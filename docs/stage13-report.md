@@ -124,3 +124,56 @@
 
 - 2021 年に観測の種目・地点が減ったあとも、かえで紅葉・いちょう黄葉の値が 2021〜2025 年にあるのは本州の 9 地点(長野・宇都宮・前橋・熊谷・水戸・甲府・銚子・東京・横浜)。松本・飯田・館山は 2005〜2007 年で終わっている。
 - 本州 12 地点の 1991〜2025 年: かえで紅葉 328 件(rm 8: 288、9: 40)、いちょう黄葉 333 件(rm 8: 188、9: 145)。2016〜2025 年: かえで紅葉 76 件、いちょう黄葉 79 件。
+
+## フェーズ 4: 段階14(紅葉の答え合わせ)の準備(通信しない)
+
+- `docs/validation-plan.md`: 対象(関東甲信の本州 12 地点、2021 年以降も値がある 9 地点。伊豆諸島は外す案)、使う気温(Open-Meteo Historical API、8/26〜12/31、`timezone` 必須、モデルの固定は要目視)、予測日(v0 と同じ判定で初めて見頃になった日)、比べ方(予測 − 観測の分布、全体・地点・年・rm・標高の扱いごと)、標高(官署の標高を `elevation` に渡す案 + 渡さない場合と比べる。官署の座標・標高は別に要る)、通信量の見積もり、合格基準の候補 3 案(決めていない)、段階14 で要る承認。
+- 通信量: 1 リクエスト = 1 地点 × 1 季節。最悪 約 9.2 call/リクエスト(推測)。推奨の案 A'(9 地点 × 10 年 × 標高 2 通り)= **180 リクエスト・約 1,660 call**・2 秒間隔で約 6 分。無料枠(10,000/日)にもハブの自主上限(3,000 リクエスト/日、推定 4,130 call/日)にも収まる。35 年に広げる案 B'(840 リクエスト・約 7,730 call)は 3 日以上に分ける。キャッシュは `IKIMONOBIYORI_DATA_DIR` の下の `cache/`。
+- コード `ikimonobiyori/backtest.py`(通信しない): `predict`(v0 の `mean_tmin`・`stage_for` とプロファイルの閾値・季節で、初めて見頃になった日)、`pair`・`aggregate`(中央値・平均・標準偏差・MAD・四分位・±N 日以内の割合。N は引数)、`report_markdown`(判定は書かない)、`observed_dates`(正規化した観測から)、`archive_query`(問い合わせの組み立てだけ。`elevation` あり/なし)。
+- テスト `tests/test_backtest.py`(12 件。合成データ): 閾値と窓がプロファイルから来ること、欠損を 0 で埋めないこと、季節の中で見頃にならなければ予測なし、差と集計の値、レポートの決定論、`archive-api.open-meteo.com` がまだ許可ホストにないこと。
+- テスト: 170 → **182 件 OK**。ゴールデンは変わらず通る。
+
+---
+
+## まとめ(最終の報告)
+
+### フェーズごとの結果
+| フェーズ | commit | 主なファイル | テスト(前 → 後) | ゴールデン |
+|---|---|---|---|---|
+| 0 現状の確認 | `d19460b` | `docs/stage13-report.md`・`docs/stage13-decisions.md` | 138 OK(基準値) | 通る |
+| 1 設計とデータ源 | `2bd8610` | `docs/design.md`・`docs/data-sources.md`・README | 138 → 138 OK | 通る |
+| 2 カタログと時期の型 | `09432d2` | `ikimonobiyori/schemas/site-catalog.schema.json`・`ikimonobiyori/catalog.py`・`ikimonobiyori/data/catalog/`・プロファイル 7 つに `timing_type`・`tests/test_catalog.py` | 138 → 159 OK | 通る(変わらない) |
+| 3 気象庁の生物季節観測 | `d5ebd8f` | `ikimonobiyori/jma_phenology.py`・`ikimonobiyori/data/jma_phenology.yaml`・`data/jma_phenology/README.md`・`raw/SOURCES.md`・`tests/test_jma_phenology.py` | 159 → 170 OK | 通る |
+| 4 答え合わせの準備 | (この commit) | `docs/validation-plan.md`・`ikimonobiyori/backtest.py`・`tests/test_backtest.py` | 170 → 182 OK | 通る |
+
+- v0 の挙動(閾値・式・band・出力)は変えていない。`engine.py`・`methods/`・`fetch/`・`main.py`・`compose.py` は変更なし。プロファイルは `timing_type` の追加だけ(v0 は読まない)。
+- テストは biyori-hub の既存の仮想環境で実行した(D-01)。この PC の既定の `python` には jsonschema・PyYAML がない。
+
+### 見直してほしい判断(順に)
+1. **D-03** 気象庁のデータを public のリポジトリに置かない(規約は公開を認めると読めるが、要約経由でしか読めなかった)。目視で問題なければ `.gitignore` の 2 行を外す。
+2. **D-12 / D-17** 正規化・答え合わせのコードをパッケージの中に置き、`--out` に明示したときだけ書く(規則 8 の読み方)。
+3. **D-06 / D-07** カタログ・スキーマ・方針をパッケージの中に置いた(指示書は `data/catalog/`・`schemas/`)。
+4. **D-08 / D-09** 公開会場の例外はホタルだけ、area_1km の座標は小数 2 桁(仮置き)。
+5. **D-13** 年をまたぐ値の読み方(推測)。
+6. **D-10 / D-11** スキーマの必須・任意、`example` の追加、ファイルの最上位の形。
+7. **D-15** 伊豆諸島を答え合わせの主な対象から外す案。
+8. **D-19 / D-20** 通信量の見積もりの前提、合格基準の候補。
+9. **D-01 / D-02 / D-04 / D-05 / D-14 / D-16 / D-18 / D-21** その他。
+
+### ユーザーが後で決めること(作業を止める理由にはしていない)
+- 合格基準(`docs/validation-plan.md` §6 の 3 案から、または別の案)と、気象庁の紅葉日を v0 の「見頃」と「色づき始め」のどちらと比べるか。**結果を見る前に**。
+- 要目視の規約・資料: 気象庁の公共データ利用規約の原文(public に置けるか)、付録 B の「自動巡回は控える」の記述の場所、累年値のフォーマットの PDF(rm の意味・値 0 の意味・年またぎ)、Open-Meteo の Historical API のモデルを固定する引数・ERA5 の引用文、**iNaturalist の利用規約と API の推奨手順(HTTP 403 で読めなかった)**、環境省の植生図の利用条件。
+- 段階14 の承認: `archive-api.open-meteo.com` を許可ホストに足す、気象官署の緯度・経度・標高の取り方、案 A'(180 リクエスト)から始めるか。
+- 足りなかったデータ: 気象官署の座標・標高(CSV に含まれない)。CSV は 7 ファイルともそろった。
+
+### 推測で書いた部分
+- 76 地点の座標・標高が山頂のものであること(ファイルに明記はない。名前と標高の値から)。
+- CSV の地点番号が国際地点番号 47NNN の下 3 桁であること、地点名から都道府県・関東甲信への対応。
+- 年をまたぐ値の読み方(春の 10〜12 月は前年、秋の 1〜3 月は翌年)。
+- rm の意味(標本木の種の違いの可能性。未確認)。
+- Open-Meteo の call の数え方(最悪 約 9.2 call/リクエスト)、予報 API の `elevation` が Historical API と同じ扱いであること、標本木が官署の構内か近くにあること。
+- 合格基準の候補の数値(例であり根拠はない)。
+
+### push すべきもの(push はユーザーが行う)
+- ブランチ **`stage13`**(main の `add784e` から): `d19460b` → `2bd8610` → `09432d2` → `d5ebd8f` → フェーズ 4 の commit(`git log --oneline main..stage13` で確認できる)。
+- フェーズ 5(biyori-hub への取り込み)は指示書どおり**実行していない**。push の後に、`vendor.lock` の更新(`hub/fetch_vendor.py` → `--apply` → `hub/check_vendor.py`)・ハブの unittest・manifest の `source.commit` の更新を行う。プロファイルの `phenology_labels`・`stage_order`・`config.yaml` の有効期間は変えていないので、ハブの manifest の写しを直す必要はない見込み。

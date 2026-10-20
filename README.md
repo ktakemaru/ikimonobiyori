@@ -77,6 +77,7 @@ python -X utf8 -m unittest discover -s tests
 - `docs/` 調査・対応表・検証計画(設計の記録。biyori-hub の中にあったときの記述が残る)
   - [`docs/design.md`](docs/design.md) 設計(ネイチャーガイド仕様: 役割の分担・時期の5つの型・対象別の仕様・名所カタログ・検証方針・段階計画)
   - [`docs/data-sources.md`](docs/data-sources.md) データ源ごとの使いみち・取り方・利用条件・出典表示(確認日と確認した URL つき)
+  - [`docs/validation-plan.md`](docs/validation-plan.md) 紅葉の答え合わせ(気象庁の生物季節観測が正解)の手順の案・通信量の見積もり・合格基準の候補(段階14 の準備)
 - `tests/` テスト。`tests/fixtures/` は合成データと、Open-Meteo の記録、ゴールデン(`golden/`)
 
 ## ライセンス
