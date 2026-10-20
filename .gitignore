@@ -18,3 +18,8 @@ __pycache__/
 .vscode/
 Thumbs.db
 desktop.ini
+
+# 気象庁 生物季節観測の取得データと加工データ(段階13)。public に置いてよいとはっきり確認できるまで置かない(docs/data-sources.md §1.4、判断 D-03)
+/data/jma_phenology/raw/*
+!/data/jma_phenology/raw/SOURCES.md
+/data/jma_phenology/normalized.csv

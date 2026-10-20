@@ -1,0 +1,46 @@
+# 気象庁 生物季節観測の累年値ファイル(CSV)を読むための定義(段階13)。ikimonobiyori/jma_phenology.py はここから読み、コードに値を持たない。
+# 出典: 気象庁ホームページ「生物季節観測累年値」(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)。地点の番号・名前はそれを加工して作成(下の stations)。
+# CSV そのもの・正規化した CSV はリポジトリに置かない(.gitignore。docs/data-sources.md §1.4、判断 D-03)。
+schema: ikimono-jma-phenology/1
+source_page: https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html
+encoding: cp932                # フォーマットの PDF の断片に「Shift_JIS」「CRLF」。実際のファイルも cp932 で読める(2026-10-21 確認)
+# 現象。code は CSV のファイル名(NNN.csv)と1行目の番号。
+# season: 現象の季節。cross_year_months: その月の値は、列の年ではなく隣の年の日付と読む(spring は前年、autumn は翌年)。
+#   **推測**: フォーマットの PDF の本文を読めなかった(要目視)。PDF の断片(「2015」「2014 12 15」「2015」「1215」)と、
+#   実際の値(うめ・さくらの列に 12月の値、かえで・いちょうの落葉の列に 1〜2月の値がある)から、季節の年の列に入っていると読んだ。
+#   月の範囲は実際の値の月(うめ・さくら: 1〜6月と12月、紅葉・落葉: 9〜12月と1〜2月)が収まる範囲として選んだ
+phenomena:
+  - {code: "015", key: kaede_koyo,    name: かえでの紅葉,   season: autumn, cross_year_months: [1, 2, 3]}
+  - {code: "016", key: kaede_rakuyo,  name: かえでの落葉,   season: autumn, cross_year_months: [1, 2, 3]}
+  - {code: "013", key: icho_koyo,     name: いちょうの黄葉, season: autumn, cross_year_months: [1, 2, 3]}
+  - {code: "014", key: icho_rakuyo,   name: いちょうの落葉, season: autumn, cross_year_months: [1, 2, 3]}
+  - {code: "004", key: sakura_kaika,  name: さくらの開花,   season: spring, cross_year_months: [10, 11, 12]}
+  - {code: "005", key: sakura_mankai, name: さくらの満開,   season: spring, cross_year_months: [10, 11, 12]}
+  - {code: "001", key: ume_kaika,     name: うめの開花,     season: spring, cross_year_months: [10, 11, 12]}
+# CSV の形(2026-10-21 に取得した 7 ファイルで確認)
+layout:
+  title_row: 0                  # 1行目: 番号,現象名,(空)…
+  header_row: 1                 # 2行目: 番号,地点名,1953,rm,1954,rm,…,2032,e,平年値,rm,最早値,rm,最早年,最晩値,rm,最晩年
+  station_columns: [番号, 地点名]
+  summary_columns: [平年値, rm, 最早値, rm, 最早年, 最晩値, rm, 最晩年]   # 正規化では使わない(形の確認だけ)
+  no_value: "0"                 # 値 0(rm も 0)は「値なし」。欠測・観測なし・観測終了・未来の年の区別は CSV からは分からない(要目視)
+# 地点。番号は CSV の 3 桁(フォーマットの PDF の断片「47***」から、国際地点番号 47NNN の下 3 桁と読める = 推測)。
+# 座標・標高は CSV に含まれない → null(気象官署の一覧など、別の資料が要る。段階13 では取りに行かない)。
+# prefecture・region は地点名からの対応(**このリポジトリの外の資料では確認していない**)。region は気象庁の地方予報区の「関東甲信」。
+# island: true は伊豆諸島(本州の気象官署と条件が大きく違うため、答え合わせの主な対象から外す案。docs/validation-plan.md)
+stations:
+  - {station_no: "610", name: 長野,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "615", name: 宇都宮, prefecture: 栃木県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "618", name: 松本,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "624", name: 前橋,   prefecture: 群馬県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "626", name: 熊谷,   prefecture: 埼玉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "629", name: 水戸,   prefecture: 茨城県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "637", name: 飯田,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "638", name: 甲府,   prefecture: 山梨県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "648", name: 銚子,   prefecture: 千葉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "662", name: 東京,   prefecture: 東京都,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "670", name: 横浜,   prefecture: 神奈川県, region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "672", name: 館山,   prefecture: 千葉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "675", name: 大島,   prefecture: 東京都,   region: 関東甲信, island: true, lat: null, lon: null, elevation_m: null}
+  - {station_no: "677", name: 三宅島, prefecture: 東京都,   region: 関東甲信, island: true, lat: null, lon: null, elevation_m: null}
+  - {station_no: "678", name: 八丈島, prefecture: 東京都,   region: 関東甲信, island: true, lat: null, lon: null, elevation_m: null}

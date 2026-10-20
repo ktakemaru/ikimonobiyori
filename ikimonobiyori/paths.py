@@ -17,6 +17,7 @@ PROFILE_SCHEMA_PATH = SCHEMA_DIR / "ikimono-profile.schema.json"
 CATALOG_DIR = DATA_FILES_DIR / "catalog"                      # 名所カタログ(段階13。v0 の判定は使わない)
 CATALOG_POLICY_PATH = CATALOG_DIR / "policy.yaml"
 CATALOG_SCHEMA_PATH = SCHEMA_DIR / "site-catalog.schema.json"
+JMA_PHENOLOGY_DEF_PATH = DATA_FILES_DIR / "jma_phenology.yaml"   # 気象庁 生物季節観測の CSV の読み方(段階13)。CSV そのものはパッケージの外(コマンドで明示)
 DEFAULT_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"      # パッケージの外を指すのはここだけ(未設定のときの書き込み先の既定)
 ENV_DATA_DIR = "IKIMONOBIYORI_DATA_DIR"
 
