@@ -4,6 +4,7 @@ name: ホタル
 category: occurrence_event
 validated: false
 status: skeleton
+timing_type: temperature          # 時期の型の既定(段階13。docs/design.md §3・§4)。v0 の判定には使わない。名所カタログの各件は別の型を持てる
 interests: [fireflies]
 season:
   months: null

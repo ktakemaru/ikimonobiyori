@@ -62,3 +62,18 @@
   - iNaturalist: 規約・推奨手順とも **HTTP 403 で読めなかった → 要目視(ユーザー)**。既存の扱いを変えない。
   - 環境省の報道発表(109419)は、いきものログによる生物季節の試行調査の発表で、植生図・ライセンスの記述はなかった。
 - README に2つの文書へのリンクを追加。
+
+## フェーズ 2: 名所カタログと時期の型のスキーマ
+
+- スキーマ `ikimonobiyori/schemas/site-catalog.schema.json`(`ikimono-site-catalog/1`)。置き場所はパッケージの中(D-06)。
+  - 必須: `id, name, subjects, timing_type, kind, location_precision, status, sources`(出典 URL が1つ以上)。`status: approved` なら `approved_at` も必須。
+  - `timing_type`: temperature / calendar / managed / frequency / episodic。`kind`: point / area / river / coast。`location_precision`: exact / area_1km / area_10km。`status`: candidate / approved / retired。
+  - `typical_window` は `start`・`end`(MM-DD。年またぎは start > end)・`source_url` がすべて必須 = 出典のない例年値は通らない。
+  - `site_ref` は `yamabiyori:` / `hoshibiyori:` / `ikimonobiyori:` + id。`public_venue{source_url}`(公式の観賞会場)、`sensitive`(希少種)、`example`(実在しない例)を追加。
+- 方針 `ikimonobiyori/data/catalog/policy.yaml`: 位置の粗さの下限(既定 exact、野鳥・ホタル area_10km)、公開会場の例外はホタルだけ、希少種は area_10km 以上、座標の桁の上限(area_10km は小数1桁、area_1km は2桁)。(D-07〜D-09)
+- 検査器 `ikimonobiyori/catalog.py`: `python -X utf8 -m ikimonobiyori.catalog check [--catalog-dir] [--profiles-dir] [--policy]`。スキーマ+スキーマで見られない規則(未知の対象、ファイル名と subject の不一致、id の重複、位置の下限、座標の桁、存在しない日付、例の approved)。プロファイルは ikimono-profile/1 + `timing_type` の有無。
+  - `usable_description(entry)`: approved で approved_at と sources がそろい、例でないときだけ解説を返す。`approved_entries(doc)`: 提案に使ってよい件。**v0 のエンジンはどちらも使わない**(テストで確認)。
+- プロファイル 7 つに `timing_type` を追加(紅葉・桜・ホタル temperature、野鳥 frequency、彼岸花 calendar、ひまわり managed、夜光虫 episodic)。プロファイルのスキーマに任意項目として追加(項目の追加のみ)。ハブの `hub/validate.py` は ikimono 自身のスキーマで検証するので、ハブ側の変更は要らない。
+- 例: `ikimonobiyori/data/catalog/autumn_leaves.yaml` に `status: candidate`・`example: true` の2件(座標・例年値・URL は example.org の例)。
+- テスト `tests/test_catalog.py`(21 件): 正しい例が通る/出典のない例年値・存在しない日付・未知の timing_type 等・出典なし・approved_at なし・例の approved・野鳥とホタルの細かすぎる位置・座標の桁・公開会場の例外・希少種・複数対象・未知の対象・重複などがすべて拒否される。
+- テスト: 138 → **159 件 OK**。ゴールデンは変わらず通る。`ikimonobiyori.catalog check` は全ファイル OK。

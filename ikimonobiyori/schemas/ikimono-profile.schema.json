@@ -12,6 +12,7 @@
     "category": {"enum": ["seasonal_progression", "observation_record", "occurrence_event"]},
     "validated": {"type": "boolean", "description": "バックテストに通ったか。false の間は band の上限が maybe"},
     "status": {"enum": ["implemented", "skeleton"]},
+    "timing_type": {"enum": ["temperature", "calendar", "managed", "frequency", "episodic"], "description": "時期の型の既定(段階13 で追加。任意項目。docs/design.md §3)。v0 の判定には使わない"},
     "interests": {"type": "array", "items": {"type": "string"}, "description": "依頼の interests のうち、このプロファイルに対応する語"},
     "season": {
       "type": "object",

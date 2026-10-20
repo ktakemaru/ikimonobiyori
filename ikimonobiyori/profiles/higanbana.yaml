@@ -4,6 +4,7 @@ name: 彼岸花
 category: seasonal_progression
 validated: false
 status: skeleton
+timing_type: calendar          # 時期の型の既定(段階13。docs/design.md §3・§4)。v0 の判定には使わない。名所カタログの各件は別の型を持てる
 interests: [wildflowers, higanbana]
 season:
   months: null

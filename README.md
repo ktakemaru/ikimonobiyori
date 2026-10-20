@@ -72,7 +72,7 @@ python -X utf8 -m unittest discover -s tests
 ## ファイル構成
 
 - `ikimonobiyori/` パッケージ。`engine.py`(依頼 + 入力 + プロファイル → 提案)、`methods/`(手法)、`fetch/`(パーサー・キャッシュ・取得層)、`compose.py`(紅葉と野鳥の部品の合成)、`main.py`(CLI)
-  - `profiles/` 対象ごとのプロファイル(閾値・出典・マナー)、`data/` 地点カタログと調査の定義、`config.yaml` 取得層の運用値(許可ホスト・間隔・再試行・有効期間)、`schemas/` プロファイルのスキーマ
+  - `profiles/` 対象ごとのプロファイル(閾値・出典・マナー)、`data/` 地点カタログと調査の定義(`data/catalog/` は名所カタログ。段階13 では例のみで、v0 は使わない。検査は `python -X utf8 -m ikimonobiyori.catalog check`)、`config.yaml` 取得層の運用値(許可ホスト・間隔・再試行・有効期間)、`schemas/` プロファイルのスキーマ
   - `paths.py` ファイルの場所(読むものはパッケージの中、書くものは `IKIMONOBIYORI_DATA_DIR` の下)、`livegate.py` 実通信の許可の判定
 - `docs/` 調査・対応表・検証計画(設計の記録。biyori-hub の中にあったときの記述が残る)
   - [`docs/design.md`](docs/design.md) 設計(ネイチャーガイド仕様: 役割の分担・時期の5つの型・対象別の仕様・名所カタログ・検証方針・段階計画)
