@@ -144,7 +144,7 @@
 | 1 設計とデータ源 | `2bd8610` | `docs/design.md`・`docs/data-sources.md`・README | 138 → 138 OK | 通る |
 | 2 カタログと時期の型 | `09432d2` | `ikimonobiyori/schemas/site-catalog.schema.json`・`ikimonobiyori/catalog.py`・`ikimonobiyori/data/catalog/`・プロファイル 7 つに `timing_type`・`tests/test_catalog.py` | 138 → 159 OK | 通る(変わらない) |
 | 3 気象庁の生物季節観測 | `d5ebd8f` | `ikimonobiyori/jma_phenology.py`・`ikimonobiyori/data/jma_phenology.yaml`・`data/jma_phenology/README.md`・`raw/SOURCES.md`・`tests/test_jma_phenology.py` | 159 → 170 OK | 通る |
-| 4 答え合わせの準備 | (この commit) | `docs/validation-plan.md`・`ikimonobiyori/backtest.py`・`tests/test_backtest.py` | 170 → 182 OK | 通る |
+| 4 答え合わせの準備 | `391af9f` | `docs/validation-plan.md`・`ikimonobiyori/backtest.py`・`tests/test_backtest.py` | 170 → 182 OK | 通る |
 
 - v0 の挙動(閾値・式・band・出力)は変えていない。`engine.py`・`methods/`・`fetch/`・`main.py`・`compose.py` は変更なし。プロファイルは `timing_type` の追加だけ(v0 は読まない)。
 - テストは biyori-hub の既存の仮想環境で実行した(D-01)。この PC の既定の `python` には jsonschema・PyYAML がない。
@@ -175,5 +175,5 @@
 - 合格基準の候補の数値(例であり根拠はない)。
 
 ### push すべきもの(push はユーザーが行う)
-- ブランチ **`stage13`**(main の `add784e` から): `d19460b` → `2bd8610` → `09432d2` → `d5ebd8f` → フェーズ 4 の commit(`git log --oneline main..stage13` で確認できる)。
+- ブランチ **`stage13`**(main の `add784e` から): `d19460b` → `2bd8610` → `09432d2` → `d5ebd8f` → `391af9f` → この報告書の commit ID の追記(`git log --oneline main..stage13` で確認できる)。
 - フェーズ 5(biyori-hub への取り込み)は指示書どおり**実行していない**。push の後に、`vendor.lock` の更新(`hub/fetch_vendor.py` → `--apply` → `hub/check_vendor.py`)・ハブの unittest・manifest の `source.commit` の更新を行う。プロファイルの `phenology_labels`・`stage_order`・`config.yaml` の有効期間は変えていないので、ハブの manifest の写しを直す必要はない見込み。
