@@ -1,0 +1,2533 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "golden",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-15T06:00:00+09:00",
+ "data_as_of": [
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  },
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  },
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  },
+  {
+   "source": "iNaturalist API [SYNTHETIC fixture]",
+   "source_type": "observation",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": "2025-10-19",
+   "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja"
+  },
+  {
+   "source": "iNaturalist API [SYNTHETIC fixture]",
+   "source_type": "observation",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": "2025-10-19",
+   "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m001",
+   "title": "谷川岳 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "谷川岳",
+    "lat": 36.837,
+    "lon": 138.9297,
+    "elevation_m": 1977,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m001"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.19047619047619038,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 7.428571428571429,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 7.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m001",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m013",
+   "title": "天上山(カチカチ山) 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "天上山(カチカチ山)",
+    "lat": 35.5033,
+    "lon": 138.7806,
+    "elevation_m": 1140,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m013"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 12.428571428571429,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 12.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m013",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m065",
+   "title": "立山(雄山) 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "立山(雄山)",
+    "lat": 36.5758,
+    "lon": 137.6197,
+    "elevation_m": 3003,
+    "region": "北陸信越",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m065"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 4.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 3.5,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m065",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m001",
+   "title": "谷川岳 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "谷川岳",
+    "lat": 36.837,
+    "lon": 138.9297,
+    "elevation_m": 1977,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m001"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.2857142857142856,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 7.142857142857143,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 6.5,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m001",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m013",
+   "title": "天上山(カチカチ山) 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "天上山(カチカチ山)",
+    "lat": 35.5033,
+    "lon": 138.7806,
+    "elevation_m": 1140,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m013"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 12.142857142857142,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 11.5,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m013",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m065",
+   "title": "立山(雄山) 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "立山(雄山)",
+    "lat": 36.5758,
+    "lon": 137.6197,
+    "elevation_m": 3003,
+    "region": "北陸信越",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m065"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 3.7857142857142856,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 3.0,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m065",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Corvus macrorhynchos",
+   "title": "合成の里山(synthetic) 2026-10-17 ハシブトガラス",
+   "subject": {
+    "category": "observation_record",
+    "name": "ハシブトガラス",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1617873651771957,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1617873651771957,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 105,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Corvus macrorhynchos",
+    "taxon_id": 10002,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ハシブトガラスは105件(約16%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Hypsipetes amaurotis",
+   "title": "合成の里山(synthetic) 2026-10-17 ヒヨドリ",
+   "subject": {
+    "category": "observation_record",
+    "name": "ヒヨドリ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.24036979969183359,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.24036979969183359,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 156,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Hypsipetes amaurotis",
+    "taxon_id": 10001,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ヒヨドリは156件(約24%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Parus minor",
+   "title": "合成の里山(synthetic) 2026-10-17 シジュウカラ",
+   "subject": {
+    "category": "observation_record",
+    "name": "シジュウカラ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.31432973805855163,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.31432973805855163,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 204,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Parus minor",
+    "taxon_id": 10000,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、シジュウカラは204件(約31%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Passer montanus",
+   "title": "合成の里山(synthetic) 2026-10-17 スズメ",
+   "subject": {
+    "category": "observation_record",
+    "name": "スズメ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.08628659476117104,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.08628659476117104,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 56,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Passer montanus",
+    "taxon_id": 10004,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、スズメは56件(約9%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Zosterops japonicus",
+   "title": "合成の里山(synthetic) 2026-10-17 メジロ",
+   "subject": {
+    "category": "observation_record",
+    "name": "メジロ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1140215716486903,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1140215716486903,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 74,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Zosterops japonicus",
+    "taxon_id": 10003,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、メジロは74件(約11%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Corvus macrorhynchos",
+   "title": "合成の里山(synthetic) 2026-10-18 ハシブトガラス",
+   "subject": {
+    "category": "observation_record",
+    "name": "ハシブトガラス",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1617873651771957,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1617873651771957,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 105,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Corvus macrorhynchos",
+    "taxon_id": 10002,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ハシブトガラスは105件(約16%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Hypsipetes amaurotis",
+   "title": "合成の里山(synthetic) 2026-10-18 ヒヨドリ",
+   "subject": {
+    "category": "observation_record",
+    "name": "ヒヨドリ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.24036979969183359,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.24036979969183359,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 156,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Hypsipetes amaurotis",
+    "taxon_id": 10001,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ヒヨドリは156件(約24%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Parus minor",
+   "title": "合成の里山(synthetic) 2026-10-18 シジュウカラ",
+   "subject": {
+    "category": "observation_record",
+    "name": "シジュウカラ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.31432973805855163,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.31432973805855163,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 204,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Parus minor",
+    "taxon_id": 10000,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、シジュウカラは204件(約31%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Passer montanus",
+   "title": "合成の里山(synthetic) 2026-10-18 スズメ",
+   "subject": {
+    "category": "observation_record",
+    "name": "スズメ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.08628659476117104,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.08628659476117104,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 56,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Passer montanus",
+    "taxon_id": 10004,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、スズメは56件(約9%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Zosterops japonicus",
+   "title": "合成の里山(synthetic) 2026-10-18 メジロ",
+   "subject": {
+    "category": "observation_record",
+    "name": "メジロ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1140215716486903,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1140215716486903,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 74,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Zosterops japonicus",
+    "taxon_id": 10003,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、メジロは74件(約11%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": [
+   "SYNTHETIC: 合成フィクスチャの入力から作った。実データではない"
+  ]
+ }
+}

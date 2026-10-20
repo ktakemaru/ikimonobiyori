@@ -1,0 +1,1609 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "golden",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-15T06:00:00+09:00",
+ "data_as_of": [
+  {
+   "source": "iNaturalist API [SYNTHETIC fixture]",
+   "source_type": "observation",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": "2025-10-19",
+   "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja"
+  },
+  {
+   "source": "iNaturalist API [SYNTHETIC fixture]",
+   "source_type": "observation",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": "2025-10-19",
+   "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Corvus macrorhynchos",
+   "title": "合成の里山(synthetic) 2026-10-17 ハシブトガラス",
+   "subject": {
+    "category": "observation_record",
+    "name": "ハシブトガラス",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1617873651771957,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1617873651771957,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 105,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Corvus macrorhynchos",
+    "taxon_id": 10002,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ハシブトガラスは105件(約16%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Hypsipetes amaurotis",
+   "title": "合成の里山(synthetic) 2026-10-17 ヒヨドリ",
+   "subject": {
+    "category": "observation_record",
+    "name": "ヒヨドリ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.24036979969183359,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.24036979969183359,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 156,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Hypsipetes amaurotis",
+    "taxon_id": 10001,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ヒヨドリは156件(約24%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Parus minor",
+   "title": "合成の里山(synthetic) 2026-10-17 シジュウカラ",
+   "subject": {
+    "category": "observation_record",
+    "name": "シジュウカラ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.31432973805855163,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.31432973805855163,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 204,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Parus minor",
+    "taxon_id": 10000,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、シジュウカラは204件(約31%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Passer montanus",
+   "title": "合成の里山(synthetic) 2026-10-17 スズメ",
+   "subject": {
+    "category": "observation_record",
+    "name": "スズメ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.08628659476117104,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.08628659476117104,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 56,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Passer montanus",
+    "taxon_id": 10004,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、スズメは56件(約9%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-17:合成の里山(synthetic):Zosterops japonicus",
+   "title": "合成の里山(synthetic) 2026-10-17 メジロ",
+   "subject": {
+    "category": "observation_record",
+    "name": "メジロ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1140215716486903,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1140215716486903,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 74,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Zosterops japonicus",
+    "taxon_id": 10003,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、メジロは74件(約11%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Corvus macrorhynchos",
+   "title": "合成の里山(synthetic) 2026-10-18 ハシブトガラス",
+   "subject": {
+    "category": "observation_record",
+    "name": "ハシブトガラス",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1617873651771957,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1617873651771957,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 105,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Corvus macrorhynchos",
+    "taxon_id": 10002,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ハシブトガラスは105件(約16%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Hypsipetes amaurotis",
+   "title": "合成の里山(synthetic) 2026-10-18 ヒヨドリ",
+   "subject": {
+    "category": "observation_record",
+    "name": "ヒヨドリ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.24036979969183359,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.24036979969183359,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 156,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Hypsipetes amaurotis",
+    "taxon_id": 10001,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、ヒヨドリは156件(約24%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Parus minor",
+   "title": "合成の里山(synthetic) 2026-10-18 シジュウカラ",
+   "subject": {
+    "category": "observation_record",
+    "name": "シジュウカラ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.31432973805855163,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.31432973805855163,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 204,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Parus minor",
+    "taxon_id": 10000,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、シジュウカラは204件(約31%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Passer montanus",
+   "title": "合成の里山(synthetic) 2026-10-18 スズメ",
+   "subject": {
+    "category": "observation_record",
+    "name": "スズメ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.08628659476117104,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.08628659476117104,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 56,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Passer montanus",
+    "taxon_id": 10004,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、スズメは56件(約9%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-18:合成の里山(synthetic):Zosterops japonicus",
+   "title": "合成の里山(synthetic) 2026-10-18 メジロ",
+   "subject": {
+    "category": "observation_record",
+    "name": "メジロ",
+    "profile_id": "birds"
+   },
+   "place": {
+    "name": "合成の里山(synthetic)",
+    "area_id": null,
+    "lat": 35.7,
+    "lon": 139.1,
+    "elevation_m": null,
+    "region": null,
+    "location_precision": "area_10km"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.1140215716486903,
+     "scale": "ikimonobiyori-birds-relative-frequency-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "relative_frequency",
+     "value": 0.1140215716486903,
+     "unit": "ratio",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "species_observations",
+     "value": 74,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "total_observations",
+     "value": 649,
+     "unit": "observations",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "years_used",
+     "value": 5,
+     "unit": "year",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    },
+    {
+     "metric": "window_weeks",
+     "value": 1,
+     "unit": "week",
+     "valid_time": null,
+     "source": "iNaturalist API [SYNTHETIC fixture]",
+     "source_type": "observation",
+     "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-11&d2=2025-10-25&iconic_taxa=Aves&quality_grade=research&locale=ja",
+     "last_updated": "2025-10-19"
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "observation-frequency",
+     "validated": false
+    },
+    "known_limits": [
+     "記録は観察者の多い場所に偏る",
+     "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う",
+     "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)",
+     "天気(風・降水)による補正は v0 では行わない",
+     "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "taxon_name": "Zosterops japonicus",
+    "taxon_id": 10003,
+    "area_radius_km": 10,
+    "url_uses_rounded_center": true,
+    "attribution": "iNaturalist のコミュニティによる観察記録(API 経由の集計。https://www.inaturalist.org/)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認(集計値のみを使用)",
+    "score_explain": "過去5年のこの時期(前後1週間・半径10km)の鳥類の記録649件のうち、メジロは74件(約11%)",
+    "provisional_params": [
+     {
+      "name": "window_weeks",
+      "value": 1,
+      "unit": "week",
+      "source": null,
+      "reason": "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "history_years",
+      "value": 5,
+      "unit": "year",
+      "source": null,
+      "reason": "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "min_total_observations",
+      "value": 30,
+      "unit": "observations",
+      "source": null,
+      "reason": "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"
+     },
+     {
+      "name": "maybe_min_relative_frequency",
+      "value": 0.05,
+      "unit": "ratio",
+      "source": null,
+      "reason": "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"
+     },
+     {
+      "name": "default_radius_km",
+      "value": 10,
+      "unit": "km",
+      "source": null,
+      "reason": "仮置き。location_precision area_10km に合わせた問い合わせ半径"
+     }
+    ],
+    "synthetic": true
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": [
+   "SYNTHETIC: 合成フィクスチャの入力から作った。実データではない"
+  ]
+ }
+}

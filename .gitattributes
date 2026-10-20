@@ -1,0 +1,5 @@
+# 改行: リポジトリ内は LF(biyori-hub と同じ)。ハッシュや比較が OS の改行設定で変わらないようにする
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary

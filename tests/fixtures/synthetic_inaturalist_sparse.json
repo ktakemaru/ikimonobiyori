@@ -1,0 +1,191 @@
+{
+ "schema": "ikimono-synthetic-inaturalist/1",
+ "recorded": false,
+ "synthetic": true,
+ "note": "SYNTHETIC: 合成フィクスチャ。実際の iNaturalist の応答ではない。場所・種・件数はすべて架空(記録が少ない場所の入力)",
+ "shape_check": {
+  "url": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2024-10-10&d2=2024-10-24&iconic_taxa=Aves&quality_grade=research&per_page=10",
+  "status": 200,
+  "fetched_at": "2026-10-14T23:13:54+09:00",
+  "rate_headers": {},
+  "fields_seen": {
+   "top": [
+    "page",
+    "per_page",
+    "results",
+    "total_results"
+   ],
+   "result": [
+    "count",
+    "taxon"
+   ]
+  },
+  "minimized": {
+   "total_results": 3,
+   "page": 1,
+   "per_page": 10,
+   "results": [
+    {
+     "count": 3,
+     "taxon": {
+      "id": 20000,
+      "name": "Parus minor",
+      "preferred_common_name": "シジュウカラ",
+      "rank": "species",
+      "iconic_taxon_name": "Aves"
+     }
+    },
+    {
+     "count": 1,
+     "taxon": {
+      "id": 20001,
+      "name": "Zosterops japonicus",
+      "preferred_common_name": "メジロ",
+      "rank": "species",
+      "iconic_taxon_name": "Aves"
+     }
+    },
+    {
+     "count": 1,
+     "taxon": {
+      "id": 20002,
+      "name": "Corvus macrorhynchos",
+      "preferred_common_name": "ハシブトガラス",
+      "rank": "species",
+      "iconic_taxon_name": "Aves"
+     }
+    }
+   ]
+  }
+ },
+ "inputs": {
+  "schema": "ikimono-inputs/1",
+  "synthetic": true,
+  "fetched_at": "2026-10-14T23:13:54+09:00",
+  "birds": [
+   {
+    "area": {
+     "name": "合成の里山(synthetic)",
+     "lat": 35.7,
+     "lon": 139.1,
+     "radius_km": 10
+    },
+    "queries": [
+     {
+      "date": "2026-10-17",
+      "years": {
+       "2025": {
+        "total_results": 2,
+        "page": 1,
+        "per_page": 200,
+        "results": [
+         {
+          "count": 2,
+          "taxon": {
+           "id": 20000,
+           "name": "Parus minor",
+           "preferred_common_name": "シジュウカラ",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         },
+         {
+          "count": 1,
+          "taxon": {
+           "id": 20001,
+           "name": "Passer montanus",
+           "preferred_common_name": "スズメ",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         }
+        ]
+       },
+       "2024": {
+        "total_results": 3,
+        "page": 1,
+        "per_page": 200,
+        "results": [
+         {
+          "count": 3,
+          "taxon": {
+           "id": 20000,
+           "name": "Parus minor",
+           "preferred_common_name": "シジュウカラ",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         },
+         {
+          "count": 1,
+          "taxon": {
+           "id": 20001,
+           "name": "Zosterops japonicus",
+           "preferred_common_name": "メジロ",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         },
+         {
+          "count": 1,
+          "taxon": {
+           "id": 20002,
+           "name": "Corvus macrorhynchos",
+           "preferred_common_name": "ハシブトガラス",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         }
+        ]
+       },
+       "2023": {
+        "total_results": 1,
+        "page": 1,
+        "per_page": 200,
+        "results": [
+         {
+          "count": 1,
+          "taxon": {
+           "id": 20000,
+           "name": "Parus minor",
+           "preferred_common_name": "シジュウカラ",
+           "rank": "species",
+           "iconic_taxon_name": "Aves"
+          }
+         }
+        ]
+       },
+       "2022": {
+        "total_results": 0,
+        "page": 1,
+        "per_page": 200,
+        "results": []
+       },
+       "2021": {
+        "total_results": 0,
+        "page": 1,
+        "per_page": 200,
+        "results": []
+       }
+      },
+      "urls": {
+       "2025": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2025-10-10&d2=2025-10-24&iconic_taxa=Aves&quality_grade=research&per_page=200",
+       "2024": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2024-10-10&d2=2024-10-24&iconic_taxa=Aves&quality_grade=research&per_page=200",
+       "2023": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2023-10-10&d2=2023-10-24&iconic_taxa=Aves&quality_grade=research&per_page=200",
+       "2022": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2022-10-10&d2=2022-10-24&iconic_taxa=Aves&quality_grade=research&per_page=200",
+       "2021": "https://api.inaturalist.org/v1/observations/species_counts?lat=35.7&lng=139.1&radius=10&d1=2021-10-10&d2=2021-10-24&iconic_taxa=Aves&quality_grade=research&per_page=200"
+      },
+      "fetched_at_by_year": {
+       "2025": "2026-10-14T23:13:54+09:00",
+       "2024": "2026-10-14T23:13:54+09:00",
+       "2023": "2026-10-14T23:13:54+09:00",
+       "2022": "2026-10-14T23:13:54+09:00",
+       "2021": "2026-10-14T23:13:54+09:00"
+      },
+      "latest_observations": null
+     }
+    ]
+   }
+  ]
+ }
+}

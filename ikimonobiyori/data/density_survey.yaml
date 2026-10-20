@@ -1,0 +1,19 @@
+# 野鳥のデータ密度の調査(段階6c)。閾値・窓・半径・bird_areas は変えない。測定だけ。
+# 座標は丸めた値(概略。小数1桁)だけを持つ。ここに書いた名前と丸めた座標以外は成果物に出さない。
+schema: ikimono-density-survey/1
+conditions:
+  iconic_taxa: Aves
+  quality_grade: research
+  radius_km: 10
+  months: [10, 11]          # 年は限らない
+places:
+  - {id: karuizawa, name: 軽井沢周辺, lat: 36.3, lon: 138.6}
+  - {id: kasai, name: 葛西臨海公園周辺, lat: 35.6, lon: 139.9}
+  - {id: yatsu, name: 谷津干潟周辺, lat: 35.7, lon: 140.0}
+  - {id: watarase, name: 渡良瀬遊水地周辺, lat: 36.2, lon: 139.7}
+  - {id: kawaguchiko, name: 河口湖周辺, lat: 35.5, lon: 138.8}
+  - {id: inba, name: 印旛沼周辺, lat: 35.8, lon: 140.2}
+locale_check:               # 日本語名を取れるか(軽井沢周辺の species_counts に locale=ja)
+  place: karuizawa
+  locale: ja
+  per_page: 10

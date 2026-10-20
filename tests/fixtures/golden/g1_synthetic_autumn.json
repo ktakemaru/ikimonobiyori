@@ -1,0 +1,947 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "golden",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-15T06:00:00+09:00",
+ "data_as_of": [
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  },
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  },
+  {
+   "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+   "source_type": "forecast",
+   "run_time": null,
+   "fetched_at": "2026-10-14T21:30:00+09:00",
+   "last_updated": null,
+   "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m001",
+   "title": "谷川岳 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "谷川岳",
+    "lat": 36.837,
+    "lon": 138.9297,
+    "elevation_m": 1977,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m001"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.19047619047619038,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 7.428571428571429,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 7.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m001",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m013",
+   "title": "天上山(カチカチ山) 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "天上山(カチカチ山)",
+    "lat": 35.5033,
+    "lon": 138.7806,
+    "elevation_m": 1140,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m013"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 12.428571428571429,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 12.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m013",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-17:m065",
+   "title": "立山(雄山) 2026-10-17 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "立山(雄山)",
+    "lat": 36.5758,
+    "lon": 137.6197,
+    "elevation_m": 3003,
+    "region": "北陸信越",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m065"
+   },
+   "time_window": {
+    "start": "2026-10-17T00:00:00+09:00",
+    "end": "2026-10-18T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 4.0,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 3.5,
+     "unit": "degC",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-17T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 2,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m065",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m001",
+   "title": "谷川岳 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "谷川岳",
+    "lat": 36.837,
+    "lon": 138.9297,
+    "elevation_m": 1977,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m001"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0.2857142857142856,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 7.142857142857143,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 6.5,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.837&longitude=138.9297&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m001",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m013",
+   "title": "天上山(カチカチ山) 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "天上山(カチカチ山)",
+    "lat": 35.5033,
+    "lon": 138.7806,
+    "elevation_m": 1140,
+    "region": "関東甲信",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m013"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 12.142857142857142,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 11.5,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=35.5033&longitude=138.7806&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m013",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-18:m065",
+   "title": "立山(雄山) 2026-10-18 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "立山(雄山)",
+    "lat": 36.5758,
+    "lon": 137.6197,
+    "elevation_m": 3003,
+    "region": "北陸信越",
+    "location_precision": "exact",
+    "site_ref": "yamabiyori:m065"
+   },
+   "time_window": {
+    "start": "2026-10-18T00:00:00+09:00",
+    "end": "2026-10-19T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1.0,
+     "scale": "ikimonobiyori-autumn-leaves-cold-progress-0-1",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "min_temp_mean_window",
+     "value": 3.7857142857142856,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "min_temp_target_day",
+     "value": 3.0,
+     "unit": "degC",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "mean_window_days",
+     "value": 7,
+     "unit": "day",
+     "valid_time": "2026-10-18T00:00:00+09:00",
+     "source": "Open-Meteo forecast API [SYNTHETIC fixture]",
+     "source_type": "forecast",
+     "url": "https://api.open-meteo.com/v1/forecast?latitude=36.5758&longitude=137.6197&daily=temperature_2m_min&past_days=7&forecast_days=1&timezone=Asia%2FTokyo",
+     "last_updated": null
+    },
+    {
+     "metric": "start_min_temp_c",
+     "value": 8,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    },
+    {
+     "metric": "advance_min_temp_c",
+     "value": 6,
+     "unit": "degC",
+     "valid_time": null,
+     "source": "ikimonobiyori profile autumn_leaves (provisional)",
+     "source_type": "static_reference",
+     "url": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 3,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "heuristic-unvalidated",
+     "validated": false
+    },
+    "known_limits": [
+     "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない",
+     "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない",
+     "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "m065",
+    "provisional_params": [
+     {
+      "name": "start_min_temp_c",
+      "value": 8,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/",
+      "reason": "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"
+     },
+     {
+      "name": "advance_min_temp_c",
+      "value": 6,
+      "unit": "degC",
+      "source": "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf",
+      "reason": "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"
+     },
+     {
+      "name": "strong_min_temp_c",
+      "value": 5,
+      "unit": "degC",
+      "source": "https://weathernews.jp/news/202410/310205/",
+      "reason": "『5℃以下になると色づきは一気に進む』。言い伝えの目安"
+     },
+     {
+      "name": "mean_window_days",
+      "value": 7,
+      "unit": "day",
+      "source": null,
+      "reason": "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"
+     },
+     {
+      "name": "progress_shape",
+      "value": "linear",
+      "unit": null,
+      "source": null,
+      "reason": "仮置き。start と strong の間を線形に補間する。出典なし"
+     }
+    ],
+    "synthetic": true
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": [
+   "SYNTHETIC: 合成フィクスチャの入力から作った。実データではない"
+  ]
+ }
+}

@@ -1,0 +1,22 @@
+# 夜光虫(骨組み)。エンジンは not_applicable(profile_skeleton) を返す。
+profile_id: bioluminescence
+name: 夜光虫
+category: occurrence_event
+validated: false
+status: skeleton
+interests: [bioluminescence]
+season:
+  months: null
+  months_source: null
+  note: "未確認(出典なし)"
+  out_of_season_rule: "未確認。骨組みの間は常に not_applicable(profile_skeleton)"
+method:
+  kind: event_occurrence
+  description: "予測の型は未確認。発生は不規則で、海水温・栄養塩・波の条件が関わると言われるが、本調査では出典を確認していない。観察記録(発生報告)が主な源になる見込み"
+data_sources:
+  - {name: iNaturalist API, type: observation, url: "https://api.inaturalist.org/v1/docs/", note: "発生報告の有無は未確認"}
+  - {name: Open-Meteo Marine, type: forecast, note: "未調査"}
+confidence: {method: heuristic-unvalidated, validated: false, value_provided: false}
+care: {location_precision: area_10km, do_not_disclose_exact_location: false, manners: ["夜の海辺では波・足元に注意し、単独で水に入らない(骨組みの仮案)"]}
+known_limits:
+  - "骨組みのみ。判定ロジックは未実装"

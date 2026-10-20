@@ -1,0 +1,22 @@
+# ヒマワリ(骨組み)。エンジンは not_applicable(profile_skeleton) を返す。
+profile_id: sunflower
+name: ヒマワリ
+category: seasonal_progression
+validated: false
+status: skeleton
+interests: [wildflowers, sunflower]
+season:
+  months: null
+  months_source: null
+  note: "未確認(出典なし)。畑ごとに播種時期が違い、観光用の畑の開花情報が主な源になると考えられる(未確認)"
+  out_of_season_rule: "未確認。骨組みの間は常に not_applicable(profile_skeleton)"
+method:
+  kind: tbd
+  description: "予測の型は未確認。候補: 観光施設・自治体の開花情報(official_notice)を最優先、気温は補助。式・閾値は未確認"
+data_sources:
+  - {name: 自治体・観光協会の開花情報, type: official_notice, note: "形式がまちまち。未調査"}
+  - {name: Open-Meteo (日別気温), type: forecast, url: "https://open-meteo.com/en/docs"}
+confidence: {method: heuristic-unvalidated, validated: false, value_provided: false}
+care: {location_precision: exact, do_not_disclose_exact_location: false, manners: ["畑に立ち入らない・花を採らない(骨組みの仮案)"]}
+known_limits:
+  - "骨組みのみ。判定ロジックは未実装"

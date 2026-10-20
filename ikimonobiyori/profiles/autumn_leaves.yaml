@@ -1,0 +1,58 @@
+# 紅葉プロファイル(v0 実装)。docs/ikimonobiyori-research.md §4 の調査にもとづく。閾値はここだけに書く。
+profile_id: autumn_leaves
+name: 紅葉
+category: seasonal_progression
+validated: false          # バックテスト(公式の見頃情報・観察記録との照合)に通るまで false。band は maybe まで
+status: implemented
+interests: [autumn_leaves]
+season:
+  months: [9, 10, 11, 12]
+  months_source: "仮置き(出典なし)。気象庁 生物季節観測指針(令和3年12月、https://www.data.jma.go.jp/sakura/data/shishin.pdf)の3.4 かえで・2.1.2 紅(黄)葉を確認したが、紅葉の観察期間(月)の記述はなかった(桜については『3月の末から観測を開始』の記述のみ)。山岳は9月下旬〜、平地は11月〜12月上旬という目安も、出典を確認できていない。**月の外では out_of_season を返すので、狭すぎないか注意**(特に標高の高い山の9月上旬、低地の12月下旬)"
+  note: "標高・地域で大きく異なる。山岳は9月下旬〜、平地は11月〜12月上旬(いずれも出典未確認)"
+  out_of_season_rule: "months 以外の月は提案を出さず not_applicable(out_of_season)"
+scale:
+  name: ikimonobiyori-autumn-leaves-cold-progress-0-1
+  range: [0, 1]
+  formula: "進み = clamp((start_min_temp_c − M) ÷ (start_min_temp_c − strong_min_temp_c), 0, 1)。M は対象日までの mean_window_days 日間の日最低気温の平均(予報日を含む)。start 以上で 0、strong 以下で 1 の線形補間(線形は仮置き)。紅葉の進み具合そのものではなく、気温から見た冷え込みの進み。他のビヨリの点数とは比較しない"
+stage_order: [peak, early_bloom, late]     # 窓口の絞り込みで、同じ band の中の並び(見頃 → 色づき始め → 終盤)。**好みの仮置きで、根拠はない**(5c)
+method:
+  kind: temperature_progression
+  description: "日最低気温の直近平均 M から段階を決める。M ≤ advance_min_temp_c: 見頃(peak)、M ≤ start_min_temp_c: 色づき始め(early_bloom)、それより高い: 色づき前(before_bud)。終盤(late)・落葉は判定しない(出典がない)"
+  params:
+    - {name: start_min_temp_c, value: 8, unit: degC, provisional: true, source: "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf ; https://weathernews.jp/news/202410/310205/", reason: "『最低気温が8℃以下になると紅葉が始まる』という言い伝えの目安(国交省 北陸地方整備局 大町ダム 2016-10-24、ウェザーニュース 2024-11-14)。イロハモミジ対象で明確なデータはない。気象庁の基準ではない"}
+    - {name: advance_min_temp_c, value: 6, unit: degC, provisional: true, source: "https://www.hrr.mlit.go.jp/omachi/news/back/kisyahappyou/161024/161024omachikouyou.pdf", reason: "『5〜6℃になると紅葉が進んで見頃になる』の範囲の上端。言い伝えの目安"}
+    - {name: strong_min_temp_c, value: 5, unit: degC, provisional: true, source: "https://weathernews.jp/news/202410/310205/", reason: "『5℃以下になると色づきは一気に進む』。言い伝えの目安"}
+    - {name: mean_window_days, value: 7, unit: day, provisional: true, source: null, reason: "仮置き。日々のばらつきをならす平均の日数。出典なし。既存の雛形(min_temp_7d_mean)を引き継ぐ"}
+    - {name: progress_shape, value: linear, unit: null, provisional: true, source: null, reason: "仮置き。start と strong の間を線形に補間する。出典なし"}
+  band_map: {before_bud: "no", early_bloom: maybe, peak: maybe, late: "no"}
+band_policy:
+  max_band: maybe
+  rules:
+    - "validated=false のため go は出さない"
+    - "見頃(peak)・色づき始め(early_bloom)は maybe、色づき前(before_bud)は no(『まだ色づいていない』の意味で、行ってはいけないではない)。理由: 気温の目安(8℃以下で始まり5〜6℃で見頃)は幅が広く、色づき始めを一律に見送ると見頃の前後の情報が失われる。上限が maybe なので、go の山より下に並ぶ"
+data_sources:
+  - {name: Open-Meteo (日別の最低気温), type: forecast, auth: none, url: "https://open-meteo.com/en/docs", note: "forecast: past_days 0-92 / forecast_days 0-16、daily=temperature_2m_min、timezone 必須。6b で実通信"}
+  - {name: 自治体・観光協会の紅葉情報, type: official_notice, optional: true, note: "形式がまちまち。まず数地域に絞る。v0 では使わない"}
+  - {name: 気象庁 生物季節観測(かえで), type: observation, optional: true, url: "https://www.data.jma.go.jp/sakura/data/shishin.pdf", note: "気象官署の標本木の目視。検証用の候補"}
+confidence:
+  method: heuristic-unvalidated
+  validated: false
+  value_provided: false      # 確信度の数値は出さない(confidence.value は null)
+  validation_plan: "今季の公式見頃情報・観察記録・気象庁の生物季節観測との照合で、推定のズレを記録する"
+pairing_hint: "yamabiyori の山の提案と同じ日に組み合わせ、標高の近い紅葉スポットを提案できる(窓は暦日=粗い値なので組み合わせは『要確認』)"
+care:
+  location_precision: exact
+  do_not_disclose_exact_location: false
+  manners:
+    - "指定の駐車場・歩道を使う"
+    - "枝や葉を採らない"
+phenology_labels:           # 窓口の表示ラベル。render が必ずこのラベルで表示し、narrative は言い換えない(CLAUDE.md)
+  before_bud: 色づき前
+  early_bloom: 色づき始め
+  peak: 見頃
+  late: 終盤
+  out_of_season: 期間外
+known_limits:
+  - "手法は日最低気温だけを使う。日照・降水・樹種・森林限界は考慮していない"
+  - "8℃/5〜6℃ は種(イロハモミジ)・地域差のある言い伝えの目安で、気象庁の基準ではない"
+  - "気温は Open-Meteo の格子の標高のもので、山頂の標高とは異なり、標高による補正はしていない。終盤(落葉)は判定しない"

@@ -1,0 +1,23 @@
+# ホタル(骨組み)。エンジンは not_applicable(profile_skeleton) を返す。
+profile_id: fireflies
+name: ホタル
+category: occurrence_event
+validated: false
+status: skeleton
+interests: [fireflies]
+season:
+  months: null
+  months_source: null
+  note: "未確認(出典なし)。種(ゲンジボタル・ヘイケボタル等)と地域で異なる"
+  out_of_season_rule: "未確認。骨組みの間は常に not_applicable(profile_skeleton)"
+method:
+  kind: event_occurrence
+  description: "予測の型の候補: 過去の観察記録の出現週 + 当日の気象条件(気温・風・降水・月明かり)。条件の閾値は未確認"
+data_sources:
+  - {name: iNaturalist API, type: observation, url: "https://api.inaturalist.org/v1/docs/"}
+  - {name: 自治体・観光協会の発生情報, type: official_notice, note: "形式がまちまち。未調査"}
+  - {name: Open-Meteo, type: forecast, url: "https://open-meteo.com/en/docs"}
+confidence: {method: heuristic-unvalidated, validated: false, value_provided: false}
+care: {location_precision: area_1km, do_not_disclose_exact_location: true, manners: ["ライトで照らさない・捕まえない・水辺の草を踏まない(骨組みの仮案)"]}
+known_limits:
+  - "骨組みのみ。判定ロジックは未実装"

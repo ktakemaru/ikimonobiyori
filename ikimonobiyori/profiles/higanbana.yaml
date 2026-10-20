@@ -1,0 +1,22 @@
+# 彼岸花(骨組み)。エンジンは not_applicable(profile_skeleton) を返す。
+profile_id: higanbana
+name: 彼岸花
+category: seasonal_progression
+validated: false
+status: skeleton
+interests: [wildflowers, higanbana]
+season:
+  months: null
+  months_source: null
+  note: "未確認(出典なし)。秋の彼岸ごろという一般的な言及はあるが、本調査では出典を確認していない"
+  out_of_season_rule: "未確認。骨組みの間は常に not_applicable(profile_skeleton)"
+method:
+  kind: tbd
+  description: "予測の型は未確認。候補: 過去の観察記録(iNaturalist)の出現週の分布 + 気温。式・閾値は未確認"
+data_sources:
+  - {name: iNaturalist API, type: observation, url: "https://api.inaturalist.org/v1/docs/", note: "出現週の分布の候補。分類(taxon)の指定は未確認"}
+  - {name: Open-Meteo (日別気温), type: forecast, url: "https://open-meteo.com/en/docs"}
+confidence: {method: heuristic-unvalidated, validated: false, value_provided: false}
+care: {location_precision: exact, do_not_disclose_exact_location: false, manners: ["球根を採らない・畦を荒らさない(骨組みの仮案)"]}
+known_limits:
+  - "骨組みのみ。判定ロジックは未実装"

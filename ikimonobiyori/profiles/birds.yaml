@@ -1,0 +1,59 @@
+# 野鳥プロファイル(v0 実装)。docs/ikimonobiyori-research.md の調査にもとづく。閾値・係数はここだけに書く(コードに直接書かない)。
+profile_id: birds
+name: 野鳥
+category: observation_record
+validated: false          # バックテストに通るまで false。band は maybe まで(go は出さない)
+status: implemented
+interests: [birds]
+season:
+  months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  months_source: "プロファイル方針(通年対象)。渡り・冬鳥・繁殖期で種は入れ替わるが、場所×週の過去記録の頻度で扱う"
+  note: "通年。秋は渡り、冬は冬鳥・水辺、春は繁殖期の囀り(種の入れ替わりは過去記録の頻度に現れる)"
+  out_of_season_rule: "なし(通年対象)。過去記録が少ない場所・週は提案を出さず警告する"
+scale:
+  name: ikimonobiyori-birds-relative-frequency-0-1
+  range: [0, 1]
+  formula: "種 s の相対頻度 = (場所×半径、対象日の前後 window_weeks 週、過去 history_years 年の観察記録のうち種 s の件数) ÷ (同条件の鳥類の観察記録の総数)。0〜1。他のビヨリの点数とは比較しない"
+method:
+  kind: observation_frequency
+  description: "場所×半径×週の過去の観察記録から、種ごとの相対頻度を出す。天気による補正は v0 では行わない。観察記録は観察者の多い場所に偏るため、頻度は『見つけやすさ』ではなく『記録されやすさ』を含む"
+  params:
+    - {name: window_weeks, value: 1, unit: week, provisional: true, source: null, reason: "仮置き。対象日の前後何週を同じ季節とみなすか。出典なし。バックテストで較正する"}
+    - {name: history_years, value: 5, unit: year, provisional: true, source: null, reason: "仮置き。過去何年分を使うか。出典なし。バックテストで較正する"}
+    - {name: min_total_observations, value: 30, unit: observations, provisional: true, source: null, reason: "仮置き。これ未満の場所・週は頻度が不安定なので提案を出さない(警告)。出典なし"}
+    - {name: maybe_min_relative_frequency, value: 0.05, unit: ratio, provisional: true, source: null, reason: "仮置き。相対頻度がこれ以上なら maybe、未満は no。出典なし。バックテストで較正する"}
+    - {name: top_species, value: 5, unit: species, provisional: false, source: null, reason: "表示する種の数(閾値ではなく出力の件数の設計値)"}
+    - {name: iconic_taxa, value: Aves, unit: null, provisional: false, source: "https://pyinaturalist.readthedocs.io/en/stable/modules/pyinaturalist.v1.observations.html", reason: "問い合わせ条件(鳥類)。iNaturalist の iconic_taxa の値としての Aves は本調査では未確認(6b で確認)"}
+    - {name: quality_grade, value: research, unit: null, provisional: false, source: "https://pyinaturalist.readthedocs.io/en/stable/modules/pyinaturalist.v1.observations.html", reason: "問い合わせ条件(同定が確定した記録のみ)。値 research の定義は本調査では未確認(6b で確認)"}
+    - {name: default_radius_km, value: 10, unit: km, provisional: true, source: null, reason: "仮置き。location_precision area_10km に合わせた問い合わせ半径"}
+  band_map: {at_or_above_maybe_min_relative_frequency: maybe, below: "no"}
+band_policy:
+  max_band: maybe
+  rules:
+    - "validated=false のため go は出さない(バックテストに通った後にだけ許す)"
+    - "相対頻度が maybe_min_relative_frequency 以上なら maybe、未満なら no"
+data_sources:
+  - {name: iNaturalist API, type: observation, auth: none, url: "https://api.inaturalist.org/v1/docs/", note: "v1 /observations/species_counts 相当。レート 60/分以下を目安(要確認)。6b で実通信"}
+  - {name: GBIF API, type: observation, auth: none, optional: true, url: "https://techdocs.gbif.org/en/openapi/v1/occurrence", note: "日本国内の鳥類記録の補助。条件は未確認"}
+  - {name: eBird API 2.0, type: observation, auth: free_key, optional: true, url: "https://documenter.getpostman.com/view/664302/S1ENwy59", note: "キー必須・商用不可。v0 では使わない"}
+confidence:
+  method: observation-frequency
+  validated: false
+  value_provided: false      # 手法は確信度の数値を出さない(confidence.value は null)
+  validation_plan: "過去の観察記録を正解として、的中度を測る(ヤマビヨリのバックテスト基盤の考え方を流用)"
+care:
+  location_precision: area_10km
+  do_not_disclose_exact_location: true
+  manners:
+    - "巣・ねぐらに近づかない"
+    - "給餌をしない"
+    - "録音の再生で誘引しない"
+# 相対頻度の平易な説明(5d)。式(種の件数 ÷ 鳥類の観察記録の総数。条件は場所×半径、対象日の前後 window_weeks 週、過去 history_years 年。docs/ikimonobiyori-mapping.md)から
+# 機械的に出す一文。式と一致する言い方だけ。窓口の narrative は details.score_explain を逐語で引用する
+score_explain: "過去{years}年のこの時期(前後{weeks}週間・半径{radius}km)の鳥類の記録{total}件のうち、{name}は{count}件(約{rf:.0%})"
+known_limits:
+  - "記録は観察者の多い場所に偏る"
+  - "日本語名(locale=ja)が取れない種がありうる(実測は research.md §17)。取れないときは学名を使う"
+  - "iNaturalist の記録は観察者の少ない場所・年では極端に少ない。少ない場合は頻度を出さず、提案を出さない(場所ごとの実測は bird_areas の note と警告に持つ)"
+  - "天気(風・降水)による補正は v0 では行わない"
+  - "iNaturalist の位置秘匿(geoprivacy)された記録は座標が粗い可能性がある"

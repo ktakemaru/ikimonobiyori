@@ -1,0 +1,21 @@
+# 野鳥の場所の実測(段階5a)。現行の窓(対象日の前後7日)・過去5年・半径10kmの条件で、観察総数を1リクエストずつ取る。測定だけ。
+# 閾値・窓・半径・年数・bird_areas は変えない。座標は丸めた値(小数1桁)だけ。
+schema: ikimono-window-survey/1
+target_date: "2026-10-17"          # 6b-2 と同じ対象日。窓は前後7日 = 10月10日〜24日
+conditions: {iconic_taxa: Aves, quality_grade: research, radius_km: 10, years: [2021, 2022, 2023, 2024, 2025], month: 10, days: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}
+places:
+  - {id: karuizawa, name: 軽井沢周辺, lat: 36.3, lon: 138.6}
+  - {id: kasai, name: 葛西臨海公園周辺, lat: 35.6, lon: 139.9}
+  - {id: yatsu, name: 谷津干潟周辺, lat: 35.7, lon: 140.0}
+  - {id: kawaguchiko, name: 河口湖周辺, lat: 35.5, lon: 138.8}
+  - {id: watarase, name: 渡良瀬遊水地周辺, lat: 36.2, lon: 139.7}
+  - {id: inba, name: 印旛沼周辺, lat: 35.8, lon: 140.2}
+queries:
+  - {kind: total, place: karuizawa, role: equivalence, expect_total: 11}   # 6b-2 の「過去5年で11件」と一致しなければ止める
+  - {kind: total, place: kasai, role: measure}
+  - {kind: total, place: yatsu, role: measure}
+  - {kind: total, place: kawaguchiko, role: measure}
+  - {kind: total, place: watarase, role: reference}
+  - {kind: total, place: inba, role: reference}
+  - {kind: total, place: karuizawa, role: reference_wide, days: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]}   # 前後14日(窓は変えない)
+  - {kind: locale, place: karuizawa, role: species_multi_year, per_page: 200, locale: ja}

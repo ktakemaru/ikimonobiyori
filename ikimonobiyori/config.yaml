@@ -1,0 +1,41 @@
+# イキモノビヨリの実行設定(閾値ではなく、取得層の運用値)。値はコードに直接書かず、ここから読む。
+cache:
+  dir: cache                                  # 書き込み先の基準(IKIMONOBIYORI_DATA_DIR。既定 runtime/ikimonobiyori)からの相対(段階12。以前は runtime/ikimonobiyori/cache と書いていた。場所は同じ)
+  unparsed_dir: _unparsed                     # パーサーが読めなかった実応答の保存先(同上の相対)
+  ttl_s:
+    # 仮置き: 他ビヨリの慣行(yamabiyori のキャッシュ有効期間 3 時間)に合わせた値。Open-Meteo の更新間隔の実測ではない
+    open_meteo_forecast: 10800
+    # 更新間隔(24時間)から導いた仮置き(根拠のある値ではない。段階5aの決定。規則: キャッシュ期間 < 更新間隔)。観察記録の集計は日単位でしか変わらない想定
+    inaturalist_species_counts: 72000
+live:
+  allowed_hosts: [api.open-meteo.com]         # 紅葉(Open-Meteo)の許可リスト(計測フックの既定と同じ。自分では広げない)
+  allowed_hosts_by_subject:                   # 対象ごとの許可リスト。野鳥の実行にだけ iNaturalist を許す(ユーザー承認 2026-10-14。GET のみ・認証なし)
+    autumn_leaves: [api.open-meteo.com]
+    birds: [api.inaturalist.org]
+  min_interval_s: 2                           # リクエスト間隔の下限(30リクエスト/分以下)
+  retry:                                      # 紅葉(fetch/live.py)の通信エラー(接続・TLS・タイムアウト)だけの再試行。HTTP の非 200 は、下の http の 502/503/504 だけ再試行する(それ以外は即中止)。野鳥は対象外。再試行も 1 リクエストと数える。**仮置き**(GitHub Actions の実験でのタイムアウトを受けた値。根拠のある値ではない)
+    max_retries: 2
+    wait_s: [2, 5]                            # 1 回目・2 回目の再試行の前の待ち(秒)
+    http:                                     # 一時的なサーバー障害(HTTP 502/503/504)だけの再試行(段階9b。2026-10-17 承認)。**すべて仮置き**(根拠のある値ではない。2026-10-17 の 57 件目の HTTP 503 を受けた値)
+      statuses: [502, 503, 504]               # 再試行する状態コード。429・500・その他の 4xx/5xx は従来どおり即中止(計測フックも 502/503/504 以外は設定があっても中止する)
+      max_retries: 2                          # 1 リクエストあたりの再試行の最大回数(= 計測フックの『連続』の上限)
+      wait_s: [10, 30]                        # 1 回目・2 回目の再試行の前の待ち(秒)。Retry-After があれば min(Retry-After, retry_after_max_s) 秒に置き換える
+      retry_after_max_s: 60                   # Retry-After(秒数・HTTP 日付)がこれを超える指定は、再試行せず中止する
+      max_total_per_run: 6                    # 1 回の実行全体の再試行の合計の上限(= 計測フックの『全体』の上限)。通常 76 件 + 6 = 82 ≦ --max-requests 90。再試行も 1 リクエストと数える
+  user_agent: "biyori-hub/ikimonobiyori (personal, non-commercial)"
+  timeout_s: 20                               # 野鳥(urllib の default_http_get)のタイムアウト。紅葉は下の request_timeout を使う
+  request_timeout:                            # 紅葉(requests.Session)の (connect, read)。段階7c。**仮置き**(根拠のある値ではない)
+    connect_s: 10                             # 通常の TLS ハンドシェイクは 0.4 秒前後。5 秒に縮めない: クラウドの実験(3 回)で停止が「約 20 秒の窓」だった場合、短い待ちでは再試行が窓に入り連続失敗するため(未確認)
+    read_s: 20                                # 従来の timeout_s と同じ
+  open_meteo:                                 # 公式ドキュメント https://open-meteo.com/en/docs の範囲(past_days 0-92 / forecast_days 0-16)
+    max_past_days: 92
+    max_forecast_days: 16
+  inaturalist:
+    shape_check_per_page: 10                  # 形の確認用(小さく)。仮置き
+    per_page: 200                             # 種数を取りきる値。仮置き。per_page の上限は公式ページで未確認(4xx なら中止して報告)
+compose:                                      # スナップショットの合成(段階6c。ikimonobiyori/compose.py)
+  component_dir: components                   # 部品の保存先(同上の相対。段階12)
+  keep_last: 8                                # snapshots/ikimonobiyori/ に残す合成スナップショットの件数
+  ttl_s:                                      # 対象ごとの部品の有効期間。これを超えた部品は合成に含めない。いずれも仮置き(段階5の実測で見直す)
+    autumn_leaves: 46800                      # 13 時間: 更新間隔(12時間)+ 1時間から導いた仮置き(根拠のある値ではない。規則: 有効期間 ≧ 更新間隔 + 1時間)。5f の決定で更新間隔を 6→12 時間にしたため 7→13 時間
+    birds: 604800                             # 7 日: 過去の観察記録の集計は日単位でしか変わらない想定。根拠は未確認

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ikimono-profile/1",
+  "title": "ikimono-profile/1",
+  "description": "イキモノビヨリの対象プロファイル(ikimonobiyori/profiles/*.yaml)。ハブの文書用スキーマ。閾値・係数はここ(method.params)にだけ書き、コードに直接書かない。各パラメータに provisional と出典または理由を必須にする。",
+  "type": "object",
+  "required": ["profile_id", "name", "category", "validated", "status", "interests", "season", "method", "data_sources", "confidence", "care", "known_limits"],
+  "additionalProperties": true,
+  "properties": {
+    "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "name": {"type": "string"},
+    "category": {"enum": ["seasonal_progression", "observation_record", "occurrence_event"]},
+    "validated": {"type": "boolean", "description": "バックテストに通ったか。false の間は band の上限が maybe"},
+    "status": {"enum": ["implemented", "skeleton"]},
+    "interests": {"type": "array", "items": {"type": "string"}, "description": "依頼の interests のうち、このプロファイルに対応する語"},
+    "season": {
+      "type": "object",
+      "required": ["note", "out_of_season_rule"],
+      "properties": {
+        "months": {"type": ["array", "null"], "items": {"type": "integer", "minimum": 1, "maximum": 12}, "description": "対象の月。null は『未確認』(出典がない)"},
+        "months_source": {"type": ["string", "null"]},
+        "note": {"type": "string"},
+        "out_of_season_rule": {"type": "string"}
+      }
+    },
+    "scale": {
+      "type": "object",
+      "required": ["name", "range", "formula"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "range": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+        "formula": {"type": "string"}
+      }
+    },
+    "method": {
+      "type": "object",
+      "required": ["kind", "description"],
+      "properties": {
+        "kind": {"enum": ["observation_frequency", "temperature_progression", "gdd_accumulation", "event_occurrence", "tbd"]},
+        "description": {"type": "string"},
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value", "provisional"],
+            "properties": {
+              "name": {"type": "string"},
+              "value": {"type": ["number", "string", "boolean"]},
+              "unit": {"type": ["string", "null"]},
+              "provisional": {"type": "boolean"},
+              "source": {"type": ["string", "null"], "description": "出典(URL など)"},
+              "reason": {"type": ["string", "null"], "description": "出典がないとき、または仮置きの理由"}
+            },
+            "anyOf": [
+              {"properties": {"source": {"type": "string", "minLength": 1}}, "required": ["source"]},
+              {"properties": {"reason": {"type": "string", "minLength": 1}}, "required": ["reason"]}
+            ]
+          }
+        },
+        "band_map": {"type": "object", "description": "段階 → band。validated=false のプロファイルでは go を含めない"}
+      }
+    },
+    "band_policy": {
+      "type": "object",
+      "properties": {
+        "max_band": {"enum": ["go", "maybe"]},
+        "rules": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "data_sources": {"type": "array", "items": {"type": "object", "required": ["name", "type"]}},
+    "confidence": {
+      "type": "object",
+      "required": ["method", "validated"],
+      "properties": {
+        "method": {"type": "string"},
+        "validated": {"type": "boolean"},
+        "value_provided": {"type": "boolean", "description": "手法が確信度の数値を出すか。false なら confidence.value は null"},
+        "validation_plan": {"type": "string"}
+      }
+    },
+    "care": {
+      "type": "object",
+      "properties": {
+        "location_precision": {"enum": ["exact", "area_1km", "area_10km", "municipality"]},
+        "do_not_disclose_exact_location": {"type": "boolean"},
+        "manners": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "score_explain": {"type": "string", "description": "相対頻度の平易な説明のテンプレート(野鳥。式から機械的に出す一文。5d)"},
+    "stage_order": {"type": "array", "items": {"type": "string"}, "description": "窓口の絞り込みで、同じ band の中の段階の並び(好みの仮置き。項目追加。5c)"},
+    "known_limits": {"type": "array", "items": {"type": "string"}},
+    "phenology_labels": {
+      "type": "object",
+      "description": "phenology_stage の日本語ラベル(窓口の表示・引用用)。段階を持つプロファイルに必要",
+      "propertyNames": {"enum": ["before_bud", "bud", "early_bloom", "peak", "late", "out_of_season"]},
+      "additionalProperties": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "implemented"}}},
+      "then": {
+        "required": ["scale", "band_policy"],
+        "properties": {"method": {"required": ["params", "band_map"], "properties": {"params": {"minItems": 1}}}}
+      }
+    },
+    {
+      "if": {"properties": {"validated": {"const": false}}},
+      "then": {"properties": {"band_policy": {"properties": {"max_band": {"const": "maybe"}}}, "confidence": {"properties": {"validated": {"const": false}}}}}
+    },
+    {
+      "if": {"properties": {"category": {"const": "observation_record"}}},
+      "then": {"properties": {"care": {"required": ["location_precision", "do_not_disclose_exact_location", "manners"], "properties": {"do_not_disclose_exact_location": {"const": true}, "manners": {"minItems": 1}}}}}
+    }
+  ]
+}

@@ -1,0 +1,946 @@
+{
+ "schema": "ikimono-inputs/1",
+ "synthetic": true,
+ "note": "SYNTHETIC: 合成フィクスチャ。実際の iNaturalist / Open-Meteo の応答ではない。値・地点・件数はすべて架空",
+ "fetched_at": "2026-10-14T21:30:00+09:00",
+ "birds": [
+  {
+   "area": {
+    "name": "合成の里山(synthetic)",
+    "lat": 35.678912,
+    "lon": 139.123456,
+    "radius_km": 10
+   },
+   "queries": [
+    {
+     "date": "2026-10-17",
+     "years": {
+      "2021": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 40,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 31,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 22,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 14,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 11,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 8,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 3,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2022": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 41,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 32,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 20,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 15,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 12,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 6,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 4,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2023": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 42,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 30,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 21,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 16,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 10,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 7,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 5,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2024": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 40,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 31,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 22,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 14,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 11,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 8,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 3,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2025": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 41,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 32,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 20,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 15,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 12,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 6,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 4,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      }
+     },
+     "latest_observations": {
+      "total_results": 3,
+      "page": 1,
+      "per_page": 30,
+      "results": [
+       {
+        "id": 900000,
+        "observed_on": "2025-10-03"
+       },
+       {
+        "id": 900001,
+        "observed_on": "2025-10-19"
+       },
+       {
+        "id": 900002,
+        "observed_on": "2025-10-11"
+       }
+      ]
+     }
+    },
+    {
+     "date": "2026-10-18",
+     "years": {
+      "2021": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 40,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 31,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 22,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 14,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 11,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 8,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 3,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2022": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 41,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 32,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 20,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 15,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 12,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 6,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 4,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2023": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 42,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 30,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 21,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 16,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 10,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 7,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 5,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2024": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 40,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 31,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 22,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 14,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 11,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 8,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 3,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      },
+      "2025": {
+       "total_results": 7,
+       "page": 1,
+       "per_page": 50,
+       "results": [
+        {
+         "count": 41,
+         "taxon": {
+          "id": 10000,
+          "name": "Parus minor",
+          "preferred_common_name": "シジュウカラ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 32,
+         "taxon": {
+          "id": 10001,
+          "name": "Hypsipetes amaurotis",
+          "preferred_common_name": "ヒヨドリ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 20,
+         "taxon": {
+          "id": 10002,
+          "name": "Corvus macrorhynchos",
+          "preferred_common_name": "ハシブトガラス",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 15,
+         "taxon": {
+          "id": 10003,
+          "name": "Zosterops japonicus",
+          "preferred_common_name": "メジロ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 12,
+         "taxon": {
+          "id": 10004,
+          "name": "Passer montanus",
+          "preferred_common_name": "スズメ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 6,
+         "taxon": {
+          "id": 10005,
+          "name": "Phasianus versicolor",
+          "preferred_common_name": "キジ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        },
+        {
+         "count": 4,
+         "taxon": {
+          "id": 10006,
+          "name": "Cyanopica cyanus",
+          "preferred_common_name": "オナガ",
+          "rank": "species",
+          "iconic_taxon_name": "Aves"
+         }
+        }
+       ]
+      }
+     },
+     "latest_observations": {
+      "total_results": 3,
+      "page": 1,
+      "per_page": 30,
+      "results": [
+       {
+        "id": 900000,
+        "observed_on": "2025-10-03"
+       },
+       {
+        "id": 900001,
+        "observed_on": "2025-10-19"
+       },
+       {
+        "id": 900002,
+        "observed_on": "2025-10-11"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "temperatures": {
+  "m065": {
+   "latitude": 0.0,
+   "longitude": 0.0,
+   "daily": {
+    "time": [
+     "2026-10-08",
+     "2026-10-09",
+     "2026-10-10",
+     "2026-10-11",
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-17",
+     "2026-10-18",
+     "2026-10-19",
+     "2026-10-20"
+    ],
+    "temperature_2m_min": [
+     6.0,
+     5.5,
+     5.0,
+     4.5,
+     4.0,
+     4.5,
+     4.0,
+     3.5,
+     4.0,
+     3.5,
+     3.0,
+     3.5,
+     3.0
+    ]
+   }
+  },
+  "m001": {
+   "latitude": 0.0,
+   "longitude": 0.0,
+   "daily": {
+    "time": [
+     "2026-10-08",
+     "2026-10-09",
+     "2026-10-10",
+     "2026-10-11",
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-17",
+     "2026-10-18",
+     "2026-10-19",
+     "2026-10-20"
+    ],
+    "temperature_2m_min": [
+     9.0,
+     8.5,
+     8.0,
+     8.5,
+     7.5,
+     7.0,
+     7.5,
+     7.0,
+     7.5,
+     7.0,
+     6.5,
+     7.0,
+     6.5
+    ]
+   }
+  },
+  "m013": {
+   "latitude": 0.0,
+   "longitude": 0.0,
+   "daily": {
+    "time": [
+     "2026-10-08",
+     "2026-10-09",
+     "2026-10-10",
+     "2026-10-11",
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-17",
+     "2026-10-18",
+     "2026-10-19",
+     "2026-10-20"
+    ],
+    "temperature_2m_min": [
+     14.0,
+     13.5,
+     13.0,
+     13.5,
+     12.5,
+     12.0,
+     12.5,
+     12.0,
+     12.5,
+     12.0,
+     11.5,
+     12.0,
+     11.5
+    ]
+   }
+  }
+ }
+}

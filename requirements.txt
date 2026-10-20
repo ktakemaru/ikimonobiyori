@@ -1,0 +1,13 @@
+# イキモノビヨリの実行・テストに要る依存(固定。biyori-hub の requirements-hub.txt と同じ版)。Python 3.13 で確認(CI は 3.13 の最新パッチ)。
+# 使うもの: PyYAML(プロファイル・設定)、jsonschema(プロファイルの検査)、requests(紅葉の取得層 ikimonobiyori/fetch/live.py)
+attrs==26.1.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+PyYAML==6.0.3
+referencing==0.37.0
+rpds-py==2026.9.1
+certifi==2026.7.22
+charset-normalizer==3.5.2
+idna==3.20
+requests==2.34.2
+urllib3==2.8.0

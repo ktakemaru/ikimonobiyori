@@ -1,0 +1,22 @@
+# 桜(骨組み。status: skeleton)。エンジンは not_applicable(profile_skeleton) を返す。出典のない項目は「未確認」。
+profile_id: cherry_blossom
+name: 桜
+category: seasonal_progression
+validated: false
+status: skeleton
+interests: [cherry_blossom]
+season:
+  months: null
+  months_source: null
+  note: "未確認(出典なし)。月は決めていない"
+  out_of_season_rule: "未確認。骨組みの間は常に not_applicable(profile_skeleton)"
+method:
+  kind: gdd_accumulation
+  description: "予測の型の候補: 気温の積算による開花予測。具体的な式・閾値は未確認(本調査では出典を確認できていない)"
+data_sources:
+  - {name: 気象庁 生物季節観測(さくら), type: observation, url: "https://www.data.jma.go.jp/sakura/data/shishin.pdf", note: "指針 2.1.1: 開花日は『多数の花が咲く種目は5〜6輪』の最初の日、満開は約80％以上が咲いた状態(標本木の目視)。予測式は載っていない"}
+  - {name: Open-Meteo (日別気温), type: forecast, url: "https://open-meteo.com/en/docs"}
+confidence: {method: heuristic-unvalidated, validated: false, value_provided: false}
+care: {location_precision: exact, do_not_disclose_exact_location: false, manners: ["枝を折らない・根元を踏まない(骨組みの仮案)"]}
+known_limits:
+  - "骨組みのみ。判定ロジックは未実装"
