@@ -75,6 +75,8 @@ python -X utf8 -m unittest discover -s tests
   - `profiles/` 対象ごとのプロファイル(閾値・出典・マナー)、`data/` 地点カタログと調査の定義、`config.yaml` 取得層の運用値(許可ホスト・間隔・再試行・有効期間)、`schemas/` プロファイルのスキーマ
   - `paths.py` ファイルの場所(読むものはパッケージの中、書くものは `IKIMONOBIYORI_DATA_DIR` の下)、`livegate.py` 実通信の許可の判定
 - `docs/` 調査・対応表・検証計画(設計の記録。biyori-hub の中にあったときの記述が残る)
+  - [`docs/design.md`](docs/design.md) 設計(ネイチャーガイド仕様: 役割の分担・時期の5つの型・対象別の仕様・名所カタログ・検証方針・段階計画)
+  - [`docs/data-sources.md`](docs/data-sources.md) データ源ごとの使いみち・取り方・利用条件・出典表示(確認日と確認した URL つき)
 - `tests/` テスト。`tests/fixtures/` は合成データと、Open-Meteo の記録、ゴールデン(`golden/`)
 
 ## ライセンス
