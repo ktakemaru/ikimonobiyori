@@ -177,3 +177,27 @@
 ### push すべきもの(push はユーザーが行う)
 - ブランチ **`stage13`**(main の `add784e` から): `d19460b` → `2bd8610` → `09432d2` → `d5ebd8f` → `391af9f` → この報告書の commit ID の追記(`git log --oneline main..stage13` で確認できる)。
 - フェーズ 5(biyori-hub への取り込み)は指示書どおり**実行していない**。push の後に、`vendor.lock` の更新(`hub/fetch_vendor.py` → `--apply` → `hub/check_vendor.py`)・ハブの unittest・manifest の `source.commit` の更新を行う。プロファイルの `phenology_labels`・`stage_order`・`config.yaml` の有効期間は変えていないので、ハブの manifest の写しを直す必要はない見込み。
+
+---
+
+## 追加作業(2026-10-21、報告の確認を受けて)
+
+1. **D-03 の見直し(D-22〜D-25)**: `.gitignore` の 2 行を外し、`data/jma_phenology/raw/`(7 つの CSV と取得の記録)と `normalized.csv` を追跡した。
+   - 出典と「加工したこと」(`docs/data-sources.md` §1.5 の文言)を、`data/jma_phenology/README.md` と `normalized.csv` の**冒頭の `#` の 3 行**に入れた。`read_csv` は `#` の行を読み飛ばす。
+   - 元の CSV は取得したときのバイト列のまま(SHA-256 は `raw/SOURCES.md` と一致)。`.gitattributes` で改行を変換しない。
+   - 段階13 で足した「データを追跡しない」テストを、新しい方針の検査に置き換えた。
+2. **`docs/data-sources.md` の修正**:
+   - 「自動巡回は控える」は、高層気象台のページ(https://www.jma-net.go.jp/kousou/information/copyright/index.html)の記述と直した。一度だけの取得の運用は変えない。
+   - iNaturalist: ユーザーの確認として記録した。既定のライセンスは CC BY-NC、規約 第7条は AI の学習への利用を禁止、API の目安は約 1 リクエスト/秒・約 1 万/日、User-Agent を推奨。ikimono は集計値だけを使い、学習に使わないので適合、と記録した。
+   - Open-Meteo Historical: モデルの固定は `models`(例 `models=era5_land`)を使う見込みで、値の名前は段階14 の最初の 1 リクエストで確認する、と記録した。
+3. **User-Agent の調査(コードは変えていない)**: iNaturalist への取得は**すべて User-Agent を付けている**。値は `ikimonobiyori/config.yaml:25` の `biyori-hub/ikimonobiyori (personal, non-commercial)`。
+   - 経路: 野鳥の取得 `fetch/birds_live.py:116` と野鳥の調査 `survey.py:92` が、`fetch/live.py:31-32` の `default_http_get`(urllib)を使う。紅葉(Open-Meteo)は `fetch/live.py:45-46,58,176` の `SessionGetter`(requests)で、同じ値を使う。
+   - リクエストの間隔は 2 秒(0.5 リクエスト/秒以下)。ハブの iNaturalist の 1 日の上限は 1,000。どちらも目安の内側。
+   - User-Agent に連絡先(メール・URL)は入っていない。入れるかはユーザーが決める。
+   - CLAUDE.md・AGENTS.md の規則 6 と README には、まだ「iNaturalist の規約は未確認」と書いてある。今回は変えていない(D-27)。
+4. **`docs/validation-plan.md` に §0「決定」を記入**: 比べる段階は見頃(色づき始めは参考)、合格基準は案 3(全体の平均絶対誤差 < 平年値法、かつ差の中央値 ±3 日以内。地点ごとは報告だけ、いちょうは参考)、`models=era5_land` で固定、案 A' から始める、段階14 で承認済みの 2 件(記入だけで実施していない)。
+   - 計算の部品として、平均絶対誤差(`aggregate` の `mae`)と平年値法(`climatology_pairs`)を足した(D-26。通信しない。合否の判定そのものは書いていない)。
+   - **結果を見る前に決めてほしい細部**(`validation-plan.md` §0): 「その年を除いた過去」が「その年以外のすべての年」か「その年より前の年だけ」か/平年値法に使う年の範囲(2016〜2025 年だけか 1953 年〜か)/平均絶対誤差を比べる組と、予測なしの数え方。
+5. **参考**: 気象庁の累年表には動物の記録もある(ほたる初見 024、さしば南下初見 106 など。2020 年まで。ユーザーの情報。CSV は取得していない)。`docs/design.md` の検証方針に、段階16・17 の答え合わせの候補として 1 行足した。
+
+- テスト: 182 → **188 件 OK**(データの検査 3 件、平均絶対誤差・平年値法 4 件を追加。データを追跡しないことの検査 1 件を置き換え)。ゴールデンは変わらず通る。

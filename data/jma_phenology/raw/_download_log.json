@@ -1,0 +1,65 @@
+[
+ {
+  "code": "015",
+  "name": "かえで紅葉",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/015.csv",
+  "fetched_at": "2026-10-21T07:46:19+09:00",
+  "status": 200,
+  "bytes": 50963,
+  "sha256": "278c175a8661f3c1c82cf4119d4609aab05dad159f6388bec5fe90eaebbd7008"
+ },
+ {
+  "code": "016",
+  "name": "かえで落葉",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/016.csv",
+  "fetched_at": "2026-10-21T07:46:25+09:00",
+  "status": 200,
+  "bytes": 50487,
+  "sha256": "9a6dca67a54e52b3922fbaac0b4df5f433328d62494ccc20fa7514d3ebd6f618"
+ },
+ {
+  "code": "013",
+  "name": "いちょう黄葉",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/013.csv",
+  "fetched_at": "2026-10-21T07:46:31+09:00",
+  "status": 200,
+  "bytes": 50015,
+  "sha256": "62ddc1a01ae2e6859f8cfefba66139528c0f78940b36e0c84466d89fefa90b0a"
+ },
+ {
+  "code": "014",
+  "name": "いちょう落葉",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/014.csv",
+  "fetched_at": "2026-10-21T07:46:37+09:00",
+  "status": 200,
+  "bytes": 50241,
+  "sha256": "7c90dbd3e037ce1eb1e078f1f6be803e3aa6328ce5271f47786ef632d4c0579e"
+ },
+ {
+  "code": "004",
+  "name": "さくら開花",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/004.csv",
+  "fetched_at": "2026-10-21T07:46:43+09:00",
+  "status": 200,
+  "bytes": 50241,
+  "sha256": "53b51c305f867fe2a0a8a398c449cec73439cfdcae0ec64cbe845b7c2f9a76ad"
+ },
+ {
+  "code": "005",
+  "name": "さくら満開",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/005.csv",
+  "fetched_at": "2026-10-21T07:46:50+09:00",
+  "status": 200,
+  "bytes": 50034,
+  "sha256": "6be6f4ae2e149f473563d510efed0fa0ad7ad740f642598f3df62267437e07ff"
+ },
+ {
+  "code": "001",
+  "name": "うめ開花",
+  "url": "https://www.data.jma.go.jp/sakura/data/ruinenchi/001.csv",
+  "fetched_at": "2026-10-21T07:46:56+09:00",
+  "status": 200,
+  "bytes": 47922,
+  "sha256": "7ebf1033dc9978bc2d24c586c18b5cb976c82e720bbe50ee9d6ed8e791aac609"
+ }
+]

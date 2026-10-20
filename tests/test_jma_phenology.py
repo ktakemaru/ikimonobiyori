@@ -1,5 +1,6 @@
 """気象庁 生物季節観測の累年値ファイルの正規化(段階13。ikimonobiyori/jma_phenology.py)。通信なし。
-実際の CSV はリポジトリに置かない(docs/data-sources.md §1.4)ので、同じ形の小さな合成データ(cp932)をテストの中で作る。"""
+解釈のテストは、同じ形の小さな合成データ(cp932)をテストの中で作って行う。リポジトリに置いた実際の CSV(data/jma_phenology/)は、取得時のバイト列のままであることと、
+正規化の結果が置いたものと一致すること(決定論)、出典と加工の記載があることだけを確かめる。"""
 import contextlib
 import io
 import shutil
@@ -115,7 +116,8 @@ class NormalizeAndSummary(unittest.TestCase):
         self.assertIn("を加工して作成", s.getvalue())                                    # 出典と加工したことを表示する
         self.assertEqual(sorted(p.name for p in self.raw.iterdir()), before)              # 元のファイルは変えない
         self.assertEqual(sorted(p.name for p in self.d.rglob("*") if p.is_file()), ["001.csv", "015.csv", "normalized.csv"])
-        back = J.read_csv(out)
+        self.assertTrue(out.read_text(encoding="utf-8").startswith("# 出典:気象庁ホームページ"))       # 冒頭に出典と加工の記載
+        back = J.read_csv(out)                                                                        # 冒頭の # の行は読み飛ばす
         self.assertEqual(list(back[0]), J.COLUMNS)
         self.assertEqual(len(back), 8)
         with contextlib.redirect_stdout(io.StringIO()) as s:
@@ -143,10 +145,36 @@ class Definition(unittest.TestCase):
         self.assertEqual(len(J.region_station_nos(DEF, "関東甲信")), 15)
         self.assertEqual(len(J.region_station_nos(DEF, "関東甲信", include_islands=False)), 12)
 
-    def test_no_jma_data_is_tracked(self):
+
+class TrackedData(unittest.TestCase):
+    """リポジトリに置いた気象庁のデータ(2026-10-21 ユーザーの判断。docs/data-sources.md §1.4)。"""
+    DIR = H.ROOT / "data" / "jma_phenology"
+
+    def test_raw_files_are_the_bytes_that_were_downloaded(self):
+        import hashlib
+        import re
+        recorded = dict(re.findall(r"\| (\d{3}\.csv) \|.*`([0-9a-f]{64})` \|", (self.DIR / "raw" / "SOURCES.md").read_text(encoding="utf-8")))
+        self.assertEqual(sorted(recorded), sorted(f"{p['code']}.csv" for p in DEF["phenomena"]))
+        for name, sha in recorded.items():
+            with self.subTest(name=name):
+                self.assertEqual(hashlib.sha256((self.DIR / "raw" / name).read_bytes()).hexdigest(), sha)
+
+    def test_normalized_file_has_the_attribution_and_matches_a_fresh_run(self):
+        text = (self.DIR / "normalized.csv").read_text(encoding="utf-8")
+        head = text.splitlines()[:3]
+        self.assertEqual(head, [f"# {line}" for line in J.attribution_lines(DEF)])
+        self.assertIn("を加工して作成", head[1])
+        self.assertTrue(head[0].startswith("# 出典:気象庁ホームページ"))
+        d = Path(tempfile.mkdtemp(prefix="ikimono-jma-"))
+        self.addCleanup(shutil.rmtree, d, True)
+        rows, _, missing = J.normalize(self.DIR / "raw", DEF)
+        self.assertEqual(missing, [])
+        J.write_csv(rows, d / "n.csv", J.attribution_lines(DEF))
+        self.assertEqual((d / "n.csv").read_bytes(), (self.DIR / "normalized.csv").read_bytes())       # 置いたものは今のコードの出力と同じ
+
+    def test_the_data_is_not_ignored(self):
         lines = [l.strip() for l in (H.ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
-        self.assertIn("/data/jma_phenology/raw/*", lines)
-        self.assertIn("/data/jma_phenology/normalized.csv", lines)
+        self.assertFalse([l for l in lines if "jma_phenology" in l])
 
 
 if __name__ == "__main__":

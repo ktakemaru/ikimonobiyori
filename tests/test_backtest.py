@@ -104,6 +104,39 @@ class Compare(unittest.TestCase):
                          {("670", 2021): "2021-11-28"})
 
 
+class DecidedCriterionParts(unittest.TestCase):
+    """2026-10-21 に決めた合格基準(案3)に要る部品: 平均絶対誤差と平年値法の基準線。合否の判定そのものは書かない。"""
+
+    def test_mean_absolute_error(self):
+        a = B.aggregate(Compare.PAIRS)
+        self.assertEqual(a["overall"]["mae"], 4.5)                                         # (5 + 1 + 0 + 12) / 4
+        self.assertIsNone(B.aggregate([])["overall"]["mae"])
+        self.assertIn("| 平均絶対誤差 |", B.report_markdown(a, title="合成"))
+
+    OBS = {("662", 2021): "2021-11-25", ("662", 2022): "2022-11-30", ("662", 2023): "2023-12-02",
+           ("670", 2021): "2021-11-28", ("670", 2022): "2023-01-02"}                         # 670 の 2022 年は年またぎ(翌年 1/2)
+
+    def test_climatology_leave_one_out(self):
+        got = {(p["station"], p["year"]): (p["predicted"], p["diff_days"]) for p in B.climatology_pairs(self.OBS, mode="leave_one_out")}
+        # 662 の 2021 年: 他の年の 1/1 からの日数 333(11/30)と 335(12/2)の中央値 334 → 2021-12-01、差 334 − 328 = 6
+        self.assertEqual(got[("662", 2021)], ("2021-12-01", 6))
+        self.assertEqual(got[("662", 2022)], ("2022-11-28", -1.5))                          # (328 + 335) / 2 = 331.5(切り捨てて 11/28)− 333
+        self.assertEqual(got[("670", 2021)], ("2022-01-02", 35))                            # 他の年は年をまたいだ 366 日目
+        self.assertEqual(got[("670", 2022)], ("2022-11-28", -35))
+
+    def test_climatology_prior_only(self):
+        ps = B.climatology_pairs(self.OBS, mode="prior_only")
+        got = {(p["station"], p["year"]): p["diff_days"] for p in ps}
+        self.assertEqual(got, {("662", 2021): None, ("662", 2022): -5, ("662", 2023): -4.5, ("670", 2021): None, ("670", 2022): -35})
+        self.assertEqual(B.aggregate(ps)["no_prediction"], 2)
+
+    def test_climatology_mode_must_be_chosen(self):
+        with self.assertRaises(TypeError):
+            B.climatology_pairs(self.OBS)
+        with self.assertRaises(ValueError):
+            B.climatology_pairs(self.OBS, mode="all")
+
+
 class ArchiveQuery(unittest.TestCase):
     def test_query_with_and_without_elevation(self):
         q = B.archive_query(lat=35.69, lon=139.75, start_date="2025-08-26", end_date="2025-12-31", elevation=25)

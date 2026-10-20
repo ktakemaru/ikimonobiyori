@@ -6,7 +6,8 @@
 
 出典: 気象庁ホームページ「生物季節観測累年値」(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)
 
-このフォルダの CSV はリポジトリに置かない(`.gitignore`。`docs/data-sources.md` §1.4、判断 D-03)。この記録だけを置く。
+このフォルダの CSV は、取得したときのバイト列のまま置く(変更しない。`.gitattributes` で改行の変換もしない。下の SHA-256 と一致する)。2026-10-21 のユーザーの判断で公開(D-03 の見直し、D-22)。`_download_log.json` は取得の道具が書いた同じ内容の記録。
+利用条件: 公共データ利用規約(第1.0版)(https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)。出典と加工の記載は `../README.md`。
 
 | ファイル | 現象 | URL | 取得日時 | HTTP | バイト数 | SHA-256 |
 |---|---|---|---|---|---|---|

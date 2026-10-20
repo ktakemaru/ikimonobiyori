@@ -1,6 +1,6 @@
 # 気象庁 生物季節観測の累年値ファイル(CSV)を読むための定義(段階13)。ikimonobiyori/jma_phenology.py はここから読み、コードに値を持たない。
 # 出典: 気象庁ホームページ「生物季節観測累年値」(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)。地点の番号・名前はそれを加工して作成(下の stations)。
-# CSV そのもの・正規化した CSV はリポジトリに置かない(.gitignore。docs/data-sources.md §1.4、判断 D-03)。
+# 取得した CSV(data/jma_phenology/raw/)と正規化した CSV(data/jma_phenology/normalized.csv)は、出典と加工の記載を付けてリポジトリに置く(2026-10-21 ユーザーの判断。docs/data-sources.md §1.4)。
 schema: ikimono-jma-phenology/1
 source_page: https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html
 encoding: cp932                # フォーマットの PDF の断片に「Shift_JIS」「CRLF」。実際のファイルも cp932 で読める(2026-10-21 確認)

@@ -7,9 +7,11 @@
 - `normalized.csv`: 気象庁「生物季節観測累年値」(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)を加工して作成(イキモノビヨリ `ikimonobiyori.jma_phenology`)。公共データ利用規約(第1.0版)(https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)
 - 加工の内容: 列の年 × 地点の表を「地点・年・現象」ごとの行に並べ替え、月日(MMDD)を日付(YYYY-MM-DD)にした。値 0 を「値なし」(`status: no_value`)にした。年をまたぐ値を隣の年の日付にした(下の「推測」)。値のある最後の年より後の列(未来の年)を落とした。地点名の全角空白を除いた。値は変えていない。
 
-## 置いていないもの
-`raw/*.csv`(取得した元のファイル)と `normalized.csv` は、**このリポジトリに置かない**(`.gitignore`)。
-公共データ利用規約は公衆送信・加工を認めると読めるが、はっきりとは確認できなかったため(`docs/data-sources.md` §1.4、判断 D-03)。取得の記録は `raw/SOURCES.md`(URL・日時・SHA-256)。
+## 置いているもの・利用条件
+- `raw/*.csv`: 取得した元のファイル(気象庁の累年値ファイルそのもの。cp932・CRLF。**変更していない**。`.gitattributes` で改行も変換しない)。取得の記録は `raw/SOURCES.md`(URL・日時・SHA-256)。
+- `normalized.csv`: 加工したもの。**ファイルの冒頭の `#` で始まる 3 行に、出典と加工したことを書いている**(`ikimonobiyori.jma_phenology.read_csv` は読み飛ばす)。
+- 利用条件: 気象庁ホームページのコンテンツは公共データ利用規約(第1.0版)に準拠(複製・公衆送信・翻案を認める。数値データは著作権の対象外)。出典と、加工したものには加工したことを記載する。2026-10-21 のユーザーの判断で、このリポジトリ(public)に置くことにした(`docs/data-sources.md` §1.4、判断 D-03 の見直し・D-22)。
+- 加工したものを、気象庁が作成した未加工の情報であるかのように使わないこと(規約 1.1.2)。
 
 ## 作り方(通信しない)
 ```

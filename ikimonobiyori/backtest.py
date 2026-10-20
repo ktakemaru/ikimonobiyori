@@ -66,10 +66,10 @@ def pair(station, year, predicted, observed):
 
 def _stats(diffs, tolerances):
     if not diffs:
-        return {"n": 0, "median": None, "mean": None, "stdev": None, "mad": None, "min": None, "max": None, "quartiles": None,
+        return {"n": 0, "median": None, "mean": None, "mae": None, "stdev": None, "mad": None, "min": None, "max": None, "quartiles": None,
                 "within": {str(t): None for t in tolerances}}
     med = statistics.median(diffs)
-    return {"n": len(diffs), "median": med, "mean": statistics.fmean(diffs),
+    return {"n": len(diffs), "median": med, "mean": statistics.fmean(diffs), "mae": statistics.fmean([abs(x) for x in diffs]),
             "stdev": statistics.stdev(diffs) if len(diffs) > 1 else None,
             "mad": statistics.median([abs(x - med) for x in diffs]),
             "min": min(diffs), "max": max(diffs),
@@ -110,12 +110,12 @@ def _pct(x):
 def report_markdown(agg, *, title, notes=()):
     """集計 → Markdown(差 = 予測 − 観測。正 = 予測が遅い)。判定(合格/不合格)は書かない。"""
     tol = [str(t) for t in agg["tolerances"]]
-    head = "| 区分 | n | 中央値 | 平均 | 標準偏差 | MAD | 最小 | 最大 | " + " | ".join(f"±{t}日以内" for t in tol) + " |"
-    sep = "|---" * (8 + len(tol)) + "|"
+    head = "| 区分 | n | 中央値 | 平均 | 標準偏差 | MAD | 最小 | 最大 | " + " | ".join(f"±{t}日以内" for t in tol) + " | 平均絶対誤差 |"
+    sep = "|---" * (9 + len(tol)) + "|"
 
     def row(label, s):
         return (f"| {label} | {s['n']} | {_fmt(s['median'])} | {_fmt(s['mean'])} | {_fmt(s['stdev'])} | {_fmt(s['mad'])} | "
-                f"{_fmt(s['min'])} | {_fmt(s['max'])} | " + " | ".join(_pct(s["within"][t]) for t in tol) + " |")
+                f"{_fmt(s['min'])} | {_fmt(s['max'])} | " + " | ".join(_pct(s["within"][t]) for t in tol) + f" | {_fmt(s['mae'])} |")
     lines = [f"# {title}", "", "差 = 予測日 − 観測日(日数。正は予測が遅い)。合格・不合格の判定はしない(基準は結果を見る前にユーザーが決める)。", ""]
     lines += [f"- {n}" for n in notes]
     lines += [f"- 比較した組: {agg['overall']['n']} / 全 {agg['pairs']}(予測なし {agg['no_prediction']}、観測なし {agg['no_observation']})", "",
@@ -124,6 +124,33 @@ def report_markdown(agg, *, title, notes=()):
     lines += ["", "## 年ごと", "", head, sep]
     lines += [row(str(k), s) for k, s in agg["by_year"].items()]
     return "\n".join(lines) + "\n"
+
+
+def _offset(year, iso):
+    """季節の年の 1 月 1 日からの日数(年をまたいだ観測日は 365 を超える)。"""
+    return (date.fromisoformat(iso) - date(year, 1, 1)).days
+
+
+def climatology_pairs(observed, *, mode):
+    """平年値法(基準線)の比較の組。各地点・年について、同じ地点の「その年を除いた」観測日の中央値を予測とする。
+    mode は呼び出し側が必ず選ぶ(段階14 の前にユーザーが決める。docs/validation-plan.md §0):
+      "leave_one_out" = その地点のその年以外のすべての年、"prior_only" = その年より前の年だけ。
+    差 diff_days は中央値の日数 − 観測の日数(端数 0.5 がありうる)。predicted はその日付(切り捨て)。比べる年がなければ予測なし。"""
+    if mode not in ("leave_one_out", "prior_only"):
+        raise ValueError(f"mode は leave_one_out か prior_only: {mode!r}")
+    by_station = defaultdict(dict)
+    for (st, y), iso in observed.items():
+        by_station[st][y] = _offset(y, iso)
+    out = []
+    for (st, y), iso in sorted(observed.items()):
+        others = [v for yy, v in by_station[st].items() if yy != y and (mode == "leave_one_out" or yy < y)]
+        if not others:
+            out.append(pair(st, y, None, iso))
+            continue
+        med = statistics.median(others)
+        pred = (date(y, 1, 1) + timedelta(days=int(med))).isoformat()
+        out.append({"station": st, "year": y, "predicted": pred, "observed": iso, "diff_days": med - _offset(y, iso)})
+    return out
 
 
 def observed_dates(rows, phenomenon, station_nos=None, years=None, rm=None):

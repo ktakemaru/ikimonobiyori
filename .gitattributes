@@ -3,3 +3,6 @@
 *.png binary
 *.jpg binary
 *.gif binary
+# 気象庁 生物季節観測の取得データは、取得したときのバイト列のまま置く(改行を変換しない。raw/SOURCES.md の SHA-256 と一致させる。段階13 の追加作業)
+data/jma_phenology/raw/*.csv -text
+data/jma_phenology/normalized.csv -text

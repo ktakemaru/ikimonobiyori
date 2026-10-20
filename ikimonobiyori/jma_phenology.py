@@ -23,6 +23,9 @@ COLUMNS = ["station_no", "station_name", "phenomenon_code", "phenomenon", "year"
 OBSERVED, NO_VALUE = "observed", "no_value"
 ATTRIBUTION = ("気象庁「生物季節観測累年値」({page})を加工して作成(イキモノビヨリ ikimonobiyori.jma_phenology)。"
                "公共データ利用規約(第1.0版)(https://www.digital.go.jp/resources/open_data/public_data_license_v1.0)")
+SOURCE_LINE = "出典:気象庁ホームページ「生物季節観測累年値」({page})"
+PROCESS_NOTE = "加工の内容: 地点×年の表を行に並べ替え、月日を日付にし、値 0 を no_value にした(詳しくは data/jma_phenology/README.md)"
+COMMENT = "#"      # 正規化した CSV の冒頭の出典の行の印(read_csv は読み飛ばす)
 
 
 def load_definition(path=None):
@@ -132,10 +135,19 @@ def normalize(raw_dir, definition=None):
     return rows, infos, missing
 
 
-def write_csv(rows, out):
+def attribution_lines(definition):
+    """正規化した CSV の冒頭に書く出典と加工したことの記載(docs/data-sources.md §1.5)。日時を含めない(同じ入力なら同じファイル)。"""
+    page = definition["source_page"]
+    return [SOURCE_LINE.format(page=page), ATTRIBUTION.format(page=page), PROCESS_NOTE]
+
+
+def write_csv(rows, out, header_lines=()):
+    """header_lines は '# ' を付けて CSV の見出しの前に書く。"""
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8", newline="") as f:
+        for line in header_lines:
+            f.write(f"{COMMENT} {line}\n")
         w = csv.DictWriter(f, fieldnames=COLUMNS, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
@@ -143,7 +155,7 @@ def write_csv(rows, out):
 
 def read_csv(path):
     with Path(path).open(encoding="utf-8", newline="") as f:
-        return list(csv.DictReader(f))
+        return list(csv.DictReader(line for line in f if not line.startswith(COMMENT)))
 
 
 def summarize(rows, station_nos=None):
@@ -182,7 +194,7 @@ def main(argv=None):
     df = load_definition()
     if a.cmd == "normalize":
         rows, infos, missing = normalize(a.raw_dir, df)
-        write_csv(rows, a.out)
+        write_csv(rows, a.out, attribution_lines(df))
         for i in infos:
             print(f"{i['file']} {i['phenomenon']}: 地点 {i['stations']}、{i['first_year']}〜{i['last_year_with_value']} 年、{i['rows']} 行")
         if missing:
