@@ -4,6 +4,7 @@
 #   公式ページの事実を Claude Code が自分の言葉で短くまとめたもの。代表点の座標は Claude Code の推定、標高は Open-Meteo Elevation API の値。
 #   typical_window は公式の「上旬・中旬・下旬」を 01〜10・11〜20・21〜月末に直した(元の書き方は note)。
 # v0 の既定の判定はこのファイルを使わない(v0 は ikimonobiyori/data/sites.yaml の 76 地点)。
+# 段階15(2026-10-23): status_sources は現況などを発信する公式ページの台帳(ikimonobiyori/data/sources/autumn_leaves.yaml)の id。台帳の covers と一致する(python -X utf8 -m ikimonobiyori.sources check)。
 schema: ikimono-site-catalog/1
 subject: autumn_leaves
 note: "例(example: true)は approved にしない。実在の名所は承認済み(approved)だけを置く(段階14b)"
@@ -51,6 +52,7 @@ entries:
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     access_notes: "日光駅・東武日光駅から湯元温泉行きのバス。冬は湖の周回歩道が閉鎖される"
     status: approved
+    status_sources: [nikko-kankou-autumn-leaves, nikko-kankou-congestion]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.nikko-kankou.org/spot/13", title: "日光市観光協会 湯ノ湖", checked_on: "2026-10-22"}
@@ -67,6 +69,7 @@ entries:
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     access_notes: "日光駅・東武日光駅から湯元温泉行きのバスで赤沼または三本松"
     status: approved
+    status_sources: [nikko-kankou-autumn-leaves, nikko-kankou-congestion]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.nikko-kankou.org/spot/10", title: "日光市観光協会 戦場ヶ原", checked_on: "2026-10-22"}
@@ -82,6 +85,7 @@ entries:
     typical_window: {start: "11-01", end: "11-20", source_url: "https://www.city.nasushiobara.tochigi.jp/soshikikarasagasu/tsuishin/hana/2755.html", note: "那須塩原市: 紅の吊橋 11月上旬〜中旬(塩原渓谷 10月下旬〜11月中旬、日塩もみじライン 10月中旬〜11月上旬)"}
     access_notes: "西那須野塩原ICから車で約20分(塩原もの語り館の近く)"
     status: approved
+    status_sources: [siobara-kankou]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.nasushiobara.tochigi.jp/soshikikarasagasu/tsuishin/hana/2755.html", title: "那須塩原市 紅葉", checked_on: "2026-10-22"}
@@ -97,6 +101,7 @@ entries:
     access_notes: "遊歩道は柵がなく、雨で滑りやすい所がある(白線の内側に入らない)。夜間は通行止め。12月中旬〜3月下旬は冬季閉鎖。吹割大橋の手前に無料駐車場(約10台)、ほかに民間の駐車場"
     manners: ["白線の内側に入らない"]
     status: approved
+    status_sources: [numata-kankou-news]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.numata.gunma.jp/kanko/fukiware/1003065.html", title: "沼田市 吹割の滝 よくあるご質問", checked_on: "2026-10-22"}
@@ -112,6 +117,7 @@ entries:
     typical_window: {start: "11-11", end: "11-30", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 竜神峡 11月中旬〜下旬"}
     access_notes: "駐車場250台。営業8:30〜17:00(土曜はライトアップで20時まで)"
     status: approved
+    status_sources: [ibaraki-guide-autumn-leaves]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
@@ -142,6 +148,7 @@ entries:
     location_precision: exact
     typical_window: {start: "11-01", end: "11-20", source_url: "https://www.city.kofu.yamanashi.jp/kanko/faq/kyoiku/sports/shisetsu/00644.html", note: "甲府市: 例年11月上旬〜中旬"}
     status: approved
+    status_sources: [yamanashi-kankou-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.kofu.yamanashi.jp/kanko/faq/kyoiku/sports/shisetsu/00644.html", title: "甲府市 紅葉が楽しめる場所を教えてください", checked_on: "2026-10-22"}
@@ -157,6 +164,7 @@ entries:
     typical_window: {start: "10-21", end: "11-20", source_url: "https://fujisan.ne.jp/sightseeing/4218/", note: "富士河口湖町観光連盟: 例年10月下旬〜11月中旬"}
     access_notes: "専用の駐車場はなく、近くの駐車場を使う。河口湖駅から周遊バスで久保田一竹美術館下車、徒歩5分。秋の夜は冷える"
     status: approved
+    status_sources: [yamanashi-kankou-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://fujisan.ne.jp/sightseeing/4218/", title: "富士河口湖町観光連盟 もみじ回廊", checked_on: "2026-10-22"}
@@ -173,6 +181,7 @@ entries:
     official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
     access_notes: "観瀑台は袋田の滝トンネルの奥(第2観瀑台もある)"
     status: approved
+    status_sources: [daigo-kanko-koyo, ibaraki-guide-autumn-leaves]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
@@ -188,6 +197,7 @@ entries:
     location_precision: exact
     typical_window: {start: "11-01", end: "11-30", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 筑波山 11月上旬〜下旬"}
     status: approved
+    status_sources: [ibaraki-guide-autumn-leaves, ttca-autumn-tsukuba]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
@@ -204,6 +214,7 @@ entries:
     official_status_url: "https://www.hakone.or.jp/1804"
     access_notes: "箱根湯本駅から箱根登山線で強羅駅、ケーブルカーで公園上駅"
     status: approved
+    status_sources: [hakone-kankou-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-22"}
@@ -217,6 +228,7 @@ entries:
     location_precision: exact
     typical_window: {start: "11-01", end: "11-30", source_url: "https://www.town.kawanehon.shizuoka.jp/soshiki/kankoshoko/faq00/5968.html", note: "川根本町: 寸又峡・接岨峡方面 11月上旬〜下旬"}
     status: approved
+    status_sources: [okuooi-koyo, okuooi-traffic-sumata]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.town.kawanehon.shizuoka.jp/soshiki/kankoshoko/faq00/5968.html", title: "川根本町 花の見頃を教えてください", checked_on: "2026-10-22"}
@@ -232,6 +244,7 @@ entries:
     location_precision: exact
     access_notes: "伊勢原駅北口からバスで大山ケーブル(終点)。紅葉ライトアップの期間はケーブルカーが夜も動く"
     status: approved
+    status_sources: [isehara-oyama-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/", title: "伊勢原市 紅葉(大山)", checked_on: "2026-10-22"}
@@ -247,6 +260,7 @@ entries:
     official_status_url: "https://www.hasedera.jp/"
     access_notes: "夜間特別拝観の期間は通路で三脚を使えない"
     status: approved
+    status_sources: [hasedera-lightup]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.trip-kamakura.com/association-news/detail.php?id=30", title: "鎌倉市観光協会 鎌倉市内の色づき状況", checked_on: "2026-10-22"}
@@ -261,6 +275,7 @@ entries:
     location_precision: exact
     access_notes: "2026年の夜間特別観賞は11月25日〜12月6日(夜は特別観賞券のみ。1日の販売数に限りがある)"
     status: approved
+    status_sources: [tokyo-park-rikugien-news, tokyo-park-rikugien-lightup]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html", title: "東京都公園協会 庭紅葉の六義園 夜間特別観賞(2026)", checked_on: "2026-10-22"}
@@ -275,6 +290,7 @@ entries:
     location_precision: exact
     typical_window: {start: "12-01", end: "12-31", source_url: "https://fng.or.jp/shinjuku/place/season/", note: "国民公園協会: 12月の欄に紅葉(カエデ、ハナノキなど)。月単位の記載なので12月全体にした。11月の欄はイチョウ・プラタナス"}
     status: approved
+    status_sources: [fng-shinjuku-seasonal]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://fng.or.jp/shinjuku/place/season/", title: "国民公園協会 新宿御苑 四季のみどころ", checked_on: "2026-10-22"}
@@ -302,6 +318,7 @@ entries:
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     access_notes: "いろは坂は紅葉期に渋滞しやすく、普段約20分の上りが2〜3時間、連休に最大6時間かかった例がある。中禅寺湖の駐車場は奥日光県営駐車場(栃木県のページ)"
     status: approved
+    status_sources: [nikko-kankou-autumn-leaves, nikko-kankou-congestion]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.nikko-kankou.org/spot/12", title: "日光市観光協会 中禅寺湖", checked_on: "2026-10-22"}
@@ -315,6 +332,7 @@ entries:
     point: {lat: 36.091, lon: 139.113, elevation_m: 149}
     location_precision: exact
     status: approved
+    status_sources: [nagatoro-kanko-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報"}
@@ -328,6 +346,7 @@ entries:
     location_precision: exact
     typical_window: {start: "10-21", end: "12-10", source_url: "https://www.showakinen-koen.jp/flower-information/", note: "公式: モミジ類 10月下旬〜12月上旬(日本庭園など)。ユーザーが公式ページで確認(2026-10-22)"}
     status: approved
+    status_sources: [showakinen-flower-information]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}

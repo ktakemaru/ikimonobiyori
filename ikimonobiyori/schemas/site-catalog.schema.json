@@ -69,6 +69,7 @@
           }
         },
         "official_status_url": {"$ref": "#/$defs/url", "description": "今年の状況の公式ページ(人が見る)"},
+        "status_sources": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$"}, "description": "現況などを発信する公式ページの台帳(data/sources/<subject>.yaml)の id(段階15)。台帳の covers と一致すること(ikimonobiyori/sources.py の検査器)"},
         "description": {"type": "string", "description": "人が承認した短い解説。sources と approved_at がそろったものだけを提案に使う(catalog.usable_description)"},
         "access_notes": {"type": "string"},
         "manners": {"type": "array", "items": {"type": "string", "minLength": 1}},

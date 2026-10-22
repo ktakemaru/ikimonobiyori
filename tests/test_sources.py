@@ -1,0 +1,298 @@
+"""現況の情報源の台帳と、読んだ結果の記録(段階15。ikimonobiyori/sources.py)。通信なし。
+台帳の検査(承認の条件・名所カタログとの対応)、状態の書き方の対応、新しさ、候補の絞り込み、記録の読み書き(事実だけ・重複なし)。"""
+import contextlib
+import copy
+import io
+import json
+import os
+import shutil
+import tempfile
+import unittest
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from unittest import mock
+
+import yaml
+
+import helpers as H  # noqa: F401  (通信禁止)
+
+from ikimonobiyori import catalog, paths, sources
+
+JST = timezone(timedelta(hours=9))
+POLICY = sources.load_policy()
+
+
+def src(**kw):
+    s = {"id": "test-kankou-koyo", "publisher": "試験市観光協会", "publisher_kind": "tourism_association",
+         "url": "https://kankou.example.org/koyo", "kind": "status_page",
+         "covers": [{"site": "kouyou-0001", "label": "渓谷"}, {"name": "滝", "label": "【北】滝"}],
+         "notation": {"style": "symbol", "map": {"✕": "not_yet", "△": "starting", "〇": "good", "◎": "peak", "▼": "fading"},
+                      "no_info": ["情報なし"], "updated": "per_item", "year_shown": True},
+         "readable": {"status": "ok", "checked_on": "2026-10-23", "robots": "allows"},
+         "terms": {"status": "no_prohibition_found"},
+         "approval": {"status": "approved", "approved_by": "claude_code_provisional", "approved_on": "2026-10-23"}}
+    s.update(kw)
+    return s
+
+
+def reg(*ss):
+    return {"schema": "ikimono-status-sources/1", "subject": "autumn_leaves", "sources": list(ss)}
+
+
+def site(sid, tw=None, status_sources=None, **kw):
+    e = {"id": sid, "name": f"名所 {sid}", "subjects": ["autumn_leaves"], "timing_type": "temperature", "kind": "point",
+         "point": {"lat": 35.5, "lon": 139.5, "elevation_m": 100}, "location_precision": "exact", "status": "approved",
+         "approved_at": "2026-10-22", "sources": [{"url": "https://example.org/a"}]}
+    if tw:
+        e["typical_window"] = {"start": tw[0], "end": tw[1], "source_url": "https://example.org/tw"}
+    if status_sources is not None:
+        e["status_sources"] = status_sources
+    e.update(kw)
+    return e
+
+
+def cat(*entries):
+    return {"schema": "ikimono-site-catalog/1", "subject": "autumn_leaves", "entries": list(entries)}
+
+
+CATALOG = cat(site("kouyou-0001", ("10-21", "11-10"), ["test-kankou-koyo"]))
+
+
+class Registry(unittest.TestCase):
+    def errs(self, r, c=CATALOG, name="autumn_leaves"):
+        return sources.check_registry(r, name=name, catalog_doc=c, policy=POLICY)
+
+    def assertRejected(self, r, needle, c=CATALOG):
+        errs = self.errs(r, c)
+        self.assertTrue(any(needle in e for e in errs), errs)
+
+    def test_the_repository_registry_passes(self):
+        res = sources.check_all()
+        self.assertEqual([(p.name, e) for p, e in res if e], [])
+        self.assertIn("autumn_leaves.yaml", [p.name for p, _ in res])
+        self.assertNotIn("policy.yaml", [p.name for p, _ in res])           # 方針のファイルは台帳として検査しない
+
+    def test_the_repository_registry_keeps_the_rules(self):
+        r = sources.load_registry("autumn_leaves")
+        for s in r["sources"]:
+            with self.subTest(s["id"]):
+                if s["approval"]["status"] == "approved":
+                    self.assertEqual(s["readable"]["status"], "ok")
+                    self.assertNotIn(s["readable"].get("robots"), sources.ROBOTS_BLOCKING)
+                    self.assertEqual(s["approval"].get("approved_by"), "claude_code_provisional")   # 段階15 の承認はすべて仮承認(ユーザーが見直す)
+                self.assertNotIn(s["publisher_kind"], ("aggregator", "travel_agency", "weather_company", "personal"))
+
+    def test_a_good_registry_passes(self):
+        self.assertEqual(self.errs(reg(src())), [])
+
+    def test_cli_exit_codes(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(sources.main(["check"]), 0)
+        self.assertIn("OK  sources/autumn_leaves.yaml", out.getvalue())
+        d = Path(tempfile.mkdtemp(prefix="ikimono-src-"))
+        self.addCleanup(shutil.rmtree, d, True)
+        (d / "autumn_leaves.yaml").write_text(yaml.safe_dump(reg(src(kind="blog")), allow_unicode=True), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(sources.main(["check", "--sources-dir", str(d)]), 1)
+
+    def test_schema_rejects_bad_shapes(self):
+        self.assertRejected(reg(src(kind="blog")), "kind")
+        self.assertRejected(reg(src(publisher_kind="personal")), "publisher_kind")
+        self.assertRejected(reg(src(covers=[{"site": "kouyou-0001", "name": "x"}])), "covers")
+        self.assertRejected(reg(src(body="本文の写し")), "Additional properties")       # 本文を入れる欄はない
+
+    def test_rules_beyond_the_schema(self):
+        self.assertRejected(reg(src(notation={"style": "word", "map": {"見頃": "mikoro"}})), "共通の段階にない")
+        self.assertRejected(reg(src(covers=[{"site": "kouyou-9999"}])), "名所カタログの承認済みの件にない")
+        self.assertRejected(reg(src(), src()), "id が重複")
+        self.assertRejected(reg(src(approval={"status": "approved"})), "approved_by と approved_on")
+        self.assertRejected(reg(src(readable={"status": "refused", "checked_on": "2026-10-23"})), "読めていない")
+        self.assertRejected(reg(src(readable={"status": "partial", "checked_on": "2026-10-23"})), "読めていない")
+        self.assertRejected(reg(src(readable={"status": "ok", "checked_on": "2026-10-23", "robots": "ai_agents_blocked"})), "robots.txt")
+        self.assertRejected(reg(src(terms={"status": "not_checked"})), "利用条件")
+        self.assertRejected(reg(src(terms={"status": "prohibits_summary"})), "利用条件")
+        self.assertRejected(reg(src(readable={"status": "unconfirmed", "checked_on": "2026-10-23"}, approval={"status": "pending"})), "reason")
+        self.assertRejected(reg(src(readable={"status": "ok", "checked_on": "2026-13-01"})), "日付でない")
+        ok_pending = src(readable={"status": "unconfirmed", "checked_on": "2026-10-23"}, approval={"status": "pending", "reason": "HTTP 503"})
+        self.assertEqual(self.errs(reg(ok_pending)), [])
+
+    def test_catalog_and_registry_must_agree(self):
+        self.assertRejected(reg(src()), "が違う", c=cat(site("kouyou-0001", ("10-21", "11-10"), [])))
+        self.assertRejected(reg(src()), "台帳にない", c=cat(site("kouyou-0001", ("10-21", "11-10"), ["test-kankou-koyo", "missing-source"])))
+        self.assertRejected(reg(src(covers=[{"name": "滝"}])), "が違う")             # カタログは指しているが台帳の covers にない
+
+
+class Notation(unittest.TestCase):
+    def test_symbols_map_to_the_common_stages(self):
+        s = src()
+        self.assertEqual(sources.normalize_state(s, "◎"), ("peak", "mapped"))
+        self.assertEqual(sources.normalize_state(s, " 〇 "), ("good", "mapped"))
+        self.assertEqual(sources.normalize_state(s, "▼"), ("fading", "mapped"))
+        self.assertEqual(sources.normalize_state(s, "情報なし"), (None, "no_info"))
+        self.assertEqual(sources.normalize_state(s, None), (None, "no_info"))
+        self.assertEqual(sources.normalize_state(s, "見頃"), (None, "unknown"))       # 台帳にない書き方は推測しない
+
+    def test_the_nikko_notation_in_the_repository(self):
+        nikko = sources.sources_by_id(sources.load_registry("autumn_leaves"))["nikko-kankou-autumn-leaves"]
+        got = {k: sources.normalize_state(nikko, k)[0] for k in "✕△〇◎▼"}
+        self.assertEqual(got, {"✕": "not_yet", "△": "starting", "〇": "good", "◎": "peak", "▼": "fading"})
+
+    def test_stage_labels(self):
+        self.assertEqual(sources.stage_label(POLICY, "autumn_leaves", "peak"), "真っ盛り")
+        self.assertIsNone(sources.stage_label(POLICY, "autumn_leaves", None))
+
+
+class Freshness(unittest.TestCase):
+    def test_classes(self):
+        on = date(2026, 10, 23)
+        cls = {n: sources.freshness(on - timedelta(days=n), on, POLICY)["class"] for n in (0, 3, 4, 7, 8, 30)}
+        self.assertEqual(cls, {0: "fresh", 3: "fresh", 4: "somewhat_old", 7: "somewhat_old", 8: "old", 30: "old"})
+        self.assertEqual(sources.freshness(None, on, POLICY)["class"], "unknown")
+        self.assertEqual(sources.freshness(date(2026, 10, 20), on, POLICY)["label"], "新しい")
+        with self.assertRaises(ValueError):
+            sources.freshness(date(2026, 10, 24), on, POLICY)                      # 未来の更新日は推測で直さない
+
+    def test_policy_values_have_a_source(self):
+        for k in ("fresh_max_days", "somewhat_old_max_days"):
+            self.assertIn("source", POLICY["freshness"][k])
+            self.assertIn("provisional", POLICY["freshness"][k])
+        self.assertIn("source", POLICY["candidates"]["window_margin_days"])
+
+
+class Weekend(unittest.TestCase):
+    def test_next_weekend(self):
+        f = lambda s: [d.isoformat() for d in sources.next_weekend(datetime.fromisoformat(s))]
+        self.assertEqual(f("2026-10-23T22:00:00+09:00"), ["2026-10-24", "2026-10-25"])   # 金曜
+        self.assertEqual(f("2026-10-19T08:00:00+09:00"), ["2026-10-24", "2026-10-25"])   # 月曜
+        self.assertEqual(f("2026-10-24T08:00:00+09:00"), ["2026-10-24", "2026-10-25"])   # 土曜は当日から
+        self.assertEqual(f("2026-10-25T08:00:00+09:00"), ["2026-10-25"])                 # 日曜は当日だけ
+
+    def test_now_needs_an_offset(self):
+        with self.assertRaises(ValueError):
+            sources.parse_now("2026-10-23T22:00:00")
+
+    def test_days_from_window(self):
+        tw = {"start": "10-21", "end": "11-10"}
+        self.assertEqual(sources.days_from_window(date(2026, 10, 24), tw), 0)
+        self.assertEqual(sources.days_from_window(date(2026, 10, 14), tw), 7)
+        self.assertEqual(sources.days_from_window(date(2026, 11, 17), tw), 7)
+        wrap = {"start": "12-20", "end": "01-10"}
+        self.assertEqual(sources.days_from_window(date(2027, 1, 5), wrap), 0)
+        self.assertEqual(sources.days_from_window(date(2026, 12, 25), wrap), 0)
+        self.assertEqual(sources.days_from_window(date(2027, 1, 12), wrap), 2)
+
+    def test_candidates_and_the_read_plan(self):
+        r = reg(src(covers=[{"site": "kouyou-0001"}, {"site": "kouyou-0002"}]),
+                src(id="test-park-news", covers=[{"site": "kouyou-0003"}], readable={"status": "unconfirmed", "checked_on": "2026-10-23"},
+                    approval={"status": "pending", "reason": "HTTP 503"}),
+                src(id="test-traffic", kind="access_page", covers=[{"site": "kouyou-0002"}]))
+        c = cat(site("kouyou-0001", ("10-21", "11-10"), ["test-kankou-koyo"]),
+                site("kouyou-0002", ("10-31", "11-20"), ["test-kankou-koyo", "test-traffic"]),
+                site("kouyou-0003", None, ["test-park-news"]),
+                site("kouyou-0004", ("12-01", "12-20"), []),
+                site("kouyou-0005", ("09-21", "10-10"), [], status="candidate"))
+        got = sources.candidates(c, r, [date(2026, 10, 24), date(2026, 10, 25)], POLICY)
+        self.assertEqual([(s["site"], s["season"], s["days_from_window"]) for s in got["sites"]],
+                         [("kouyou-0001", "in_window", 0), ("kouyou-0002", "near", 6), ("kouyou-0003", "no_window", None)])
+        self.assertEqual([o["site"] for o in got["out_of_season"]], ["kouyou-0004"])        # candidate(未承認)は入れない
+        self.assertEqual([(p["id"], p["sites"]) for p in got["read_plan"]],
+                         [("test-kankou-koyo", ["kouyou-0001", "kouyou-0002"]), ("test-traffic", ["kouyou-0002"])])   # 1 回だけ読む。現況が先
+        self.assertEqual([h["id"] for h in got["human_urls"]], ["test-park-news"])
+        self.assertEqual(got["no_status_source"], ["kouyou-0003"])
+
+    def test_out_of_season_sites_covered_by_a_page_that_is_read_anyway(self):
+        r = reg(src(covers=[{"site": "kouyou-0001"}, {"site": "kouyou-0002"}]))
+        c = cat(site("kouyou-0001", ("10-21", "11-10"), ["test-kankou-koyo"]), site("kouyou-0002", ("09-21", "10-10"), ["test-kankou-koyo"]))
+        got = sources.candidates(c, r, [date(2026, 10, 24)], POLICY)
+        self.assertEqual(got["out_of_season"], [{"site": "kouyou-0002", "name": "名所 kouyou-0002", "days_from_window": 14,
+                                                 "covered_by_read_plan": ["test-kankou-koyo"]}])
+
+    def test_weekend_cli_on_the_repository(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(sources.main(["weekend", "--now", "2026-10-23T22:00:00+09:00"]), 0)
+        got = json.loads(out.getvalue())
+        self.assertEqual(got["dates"], ["2026-10-24", "2026-10-25"])
+        self.assertIn("kouyou-0001", [s["site"] for s in got["sites"]])
+
+
+class Records(unittest.TestCase):
+    R = reg(src(), src(id="test-pending", approval={"status": "pending"}))
+    AT = "2026-10-23T21:30:00+09:00"
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="ikimono-log-"))
+        self.addCleanup(shutil.rmtree, self.d, True)
+        self.env = {paths.ENV_DATA_DIR: str(self.d)}
+
+    def rec(self, **kw):
+        a = {"registry": self.R, "policy": POLICY, "source_id": "test-kankou-koyo", "read_at": self.AT, "state": "◎",
+             "updated": "2026-10-21", "site": "kouyou-0001", "label": "渓谷"}
+        a.update(kw)
+        return sources.make_record(**a)
+
+    def errs(self, r):
+        return sources.validate_record(r, registry=self.R, policy=POLICY)
+
+    def test_a_good_record(self):
+        r = self.rec()
+        self.assertEqual(self.errs(r), [])
+        self.assertEqual((r["stage"], r["url"], r["schema"]), ("peak", "https://kankou.example.org/koyo", "ikimono-status-record/1"))
+        self.assertEqual(self.errs(self.rec(site=None, name="滝", label=None, state="情報なし", updated=None)), [])
+
+    def test_bad_records_are_rejected(self):
+        def bad(r, needle):
+            errs = self.errs(r)
+            self.assertTrue(any(needle in e for e in errs), errs)
+        bad({**self.rec(), "text": "公式ページの本文"}, "入れられない項目")
+        bad({**self.rec(), "photo": "x.jpg"}, "入れられない項目")
+        bad(self.rec(source_id="test-pending"), "承認されていない")
+        bad({**self.rec(source_id="nope"), "url": "https://kankou.example.org/koyo"}, "台帳にない")
+        bad(self.rec(site="kouyou-0099"), "covers にない")
+        bad(self.rec(name="滝"), "どちらか一方")
+        bad(self.rec(state="◎" * 21), "本文を写さない")
+        bad(self.rec(label="長" * 41), "label")
+        bad({**self.rec(), "stage": "good"}, "台帳の対応")
+        bad(self.rec(read_at="2026-10-23T21:30:00"), "オフセット")
+        bad(self.rec(updated="2026-10-24"), "読んだ日")
+        bad(self.rec(updated="2026-02-30"), "日付でない")
+        bad({**self.rec(), "url": "https://other.example.com/koyo"}, "ホスト")
+        bad(self.rec(year_inferred="yes"), "真偽値")
+
+    def test_append_dedup_and_all_or_nothing(self):
+        with mock.patch.dict(os.environ, self.env):
+            self.assertEqual(sources.append_records([self.rec(), self.rec(site=None, name="滝", label="【北】滝", state="△")],
+                                                    registry=self.R, policy=POLICY), (2, 0))
+            self.assertEqual(sources.append_records([self.rec(read_at="2026-10-23T23:00:00+09:00")], registry=self.R, policy=POLICY), (0, 1))
+            with self.assertRaises(ValueError):
+                sources.append_records([self.rec(state="▼", updated="2026-10-23"), self.rec(source_id="test-pending")], registry=self.R, policy=POLICY)
+            got = sources.read_records("autumn_leaves")
+        self.assertEqual([(r.get("site") or r.get("name"), r["stage"]) for r in got], [("kouyou-0001", "peak"), ("滝", "starting")])
+        p = self.d / "status_log" / "autumn_leaves.jsonl"
+        self.assertTrue(p.is_file())                                                # IKIMONOBIYORI_DATA_DIR の下だけに書く
+        self.assertNotIn(b"\r\n", p.read_bytes())
+
+    def test_record_cli(self):
+        batch = self.d / "reads.json"
+        batch.write_text(json.dumps([{"source": "nikko-kankou-autumn-leaves", "site": "kouyou-0001", "label": "【奥日光】湯ノ湖、湯滝",
+                                      "state": "◎", "updated": "2026-10-20"}], ensure_ascii=False), encoding="utf-8")
+        reg_real = sources.load_registry("autumn_leaves")
+        approved = copy.deepcopy(reg_real)
+        for s in approved["sources"]:
+            if s["id"] == "nikko-kankou-autumn-leaves":
+                s["approval"] = {"status": "approved", "approved_by": "claude_code_provisional", "approved_on": "2026-10-23"}
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(sources, "load_registry", return_value=approved), contextlib.redirect_stdout(out):
+            self.assertEqual(sources.main(["record", "--read-at", "2026-10-23T21:30:00+09:00", "--batch", str(batch)]), 0)
+        got = json.loads(out.getvalue())
+        self.assertEqual(got["written"], 1)
+        self.assertEqual((got["rows"][0]["stage_label"], got["rows"][0]["freshness"]["class"]), ("真っ盛り", "fresh"))
+        self.assertTrue(Path(got["path"]).is_relative_to(self.d))
+
+    def test_the_log_location_is_under_the_data_dir(self):
+        self.assertEqual(sources.log_path("autumn_leaves", self.env), self.d / "status_log" / "autumn_leaves.jsonl")
+
+
+if __name__ == "__main__":
+    unittest.main()

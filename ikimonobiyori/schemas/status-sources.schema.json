@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ikimono-status-sources/1",
+  "title": "ikimono-status-sources/1",
+  "description": "現地の現況を発信する公式ページの台帳(ikimonobiyori/data/sources/<subject>.yaml。対象ごとに1ファイル)。段階15(docs/design.md §0)。形だけを見る。id の重複・名所カタログとの対応・状態の書き方の対応先・承認の条件は ikimonobiyori/sources.py の検査器が見る。",
+  "type": "object",
+  "required": ["schema", "subject", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "ikimono-status-sources/1"},
+    "subject": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "description": "このファイルの対象(プロファイルの profile_id。ファイル名と同じ)"},
+    "note": {"type": "string"},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}}
+  },
+  "$defs": {
+    "url": {"type": "string", "pattern": "^https?://[^\\s]+$"},
+    "date": {"type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "この情報源がどの名所の情報か。カタログにある名所は site(カタログの id)、ない名所は name だけ。label は公式ページでの地点の書き方(探すための目印。本文の写しではない)",
+      "properties": {
+        "site": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$"},
+        "name": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1}
+      },
+      "oneOf": [{"required": ["site"], "not": {"required": ["name"]}}, {"required": ["name"], "not": {"required": ["site"]}}]
+    },
+    "source": {
+      "type": "object",
+      "required": ["id", "publisher", "publisher_kind", "url", "kind", "covers", "readable", "terms", "approval"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$", "description": "例: nikko-kankou-autumn-leaves"},
+        "publisher": {"type": "string", "minLength": 1, "description": "発信者(観光協会・自治体・公園の管理者など)"},
+        "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine"], "description": "公式の発信者の種類。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
+        "url": {"$ref": "#/$defs/url"},
+        "kind": {"enum": ["status_page", "forecast_page", "event_page", "access_page", "opendata"], "description": "status_page 現況 / forecast_page 見頃予測 / event_page まつり・ライトアップ / access_page 交通・混雑・通行止め / opendata"},
+        "covers": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cover"}},
+        "notation": {
+          "type": "object",
+          "required": ["style", "map"],
+          "additionalProperties": false,
+          "description": "公式の状態の書き方と、共通の段階(data/sources/policy.yaml の stages)への対応。読んで確かめた書き方だけを書く(見ていない書き方を推測で足さない)。map にない書き方は段階を null にして原文の記号・語を残す",
+          "properties": {
+            "style": {"enum": ["symbol", "word", "none"]},
+            "map": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-z_]+$"}},
+            "no_info": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "「情報なし」を表す書き方(段階なし)"},
+            "updated": {"enum": ["per_item", "per_page", "per_article", "none"], "description": "公式の更新日の付き方"},
+            "year_shown": {"type": "boolean", "description": "更新日に年が書いてあるか(false なら読んだ人が年を補い、記録に updated_year_inferred を付ける)"},
+            "note": {"type": "string"}
+          }
+        },
+        "readable": {
+          "type": "object",
+          "required": ["status", "checked_on"],
+          "additionalProperties": false,
+          "properties": {
+            "status": {"enum": ["ok", "partial", "refused", "unconfirmed"], "description": "ok 読めた / partial 読めたが状態は読めない(画像など) / refused 自動アクセスを拒否(robots.txt・応答) / unconfirmed サーバーの障害などで未確認"},
+            "checked_on": {"$ref": "#/$defs/date"},
+            "robots": {"enum": ["allows", "no_file", "disallows", "ai_agents_blocked", "unknown"], "description": "robots.txt の判定。ai_agents_blocked は他社の AI エージェントを名指しで拒否(この道具の名前はない)"},
+            "observed_latest_update": {"$ref": "#/$defs/date", "description": "読んだときに分かった、いちばん新しい公式の更新日"},
+            "note": {"type": "string"}
+          }
+        },
+        "terms": {
+          "type": "object",
+          "required": ["status"],
+          "additionalProperties": false,
+          "properties": {
+            "status": {"enum": ["no_prohibition_found", "prohibits_summary", "not_checked"], "description": "利用条件が、要約や出典つきの事実の利用を禁じているか(禁じていれば prohibits_summary)"},
+            "url": {"$ref": "#/$defs/url"},
+            "note": {"type": "string"}
+          }
+        },
+        "approval": {
+          "type": "object",
+          "required": ["status"],
+          "additionalProperties": false,
+          "properties": {
+            "status": {"enum": ["pending", "approved", "revoked"]},
+            "approved_by": {"enum": ["claude_code_provisional", "user"]},
+            "approved_on": {"$ref": "#/$defs/date"},
+            "reason": {"type": "string", "description": "pending・revoked の理由、仮承認で迷った点"}
+          }
+        },
+        "note": {"type": "string"}
+      }
+    }
+  }
+}
