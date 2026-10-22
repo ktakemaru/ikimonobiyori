@@ -59,6 +59,12 @@ def cat(*entries):
 CATALOG = cat(site("kouyou-0001", ("10-21", "11-10"), ["test-kankou-koyo"]))
 
 
+# 段階15 でユーザーが承認した情報源(2026-10-23 の見直し。docs/stage15-decisions.md D-38)。段階16 で仮承認に戻さない
+STAGE15_USER_APPROVED = {"nikko-kankou-autumn-leaves", "hakone-kankou-koyo", "daigo-kanko-koyo", "ibaraki-guide-autumn-leaves", "yamanashi-kankou-koyo",
+                         "tokyo-park-rikugien-news", "fng-shinjuku-seasonal", "tokyo-park-rikugien-lightup", "hasedera-lightup", "ttca-autumn-tsukuba",
+                         "nikko-kankou-congestion", "okuooi-traffic-sumata", "numata-kankou-news"}
+
+
 class Registry(unittest.TestCase):
     def errs(self, r, c=CATALOG, name="autumn_leaves"):
         return sources.check_registry(r, name=name, catalog_doc=c, policy=POLICY)
@@ -80,7 +86,8 @@ class Registry(unittest.TestCase):
                 if s["approval"]["status"] == "approved":
                     self.assertEqual(s["readable"]["status"], "ok")
                     self.assertNotIn(s["readable"].get("robots"), sources.ROBOTS_BLOCKING)
-                    self.assertEqual(s["approval"].get("approved_by"), "user")   # 仮承認はユーザーの見直し(2026-10-23)ですべてユーザーの承認に切り替えた
+                    # 段階15 の仮承認はユーザーの見直し(2026-10-23)ですべてユーザーの承認に切り替えた。段階16 で足した情報源だけは仮承認でよい(指示書 フェーズ6)
+                    self.assertEqual(s["approval"].get("approved_by"), "user" if s["id"] in STAGE15_USER_APPROVED else "claude_code_provisional")
                 self.assertNotIn(s["publisher_kind"], ("aggregator", "travel_agency", "weather_company", "personal"))
 
     def test_the_review_of_2026_10_23_is_kept(self):
@@ -488,7 +495,8 @@ class Generic(unittest.TestCase):
         self.assertEqual(tohoku["catalog_sites"], {"autumn_leaves": []})
         tokyo = sources.region_report(sources.resolve_region("都内", regions), catalogs={"autumn_leaves": catalog.load_catalog("autumn_leaves")},
                                       catalog_policy=cp)
-        self.assertEqual((tokyo["status"], len(tokyo["catalog_sites"]["autumn_leaves"])), ("in_range", 3))
+        self.assertEqual(tokyo["status"], "in_range")
+        self.assertTrue({"kouyou-0022", "kouyou-0023", "kouyou-0024"} <= set(tokyo["catalog_sites"]["autumn_leaves"]))
 
     def test_every_catalog_area_is_reachable_by_a_region(self):
         regions = sources.load_regions()

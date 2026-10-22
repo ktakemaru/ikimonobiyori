@@ -15,6 +15,8 @@ regions:
   - {name: 鎌倉, aliases: [], match: {areas: [鎌倉]}}
   - {name: 秩父・長瀞, aliases: [秩父, 長瀞], match: {areas: [秩父・長瀞]}}
   - {name: 軽井沢, aliases: [], match: {areas: [軽井沢]}}
+  - {name: 谷川岳, aliases: [水上, みなかみ], match: {areas: [谷川岳]}}
+  - {name: 白馬, aliases: [八方尾根, 白馬村], match: {areas: [白馬]}}
   - {name: 栃木県, aliases: [栃木], match: {prefectures: [栃木県]}}
   - {name: 群馬県, aliases: [群馬], match: {prefectures: [群馬県]}}
   - {name: 茨城県, aliases: [茨城], match: {prefectures: [茨城県]}}

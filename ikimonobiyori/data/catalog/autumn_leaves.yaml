@@ -172,7 +172,7 @@ entries:
     access_notes: "専用の駐車場はなく、近くの駐車場を使う。河口湖駅から周遊バスで久保田一竹美術館下車、徒歩5分。秋の夜は冷える"
     status: approved
     tags: {prefecture: 山梨県, area: 富士五湖, terrain: [lake], access: [bus], traffic_note: "専用の駐車場がない(カタログの access_notes)", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
-    status_sources: [yamanashi-kankou-koyo]
+    status_sources: [yamanashi-kankou-koyo, fujikawaguchiko-koyo-matsuri]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://fujisan.ne.jp/sightseeing/4218/", title: "富士河口湖町観光連盟 もみじ回廊", checked_on: "2026-10-22"}
@@ -371,3 +371,115 @@ entries:
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}
     note: "代表点: 日本庭園(推定)。イチョウ並木は別(カナール 11月上旬〜中旬など)"
+  # ---- 段階16 フェーズ4(2026-10-23)で Claude Code が足した名所。仮承認(approved_by: claude_code_provisional)。見直しは docs/stage16-review.md ----
+  - id: kouyou-0026
+    name: 奥日光 竜頭滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.775, lon: 139.441, elevation_m: null}
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall, mountain], access: [bus], traffic_note: "いろは坂(紅葉期に渋滞しやすい)を通る", source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況(【奥日光】竜頭滝)", checked_on: "2026-10-23"}
+    note: "段階16 A-5。日光市観光協会の紅葉状況にある地点。代表点の座標は Claude Code の推定(公式ページに座標はない)、標高は不明(null)。例年の時期は書かない(紅葉状況の見頃予測は今年の予測なので使わない。kouyou-0003 のユーザー承認 2026-10-22 と同じ扱い)"
+  - id: kouyou-0027
+    name: 日塩もみじライン
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.90, lon: 139.77, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [mountain], access: [car_only], source: "Claude Code が付けた(推定。山あいの道路。段階16 フェーズ4)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況(【鬼怒川・川治】日塩もみじライン)", checked_on: "2026-10-23"}
+    note: "段階16 A-5。鬼怒川温泉と塩原温泉を結ぶ道路(ドライブ)。代表点は道路の中ほど(Claude Code の推定)。例年の時期は書かない(kouyou-0026 と同じ)"
+  - id: kouyou-0028
+    name: 瀬戸合峡
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.86, lon: 139.55, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [valley], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況(【湯西川・川俣・奥鬼怒】瀬戸合峡)", checked_on: "2026-10-23"}
+    note: "段階16 A-5。代表点は川俣ダムの付近(Claude Code の推定)。例年の時期は書かない(kouyou-0026 と同じ)"
+  - id: kouyou-0029
+    name: 霧降高原 キスゲ平園地
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.80, lon: 139.66, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [highland, mountain], access: [bus], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況(【日光】日光市霧降高原 キスゲ平園地)", checked_on: "2026-10-23"}
+    note: "段階16 A-5。いろは坂を通らずに行ける(日光市街の北)。代表点は Claude Code の推定。例年の時期は書かない(kouyou-0026 と同じ)"
+  - id: kouyou-0030
+    name: 谷川岳 天神平(谷川岳ヨッホ)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.83, lon: 138.94, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://tanigawadake-joch.com/information/"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 群馬県, area: 谷川岳, terrain: [mountain], access: [ropeway], traffic_note: "紅葉シーズン(9/19〜11/3)は駐車場の料金が変わる(谷川岳ヨッホのお知らせ 2026-09-02)", source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
+    status_sources: [tanigawadake-joch-information]
+    sources:
+      - {url: "https://tanigawadake-joch.com/information/20261022/", title: "谷川岳ヨッホ 紅葉情報(2026-10-22)", checked_on: "2026-10-23"}
+    note: "段階16 A-9(山)。ロープウェイの運営者の発信(天神平・ロープウェイ沿線・天神峠)。代表点は天神平の付近(Claude Code の推定)。例年の時期の公式の記載は見つけていない(書かない)"
+  - id: kouyou-0031
+    name: 白馬 八方尾根(うさぎ平周辺)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.70, lon: 137.82, elevation_m: 1400}
+    location_precision: area_1km
+    official_status_url: "https://www.happo-one.jp/news-green/"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 長野県, area: 白馬, terrain: [mountain], access: [ropeway], source: "Claude Code が付けた(推定。ゴンドラ・リフト。段階16 フェーズ4)"}
+    status_sources: [happo-one-news-green]
+    sources:
+      - {url: "https://www.happo-one.jp/news-green/39613/", title: "白馬八方尾根 【八方尾根 紅葉情報 10/17】", checked_on: "2026-10-23"}
+    note: "段階16 A-9(山)。索道の運営者(八方尾根索道事業者協議会)の発信。標高 1400 m はページのうさぎ平周辺の記載。代表点は Claude Code の推定。例年の時期の公式の記載は見つけていない(書かない)"
+  - id: kouyou-0032
+    name: 小石川後楽園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.706, lon: 139.749, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 東京都, area: 都心, terrain: [garden, urban], access: [walk_from_station], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
+    status_sources: [tokyo-park-koishikawa-event]
+    sources:
+      - {url: "https://www.tokyo-park.or.jp/event_search/event_57.html", title: "東京都公園協会 小石川後楽園「深山紅葉を楽しむ」", checked_on: "2026-10-23"}
+    note: "段階16 A-6(都内)。都立庭園。催し「深山紅葉を楽しむ」は 2026-11-21〜12-06(イロハモミジの見ごろに合わせた催し)。現況のページは、東京都公園協会の「紅葉を見に行こう!」(2025 年は 11 月 10 日から提供)が今年はまだ見つからない。代表点は Claude Code の推定。例年の時期は書かない(公式の数値の記載がない)"
