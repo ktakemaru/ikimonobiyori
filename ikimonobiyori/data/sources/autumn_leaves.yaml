@@ -46,7 +46,7 @@ sources:
       year_shown: true
       forecast: per_item
       note: "地点ごとに見出し『現在の状況』(記号)・『最終更新日』(年つき)・『見頃予測』(例: 10月下旬～11月上旬。括弧の注記つきのこともある)がある(2026-10-23 に確認。段階16 A-8)。見ごろの丸は、読む道具の出力で 〇(U+3007)と ◯(U+25EF)の両方が出た(段階15 フェーズ4。どちらも見ごろ)。凡例: ✕ まだ / △ 色づき始め / 〇 見ごろ / ◎ 真っ盛り / ▼ 色褪せ・落葉始め。地点ごとに最終更新日(年つき)がある。写真は見頃の時期のもので今の様子ではない、と注記がある"
-    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "1 ページで 24 地点。地点ごとの更新日は 2026-09-13〜10-22。読み取り結果(2026-10-22 時点の内容)は、ユーザー側でも同じ内容を確認済み(2026-10-23 の見直し)"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "1 ページで 24 地点。地点ごとの更新日は 2026-09-13〜10-22。読み取り結果(2026-10-22 時点の内容)は、別の会話のアシスタント(Claude)が WebFetch で読んだものと同じ内容だった。ユーザーの目視ではない(段階15 の見直しで「ユーザー側でも確認済み」と書いたのを、段階16 の見直し 2026-10-23 で訂正)"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "サイトポリシーに引用・要約・転載・自動取得の規定なし。フッターに Copyright 表示だけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
@@ -315,7 +315,7 @@ sources:
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。© 表示だけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
-  # ---- 段階16 フェーズ4(2026-10-23)で足した情報源。仮承認(approved_by: claude_code_provisional)。見直しは docs/stage16-review.md ----
+  # ---- 段階16 フェーズ4(2026-10-23)で足した情報源。仮承認のあと、段階16 の見直し(2026-10-23)でユーザーの承認に(八方尾根は pending) ----
   - id: tanigawadake-joch-information
     publisher: 谷川岳ヨッホ by 星野リゾート(谷川岳ロープウェイ)
     publisher_kind: facility_operator
@@ -333,7 +333,7 @@ sources:
       note: "お知らせ一覧に『紅葉情報:…』の記事が出る形。2026-10-22 の記事で、地点ごとの語『見頃を迎えています』『落葉が始まっています』を見た(ほかの語は未確認)。見頃予測の記載はなかった"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "robots.txt は /cms/wp-admin/ だけ拒否。旧 URL www.tanigawadake-rw.com は tanigawadake-joch.com へ転送"}
     terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見当たらない(索道約款・プライバシーポリシーだけ)"}
-    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
   - id: happo-one-news-green
     publisher: 八方尾根索道事業者協議会(白馬八方尾根)
@@ -351,7 +351,7 @@ sources:
       note: "ニュース一覧に『【八方尾根 紅葉情報 M/D】』の記事が出る形。2026-10-17 の記事は文章(『鮮やかに彩られています』など)で、決まった状態の語がない。段階は推測しない(原文の短い語を示す)"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-17", note: "robots.txt は /wp2019/wp-admin/ と PDF・Office 文書だけ拒否"}
     terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見当たらない(個人情報保護方針の PDF だけ)"}
-    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
+    approval: {status: pending, reason: "状態の決まった語がなく段階が付けられない。人が開く URL として扱う(段階16 の見直し 2026-10-23)"}
 
   - id: fujikawaguchiko-koyo-matsuri
     publisher: 富士河口湖町観光連盟
@@ -362,7 +362,7 @@ sources:
       - {site: kouyou-0012, label: "富士河口湖紅葉まつり"}
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-01", note: "2026 年の期間 11/7〜11/29、ライトアップ 日没〜21:00、会場『紅葉まつり特設会場』。今の色づき状況の記載はない。robots.txt は /wp/wp-admin/ だけ拒否"}
     terms: {status: no_prohibition_found, url: "https://fujisan.ne.jp/policy", note: "サイトポリシー: 私的使用・引用など著作権法上認められた行為として、出所を明示すれば引用・転載・複製できる(『無断転載を禁じます』等の注記がある場合を除く)。無断の改変は不可"}
-    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
   - id: tokyo-park-koishikawa-event
     publisher: 東京都公園協会(小石川後楽園)
@@ -373,4 +373,4 @@ sources:
       - {site: kouyou-0032, label: "深山紅葉を楽しむ"}
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, note: "催し『深山紅葉を楽しむ』2026-11-21〜12-06、9:00〜17:00。今の状況の記載はない。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ(ユーザーの判断 2026-10-23: 状態と更新日の短い事実を出典つきで示すだけで、複製には当たらない)"}
-    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}

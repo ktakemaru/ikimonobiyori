@@ -505,6 +505,10 @@ def validate_record(rec, *, registry, policy):
             errs.append(f"event_start・event_end は両方とも日付(YYYY-MM-DD)が要る({ev})")
         elif ev[0] > ev[1]:
             errs.append(f"event_start {ev[0]} が event_end {ev[1]} より後")
+    if ("unmarked_on" in rec) != ("unmarked_reason" in rec) or ("unmarked_on" in rec and not catalog_mod.valid_date(rec["unmarked_on"] or "")):
+        errs.append("印を外した記録は unmarked_on(YYYY-MM-DD)と unmarked_reason をそろえる")
+    if "user_checked_on" in rec and not catalog_mod.valid_date(rec["user_checked_on"] or ""):
+        errs.append("user_checked_on は YYYY-MM-DD")
     if any(k in rec for k in rp["erroneous_fields"]):
         if rec.get("erroneous") is not True or not rec.get("erroneous_reason") or not catalog_mod.valid_date(rec.get("corrected_on") or ""):
             errs.append("誤りの印は erroneous: true・erroneous_reason・corrected_on(YYYY-MM-DD)をそろえて付ける")
@@ -571,6 +575,59 @@ def conflicts(records):
     return out
 
 
+def _rewrite(subject, rows, env=None):
+    p = log_path(subject, env)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8", newline="\n") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    os.replace(tmp, p)
+
+
+def _matching(subject, match, env=None):
+    if not match:
+        raise ValueError("どの記録かを match で指定する")
+    rows = _read_all(subject, env)
+    hit = [r for r in rows if all(r.get(k) == v for k, v in match.items())]
+    if not hit:
+        raise ValueError(f"一致する記録がない: {match}")
+    return rows, hit
+
+
+def unmark_erroneous(subject, match, *, reason, on, env=None):
+    """誤りの印を外す(段階16 の見直し: 湖尻の「色づきはじめ、10/22現在」は正しかった)。印の項目は消し、外した日と理由を残す。→ 外した件数。"""
+    if not reason or not catalog_mod.valid_date(on or ""):
+        raise ValueError("reason と on(YYYY-MM-DD)が要る")
+    rows, hit = _matching(subject, match, env)
+    n = 0
+    for r in hit:
+        if r.get("erroneous") is True:
+            for k in ("erroneous", "erroneous_reason", "corrected_on"):
+                r.pop(k, None)
+            r.update({"unmarked_on": on, "unmarked_reason": reason})
+            n += 1
+    _rewrite(subject, rows, env)
+    return n
+
+
+def amend_records(subject, match, updates, *, env=None, policy=None):
+    """記録の読み方の項目だけを直す(方針の record.amendable_fields。method・method_note・user_checked_on)。事実の項目は直さない。→ 直した件数。"""
+    policy = policy or load_policy()
+    allowed = set(policy["record"]["amendable_fields"])
+    bad = sorted(set(updates) - allowed)
+    if bad:
+        raise ValueError(f"直せない項目: {bad}(直せるのは {sorted(allowed)}。事実は誤りの印と新しい記録で直す)")
+    if "method" in updates and updates["method"] not in policy["record"]["methods"]:
+        raise ValueError(f"method={updates['method']} は {policy['record']['methods']} のどれでもない")
+    if "user_checked_on" in updates and not catalog_mod.valid_date(updates["user_checked_on"] or ""):
+        raise ValueError("user_checked_on は YYYY-MM-DD")
+    rows, hit = _matching(subject, match, env)
+    for r in hit:
+        r.update(updates)
+    _rewrite(subject, rows, env)
+    return len(hit)
+
+
 def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=None):
     """match(項目 → 値)にすべて一致する記録に誤りの印を付ける(消さない。段階16 A-1)。→ 印を付けた件数。
     1 件も一致しなければ ValueError(取り違えを防ぐ)。すでに印のある記録はそのまま。ファイルは書き直す(一時ファイル → 置き換え)。"""
@@ -587,12 +644,7 @@ def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=Non
         if r.get("erroneous") is not True:
             r.update({"erroneous": True, "erroneous_reason": reason, "corrected_on": corrected_on})
             n += 1
-    p = log_path(subject, env)
-    tmp = p.with_suffix(p.suffix + ".tmp")
-    with tmp.open("w", encoding="utf-8", newline="\n") as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
-    os.replace(tmp, p)
+    _rewrite(subject, rows, env)
     return n
 
 
@@ -747,6 +799,13 @@ def main(argv=None, http_get=None):
     me.add_argument("--match", required=True, help='JSON の辞書(例: {"source_id": "...", "name": "湖尻", "official_state": "色づきはじめ"})')
     me.add_argument("--reason", required=True)
     me.add_argument("--corrected-on", required=True, help="YYYY-MM-DD")
+    um = sub.add_parser("unmark-erroneous", help="誤りの印を外す(外した日と理由を残す)")
+    um.add_argument("--match", required=True)
+    um.add_argument("--reason", required=True)
+    um.add_argument("--on", required=True, help="YYYY-MM-DD")
+    am = sub.add_parser("amend", help="記録の読み方の項目(method・method_note・user_checked_on)だけを直す")
+    am.add_argument("--match", required=True)
+    am.add_argument("--set", required=True, help='JSON の辞書(例: {"method": "assistant_webfetch"})')
     sm = sub.add_parser("summary", help="同じ日に読んだ記録から、答えの材料(段階・新しさ・見頃予測・期間)を出す(通信しない・書き込まない)")
     sm.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     sm.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
@@ -840,6 +899,15 @@ def main(argv=None, http_get=None):
         return 0
     if a.cmd == "log":
         _dump([r for r in read_records(a.subject, include_erroneous=a.include_erroneous) if not a.source or r["source_id"] == a.source])
+        return 0
+    if a.cmd in ("unmark-erroneous", "amend"):
+        try:
+            n = (unmark_erroneous(a.subject, json.loads(a.match), reason=a.reason, on=a.on) if a.cmd == "unmark-erroneous"
+                 else amend_records(a.subject, json.loads(a.match), json.loads(a.set)))
+        except ValueError as ex:
+            print(f"直さなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"changed": n, "path": str(log_path(a.subject))})
         return 0
     if a.cmd == "mark-erroneous":
         try:

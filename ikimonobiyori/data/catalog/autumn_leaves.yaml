@@ -371,7 +371,7 @@ entries:
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}
     note: "代表点: 日本庭園(推定)。イチョウ並木は別(カナール 11月上旬〜中旬など)"
-  # ---- 段階16 フェーズ4(2026-10-23)で Claude Code が足した名所。仮承認(approved_by: claude_code_provisional)。見直しは docs/stage16-review.md ----
+  # ---- 段階16 フェーズ4(2026-10-23)で Claude Code が足した名所。仮承認のあと、段階16 の見直し(2026-10-23)でユーザーの承認に ----
   - id: kouyou-0026
     name: 奥日光 竜頭滝
     subjects: [autumn_leaves]
@@ -381,7 +381,7 @@ entries:
     location_precision: exact
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall, mountain], access: [bus], traffic_note: "いろは坂(紅葉期に渋滞しやすい)を通る", source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
     status_sources: [nikko-kankou-autumn-leaves]
@@ -397,7 +397,7 @@ entries:
     location_precision: area_1km
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 栃木県, area: 日光, terrain: [mountain], access: [car_only], source: "Claude Code が付けた(推定。山あいの道路。段階16 フェーズ4)"}
     status_sources: [nikko-kankou-autumn-leaves]
@@ -413,7 +413,7 @@ entries:
     location_precision: area_1km
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 栃木県, area: 日光, terrain: [valley], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
     status_sources: [nikko-kankou-autumn-leaves]
@@ -429,7 +429,7 @@ entries:
     location_precision: area_1km
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 栃木県, area: 日光, terrain: [highland, mountain], access: [bus], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
     status_sources: [nikko-kankou-autumn-leaves]
@@ -445,7 +445,7 @@ entries:
     location_precision: area_1km
     official_status_url: "https://tanigawadake-joch.com/information/"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 群馬県, area: 谷川岳, terrain: [mountain], access: [ropeway], traffic_note: "紅葉シーズン(9/19〜11/3)は駐車場の料金が変わる(谷川岳ヨッホのお知らせ 2026-09-02)", source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
     status_sources: [tanigawadake-joch-information]
@@ -461,7 +461,7 @@ entries:
     location_precision: area_1km
     official_status_url: "https://www.happo-one.jp/news-green/"
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 長野県, area: 白馬, terrain: [mountain], access: [ropeway], source: "Claude Code が付けた(推定。ゴンドラ・リフト。段階16 フェーズ4)"}
     status_sources: [happo-one-news-green]
@@ -476,7 +476,7 @@ entries:
     point: {lat: 35.706, lon: 139.749, elevation_m: null}
     location_precision: exact
     status: approved
-    approved_by: claude_code_provisional
+    approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 東京都, area: 都心, terrain: [garden, urban], access: [walk_from_station], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
     status_sources: [tokyo-park-koishikawa-event]

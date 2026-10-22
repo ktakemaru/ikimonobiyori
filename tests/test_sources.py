@@ -86,9 +86,10 @@ class Registry(unittest.TestCase):
                 if s["approval"]["status"] == "approved":
                     self.assertEqual(s["readable"]["status"], "ok")
                     self.assertNotIn(s["readable"].get("robots"), sources.ROBOTS_BLOCKING)
-                    # 段階15 の仮承認はユーザーの見直し(2026-10-23)ですべてユーザーの承認に切り替えた。段階16 で足した情報源だけは仮承認でよい(指示書 フェーズ6)
-                    self.assertEqual(s["approval"].get("approved_by"), "user" if s["id"] in STAGE15_USER_APPROVED else "claude_code_provisional")
+                    # 段階15・段階16 の仮承認は、ユーザーの見直し(どちらも 2026-10-23)ですべてユーザーの承認に切り替えた
+                    self.assertEqual(s["approval"].get("approved_by"), "user")
                 self.assertNotIn(s["publisher_kind"], ("aggregator", "travel_agency", "weather_company", "personal"))
+        self.assertTrue(STAGE15_USER_APPROVED <= {s["id"] for s in r["sources"] if s["approval"]["status"] == "approved"})
 
     def test_the_review_of_2026_10_23_is_kept(self):
         """ユーザーの見直し(2026-10-23)の反映。"""
@@ -102,7 +103,7 @@ class Registry(unittest.TestCase):
         for sid in ("ibaraki-guide-autumn-leaves", "fng-shinjuku-seasonal", "tokyo-park-rikugien-news", "tokyo-park-rikugien-lightup"):
             self.assertIn("複製には当たらないとユーザーが判断(2026-10-23)", by[sid]["approval"]["reason"], sid)
         self.assertEqual(by["chichibu-kanko-kouyou"]["approval"]["status"], "pending")
-        self.assertIn("ユーザー側でも同じ内容を確認済み", by["nikko-kankou-autumn-leaves"]["readable"]["note"])
+        self.assertIn("ユーザーの目視ではない", by["nikko-kankou-autumn-leaves"]["readable"]["note"])   # 段階16 の見直しで訂正(アシスタントの WebFetch だった)
         c = sources.candidates(catalog.load_catalog("autumn_leaves"), sources.load_registry("autumn_leaves"), [date(2026, 11, 21)], POLICY)
         self.assertNotIn("isehara-oyama-koyo", [p["id"] for p in c["read_plan"]])
         self.assertIn("isehara-oyama-koyo", [h["id"] for h in c["human_urls"]])
@@ -374,6 +375,29 @@ class Records(unittest.TestCase):
         marked = [r for r in every if r.get("erroneous")]
         self.assertEqual((marked[0]["official_state"], marked[0]["corrected_on"]), ("△", "2026-10-23"))
         self.assertNotIn(b"\r\n", (self.d / "status_log" / "autumn_leaves.jsonl").read_bytes())
+
+    def test_unmark_and_amend(self):
+        """段階16 の見直し: 誤りの印を外す(外した日と理由を残す)。読み方の項目だけを直す(事実は直さない)。"""
+        right = self.rec(site=None, name="滝", label="【北】滝", state="△", updated="2026-10-22")
+        cached = self.rec(site=None, name="滝", label="【北】滝", state="✕", updated="2026-10-15", method="user_verified",
+                          read_at="2026-10-23T22:00:00+09:00")
+        with mock.patch.dict(os.environ, self.env):
+            sources.append_records([right, cached], registry=self.R, policy=POLICY)
+            sources.mark_erroneous("autumn_leaves", {"name": "滝", "official_state": "△"}, reason="読み違いと思った", corrected_on="2026-10-23")
+            self.assertEqual(sources.unmark_erroneous("autumn_leaves", {"name": "滝", "official_state": "△"}, reason="ブラウザで確認", on="2026-10-23"), 1)
+            sources.mark_erroneous("autumn_leaves", {"name": "滝", "official_state": "✕"}, reason="古いページ(キャッシュ)", corrected_on="2026-10-23")
+            self.assertEqual(sources.amend_records("autumn_leaves", {"name": "滝", "official_state": "✕"}, {"method": "assistant_webfetch"}, policy=POLICY), 1)
+            sources.amend_records("autumn_leaves", {"name": "滝", "official_state": "△"}, {"user_checked_on": "2026-10-23"}, policy=POLICY)
+            for bad in ({"official_state": "◎"}, {"method": "guess"}, {"user_checked_on": "昨日"}):
+                with self.assertRaises(ValueError):
+                    sources.amend_records("autumn_leaves", {"name": "滝"}, bad, policy=POLICY)          # 事実・未知の読み方・日付でないものは直さない
+            used = [r for r in sources.read_records("autumn_leaves") if r.get("name") == "滝"]
+            every = [r for r in sources.read_records("autumn_leaves", include_erroneous=True) if r.get("name") == "滝"]
+        self.assertEqual([(r["official_state"], r.get("unmarked_on"), r.get("user_checked_on")) for r in used], [("△", "2026-10-23", "2026-10-23")])
+        old = next(r for r in every if r["official_state"] == "✕")
+        self.assertEqual((old["method"], old["erroneous"]), ("assistant_webfetch", True))
+        self.assertTrue(all(self.errs(r) == [] for r in used))
+        self.assertEqual(sources.conflicts(every), {})                                         # user_verified がなくなれば食い違いではない
 
     def test_new_fields_are_checked(self):
         def bad(r, needle):
