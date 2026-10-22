@@ -15,6 +15,7 @@ from unittest import mock
 import yaml
 
 import helpers as H  # noqa: F401  (通信禁止)
+from helpers import ROOT
 
 from ikimonobiyori import catalog, paths, sources
 
@@ -292,6 +293,54 @@ class Records(unittest.TestCase):
 
     def test_the_log_location_is_under_the_data_dir(self):
         self.assertEqual(sources.log_path("autumn_leaves", self.env), self.d / "status_log" / "autumn_leaves.jsonl")
+
+
+class V0Estimates(unittest.TestCase):
+    DOC = {"schema": "biyori-proposal/1", "generated_at": "2026-10-23T09:30:00+09:00", "proposals": [
+        {"id": "ikimonobiyori:autumn_leaves:2026-10-24:kouyou-0002", "phenology_stage": "before_bud", "suitability": {"band": "no"}},
+        {"id": "ikimonobiyori:autumn_leaves:2026-10-24:kouyou-0001", "phenology_stage": "early_bloom", "suitability": {"band": "maybe"}},
+        {"id": "ikimonobiyori:autumn_leaves:2026-10-25:kouyou-0001", "phenology_stage": "early_bloom", "suitability": {"band": "maybe"}},
+        {"id": "ikimonobiyori:autumn_leaves:2026-10-24:m001", "phenology_stage": "peak", "suitability": {"band": "maybe"}},
+        {"id": "ikimonobiyori:birds:2026-10-24:area-1", "suitability": {"band": "maybe"}}]}
+    LABELS = {"before_bud": "色づき前", "early_bloom": "色づき始め"}
+
+    def test_reads_only_the_subject_and_always_labels_it_as_an_estimate(self):
+        got = sources.v0_estimates(self.DOC, subject="autumn_leaves", labels=self.LABELS, policy=POLICY, dates=[date(2026, 10, 24)])
+        self.assertEqual([(r["site"], r["stage_label"], r["band"]) for r in got],
+                         [("kouyou-0001", "色づき始め", "maybe"), ("kouyou-0002", "色づき前", "no"), ("m001", None, "maybe")])
+        self.assertTrue(all(r["label"] == "推定(未検証・段階14で不合格)" and r["generated_at"] == "2026-10-23T09:30:00+09:00" for r in got))
+        self.assertEqual(len(sources.v0_estimates(self.DOC, subject="autumn_leaves", labels=self.LABELS, policy=POLICY)), 4)
+
+    def test_rejects_other_shapes(self):
+        with self.assertRaises(ValueError):
+            sources.v0_estimates({"schema": "x"}, subject="autumn_leaves", labels={}, policy=POLICY)
+
+
+class Procedure(unittest.TestCase):
+    """「今週末のおすすめ」の手順は、Claude Code のスキルと AGENTS.md・CLAUDE.md で同じ(段階15)。"""
+    def block(self, path):
+        s = path.read_text(encoding="utf-8")
+        b, e = "<!-- ikimono-weekend:begin -->", "<!-- ikimono-weekend:end -->"
+        self.assertEqual((s.count(b), s.count(e)), (1, 1), path.name)
+        return s[s.index(b):s.index(e)]
+
+    def test_skill_and_agents_md_have_the_same_steps(self):
+        skill = self.block(ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md")
+        self.assertEqual(self.block(ROOT / "AGENTS.md"), skill)
+        self.assertEqual(self.block(ROOT / "CLAUDE.md"), skill)
+        for needle in ("approved", "robots.txt", "3 日以内", "7 日以内", "推定(未検証・段階14で不合格)", "上位 3〜5 か所", "出典 URL",
+                       "IKIMONOBIYORI_DATA_DIR", "--live"):
+            self.assertIn(needle, skill)
+
+    def test_the_numbers_in_the_steps_match_the_policy(self):
+        skill = self.block(ROOT / "AGENTS.md")
+        f = POLICY["freshness"]
+        self.assertIn(f"{sources.val(f['fresh_max_days'])} 日以内は「{f['labels']['fresh']}」", skill)
+        self.assertIn(f"{sources.val(f['somewhat_old_max_days'])} 日以内は「{f['labels']['somewhat_old']}」", skill)
+        self.assertIn(f"前後 {sources.val(POLICY['candidates']['window_margin_days'])} 日以内", skill)
+        r = POLICY["recommend"]
+        self.assertIn(f"上位 {sources.val(r['top_min'])}〜{sources.val(r['top_max'])} か所", skill)
+        self.assertIn(POLICY["aux_estimate"]["label"], skill)
 
 
 if __name__ == "__main__":

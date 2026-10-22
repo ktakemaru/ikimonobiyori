@@ -11,6 +11,7 @@
   python -X utf8 -m ikimonobiyori.sources normalize --source nikko-kankou-autumn-leaves --state ◎
   python -X utf8 -m ikimonobiyori.sources record --read-at 2026-10-23T21:00:00+09:00 --batch reads.json
   python -X utf8 -m ikimonobiyori.sources log [--source ID]
+  python -X utf8 -m ikimonobiyori.sources v0 --proposal OUT.json [--date 2026-10-24 ...]
 """
 import argparse
 import calendar
@@ -25,11 +26,12 @@ from jsonschema import Draft202012Validator
 
 from . import catalog as catalog_mod
 from .config import load_config
-from .paths import CATALOG_DIR, SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
+from .paths import SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
 
 APPROVED = "approved"
 USABLE_TERMS = "no_prohibition_found"
 READABLE_OK = "ok"
+V0_ID_PARTS = ("agent", "subject", "date", "site")        # v0 の提案の id の形: ikimonobiyori:<subject>:<日付>:<名所>
 ROBOTS_BLOCKING = ("disallows", "ai_agents_blocked")      # 仮承認しない robots.txt の判定(安全側。docs/stage15-decisions.md)
 
 
@@ -357,6 +359,28 @@ def append_records(records, *, registry, policy, env=None):
     return len(new), len(records) - len(new)
 
 
+# ---- 補助の推定(v0 の出力を読むだけ。計算も通信もしない) ----
+
+def v0_estimates(proposal_doc, *, subject, labels, policy, dates=None):
+    """v0 の出力(biyori-proposal/1)から、名所ごと・日ごとの段階と band を取り出す。→ [{site, date, stage, stage_label, band, generated_at, label}]。
+    名所カタログの件(id が ikimonobiyori:<subject>:<日付>:<名所>)だけ。補助の推定として、方針の書き方(aux_estimate.label)を必ず付ける。"""
+    if proposal_doc.get("schema") != "biyori-proposal/1":
+        raise ValueError(f"biyori-proposal/1 ではない: {proposal_doc.get('schema')!r}")
+    want = {d.isoformat() for d in dates} if dates else None
+    out = []
+    for p in proposal_doc.get("proposals") or []:
+        parts = p.get("id", "").split(":")
+        if len(parts) != len(V0_ID_PARTS) or parts[:2] != ["ikimonobiyori", subject]:
+            continue
+        _, _, day, sid = parts
+        if want is not None and day not in want:
+            continue
+        st = p.get("phenology_stage")
+        out.append({"site": sid, "date": day, "stage": st, "stage_label": labels.get(st), "band": (p.get("suitability") or {}).get("band"),
+                    "generated_at": proposal_doc.get("generated_at"), "label": policy["aux_estimate"]["label"]})
+    return sorted(out, key=lambda r: (r["site"], r["date"]))
+
+
 # ---- CLI ----
 
 def _dump(obj):
@@ -381,6 +405,9 @@ def main(argv=None):
     r.add_argument("--batch", required=True, help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?}]")
     lg = sub.add_parser("log", help="記録を表示する")
     lg.add_argument("--source")
+    v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
+    v.add_argument("--proposal", required=True)
+    v.add_argument("--date", action="append")
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
@@ -427,6 +454,13 @@ def main(argv=None):
                          "stage": rc["stage"], "stage_label": stage_label(policy, a.subject, rc["stage"]), "updated": rc.get("official_updated"),
                          "freshness": freshness(up, read_at.date(), policy)})
         _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "rows": rows})
+        return 0
+    if a.cmd == "v0":
+        from .profiles import load_profiles
+        labels = load_profiles().get(a.subject, {}).get("phenology_labels") or {}
+        doc = json.loads(Path(a.proposal).read_text(encoding="utf-8"))
+        dates = [date.fromisoformat(x) for x in a.date] if a.date else None
+        _dump(v0_estimates(doc, subject=a.subject, labels=labels, policy=policy, dates=dates))
         return 0
     if a.cmd == "log":
         _dump([r for r in read_records(a.subject) if not a.source or r["source_id"] == a.source])

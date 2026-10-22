@@ -29,6 +29,11 @@ recommend:
   top_min: {value: 3, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
   top_max: {value: 5, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
 
+# 補助の推定: 現況がない名所だけに、v0 の気温判定(biyori-proposal/1 の出力)を添えるときの書き方(段階15 決定 D-06)
+aux_estimate:
+  label: "推定(未検証・段階14で不合格)"
+  source: "指示書(段階15): 現況がない名所の補助として『推定(未検証・段階14で不合格)』と明記して出す"
+
 # 読んだ結果の記録(IKIMONOBIYORI_DATA_DIR の下。config.yaml の status_log.dir)。事実だけを残す(本文の写し・写真は残さない)
 record:
   schema: ikimono-status-record/1
