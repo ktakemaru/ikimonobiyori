@@ -40,10 +40,10 @@ sources:
       - {name: 日光の社寺, label: "【日光】世界遺産 日光の社寺"}
     notation:
       style: symbol
-      map: {"✕": not_yet, "△": starting, "〇": good, "◎": peak, "▼": fading}
+      map: {"✕": not_yet, "△": starting, "〇": good, "◯": good, "◎": peak, "▼": fading}
       updated: per_item
       year_shown: true
-      note: "凡例: ✕ まだ / △ 色づき始め / 〇 見ごろ / ◎ 真っ盛り / ▼ 色褪せ・落葉始め。地点ごとに最終更新日(年つき)がある。写真は見頃の時期のもので今の様子ではない、と注記がある"
+      note: "見ごろの丸は、読む道具の出力で 〇(U+3007)と ◯(U+25EF)の両方が出た(段階15 フェーズ4。どちらも見ごろ)。凡例: ✕ まだ / △ 色づき始め / 〇 見ごろ / ◎ 真っ盛り / ▼ 色褪せ・落葉始め。地点ごとに最終更新日(年つき)がある。写真は見頃の時期のもので今の様子ではない、と注記がある"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "1 ページで 24 地点。地点ごとの更新日は 2026-09-13〜10-22"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "サイトポリシーに引用・要約・転載・自動取得の規定なし。フッターに Copyright 表示だけ"}
     approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
