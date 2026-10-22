@@ -1,0 +1,98 @@
+# 冬鳥(白鳥などの飛来地)の名所カタログ(ikimono-site-catalog/1)。段階16 C(2026-10-23)。
+# 公式ページ(自治体・管理者)の事実を Claude Code が自分の言葉で短くまとめたもの。代表点の座標は Claude Code の推定(小数 2 桁。位置の下限 area_1km)、標高は不明(null)。
+# すべて Claude Code の仮承認(approved_by: claude_code_provisional)。ユーザーが見直す(docs/stage16-review.md)。
+# typical_window は公式の「上旬・中旬・下旬」を 01〜10・11〜20・21〜月末に直した(元の書き方は note)。年をまたぐ時期は start > end。
+# status_sources は台帳 data/sources/wintering_birds.yaml の id。
+schema: ikimono-site-catalog/1
+subject: wintering_birds
+entries:
+  - id: hakucho-0001
+    name: 瓢湖(阿賀野市)
+    subjects: [wintering_birds]
+    timing_type: calendar
+    species: [コハクチョウ, オオハクチョウ]
+    kind: point
+    point: {lat: 37.83, lon: 139.23, elevation_m: null}
+    location_precision: area_1km
+    public_venue: {source_url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2845.html", note: "市の公園(瓢湖水きん公園)。ラムサール条約登録湿地"}
+    typical_window: {start: "10-01", end: "03-31", source_url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2845.html", note: "公式: 毎年10月上旬に第一陣が訪れ、3月まで滞在。11月下旬のピーク時には5000羽を超えることも"}
+    official_status_url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2/index.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 新潟県, area: 阿賀野, terrain: [lake, wetland], source: "Claude Code が付けた(推定。段階16 C)"}
+    status_sources: [agano-hyoko-monthly]
+    sources:
+      - {url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2845.html", title: "阿賀野市 白鳥の渡来地・瓢湖 最新情報", checked_on: "2026-10-23"}
+    note: "東京・横浜から約 244 km(範囲の端)。管理者が決めた時間に給餌をしている(公式)"
+  - id: hakucho-0002
+    name: 安曇野(犀川白鳥湖・御宝田遊水池)
+    subjects: [wintering_birds]
+    timing_type: calendar
+    species: [コハクチョウ]
+    kind: area
+    point: {lat: 36.33, lon: 137.90, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.city.azumino.nagano.jp/soshiki/32/10320.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 長野県, area: 安曇野, terrain: [river, wetland], source: "Claude Code が付けた(推定。段階16 C)"}
+    status_sources: [azumino-hakucho-hirai]
+    sources:
+      - {url: "https://www.city.azumino.nagano.jp/soshiki/32/10320.html", title: "安曇野市 白鳥飛来情報(令和8年度)", checked_on: "2026-10-23"}
+    note: "例年の時期の文の記載はない(年度ごとの初飛来日・最終北帰行日の表がある。令和7年度は 10/10〜3/20)。typical_window は書かない。数は『アルプス白鳥の会』の集計(公式ページの記載)"
+  - id: hakucho-0003
+    name: 多々良沼(館林市)
+    subjects: [wintering_birds]
+    timing_type: calendar
+    species: [コハクチョウ, オオハクチョウ]
+    kind: point
+    point: {lat: 36.25, lon: 139.47, elevation_m: null}
+    location_precision: area_1km
+    typical_window: {start: "11-11", end: "03-10", source_url: "https://www.city.tatebayashi.gunma.jp/s025/kanko/020/070/020/20200104065000.html", note: "公式: 11月中旬から3月上旬にかけて飛来。近年は1月下旬から2月上旬に最多"}
+    official_status_url: "https://www.city.tatebayashi.gunma.jp/s025/kanko/020/070/020/20200104065000.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 群馬県, area: 館林, terrain: [lake, wetland], source: "Claude Code が付けた(推定。段階16 C)"}
+    status_sources: [tatebayashi-hakucho]
+    sources:
+      - {url: "https://www.city.tatebayashi.gunma.jp/s025/kanko/020/070/020/20200104065000.html", title: "館林市 館林の白鳥に関する情報", checked_on: "2026-10-23"}
+    note: "白鳥は多々良沼と城沼を行き来する(公式)。見られる場所は夕陽の小径・ガバ沼・天沼(公式)"
+  - id: hakucho-0004
+    name: 古徳沼(那珂市)
+    subjects: [wintering_birds]
+    timing_type: calendar
+    species: [コハクチョウ]
+    kind: point
+    point: {lat: 36.53, lon: 140.42, elevation_m: null}
+    location_precision: area_1km
+    typical_window: {start: "11-01", end: "03-20", source_url: "https://www.city.naka.lg.jp/event-kankou/kankou-spot/page000276.html", note: "公式: 11月初旬ごろから3月中旬ごろまで観察できる(初旬は上旬として 01 にした)"}
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 茨城県, area: 那珂, terrain: [wetland], source: "Claude Code が付けた(推定。段階16 C)"}
+    status_sources: [naka-kotokunuma]
+    sources:
+      - {url: "https://www.city.naka.lg.jp/event-kankou/kankou-spot/page000276.html", title: "那珂市 冬の使者「白鳥」が訪れる「古徳沼」と「一の関ため池親水公園」", checked_on: "2026-10-23"}
+    note: "早朝(7時ごろまで)か夕方が多く見られる(公式)。駐車場約50台、路上駐車をしない(公式)。今季の飛来数は那珂市観光協会のサイトに載る(台帳には入れていない)"
+  - id: hakucho-0005
+    name: 白鳥の郷公苑(三条市)
+    subjects: [wintering_birds]
+    timing_type: calendar
+    species: [コハクチョウ]
+    kind: point
+    point: {lat: 37.60, lon: 139.05, elevation_m: null}
+    location_precision: area_1km
+    public_venue: {source_url: "https://www.city.sanjo.niigata.jp/sanjonavi/see_do/nature/swan/2282.html", note: "市の観察施設(営業期間あり。来シーズンは11月中旬ごろの予定と公式)"}
+    typical_window: {start: "11-11", end: "03-31", source_url: "https://www.city.sanjo.niigata.jp/sanjonavi/see_do/nature/swan/2316.html", note: "公式の『白鳥の平均飛来数』が11月中旬〜3月下旬(1月下旬が最多の約380)"}
+    official_status_url: "https://www.city.sanjo.niigata.jp/sanjonavi/see_do/nature/swan/2316.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-23"
+    tags: {prefecture: 新潟県, area: 三条, terrain: [river], source: "Claude Code が付けた(推定。五十嵐川の飛来地。段階16 C)"}
+    status_sources: [sanjo-hakucho-hirai]
+    sources:
+      - {url: "https://www.city.sanjo.niigata.jp/sanjonavi/see_do/nature/swan/2316.html", title: "三条市 白鳥飛来状況", checked_on: "2026-10-23"}
+    note: "鳥インフルエンザ予防のため白鳥やカモに触らない(公式)"

@@ -11,6 +11,8 @@ min_location_precision:
   default: exact
   birds: area_10km
   fireflies: area_10km
+  # 冬鳥の飛来地(段階16 C): 自治体・管理者が公開している観察場所だけを載せる前提で area_1km(小数 2 桁)。個々の群れ・ねぐらの正確な位置は載せない(安全側の仮置き)
+  wintering_birds: area_1km
 # 公式に公開された観賞会場(entry.public_venue)なら、下限より細かい位置を許す対象。野鳥は許さない(安全側。判断 D-08)
 public_venue_exception: [fireflies]
 # 希少種・生息地(entry.sensitive: true)の下限。公開会場の例外は効かない

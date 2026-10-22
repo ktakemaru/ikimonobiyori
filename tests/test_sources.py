@@ -513,6 +513,38 @@ class Generic(unittest.TestCase):
         self.assertIn("台帳", got["cherry_blossom"]["missing"])
 
 
+class WinteringBirds(unittest.TestCase):
+    """段階16 C: 2 つ目の対象(冬鳥の飛来地)。手順・コードは紅葉と同じものを使う。"""
+    def test_the_second_subject_uses_the_same_machinery(self):
+        got = {s["subject"]: s["implemented"] for s in sources.subjects_status()}
+        self.assertTrue(got["wintering_birds"] and got["autumn_leaves"])
+        self.assertEqual([s["label"] for s in POLICY["stages"]["wintering_birds"]["items"]], ["飛来前", "飛来開始", "増加中", "最多", "北帰行"])
+        self.assertEqual(sources.stage_errors(POLICY), [])
+        res = dict((p.name, e) for p, e in sources.check_all())
+        self.assertEqual(res["wintering_birds.yaml"], [])
+
+    def test_no_count_thresholds(self):
+        """羽数から段階を決める閾値は持たない(出典がない)。羽数は原文のまま、段階は null。"""
+        reg_w = sources.load_registry("wintering_birds")
+        for s in reg_w["sources"]:
+            self.assertFalse(any(k.endswith("羽") for k in ((s.get("notation") or {}).get("map") or {})), s["id"])
+        rec = sources.make_record(registry=reg_w, policy=POLICY, source_id="azumino-hakucho-hirai", site="hakucho-0002", label="御宝田遊水地",
+                                  read_at="2026-10-23T08:00:00+09:00", state="6羽", updated="2026-10-20")
+        self.assertEqual((rec["stage"], sources.validate_record(rec, registry=reg_w, policy=POLICY)), (None, []))
+
+    def test_before_the_season_the_typical_start_is_given(self):
+        c = catalog.load_catalog("wintering_birds")
+        got = sources.candidates(c, sources.load_registry("wintering_birds"), [date(2026, 10, 24), date(2026, 10, 25)], POLICY)
+        up = {u["site"]: u["next_start"] for u in got["upcoming_windows"]}
+        self.assertEqual(up["hakucho-0003"], "2026-11-11")                                 # 多々良沼: 例年 11月中旬から
+        self.assertIn("hakucho-0001", [s["site"] for s in got["sites"]])                   # 瓢湖: 例年 10月上旬から(季節の中)
+        self.assertEqual(sources.next_window_start(date(2026, 12, 1), {"start": "11-11", "end": "03-10"}), date(2027, 11, 11))
+
+    def test_locations_are_coarse(self):
+        for e in catalog.approved_entries(catalog.load_catalog("wintering_birds")):
+            self.assertIn(e["location_precision"], ("area_1km", "area_10km"), e["id"])
+
+
 class V0Estimates(unittest.TestCase):
     DOC = {"schema": "biyori-proposal/1", "generated_at": "2026-10-23T09:30:00+09:00", "proposals": [
         {"id": "ikimonobiyori:autumn_leaves:2026-10-24:kouyou-0002", "phenology_stage": "before_bud", "suitability": {"band": "no"}},

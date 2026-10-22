@@ -391,6 +391,12 @@ def horizon(now, dates, policy):
     return {"days": days, "beyond": [d.isoformat() for d in dates if (d - now.date()).days > days]}
 
 
+def next_window_start(d, tw):
+    """d の日以後で最も近い、例年の時期の始まりの日(今年か来年)。"""
+    s = _md_date(d.year, tw["start"])
+    return s if s >= d else _md_date(d.year + 1, tw["start"])
+
+
 def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=None, access=None):
     """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。
     region(regions.yaml の地域)・terrain・access を渡すと、名所の tags で先に絞る(段階16 B-4)。"""
@@ -424,6 +430,10 @@ def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=Non
             # 例年の時期から外れた名所。読む情報源(read_plan)がこの名所も伝えていれば、ついでに分かる公式の現況を示せる(現況が主。段階15)
             "out_of_season": [{"site": r["site"], "name": r["name"], "days_from_window": r["days_from_window"],
                                "covered_by_read_plan": [s["id"] for s in r["sources"] if s["id"] in plan]} for r in out_of_season],
+            # 例年の時期がこれから来る名所(段階16 C: 季節の前でも「例年の始まりの時期」を答える)。next_start は対象の最初の日より後で最も近い始まり
+            "upcoming_windows": [{"site": r["site"], "name": r["name"], "typical_window": r["typical_window"],
+                                  "next_start": next_window_start(dates[0], r["typical_window"]).isoformat()}
+                                 for r in out_of_season if r["typical_window"] and next_window_start(dates[0], r["typical_window"]) > dates[0]],
             "read_plan": sorted(plan.values(), key=lambda x: (x["kind"] != "status_page", x["id"])),
             "human_urls": sorted(human.values(), key=lambda x: x["id"]),
             "no_status_source": no_status}

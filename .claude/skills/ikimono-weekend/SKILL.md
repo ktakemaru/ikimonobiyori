@@ -37,7 +37,7 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
    ```
    python -X utf8 -m ikimonobiyori.sources --subject <対象> weekend --now <今の時刻 ISO 8601 +09:00> [--date YYYY-MM-DD ...] [--region <呼び名>] [--terrain <地形>] [--access <行き方>]
    ```
-   出力の `sites`(候補)・`read_plan`(読む情報源。1 件で複数の名所が分かるものは 1 回だけ)・`human_urls`(未承認。人が開く)・`no_status_source`(現況の情報源がない候補)・`out_of_season`(例年の時期の外)・`horizon`(14 日より先の日)を使う。
+   出力の `sites`(候補)・`read_plan`(読む情報源。1 件で複数の名所が分かるものは 1 回だけ)・`human_urls`(未承認。人が開く)・`no_status_source`(現況の情報源がない候補)・`out_of_season`(例年の時期の外)・`upcoming_windows`(例年の時期がこれから来る名所と、その始まりの日。季節の前の「飛来前」「例年の始まりの時期」に使う)・`horizon`(14 日より先の日)を使う。
 
 2. **候補を絞る。** `sites` は、名所カタログの例年の時期に対象の日が入る(`in_window`)か前後 7 日以内(`near`)の名所と、例年の時期の記載がない名所(`no_window`)。`out_of_season` の名所は、`covered_by_read_plan` があれば(読むページがついでに伝えていれば)公式の現況を示してよい(例年より遅い・早い年がある)。来週以降の質問では、名所カタログの例年の時期より**公式の見頃予測を優先**する(手順 6 の `forecast_hits`)。
 
