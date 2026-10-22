@@ -63,7 +63,7 @@ entries:
     kind: area
     point: {lat: 36.766, lon: 139.448, elevation_m: 1402}
     location_precision: exact
-    typical_window: {start: "10-11", end: "10-31", source_url: "https://www.nikko-kankou.org/flowering/autumn-leaves", note: "公式の「見頃予測」: 戦場ヶ原・小田代原の木々 10月中旬〜下旬(例年値か今年の予測かは明記なし)。草紅葉は9月下旬〜10月上旬(spot/10)"}
+    typical_window: {start: "09-21", end: "10-10", source_url: "https://www.nikko-kankou.org/spot/10", note: "公式: 草紅葉の見頃 9月下旬〜10月上旬"}
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     access_notes: "日光駅・東武日光駅から湯元温泉行きのバスで赤沼または三本松"
     status: approved
@@ -71,7 +71,7 @@ entries:
     sources:
       - {url: "https://www.nikko-kankou.org/spot/10", title: "日光市観光協会 戦場ヶ原", checked_on: "2026-10-22"}
       - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況", checked_on: "2026-10-22"}
-    note: "代表点: 赤沼(ハイキングの起点。推定)。所在地は日光市中宮祠"
+    note: "公式の記載は草紅葉の見頃。樹木の紅葉とは対象が異なる(ユーザーの修正 2026-10-22)。代表点: 赤沼(ハイキングの起点。推定)。所在地は日光市中宮祠"
   - id: kouyou-0006
     name: 塩原温泉郷(紅の吊橋付近)
     subjects: [autumn_leaves]
@@ -292,3 +292,43 @@ entries:
     sources:
       - {url: "https://www.town.otaki.chiba.jp/kanko_iju_bunka/kanko_iju/kanko_jyouho/5/4/1481.html", title: "大多喜町 養老渓谷の紅葉", checked_on: "2026-10-22"}
     note: "代表点: 粟又の滝(推定)。遊歩道は台風の被害で一部規制がある(大多喜町の通行規制のお知らせ。検索結果の要約でしか見ていない。要確認)"
+  - id: kouyou-0003
+    name: 中禅寺湖・いろは坂(中禅寺温泉付近)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.738, lon: 139.501, elevation_m: 1284}
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    access_notes: "いろは坂は紅葉期に渋滞しやすく、普段約20分の上りが2〜3時間、連休に最大6時間かかった例がある。中禅寺湖の駐車場は奥日光県営駐車場(栃木県のページ)"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/12", title: "日光市観光協会 中禅寺湖", checked_on: "2026-10-22"}
+      - {url: "https://www.nikko-kankou.org/spot/9", title: "日光市観光協会 いろは坂", checked_on: "2026-10-22"}
+    note: "公式スポットページに例年の記載なし(紅葉状況ページの見頃予測は今年の予測のため使わない。ユーザー承認 2026-10-22)。代表点: 中禅寺温泉(バス停付近。湖面は公式で標高1269m。推定)"
+  - id: kouyou-0013
+    name: 長瀞(月の石もみじ公園)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.091, lon: 139.113, elevation_m: 149}
+    location_precision: exact
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報"}
+    note: "公式に例年の記載なし。2021年の公式速報では11月中旬が見頃(ユーザー承認 2026-10-22。出典ページの本文はユーザーが確認)。代表点: 月の石もみじ公園(推定)"
+  - id: kouyou-0024
+    name: 国営昭和記念公園(日本庭園)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.711, lon: 139.398, elevation_m: 100}
+    location_precision: exact
+    typical_window: {start: "10-21", end: "12-10", source_url: "https://www.showakinen-koen.jp/flower-information/", note: "公式: モミジ類 10月下旬〜12月上旬(日本庭園など)。ユーザーが公式ページで確認(2026-10-22)"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}
+    note: "代表点: 日本庭園(推定)。イチョウ並木は別(カナール 11月上旬〜中旬など)"

@@ -8,24 +8,8 @@
 #   id の kouyou-0004(丸沼高原)と kouyou-0016(御岳渓谷)は見送りのため欠番。
 schema: ikimono-site-catalog/1
 subject: autumn_leaves
-note: "段階14b の下書きのうち、保留(承認結果が未記入)のものだけ。承認された件は本番のカタログに移した(2026-10-22)。却下はなし"
+note: "段階14b の下書きのうち、保留のものだけ。承認された件は本番のカタログに移した(2026-10-22)。却下はなし"
 entries:
-  - id: kouyou-0003
-    name: 中禅寺湖・いろは坂(中禅寺温泉付近)
-    subjects: [autumn_leaves]
-    timing_type: temperature
-    kind: area
-    point: {lat: 36.738, lon: 139.501, elevation_m: 1284}
-    location_precision: exact
-    typical_window: {start: "10-11", end: "11-10", source_url: "https://www.nikko-kankou.org/flowering/autumn-leaves", note: "公式の「見頃予測」: 中禅寺湖・華厳滝、いろは坂とも10月中旬〜11月上旬(例年値か今年の予測かは明記なし)"}
-    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
-    access_notes: "いろは坂は紅葉期に渋滞しやすく、普段約20分の上りが2〜3時間、連休に最大6時間かかった例がある。中禅寺湖の駐車場は奥日光県営駐車場(栃木県のページ)"
-    status: candidate              # 保留: 中禅寺湖: 承認結果に判定の記入がなかった(時期が例年値か今年の予測かの回答も未記入)
-    sources:
-      - {url: "https://www.nikko-kankou.org/spot/12", title: "日光市観光協会 中禅寺湖", checked_on: "2026-10-22"}
-      - {url: "https://www.nikko-kankou.org/spot/9", title: "日光市観光協会 いろは坂", checked_on: "2026-10-22"}
-      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況", checked_on: "2026-10-22"}
-    note: "代表点: 中禅寺温泉(バス停付近。標高は公式で湖面1269m。推定)。いろは坂は坂の途中で標高が約440m変わり、上から下へ色づく"
   - id: kouyou-0005
     name: 那須高原(殺生石・那須湯本温泉周辺)
     subjects: [autumn_leaves]
@@ -34,7 +18,7 @@ entries:
     point: {lat: 37.107, lon: 139.999, elevation_m: 1020}
     location_precision: exact
     typical_window: {start: "10-11", end: "10-31", source_url: "https://www.tochigiji.or.jp/spot/s10954/", note: "栃木県観光物産協会の一覧: 殺生石・湯本温泉周辺 10月中旬〜下旬(例年のもの)。本文は直接読めず(応答 503)、検索結果の要約で確認。要目視"}
-    status: candidate              # 保留: 那須高原: 要確認の結果が未記入(承認/修正/却下のどれも選ばれていない)
+    status: candidate              # 保留: 那須高原: 出典ページを読めていないため保留(ユーザーの判定 2026-10-22)
     sources:
       - {url: "https://www.tochigiji.or.jp/spot/s10954/", title: "栃木県観光物産協会 茶臼岳(那須岳)"}
     note: "代表点: 殺生石・那須温泉神社付近(推定)。76地点の那須岳(茶臼岳)と重ならないよう、山麓の温泉地にした。那須町観光協会のサイトは応答なし(503)"
@@ -47,22 +31,10 @@ entries:
     typical_window: {start: "10-21", end: "11-10", source_url: "https://www.tokamachishikankou.jp/special/autumn_leaves/", note: "十日町市観光協会: 紅葉時期は例年10月中旬〜11月中旬頃、見頃は10月下旬〜11月上旬"}
     official_status_url: "https://www.tokamachishikankou.jp/special/autumn_leaves/"
     access_notes: "繁忙期は混雑緩和のため事前予約が必要な期間がある"
-    status: candidate              # 保留: 清津峡: 修正の指示の座標が未記入(「［lat, lon］」のまま)。座標が決まるまで保留
+    status: candidate              # 保留: 清津峡: 修正の指示の座標が 2 回とも未記入(「［lat, lon］」のまま)。座標が決まるまで保留
     sources:
       - {url: "https://www.tokamachishikankou.jp/special/autumn_leaves/", title: "十日町市観光協会 紅葉情報2026", checked_on: "2026-10-22"}
     note: "代表点(清津峡渓谷トンネルの入口)の座標を確かめられなかったので point を入れていない(推定した座標の標高が1,410mと出て、入口の標高と合わないと判断)。承認のときに決めたい"
-  - id: kouyou-0013
-    name: 長瀞(月の石もみじ公園)
-    subjects: [autumn_leaves]
-    timing_type: temperature
-    kind: point
-    point: {lat: 36.091, lon: 139.113, elevation_m: 149}
-    location_precision: exact
-    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", note: "長瀞町観光協会: 例年10月下旬に色づき始め、11月中旬ごろから見頃(終わりの記載なし。end は仮に11月末)。本文は直接読めず(応答 503)、検索結果の要約で確認。要目視"}
-    status: candidate              # 保留: 長瀞: 要確認の結果が未記入
-    sources:
-      - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報"}
-    note: "代表点: 月の石もみじ公園(推定)"
   - id: kouyou-0017
     name: 高尾山(清滝駅・ケーブルカー沿線)
     subjects: [autumn_leaves]
@@ -71,19 +43,7 @@ entries:
     point: {lat: 35.633, lon: 139.271, elevation_m: 193}
     location_precision: exact
     typical_window: {start: "11-11", end: "12-10", source_url: "https://www.takaotozan.co.jp/StationStaff/archives/14100", note: "高尾登山電鉄(ケーブルカーの管理者)のブログ: 例年11月中旬〜12月上旬。山頂〜薬王院が先、ケーブル沿線は遅れる。本文は直接読めず(メンテナンス中)、検索結果の要約で確認。要目視"}
-    status: candidate              # 保留: 高尾山: 要確認の結果が未記入
+    status: candidate              # 保留: 高尾山: 出典サイトがメンテナンス中のため保留(ユーザーの判定 2026-10-22)
     sources:
       - {url: "https://www.takaotozan.co.jp/StationStaff/archives/14100", title: "高尾登山電鉄 高尾山の紅葉情報"}
     note: "代表点: ケーブルカー清滝駅(推定)。76地点の高尾山(山頂)とは別に山麓を代表点にした"
-  - id: kouyou-0024
-    name: 国営昭和記念公園(日本庭園)
-    subjects: [autumn_leaves]
-    timing_type: temperature
-    kind: point
-    point: {lat: 35.711, lon: 139.398, elevation_m: 100}
-    location_precision: exact
-    typical_window: {start: "10-21", end: "12-10", source_url: "https://www.showakinen-koen.jp/flower-information/", note: "公園の案内: モミジ類 10月下旬〜12月上旬(日本庭園など)。本文は直接読めず(応答 504)、検索結果の要約で確認。要目視"}
-    status: candidate              # 保留: 国営昭和記念公園: 要確認の結果が未記入
-    sources:
-      - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}
-    note: "代表点: 日本庭園(推定)。イチョウ並木は別(カナール 11月上旬〜中旬など)"
