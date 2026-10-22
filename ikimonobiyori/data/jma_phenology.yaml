@@ -25,21 +25,24 @@ layout:
   summary_columns: [平年値, rm, 最早値, rm, 最早年, 最晩値, rm, 最晩年]   # 正規化では使わない(形の確認だけ)
   no_value: "0"                 # 値 0(rm も 0)は「値なし」。欠測・観測なし・観測終了・未来の年の区別は CSV からは分からない(要目視)
 # 地点。番号は CSV の 3 桁(フォーマットの PDF の断片「47***」から、国際地点番号 47NNN の下 3 桁と読める = 推測)。
-# 座標・標高は CSV に含まれない → null(気象官署の一覧など、別の資料が要る。段階13 では取りに行かない)。
+# 座標・標高は CSV に含まれない。段階14 フェーズ 1(2026-10-22、ユーザー承認)で、気象庁「地域気象観測所一覧」ame_master.pdf
+#   (https://www.jma.go.jp/jma/kishou/know/amedas/ame_master.pdf。出典: 気象庁ホームページ。加工して作成)を一度だけ取得して読み、9 地点(長野・宇都宮・前橋・熊谷・水戸・甲府・銚子・東京・横浜)に書いた。
+#   lat・lon は PDF の度分を度に直した小数(小数 4 桁)、elevation_m は PDF の「海面上の高さ(m)」。ame_no は PDF の観測所番号(5 桁。地点名は PDF から文字として取り出せず、番号と座標の妥当性で対応づけた。docs/stage14-decisions.md D-10)。
+#   PDF 自体はリポジトリに置かない(SHA-256 は docs/stage14-decisions.md)。残りの 6 地点(松本・飯田・館山・伊豆諸島)は答え合わせの範囲外のため null のまま。
 # prefecture・region は地点名からの対応(**このリポジトリの外の資料では確認していない**)。region は気象庁の地方予報区の「関東甲信」。
 # island: true は伊豆諸島(本州の気象官署と条件が大きく違うため、答え合わせの主な対象から外す案。docs/validation-plan.md)
 stations:
-  - {station_no: "610", name: 長野,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "615", name: 宇都宮, prefecture: 栃木県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "610", name: 長野,   prefecture: 長野県,   region: 関東甲信, lat: 36.6617, lon: 138.1917, elevation_m: 418, ame_no: "48156"}
+  - {station_no: "615", name: 宇都宮, prefecture: 栃木県,   region: 関東甲信, lat: 36.5483, lon: 139.8683, elevation_m: 119, ame_no: "41277"}
   - {station_no: "618", name: 松本,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "624", name: 前橋,   prefecture: 群馬県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "626", name: 熊谷,   prefecture: 埼玉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "629", name: 水戸,   prefecture: 茨城県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "624", name: 前橋,   prefecture: 群馬県,   region: 関東甲信, lat: 36.405, lon: 139.06, elevation_m: 112, ame_no: "42251"}
+  - {station_no: "626", name: 熊谷,   prefecture: 埼玉県,   region: 関東甲信, lat: 36.15, lon: 139.38, elevation_m: 30, ame_no: "43056"}
+  - {station_no: "629", name: 水戸,   prefecture: 茨城県,   region: 関東甲信, lat: 36.38, lon: 140.4667, elevation_m: 29, ame_no: "40201"}
   - {station_no: "637", name: 飯田,   prefecture: 長野県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "638", name: 甲府,   prefecture: 山梨県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "648", name: 銚子,   prefecture: 千葉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "662", name: 東京,   prefecture: 東京都,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
-  - {station_no: "670", name: 横浜,   prefecture: 神奈川県, region: 関東甲信, lat: null, lon: null, elevation_m: null}
+  - {station_no: "638", name: 甲府,   prefecture: 山梨県,   region: 関東甲信, lat: 35.6667, lon: 138.5533, elevation_m: 273, ame_no: "49142"}
+  - {station_no: "648", name: 銚子,   prefecture: 千葉県,   region: 関東甲信, lat: 35.7383, lon: 140.8567, elevation_m: 20, ame_no: "45148"}
+  - {station_no: "662", name: 東京,   prefecture: 東京都,   region: 関東甲信, lat: 35.6917, lon: 139.75, elevation_m: 25, ame_no: "44132"}
+  - {station_no: "670", name: 横浜,   prefecture: 神奈川県, region: 関東甲信, lat: 35.4383, lon: 139.6517, elevation_m: 39, ame_no: "46106"}
   - {station_no: "672", name: 館山,   prefecture: 千葉県,   region: 関東甲信, lat: null, lon: null, elevation_m: null}
   - {station_no: "675", name: 大島,   prefecture: 東京都,   region: 関東甲信, island: true, lat: null, lon: null, elevation_m: null}
   - {station_no: "677", name: 三宅島, prefecture: 東京都,   region: 関東甲信, island: true, lat: null, lon: null, elevation_m: null}

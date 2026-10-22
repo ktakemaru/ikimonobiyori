@@ -18,6 +18,7 @@ CATALOG_DIR = DATA_FILES_DIR / "catalog"                      # 名所カタロ�
 CATALOG_POLICY_PATH = CATALOG_DIR / "policy.yaml"
 CATALOG_SCHEMA_PATH = SCHEMA_DIR / "site-catalog.schema.json"
 JMA_PHENOLOGY_DEF_PATH = DATA_FILES_DIR / "jma_phenology.yaml"   # 気象庁 生物季節観測の CSV の読み方(段階13)。CSV そのものはパッケージの外(コマンドで明示)
+BACKTEST_PLAN_PATH = DATA_FILES_DIR / "backtest_plan.yaml"          # 紅葉の答え合わせの計画と判定の基準(段階14。結果を見る前に決めた値。変えない)
 DEFAULT_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"      # パッケージの外を指すのはここだけ(未設定のときの書き込み先の既定)
 ENV_DATA_DIR = "IKIMONOBIYORI_DATA_DIR"
 

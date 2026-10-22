@@ -19,7 +19,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 6. **実通信は、ユーザーがその場で承認したときだけ。**
    - テストは通信しない(ソケットは `tests/nonet.py` で禁止、子プロセスも `tests/nonet_child/` で禁止、`BIYORI_UNDER_TEST=1` は `--live` を常に拒否)。テストから子プロセスを起動するのは `tests/helpers.py` の `run_child` / `run_child_env` だけ。
    - `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る。このリポジトリ単独で実通信しない。単独で使うための別の上限の仕組みは作らない(作るなら提案として報告)。
-   - 許可ホストは `config.yaml` の `live.allowed_hosts_by_subject`(紅葉: `api.open-meteo.com`、野鳥: `api.inaturalist.org`)だけ。自分では広げない。Open-Meteo は無料枠(1 日 10,000 call、非商用、CC BY 4.0 の表示)を守る。
+   - 許可ホストは `config.yaml` の `live.allowed_hosts_by_subject`(紅葉: `api.open-meteo.com`、野鳥: `api.inaturalist.org`、紅葉の答え合わせ `autumn_leaves_backtest`: `archive-api.open-meteo.com`。最後はユーザー承認 2026-10-22)だけ。自分では広げない。Open-Meteo は無料枠(1 日 10,000 call、非商用、CC BY 4.0 の表示)を守る。
    - **iNaturalist の利用規約・推奨手順は、人の目で確認するまで未確認**(`docs/ikimonobiyori-research.md` §12)。野鳥の実通信を増やさない。実際の応答をこのリポジトリに置かない(テストは合成データ)。
 7. **野鳥の位置は粗く丸める**(プロファイルの `location_precision`、既定は小数 1 桁)。正確な座標・観察者・写真はクエリ・キャッシュ・ログ・出力のどこにも出さない。`care`(マナー)を出力に付ける。
 8. **書き込み先は `IKIMONOBIYORI_DATA_DIR` の下だけ**(キャッシュ・読めなかった応答・部品)。未設定のときは `runtime/ikimonobiyori/`(`.gitignore` 済み)。リポジトリの追跡ファイルを実行で変えない。biyori-hub は取り込んだこのコードを `vendor/` から動かすので、`ikimonobiyori/` の中に書き込まない。

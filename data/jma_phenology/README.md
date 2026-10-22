@@ -31,7 +31,7 @@ python -X utf8 -m ikimonobiyori.jma_phenology summary --normalized data/jma_phen
 | `status` | `observed` / `no_value`(欠測・観測なし・観測終了の区別は CSV からは分からない) |
 | `rm` | CSV の rm の値をそのまま(意味は**未確認**。フォーマットの PDF を読めなかった。値は 4・6・7・8・9) |
 | `cross_year` | 1 = 年をまたいだ値(隣の年の日付にした) |
-| `lat` / `lon` / `elevation_m` | CSV に含まれないので空(気象官署の一覧など別の資料が要る) |
+| `lat` / `lon` / `elevation_m` | CSV に含まれない。9 地点(長野・宇都宮・前橋・熊谷・水戸・甲府・銚子・東京・横浜)だけ、気象庁「地域気象観測所一覧」(https://www.jma.go.jp/jma/kishou/know/amedas/ame_master.pdf、2026-10-22 取得)から `ikimonobiyori/data/jma_phenology.yaml` に書いた値(出典: 気象庁ホームページ。度分を度に直し小数 4 桁)。ほかの地点は空 |
 
 ## 推測で決めた部分
 - 年をまたぐ値: 春の現象(うめ・さくら)の 10〜12 月の値は前年、秋の現象(紅葉・落葉)の 1〜3 月の値は翌年の日付と読んだ。フォーマットの PDF の断片(「2015」「2014 12 15」「2015」「1215」)と、実際の値の月の分布からの推測。**要目視(フォーマットの PDF)**。
