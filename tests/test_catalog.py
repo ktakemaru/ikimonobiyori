@@ -158,12 +158,18 @@ class Catalog(unittest.TestCase):
         d = doc(ok, entry(id="kouyou-0002"), entry(id="kouyou-0003", status="retired"))
         self.assertEqual([e["id"] for e in catalog.approved_entries(d)], ["kouyou-0001"])
 
-    def test_the_repository_examples_are_candidates_only(self):
+    def test_the_repository_catalog_has_only_approved_real_entries(self):
+        # 段階14b(ユーザーの指示 2026-10-22): 本番のカタログの実在の名所は承認済みだけ。説明用の例(example: true)は candidate のまま
         d = yaml.safe_load((paths.CATALOG_DIR / "autumn_leaves.yaml").read_text(encoding="utf-8"))
-        self.assertTrue(1 <= len(d["entries"]) <= 2)
-        for e in d["entries"]:
-            self.assertEqual((e["status"], e.get("example")), ("candidate", True))
-        self.assertEqual(catalog.approved_entries(d), [])
+        real = [e for e in d["entries"] if not e.get("example")]
+        examples = [e for e in d["entries"] if e.get("example")]
+        self.assertTrue(real)
+        for e in real:
+            self.assertEqual(e["status"], "approved", e["id"])
+            self.assertTrue(e.get("approved_at") and e["sources"], e["id"])
+        for e in examples:
+            self.assertEqual(e["status"], "candidate", e["id"])
+        self.assertEqual([e["id"] for e in catalog.approved_entries(d)], [e["id"] for e in real])
 
 
 class ProfileTimingType(unittest.TestCase):
@@ -200,9 +206,10 @@ class Drafts(unittest.TestCase):
         self.assertIn("autumn_leaves.yaml", [p.name for p, _ in res])
 
     def test_drafts_are_unapproved_and_not_used(self):
+        # フェーズ3 の後: 下書きには保留(と却下)だけが残る。承認済みは本番のカタログへ移した
         d = self.load()
-        self.assertTrue(20 <= len(d["entries"]) <= 30)
-        self.assertEqual({e["status"] for e in d["entries"]}, {"candidate"})
+        self.assertTrue(d["entries"])
+        self.assertEqual({e["status"] for e in d["entries"]} - {"candidate", "retired"}, set())
         self.assertFalse(any(e.get("approved_at") or e.get("example") for e in d["entries"]))
         self.assertEqual(catalog.approved_entries(d), [])
         self.assertTrue(all(catalog.usable_description(e) is None for e in d["entries"]))
@@ -214,6 +221,17 @@ class Drafts(unittest.TestCase):
             tw = e.get("typical_window")
             if tw:
                 self.assertIn(tw["source_url"], [s["url"] for s in e["sources"]], e["id"])     # 時期の出典は sources にもある
+
+    def test_no_entry_is_both_approved_and_in_the_drafts(self):
+        main = yaml.safe_load((paths.CATALOG_DIR / "autumn_leaves.yaml").read_text(encoding="utf-8"))
+        self.assertEqual({e["id"] for e in main["entries"]} & {e["id"] for e in self.load()["entries"]}, set())
+
+    def test_approved_real_entries_are_in_range_and_have_a_point(self):
+        pol = catalog.load_policy()
+        main = yaml.safe_load((paths.CATALOG_DIR / "autumn_leaves.yaml").read_text(encoding="utf-8"))
+        for e in catalog.approved_entries(main):
+            self.assertIn("point", e, e["id"])
+            self.assertLessEqual(catalog.nearest_origin_km(pol, e["point"])[0], pol["range_limit"]["max_km"])
 
     def test_the_default_catalog_dir_does_not_read_the_drafts(self):
         names = [p.parent.name + "/" + p.name for p, _ in catalog.check_all()]

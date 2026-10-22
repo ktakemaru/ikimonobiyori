@@ -1,9 +1,12 @@
 # 紅葉の名所カタログ(ikimono-site-catalog/1)。docs/design.md §5。
-# 段階13 では説明用の例だけを入れる(example: true。実在しない。座標・例年値・URL はすべて「例」)。実在の名所の下書きは段階14。
-# v0 の判定はこのファイルを使わない(v0 は ikimonobiyori/data/sites.yaml の 76 地点)。
+# 段階13 では説明用の例だけを入れた(example: true。実在しない。座標・例年値・URL はすべて「例」)。
+# 段階14b(2026-10-22): ユーザーが 1 件ずつ承認した実在の名所(status: approved)を足した。下書き・保留は drafts/autumn_leaves.yaml。
+#   公式ページの事実を Claude Code が自分の言葉で短くまとめたもの。代表点の座標は Claude Code の推定、標高は Open-Meteo Elevation API の値。
+#   typical_window は公式の「上旬・中旬・下旬」を 01〜10・11〜20・21〜月末に直した(元の書き方は note)。
+# v0 の既定の判定はこのファイルを使わない(v0 は ikimonobiyori/data/sites.yaml の 76 地点)。
 schema: ikimono-site-catalog/1
 subject: autumn_leaves
-note: "段階13: 例のみ。approved にしない"
+note: "例(example: true)は approved にしない。実在の名所は承認済み(approved)だけを置く(段階14b)"
 entries:
   - id: kouyou-example-0001
     name: (例)〇〇渓谷の遊歩道
@@ -34,3 +37,258 @@ entries:
     status: candidate
     sources:
       - {url: "https://example.org/kouyou-example-0002", title: "例の出典(実在しない)", checked_on: "2026-10-21"}
+
+  # ---- 段階14b: ユーザーが承認した名所(2026-10-22) ----
+  - id: kouyou-0001
+    name: 奥日光 湯ノ湖
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [ノリウツギ, オオカメノキ, ダケカンバ]
+    kind: area
+    point: {lat: 36.798, lon: 139.424, elevation_m: 1499}
+    location_precision: exact
+    typical_window: {start: "10-01", end: "10-20", source_url: "https://www.nikko-kankou.org/spot/13", note: "公式: 例年10月上旬〜中旬"}
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    access_notes: "日光駅・東武日光駅から湯元温泉行きのバス。冬は湖の周回歩道が閉鎖される"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/13", title: "日光市観光協会 湯ノ湖", checked_on: "2026-10-22"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況", checked_on: "2026-10-22"}
+    note: "代表点: 湖の北岸(湯元温泉の湖畔前バス停付近。推定)。所在地は日光市湯元"
+  - id: kouyou-0002
+    name: 奥日光 戦場ヶ原(赤沼付近)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.766, lon: 139.448, elevation_m: 1402}
+    location_precision: exact
+    typical_window: {start: "10-11", end: "10-31", source_url: "https://www.nikko-kankou.org/flowering/autumn-leaves", note: "公式の「見頃予測」: 戦場ヶ原・小田代原の木々 10月中旬〜下旬(例年値か今年の予測かは明記なし)。草紅葉は9月下旬〜10月上旬(spot/10)"}
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    access_notes: "日光駅・東武日光駅から湯元温泉行きのバスで赤沼または三本松"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/10", title: "日光市観光協会 戦場ヶ原", checked_on: "2026-10-22"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉状況", checked_on: "2026-10-22"}
+    note: "代表点: 赤沼(ハイキングの起点。推定)。所在地は日光市中宮祠"
+  - id: kouyou-0006
+    name: 塩原温泉郷(紅の吊橋付近)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.966, lon: 139.825, elevation_m: 538}
+    location_precision: exact
+    typical_window: {start: "11-01", end: "11-20", source_url: "https://www.city.nasushiobara.tochigi.jp/soshikikarasagasu/tsuishin/hana/2755.html", note: "那須塩原市: 紅の吊橋 11月上旬〜中旬(塩原渓谷 10月下旬〜11月中旬、日塩もみじライン 10月中旬〜11月上旬)"}
+    access_notes: "西那須野塩原ICから車で約20分(塩原もの語り館の近く)"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.city.nasushiobara.tochigi.jp/soshikikarasagasu/tsuishin/hana/2755.html", title: "那須塩原市 紅葉", checked_on: "2026-10-22"}
+    note: "代表点: 紅の吊橋(推定)"
+  - id: kouyou-0007
+    name: 吹割の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.688, lon: 139.212, elevation_m: 589}
+    location_precision: exact
+    typical_window: {start: "10-21", end: "11-10", source_url: "https://www.city.numata.gunma.jp/kanko/fukiware/1003065.html", note: "沼田市: 例年10月下旬〜11月上旬"}
+    access_notes: "遊歩道は柵がなく、雨で滑りやすい所がある(白線の内側に入らない)。夜間は通行止め。12月中旬〜3月下旬は冬季閉鎖。吹割大橋の手前に無料駐車場(約10台)、ほかに民間の駐車場"
+    manners: ["白線の内側に入らない"]
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.city.numata.gunma.jp/kanko/fukiware/1003065.html", title: "沼田市 吹割の滝 よくあるご質問", checked_on: "2026-10-22"}
+      - {url: "https://www.numata-kankou.jp/fukiwarenotaki/", title: "沼田市観光協会 吹割の滝", checked_on: "2026-10-22"}
+    note: "代表点: 滝(推定)。所在地は沼田市利根町追貝"
+  - id: kouyou-0008
+    name: 竜神大吊橋(竜神峡)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.650, lon: 140.431, elevation_m: 213}
+    location_precision: exact
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 竜神峡 11月中旬〜下旬"}
+    access_notes: "駐車場250台。営業8:30〜17:00(土曜はライトアップで20時まで)"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
+      - {url: "https://www.city.hitachiota.ibaraki.jp/miryoku/miru/facility/page000237.html", title: "常陸太田市 竜神大吊橋", checked_on: "2026-10-22"}
+    note: "代表点: 竜神大吊橋(推定)。所在地は常陸太田市天下野町2133-9"
+  - id: kouyou-0010
+    name: 軽井沢 雲場池
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [モミジ, ドウダンツツジ, カラマツ]
+    kind: point
+    point: {lat: 36.350, lon: 138.619, elevation_m: 999}
+    location_precision: exact
+    typical_window: {start: "10-11", end: "11-10", source_url: "https://www.go-nagano.net/nature-and-outdoors/id16956", note: "長野県観光機構: 例年10月中旬〜11月上旬"}
+    access_notes: "紅葉期はとても混む。池の近くに駐車場がなく、公共交通を勧めている(軽井沢駅北口の町営駐車場など)。紅葉期に周辺道路の一方通行の規制がある"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.go-nagano.net/nature-and-outdoors/id16956", title: "長野県観光機構 長野の紅葉名所", checked_on: "2026-10-22"}
+      - {url: "https://www.town.karuizawa.lg.jp/page/1194.html", title: "軽井沢町 雲場池", checked_on: "2026-10-22"}
+    note: "代表点: 池(推定)。軽井沢町・軽井沢観光協会のページには例年の時期の記載がない"
+  - id: kouyou-0011
+    name: 御岳昇仙峡(仙娥滝付近)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.729, lon: 138.565, elevation_m: 783}
+    location_precision: exact
+    typical_window: {start: "11-01", end: "11-20", source_url: "https://www.city.kofu.yamanashi.jp/kanko/faq/kyoiku/sports/shisetsu/00644.html", note: "甲府市: 例年11月上旬〜中旬"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.city.kofu.yamanashi.jp/kanko/faq/kyoiku/sports/shisetsu/00644.html", title: "甲府市 紅葉が楽しめる場所を教えてください", checked_on: "2026-10-22"}
+    note: "代表点: 仙娥滝付近(推定)。渓谷は長いので、下流の長潭橋付近とは時期・標高がずれる(検索結果の要約では、観光協会の方の話として長潭橋付近は11月初め頃)"
+  - id: kouyou-0012
+    name: 河口湖 もみじ回廊
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [モミジ]
+    kind: point
+    point: {lat: 35.519, lon: 138.743, elevation_m: 837}
+    location_precision: exact
+    typical_window: {start: "10-21", end: "11-20", source_url: "https://fujisan.ne.jp/sightseeing/4218/", note: "富士河口湖町観光連盟: 例年10月下旬〜11月中旬"}
+    access_notes: "専用の駐車場はなく、近くの駐車場を使う。河口湖駅から周遊バスで久保田一竹美術館下車、徒歩5分。秋の夜は冷える"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://fujisan.ne.jp/sightseeing/4218/", title: "富士河口湖町観光連盟 もみじ回廊", checked_on: "2026-10-22"}
+    note: "代表点: 梨川沿いの回廊(推定)。所在地は富士河口湖町河口。モミジ約150本"
+  - id: kouyou-0014
+    name: 袋田の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [モミジ, カエデ]
+    kind: point
+    point: {lat: 36.764, lon: 140.407, elevation_m: 166}
+    location_precision: exact
+    typical_window: {start: "11-01", end: "11-20", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 11月上旬〜中旬。大子町観光協会のページには例年の時期の記載がない"}
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    access_notes: "観瀑台は袋田の滝トンネルの奥(第2観瀑台もある)"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
+      - {url: "https://www.daigo-kanko.jp/spot-0001.html", title: "大子町観光協会 袋田の滝", checked_on: "2026-10-22"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉", checked_on: "2026-10-22"}
+    note: "代表点: 滝(観瀑台。推定)。所在地は大子町袋田"
+  - id: kouyou-0015
+    name: 筑波山(筑波山神社・宮脇駅周辺)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.214, lon: 140.104, elevation_m: 308}
+    location_precision: exact
+    typical_window: {start: "11-01", end: "11-30", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 筑波山 11月上旬〜下旬"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", title: "茨城県 観光いばらき 茨城の紅葉", checked_on: "2026-10-22"}
+    note: "代表点: 筑波山神社(推定)。76地点の筑波山(女体山。山頂)とは別に山麓を代表点にした。つくば市の渋滞・混雑とケーブルカーの運行の告知は検索結果の要約でしか見ていない(要確認)"
+  - id: kouyou-0018
+    name: 箱根 強羅(箱根美術館)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [モミジ]
+    kind: point
+    point: {lat: 35.249, lon: 139.050, elevation_m: 520}
+    location_precision: exact
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.hakone.or.jp/1804", note: "箱根町観光協会: 箱根美術館 例年11月中旬〜下旬"}
+    official_status_url: "https://www.hakone.or.jp/1804"
+    access_notes: "箱根湯本駅から箱根登山線で強羅駅、ケーブルカーで公園上駅"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-22"}
+    note: "代表点: 箱根美術館(推定)。日本庭園にモミジ200本以上。仙石原・大涌谷は除いた(指示書)"
+  - id: kouyou-0019
+    name: 寸又峡(夢のつり橋)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.172, lon: 138.128, elevation_m: 607}
+    location_precision: exact
+    typical_window: {start: "11-01", end: "11-30", source_url: "https://www.town.kawanehon.shizuoka.jp/soshiki/kankoshoko/faq00/5968.html", note: "川根本町: 寸又峡・接岨峡方面 11月上旬〜下旬"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.town.kawanehon.shizuoka.jp/soshiki/kankoshoko/faq00/5968.html", title: "川根本町 花の見頃を教えてください", checked_on: "2026-10-22"}
+      - {url: "https://okuooi.gr.jp/watch/details.php?id=131", title: "川根本町まちづくり観光協会 寸又峡の紅葉", checked_on: "2026-10-22"}
+    note: "代表点: 夢のつり橋(推定)。つり橋の人数制限・待ち時間は検索結果の要約でしか見ていない(要確認)"
+  - id: kouyou-0020
+    name: 大山(大山寺)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [モミジ]
+    kind: area
+    point: {lat: 35.430, lon: 139.243, elevation_m: 528}
+    location_precision: exact
+    access_notes: "伊勢原駅北口からバスで大山ケーブル(終点)。紅葉ライトアップの期間はケーブルカーが夜も動く"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/", title: "伊勢原市 紅葉(大山)", checked_on: "2026-10-22"}
+    note: "公式ページに例年の記載なし(紅葉ライトアップが11月下旬ごろ、とだけある)。typical_window は空のまま(ユーザー承認 2026-10-22)。代表点: 大山寺の境内(ユーザーの修正の指示。座標は Claude Code の推定、標高は Open-Meteo Elevation API で取り直し)。76地点の大山(伊勢原。山頂)とは別"
+  - id: kouyou-0021
+    name: 鎌倉 長谷寺
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.313, lon: 139.533, elevation_m: 27}
+    location_precision: exact
+    typical_window: {start: "11-21", end: "12-10", source_url: "https://www.trip-kamakura.com/association-news/detail.php?id=30", note: "鎌倉市観光協会: 鎌倉市内全体の例年 11月下旬〜12月上旬(長谷寺だけの例年値ではない)"}
+    official_status_url: "https://www.hasedera.jp/"
+    access_notes: "夜間特別拝観の期間は通路で三脚を使えない"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.trip-kamakura.com/association-news/detail.php?id=30", title: "鎌倉市観光協会 鎌倉市内の色づき状況", checked_on: "2026-10-22"}
+      - {url: "https://www.hasedera.jp/2025/11/20124/", title: "長谷寺 花散歩 紅葉状況(2025)", checked_on: "2026-10-22"}
+    note: "時期は鎌倉市全体の目安(鎌倉市観光協会)で、長谷寺だけの例年値ではない。代表点: 長谷寺(推定)"
+  - id: kouyou-0022
+    name: 六義園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.733, lon: 139.747, elevation_m: 28}
+    location_precision: exact
+    access_notes: "2026年の夜間特別観賞は11月25日〜12月6日(夜は特別観賞券のみ。1日の販売数に限りがある)"
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html", title: "東京都公園協会 庭紅葉の六義園 夜間特別観賞(2026)", checked_on: "2026-10-22"}
+    note: "公式ページに例年の記載なし。typical_window は空のまま(ユーザー承認 2026-10-22。夜間特別観賞の期間は見頃の記述ではない)。代表点: 庭園(推定)"
+  - id: kouyou-0023
+    name: 新宿御苑
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    species: [カエデ, ハナノキ]
+    kind: area
+    point: {lat: 35.685, lon: 139.711, elevation_m: 39}
+    location_precision: exact
+    typical_window: {start: "12-01", end: "12-31", source_url: "https://fng.or.jp/shinjuku/place/season/", note: "国民公園協会: 12月の欄に紅葉(カエデ、ハナノキなど)。月単位の記載なので12月全体にした。11月の欄はイチョウ・プラタナス"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://fng.or.jp/shinjuku/place/season/", title: "国民公園協会 新宿御苑 四季のみどころ", checked_on: "2026-10-22"}
+    note: "公式の記載は月単位(12月の欄に紅葉)。typical_window は12月全体にした。代表点: 苑内(日本庭園付近。推定)"
+  - id: kouyou-0025
+    name: 養老渓谷(粟又の滝)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.219, lon: 140.171, elevation_m: 230}
+    location_precision: exact
+    typical_window: {start: "11-21", end: "12-10", source_url: "https://www.town.otaki.chiba.jp/kanko_iju_bunka/kanko_iju/kanko_jyouho/5/4/1481.html", note: "大多喜町: 例年11月下旬〜12月上旬"}
+    status: approved
+    approved_at: "2026-10-22"
+    sources:
+      - {url: "https://www.town.otaki.chiba.jp/kanko_iju_bunka/kanko_iju/kanko_jyouho/5/4/1481.html", title: "大多喜町 養老渓谷の紅葉", checked_on: "2026-10-22"}
+    note: "代表点: 粟又の滝(推定)。遊歩道は台風の被害で一部規制がある(大多喜町の通行規制のお知らせ。検索結果の要約でしか見ていない。要確認)"
