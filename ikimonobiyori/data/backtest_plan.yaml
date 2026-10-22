@@ -1,0 +1,24 @@
+# 紅葉の答え合わせの計画と判定の基準(段階14)。ikimonobiyori/backtest.py はここから読み、コードに値を持たない。
+# 出典: ユーザーが結果を見る前に決めた(2026-10-21 と 2026-10-22。docs/validation-plan.md §0 と追記、docs/stage14-decisions.md D-01〜D-09)。
+# **結果を見た後に変えない。** 変えるなら、別の年で確かめ直す。
+schema: ikimono-backtest-plan/1
+phenomenon: kaede_koyo               # 正解: 気象庁 かえでの紅葉(015)
+reference_phenomenon: icho_koyo      # 参考: いちょうの黄葉(013)。合否の対象外
+year_from: 2016                      # 案 A'(10 年)
+year_to: 2025
+station_nos: ["610", "615", "624", "626", "629", "638", "648", "662", "670"]   # 長野・宇都宮・前橋・熊谷・水戸・甲府・銚子・東京・横浜(2021 年以降も値がある 9 地点)
+models: era5_land                    # 再解析のモデルは era5_land で固定(Historical API の models)
+target_stage: peak                   # 合否に比べる v0 の段階: 見頃
+reference_stage: early_bloom         # 参考: 色づき始め
+elevation_modes: [with, without]     # with = 官署の標高を elevation に渡す(合否に使う)、without = 渡さない(v0 と同じ。参考)
+decisive_elevation_mode: with
+climatology:
+  mode: leave_one_out                # その地点のその年以外のすべての年
+  years: same_as_backtest            # 平年値法に使う年も year_from〜year_to だけ(1953 年からの観測は使わない)
+pass_criteria:
+  tolerance_days: 3                  # 差(予測 − 観測)の中央値が ±3 日以内(ちょうど 3 日を含む)
+  max_no_prediction_ratio: 0.2       # 予測なし ÷ 観測のある組 が 0.2 を超えたら不合格(0.2 ちょうどは超えない)
+  mae_rule: v0_smaller_than_climatology   # 共通の組で v0 の平均絶対誤差が平年値法より小さい(等しいときは不合格)
+cost:                                # 通信量の見積もり(docs/validation-plan.md §7。最悪側の推測。フェーズ 2 で見直す)
+  worst_case_calls_per_request: 9.2
+  daily_call_cap: 2000               # その日の実行の call の上限(指示書)。見込みがこれを超えるなら、超えない分だけ送って止める

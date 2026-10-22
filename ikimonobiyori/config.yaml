@@ -7,11 +7,14 @@ cache:
     open_meteo_forecast: 10800
     # 更新間隔(24時間)から導いた仮置き(根拠のある値ではない。段階5aの決定。規則: キャッシュ期間 < 更新間隔)。観察記録の集計は日単位でしか変わらない想定
     inaturalist_species_counts: 72000
+    # 仮置き(根拠のある値ではない): 過去の年の気温は変わらない前提で長くする。ただし直近の年の再解析は暫定値がありうる(ERA5 は約 5 日遅れ。docs/data-sources.md §2)。30 日
+    open_meteo_archive: 2592000
 live:
   allowed_hosts: [api.open-meteo.com]         # 紅葉(Open-Meteo)の許可リスト(計測フックの既定と同じ。自分では広げない)
   allowed_hosts_by_subject:                   # 対象ごとの許可リスト。野鳥の実行にだけ iNaturalist を許す(ユーザー承認 2026-10-14。GET のみ・認証なし)
     autumn_leaves: [api.open-meteo.com]
     birds: [api.inaturalist.org]
+    autumn_leaves_backtest: [archive-api.open-meteo.com]   # 紅葉の答え合わせ(段階14)の過去の気温(Historical API)だけ。ユーザー承認 2026-10-22(docs/validation-plan.md §0)。GET のみ・認証なし。allowed_hosts(上の紅葉の実行)には足さない
   min_interval_s: 2                           # リクエスト間隔の下限(30リクエスト/分以下)
   retry:                                      # 紅葉(fetch/live.py)の通信エラー(接続・TLS・タイムアウト)だけの再試行。HTTP の非 200 は、下の http の 502/503/504 だけ再試行する(それ以外は即中止)。野鳥は対象外。再試行も 1 リクエストと数える。**仮置き**(GitHub Actions の実験でのタイムアウトを受けた値。根拠のある値ではない)
     max_retries: 2

@@ -146,11 +146,13 @@ class ArchiveQuery(unittest.TestCase):
                                              "daily": ["temperature_2m_min"], "timezone": ["Asia/Tokyo"], "elevation": ["25"]})
         self.assertNotIn("elevation", B.archive_query(lat=35.69, lon=139.75, start_date="2025-08-26", end_date="2025-12-31")["params"])
 
-    def test_the_archive_host_is_not_allowed_yet(self):
-        # 段階14 で実通信するには、許可ホストの追加(ユーザーの承認)が要る。ここでは広げない
+    def test_the_archive_host_is_allowed_only_for_the_backtest(self):
+        # 段階14(ユーザー承認 2026-10-22): 答え合わせの過去の気温だけ。紅葉の通常の実行(allowed_hosts・autumn_leaves)には足さない
         live = load_config()["live"]
+        self.assertEqual(live["allowed_hosts_by_subject"]["autumn_leaves_backtest"], ["archive-api.open-meteo.com"])
         self.assertNotIn("archive-api.open-meteo.com", live["allowed_hosts"])
-        self.assertNotIn("archive-api.open-meteo.com", sum(live["allowed_hosts_by_subject"].values(), []))
+        self.assertNotIn("archive-api.open-meteo.com", live["allowed_hosts_by_subject"]["autumn_leaves"])
+        self.assertNotIn("archive-api.open-meteo.com", live["allowed_hosts_by_subject"]["birds"])
 
 
 if __name__ == "__main__":
