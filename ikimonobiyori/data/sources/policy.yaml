@@ -1,0 +1,47 @@
+# 情報源の台帳・現況の記録・「今週末のおすすめ」の手順の方針(段階15。docs/design.md §0)。
+# ikimonobiyori/sources.py はここから読み、コードに値を持たない。各値に出典または理由と provisional を付ける。
+schema: ikimono-sources-policy/1
+
+# 共通の段階(対象ごと。並びは早い → 遅い)。公式の書き方(台帳の notation.map)はこの id に対応させる
+stages:
+  autumn_leaves:
+    source: "指示書(段階15、2026-10-23 ユーザー承認)の『まだ・色づき始め・見ごろ・真っ盛り・色褪せ/落葉』"
+    provisional: true
+    items:
+      - {id: not_yet, label: まだ}
+      - {id: starting, label: 色づき始め}
+      - {id: good, label: 見ごろ}
+      - {id: peak, label: 真っ盛り}
+      - {id: fading, label: 色褪せ・落葉}
+
+# 新しさ: 公式の更新日から、読んだ日(または答える日)までの日数で分ける
+freshness:
+  fresh_max_days: {value: 3, source: "指示書(段階15): 3 日以内は『新しい』", provisional: true}
+  somewhat_old_max_days: {value: 7, source: "指示書(段階15): 7 日以内は『やや古い』、それより古いものは『古い。参考程度』", provisional: true}
+  labels: {fresh: 新しい, somewhat_old: やや古い, old: 古い。参考程度, unknown: 更新日不明, year_unknown: 新しさ不明}
+  # 年のない更新日(台帳の notation.year_shown: false。読んだ人が年を補ったもの)は日数で分けず year_unknown にする
+  #   (ユーザーの見直し 2026-10-23: 箱根町観光協会。前年の日付かもしれないので、新しい・やや古いと判定しない)
+
+# 候補の絞り込み: 名所カタログの例年の時期(typical_window)に対象の日が入っている、または前後これだけの日数以内
+candidates:
+  window_margin_days: {value: 7, source: "指示書(段階15): 例年の時期の前後 1 週間以内", provisional: true}
+
+# 答えの形: おすすめの件数
+recommend:
+  top_min: {value: 3, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
+  top_max: {value: 5, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
+
+# 補助の推定: 現況がない名所だけに、v0 の気温判定(biyori-proposal/1 の出力)を添えるときの書き方(段階15 決定 D-06)
+aux_estimate:
+  label: "推定(未検証・段階14で不合格)"
+  source: "指示書(段階15): 現況がない名所の補助として『推定(未検証・段階14で不合格)』と明記して出す"
+
+# 読んだ結果の記録(IKIMONOBIYORI_DATA_DIR の下。config.yaml の status_log.dir)。事実だけを残す(本文の写し・写真は残さない)
+record:
+  schema: ikimono-status-record/1
+  # 記録に入れてよい項目(これ以外は拒否する。本文の写しを入れる欄を作らない)
+  fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url]
+  # 公式の状態の原文(記号・語)の長さの上限(文字)。本文の写しを防ぐための仮置き(根拠のある値ではない。記号 1 字〜「色づきはじめ」程度の語を想定)
+  max_state_chars: {value: 20, source: "仮置き(段階15)。本文を写さないための上限", provisional: true}
+  # 地点の書き方(公式ページでの地点名)の長さの上限(文字)。仮置き(「【湯西川・川俣・奥鬼怒】湯西川水の郷」程度を想定)
+  max_label_chars: {value: 40, source: "仮置き(段階15)。本文を写さないための上限", provisional: true}

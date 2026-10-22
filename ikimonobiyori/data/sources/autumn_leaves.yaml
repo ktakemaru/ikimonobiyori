@@ -1,0 +1,312 @@
+# 紅葉の現況を発信する公式ページの台帳(ikimono-status-sources/1)。段階15(docs/design.md §0、docs/data-sources.md §7)。
+# 2026-10-23 に Claude Code が各ページを 1 回読んで、readable・notation・terms を確かめた(WebFetch。ページを取得して要約モデルが質問に答える道具。
+#   原文そのものとの照合は人の目でしていない)。読んだ結果の状態そのもの(今年の値)はここに書かない(記録は IKIMONOBIYORI_DATA_DIR の下)。
+# notation.map には、読んで確かめた書き方だけを書いた(見ていない書き方を推測で足さない)。
+# 承認: 指示書の条件(公式・読めた・利用条件が要約や出典つきの事実の利用を禁じていない)を満たすものを Claude Code が仮承認した(フェーズ 2)。
+#   2026-10-23 にユーザーが見直し、承認済みはすべてユーザーの承認(approved_by: user)に切り替えた。伊勢原市は pending に戻した。一覧は docs/stage15-review.md。
+schema: ikimono-status-sources/1
+subject: autumn_leaves
+sources:
+  # ---- 現況(status_page) ----
+  - id: nikko-kankou-autumn-leaves
+    publisher: 日光市観光協会
+    publisher_kind: tourism_association
+    url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    kind: status_page
+    covers:
+      - {site: kouyou-0001, label: "【奥日光】湯ノ湖、湯滝"}
+      - {site: kouyou-0002, label: "【奥日光】戦場ヶ原、小田代原の木々"}
+      - {site: kouyou-0002, label: "【奥日光】小田代原の草紅葉"}
+      - {site: kouyou-0003, label: "【奥日光】中禅寺湖、華厳滝"}
+      - {site: kouyou-0003, label: "【奥日光】いろは坂"}
+      - {name: 竜頭滝, label: "【奥日光】竜頭滝"}
+      - {name: 霧降高原 キスゲ平園地, label: "【日光】日光市霧降高原 キスゲ平園地"}
+      - {name: 日塩もみじライン, label: "【鬼怒川・川治】日塩もみじライン"}
+      - {name: 瀬戸合峡, label: "【湯西川・川俣・奥鬼怒】瀬戸合峡"}
+      - {name: 蛇王の滝, label: "【湯西川・川俣・奥鬼怒】蛇王の滝"}
+      - {name: 鬼怒沼, label: "【湯西川・川俣・奥鬼怒】鬼怒沼"}
+      - {name: 平家の里, label: "【湯西川・川俣・奥鬼怒】平家の里"}
+      - {name: 湯西川水の郷, label: "【湯西川・川俣・奥鬼怒】湯西川水の郷"}
+      - {name: 六方沢, label: "【今市】六方沢"}
+      - {name: 日光だいや川公園, label: "【今市】日光だいや川公園"}
+      - {name: 杉並木公園, label: "【今市】杉並木公園"}
+      - {name: 足尾 銀山平, label: "【足尾】CAMP THE 銀山平"}
+      - {name: 鬼怒川温泉 丸山, label: "【鬼怒川・川治】鬼怒川温泉 丸山"}
+      - {name: 鬼怒楯岩大吊橋, label: "【鬼怒川・川治】鬼怒楯岩大吊橋"}
+      - {name: 龍王峡, label: "【鬼怒川・川治】龍王峡"}
+      - {name: 川治温泉, label: "【鬼怒川・川治】川治温泉"}
+      - {name: 小網ダム, label: "【鬼怒川・川治】小網ダム"}
+      - {name: 霧降滝, label: "【日光】霧降滝"}
+      - {name: 日光の社寺, label: "【日光】世界遺産 日光の社寺"}
+    notation:
+      style: symbol
+      map: {"✕": not_yet, "△": starting, "〇": good, "◯": good, "◎": peak, "▼": fading}
+      updated: per_item
+      year_shown: true
+      note: "見ごろの丸は、読む道具の出力で 〇(U+3007)と ◯(U+25EF)の両方が出た(段階15 フェーズ4。どちらも見ごろ)。凡例: ✕ まだ / △ 色づき始め / 〇 見ごろ / ◎ 真っ盛り / ▼ 色褪せ・落葉始め。地点ごとに最終更新日(年つき)がある。写真は見頃の時期のもので今の様子ではない、と注記がある"
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "1 ページで 24 地点。地点ごとの更新日は 2026-09-13〜10-22。読み取り結果(2026-10-22 時点の内容)は、ユーザー側でも同じ内容を確認済み(2026-10-23 の見直し)"}
+    terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "サイトポリシーに引用・要約・転載・自動取得の規定なし。フッターに Copyright 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: hakone-kankou-koyo
+    publisher: 箱根町観光協会
+    publisher_kind: tourism_association
+    url: "https://www.hakone.or.jp/1804"
+    kind: status_page
+    covers:
+      - {site: kouyou-0018, label: "強羅(箱根美術館)"}
+      - {name: 仙石原 長安寺, label: "仙石原(長安寺)"}
+      - {name: 宮ノ下, label: "宮ノ下"}
+      - {name: 箱根湯本, label: "湯本"}
+      - {name: 湖尻, label: "湖尻"}
+      - {name: 恩賜箱根公園, label: "恩賜箱根公園"}
+      - {name: 元箱根, label: "元箱根"}
+      - {name: 旧街道 甘酒茶屋付近, label: "旧街道甘酒茶屋付近"}
+    notation:
+      style: word
+      map: {"まだまだ": not_yet, "色づきはじめ": starting, "また来年": fading}
+      updated: per_item
+      year_shown: false
+      note: "「○/○現在」の形で年がない。「また来年」は季節の終わりの意味と読んだ(推測。凡例の説明はない)。2026-10-23 の読みでは強羅が『また来年(10/06現在)』で、今年の値か前年の残りかが分からない(要目視)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "robots.txt は User-agent: * だけ(拒否なし)。地点ごとの日付のうち最新は 10/22(年は今年と読んだ)"}
+    terms: {status: no_prohibition_found, url: "https://www.hakone.or.jp/6338", note: "サイト利用規約: 商業目的の利用(複製・販売など)と、営利目的の情報の転用を禁じる(第11条・第13条)。引用・要約・自動取得の規定はない。イキモノビヨリの使い方(個人・非商用、事実だけ・出典つき)は禁止に当たらないと判断。商用にするなら見直す"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "ユーザーの見直し(2026-10-23)で承認のまま。日付に年がない(notation.year_shown: false)ので、年を補った更新日は新しさを判定せず「新しさ不明」とする"}
+
+  - id: daigo-kanko-koyo
+    publisher: 大子町観光協会
+    publisher_kind: tourism_association
+    url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    kind: status_page
+    covers:
+      - {site: kouyou-0014, label: "袋田の滝"}
+      - {name: 永源寺(大子町), label: "永源寺(弁財天)"}
+      - {name: 月待の滝, label: "月待の滝"}
+      - {name: 男体山(大子町), label: "男体山"}
+      - {name: 八溝山, label: "八溝山"}
+    notation:
+      style: word
+      map: {"青葉": not_yet}
+      updated: per_item
+      year_shown: true
+      note: "スポット紹介の各件に「色づき状況…<語>」と「YYYY年MM月DD日(曜) 現在」。2026-10-23 の読みでは見た語は『青葉』だけ(ほかの語は未確認)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-19", note: "robots.txt は /wp-admin/ だけ拒否。生瀬滝・月居山・高徳寺は状況の表示なし"}
+    terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見当たらない。フッターに All rights reserved だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: ibaraki-guide-autumn-leaves
+    publisher: 茨城県(観光いばらき)
+    publisher_kind: prefecture_tourism
+    url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html"
+    kind: status_page
+    covers:
+      - {site: kouyou-0008, label: "竜神峡"}
+      - {site: kouyou-0014, label: "袋田の滝"}
+      - {site: kouyou-0015, label: "筑波山"}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: "2026-10-23 の読みでは今年の状況はまだなく、地図の画像に『2026年の紅葉状況は10月下旬から更新』とある。例年の見頃だけ載っている。状態の書き方は更新が始まってから確かめる(未確認)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-15", note: "ページの更新日 2026-10-15。robots.txt は /?s= だけ拒否"}
+    terms: {status: no_prohibition_found, url: "https://www.ibarakiguide.jp/page/poricy.html", note: "サイトポリシー: 文章・画像の著作物は、私的使用の複製や引用など著作権法上認められた場合を除き、無断で転用・引用できない。事実(状態・更新日)を出典つきで短く伝えることは禁じていないと判断(本文・画像は写さない)。迷った点として review に書く"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "状態と更新日の短い事実を出典つきで示すだけで、複製には当たらないとユーザーが判断(2026-10-23)"}
+
+  - id: yamanashi-kankou-koyo
+    publisher: やまなし観光推進機構(富士の国やまなし観光ネット。山梨県公式観光情報)
+    publisher_kind: prefecture_tourism
+    url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"
+    kind: status_page
+    covers:
+      - {site: kouyou-0011, label: "甲府・昇仙峡"}
+      - {site: kouyou-0012, label: "富士山・富士五湖"}
+      - {name: 西沢渓谷, label: "石和・勝沼・西沢渓谷"}
+    notation:
+      style: none
+      map: {}
+      no_info: ["現在、情報がありません"]
+      updated: per_page
+      note: "地域(6 区分)ごとの欄。2026-10-23 の読みではすべての欄が『現在、情報がありません』で、状態の書き方は未確認。地点ではなく地域の単位(label は地域名)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-16", note: "ページの更新日 2026-10-16。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, note: "「このサイトについて」に引用・要約・転載・自動取得の規定なし。© 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: tokyo-park-rikugien-news
+    publisher: 東京都公園協会(六義園サービスセンター)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/park/rikugien/news/index.html"
+    kind: status_page
+    covers:
+      - {site: kouyou-0022, label: "【六義園】紅葉状況"}
+    notation:
+      style: word
+      map: {"色づき始め": starting, "見ごろ": good}
+      updated: per_article
+      year_shown: true
+      note: "お知らせ一覧に『【六義園】紅葉状況M/D(YYYY年)』の記事が出る形(2025 年の記事で確認)。2026-10-23 の読みでは今年の紅葉状況の記事はまだない。語は 2025-11-20 の記事で見たもの"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-20", note: "一覧の最新は 2026-10-20(紅葉以外)。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "サイトポリシー: 情報・画像は権利者の許可なく複製・転用・販売などの二次利用を禁じる。リンクは原則自由。事実(状態・日付)を出典つきで短く伝えることは二次利用(複製・転用)に当たらないと判断。迷った点として review に書く"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "状態と更新日の短い事実を出典つきで示すだけで、複製には当たらないとユーザーが判断(2026-10-23)"}
+
+  - id: fng-shinjuku-seasonal
+    publisher: 国民公園協会 新宿御苑
+    publisher_kind: park_manager
+    url: "https://fng.or.jp/shinjuku/"
+    kind: status_page
+    covers:
+      - {site: kouyou-0023, label: "季節のみどころ情報"}
+    notation:
+      style: word
+      map: {"色づきはじめ": starting, "見ごろ": good}
+      updated: per_article
+      year_shown: true
+      note: "『季節のみどころ情報【M月D日号】』の記事(一覧はトップページ)。欄の見出しが『みごろの花』『開花、色づきはじめ』など。2026-10-16 号には紅葉の樹木の記載がなかった。紅葉の書き方は記事が出てから確かめる"
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-16", note: "robots.txt は /wp-admin/ だけ拒否"}
+    terms: {status: no_prohibition_found, url: "https://fng.or.jp/terms/", note: "利用規約: 文章・写真などは、私的使用の複製や引用など著作権法上認められた場合を除き、許可なく転用・引用できない。要約・自動取得の規定なし。事実を出典つきで短く伝えることは禁じていないと判断。迷った点として review に書く"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "状態と更新日の短い事実を出典つきで示すだけで、複製には当たらないとユーザーが判断(2026-10-23)"}
+
+  - id: okuooi-koyo
+    publisher: 川根本町まちづくり観光協会
+    publisher_kind: tourism_association
+    url: "https://okuooi.gr.jp/pickup/page.php?id=3"
+    kind: status_page
+    covers:
+      - {site: kouyou-0019, label: "寸又峡 夢のつり橋"}
+      - {name: 接岨峡・長島ダム・奥大井湖上駅, label: "接岨峡・長島ダム・奥大井湖上駅"}
+      - {name: 智満寺, label: "智満寺"}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: "『令和8年10月21日現在の情報』とあるが、地点ごとの色づき状況は画像で示され、エージェントの道具では文字として読めない"
+    readable: {status: partial, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-21", note: "本文は読めたが、状態は画像。人が開いて見る URL として扱う"}
+    terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
+    approval: {status: pending, reason: "状態が画像で、エージェントが読めない(読めたとは言えない)"}
+
+  - id: nagatoro-kanko-koyo
+    publisher: 長瀞町観光協会
+    publisher_kind: tourism_association
+    url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/"
+    kind: status_page
+    covers:
+      - {site: kouyou-0013, label: "紅葉情報"}
+    readable: {status: unconfirmed, checked_on: "2026-10-23", robots: unknown, note: "2026-10-23 に 2 回とも HTTP 503。段階14b でも 503 だった。拒否かサーバーの障害か区別できない"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "読めていない(HTTP 503)。状態の書き方も未確認"}
+
+  - id: showakinen-flower-information
+    publisher: 国営昭和記念公園(昭和記念公園管理センター)
+    publisher_kind: park_manager
+    url: "https://www.showakinen-koen.jp/flower-information/"
+    kind: status_page
+    covers:
+      - {site: kouyou-0024, label: "花・紅葉の見頃情報"}
+    readable: {status: unconfirmed, checked_on: "2026-10-23", robots: unknown, note: "2026-10-23 にページ 2 回・robots.txt 1 回とも HTTP 504。段階14b でも応答なし"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "読めていない(HTTP 504)。状態の書き方も未確認"}
+
+  - id: siobara-kankou
+    publisher: 塩原温泉観光協会
+    publisher_kind: tourism_association
+    url: "https://www.siobara.or.jp/"
+    kind: status_page
+    covers:
+      - {site: kouyou-0006, label: "塩原温泉郷"}
+    readable: {status: unconfirmed, checked_on: "2026-10-23", robots: unknown, note: "2026-10-23 はメンテナンス中の案内だけで、紅葉の現況のページがあるかも分からない"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "メンテナンス中で読めていない。現況のページがあるかも未確認"}
+
+  # ---- 見頃予測・例年(forecast_page) ----
+  - id: chichibu-kanko-kouyou
+    publisher: 秩父観光協会
+    publisher_kind: tourism_association
+    url: "https://www.chichibuji.gr.jp/event/kouyou/"
+    kind: forecast_page
+    covers:
+      - {name: 三峯神社周辺, label: "三峯神社周辺"}
+      - {name: 中津峡, label: "中津狭"}
+      - {name: 雁坂トンネル周辺(豆焼橋), label: "雁坂トンネル周辺"}
+    notation: {style: none, map: {}, updated: none, note: "今年の状況はない。例年の時期(10 月下旬〜11 月下旬)と見どころの紹介だけ。長瀞の月の石もみじ公園は載っていない"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: ai_agents_blocked, note: "robots.txt が他社の AI エージェント(GPTBot・ChatGPT-User・OAI-SearchBot・Meta の取得など)をサイト全体で拒否。この道具の名前はない。ページはrobots.txt を確かめる前に 1 回読んだ"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "robots.txt で AI エージェントによる取得を拒む意思が読み取れる(この道具は名指しされていないが安全側)。今年の状況もない"}
+
+  - id: isehara-oyama-koyo
+    publisher: 伊勢原市
+    publisher_kind: municipality
+    url: "https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/"
+    kind: forecast_page
+    covers:
+      - {site: kouyou-0020, label: "大山の紅葉"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, note: "公開日 2024-02-27。ライトアップは『11月下旬ごろ』(大山寺・阿夫利神社下社)とだけあり、今年の日程・状態はない。robots.txt は /_system/・/search.html だけ拒否"}
+    terms: {status: no_prohibition_found, note: "著作権・サイトポリシーのページはトップから見つからなかった。Copyright 表示だけ"}
+    approval: {status: pending, reason: "2024 年公開の古いページで、今年の状態・日程がない(ライトアップ「11月下旬ごろ」だけ)。現況の情報源にせず、例年の時期の参考として人が開く URL にとどめる(ユーザーの見直し 2026-10-23)"}
+
+  # ---- まつり・ライトアップ(event_page) ----
+  - id: tokyo-park-rikugien-lightup
+    publisher: 東京都公園協会(六義園サービスセンター)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html"
+    kind: event_page
+    covers:
+      - {site: kouyou-0022, label: "庭紅葉の六義園 夜間特別観賞"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, note: "お知らせ一覧と検索結果で、2026-11-25〜12-06・18:00〜20:30 の夜間特別観賞を確認(この URL の本文は一覧から確認)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "状態と更新日の短い事実を出典つきで示すだけで、複製には当たらないとユーザーが判断(2026-10-23)"}
+
+  - id: hasedera-lightup
+    publisher: 長谷寺(鎌倉)
+    publisher_kind: temple_shrine
+    url: "https://www.hasedera.jp/2026/10/23900/"
+    kind: event_page
+    covers:
+      - {site: kouyou-0021, label: "秋の夜間特別拝観・紅葉ライトアップ"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-17", note: "2026-10-17 のお知らせ。紅葉の今の状態の記載はない。robots.txt は wp-admin だけ拒否"}
+    terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: ttca-autumn-tsukuba
+    publisher: つくば観光コンベンション協会
+    publisher_kind: tourism_association
+    url: "https://ttca.jp/autumnmttsukuba/"
+    kind: event_page
+    covers:
+      - {site: kouyou-0015, label: "秋の筑波山(筑波山もみじまつり)"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-19", note: "もみじまつりの期間・ライトアップ・標高別の見頃の予定。今の状態の記載はない。robots.txt は wp-admin・wpforms だけ拒否"}
+    terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。All Rights Reserved 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  # ---- 交通・混雑・通行止め(access_page) ----
+  - id: nikko-kankou-congestion
+    publisher: 日光市観光協会
+    publisher_kind: tourism_association
+    url: "https://www.nikko-kankou.org/features/congestion"
+    kind: access_page
+    covers:
+      - {site: kouyou-0001, label: "日光の渋滞・混雑情報"}
+      - {site: kouyou-0002, label: "日光の渋滞・混雑情報"}
+      - {site: kouyou-0003, label: "日光の渋滞・混雑情報"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-09-02", note: "2026 年版(3 か月に 1 度更新)。渋滞予想カレンダーは画像と PDF"}
+    terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "nikko-kankou-autumn-leaves と同じ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: okuooi-traffic-sumata
+    publisher: 川根本町まちづくり観光協会
+    publisher_kind: tourism_association
+    url: "https://okuooi.gr.jp/important/page.php?id=427"
+    kind: access_page
+    covers:
+      - {site: kouyou-0019, label: "県道川根寸又峡線 奥泉・寸又峡間 紅葉シーズンの交通規制"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-01", note: "2026-10-01 のお知らせ。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: numata-kankou-news
+    publisher: 沼田市観光協会
+    publisher_kind: tourism_association
+    url: "https://www.numata-kankou.jp/news/index.html"
+    kind: access_page
+    covers:
+      - {site: kouyou-0007, label: "吹割の滝 遊歩道 通行止め"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-09-12", note: "吹割の滝の遊歩道の通行止め・解除のお知らせ(最新 2026-09-12 の解除)。紅葉の状況の記載はない。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。© 表示だけ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
