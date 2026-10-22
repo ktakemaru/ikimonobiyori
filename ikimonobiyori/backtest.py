@@ -283,12 +283,18 @@ def evaluate(plan, stations, profile, series_by_id, rows):
     return out
 
 
+def _tables(md):
+    """report_markdown の本文から、題名と「判定はしない」の注記(結果の文書には合否を書くので不要)を除く。"""
+    return [l for l in md.split(chr(10))[2:] if not l.startswith("差 = 予測日") and not l.startswith("- 比較した組")]
+
+
 def result_markdown(res):
     """evaluate の結果 → Markdown(数字は計算結果そのまま)。"""
     plan, dec = res["plan"], res["decisive_mode"]
     n = res["counts"]
     lines = ["# 紅葉の答え合わせの結果(段階14)", "",
              f"**合否: {'合格' if res['passed'] else '不合格'}**(標高の扱い = {dec}。決定事項は docs/validation-plan.md §0 の追記)", "",
+             "差 = 予測日 − 観測日(日数。正は予測が遅い)。地点は気象庁の地点番号(jma_phenology.yaml)。", "",
              f"- 組の数: 全体 {n['all_pairs']}(= {len(plan['station_nos'])} 地点 × {len(plan_years(plan))} 年)、観測あり {n['with_observation']}、観測なし {n['without_observation']}", ""]
     for mode, m in res["modes"].items():
         j = m["judge"]
@@ -299,9 +305,9 @@ def result_markdown(res):
                   f"- 予測なし: {j['no_prediction']} 組({_pct(j['no_prediction_ratio'])})",
                   "- 条件: " + "、".join(f"{k}={'○' if v else '×'}" for k, v in j["conditions"].items())
                   + ("" if j["passed"] else "。理由: " + "、".join(j["reasons"])), ""]
-        lines += report_markdown(m["aggregate"], title=f"v0 {plan['target_stage']} × かえで紅葉 / {mode}(地点は番号)").split("\n")[2:]
+        lines += _tables(report_markdown(m["aggregate"], title=f"v0 {plan['target_stage']} × かえで紅葉 / {mode}(地点は番号)"))
         lines += ["", "平年値法(基準線。標高の扱いに関係なく同じ):", ""]
-        lines += report_markdown(m["climatology_aggregate"], title="平年値法").split("\n")[2:]
+        lines += _tables(report_markdown(m["climatology_aggregate"], title="平年値法"))
     for name, r in res["reference"].items():
-        lines += ["", *report_markdown(r["aggregate"], title=f"参考: {name}(v0 {r['stage']} / {dec})").split("\n")]
+        lines += ["", f"## 参考: {name}(v0 {r['stage']} / {dec})", "", *_tables(report_markdown(r["aggregate"], title=name))]
     return "\n".join(lines) + "\n"

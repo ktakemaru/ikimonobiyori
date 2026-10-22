@@ -285,6 +285,8 @@ class Evaluate(unittest.TestCase):
         self.assertIn("early_bloom", res["reference"]["kaede_early_bloom"]["stage"])
         md = B.result_markdown(res)
         self.assertIn("合否", md)
+        self.assertNotIn("判定はしない", md)                                               # 結果の文書は合否を書く(report_markdown の注記は入れない)
+        self.assertIn("## 参考: icho_peak", md)
 
     def test_missing_temperature_input_is_an_error_not_no_prediction(self):
         series = {r["id"]: self.series(r) for r in self.reqs if r["id"] != "662-2016-with"}
