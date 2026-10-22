@@ -308,6 +308,12 @@ class Evaluate(unittest.TestCase):
 
 
 class Cli(unittest.TestCase):
+    def setUp(self):
+        import os
+        old = os.environ.get("IKIMONOBIYORI_DATA_DIR")
+        os.environ["IKIMONOBIYORI_DATA_DIR"] = tempfile.mkdtemp()                       # 取得の記録・読めなかった応答を実際の書き込み先に残さない
+        self.addCleanup(lambda: os.environ.pop("IKIMONOBIYORI_DATA_DIR", None) if old is None else os.environ.__setitem__("IKIMONOBIYORI_DATA_DIR", old))
+
     def test_live_is_refused_under_test(self):
         # テスト中は --live を常に拒否する(BIYORI_UNDER_TEST=1)。注入した http_get がなければ通信しない
         d = tempfile.mkdtemp()
@@ -329,10 +335,7 @@ class Cli(unittest.TestCase):
         import contextlib
         import io
         import os
-        d, out = tempfile.mkdtemp(), tempfile.mkdtemp()
-        old = os.environ.get("IKIMONOBIYORI_DATA_DIR")
-        os.environ["IKIMONOBIYORI_DATA_DIR"] = out
-        self.addCleanup(lambda: os.environ.pop("IKIMONOBIYORI_DATA_DIR", None) if old is None else os.environ.__setitem__("IKIMONOBIYORI_DATA_DIR", old))
+        d, out = tempfile.mkdtemp(), os.environ["IKIMONOBIYORI_DATA_DIR"]
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             rc = backtest_run.main(["fetch", "--now", NOW.isoformat(), "--live", "--max-requests", "2", "--limit", "2", "--cache-dir", d],
