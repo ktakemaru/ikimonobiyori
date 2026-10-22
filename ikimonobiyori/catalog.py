@@ -6,6 +6,7 @@ v0 の判定(engine)はカタログを使わない。
 """
 import argparse
 import json
+import math
 import sys
 from datetime import date
 from decimal import Decimal
@@ -57,6 +58,21 @@ def min_precision(policy, entry):
     return floor, why
 
 
+def distance_km(lat1, lon1, lat2, lon2, radius_km):
+    """2 点の大円距離(球の近似)。"""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 2 * radius_km * math.asin(math.sqrt(a))
+
+
+def nearest_origin_km(policy, pt):
+    """方針の起点(東京・横浜)のうち近いほうまでの距離。方針に range_limit がなければ None。→ (km, 起点の名前)"""
+    rl = policy.get("range_limit")
+    if not rl:
+        return None
+    return min((distance_km(pt["lat"], pt["lon"], o["lat"], o["lon"], rl["earth_radius_km"]), o["name"]) for o in rl["origins"])
+
+
 def valid_month_day(s):
     m, d = (int(x) for x in s.split("-"))
     try:
@@ -94,6 +110,9 @@ def check_entry(entry, *, subject, profile_ids, policy):
         for k in ("lat", "lon"):
             if decimals(pt[k]) > limit:
                 errs.append(f"{eid}: point.{k}={pt[k]} が {entry['location_precision']} より細かい(小数 {limit} 桁まで)")
+    near = nearest_origin_km(policy, pt) if pt else None
+    if near and near[0] > policy["range_limit"]["max_km"]:
+        errs.append(f"{eid}: 範囲外(近い起点 {near[1]} から {near[0]:.0f} km。上限 {policy['range_limit']['max_km']} km)")
     tw = entry.get("typical_window")
     if tw:
         for k in ("start", "end"):

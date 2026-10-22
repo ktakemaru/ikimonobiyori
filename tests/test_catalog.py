@@ -187,5 +187,55 @@ class ProfileTimingType(unittest.TestCase):
         self.assertNotIn("catalog", src)
 
 
+class Drafts(unittest.TestCase):
+    """段階14b の下書き(data/catalog/drafts/)。承認前の件は提案に使わない。本番のカタログとは分ける。"""
+    DIR = paths.CATALOG_DIR / "drafts"
+
+    def load(self):
+        return yaml.safe_load((self.DIR / "autumn_leaves.yaml").read_text(encoding="utf-8"))
+
+    def test_the_drafts_pass_the_checker(self):
+        res = catalog.check_all(catalog_dir=self.DIR)
+        self.assertEqual([(p.name, e) for p, e in res if e], [])
+        self.assertIn("autumn_leaves.yaml", [p.name for p, _ in res])
+
+    def test_drafts_are_unapproved_and_not_used(self):
+        d = self.load()
+        self.assertTrue(20 <= len(d["entries"]) <= 30)
+        self.assertEqual({e["status"] for e in d["entries"]}, {"candidate"})
+        self.assertFalse(any(e.get("approved_at") or e.get("example") for e in d["entries"]))
+        self.assertEqual(catalog.approved_entries(d), [])
+        self.assertTrue(all(catalog.usable_description(e) is None for e in d["entries"]))
+
+    def test_drafts_have_official_sources_and_only_autumn_leaves(self):
+        for e in self.load()["entries"]:
+            self.assertEqual(e["subjects"], ["autumn_leaves"], e["id"])
+            self.assertTrue(e["sources"], e["id"])
+            tw = e.get("typical_window")
+            if tw:
+                self.assertIn(tw["source_url"], [s["url"] for s in e["sources"]], e["id"])     # 時期の出典は sources にもある
+
+    def test_the_default_catalog_dir_does_not_read_the_drafts(self):
+        names = [p.parent.name + "/" + p.name for p, _ in catalog.check_all()]
+        self.assertNotIn("drafts/autumn_leaves.yaml", names)
+
+
+class RangeLimit(unittest.TestCase):
+    POLICY = catalog.load_policy()
+
+    def test_points_beyond_250km_are_rejected(self):
+        osaka = entry(point={"lat": 34.70, "lon": 135.50, "elevation_m": 10})
+        errs = catalog.check_catalog(doc(osaka), name="autumn_leaves", profile_ids=PROFILE_IDS, policy=self.POLICY)
+        self.assertTrue(any("範囲外" in e for e in errs), errs)
+        near = entry(point={"lat": 35.69, "lon": 139.71, "elevation_m": 40})
+        self.assertEqual(catalog.check_catalog(doc(near), name="autumn_leaves", profile_ids=PROFILE_IDS, policy=self.POLICY), [])
+
+    def test_the_limit_comes_from_the_policy(self):
+        self.assertEqual(self.POLICY["range_limit"]["max_km"], 250)
+        km, origin = catalog.nearest_origin_km(self.POLICY, {"lat": 35.466, "lon": 139.622})
+        self.assertEqual((round(km), origin), (0, "横浜"))
+        self.assertIsNone(catalog.nearest_origin_km({}, {"lat": 0, "lon": 0}))
+
+
 if __name__ == "__main__":
     unittest.main()
