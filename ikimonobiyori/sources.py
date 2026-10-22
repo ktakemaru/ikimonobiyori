@@ -29,6 +29,7 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from . import catalog as catalog_mod
+from . import livegate
 from .config import load_config
 from .paths import SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
 
@@ -86,6 +87,13 @@ def check_source(src, *, subject, policy, catalog_ids):
     for raw, st in ((src.get("notation") or {}).get("map") or {}).items():
         if st not in stages:
             errs.append(f"{sid}: notation.map の {raw!r} → {st} は共通の段階にない({', '.join(stages)})")
+    if src.get("reader") == "code":
+        from .fetch import status_pages
+        if sid not in status_pages.PARSERS:
+            errs.append(f"{sid}: reader: code はコードの読み方がある情報源だけ({sorted(status_pages.PARSERS)})")
+        hosts = load_config()["live"]["allowed_hosts_by_subject"].get(status_pages.SUBJECT_HOSTS) or []
+        if urlsplit(src["url"]).netloc not in hosts:
+            errs.append(f"{sid}: reader: code の url のホストが許可リスト(config.yaml の {status_pages.SUBJECT_HOSTS})にない")
     for c in src["covers"]:
         if "site" in c and c["site"] not in catalog_ids:
             errs.append(f"{sid}: covers の site={c['site']} が名所カタログの承認済みの件にない")
@@ -426,10 +434,29 @@ def latest_by_place(records):
     """同じ情報源・地点(site か name)・地点の書き方(label)ごとに、いちばん後に読んだ記録だけ。"""
     best = {}
     for r in records:
-        k = (r["source_id"], r.get("site"), r.get("name"), r.get("label"))
+        k = _place(r)
         if k not in best or parse_now(r["read_at"]) >= parse_now(best[k]["read_at"]):
             best[k] = r
     return list(best.values())
+
+
+def _place(r):
+    return (r["source_id"], r.get("site"), r.get("name"), r.get("label"))
+
+
+def conflicts(records):
+    """同じ地点で、ユーザーが原文を確かめた記録(method: user_verified)と、ほかの読み方の記録の事実(状態・更新日)が食い違うもの。
+    → {地点のキー: [{method, official_state, official_updated, read_at}]}。どちらが正しいかは推測で決めない(段階16 A-4 の実通信で見つかった)。"""
+    by = {}
+    for r in records:
+        by.setdefault(_place(r), []).append(r)
+    out = {}
+    for k, rs in by.items():
+        facts = {(r.get("official_state"), r.get("official_updated")) for r in rs}
+        if len(facts) > 1 and any(r.get("method") == "user_verified" for r in rs):
+            out[k] = [{"method": r.get("method"), "official_state": r.get("official_state"), "official_updated": r.get("official_updated"),
+                       "read_at": r["read_at"]} for r in sorted(rs, key=lambda r: parse_now(r["read_at"]))]
+    return out
 
 
 def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=None):
@@ -494,7 +521,7 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates):
     - まつり・ライトアップの期間が対象の日にかかるか"""
     srcs = sources_by_id(registry)
     entries = {e["id"]: e for e in catalog_mod.approved_entries(catalog_doc or {})}
-    rows = []
+    rows, clash = [], conflicts(records)
     for r in sorted(latest_by_place(records), key=lambda r: (r["source_id"], r.get("site") or "", r.get("name") or "", r.get("label") or "")):
         src = srcs.get(r["source_id"]) or {}
         up = date.fromisoformat(r["official_updated"]) if r.get("official_updated") else None
@@ -508,11 +535,13 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates):
                      "official_forecast": r.get("official_forecast"),
                      "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
                      "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
-                     "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url")})
+                     "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url"),
+                     "conflict": clash.get(_place(r))})
     return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "rows": rows,
             "forecast_hits": [x for x in rows if x["forecast_hits_dates"]],
             "events": [x for x in rows if x["event_hits_dates"]],
-            "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None]}
+            "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None],
+            "conflicts": [x for x in rows if x["conflict"]]}
 
 
 # ---- 補助の推定(v0 の出力を読むだけ。計算も通信もしない) ----
@@ -543,7 +572,35 @@ def _dump(obj):
     print(json.dumps(obj, ensure_ascii=False, indent=1))
 
 
-def main(argv=None):
+def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests, record=False, env=None):
+    """reader: code の承認済みの情報源を、robots.txt → ページの順に 1 回ずつ読む(段階16 A-4)。→ 結果の辞書。
+    http_get は呼び出し側が渡す(本物の通信は main が計測フックとゲートを確かめてから)。record なら読めた事実を記録に足す(method: code)。"""
+    from .fetch import status_pages
+    srcs = sources_by_id(registry)
+    out, left, reads_all = [], max_requests, []
+    for sid in source_ids:
+        src = srcs.get(sid)
+        if src is None or src.get("reader") != "code" or not is_approved(src):
+            out.append({"source": sid, "status": "コードで読む承認済みの情報源ではない。読まない", "requests": 0, "reads": []})
+            continue
+        if left < 1:
+            out.append({"source": sid, "status": f"--max-requests {max_requests} に達したため読まない", "requests": 0, "reads": []})
+            continue
+        reads, rep = status_pages.read_source(src, http_get=http_get, cfg=cfg, on=now.date(), max_requests=left)
+        left -= rep["requests"]
+        out.append({**rep, "reads": reads})
+        reads_all += reads
+    res = {"read_at": now.isoformat(), "results": out}
+    if record and reads_all:
+        recs = [make_record(registry=registry, policy=policy, source_id=it["source"], read_at=now.isoformat(), state=it["state"], updated=it["updated"],
+                            site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
+                            method=it["method"], forecast=it.get("forecast")) for it in reads_all]
+        written, dup = append_records(recs, registry=registry, policy=policy, env=env)
+        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env))}
+    return res
+
+
+def main(argv=None, http_get=None):
     ap = argparse.ArgumentParser(prog="python -m ikimonobiyori.sources")
     ap.add_argument("--subject", default="autumn_leaves")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -570,6 +627,12 @@ def main(argv=None):
     sm = sub.add_parser("summary", help="同じ日に読んだ記録から、答えの材料(段階・新しさ・見頃予測・期間)を出す(通信しない・書き込まない)")
     sm.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     sm.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    rd = sub.add_parser("read", help="reader: code の情報源をコードで 1 回読む(段階16 A-4。--live・--max-requests・計測フックが要る)")
+    rd.add_argument("--source", action="append", required=True)
+    rd.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
+    rd.add_argument("--live", action="store_true")
+    rd.add_argument("--max-requests", type=int)
+    rd.add_argument("--record", action="store_true", help="読めた事実を記録に足す(IKIMONOBIYORI_DATA_DIR の下)")
     v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
     v.add_argument("--proposal", required=True)
     v.add_argument("--date", action="append")
@@ -639,6 +702,33 @@ def main(argv=None):
             return 1
         _dump({"marked": n, "path": str(log_path(a.subject))})
         return 0
+    if a.cmd == "read":
+        if not a.live:
+            print("read は --live が必要です(読むのは答えるときに 1 回だけ。キャッシュはない)", file=sys.stderr)
+            return 2
+        if http_get is None and not livegate.live_allowed():           # 偽の http_get を注入したテストは実通信にならない。本物の通信は常にゲートを通る
+            print(livegate.refusal(), file=sys.stderr)
+            return 2
+        if a.max_requests is None or a.max_requests < 1:
+            print("--live は明示的な --max-requests (1 以上)が必要です", file=sys.stderr)
+            return 2
+        if http_get is None and not os.environ.get("BIYORI_REQ_LOG"):
+            print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します(許可リスト・上限の強制のため)", file=sys.stderr)
+            return 2
+        cfg = load_config()
+        getter = None
+        if http_get is None:
+            from .fetch.live import SessionGetter
+            t = cfg["live"]["request_timeout"]
+            getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
+        try:
+            res = read_live(a.source, registry=registry, policy=policy, cfg=cfg, now=parse_now(a.now), http_get=http_get or getter,
+                            max_requests=a.max_requests, record=a.record)
+        finally:
+            if getter is not None:
+                getter.close()
+        _dump(res)
+        return 0 if all(r.get("reads") for r in res["results"]) else 1
     if a.cmd == "summary":
         now = parse_now(a.now)
         dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)

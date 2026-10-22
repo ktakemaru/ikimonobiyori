@@ -13,6 +13,7 @@ sources:
     publisher_kind: tourism_association
     url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     kind: status_page
+    reader: code
     covers:
       - {site: kouyou-0001, label: "【奥日光】湯ノ湖、湯滝"}
       - {site: kouyou-0002, label: "【奥日光】戦場ヶ原、小田代原の木々"}
@@ -54,6 +55,7 @@ sources:
     publisher_kind: tourism_association
     url: "https://www.hakone.or.jp/1804"
     kind: status_page
+    reader: code
     covers:
       - {site: kouyou-0018, label: "強羅(箱根美術館)"}
       - {name: 仙石原 長安寺, label: "仙石原(長安寺)"}
