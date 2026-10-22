@@ -340,6 +340,100 @@ class Records(unittest.TestCase):
     def test_the_log_location_is_under_the_data_dir(self):
         self.assertEqual(sources.log_path("autumn_leaves", self.env), self.d / "status_log" / "autumn_leaves.jsonl")
 
+    def test_erroneous_records_are_kept_but_not_used(self):
+        """段階16 A-1: 誤った記録は消さずに印を付け、読む処理は使わない。正しい事実は user_verified の新しい記録。"""
+        wrong = self.rec(site=None, name="滝", label="【北】滝", state="△", updated="2026-10-22")
+        with mock.patch.dict(os.environ, self.env):
+            sources.append_records([self.rec(), wrong], registry=self.R, policy=POLICY)
+            with self.assertRaises(ValueError):                                      # 一致しなければ何もしない
+                sources.mark_erroneous("autumn_leaves", {"name": "滝", "official_state": "◎"}, reason="x", corrected_on="2026-10-23")
+            with self.assertRaises(ValueError):
+                sources.mark_erroneous("autumn_leaves", {"name": "滝"}, reason="", corrected_on="2026-10-23")
+            n = sources.mark_erroneous("autumn_leaves", {"name": "滝", "official_state": "△"}, reason="紹介文を状態と取り違えた", corrected_on="2026-10-23")
+            self.assertEqual(n, 1)
+            self.assertEqual(sources.mark_erroneous("autumn_leaves", {"name": "滝", "official_state": "△"}, reason="x", corrected_on="2026-10-23"), 0)
+            fixed = self.rec(site=None, name="滝", label="【北】滝", state="✕", updated="2026-10-15", method="user_verified",
+                             read_at="2026-10-23T22:00:00+09:00")
+            self.assertEqual(self.errs(fixed), [])
+            sources.append_records([fixed], registry=self.R, policy=POLICY)
+            used = sources.read_records("autumn_leaves")
+            every = sources.read_records("autumn_leaves", include_erroneous=True)
+            same_day = sources.records_on("autumn_leaves", date(2026, 10, 23))
+            with self.assertRaises(ValueError):                                      # 印の付いた記録を足し直さない
+                sources.append_records([{**wrong, "erroneous": True, "erroneous_reason": "x", "corrected_on": "2026-10-23"}], registry=self.R, policy=POLICY)
+        self.assertEqual(len(every), 3)
+        self.assertEqual([(r.get("name"), r["official_state"], r["method"]) for r in used if r.get("name")], [("滝", "✕", "user_verified")])
+        self.assertNotIn("△", [r["official_state"] for r in same_day])
+        marked = [r for r in every if r.get("erroneous")]
+        self.assertEqual((marked[0]["official_state"], marked[0]["corrected_on"]), ("△", "2026-10-23"))
+        self.assertNotIn(b"\r\n", (self.d / "status_log" / "autumn_leaves.jsonl").read_bytes())
+
+    def test_new_fields_are_checked(self):
+        def bad(r, needle):
+            errs = self.errs(r)
+            self.assertTrue(any(needle in e for e in errs), errs)
+        bad(self.rec(method="guess"), "method")
+        bad(self.rec(forecast="長" * 61), "official_forecast")
+        bad(self.rec(event_start="2026-11-25"), "event_start")
+        bad(self.rec(event_start="2026-12-06", event_end="2026-11-25"), "より後")
+        bad({**self.rec(), "erroneous": True}, "誤りの印")
+        self.assertEqual(self.errs(self.rec(forecast="10月下旬～11月上旬", event_start="2026-11-25", event_end="2026-12-06")), [])
+        self.assertEqual(self.rec()["method"], "agent_summary")                      # 既定は要約で読んだもの
+
+    def test_records_are_reused_only_on_the_same_day(self):
+        with mock.patch.dict(os.environ, self.env):
+            sources.append_records([self.rec(read_at="2026-10-22T23:50:00+09:00", updated="2026-10-20"), self.rec(read_at="2026-10-23T00:10:00+09:00")],
+                                   registry=self.R, policy=POLICY)
+            self.assertEqual([r["read_at"] for r in sources.records_on("autumn_leaves", date(2026, 10, 23))], ["2026-10-23T00:10:00+09:00"])
+            self.assertEqual(sources.records_on("autumn_leaves", date(2026, 10, 24)), [])
+
+
+class Forecasts(unittest.TestCase):
+    """段階16 A-8: 公式の見頃予測。A-3: 表示が古い可能性。"""
+    def test_forecast_windows(self):
+        f = lambda t: (lambda w: w and (w[0].isoformat(), w[1].isoformat()))(sources.forecast_window(t, 2026, POLICY))
+        self.assertEqual(f("10月下旬～11月上旬"), ("2026-10-21", "2026-11-10"))
+        self.assertEqual(f("9月下旬"), ("2026-09-21", "2026-09-30"))
+        self.assertEqual(f("10月下旬～11月中旬（木の種類により異なります）"), ("2026-10-21", "2026-11-20"))   # 括弧の注記は読み飛ばす
+        self.assertEqual(f("10月上旬～中旬"), ("2026-10-01", "2026-10-20"))
+        self.assertEqual(f("11月上旬～11月下旬"), ("2026-11-01", "2026-11-30"))
+        self.assertEqual(f("12月下旬～1月上旬"), ("2026-12-21", "2027-01-10"))                         # 年をまたぐ(冬鳥など)
+        self.assertEqual(f("2月下旬"), ("2026-02-21", "2026-02-28"))
+        for t in ("10月下旬～", "見頃", "", None, "13月上旬"):
+            self.assertIsNone(sources.forecast_window(t, 2026, POLICY), t)                              # 読めないものは推測しない
+
+    def test_month_thirds_come_from_the_policy(self):
+        self.assertIn("source", POLICY["month_thirds"])
+        self.assertEqual(set(POLICY["month_thirds"]["items"]), {"上旬", "中旬", "下旬"})
+
+    def test_icons_map_to_words(self):
+        hakone = sources.sources_by_id(sources.load_registry("autumn_leaves"))["hakone-kankou-koyo"]
+        self.assertEqual({k: sources.normalize_state(hakone, k)[0] for k in ("icon_lev1", "icon_lev2", "icon_lev4", "icon_lev3")},
+                         {"icon_lev1": "not_yet", "icon_lev2": "starting", "icon_lev4": "fading", "icon_lev3": None})   # lev3 は確かめていない
+
+    def test_stale_display_and_the_summary(self):
+        r = reg(src(), src(id="test-yearless", notation={"style": "word", "map": {"まだまだ": "not_yet", "また来年": "fading"}, "year_shown": False},
+                           covers=[{"site": "kouyou-0001", "label": "美術館"}, {"name": "湖", "label": "湖"}]),
+                src(id="test-event", kind="event_page", covers=[{"site": "kouyou-0001", "label": "ライトアップ"}], notation={"style": "none", "map": {}}))
+        c = cat(site("kouyou-0001", ("11-11", "11-30"), ["test-kankou-koyo", "test-yearless", "test-event"]))
+        at = "2026-10-23T07:00:00+09:00"
+        mk = lambda **kw: sources.make_record(registry=r, policy=POLICY, read_at=at, **kw)
+        recs = [mk(source_id="test-yearless", site="kouyou-0001", label="美術館", state="また来年", updated="2026-10-06", year_inferred=True),
+                mk(source_id="test-yearless", name="湖", label="湖", state="まだまだ", updated="2026-10-15", year_inferred=True),
+                mk(source_id="test-kankou-koyo", name="滝", label="【北】滝", state="✕", updated="2026-10-15", forecast="10月下旬～11月上旬"),
+                mk(source_id="test-kankou-koyo", site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-21", forecast="10月中旬"),
+                mk(source_id="test-event", site="kouyou-0001", label="ライトアップ", state=None, event_start="2026-10-31", event_end="2026-11-30")]
+        self.assertEqual([e for x in recs for e in sources.validate_record(x, registry=r, policy=POLICY)], [])
+        got = sources.summarize(recs, registry=r, catalog_doc=c, policy=POLICY, on=date(2026, 10, 23), dates=[date(2026, 10, 31), date(2026, 11, 1)])
+        by = {(x["site"] or x["name"], x["label"]): x for x in got["rows"]}
+        self.assertTrue(by[("kouyou-0001", "美術館")]["stale_display_suspect"])          # 終わりの表示が例年の時期より前 → 古い表示の可能性
+        self.assertFalse(by[("湖", "湖")]["stale_display_suspect"])
+        self.assertEqual(by[("湖", "湖")]["freshness"]["class"], "year_unknown")
+        self.assertEqual([(x["name"], x["official_state"]) for x in got["forecast_hits"]], [("滝", "✕")])   # 今は「まだ」でも予測が対象日にかかる
+        self.assertEqual([x["label"] for x in got["events"]], ["ライトアップ"])
+        self.assertEqual(got["unparsed_forecasts"], [])
+        self.assertFalse(sources.stale_display_suspect(recs[0], None, POLICY, r["sources"][1]))   # カタログの件がなければ判定しない
+
 
 class V0Estimates(unittest.TestCase):
     DOC = {"schema": "biyori-proposal/1", "generated_at": "2026-10-23T09:30:00+09:00", "proposals": [

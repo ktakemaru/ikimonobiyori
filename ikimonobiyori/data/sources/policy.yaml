@@ -40,8 +40,32 @@ aux_estimate:
 record:
   schema: ikimono-status-record/1
   # 記録に入れてよい項目(これ以外は拒否する。本文の写しを入れる欄を作らない)
-  fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url]
+  fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url,
+           method, official_forecast, event_start, event_end, erroneous, erroneous_reason, corrected_on]
+  # 読み方(記録の method)。agent_summary = エージェントが要約の道具(WebFetch など)で読んだ(段階15。method がない記録もこれ)、
+  # code = 決まった形を読むコードで読んだ(段階16 A-4。日光・箱根だけ)、user_verified = ユーザーが原文を確かめた(段階16 A-1)
+  methods: [agent_summary, code, user_verified]
+  default_method: agent_summary
+  # 誤りの印(段階16 A-1)。誤った記録は消さずに erroneous: true・理由・訂正日を付ける。印の付いた記録は読む処理が使わない
+  erroneous_fields: [erroneous, erroneous_reason, corrected_on]
   # 公式の状態の原文(記号・語)の長さの上限(文字)。本文の写しを防ぐための仮置き(根拠のある値ではない。記号 1 字〜「色づきはじめ」程度の語を想定)
   max_state_chars: {value: 20, source: "仮置き(段階15)。本文を写さないための上限", provisional: true}
   # 地点の書き方(公式ページでの地点名)の長さの上限(文字)。仮置き(「【湯西川・川俣・奥鬼怒】湯西川水の郷」程度を想定)
   max_label_chars: {value: 40, source: "仮置き(段階15)。本文を写さないための上限", provisional: true}
+  # 公式の見頃予測の原文(「10月下旬～11月上旬(木の種類により異なります)」程度)の長さの上限(文字)。仮置き(段階16 A-8)
+  max_forecast_chars: {value: 60, source: "仮置き(段階16)。本文を写さないための上限", provisional: true}
+
+# 記録の再利用(段階16 A-2): 読んだ結果は、読んだ日(その記録の時刻のオフセットでの暦日)と同じ日のうちだけ答えに使う。日をまたいだら読み直す
+reuse:
+  same_day_only: true
+  source: "指示書(段階16 A-2)"
+
+# 公式の見頃予測の「上旬・中旬・下旬」→ 日の範囲(段階16 A-8)。下旬の終わりは月末
+# 出典: 気象庁 予報用語「上旬: 1日から10日まで、中旬: 11日から20日まで、下旬: 21日から月末まで」
+month_thirds:
+  source: "気象庁 予報用語(時に関する用語)https://www.jma.go.jp/jma/kishou/know/yougo_hp/toki.html"
+  provisional: false
+  items:
+    上旬: {first: 1, last: 10}
+    中旬: {first: 11, last: 20}
+    下旬: {first: 21, last: null}

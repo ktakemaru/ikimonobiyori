@@ -46,6 +46,8 @@
             "style": {"enum": ["symbol", "word", "none"]},
             "map": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-z_]+$"}},
             "no_info": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "「情報なし」を表す書き方(段階なし)"},
+            "icons": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}, "description": "状態を表すアイコンの名前(ページの画像・class の名前)→ 公式の語(map のキー)。確かめたものだけ(段階16 A-3。箱根の icon_lev1 など)"},
+            "forecast": {"enum": ["per_item", "none"], "description": "公式の見頃予測の載り方(段階16 A-8)。per_item = 地点ごとに見頃予測がある(記録の official_forecast に原文を残す)"},
             "updated": {"enum": ["per_item", "per_page", "per_article", "none"], "description": "公式の更新日の付き方"},
             "year_shown": {"type": "boolean", "description": "更新日に年が書いてあるか(false なら読んだ人が年を補い、記録に updated_year_inferred を付ける)"},
             "note": {"type": "string"}

@@ -10,12 +10,16 @@
   python -X utf8 -m ikimonobiyori.sources weekend --now 2026-10-23T21:00:00+09:00 [--date 2026-10-24 ...]
   python -X utf8 -m ikimonobiyori.sources normalize --source nikko-kankou-autumn-leaves --state ◎
   python -X utf8 -m ikimonobiyori.sources record --read-at 2026-10-23T21:00:00+09:00 --batch reads.json
-  python -X utf8 -m ikimonobiyori.sources log [--source ID]
+  python -X utf8 -m ikimonobiyori.sources log [--source ID] [--include-erroneous]
+  python -X utf8 -m ikimonobiyori.sources summary --now 2026-10-23T21:00:00+09:00 [--date 2026-10-31 ...]
+  python -X utf8 -m ikimonobiyori.sources mark-erroneous --match '{"name": "湖尻", ...}' --reason ... --corrected-on 2026-10-23
   python -X utf8 -m ikimonobiyori.sources v0 --proposal OUT.json [--date 2026-10-24 ...]
 """
 import argparse
 import calendar
 import json
+import os
+import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -167,6 +171,7 @@ def normalize_state(src, raw):
         return None, "no_info"
     s = str(raw).strip()
     nt = src.get("notation") or {}
+    s = (nt.get("icons") or {}).get(s, s)                 # アイコンの名前(箱根の icon_lev1 など。段階16 A-3)→ 公式の語
     if s in (nt.get("map") or {}):
         return nt["map"][s], "mapped"
     if s in (nt.get("no_info") or []):
@@ -195,6 +200,51 @@ def freshness(updated, on, policy, year_inferred=False):
         raise ValueError(f"公式の更新日 {updated} が {on} より後")
     cls = "fresh" if age <= val(fr["fresh_max_days"]) else "somewhat_old" if age <= val(fr["somewhat_old_max_days"]) else "old"
     return {"age_days": age, "class": cls, "label": fr["labels"][cls]}
+
+
+# ---- 公式の見頃予測(段階16 A-8) ----
+
+FORECAST_RE = re.compile(r"^\s*(\d{1,2})月(上旬|中旬|下旬)?\s*(?:[～〜~ー-]\s*(?:(\d{1,2})月)?(上旬|中旬|下旬)?)?")
+
+
+def forecast_window(text, year, policy):
+    """公式の見頃予測の原文(「10月下旬～11月上旬」「9月下旬」「11月上旬～11月下旬(場所や木によって異なります)」)→ (始まりの日, 終わりの日)。
+    year は始まりの月の年。終わりの月が始まりより前なら翌年(12月〜1月など)。旬のない月は月の初日〜末日。読めなければ None(推測しない)。"""
+    if not text:
+        return None
+    m = FORECAST_RE.match(str(text))
+    if not m:
+        return None
+    thirds = policy["month_thirds"]["items"]
+    m1, t1, m2, t2 = int(m.group(1)), m.group(2), m.group(3), m.group(4)
+    if m2 is None and t2 is None and m.group(0).rstrip()[-1:] in "～〜~ー-":
+        return None                                          # 「10月下旬～」のように終わりがない
+    m2 = int(m2) if m2 else m1
+    t2 = t2 if (t2 or m.group(3)) else t1
+    if not (calendar.JANUARY <= m1 <= calendar.DECEMBER and calendar.JANUARY <= m2 <= calendar.DECEMBER):
+        return None
+    y2 = year + 1 if m2 < m1 else year
+    first = thirds[t1]["first"] if t1 else 1
+    last_day = calendar.monthrange(y2, m2)[1]
+    last = (thirds[t2]["last"] or last_day) if t2 else last_day
+    start, end = date(year, m1, first), date(y2, m2, min(last, last_day))
+    return (start, end) if start <= end else None
+
+
+def overlaps(window, dates):
+    return window is not None and any(window[0] <= d <= window[1] for d in dates)
+
+
+def stale_display_suspect(rec, entry, policy, src=None):
+    """年のない更新日で「終わり」の段階なのに、その日付が名所カタログの例年の時期の始まりより前 → 前のシーズンの表示が残っている可能性(段階16 A-3。箱根の強羅)。
+    カタログの件(entry)と例年の時期がないときは判定しない(False)。"""
+    tw = (entry or {}).get("typical_window")
+    up = rec.get("official_updated")
+    if not tw or not up or not year_unknown(src, rec) or rec.get("stage") != stage_ids(policy, rec["subject"])[-1]:
+        return False
+    u = date.fromisoformat(up)
+    start = _md_date(u.year, tw["start"])
+    return u < start and tw["start"] <= tw["end"]
 
 
 # ---- 対象の日と候補 ----
@@ -275,14 +325,18 @@ def log_path(subject, env=None):
     return data_path(load_config()["status_log"]["dir"], env) / f"{subject}.jsonl"
 
 
-def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None):
-    """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。"""
+def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None,
+                method=None, forecast=None, event_start=None, event_end=None):
+    """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。
+    method は読み方(agent_summary / code / user_verified。既定は方針の default_method)、forecast は公式の見頃予測の原文、
+    event_start・event_end はまつり・ライトアップの期間(YYYY-MM-DD)。"""
     src = sources_by_id(registry).get(source_id)
     stage = normalize_state(src, state)[0] if src else None
     rec = {"schema": policy["record"]["schema"], "subject": registry["subject"], "source_id": source_id,
            "official_state": state, "stage": stage, "official_updated": updated, "read_at": read_at,
-           "url": src["url"] if src else None}
-    for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred)):
+           "url": src["url"] if src else None, "method": method or policy["record"]["default_method"]}
+    for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred),
+                 ("official_forecast", forecast), ("event_start", event_start), ("event_end", event_end)):
         if v is not None:
             rec[k] = v
     return rec
@@ -320,6 +374,20 @@ def validate_record(rec, *, registry, policy):
         errs.append(f"label は {val(rp['max_label_chars'])} 文字以内")
     if rec.get("stage") != normalize_state(src, st)[0]:
         errs.append(f"stage={rec.get('stage')} が台帳の対応({normalize_state(src, st)[0]})と違う")
+    if rec.get("method", rp["default_method"]) not in rp["methods"]:
+        errs.append(f"method={rec.get('method')} は {rp['methods']} のどれでもない")
+    fc = rec.get("official_forecast")
+    if fc is not None and (not isinstance(fc, str) or len(fc) > val(rp["max_forecast_chars"])):
+        errs.append(f"official_forecast は {val(rp['max_forecast_chars'])} 文字以内の見頃予測の原文(本文を写さない)")
+    ev = [rec.get(k) for k in ("event_start", "event_end")]
+    if any(v is not None for v in ev):
+        if not all(v is not None and catalog_mod.valid_date(v) for v in ev):
+            errs.append(f"event_start・event_end は両方とも日付(YYYY-MM-DD)が要る({ev})")
+        elif ev[0] > ev[1]:
+            errs.append(f"event_start {ev[0]} が event_end {ev[1]} より後")
+    if any(k in rec for k in rp["erroneous_fields"]):
+        if rec.get("erroneous") is not True or not rec.get("erroneous_reason") or not catalog_mod.valid_date(rec.get("corrected_on") or ""):
+            errs.append("誤りの印は erroneous: true・erroneous_reason・corrected_on(YYYY-MM-DD)をそろえて付ける")
     if "updated_year_inferred" in rec and not isinstance(rec["updated_year_inferred"], bool):
         errs.append("updated_year_inferred は真偽値")
     elif rec.get("official_updated") is not None and (src.get("notation") or {}).get("year_shown") is False and rec.get("updated_year_inferred") is not True:
@@ -337,15 +405,61 @@ def validate_record(rec, *, registry, policy):
     return errs
 
 
-def read_records(subject, env=None):
+def _read_all(subject, env=None):
     p = log_path(subject, env)
     if not p.is_file():
         return []
     return [json.loads(ln) for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
 
 
+def read_records(subject, env=None, include_erroneous=False):
+    """記録を読む。誤りの印(erroneous: true)の付いた記録は、include_erroneous を明示しない限り使わない(段階16 A-1)。"""
+    return [r for r in _read_all(subject, env) if include_erroneous or r.get("erroneous") is not True]
+
+
+def records_on(subject, day, env=None):
+    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。"""
+    return [r for r in read_records(subject, env) if parse_now(r["read_at"]).date() == day]
+
+
+def latest_by_place(records):
+    """同じ情報源・地点(site か name)・地点の書き方(label)ごとに、いちばん後に読んだ記録だけ。"""
+    best = {}
+    for r in records:
+        k = (r["source_id"], r.get("site"), r.get("name"), r.get("label"))
+        if k not in best or parse_now(r["read_at"]) >= parse_now(best[k]["read_at"]):
+            best[k] = r
+    return list(best.values())
+
+
+def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=None):
+    """match(項目 → 値)にすべて一致する記録に誤りの印を付ける(消さない。段階16 A-1)。→ 印を付けた件数。
+    1 件も一致しなければ ValueError(取り違えを防ぐ)。すでに印のある記録はそのまま。ファイルは書き直す(一時ファイル → 置き換え)。"""
+    if not reason or not catalog_mod.valid_date(corrected_on or ""):
+        raise ValueError("reason と corrected_on(YYYY-MM-DD)が要る")
+    if not match:
+        raise ValueError("どの記録かを match で指定する")
+    rows = _read_all(subject, env)
+    hit = [r for r in rows if all(r.get(k) == v for k, v in match.items())]
+    if not hit:
+        raise ValueError(f"一致する記録がない: {match}")
+    n = 0
+    for r in hit:
+        if r.get("erroneous") is not True:
+            r.update({"erroneous": True, "erroneous_reason": reason, "corrected_on": corrected_on})
+            n += 1
+    p = log_path(subject, env)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8", newline="\n") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    os.replace(tmp, p)
+    return n
+
+
 def _key(rec):
-    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated"))
+    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated",
+                                      "official_forecast", "event_start", "event_end", "method"))
 
 
 def append_records(records, *, registry, policy, env=None):
@@ -354,7 +468,9 @@ def append_records(records, *, registry, policy, env=None):
     bad = [(i, e) for i, r in enumerate(records) for e in validate_record(r, registry=registry, policy=policy)]
     if bad:
         raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
-    seen = {_key(r) for r in read_records(registry["subject"], env)}
+    if any(r.get("erroneous") is True for r in records):
+        raise ValueError("誤りの印の付いた記録は足さない(印は mark_erroneous で付ける)")
+    seen = {_key(r) for r in _read_all(registry["subject"], env)}
     new = []
     for r in records:
         if _key(r) not in seen:
@@ -367,6 +483,36 @@ def append_records(records, *, registry, policy, env=None):
             for r in new:
                 f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
     return len(new), len(records) - len(new)
+
+
+# ---- 答えの材料(同じ日に読んだ記録から) ----
+
+def summarize(records, *, registry, catalog_doc, policy, on, dates):
+    """on(date)に読んだ記録(呼び出し側が records_on で絞る)→ 地点ごとの答えの材料。通信しない。
+    - 段階・新しさ(年を補った更新日は「新しさ不明」)・表示が古い可能性(段階16 A-3)
+    - 公式の見頃予測の日の範囲と、対象の日にかかるか(段階16 A-8)
+    - まつり・ライトアップの期間が対象の日にかかるか"""
+    srcs = sources_by_id(registry)
+    entries = {e["id"]: e for e in catalog_mod.approved_entries(catalog_doc or {})}
+    rows = []
+    for r in sorted(latest_by_place(records), key=lambda r: (r["source_id"], r.get("site") or "", r.get("name") or "", r.get("label") or "")):
+        src = srcs.get(r["source_id"]) or {}
+        up = date.fromisoformat(r["official_updated"]) if r.get("official_updated") else None
+        fw = forecast_window(r.get("official_forecast"), parse_now(r["read_at"]).year, policy)
+        ev = (date.fromisoformat(r["event_start"]), date.fromisoformat(r["event_end"])) if r.get("event_start") else None
+        rows.append({"source": r["source_id"], "kind": src.get("kind"), "site": r.get("site"), "name": r.get("name"), "label": r.get("label"),
+                     "official_state": r.get("official_state"), "stage": r.get("stage"), "stage_label": stage_label(policy, r["subject"], r.get("stage")),
+                     "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
+                     "freshness": freshness(up, on, policy, year_unknown(src, r)),
+                     "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
+                     "official_forecast": r.get("official_forecast"),
+                     "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
+                     "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
+                     "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url")})
+    return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "rows": rows,
+            "forecast_hits": [x for x in rows if x["forecast_hits_dates"]],
+            "events": [x for x in rows if x["event_hits_dates"]],
+            "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None]}
 
 
 # ---- 補助の推定(v0 の出力を読むだけ。計算も通信もしない) ----
@@ -412,9 +558,18 @@ def main(argv=None):
     n.add_argument("--state", required=True)
     r = sub.add_parser("record", help="読んだ結果(事実だけ)を記録に追記する(IKIMONOBIYORI_DATA_DIR の下)")
     r.add_argument("--read-at", required=True, help="読んだ時刻。ISO 8601(オフセット必須)")
-    r.add_argument("--batch", required=True, help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?}]")
-    lg = sub.add_parser("log", help="記録を表示する")
+    r.add_argument("--batch", required=True,
+                   help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?, method?, forecast?, event_start?, event_end?}]")
+    lg = sub.add_parser("log", help="記録を表示する(誤りの印の付いた記録は --include-erroneous のときだけ)")
     lg.add_argument("--source")
+    lg.add_argument("--include-erroneous", action="store_true")
+    me = sub.add_parser("mark-erroneous", help="記録に誤りの印を付ける(消さない。IKIMONOBIYORI_DATA_DIR の下)")
+    me.add_argument("--match", required=True, help='JSON の辞書(例: {"source_id": "...", "name": "湖尻", "official_state": "色づきはじめ"})')
+    me.add_argument("--reason", required=True)
+    me.add_argument("--corrected-on", required=True, help="YYYY-MM-DD")
+    sm = sub.add_parser("summary", help="同じ日に読んだ記録から、答えの材料(段階・新しさ・見頃予測・期間)を出す(通信しない・書き込まない)")
+    sm.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
+    sm.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
     v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
     v.add_argument("--proposal", required=True)
     v.add_argument("--date", action="append")
@@ -451,7 +606,8 @@ def main(argv=None):
         items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
         recs = [make_record(registry=registry, policy=policy, source_id=it.get("source"), read_at=read_at.isoformat(), state=it.get("state"),
                             updated=it.get("updated"), site=it.get("site"), name=it.get("name"), label=it.get("label"),
-                            year_inferred=it.get("year_inferred")) for it in items]
+                            year_inferred=it.get("year_inferred"), method=it.get("method"), forecast=it.get("forecast"),
+                            event_start=it.get("event_start"), event_end=it.get("event_end")) for it in items]
         try:
             written, dup = append_records(recs, registry=registry, policy=policy)
         except ValueError as ex:
@@ -473,7 +629,21 @@ def main(argv=None):
         _dump(v0_estimates(doc, subject=a.subject, labels=labels, policy=policy, dates=dates))
         return 0
     if a.cmd == "log":
-        _dump([r for r in read_records(a.subject) if not a.source or r["source_id"] == a.source])
+        _dump([r for r in read_records(a.subject, include_erroneous=a.include_erroneous) if not a.source or r["source_id"] == a.source])
+        return 0
+    if a.cmd == "mark-erroneous":
+        try:
+            n = mark_erroneous(a.subject, json.loads(a.match), reason=a.reason, corrected_on=a.corrected_on)
+        except ValueError as ex:
+            print(f"印を付けなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"marked": n, "path": str(log_path(a.subject))})
+        return 0
+    if a.cmd == "summary":
+        now = parse_now(a.now)
+        dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
+        _dump(summarize(records_on(a.subject, now.date()), registry=registry, catalog_doc=catalog_mod.load_catalog(a.subject),
+                        policy=policy, on=now.date(), dates=dates))
         return 0
     return 2
 
