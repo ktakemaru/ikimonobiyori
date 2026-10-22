@@ -783,7 +783,7 @@ def main(argv=None, http_get=None):
         if region is None:
             _dump({"region": a.name, "status": "unknown", "known": [r["name"] for r in load_regions()["regions"]]})
             return 1
-        cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status()}
+        cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status() if s["implemented"]}
         _dump(region_report(region, catalogs=cats, catalog_policy=catalog_mod.load_policy()))
         return 0
     policy, registry = load_policy(), load_registry(a.subject)
