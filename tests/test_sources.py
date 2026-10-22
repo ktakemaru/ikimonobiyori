@@ -435,6 +435,76 @@ class Forecasts(unittest.TestCase):
         self.assertFalse(sources.stale_display_suspect(recs[0], None, POLICY, r["sources"][1]))   # カタログの件がなければ判定しない
 
 
+class Generic(unittest.TestCase):
+    """段階16 B: 対象によらない形(段階の並びはプロファイル、地域・条件・範囲の外・対象の一覧)。"""
+    def test_stages_come_from_the_profiles(self):
+        from ikimonobiyori.profiles import load_profiles
+        self.assertEqual(POLICY["stages"]["autumn_leaves"], load_profiles()["autumn_leaves"]["stages"])
+        self.assertNotIn("stages", yaml.safe_load(paths.SOURCES_POLICY_PATH.read_text(encoding="utf-8")))   # 方針には書かない(正本はプロファイル)
+        self.assertEqual(sources.stage_errors(POLICY), [])
+        self.assertEqual([sources.stage_order(POLICY, "autumn_leaves", s) for s in ("not_yet", "starting", "good", "peak", "fading")], [0, 1, 2, 3, 4])
+
+    def test_stage_errors(self):
+        bad = copy.deepcopy(POLICY)
+        bad["stages"]["autumn_leaves"]["items"][1]["order"] = 9
+        self.assertTrue(any("共通の順番" in e for e in sources.stage_errors(bad)))
+        bad = copy.deepcopy(POLICY)
+        bad["stages"]["autumn_leaves"]["items"].reverse()
+        self.assertTrue(any("並んでいない" in e for e in sources.stage_errors(bad)))
+
+    def test_scope(self):
+        self.assertEqual(sources.scope_orders(POLICY), [2, 3])                              # 既定は見ごろ・最盛
+        self.assertEqual(sources.scope_orders(POLICY, early=True), [1, 2, 3])
+        self.assertEqual(sources.scope_orders(POLICY, early=True, late=True), [1, 2, 3, 4])
+
+    def test_horizon(self):
+        now = datetime(2026, 10, 23, 8, tzinfo=JST)
+        self.assertEqual(sources.horizon(now, [date(2026, 11, 6), date(2026, 11, 7), date(2026, 11, 8)], POLICY),
+                         {"days": 14, "beyond": ["2026-11-07", "2026-11-08"]})
+
+    def test_tags_filter_sites(self):
+        e = site("kouyou-0001", tags={"prefecture": "東京都", "area": "都心", "terrain": ["garden", "urban"], "access": ["walk_from_station"]})
+        region = {"name": "都内", "match": {"prefectures": ["東京都"]}}
+        self.assertTrue(sources.site_filter(e, region=region, terrain=["garden"], access=["walk_from_station"]))
+        self.assertFalse(sources.site_filter(e, terrain=["mountain"]))
+        self.assertFalse(sources.site_filter(site("kouyou-0002"), terrain=["mountain"]))   # tags がなければ外す(分からない)
+        self.assertEqual(catalog.schema_errors(cat(e)), [])
+        self.assertTrue(catalog.schema_errors(cat(site("kouyou-0003", tags={"terrain": ["volcano"]}))))
+
+    def test_regions(self):
+        regions = sources.load_regions()
+        self.assertEqual(sources.resolve_region("奥日光", regions)["name"], "日光")
+        self.assertIsNone(sources.resolve_region("日光の近く", regions))                    # 推測で近いものを選ばない
+        names = [r["name"] for r in regions["regions"]]
+        self.assertEqual(len(names), len(set(names)))
+        aliases = [a for r in regions["regions"] for a in [r["name"]] + (r.get("aliases") or [])]
+        self.assertEqual(len(aliases), len(set(aliases)), "地域の呼び名が重複")
+        cp = catalog.load_policy()
+        tohoku = sources.region_report(sources.resolve_region("東北", regions), catalogs={"autumn_leaves": catalog.load_catalog("autumn_leaves")},
+                                       catalog_policy=cp)
+        self.assertEqual(tohoku["status"], "partial")                                      # 一部(福島県の代表点)が 250 km 以内
+        self.assertIn("福島県", tohoku["within_points_by_prefecture"])
+        self.assertNotIn("宮城県", tohoku["within_points_by_prefecture"])
+        self.assertEqual(tohoku["catalog_sites"], {"autumn_leaves": []})
+        tokyo = sources.region_report(sources.resolve_region("都内", regions), catalogs={"autumn_leaves": catalog.load_catalog("autumn_leaves")},
+                                      catalog_policy=cp)
+        self.assertEqual((tokyo["status"], len(tokyo["catalog_sites"]["autumn_leaves"])), ("in_range", 3))
+
+    def test_every_catalog_area_is_reachable_by_a_region(self):
+        regions = sources.load_regions()
+        for subject in [s["subject"] for s in sources.subjects_status() if s["implemented"]]:
+            for e in catalog.approved_entries(catalog.load_catalog(subject)):
+                with self.subTest(e["id"]):
+                    self.assertIn("tags", e)
+                    self.assertTrue(any(sources.in_region(e, r) for r in regions["regions"]))
+
+    def test_subjects(self):
+        got = {s["subject"]: s for s in sources.subjects_status()}
+        self.assertTrue(got["autumn_leaves"]["implemented"])
+        self.assertFalse(got["cherry_blossom"]["implemented"])
+        self.assertIn("台帳", got["cherry_blossom"]["missing"])
+
+
 class V0Estimates(unittest.TestCase):
     DOC = {"schema": "biyori-proposal/1", "generated_at": "2026-10-23T09:30:00+09:00", "proposals": [
         {"id": "ikimonobiyori:autumn_leaves:2026-10-24:kouyou-0002", "phenology_stage": "before_bud", "suitability": {"band": "no"}},
@@ -482,6 +552,17 @@ class Procedure(unittest.TestCase):
         self.assertIn(f"上位 {sources.val(r['top_min'])}〜{sources.val(r['top_max'])} か所", skill)
         self.assertIn(POLICY["aux_estimate"]["label"], skill)
         self.assertIn(f"「{f['labels']['year_unknown']}」", skill)                      # 年のない更新日(ユーザーの見直し 2026-10-23)
+        self.assertIn(f"{sources.val(POLICY['horizon_days'])} 日より先", skill)            # 段階16 B-4 ①
+        common = "・".join(f"{s['order']} {s['label']}" for s in POLICY["common_stages"]["items"])
+        self.assertIn(common, skill)                                                       # 共通の順番(0 前・1 始まり・…)
+
+    def test_the_steps_cover_the_five_question_types(self):
+        skill = self.block(ROOT / "AGENTS.md")
+        for needle in ("1. **いつ**", "2. **どこで**", "3. **どの段階まで**", "4. **どんな場所で**", "5. **範囲の外**",
+                       "sources subjects", "sources region", "--early", "--late", "--terrain", "--access", "conflicts", "stale_display_suspect",
+                       "reader: code", "コードで読めなかった", "ヤマビヨリ"):
+            self.assertIn(needle, skill)
+        self.assertNotIn("日光市観光協会 ✕ まだ", skill)                                   # 紅葉専用の書き方は台帳とプロファイルへ
 
 
 if __name__ == "__main__":

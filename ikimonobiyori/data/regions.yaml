@@ -1,0 +1,68 @@
+# 地域の呼び名 → 名所カタログの条件(段階16 B-4 の質問の型②「どこで」・⑤「範囲の外」)。ikimonobiyori/sources.py の region が読む。
+# - match: 名所カタログの tags.prefecture(prefectures)か tags.area(areas)のどれかに一致する名所を、その地域の名所とする。
+# - points: 範囲(東京・横浜から直線 250 km。data/catalog/policy.yaml の range_limit)の内外を言うための代表点。
+#   座標は Claude Code の知識による推定(小数 2 桁、市役所・町役場や名所の付近)。県境・地方の端の正確な位置ではないので、
+#   「代表点で見て」と言う。範囲の判定はコードが距離を計算する(この表に内外を書かない)。
+schema: ikimono-regions/1
+points_source: "Claude Code の知識による推定(小数 2 桁)。段階16"
+regions:
+  # ---- 範囲の中(名所カタログに名所がある地域) ----
+  - {name: 都内, aliases: [東京都内, 東京, 都心, 東京都], match: {prefectures: [東京都]}}
+  - {name: 箱根, aliases: [], match: {areas: [箱根]}}
+  - {name: 富士山周辺, aliases: [富士山, 富士五湖, 河口湖, 富士山麓], match: {areas: [富士五湖, 富士山麓]},
+     note: "静岡県側(富士宮市・御殿場市・小山町)も富士山周辺。カタログの area を 富士山麓 にする"}
+  - {name: 日光, aliases: [奥日光, 鬼怒川, 日光市], match: {areas: [日光]}}
+  - {name: 鎌倉, aliases: [], match: {areas: [鎌倉]}}
+  - {name: 秩父・長瀞, aliases: [秩父, 長瀞], match: {areas: [秩父・長瀞]}}
+  - {name: 軽井沢, aliases: [], match: {areas: [軽井沢]}}
+  - {name: 栃木県, aliases: [栃木], match: {prefectures: [栃木県]}}
+  - {name: 群馬県, aliases: [群馬], match: {prefectures: [群馬県]}}
+  - {name: 茨城県, aliases: [茨城], match: {prefectures: [茨城県]}}
+  - {name: 埼玉県, aliases: [埼玉], match: {prefectures: [埼玉県]}}
+  - {name: 千葉県, aliases: [千葉, 房総], match: {prefectures: [千葉県]}}
+  - {name: 神奈川県, aliases: [神奈川], match: {prefectures: [神奈川県]}}
+  - {name: 山梨県, aliases: [山梨], match: {prefectures: [山梨県]}}
+  - {name: 静岡県, aliases: [静岡], match: {prefectures: [静岡県]}}
+  - {name: 長野県, aliases: [長野, 信州], match: {prefectures: [長野県]},
+     points: [{name: 軽井沢町, lat: 36.35, lon: 138.60}, {name: 長野市, lat: 36.65, lon: 138.18}, {name: 松本市, lat: 36.24, lon: 137.97},
+              {name: 白馬村, lat: 36.70, lon: 137.86}, {name: 上高地, lat: 36.25, lon: 137.64}, {name: 飯田市, lat: 35.51, lon: 137.82}]}
+  # ---- 範囲の一部だけ、または外(名所カタログ・情報源がまだない) ----
+  - name: 東北
+    aliases: [東北地方, 福島, 福島県, 宮城, 宮城県, 山形, 山形県, 岩手, 秋田, 青森]
+    match: {prefectures: [福島県, 宮城県, 山形県, 岩手県, 秋田県, 青森県]}
+    points:
+      - {name: 白河市, prefecture: 福島県, lat: 37.13, lon: 140.21}
+      - {name: いわき市, prefecture: 福島県, lat: 37.05, lon: 140.89}
+      - {name: 郡山市, prefecture: 福島県, lat: 37.40, lon: 140.38}
+      - {name: 会津若松市, prefecture: 福島県, lat: 37.49, lon: 139.93}
+      - {name: 只見町, prefecture: 福島県, lat: 37.35, lon: 139.32}
+      - {name: 喜多方市, prefecture: 福島県, lat: 37.65, lon: 139.87}
+      - {name: 福島市, prefecture: 福島県, lat: 37.76, lon: 140.47}
+      - {name: 南相馬市, prefecture: 福島県, lat: 37.64, lon: 140.96}
+      - {name: 丸森町, prefecture: 宮城県, lat: 37.91, lon: 140.77}
+      - {name: 白石市, prefecture: 宮城県, lat: 38.00, lon: 140.62}
+      - {name: 仙台市, prefecture: 宮城県, lat: 38.27, lon: 140.87}
+      - {name: 米沢市, prefecture: 山形県, lat: 37.92, lon: 140.12}
+      - {name: 山形市, prefecture: 山形県, lat: 38.24, lon: 140.36}
+      - {name: 盛岡市, prefecture: 岩手県, lat: 39.70, lon: 141.15}
+      - {name: 秋田市, prefecture: 秋田県, lat: 39.72, lon: 140.10}
+      - {name: 青森市, prefecture: 青森県, lat: 40.82, lon: 140.74}
+  - name: 新潟・北陸
+    aliases: [新潟, 新潟県, 北陸, 富山, 石川, 金沢, 福井]
+    match: {prefectures: [新潟県, 富山県, 石川県, 福井県]}
+    points:
+      - {name: 湯沢町, prefecture: 新潟県, lat: 36.93, lon: 138.81}
+      - {name: 長岡市, prefecture: 新潟県, lat: 37.45, lon: 138.85}
+      - {name: 上越市, prefecture: 新潟県, lat: 37.15, lon: 138.24}
+      - {name: 新潟市, prefecture: 新潟県, lat: 37.92, lon: 139.04}
+      - {name: 富山市, prefecture: 富山県, lat: 36.70, lon: 137.21}
+      - {name: 金沢市, prefecture: 石川県, lat: 36.56, lon: 136.66}
+      - {name: 福井市, prefecture: 福井県, lat: 36.06, lon: 136.22}
+  - name: 東海・岐阜
+    aliases: [東海, 岐阜, 岐阜県, 愛知, 名古屋, 飛騨, 高山, 三重]
+    match: {prefectures: [岐阜県, 愛知県, 三重県]}
+    points:
+      - {name: 高山市, prefecture: 岐阜県, lat: 36.15, lon: 137.25}
+      - {name: 岐阜市, prefecture: 岐阜県, lat: 35.42, lon: 136.76}
+      - {name: 名古屋市, prefecture: 愛知県, lat: 35.18, lon: 136.91}
+      - {name: 津市, prefecture: 三重県, lat: 34.73, lon: 136.51}

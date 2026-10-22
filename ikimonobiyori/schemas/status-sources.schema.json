@@ -33,7 +33,7 @@
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$", "description": "例: nikko-kankou-autumn-leaves"},
         "publisher": {"type": "string", "minLength": 1, "description": "発信者(観光協会・自治体・公園の管理者など)"},
-        "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine"], "description": "公式の発信者の種類。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
+        "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine", "facility_operator"], "description": "公式の発信者の種類。facility_operator はロープウェイ・ゴンドラ・山小屋などの名所の運営者(段階16 A-9)。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
         "url": {"$ref": "#/$defs/url"},
         "kind": {"enum": ["status_page", "forecast_page", "event_page", "access_page", "opendata"], "description": "status_page 現況 / forecast_page 見頃予測 / event_page まつり・ライトアップ / access_page 交通・混雑・通行止め / opendata"},
         "reader": {"enum": ["agent", "code"], "description": "読み方。agent(既定)= エージェントが要約の道具で読む / code = 決まった形を読むコード(fetch/status_pages.py。段階16 A-4。日光市観光協会・箱根町観光協会だけ)"},

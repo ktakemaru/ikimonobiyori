@@ -31,7 +31,7 @@ from jsonschema import Draft202012Validator
 from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
-from .paths import SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
+from .paths import REGIONS_PATH, SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
 
 APPROVED = "approved"
 USABLE_TERMS = "no_prohibition_found"
@@ -42,8 +42,38 @@ ROBOTS_BLOCKING = ("disallows", "ai_agents_blocked")      # 仮承認しない r
 
 # ---- 読み込み ----
 
-def load_policy(path=None):
-    return yaml.safe_load(Path(path or SOURCES_POLICY_PATH).read_text(encoding="utf-8"))
+def load_policy(path=None, profiles_dir=None):
+    """方針(data/sources/policy.yaml)。対象ごとの段階(stages)は、各プロファイルの stages を policy["stages"][<対象>] に置く(段階16 B-1。正本はプロファイル)。"""
+    from .profiles import load_profiles
+    pol = yaml.safe_load(Path(path or SOURCES_POLICY_PATH).read_text(encoding="utf-8"))
+    pol["stages"] = {pid: prof["stages"] for pid, prof in load_profiles(profiles_dir).items() if prof.get("stages")}
+    return pol
+
+
+def stage_errors(policy):
+    """各プロファイルの段階が、共通の順番(common_stages の order)に対応し、早い → 遅いに並んでいるか。→ エラーのリスト。"""
+    common = [s["order"] for s in policy["common_stages"]["items"]]
+    errs = []
+    for subject, st in policy["stages"].items():
+        orders = [s["order"] for s in st["items"]]
+        if any(o not in common for o in orders):
+            errs.append(f"{subject}: stages の order {orders} に共通の順番 {common} にないものがある")
+        if orders != sorted(set(orders)):
+            errs.append(f"{subject}: stages の order {orders} が早い → 遅いに並んでいない(または重複)")
+        if len({s['id'] for s in st["items"]}) != len(st["items"]):
+            errs.append(f"{subject}: stages の id が重複")
+    return errs
+
+
+def stage_order(policy, subject, stage):
+    """対象の段階 id → 共通の順番(0 前・1 始まり・2 見ごろ・3 最盛・4 終わり)。なければ None。"""
+    return next((s["order"] for s in policy["stages"][subject]["items"] if s["id"] == stage), None)
+
+
+def scope_orders(policy, early=False, late=False):
+    """質問の型③: 答えに含める共通の順番。既定は見ごろ・最盛。early で始まり、late で終わりを足す。"""
+    sc = policy["stage_scope"]
+    return sorted(set(sc["default"]) | (set(sc["early"]) if early else set()) | (set(sc["late"]) if late else set()))
 
 
 def load_registry(subject, sources_dir=None):
@@ -155,7 +185,7 @@ def check_registry(doc, *, name, catalog_doc, policy):
 
 
 def check_all(sources_dir=None, catalog_dir=None, policy_path=None):
-    """→ [(ファイル, エラーのリスト)]。"""
+    """→ [(台帳のファイル, エラーのリスト)]。段階の並び(プロファイル)の検査は stage_errors(check コマンドが両方を出す)。"""
     policy = load_policy(policy_path)
     pol = Path(policy_path or SOURCES_POLICY_PATH).resolve()
     out = []
@@ -292,19 +322,91 @@ def days_from_window(d, tw):
     return best
 
 
-def candidates(catalog_doc, registry, dates, policy):
-    """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。"""
+# ---- 地域・条件・対象(段階16 B-3・B-4) ----
+
+def load_regions(path=None):
+    return yaml.safe_load(Path(path or REGIONS_PATH).read_text(encoding="utf-8"))
+
+
+def resolve_region(query, regions_doc):
+    """地域の呼び名(名前・別名に完全一致)→ 地域。なければ None(推測で近いものを選ばない)。"""
+    q = (query or "").strip()
+    return next((r for r in regions_doc["regions"] if q == r["name"] or q in (r.get("aliases") or [])), None)
+
+
+def in_region(entry, region):
+    t, m = entry.get("tags") or {}, region.get("match") or {}
+    return t.get("prefecture") in (m.get("prefectures") or []) or t.get("area") in (m.get("areas") or [])
+
+
+def site_filter(entry, *, region=None, terrain=None, access=None):
+    """質問の型②・④: 地域(regions.yaml)・地形(tags.terrain のどれか)・行き方(tags.access のどれか)で絞る。tags のない項目は「分からない」ので外す。"""
+    t = entry.get("tags") or {}
+    if region is not None and not in_region(entry, region):
+        return False
+    if terrain and not set(terrain) & set(t.get("terrain") or []):
+        return False
+    if access and not set(access) & set(t.get("access") or []):
+        return False
+    return True
+
+
+def region_report(region, *, catalogs, catalog_policy):
+    """地域について、対象ごとの名所カタログの件数と、範囲(東京・横浜から直線 max_km)の内外を代表点で示す(質問の型⑤)。
+    status: in_range(代表点がすべて範囲内か、代表点がなく名所がある)/ partial(一部が範囲内)/ out_of_range(すべて範囲外)/ unknown"""
+    rl = catalog_policy["range_limit"]
+    pts = []
+    for p in region.get("points") or []:
+        km, origin = catalog_mod.nearest_origin_km(catalog_policy, p)
+        pts.append({"name": p["name"], "prefecture": p.get("prefecture"), "km": round(km), "from": origin, "within": km <= rl["max_km"]})
+    sites = {subj: [e["id"] for e in catalog_mod.approved_entries(doc or {}) if in_region(e, region)] for subj, doc in catalogs.items()}
+    inside = [p for p in pts if p["within"]]
+    if pts:
+        status = "in_range" if len(inside) == len(pts) else "partial" if inside else "out_of_range"
+    else:
+        status = "in_range" if any(sites.values()) else "unknown"
+    by_pref = {}
+    for p in inside:
+        by_pref.setdefault(p["prefecture"], []).append(p["name"])
+    return {"region": region["name"], "status": status, "max_km": rl["max_km"], "points": pts, "within_points_by_prefecture": by_pref,
+            "catalog_sites": sites, "note": region.get("note")}
+
+
+def subjects_status(sources_dir=None, profiles_dir=None, catalog_dir=None):
+    """対象ごとに、この手順で答えられるか(台帳・名所カタログ・プロファイルの stages がそろっている = implemented)。→ [{subject, name, implemented, missing}]"""
+    from .profiles import load_profiles
+    out = []
+    for pid, prof in load_profiles(profiles_dir).items():
+        checks = (("stages", bool(prof.get("stages"))),
+                  ("台帳", (Path(sources_dir or SOURCES_DIR) / f"{pid}.yaml").is_file()),
+                  ("名所カタログ", bool(catalog_mod.approved_entries(catalog_mod.load_catalog(pid, catalog_dir) or {}))))
+        missing = [k for k, ok in checks if not ok]
+        out.append({"subject": pid, "name": prof["name"], "implemented": not missing, "missing": missing})
+    return out
+
+
+def horizon(now, dates, policy):
+    """質問の型①: 読んだ日から horizon_days より先の日。→ {days, beyond: [日付]}(先の日は公式の見頃予測と例年の時期だけで答える)"""
+    days = val(policy["horizon_days"])
+    return {"days": days, "beyond": [d.isoformat() for d in dates if (d - now.date()).days > days]}
+
+
+def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=None, access=None):
+    """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。
+    region(regions.yaml の地域)・terrain・access を渡すと、名所の tags で先に絞る(段階16 B-4)。"""
     margin = val(policy["candidates"]["window_margin_days"])
     srcs = sources_by_id(registry)
     sites, out_of_season = [], []
     for e in catalog_mod.approved_entries(catalog_doc or {}):
+        if not site_filter(e, region=region, terrain=terrain, access=access):
+            continue
         tw = e.get("typical_window")
         if tw:
             dist = min(days_from_window(d, tw) for d in dates)
             season = "in_window" if dist == 0 else "near" if dist <= margin else "out"
         else:
             dist, season = None, "no_window"
-        row = {"site": e["id"], "name": e["name"], "season": season, "days_from_window": dist,
+        row = {"site": e["id"], "name": e["name"], "season": season, "days_from_window": dist, "tags": e.get("tags"),
                "typical_window": {k: tw[k] for k in ("start", "end", "source_url") if k in tw} if tw else None,
                "official_status_url": e.get("official_status_url"),
                "sources": [{"id": sid, "kind": srcs[sid]["kind"], "approval": srcs[sid]["approval"]["status"],
@@ -514,14 +616,15 @@ def append_records(records, *, registry, policy, env=None):
 
 # ---- 答えの材料(同じ日に読んだ記録から) ----
 
-def summarize(records, *, registry, catalog_doc, policy, on, dates):
+def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False, late=False):
     """on(date)に読んだ記録(呼び出し側が records_on で絞る)→ 地点ごとの答えの材料。通信しない。
+    - 段階の共通の順番(order)と、質問の型③の範囲に入るか(in_scope。既定は見ごろ・最盛、early で始まり、late で終わりも)
     - 段階・新しさ(年を補った更新日は「新しさ不明」)・表示が古い可能性(段階16 A-3)
     - 公式の見頃予測の日の範囲と、対象の日にかかるか(段階16 A-8)
     - まつり・ライトアップの期間が対象の日にかかるか"""
     srcs = sources_by_id(registry)
     entries = {e["id"]: e for e in catalog_mod.approved_entries(catalog_doc or {})}
-    rows, clash = [], conflicts(records)
+    rows, clash, scope = [], conflicts(records), scope_orders(policy, early=early, late=late)
     for r in sorted(latest_by_place(records), key=lambda r: (r["source_id"], r.get("site") or "", r.get("name") or "", r.get("label") or "")):
         src = srcs.get(r["source_id"]) or {}
         up = date.fromisoformat(r["official_updated"]) if r.get("official_updated") else None
@@ -529,6 +632,8 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates):
         ev = (date.fromisoformat(r["event_start"]), date.fromisoformat(r["event_end"])) if r.get("event_start") else None
         rows.append({"source": r["source_id"], "kind": src.get("kind"), "site": r.get("site"), "name": r.get("name"), "label": r.get("label"),
                      "official_state": r.get("official_state"), "stage": r.get("stage"), "stage_label": stage_label(policy, r["subject"], r.get("stage")),
+                     "order": stage_order(policy, r["subject"], r.get("stage")),
+                     "in_scope": stage_order(policy, r["subject"], r.get("stage")) in scope,
                      "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
                      "freshness": freshness(up, on, policy, year_unknown(src, r)),
                      "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
@@ -537,7 +642,9 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates):
                      "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
                      "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url"),
                      "conflict": clash.get(_place(r))})
-    return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "rows": rows,
+    common = {s["order"]: s["label"] for s in policy["common_stages"]["items"]}
+    return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "horizon": horizon(datetime.combine(on, datetime.min.time()), dates, policy),
+            "scope": [{"order": o, "label": common[o]} for o in scope], "rows": rows,
             "forecast_hits": [x for x in rows if x["forecast_hits_dates"]],
             "events": [x for x in rows if x["event_hits_dates"]],
             "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None],
@@ -610,6 +717,12 @@ def main(argv=None, http_get=None):
     w = sub.add_parser("weekend", help="対象の日の候補と、読む情報源の一覧(通信しない・書き込まない)")
     w.add_argument("--now", required=True, help="ISO 8601(オフセット必須)")
     w.add_argument("--date", action="append", help="対象の日(YYYY-MM-DD。省略すると次の土日)")
+    w.add_argument("--region", help="地域の呼び名(data/regions.yaml の名前・別名)")
+    w.add_argument("--terrain", action="append", help="地形(tags.terrain: mountain / highland / lake / urban / valley など。複数はどれか)")
+    w.add_argument("--access", action="append", help="行き方(tags.access: ropeway / cable_car / walk_from_station / bus / car_only)")
+    rg = sub.add_parser("region", help="地域の呼び名 → 名所カタログの件と、範囲(250 km)の内外(通信しない)")
+    rg.add_argument("name")
+    sub.add_parser("subjects", help="この手順で答えられる対象(台帳・名所カタログ・段階がそろったもの)と、まだの対象")
     n = sub.add_parser("normalize", help="公式の状態 → 共通の段階")
     n.add_argument("--source", required=True)
     n.add_argument("--state", required=True)
@@ -627,6 +740,8 @@ def main(argv=None, http_get=None):
     sm = sub.add_parser("summary", help="同じ日に読んだ記録から、答えの材料(段階・新しさ・見頃予測・期間)を出す(通信しない・書き込まない)")
     sm.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     sm.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    sm.add_argument("--early", action="store_true", help="質問の型③: 始まり(色づき始めなど)も含める")
+    sm.add_argument("--late", action="store_true", help="質問の型③: 終わり(色褪せ・落葉など)も含める")
     rd = sub.add_parser("read", help="reader: code の情報源をコードで 1 回読む(段階16 A-4。--live・--max-requests・計測フックが要る)")
     rd.add_argument("--source", action="append", required=True)
     rd.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
@@ -639,7 +754,10 @@ def main(argv=None, http_get=None):
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
-        bad = 0
+        serr = stage_errors(load_policy())
+        for e in serr:
+            print(f"NG  段階の並び(profiles/*.yaml の stages): {e}")
+        bad = int(bool(serr))
         for p, errs in check_all(a.sources_dir, a.catalog_dir):
             for e in errs:
                 print(f"NG  {p.parent.name}/{p.name}: {e}")
@@ -647,6 +765,17 @@ def main(argv=None, http_get=None):
                 print(f"OK  {p.parent.name}/{p.name}")
             bad += bool(errs)
         return 1 if bad else 0
+    if a.cmd == "subjects":
+        _dump(subjects_status())
+        return 0
+    if a.cmd == "region":
+        region = resolve_region(a.name, load_regions())
+        if region is None:
+            _dump({"region": a.name, "status": "unknown", "known": [r["name"] for r in load_regions()["regions"]]})
+            return 1
+        cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status()}
+        _dump(region_report(region, catalogs=cats, catalog_policy=catalog_mod.load_policy()))
+        return 0
     policy, registry = load_policy(), load_registry(a.subject)
     if registry is None:
         print(f"台帳がない: {a.subject}", file=sys.stderr)
@@ -654,7 +783,15 @@ def main(argv=None, http_get=None):
     if a.cmd == "weekend":
         now = parse_now(a.now)
         dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
-        _dump({"now": now.isoformat(), **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy)})
+        region = None
+        if a.region:
+            region = resolve_region(a.region, load_regions())
+            if region is None:
+                print(f"地域の呼び名が data/regions.yaml にない: {a.region}(region コマンドで確かめる)", file=sys.stderr)
+                return 2
+        _dump({"now": now.isoformat(), "subject": a.subject, "horizon": horizon(now, dates, policy),
+               "filters": {"region": region and region["name"], "terrain": a.terrain, "access": a.access},
+               **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy, region=region, terrain=a.terrain, access=a.access)})
         return 0
     if a.cmd == "normalize":
         src = sources_by_id(registry).get(a.source)
@@ -733,7 +870,7 @@ def main(argv=None, http_get=None):
         now = parse_now(a.now)
         dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
         _dump(summarize(records_on(a.subject, now.date()), registry=registry, catalog_doc=catalog_mod.load_catalog(a.subject),
-                        policy=policy, on=now.date(), dates=dates))
+                        policy=policy, on=now.date(), dates=dates, early=a.early, late=a.late))
         return 0
     return 2
 
