@@ -46,7 +46,7 @@ sources:
       note: "凡例: ✕ まだ / △ 色づき始め / 〇 見ごろ / ◎ 真っ盛り / ▼ 色褪せ・落葉始め。地点ごとに最終更新日(年つき)がある。写真は見頃の時期のもので今の様子ではない、と注記がある"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "1 ページで 24 地点。地点ごとの更新日は 2026-09-13〜10-22"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "サイトポリシーに引用・要約・転載・自動取得の規定なし。フッターに Copyright 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: hakone-kankou-koyo
     publisher: 箱根町観光協会
@@ -70,7 +70,7 @@ sources:
       note: "「○/○現在」の形で年がない。「また来年」は季節の終わりの意味と読んだ(推測。凡例の説明はない)。2026-10-23 の読みでは強羅が『また来年(10/06現在)』で、今年の値か前年の残りかが分からない(要目視)"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "robots.txt は User-agent: * だけ(拒否なし)。地点ごとの日付のうち最新は 10/22(年は今年と読んだ)"}
     terms: {status: no_prohibition_found, url: "https://www.hakone.or.jp/6338", note: "サイト利用規約: 商業目的の利用(複製・販売など)と、営利目的の情報の転用を禁じる(第11条・第13条)。引用・要約・自動取得の規定はない。イキモノビヨリの使い方(個人・非商用、事実だけ・出典つき)は禁止に当たらないと判断。商用にするなら見直す"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: daigo-kanko-koyo
     publisher: 大子町観光協会
@@ -91,7 +91,7 @@ sources:
       note: "スポット紹介の各件に「色づき状況…<語>」と「YYYY年MM月DD日(曜) 現在」。2026-10-23 の読みでは見た語は『青葉』だけ(ほかの語は未確認)"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-19", note: "robots.txt は /wp-admin/ だけ拒否。生瀬滝・月居山・高徳寺は状況の表示なし"}
     terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見当たらない。フッターに All rights reserved だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: ibaraki-guide-autumn-leaves
     publisher: 茨城県(観光いばらき)
@@ -109,7 +109,7 @@ sources:
       note: "2026-10-23 の読みでは今年の状況はまだなく、地図の画像に『2026年の紅葉状況は10月下旬から更新』とある。例年の見頃だけ載っている。状態の書き方は更新が始まってから確かめる(未確認)"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-15", note: "ページの更新日 2026-10-15。robots.txt は /?s= だけ拒否"}
     terms: {status: no_prohibition_found, url: "https://www.ibarakiguide.jp/page/poricy.html", note: "サイトポリシー: 文章・画像の著作物は、私的使用の複製や引用など著作権法上認められた場合を除き、無断で転用・引用できない。事実(状態・更新日)を出典つきで短く伝えることは禁じていないと判断(本文・画像は写さない)。迷った点として review に書く"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: yamanashi-kankou-koyo
     publisher: やまなし観光推進機構(富士の国やまなし観光ネット。山梨県公式観光情報)
@@ -128,7 +128,7 @@ sources:
       note: "地域(6 区分)ごとの欄。2026-10-23 の読みではすべての欄が『現在、情報がありません』で、状態の書き方は未確認。地点ではなく地域の単位(label は地域名)"
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-16", note: "ページの更新日 2026-10-16。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, note: "「このサイトについて」に引用・要約・転載・自動取得の規定なし。© 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: tokyo-park-rikugien-news
     publisher: 東京都公園協会(六義園サービスセンター)
@@ -145,7 +145,7 @@ sources:
       note: "お知らせ一覧に『【六義園】紅葉状況M/D(YYYY年)』の記事が出る形(2025 年の記事で確認)。2026-10-23 の読みでは今年の紅葉状況の記事はまだない。語は 2025-11-20 の記事で見たもの"
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-20", note: "一覧の最新は 2026-10-20(紅葉以外)。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "サイトポリシー: 情報・画像は権利者の許可なく複製・転用・販売などの二次利用を禁じる。リンクは原則自由。事実(状態・日付)を出典つきで短く伝えることは二次利用(複製・転用)に当たらないと判断。迷った点として review に書く"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: fng-shinjuku-seasonal
     publisher: 国民公園協会 新宿御苑
@@ -162,7 +162,7 @@ sources:
       note: "『季節のみどころ情報【M月D日号】』の記事(一覧はトップページ)。欄の見出しが『みごろの花』『開花、色づきはじめ』など。2026-10-16 号には紅葉の樹木の記載がなかった。紅葉の書き方は記事が出てから確かめる"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-16", note: "robots.txt は /wp-admin/ だけ拒否"}
     terms: {status: no_prohibition_found, url: "https://fng.or.jp/terms/", note: "利用規約: 文章・写真などは、私的使用の複製や引用など著作権法上認められた場合を除き、許可なく転用・引用できない。要約・自動取得の規定なし。事実を出典つきで短く伝えることは禁じていないと判断。迷った点として review に書く"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: okuooi-koyo
     publisher: 川根本町まちづくり観光協会
@@ -240,7 +240,7 @@ sources:
       - {site: kouyou-0022, label: "庭紅葉の六義園 夜間特別観賞"}
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, note: "お知らせ一覧と検索結果で、2026-11-25〜12-06・18:00〜20:30 の夜間特別観賞を確認(この URL の本文は一覧から確認)"}
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: hasedera-lightup
     publisher: 長谷寺(鎌倉)
@@ -251,7 +251,7 @@ sources:
       - {site: kouyou-0021, label: "秋の夜間特別拝観・紅葉ライトアップ"}
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-17", note: "2026-10-17 のお知らせ。紅葉の今の状態の記載はない。robots.txt は wp-admin だけ拒否"}
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: ttca-autumn-tsukuba
     publisher: つくば観光コンベンション協会
@@ -262,7 +262,7 @@ sources:
       - {site: kouyou-0015, label: "秋の筑波山(筑波山もみじまつり)"}
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-19", note: "もみじまつりの期間・ライトアップ・標高別の見頃の予定。今の状態の記載はない。robots.txt は wp-admin・wpforms だけ拒否"}
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。All Rights Reserved 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: isehara-oyama-koyo
     publisher: 伊勢原市
@@ -273,7 +273,7 @@ sources:
       - {site: kouyou-0020, label: "大山の紅葉"}
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, note: "公開日 2024-02-27。ライトアップは『11月下旬ごろ』(大山寺・阿夫利神社下社)とだけあり、今年の日程・状態はない。robots.txt は /_system/・/search.html だけ拒否"}
     terms: {status: no_prohibition_found, note: "著作権・サイトポリシーのページはトップから見つからなかった。Copyright 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   # ---- 交通・混雑・通行止め(access_page) ----
   - id: nikko-kankou-congestion
@@ -287,7 +287,7 @@ sources:
       - {site: kouyou-0003, label: "日光の渋滞・混雑情報"}
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-09-02", note: "2026 年版(3 か月に 1 度更新)。渋滞予想カレンダーは画像と PDF"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "nikko-kankou-autumn-leaves と同じ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: okuooi-traffic-sumata
     publisher: 川根本町まちづくり観光協会
@@ -298,7 +298,7 @@ sources:
       - {site: kouyou-0019, label: "県道川根寸又峡線 奥泉・寸又峡間 紅葉シーズンの交通規制"}
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-01", note: "2026-10-01 のお知らせ。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
 
   - id: numata-kankou-news
     publisher: 沼田市観光協会
@@ -309,4 +309,4 @@ sources:
       - {site: kouyou-0007, label: "吹割の滝 遊歩道 通行止め"}
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-09-12", note: "吹割の滝の遊歩道の通行止め・解除のお知らせ(最新 2026-09-12 の解除)。紅葉の状況の記載はない。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。© 表示だけ"}
-    approval: {status: pending}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-23"}
