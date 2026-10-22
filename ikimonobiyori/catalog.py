@@ -167,6 +167,29 @@ def approved_entries(doc):
     return [e for e in doc.get("entries") or [] if e.get("status") == "approved" and not e.get("example")]
 
 
+def load_catalog(subject, catalog_dir=None):
+    """本番のカタログ(data/catalog/<subject>.yaml)。なければ None。"""
+    p = Path(catalog_dir or CATALOG_DIR) / f"{subject}.yaml"
+    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+
+
+def catalog_sites(doc):
+    """承認済み(approved)で point のある件 → 地点の辞書 {id: site}(段階14b。sites.yaml の 76 地点と同じ形 + 名所の項目)。
+    site_ref は名所カタログを指す(ikimonobiyori:<id>)。region はカタログにないので None。candidate・retired・例・point のない件は入れない。"""
+    out = {}
+    for e in approved_entries(doc or {}):
+        pt = e.get("point")
+        if not pt:
+            continue
+        out[e["id"]] = {"id": e["id"], "name": e["name"], "lat": pt["lat"], "lon": pt["lon"], "elevation_m": pt.get("elevation_m"),
+                        "region": None, "kind": "catalog", "site_ref": f"ikimonobiyori:{e['id']}",
+                        "location_precision": e["location_precision"],
+                        "sources": [{k: v for k, v in src.items() if k in ("url", "title", "checked_on")} for src in e["sources"]],
+                        "landmark": {"id": e["id"], "approved_at": e["approved_at"], "typical_window": e.get("typical_window"),
+                                    "official_status_url": e.get("official_status_url"), "note": e.get("note")}}
+    return out
+
+
 def check_all(catalog_dir=None, profiles_dir=None, policy_path=None):
     """→ [(ファイル, エラーのリスト)]。"""
     out, ids = [], set()
