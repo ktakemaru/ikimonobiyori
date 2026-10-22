@@ -80,8 +80,25 @@ class Registry(unittest.TestCase):
                 if s["approval"]["status"] == "approved":
                     self.assertEqual(s["readable"]["status"], "ok")
                     self.assertNotIn(s["readable"].get("robots"), sources.ROBOTS_BLOCKING)
-                    self.assertEqual(s["approval"].get("approved_by"), "claude_code_provisional")   # 段階15 の承認はすべて仮承認(ユーザーが見直す)
+                    self.assertEqual(s["approval"].get("approved_by"), "user")   # 仮承認はユーザーの見直し(2026-10-23)ですべてユーザーの承認に切り替えた
                 self.assertNotIn(s["publisher_kind"], ("aggregator", "travel_agency", "weather_company", "personal"))
+
+    def test_the_review_of_2026_10_23_is_kept(self):
+        """ユーザーの見直し(2026-10-23)の反映。"""
+        by = sources.sources_by_id(sources.load_registry("autumn_leaves"))
+        self.assertIs(by["hakone-kankou-koyo"]["notation"]["year_shown"], False)
+        self.assertEqual(by["hakone-kankou-koyo"]["approval"]["status"], "approved")
+        ise = by["isehara-oyama-koyo"]
+        self.assertNotEqual(ise["kind"], "status_page")                              # 現況の情報源にしない
+        self.assertEqual(ise["approval"]["status"], "pending")
+        self.assertTrue(ise["approval"].get("reason"))
+        for sid in ("ibaraki-guide-autumn-leaves", "fng-shinjuku-seasonal", "tokyo-park-rikugien-news", "tokyo-park-rikugien-lightup"):
+            self.assertIn("複製には当たらないとユーザーが判断(2026-10-23)", by[sid]["approval"]["reason"], sid)
+        self.assertEqual(by["chichibu-kanko-kouyou"]["approval"]["status"], "pending")
+        self.assertIn("ユーザー側でも同じ内容を確認済み", by["nikko-kankou-autumn-leaves"]["readable"]["note"])
+        c = sources.candidates(catalog.load_catalog("autumn_leaves"), sources.load_registry("autumn_leaves"), [date(2026, 11, 21)], POLICY)
+        self.assertNotIn("isehara-oyama-koyo", [p["id"] for p in c["read_plan"]])
+        self.assertIn("isehara-oyama-koyo", [h["id"] for h in c["human_urls"]])
 
     def test_a_good_registry_passes(self):
         self.assertEqual(self.errs(reg(src())), [])
@@ -153,6 +170,16 @@ class Freshness(unittest.TestCase):
         self.assertEqual(sources.freshness(date(2026, 10, 20), on, POLICY)["label"], "新しい")
         with self.assertRaises(ValueError):
             sources.freshness(date(2026, 10, 24), on, POLICY)                      # 未来の更新日は推測で直さない
+
+    def test_a_date_without_a_year_is_not_judged(self):
+        on = date(2026, 10, 23)
+        got = sources.freshness(date(2026, 10, 22), on, POLICY, year_inferred=True)
+        self.assertEqual(got, {"age_days": None, "class": "year_unknown", "label": "新しさ不明"})   # 1 日前でも「新しい」としない
+        self.assertEqual(sources.freshness(None, on, POLICY, year_inferred=True)["class"], "unknown")
+        yearless = src(notation={"style": "word", "map": {"まだまだ": "not_yet"}, "year_shown": False})
+        self.assertTrue(sources.year_unknown(yearless))
+        self.assertTrue(sources.year_unknown(src(), {"updated_year_inferred": True}))
+        self.assertFalse(sources.year_unknown(src(), {}))
 
     def test_policy_values_have_a_source(self):
         for k in ("fresh_max_days", "somewhat_old_max_days"):
@@ -291,6 +318,25 @@ class Records(unittest.TestCase):
         self.assertEqual((got["rows"][0]["stage_label"], got["rows"][0]["freshness"]["class"]), ("真っ盛り", "fresh"))
         self.assertTrue(Path(got["path"]).is_relative_to(self.d))
 
+    def test_a_source_without_years_needs_the_inferred_flag(self):
+        r = reg(src(id="test-yearless", notation={"style": "word", "map": {"まだまだ": "not_yet"}, "updated": "per_item", "year_shown": False}))
+        a = {"registry": r, "policy": POLICY, "source_id": "test-yearless", "read_at": self.AT, "state": "まだまだ",
+             "updated": "2026-10-22", "site": "kouyou-0001", "label": "渓谷"}
+        errs = sources.validate_record(sources.make_record(**a), registry=r, policy=POLICY)
+        self.assertTrue(any("updated_year_inferred" in e for e in errs), errs)
+        self.assertEqual(sources.validate_record(sources.make_record(**a, year_inferred=True), registry=r, policy=POLICY), [])
+        self.assertEqual(sources.validate_record(sources.make_record(**{**a, "updated": None}), registry=r, policy=POLICY), [])
+
+    def test_record_cli_says_freshness_unknown_for_hakone(self):
+        batch = self.d / "reads.json"
+        batch.write_text(json.dumps([{"source": "hakone-kankou-koyo", "site": "kouyou-0018", "label": "強羅(箱根美術館)",
+                                      "state": "色づきはじめ", "updated": "2026-10-22", "year_inferred": True}], ensure_ascii=False), encoding="utf-8")
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, self.env), contextlib.redirect_stdout(out):
+            self.assertEqual(sources.main(["record", "--read-at", "2026-10-23T21:30:00+09:00", "--batch", str(batch)]), 0)
+        row = json.loads(out.getvalue())["rows"][0]
+        self.assertEqual((row["stage"], row["freshness"]["class"], row["freshness"]["label"]), ("starting", "year_unknown", "新しさ不明"))
+
     def test_the_log_location_is_under_the_data_dir(self):
         self.assertEqual(sources.log_path("autumn_leaves", self.env), self.d / "status_log" / "autumn_leaves.jsonl")
 
@@ -341,6 +387,7 @@ class Procedure(unittest.TestCase):
         r = POLICY["recommend"]
         self.assertIn(f"上位 {sources.val(r['top_min'])}〜{sources.val(r['top_max'])} か所", skill)
         self.assertIn(POLICY["aux_estimate"]["label"], skill)
+        self.assertIn(f"「{f['labels']['year_unknown']}」", skill)                      # 年のない更新日(ユーザーの見直し 2026-10-23)
 
 
 if __name__ == "__main__":

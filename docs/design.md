@@ -21,7 +21,7 @@
 | 残してよいもの | 読んだ結果の**事実だけ**(情報源 ID、名所、公式の状態、公式の更新日、読んだ日時、URL)。本文の写しと写真は残さない。置き場所は git の追跡外(`IKIMONOBIYORI_DATA_DIR` の下) |
 | アクセスの作法 | 自動アクセスを拒否しているサイト(robots.txt や応答で拒否されたもの)は読まない。台帳に「読めない」と記録し、人が開く前提の URL として扱う |
 | v0 の気温判定 | 消さない。現況がない名所の補助として「推定(未検証・段階14で不合格)」と明記して出す。現況があるときは、答えの中心にしない |
-| 情報源の承認 | 段階15 はユーザー不在のため、条件(公式の発信者・実際に読めた・利用条件が要約や出典つきの事実の利用を禁じていない)を満たす情報源を Claude Code が**仮承認**(`approved_by: claude_code_provisional`)する。ユーザーが見直し、取り消せる(`docs/stage15-review.md`) |
+| 情報源の承認 | 段階15 はユーザー不在のため、条件(公式の発信者・実際に読めた・利用条件が要約や出典つきの事実の利用を禁じていない)を満たす情報源を Claude Code が**仮承認**(`approved_by: claude_code_provisional`)する。ユーザーが見直し、取り消せる(`docs/stage15-review.md`)。2026-10-23 にユーザーが見直し、承認済みはユーザーの承認に切り替えた(`docs/stage15-decisions.md` D-34〜) |
 
 仕組み:
 - 情報源の台帳: `ikimonobiyori/data/sources/<subject>.yaml`(スキーマ `ikimonobiyori/schemas/status-sources.schema.json`、検査器 `python -X utf8 -m ikimonobiyori.sources check`)。名所カタログの各件は `status_sources` で台帳の id を指す。

@@ -176,12 +176,20 @@ def normalize_state(src, raw):
 
 # ---- 新しさ ----
 
-def freshness(updated, on, policy):
+def year_unknown(src, rec=None):
+    """更新日の年が公式ページにない(台帳の notation.year_shown: false)か、記録で年を補った(updated_year_inferred)か。"""
+    return (src or {}).get("notation", {}).get("year_shown") is False or bool((rec or {}).get("updated_year_inferred"))
+
+
+def freshness(updated, on, policy, year_inferred=False):
     """公式の更新日(date か None)から on(date)までの日数で分ける。→ {age_days, class, label}。
+    年を補った更新日(year_inferred)は日数で分けず「新しさ不明」(前年の日付かもしれない。ユーザーの見直し 2026-10-23)。
     更新日が on より後なら ValueError(年の補い方の誤りなど。推測で直さない)。"""
     fr = policy["freshness"]
     if updated is None:
         return {"age_days": None, "class": "unknown", "label": fr["labels"]["unknown"]}
+    if year_inferred:
+        return {"age_days": None, "class": "year_unknown", "label": fr["labels"]["year_unknown"]}
     age = (on - updated).days
     if age < 0:
         raise ValueError(f"公式の更新日 {updated} が {on} より後")
@@ -314,6 +322,8 @@ def validate_record(rec, *, registry, policy):
         errs.append(f"stage={rec.get('stage')} が台帳の対応({normalize_state(src, st)[0]})と違う")
     if "updated_year_inferred" in rec and not isinstance(rec["updated_year_inferred"], bool):
         errs.append("updated_year_inferred は真偽値")
+    elif rec.get("official_updated") is not None and (src.get("notation") or {}).get("year_shown") is False and rec.get("updated_year_inferred") is not True:
+        errs.append(f"情報源 {src['id']} の日付には年がない(notation.year_shown: false)。年を補った更新日には updated_year_inferred: true が要る")
     try:
         ra = parse_now(rec["read_at"])
     except (TypeError, ValueError) as ex:
@@ -447,12 +457,12 @@ def main(argv=None):
         except ValueError as ex:
             print(f"記録しなかった: {ex}", file=sys.stderr)
             return 1
-        rows = []
+        rows, by_id = [], sources_by_id(registry)
         for rc in recs:
             up = date.fromisoformat(rc["official_updated"]) if rc.get("official_updated") else None
             rows.append({"source": rc["source_id"], "where": rc.get("site") or rc.get("name"), "state": rc["official_state"],
                          "stage": rc["stage"], "stage_label": stage_label(policy, a.subject, rc["stage"]), "updated": rc.get("official_updated"),
-                         "freshness": freshness(up, read_at.date(), policy)})
+                         "freshness": freshness(up, read_at.date(), policy, year_unknown(by_id.get(rc["source_id"]), rc))})
         _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "rows": rows})
         return 0
     if a.cmd == "v0":

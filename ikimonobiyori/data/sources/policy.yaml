@@ -18,7 +18,9 @@ stages:
 freshness:
   fresh_max_days: {value: 3, source: "指示書(段階15): 3 日以内は『新しい』", provisional: true}
   somewhat_old_max_days: {value: 7, source: "指示書(段階15): 7 日以内は『やや古い』、それより古いものは『古い。参考程度』", provisional: true}
-  labels: {fresh: 新しい, somewhat_old: やや古い, old: 古い。参考程度, unknown: 更新日不明}
+  labels: {fresh: 新しい, somewhat_old: やや古い, old: 古い。参考程度, unknown: 更新日不明, year_unknown: 新しさ不明}
+  # 年のない更新日(台帳の notation.year_shown: false。読んだ人が年を補ったもの)は日数で分けず year_unknown にする
+  #   (ユーザーの見直し 2026-10-23: 箱根町観光協会。前年の日付かもしれないので、新しい・やや古いと判定しない)
 
 # 候補の絞り込み: 名所カタログの例年の時期(typical_window)に対象の日が入っている、または前後これだけの日数以内
 candidates:
