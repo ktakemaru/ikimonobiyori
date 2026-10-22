@@ -198,8 +198,9 @@ def autumn_proposals(request, profile, inputs, sites, dates, today, synthetic, w
                 "subject": {"category": profile["category"], "name": "紅葉", "profile_id": profile["profile_id"]},
                 "phenology_stage": st,
                 "place": {"name": site["name"], "lat": site["lat"], "lon": site["lon"], "elevation_m": site["elevation_m"],
-                          "region": site["region"], "location_precision": profile["care"]["location_precision"],
-                          **({"site_ref": site["site_ref"]} if site.get("site_ref") else {})},
+                          "region": site["region"], "location_precision": site.get("location_precision") or profile["care"]["location_precision"],
+                          **({"site_ref": site["site_ref"]} if site.get("site_ref") else {}),
+                          **({"sources": site["sources"]} if site.get("sources") else {})},          # 名所カタログの地点(段階14b)だけ。76 地点は今まで通り
                 "time_window": day_window(d),
                 "suitability": {"band": band, "score": {"value": prog, "scale": profile["scale"]["name"], "go_threshold": None}},
                 "evidence": [ev("min_temp_mean_window", m, "degC"), ev("min_temp_target_day", series.get(d.isoformat()), "degC"),
@@ -219,7 +220,7 @@ def autumn_proposals(request, profile, inputs, sites, dates, today, synthetic, w
                          "do_not_disclose_exact_location": profile["care"]["do_not_disclose_exact_location"]},
                 "native_ref": None,
                 "details": {"profile_id": profile["profile_id"], "site_id": sid, "provisional_params": provisional_params(profile),
-                            "synthetic": bool(synthetic)},
+                            "synthetic": bool(synthetic), **({"landmark": site["landmark"]} if site.get("landmark") else {})},
             })
         asof.append({"source": src, "source_type": "forecast", "run_time": None,
                      "fetched_at": meta["fetched_at"] if meta else inputs["fetched_at"], "last_updated": None, "url": q["url"]})

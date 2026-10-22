@@ -6,6 +6,7 @@ v0 の判定(engine)はカタログを使わない。
 """
 import argparse
 import json
+import math
 import sys
 from datetime import date
 from decimal import Decimal
@@ -57,6 +58,21 @@ def min_precision(policy, entry):
     return floor, why
 
 
+def distance_km(lat1, lon1, lat2, lon2, radius_km):
+    """2 点の大円距離(球の近似)。"""
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 2 * radius_km * math.asin(math.sqrt(a))
+
+
+def nearest_origin_km(policy, pt):
+    """方針の起点(東京・横浜)のうち近いほうまでの距離。方針に range_limit がなければ None。→ (km, 起点の名前)"""
+    rl = policy.get("range_limit")
+    if not rl:
+        return None
+    return min((distance_km(pt["lat"], pt["lon"], o["lat"], o["lon"], rl["earth_radius_km"]), o["name"]) for o in rl["origins"])
+
+
 def valid_month_day(s):
     m, d = (int(x) for x in s.split("-"))
     try:
@@ -94,6 +110,9 @@ def check_entry(entry, *, subject, profile_ids, policy):
         for k in ("lat", "lon"):
             if decimals(pt[k]) > limit:
                 errs.append(f"{eid}: point.{k}={pt[k]} が {entry['location_precision']} より細かい(小数 {limit} 桁まで)")
+    near = nearest_origin_km(policy, pt) if pt else None
+    if near and near[0] > policy["range_limit"]["max_km"]:
+        errs.append(f"{eid}: 範囲外(近い起点 {near[1]} から {near[0]:.0f} km。上限 {policy['range_limit']['max_km']} km)")
     tw = entry.get("typical_window")
     if tw:
         for k in ("start", "end"):
@@ -146,6 +165,29 @@ def usable_description(entry):
 def approved_entries(doc):
     """提案に使ってよい件(approved だけ。candidate・retired・例は使わない)。"""
     return [e for e in doc.get("entries") or [] if e.get("status") == "approved" and not e.get("example")]
+
+
+def load_catalog(subject, catalog_dir=None):
+    """本番のカタログ(data/catalog/<subject>.yaml)。なければ None。"""
+    p = Path(catalog_dir or CATALOG_DIR) / f"{subject}.yaml"
+    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+
+
+def catalog_sites(doc):
+    """承認済み(approved)で point のある件 → 地点の辞書 {id: site}(段階14b。sites.yaml の 76 地点と同じ形 + 名所の項目)。
+    site_ref は名所カタログを指す(ikimonobiyori:<id>)。region はカタログにないので None。candidate・retired・例・point のない件は入れない。"""
+    out = {}
+    for e in approved_entries(doc or {}):
+        pt = e.get("point")
+        if not pt:
+            continue
+        out[e["id"]] = {"id": e["id"], "name": e["name"], "lat": pt["lat"], "lon": pt["lon"], "elevation_m": pt.get("elevation_m"),
+                        "region": None, "kind": "catalog", "site_ref": f"ikimonobiyori:{e['id']}",
+                        "location_precision": e["location_precision"],
+                        "sources": [{k: v for k, v in src.items() if k in ("url", "title", "checked_on")} for src in e["sources"]],
+                        "landmark": {"id": e["id"], "approved_at": e["approved_at"], "typical_window": e.get("typical_window"),
+                                    "official_status_url": e.get("official_status_url"), "note": e.get("note")}}
+    return out
 
 
 def check_all(catalog_dir=None, profiles_dir=None, policy_path=None):

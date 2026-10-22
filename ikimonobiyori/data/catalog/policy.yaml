@@ -15,3 +15,11 @@ min_location_precision:
 public_venue_exception: [fireflies]
 # 希少種・生息地(entry.sensitive: true)の下限。公開会場の例外は効かない
 sensitive_min_location_precision: area_10km
+# 名所の範囲(段階14b。ビヨリシリーズの決まり: 東京・横浜からの直線距離 250 km 以内)。point のある件だけを検査する。
+# 起点の座標は東京駅・横浜駅の付近(Claude Code の知識による値。小数 3 桁)。地球の半径は球の近似(km)
+range_limit:
+  max_km: 250
+  earth_radius_km: 6371.0
+  origins:
+    - {name: 東京, lat: 35.681, lon: 139.767}
+    - {name: 横浜, lat: 35.466, lon: 139.622}

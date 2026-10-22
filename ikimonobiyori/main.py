@@ -38,6 +38,8 @@ def main(argv=None, http_get=None):
     ap.add_argument("--cache-only", action="store_true")
     ap.add_argument("--max-requests", type=int)
     ap.add_argument("--sites", help="地点 ID をカンマ区切り(例: m001,m002)。省略時は紅葉の対象日の全カタログ地点")
+    ap.add_argument("--site-set", choices=["mountains", "catalog", "both"], default="mountains",
+                    help="紅葉の地点の集合(段階14b)。mountains = 山の 76 地点(既定・今まで通り)/ catalog = 名所カタログの承認済み / both = 両方")
     ap.add_argument("--area", help="野鳥の場所 ID(bird_areas の approved のもの。省略時は先頭。all = approved の全部)")
     ap.add_argument("--dates-limit", type=int, help="野鳥: 先頭から何日分だけ処理するか(例: 1)")
     ap.add_argument("--shape-check", action="store_true", help="野鳥: 形の確認(1日分・1年分の窓を1リクエストだけ)。応答の形を --shape-out に保存して終わる")
@@ -59,6 +61,10 @@ def main(argv=None, http_get=None):
     request = json.loads(Path(a.request).read_text(encoding="utf-8"))
     profs = profiles.load_profiles(a.profiles)
     sites, sites_doc = profiles.load_sites()
+    if a.site_set != "mountains":                              # 名所カタログ(承認済みだけ)。既定の 76 地点の動作は変えない(段階14b)
+        from ikimonobiyori import catalog
+        cat = catalog.catalog_sites(catalog.load_catalog("autumn_leaves"))
+        sites = cat if a.site_set == "catalog" else {**sites, **cat}
     all_approved = [x for x in (sites_doc.get("bird_areas") or []) if x.get("status") == "approved"]      # 候補(candidate)は問い合わせの対象にしない
     approved_areas = [x for x in all_approved if x.get("active") is not False]                          # 既定の問い合わせ(--area 省略・all)は active だけ。active: false は --area ID で明示したときだけ
     report = None
