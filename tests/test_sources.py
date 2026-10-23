@@ -522,6 +522,34 @@ class Generic(unittest.TestCase):
         self.assertEqual(tokyo["status"], "in_range")
         self.assertTrue({"kouyou-0022", "kouyou-0023", "kouyou-0024"} <= set(tokyo["catalog_sites"]["autumn_leaves"]))
 
+    def test_a_region_reads_its_sources_even_out_of_season(self):
+        """地域を指定したときは、例年の時期の外の名所の承認済みの情報源も読む予定に入れる。指定がないときは変えない。"""
+        r = reg(src(covers=[{"site": "kouyou-0001", "label": "渓谷"}]),
+                src(id="test-pending", covers=[{"site": "kouyou-0001", "label": "渓谷"}], readable={"status": "unconfirmed", "checked_on": "2026-10-23"},
+                    approval={"status": "pending", "reason": "HTTP 503"}))
+        c = cat(site("kouyou-0001", ("11-11", "11-30"), ["test-kankou-koyo", "test-pending"], tags={"prefecture": "神奈川県", "area": "箱根"}))
+        region = {"name": "箱根", "match": {"areas": ["箱根"]}}
+        days = [date(2026, 10, 24), date(2026, 10, 25)]
+        with_region = sources.candidates(c, r, days, POLICY, region=region)
+        self.assertEqual([(p["id"], p["sites"], p["out_of_season_sites"]) for p in with_region["read_plan"]],
+                         [("test-kankou-koyo", ["kouyou-0001"], ["kouyou-0001"])])                 # 承認済みだけ。時期の外と分かる印つき
+        self.assertEqual(with_region["out_of_season"][0]["covered_by_read_plan"], ["test-kankou-koyo"])
+        without = sources.candidates(c, r, days, POLICY)
+        self.assertEqual((without["read_plan"], without["out_of_season"][0]["covered_by_read_plan"]), ([], []))   # 地域の指定がなければ従来どおり
+
+    def test_question_3_hakone_plans_to_read_the_hakone_page(self):
+        """試験問題 3(箱根): 読む予定が空にならず、強羅は例年の時期の外として印が付く。"""
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(sources.main(["weekend", "--now", "2026-10-23T09:30:00+09:00", "--region", "箱根"]), 0)
+        got = json.loads(out.getvalue())
+        self.assertEqual([(p["id"], p["out_of_season_sites"]) for p in got["read_plan"]], [("hakone-kankou-koyo", ["kouyou-0018"])])
+        self.assertEqual([o["site"] for o in got["out_of_season"]], ["kouyou-0018"])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            sources.main(["weekend", "--now", "2026-10-23T09:30:00+09:00"])
+        self.assertFalse(any("out_of_season_sites" in p for p in json.loads(out.getvalue())["read_plan"]))
+
     def test_every_catalog_area_is_reachable_by_a_region(self):
         regions = sources.load_regions()
         for subject in [s["subject"] for s in sources.subjects_status() if s["implemented"]]:

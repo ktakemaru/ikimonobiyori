@@ -424,7 +424,16 @@ def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=Non
         for s in row["sources"]:
             bucket = plan if s["approval"] == APPROVED else human
             bucket.setdefault(s["id"], {"id": s["id"], "kind": s["kind"], "url": s["url"], "sites": []})["sites"].append(row["site"])
-    no_status = [r["site"] for r in sites if not any(s["approval"] == APPROVED and s["kind"] == "status_page" for s in r["sources"])]
+    if region is not None:
+        # 地域を指定したときだけ: 例年の時期の外の名所も、承認済みの情報源を読む予定に入れる(段階16 の答え直しで見つけた穴。
+        # 箱根は強羅だけが名所で、時期の外だと箱根のページを読まなかった)。答えでは out_of_season_sites の名所を「例年の時期の外」と明記する
+        for row in out_of_season:
+            for s in row["sources"]:
+                if s["approval"] == APPROVED:
+                    item = plan.setdefault(s["id"], {"id": s["id"], "kind": s["kind"], "url": s["url"], "sites": []})
+                    item["sites"].append(row["site"])
+                    item.setdefault("out_of_season_sites", []).append(row["site"])
+    no_status =[r["site"] for r in sites if not any(s["approval"] == APPROVED and s["kind"] == "status_page" for s in r["sources"])]
     return {"dates": [d.isoformat() for d in dates], "window_margin_days": margin,
             "sites": sites,
             # 例年の時期から外れた名所。読む情報源(read_plan)がこの名所も伝えていれば、ついでに分かる公式の現況を示せる(現況が主。段階15)
