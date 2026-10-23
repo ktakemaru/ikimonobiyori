@@ -1,0 +1,91 @@
+# 冬鳥(白鳥などの飛来地)の飛来情報を発信する公式ページの台帳(ikimono-status-sources/1)。段階16 C(2026-10-23)。
+# 2026-10-23 に Claude Code が各ページを 1 回読んで、readable・notation・terms を確かめた(WebFetch。原文との照合は人の目でしていない)。
+# 飛来数(羽数)から段階を決める閾値はない(出典がない)。段階は、公式の語が notation.map にあるときだけ(見た語だけ)。羽数は state に原文のまま残す。
+# 承認: 段階15 と同じ条件(公式・読めた・利用条件が要約や出典つきの事実の利用を禁じていない)を満たすものを Claude Code が仮承認した。
+#   段階16 の見直し(2026-10-23): 阿賀野市・安曇野市・館林市はユーザーの承認、三条市は pending、那珂市は却下(revoked)。
+#   「著作権法上認められた引用などを除き無断で複製・転載できない」は、状態と更新日の短い事実を出典つきで示すだけなら当たらない、というユーザーの判断(段階15、2026-10-23)に合わせた。
+schema: ikimono-status-sources/1
+subject: wintering_birds
+sources:
+  - id: agano-hyoko-monthly
+    publisher: 阿賀野市(公園管理事務所)
+    publisher_kind: municipality
+    url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2/index.html"
+    kind: status_page
+    covers:
+      - {site: hakucho-0001, label: "白鳥の渡来状況"}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      note: "一覧に『令和N年M月の白鳥の渡来状況』の記事が月ごとに出る形。記事に『M月D日(曜日) N羽』の見出しと、前回・昨年・例年との比較の文(例: 例年並みの状況です)。2026-10-23 に令和8年10月の記事(10/2 3羽〈初認〉、10/9 1,157羽、10/16 2,627羽)を確認。羽数は原文のまま記録し、段階は推測しない。『最新情報』のページ(2845.html)の推移はグラフの画像"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-16", note: "robots.txt は 404(なし)。調査は毎週金曜日(公式)"}
+    terms: {status: no_prohibition_found, url: "https://www.city.agano.niigata.jp/first_guide/5356.html", note: "リンク・著作権・免責事項: 私的使用のための複製や引用など著作権法上認められた場合を除き、無断で複製・転用できない。要約・自動取得の規定なし。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: azumino-hakucho-hirai
+    publisher: 安曇野市(観光課)
+    publisher_kind: municipality
+    url: "https://www.city.azumino.nagano.jp/soshiki/32/10320.html"
+    kind: status_page
+    covers:
+      - {site: hakucho-0002, label: "犀川白鳥湖"}
+      - {site: hakucho-0002, label: "御宝田遊水地"}
+    notation:
+      style: none
+      map: {}
+      no_info: ["−"]
+      updated: per_page
+      year_shown: true
+      note: "年度ごとのページ(令和8年度)。場所ごとの飛来数(『−』は飛来場所を確認できなかった)と『令和N年M月D日時点』、今季の初飛来日、過去の年度の初飛来日・最高飛来数・最終北帰行日の表。数は朝6時〜6時30分の確認、アルプス白鳥の会の集計(公式の記載)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-21", note: "2026-10-23 の読みで、10/20 時点 御宝田遊水地 6羽・犀川白鳥湖 −、初飛来 2026-10-06。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.city.azumino.nagano.jp/site/userguide/exclusion.html", note: "私的使用のための複製や引用などの場合を除き、無断で複製・転載・販売・貸与できない。無断の改変も不可。要約・自動取得の規定なし。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  - id: tatebayashi-hakucho
+    publisher: 館林市
+    publisher_kind: municipality
+    url: "https://www.city.tatebayashi.gunma.jp/s025/kanko/020/070/020/20200104065000.html"
+    kind: status_page
+    covers:
+      - {site: hakucho-0003, label: "多々良沼"}
+      - {site: hakucho-0003, label: "城沼"}
+    notation:
+      style: none
+      map: {}
+      updated: per_item
+      year_shown: true
+      note: "『飛来情報/確認数』(場所・羽数・令和の日付)と『白鳥飛来数一斉調査』の表。2026-10-23 の読みでは今季(2026 年秋〜)の記載はまだなく、最新は令和8年3月3日 多々良沼 3羽(前のシーズン)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-03-10", note: "ページの更新日 2026-03-10。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.city.tatebayashi.gunma.jp/s002/020/20200110065000.html", note: "サイトポリシー: 私的使用や引用など著作権法で認められる場合を除き、無断の複製・転用・販売を禁じる(2026-10-23 の見直しのあと、ページを WebFetch で読んで確認。要約・自動取得の規定なし)。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "ユーザーの見直し(2026-10-23): 利用条件のページを実際に読めたら承認。読めて、文面は段階15 のユーザーの判断と同じ型だった"}
+
+  - id: naka-kotokunuma
+    publisher: 那珂市(商工観光課)
+    publisher_kind: municipality
+    url: "https://www.city.naka.lg.jp/event-kankou/kankou-spot/page000276.html"
+    kind: forecast_page
+    covers:
+      - {name: 古徳沼(那珂市), label: "古徳沼"}
+    notation: {style: none, map: {}, updated: per_page, note: "観光スポットのページ。観察できる期間(11月初旬〜3月中旬)と、過去の年度の初飛来日・最多の羽数。今季の飛来数は那珂市観光協会のサイトに載る(公式の記載。台帳には入れていない)"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2025-03-24", note: "ページの更新日の表示は 2025-03-24(令和7年度の記録を含むのに古い日付。要目視)。読む道具が『ページに書式を指定する文が埋め込まれている』と注意した(従わなかった。データとして扱う)。robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.city.naka.lg.jp/hp-about/", note: "『このサイトについて』に複製・引用の規定なし(© 表示だけ)"}
+    approval: {status: revoked, reason: "却下(ユーザーの見直し 2026-10-23): 更新が古く、ページ内に指示文が埋め込まれていたため"}
+
+  - id: sanjo-hakucho-hirai
+    publisher: 三条市
+    publisher_kind: municipality
+    url: "https://www.city.sanjo.niigata.jp/sanjonavi/see_do/nature/swan/2316.html"
+    kind: status_page
+    covers:
+      - {site: hakucho-0005, label: "白鳥の郷公苑"}
+    notation:
+      style: none
+      map: {}
+      updated: per_item
+      year_shown: false
+      note: "『飛来状況:<語や羽数>(M月D日現在)』の形で年がない。2026-10-23 の読みでは『数羽程度(3月8日現在)』(前のシーズン。ページの更新日 2026-03-09)。『参考:白鳥の平均飛来数』に旬ごとの平均(11月中旬 60 〜 1月下旬 380 〜 3月下旬 60)"
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-03-09", note: "robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.city.sanjo.niigata.jp/soshiki/somubu/seisakusuishin/kohokocho/hp/8848.html", note: "ホームページ運営方針: 私的使用のための複製や引用などの場合を除き、無断で複製・転載・販売・貸与できない。さらに『御利用に当たってはあらかじめ三条市政策推進課広報広聴係までご連絡ください』とある(2026-10-23 の見直しのあと、ページを WebFetch で読んで確認。要約・自動取得の規定なし)。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
+    approval: {status: pending, reason: "利用条件に、利用の前に市へ連絡するよう求める一文がある。個人利用の道具のため、事前連絡はしない。公開を検討するときに利用条件を見直す(ユーザーの判断 2026-10-23)。読まずに、人が開く URL として扱う"}

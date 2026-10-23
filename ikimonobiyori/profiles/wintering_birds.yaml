@@ -1,0 +1,43 @@
+# 冬鳥(白鳥などの飛来地)プロファイル(骨組み。status: skeleton)。段階16 C(2026-10-23)。
+# v0 の計算(エンジン)は持たない(not_applicable(profile_skeleton) を返す)。答えは「生き物の見頃・おすすめ」の手順で、
+# 自治体・管理者の公式の飛来情報(台帳 data/sources/wintering_birds.yaml)を読んで出す。既存の野鳥(birds、iNaturalist の記録頻度)は残し、補助に使ってよい。
+profile_id: wintering_birds
+name: 冬鳥(白鳥などの飛来地)
+category: observation_record
+validated: false
+status: skeleton
+timing_type: calendar             # 時期の型(docs/design.md §3)。例年の飛来の時期で答える。名所カタログの各件は別の型を持てる
+interests: [wintering_birds]
+season:
+  months: [11, 12, 1, 2, 3]
+  months_source: "指示書(段階16 C、2026-10-23 ユーザー承認): 季節は11月〜3月。飛来地によっては10月上旬に第一陣が来る(阿賀野市 瓢湖『毎年10月上旬に第一陣が訪れ、3月まで滞在』)ので、手順では名所カタログの例年の時期を優先する"
+  note: "飛来地ごとに大きく違う。季節の前でも『飛来前』『例年の飛来開始の時期』を答える(手順の補助の推定)"
+  out_of_season_rule: "骨組みの間は常に not_applicable(profile_skeleton)。手順(sources.py)はこの months を使わない"
+method:
+  kind: tbd                     # エンジンの手法はまだない(骨組み)。答えは公式の飛来情報を読む手順(段階16 C)
+  description: "自治体・管理者が発信する飛来情報(飛来数・初飛来・北帰行)を読む。羽数から段階を決める閾値は持たない(出典がない)。段階は公式の語(初飛来・北帰完了など)が台帳の notation.map にあるときだけ"
+data_sources:
+  - {name: 自治体・管理者の白鳥の飛来情報, type: official_notice, note: "台帳 data/sources/wintering_birds.yaml(段階16 C)"}
+  - {name: iNaturalist(野鳥の birds プロファイル), type: observation, optional: true, note: "補助。位置は粗く(area_10km)"}
+confidence: {method: official-reports, validated: false, value_provided: false}
+care:
+  location_precision: area_1km
+  do_not_disclose_exact_location: true
+  manners:
+    - "白鳥に餌を与えない・近づいたり触れたりしない(館林市の白鳥の情報。飛来地によっては管理者が給餌の時間を決めている)"
+    - "鳥インフルエンザ予防のため、白鳥やカモに触らない(三条市の白鳥飛来状況)"
+    - "フラッシュを使った撮影・ペットを連れての観察は控える(館林市の白鳥の情報)"
+    - "静かに観察し、路上駐車をしない(那珂市の古徳沼のページ)"
+# 現況の段階(段階16 B-1)。order は共通の順番(data/sources/policy.yaml の common_stages)
+stages:
+  source: "指示書(段階16 B-1、2026-10-23 ユーザー承認): 飛来前 / 飛来開始 / 増加中 / 最多 / 北帰行"
+  provisional: true
+  items:
+    - {id: not_arrived, order: 0, label: 飛来前}
+    - {id: arriving, order: 1, label: 飛来開始}
+    - {id: increasing, order: 2, label: 増加中}
+    - {id: peak_count, order: 3, label: 最多}
+    - {id: departing, order: 4, label: 北帰行}
+known_limits:
+  - "骨組み。エンジンの判定はない。段階は公式の語が台帳の notation.map にあるときだけ(羽数から段階を推測しない)"
+  - "飛来数は観察の時刻・天候・餌場への移動で大きく変わる(多くの飛来地で、日中は周辺の田に餌を探しに出る)"

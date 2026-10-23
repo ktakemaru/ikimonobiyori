@@ -33,9 +33,10 @@
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$", "description": "例: nikko-kankou-autumn-leaves"},
         "publisher": {"type": "string", "minLength": 1, "description": "発信者(観光協会・自治体・公園の管理者など)"},
-        "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine"], "description": "公式の発信者の種類。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
+        "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine", "facility_operator"], "description": "公式の発信者の種類。facility_operator はロープウェイ・ゴンドラ・山小屋などの名所の運営者(段階16 A-9)。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
         "url": {"$ref": "#/$defs/url"},
         "kind": {"enum": ["status_page", "forecast_page", "event_page", "access_page", "opendata"], "description": "status_page 現況 / forecast_page 見頃予測 / event_page まつり・ライトアップ / access_page 交通・混雑・通行止め / opendata"},
+        "reader": {"enum": ["agent", "code"], "description": "読み方。agent(既定)= エージェントが要約の道具で読む / code = 決まった形を読むコード(fetch/status_pages.py。段階16 A-4。日光市観光協会・箱根町観光協会だけ)"},
         "covers": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cover"}},
         "notation": {
           "type": "object",
@@ -46,6 +47,8 @@
             "style": {"enum": ["symbol", "word", "none"]},
             "map": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^[a-z_]+$"}},
             "no_info": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "「情報なし」を表す書き方(段階なし)"},
+            "icons": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}, "description": "状態を表すアイコンの名前(ページの画像・class の名前)→ 公式の語(map のキー)。確かめたものだけ(段階16 A-3。箱根の icon_lev1 など)"},
+            "forecast": {"enum": ["per_item", "none"], "description": "公式の見頃予測の載り方(段階16 A-8)。per_item = 地点ごとに見頃予測がある(記録の official_forecast に原文を残す)"},
             "updated": {"enum": ["per_item", "per_page", "per_article", "none"], "description": "公式の更新日の付き方"},
             "year_shown": {"type": "boolean", "description": "更新日に年が書いてあるか(false なら読んだ人が年を補い、記録に updated_year_inferred を付ける)"},
             "note": {"type": "string"}

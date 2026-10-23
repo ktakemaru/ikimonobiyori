@@ -296,7 +296,8 @@ class Parsers(unittest.TestCase):
 
 class ProfileSchema(unittest.TestCase):
     def test_all_profiles_valid_and_params_documented(self):
-        self.assertEqual(set(PROFILES), {"birds", "autumn_leaves", "cherry_blossom", "higanbana", "sunflower", "fireflies", "bioluminescence"})
+        self.assertEqual(set(PROFILES), {"birds", "autumn_leaves", "cherry_blossom", "higanbana", "sunflower", "fireflies", "bioluminescence",
+                                         "wintering_birds"})                                  # wintering_birds は段階16 C で足した(指示書 フェーズ5)
         for pid, p in PROFILES.items():
             self.assertEqual(ip.validate_profile(p), [], pid)
             for q in p["method"].get("params") or []:

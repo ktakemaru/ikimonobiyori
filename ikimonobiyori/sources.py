@@ -10,12 +10,16 @@
   python -X utf8 -m ikimonobiyori.sources weekend --now 2026-10-23T21:00:00+09:00 [--date 2026-10-24 ...]
   python -X utf8 -m ikimonobiyori.sources normalize --source nikko-kankou-autumn-leaves --state ◎
   python -X utf8 -m ikimonobiyori.sources record --read-at 2026-10-23T21:00:00+09:00 --batch reads.json
-  python -X utf8 -m ikimonobiyori.sources log [--source ID]
+  python -X utf8 -m ikimonobiyori.sources log [--source ID] [--include-erroneous]
+  python -X utf8 -m ikimonobiyori.sources summary --now 2026-10-23T21:00:00+09:00 [--date 2026-10-31 ...]
+  python -X utf8 -m ikimonobiyori.sources mark-erroneous --match '{"name": "湖尻", ...}' --reason ... --corrected-on 2026-10-23
   python -X utf8 -m ikimonobiyori.sources v0 --proposal OUT.json [--date 2026-10-24 ...]
 """
 import argparse
 import calendar
 import json
+import os
+import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -25,8 +29,9 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from . import catalog as catalog_mod
+from . import livegate
 from .config import load_config
-from .paths import SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
+from .paths import REGIONS_PATH, SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
 
 APPROVED = "approved"
 USABLE_TERMS = "no_prohibition_found"
@@ -37,8 +42,38 @@ ROBOTS_BLOCKING = ("disallows", "ai_agents_blocked")      # 仮承認しない r
 
 # ---- 読み込み ----
 
-def load_policy(path=None):
-    return yaml.safe_load(Path(path or SOURCES_POLICY_PATH).read_text(encoding="utf-8"))
+def load_policy(path=None, profiles_dir=None):
+    """方針(data/sources/policy.yaml)。対象ごとの段階(stages)は、各プロファイルの stages を policy["stages"][<対象>] に置く(段階16 B-1。正本はプロファイル)。"""
+    from .profiles import load_profiles
+    pol = yaml.safe_load(Path(path or SOURCES_POLICY_PATH).read_text(encoding="utf-8"))
+    pol["stages"] = {pid: prof["stages"] for pid, prof in load_profiles(profiles_dir).items() if prof.get("stages")}
+    return pol
+
+
+def stage_errors(policy):
+    """各プロファイルの段階が、共通の順番(common_stages の order)に対応し、早い → 遅いに並んでいるか。→ エラーのリスト。"""
+    common = [s["order"] for s in policy["common_stages"]["items"]]
+    errs = []
+    for subject, st in policy["stages"].items():
+        orders = [s["order"] for s in st["items"]]
+        if any(o not in common for o in orders):
+            errs.append(f"{subject}: stages の order {orders} に共通の順番 {common} にないものがある")
+        if orders != sorted(set(orders)):
+            errs.append(f"{subject}: stages の order {orders} が早い → 遅いに並んでいない(または重複)")
+        if len({s['id'] for s in st["items"]}) != len(st["items"]):
+            errs.append(f"{subject}: stages の id が重複")
+    return errs
+
+
+def stage_order(policy, subject, stage):
+    """対象の段階 id → 共通の順番(0 前・1 始まり・2 見ごろ・3 最盛・4 終わり)。なければ None。"""
+    return next((s["order"] for s in policy["stages"][subject]["items"] if s["id"] == stage), None)
+
+
+def scope_orders(policy, early=False, late=False):
+    """質問の型③: 答えに含める共通の順番。既定は見ごろ・最盛。early で始まり、late で終わりを足す。"""
+    sc = policy["stage_scope"]
+    return sorted(set(sc["default"]) | (set(sc["early"]) if early else set()) | (set(sc["late"]) if late else set()))
 
 
 def load_registry(subject, sources_dir=None):
@@ -82,6 +117,13 @@ def check_source(src, *, subject, policy, catalog_ids):
     for raw, st in ((src.get("notation") or {}).get("map") or {}).items():
         if st not in stages:
             errs.append(f"{sid}: notation.map の {raw!r} → {st} は共通の段階にない({', '.join(stages)})")
+    if src.get("reader") == "code":
+        from .fetch import status_pages
+        if sid not in status_pages.PARSERS:
+            errs.append(f"{sid}: reader: code はコードの読み方がある情報源だけ({sorted(status_pages.PARSERS)})")
+        hosts = load_config()["live"]["allowed_hosts_by_subject"].get(status_pages.SUBJECT_HOSTS) or []
+        if urlsplit(src["url"]).netloc not in hosts:
+            errs.append(f"{sid}: reader: code の url のホストが許可リスト(config.yaml の {status_pages.SUBJECT_HOSTS})にない")
     for c in src["covers"]:
         if "site" in c and c["site"] not in catalog_ids:
             errs.append(f"{sid}: covers の site={c['site']} が名所カタログの承認済みの件にない")
@@ -143,7 +185,7 @@ def check_registry(doc, *, name, catalog_doc, policy):
 
 
 def check_all(sources_dir=None, catalog_dir=None, policy_path=None):
-    """→ [(ファイル, エラーのリスト)]。"""
+    """→ [(台帳のファイル, エラーのリスト)]。段階の並び(プロファイル)の検査は stage_errors(check コマンドが両方を出す)。"""
     policy = load_policy(policy_path)
     pol = Path(policy_path or SOURCES_POLICY_PATH).resolve()
     out = []
@@ -167,6 +209,7 @@ def normalize_state(src, raw):
         return None, "no_info"
     s = str(raw).strip()
     nt = src.get("notation") or {}
+    s = (nt.get("icons") or {}).get(s, s)                 # アイコンの名前(箱根の icon_lev1 など。段階16 A-3)→ 公式の語
     if s in (nt.get("map") or {}):
         return nt["map"][s], "mapped"
     if s in (nt.get("no_info") or []):
@@ -195,6 +238,51 @@ def freshness(updated, on, policy, year_inferred=False):
         raise ValueError(f"公式の更新日 {updated} が {on} より後")
     cls = "fresh" if age <= val(fr["fresh_max_days"]) else "somewhat_old" if age <= val(fr["somewhat_old_max_days"]) else "old"
     return {"age_days": age, "class": cls, "label": fr["labels"][cls]}
+
+
+# ---- 公式の見頃予測(段階16 A-8) ----
+
+FORECAST_RE = re.compile(r"^\s*(\d{1,2})月(上旬|中旬|下旬)?\s*(?:[～〜~ー-]\s*(?:(\d{1,2})月)?(上旬|中旬|下旬)?)?")
+
+
+def forecast_window(text, year, policy):
+    """公式の見頃予測の原文(「10月下旬～11月上旬」「9月下旬」「11月上旬～11月下旬(場所や木によって異なります)」)→ (始まりの日, 終わりの日)。
+    year は始まりの月の年。終わりの月が始まりより前なら翌年(12月〜1月など)。旬のない月は月の初日〜末日。読めなければ None(推測しない)。"""
+    if not text:
+        return None
+    m = FORECAST_RE.match(str(text))
+    if not m:
+        return None
+    thirds = policy["month_thirds"]["items"]
+    m1, t1, m2, t2 = int(m.group(1)), m.group(2), m.group(3), m.group(4)
+    if m2 is None and t2 is None and m.group(0).rstrip()[-1:] in "～〜~ー-":
+        return None                                          # 「10月下旬～」のように終わりがない
+    m2 = int(m2) if m2 else m1
+    t2 = t2 if (t2 or m.group(3)) else t1
+    if not (calendar.JANUARY <= m1 <= calendar.DECEMBER and calendar.JANUARY <= m2 <= calendar.DECEMBER):
+        return None
+    y2 = year + 1 if m2 < m1 else year
+    first = thirds[t1]["first"] if t1 else 1
+    last_day = calendar.monthrange(y2, m2)[1]
+    last = (thirds[t2]["last"] or last_day) if t2 else last_day
+    start, end = date(year, m1, first), date(y2, m2, min(last, last_day))
+    return (start, end) if start <= end else None
+
+
+def overlaps(window, dates):
+    return window is not None and any(window[0] <= d <= window[1] for d in dates)
+
+
+def stale_display_suspect(rec, entry, policy, src=None):
+    """年のない更新日で「終わり」の段階なのに、その日付が名所カタログの例年の時期の始まりより前 → 前のシーズンの表示が残っている可能性(段階16 A-3。箱根の強羅)。
+    カタログの件(entry)と例年の時期がないときは判定しない(False)。"""
+    tw = (entry or {}).get("typical_window")
+    up = rec.get("official_updated")
+    if not tw or not up or not year_unknown(src, rec) or rec.get("stage") != stage_ids(policy, rec["subject"])[-1]:
+        return False
+    u = date.fromisoformat(up)
+    start = _md_date(u.year, tw["start"])
+    return u < start and tw["start"] <= tw["end"]
 
 
 # ---- 対象の日と候補 ----
@@ -234,19 +322,97 @@ def days_from_window(d, tw):
     return best
 
 
-def candidates(catalog_doc, registry, dates, policy):
-    """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。"""
+# ---- 地域・条件・対象(段階16 B-3・B-4) ----
+
+def load_regions(path=None):
+    return yaml.safe_load(Path(path or REGIONS_PATH).read_text(encoding="utf-8"))
+
+
+def resolve_region(query, regions_doc):
+    """地域の呼び名(名前・別名に完全一致)→ 地域。なければ None(推測で近いものを選ばない)。"""
+    q = (query or "").strip()
+    return next((r for r in regions_doc["regions"] if q == r["name"] or q in (r.get("aliases") or [])), None)
+
+
+def in_region(entry, region):
+    t, m = entry.get("tags") or {}, region.get("match") or {}
+    return t.get("prefecture") in (m.get("prefectures") or []) or t.get("area") in (m.get("areas") or [])
+
+
+def site_filter(entry, *, region=None, terrain=None, access=None):
+    """質問の型②・④: 地域(regions.yaml)・地形(tags.terrain のどれか)・行き方(tags.access のどれか)で絞る。tags のない項目は「分からない」ので外す。"""
+    t = entry.get("tags") or {}
+    if region is not None and not in_region(entry, region):
+        return False
+    if terrain and not set(terrain) & set(t.get("terrain") or []):
+        return False
+    if access and not set(access) & set(t.get("access") or []):
+        return False
+    return True
+
+
+def region_report(region, *, catalogs, catalog_policy):
+    """地域について、対象ごとの名所カタログの件数と、範囲(東京・横浜から直線 max_km)の内外を代表点で示す(質問の型⑤)。
+    status: in_range(代表点がすべて範囲内か、代表点がなく名所がある)/ partial(一部が範囲内)/ out_of_range(すべて範囲外)/ unknown"""
+    rl = catalog_policy["range_limit"]
+    pts = []
+    for p in region.get("points") or []:
+        km, origin = catalog_mod.nearest_origin_km(catalog_policy, p)
+        pts.append({"name": p["name"], "prefecture": p.get("prefecture"), "km": round(km), "from": origin, "within": km <= rl["max_km"]})
+    sites = {subj: [e["id"] for e in catalog_mod.approved_entries(doc or {}) if in_region(e, region)] for subj, doc in catalogs.items()}
+    inside = [p for p in pts if p["within"]]
+    if pts:
+        status = "in_range" if len(inside) == len(pts) else "partial" if inside else "out_of_range"
+    else:
+        status = "in_range" if any(sites.values()) else "unknown"
+    by_pref = {}
+    for p in inside:
+        by_pref.setdefault(p["prefecture"], []).append(p["name"])
+    return {"region": region["name"], "status": status, "max_km": rl["max_km"], "points": pts, "within_points_by_prefecture": by_pref,
+            "catalog_sites": sites, "note": region.get("note")}
+
+
+def subjects_status(sources_dir=None, profiles_dir=None, catalog_dir=None):
+    """対象ごとに、この手順で答えられるか(台帳・名所カタログ・プロファイルの stages がそろっている = implemented)。→ [{subject, name, implemented, missing}]"""
+    from .profiles import load_profiles
+    out = []
+    for pid, prof in load_profiles(profiles_dir).items():
+        checks = (("stages", bool(prof.get("stages"))),
+                  ("台帳", (Path(sources_dir or SOURCES_DIR) / f"{pid}.yaml").is_file()),
+                  ("名所カタログ", bool(catalog_mod.approved_entries(catalog_mod.load_catalog(pid, catalog_dir) or {}))))
+        missing = [k for k, ok in checks if not ok]
+        out.append({"subject": pid, "name": prof["name"], "implemented": not missing, "missing": missing})
+    return out
+
+
+def horizon(now, dates, policy):
+    """質問の型①: 読んだ日から horizon_days より先の日。→ {days, beyond: [日付]}(先の日は公式の見頃予測と例年の時期だけで答える)"""
+    days = val(policy["horizon_days"])
+    return {"days": days, "beyond": [d.isoformat() for d in dates if (d - now.date()).days > days]}
+
+
+def next_window_start(d, tw):
+    """d の日以後で最も近い、例年の時期の始まりの日(今年か来年)。"""
+    s = _md_date(d.year, tw["start"])
+    return s if s >= d else _md_date(d.year + 1, tw["start"])
+
+
+def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=None, access=None):
+    """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。
+    region(regions.yaml の地域)・terrain・access を渡すと、名所の tags で先に絞る(段階16 B-4)。"""
     margin = val(policy["candidates"]["window_margin_days"])
     srcs = sources_by_id(registry)
     sites, out_of_season = [], []
     for e in catalog_mod.approved_entries(catalog_doc or {}):
+        if not site_filter(e, region=region, terrain=terrain, access=access):
+            continue
         tw = e.get("typical_window")
         if tw:
             dist = min(days_from_window(d, tw) for d in dates)
             season = "in_window" if dist == 0 else "near" if dist <= margin else "out"
         else:
             dist, season = None, "no_window"
-        row = {"site": e["id"], "name": e["name"], "season": season, "days_from_window": dist,
+        row = {"site": e["id"], "name": e["name"], "season": season, "days_from_window": dist, "tags": e.get("tags"),
                "typical_window": {k: tw[k] for k in ("start", "end", "source_url") if k in tw} if tw else None,
                "official_status_url": e.get("official_status_url"),
                "sources": [{"id": sid, "kind": srcs[sid]["kind"], "approval": srcs[sid]["approval"]["status"],
@@ -258,12 +424,25 @@ def candidates(catalog_doc, registry, dates, policy):
         for s in row["sources"]:
             bucket = plan if s["approval"] == APPROVED else human
             bucket.setdefault(s["id"], {"id": s["id"], "kind": s["kind"], "url": s["url"], "sites": []})["sites"].append(row["site"])
-    no_status = [r["site"] for r in sites if not any(s["approval"] == APPROVED and s["kind"] == "status_page" for s in r["sources"])]
+    if region is not None:
+        # 地域を指定したときだけ: 例年の時期の外の名所も、承認済みの情報源を読む予定に入れる(段階16 の答え直しで見つけた穴。
+        # 箱根は強羅だけが名所で、時期の外だと箱根のページを読まなかった)。答えでは out_of_season_sites の名所を「例年の時期の外」と明記する
+        for row in out_of_season:
+            for s in row["sources"]:
+                if s["approval"] == APPROVED:
+                    item = plan.setdefault(s["id"], {"id": s["id"], "kind": s["kind"], "url": s["url"], "sites": []})
+                    item["sites"].append(row["site"])
+                    item.setdefault("out_of_season_sites", []).append(row["site"])
+    no_status =[r["site"] for r in sites if not any(s["approval"] == APPROVED and s["kind"] == "status_page" for s in r["sources"])]
     return {"dates": [d.isoformat() for d in dates], "window_margin_days": margin,
             "sites": sites,
             # 例年の時期から外れた名所。読む情報源(read_plan)がこの名所も伝えていれば、ついでに分かる公式の現況を示せる(現況が主。段階15)
             "out_of_season": [{"site": r["site"], "name": r["name"], "days_from_window": r["days_from_window"],
                                "covered_by_read_plan": [s["id"] for s in r["sources"] if s["id"] in plan]} for r in out_of_season],
+            # 例年の時期がこれから来る名所(段階16 C: 季節の前でも「例年の始まりの時期」を答える)。next_start は対象の最初の日より後で最も近い始まり
+            "upcoming_windows": [{"site": r["site"], "name": r["name"], "typical_window": r["typical_window"],
+                                  "next_start": next_window_start(dates[0], r["typical_window"]).isoformat()}
+                                 for r in out_of_season if r["typical_window"] and next_window_start(dates[0], r["typical_window"]) > dates[0]],
             "read_plan": sorted(plan.values(), key=lambda x: (x["kind"] != "status_page", x["id"])),
             "human_urls": sorted(human.values(), key=lambda x: x["id"]),
             "no_status_source": no_status}
@@ -275,14 +454,18 @@ def log_path(subject, env=None):
     return data_path(load_config()["status_log"]["dir"], env) / f"{subject}.jsonl"
 
 
-def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None):
-    """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。"""
+def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None,
+                method=None, forecast=None, event_start=None, event_end=None):
+    """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。
+    method は読み方(agent_summary / code / user_verified。既定は方針の default_method)、forecast は公式の見頃予測の原文、
+    event_start・event_end はまつり・ライトアップの期間(YYYY-MM-DD)。"""
     src = sources_by_id(registry).get(source_id)
     stage = normalize_state(src, state)[0] if src else None
     rec = {"schema": policy["record"]["schema"], "subject": registry["subject"], "source_id": source_id,
            "official_state": state, "stage": stage, "official_updated": updated, "read_at": read_at,
-           "url": src["url"] if src else None}
-    for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred)):
+           "url": src["url"] if src else None, "method": method or policy["record"]["default_method"]}
+    for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred),
+                 ("official_forecast", forecast), ("event_start", event_start), ("event_end", event_end)):
         if v is not None:
             rec[k] = v
     return rec
@@ -320,6 +503,24 @@ def validate_record(rec, *, registry, policy):
         errs.append(f"label は {val(rp['max_label_chars'])} 文字以内")
     if rec.get("stage") != normalize_state(src, st)[0]:
         errs.append(f"stage={rec.get('stage')} が台帳の対応({normalize_state(src, st)[0]})と違う")
+    if rec.get("method", rp["default_method"]) not in rp["methods"]:
+        errs.append(f"method={rec.get('method')} は {rp['methods']} のどれでもない")
+    fc = rec.get("official_forecast")
+    if fc is not None and (not isinstance(fc, str) or len(fc) > val(rp["max_forecast_chars"])):
+        errs.append(f"official_forecast は {val(rp['max_forecast_chars'])} 文字以内の見頃予測の原文(本文を写さない)")
+    ev = [rec.get(k) for k in ("event_start", "event_end")]
+    if any(v is not None for v in ev):
+        if not all(v is not None and catalog_mod.valid_date(v) for v in ev):
+            errs.append(f"event_start・event_end は両方とも日付(YYYY-MM-DD)が要る({ev})")
+        elif ev[0] > ev[1]:
+            errs.append(f"event_start {ev[0]} が event_end {ev[1]} より後")
+    if ("unmarked_on" in rec) != ("unmarked_reason" in rec) or ("unmarked_on" in rec and not catalog_mod.valid_date(rec["unmarked_on"] or "")):
+        errs.append("印を外した記録は unmarked_on(YYYY-MM-DD)と unmarked_reason をそろえる")
+    if "user_checked_on" in rec and not catalog_mod.valid_date(rec["user_checked_on"] or ""):
+        errs.append("user_checked_on は YYYY-MM-DD")
+    if any(k in rec for k in rp["erroneous_fields"]):
+        if rec.get("erroneous") is not True or not rec.get("erroneous_reason") or not catalog_mod.valid_date(rec.get("corrected_on") or ""):
+            errs.append("誤りの印は erroneous: true・erroneous_reason・corrected_on(YYYY-MM-DD)をそろえて付ける")
     if "updated_year_inferred" in rec and not isinstance(rec["updated_year_inferred"], bool):
         errs.append("updated_year_inferred は真偽値")
     elif rec.get("official_updated") is not None and (src.get("notation") or {}).get("year_shown") is False and rec.get("updated_year_inferred") is not True:
@@ -337,15 +538,128 @@ def validate_record(rec, *, registry, policy):
     return errs
 
 
-def read_records(subject, env=None):
+def _read_all(subject, env=None):
     p = log_path(subject, env)
     if not p.is_file():
         return []
     return [json.loads(ln) for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
 
 
+def read_records(subject, env=None, include_erroneous=False):
+    """記録を読む。誤りの印(erroneous: true)の付いた記録は、include_erroneous を明示しない限り使わない(段階16 A-1)。"""
+    return [r for r in _read_all(subject, env) if include_erroneous or r.get("erroneous") is not True]
+
+
+def records_on(subject, day, env=None):
+    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。"""
+    return [r for r in read_records(subject, env) if parse_now(r["read_at"]).date() == day]
+
+
+def latest_by_place(records):
+    """同じ情報源・地点(site か name)・地点の書き方(label)ごとに、いちばん後に読んだ記録だけ。"""
+    best = {}
+    for r in records:
+        k = _place(r)
+        if k not in best or parse_now(r["read_at"]) >= parse_now(best[k]["read_at"]):
+            best[k] = r
+    return list(best.values())
+
+
+def _place(r):
+    return (r["source_id"], r.get("site"), r.get("name"), r.get("label"))
+
+
+def conflicts(records):
+    """同じ地点で、ユーザーが原文を確かめた記録(method: user_verified)と、ほかの読み方の記録の事実(状態・更新日)が食い違うもの。
+    → {地点のキー: [{method, official_state, official_updated, read_at}]}。どちらが正しいかは推測で決めない(段階16 A-4 の実通信で見つかった)。"""
+    by = {}
+    for r in records:
+        by.setdefault(_place(r), []).append(r)
+    out = {}
+    for k, rs in by.items():
+        facts = {(r.get("official_state"), r.get("official_updated")) for r in rs}
+        if len(facts) > 1 and any(r.get("method") == "user_verified" for r in rs):
+            out[k] = [{"method": r.get("method"), "official_state": r.get("official_state"), "official_updated": r.get("official_updated"),
+                       "read_at": r["read_at"]} for r in sorted(rs, key=lambda r: parse_now(r["read_at"]))]
+    return out
+
+
+def _rewrite(subject, rows, env=None):
+    p = log_path(subject, env)
+    tmp = p.with_suffix(p.suffix + ".tmp")
+    with tmp.open("w", encoding="utf-8", newline="\n") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    os.replace(tmp, p)
+
+
+def _matching(subject, match, env=None):
+    if not match:
+        raise ValueError("どの記録かを match で指定する")
+    rows = _read_all(subject, env)
+    hit = [r for r in rows if all(r.get(k) == v for k, v in match.items())]
+    if not hit:
+        raise ValueError(f"一致する記録がない: {match}")
+    return rows, hit
+
+
+def unmark_erroneous(subject, match, *, reason, on, env=None):
+    """誤りの印を外す(段階16 の見直し: 湖尻の「色づきはじめ、10/22現在」は正しかった)。印の項目は消し、外した日と理由を残す。→ 外した件数。"""
+    if not reason or not catalog_mod.valid_date(on or ""):
+        raise ValueError("reason と on(YYYY-MM-DD)が要る")
+    rows, hit = _matching(subject, match, env)
+    n = 0
+    for r in hit:
+        if r.get("erroneous") is True:
+            for k in ("erroneous", "erroneous_reason", "corrected_on"):
+                r.pop(k, None)
+            r.update({"unmarked_on": on, "unmarked_reason": reason})
+            n += 1
+    _rewrite(subject, rows, env)
+    return n
+
+
+def amend_records(subject, match, updates, *, env=None, policy=None):
+    """記録の読み方の項目だけを直す(方針の record.amendable_fields。method・method_note・user_checked_on)。事実の項目は直さない。→ 直した件数。"""
+    policy = policy or load_policy()
+    allowed = set(policy["record"]["amendable_fields"])
+    bad = sorted(set(updates) - allowed)
+    if bad:
+        raise ValueError(f"直せない項目: {bad}(直せるのは {sorted(allowed)}。事実は誤りの印と新しい記録で直す)")
+    if "method" in updates and updates["method"] not in policy["record"]["methods"]:
+        raise ValueError(f"method={updates['method']} は {policy['record']['methods']} のどれでもない")
+    if "user_checked_on" in updates and not catalog_mod.valid_date(updates["user_checked_on"] or ""):
+        raise ValueError("user_checked_on は YYYY-MM-DD")
+    rows, hit = _matching(subject, match, env)
+    for r in hit:
+        r.update(updates)
+    _rewrite(subject, rows, env)
+    return len(hit)
+
+
+def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=None):
+    """match(項目 → 値)にすべて一致する記録に誤りの印を付ける(消さない。段階16 A-1)。→ 印を付けた件数。
+    1 件も一致しなければ ValueError(取り違えを防ぐ)。すでに印のある記録はそのまま。ファイルは書き直す(一時ファイル → 置き換え)。"""
+    if not reason or not catalog_mod.valid_date(corrected_on or ""):
+        raise ValueError("reason と corrected_on(YYYY-MM-DD)が要る")
+    if not match:
+        raise ValueError("どの記録かを match で指定する")
+    rows = _read_all(subject, env)
+    hit = [r for r in rows if all(r.get(k) == v for k, v in match.items())]
+    if not hit:
+        raise ValueError(f"一致する記録がない: {match}")
+    n = 0
+    for r in hit:
+        if r.get("erroneous") is not True:
+            r.update({"erroneous": True, "erroneous_reason": reason, "corrected_on": corrected_on})
+            n += 1
+    _rewrite(subject, rows, env)
+    return n
+
+
 def _key(rec):
-    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated"))
+    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated",
+                                      "official_forecast", "event_start", "event_end", "method"))
 
 
 def append_records(records, *, registry, policy, env=None):
@@ -354,7 +668,9 @@ def append_records(records, *, registry, policy, env=None):
     bad = [(i, e) for i, r in enumerate(records) for e in validate_record(r, registry=registry, policy=policy)]
     if bad:
         raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
-    seen = {_key(r) for r in read_records(registry["subject"], env)}
+    if any(r.get("erroneous") is True for r in records):
+        raise ValueError("誤りの印の付いた記録は足さない(印は mark_erroneous で付ける)")
+    seen = {_key(r) for r in _read_all(registry["subject"], env)}
     new = []
     for r in records:
         if _key(r) not in seen:
@@ -367,6 +683,43 @@ def append_records(records, *, registry, policy, env=None):
             for r in new:
                 f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
     return len(new), len(records) - len(new)
+
+
+# ---- 答えの材料(同じ日に読んだ記録から) ----
+
+def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False, late=False):
+    """on(date)に読んだ記録(呼び出し側が records_on で絞る)→ 地点ごとの答えの材料。通信しない。
+    - 段階の共通の順番(order)と、質問の型③の範囲に入るか(in_scope。既定は見ごろ・最盛、early で始まり、late で終わりも)
+    - 段階・新しさ(年を補った更新日は「新しさ不明」)・表示が古い可能性(段階16 A-3)
+    - 公式の見頃予測の日の範囲と、対象の日にかかるか(段階16 A-8)
+    - まつり・ライトアップの期間が対象の日にかかるか"""
+    srcs = sources_by_id(registry)
+    entries = {e["id"]: e for e in catalog_mod.approved_entries(catalog_doc or {})}
+    rows, clash, scope = [], conflicts(records), scope_orders(policy, early=early, late=late)
+    for r in sorted(latest_by_place(records), key=lambda r: (r["source_id"], r.get("site") or "", r.get("name") or "", r.get("label") or "")):
+        src = srcs.get(r["source_id"]) or {}
+        up = date.fromisoformat(r["official_updated"]) if r.get("official_updated") else None
+        fw = forecast_window(r.get("official_forecast"), parse_now(r["read_at"]).year, policy)
+        ev = (date.fromisoformat(r["event_start"]), date.fromisoformat(r["event_end"])) if r.get("event_start") else None
+        rows.append({"source": r["source_id"], "kind": src.get("kind"), "site": r.get("site"), "name": r.get("name"), "label": r.get("label"),
+                     "official_state": r.get("official_state"), "stage": r.get("stage"), "stage_label": stage_label(policy, r["subject"], r.get("stage")),
+                     "order": stage_order(policy, r["subject"], r.get("stage")),
+                     "in_scope": stage_order(policy, r["subject"], r.get("stage")) in scope,
+                     "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
+                     "freshness": freshness(up, on, policy, year_unknown(src, r)),
+                     "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
+                     "official_forecast": r.get("official_forecast"),
+                     "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
+                     "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
+                     "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url"),
+                     "conflict": clash.get(_place(r))})
+    common = {s["order"]: s["label"] for s in policy["common_stages"]["items"]}
+    return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "horizon": horizon(datetime.combine(on, datetime.min.time()), dates, policy),
+            "scope": [{"order": o, "label": common[o]} for o in scope], "rows": rows,
+            "forecast_hits": [x for x in rows if x["forecast_hits_dates"]],
+            "events": [x for x in rows if x["event_hits_dates"]],
+            "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None],
+            "conflicts": [x for x in rows if x["conflict"]]}
 
 
 # ---- 補助の推定(v0 の出力を読むだけ。計算も通信もしない) ----
@@ -397,7 +750,35 @@ def _dump(obj):
     print(json.dumps(obj, ensure_ascii=False, indent=1))
 
 
-def main(argv=None):
+def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests, record=False, env=None):
+    """reader: code の承認済みの情報源を、robots.txt → ページの順に 1 回ずつ読む(段階16 A-4)。→ 結果の辞書。
+    http_get は呼び出し側が渡す(本物の通信は main が計測フックとゲートを確かめてから)。record なら読めた事実を記録に足す(method: code)。"""
+    from .fetch import status_pages
+    srcs = sources_by_id(registry)
+    out, left, reads_all = [], max_requests, []
+    for sid in source_ids:
+        src = srcs.get(sid)
+        if src is None or src.get("reader") != "code" or not is_approved(src):
+            out.append({"source": sid, "status": "コードで読む承認済みの情報源ではない。読まない", "requests": 0, "reads": []})
+            continue
+        if left < 1:
+            out.append({"source": sid, "status": f"--max-requests {max_requests} に達したため読まない", "requests": 0, "reads": []})
+            continue
+        reads, rep = status_pages.read_source(src, http_get=http_get, cfg=cfg, on=now.date(), max_requests=left)
+        left -= rep["requests"]
+        out.append({**rep, "reads": reads})
+        reads_all += reads
+    res = {"read_at": now.isoformat(), "results": out}
+    if record and reads_all:
+        recs = [make_record(registry=registry, policy=policy, source_id=it["source"], read_at=now.isoformat(), state=it["state"], updated=it["updated"],
+                            site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
+                            method=it["method"], forecast=it.get("forecast")) for it in reads_all]
+        written, dup = append_records(recs, registry=registry, policy=policy, env=env)
+        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env))}
+    return res
+
+
+def main(argv=None, http_get=None):
     ap = argparse.ArgumentParser(prog="python -m ikimonobiyori.sources")
     ap.add_argument("--subject", default="autumn_leaves")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -407,21 +788,54 @@ def main(argv=None):
     w = sub.add_parser("weekend", help="対象の日の候補と、読む情報源の一覧(通信しない・書き込まない)")
     w.add_argument("--now", required=True, help="ISO 8601(オフセット必須)")
     w.add_argument("--date", action="append", help="対象の日(YYYY-MM-DD。省略すると次の土日)")
+    w.add_argument("--region", help="地域の呼び名(data/regions.yaml の名前・別名)")
+    w.add_argument("--terrain", action="append", help="地形(tags.terrain: mountain / highland / lake / urban / valley など。複数はどれか)")
+    w.add_argument("--access", action="append", help="行き方(tags.access: ropeway / cable_car / walk_from_station / bus / car_only)")
+    rg = sub.add_parser("region", help="地域の呼び名 → 名所カタログの件と、範囲(250 km)の内外(通信しない)")
+    rg.add_argument("name")
+    sub.add_parser("subjects", help="この手順で答えられる対象(台帳・名所カタログ・段階がそろったもの)と、まだの対象")
     n = sub.add_parser("normalize", help="公式の状態 → 共通の段階")
     n.add_argument("--source", required=True)
     n.add_argument("--state", required=True)
     r = sub.add_parser("record", help="読んだ結果(事実だけ)を記録に追記する(IKIMONOBIYORI_DATA_DIR の下)")
     r.add_argument("--read-at", required=True, help="読んだ時刻。ISO 8601(オフセット必須)")
-    r.add_argument("--batch", required=True, help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?}]")
-    lg = sub.add_parser("log", help="記録を表示する")
+    r.add_argument("--batch", required=True,
+                   help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?, method?, forecast?, event_start?, event_end?}]")
+    lg = sub.add_parser("log", help="記録を表示する(誤りの印の付いた記録は --include-erroneous のときだけ)")
     lg.add_argument("--source")
+    lg.add_argument("--include-erroneous", action="store_true")
+    me = sub.add_parser("mark-erroneous", help="記録に誤りの印を付ける(消さない。IKIMONOBIYORI_DATA_DIR の下)")
+    me.add_argument("--match", required=True, help='JSON の辞書(例: {"source_id": "...", "name": "湖尻", "official_state": "色づきはじめ"})')
+    me.add_argument("--reason", required=True)
+    me.add_argument("--corrected-on", required=True, help="YYYY-MM-DD")
+    um = sub.add_parser("unmark-erroneous", help="誤りの印を外す(外した日と理由を残す)")
+    um.add_argument("--match", required=True)
+    um.add_argument("--reason", required=True)
+    um.add_argument("--on", required=True, help="YYYY-MM-DD")
+    am = sub.add_parser("amend", help="記録の読み方の項目(method・method_note・user_checked_on)だけを直す")
+    am.add_argument("--match", required=True)
+    am.add_argument("--set", required=True, help='JSON の辞書(例: {"method": "assistant_webfetch"})')
+    sm = sub.add_parser("summary", help="同じ日に読んだ記録から、答えの材料(段階・新しさ・見頃予測・期間)を出す(通信しない・書き込まない)")
+    sm.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
+    sm.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    sm.add_argument("--early", action="store_true", help="質問の型③: 始まり(色づき始めなど)も含める")
+    sm.add_argument("--late", action="store_true", help="質問の型③: 終わり(色褪せ・落葉など)も含める")
+    rd = sub.add_parser("read", help="reader: code の情報源をコードで 1 回読む(段階16 A-4。--live・--max-requests・計測フックが要る)")
+    rd.add_argument("--source", action="append", required=True)
+    rd.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
+    rd.add_argument("--live", action="store_true")
+    rd.add_argument("--max-requests", type=int)
+    rd.add_argument("--record", action="store_true", help="読めた事実を記録に足す(IKIMONOBIYORI_DATA_DIR の下)")
     v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
     v.add_argument("--proposal", required=True)
     v.add_argument("--date", action="append")
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
-        bad = 0
+        serr = stage_errors(load_policy())
+        for e in serr:
+            print(f"NG  段階の並び(profiles/*.yaml の stages): {e}")
+        bad = int(bool(serr))
         for p, errs in check_all(a.sources_dir, a.catalog_dir):
             for e in errs:
                 print(f"NG  {p.parent.name}/{p.name}: {e}")
@@ -429,6 +843,17 @@ def main(argv=None):
                 print(f"OK  {p.parent.name}/{p.name}")
             bad += bool(errs)
         return 1 if bad else 0
+    if a.cmd == "subjects":
+        _dump(subjects_status())
+        return 0
+    if a.cmd == "region":
+        region = resolve_region(a.name, load_regions())
+        if region is None:
+            _dump({"region": a.name, "status": "unknown", "known": [r["name"] for r in load_regions()["regions"]]})
+            return 1
+        cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status() if s["implemented"]}
+        _dump(region_report(region, catalogs=cats, catalog_policy=catalog_mod.load_policy()))
+        return 0
     policy, registry = load_policy(), load_registry(a.subject)
     if registry is None:
         print(f"台帳がない: {a.subject}", file=sys.stderr)
@@ -436,7 +861,15 @@ def main(argv=None):
     if a.cmd == "weekend":
         now = parse_now(a.now)
         dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
-        _dump({"now": now.isoformat(), **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy)})
+        region = None
+        if a.region:
+            region = resolve_region(a.region, load_regions())
+            if region is None:
+                print(f"地域の呼び名が data/regions.yaml にない: {a.region}(region コマンドで確かめる)", file=sys.stderr)
+                return 2
+        _dump({"now": now.isoformat(), "subject": a.subject, "horizon": horizon(now, dates, policy),
+               "filters": {"region": region and region["name"], "terrain": a.terrain, "access": a.access},
+               **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy, region=region, terrain=a.terrain, access=a.access)})
         return 0
     if a.cmd == "normalize":
         src = sources_by_id(registry).get(a.source)
@@ -451,7 +884,8 @@ def main(argv=None):
         items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
         recs = [make_record(registry=registry, policy=policy, source_id=it.get("source"), read_at=read_at.isoformat(), state=it.get("state"),
                             updated=it.get("updated"), site=it.get("site"), name=it.get("name"), label=it.get("label"),
-                            year_inferred=it.get("year_inferred")) for it in items]
+                            year_inferred=it.get("year_inferred"), method=it.get("method"), forecast=it.get("forecast"),
+                            event_start=it.get("event_start"), event_end=it.get("event_end")) for it in items]
         try:
             written, dup = append_records(recs, registry=registry, policy=policy)
         except ValueError as ex:
@@ -473,7 +907,57 @@ def main(argv=None):
         _dump(v0_estimates(doc, subject=a.subject, labels=labels, policy=policy, dates=dates))
         return 0
     if a.cmd == "log":
-        _dump([r for r in read_records(a.subject) if not a.source or r["source_id"] == a.source])
+        _dump([r for r in read_records(a.subject, include_erroneous=a.include_erroneous) if not a.source or r["source_id"] == a.source])
+        return 0
+    if a.cmd in ("unmark-erroneous", "amend"):
+        try:
+            n = (unmark_erroneous(a.subject, json.loads(a.match), reason=a.reason, on=a.on) if a.cmd == "unmark-erroneous"
+                 else amend_records(a.subject, json.loads(a.match), json.loads(a.set)))
+        except ValueError as ex:
+            print(f"直さなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"changed": n, "path": str(log_path(a.subject))})
+        return 0
+    if a.cmd == "mark-erroneous":
+        try:
+            n = mark_erroneous(a.subject, json.loads(a.match), reason=a.reason, corrected_on=a.corrected_on)
+        except ValueError as ex:
+            print(f"印を付けなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"marked": n, "path": str(log_path(a.subject))})
+        return 0
+    if a.cmd == "read":
+        if not a.live:
+            print("read は --live が必要です(読むのは答えるときに 1 回だけ。キャッシュはない)", file=sys.stderr)
+            return 2
+        if http_get is None and not livegate.live_allowed():           # 偽の http_get を注入したテストは実通信にならない。本物の通信は常にゲートを通る
+            print(livegate.refusal(), file=sys.stderr)
+            return 2
+        if a.max_requests is None or a.max_requests < 1:
+            print("--live は明示的な --max-requests (1 以上)が必要です", file=sys.stderr)
+            return 2
+        if http_get is None and not os.environ.get("BIYORI_REQ_LOG"):
+            print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します(許可リスト・上限の強制のため)", file=sys.stderr)
+            return 2
+        cfg = load_config()
+        getter = None
+        if http_get is None:
+            from .fetch.live import SessionGetter
+            t = cfg["live"]["request_timeout"]
+            getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
+        try:
+            res = read_live(a.source, registry=registry, policy=policy, cfg=cfg, now=parse_now(a.now), http_get=http_get or getter,
+                            max_requests=a.max_requests, record=a.record)
+        finally:
+            if getter is not None:
+                getter.close()
+        _dump(res)
+        return 0 if all(r.get("reads") for r in res["results"]) else 1
+    if a.cmd == "summary":
+        now = parse_now(a.now)
+        dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
+        _dump(summarize(records_on(a.subject, now.date()), registry=registry, catalog_doc=catalog_mod.load_catalog(a.subject),
+                        policy=policy, on=now.date(), dates=dates, early=a.early, late=a.late))
         return 0
     return 2
 

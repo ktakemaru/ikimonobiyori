@@ -22,6 +22,7 @@ BACKTEST_PLAN_PATH = DATA_FILES_DIR / "backtest_plan.yaml"          # 紅葉の�
 SOURCES_DIR = DATA_FILES_DIR / "sources"                      # 現況を発信する公式ページの台帳(段階15。docs/design.md §0)
 SOURCES_POLICY_PATH = SOURCES_DIR / "policy.yaml"
 SOURCES_SCHEMA_PATH = SCHEMA_DIR / "status-sources.schema.json"
+REGIONS_PATH = DATA_FILES_DIR / "regions.yaml"                  # 地域の呼び名 → 名所カタログの条件・範囲の代表点(段階16 B-4)
 DEFAULT_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"      # パッケージの外を指すのはここだけ(未設定のときの書き込み先の既定)
 ENV_DATA_DIR = "IKIMONOBIYORI_DATA_DIR"
 

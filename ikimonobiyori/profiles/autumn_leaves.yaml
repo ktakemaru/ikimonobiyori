@@ -47,6 +47,18 @@ care:
   manners:
     - "指定の駐車場・歩道を使う"
     - "枝や葉を採らない"
+# 現況の段階(段階16 B-1)。公式の現況の書き方(台帳 data/sources/autumn_leaves.yaml の notation.map)はこの id に対応させる。
+# order は共通の順番(data/sources/policy.yaml の common_stages: 0 前・1 始まり・2 見ごろ・3 最盛・4 終わり)。
+# v0 の気温判定の phenology_labels・stage_order(窓口が読む)とは別のもの。こちらは変えても窓口の manifest に影響しない
+stages:
+  source: "指示書(段階15・段階16 B-1、2026-10-23 ユーザー承認)の『まだ・色づき始め・見ごろ・真っ盛り・色褪せ/落葉』"
+  provisional: true
+  items:
+    - {id: not_yet, order: 0, label: まだ}
+    - {id: starting, order: 1, label: 色づき始め}
+    - {id: good, order: 2, label: 見ごろ}
+    - {id: peak, order: 3, label: 真っ盛り}
+    - {id: fading, order: 4, label: 色褪せ・落葉}
 phenology_labels:           # 窓口の表示ラベル。render が必ずこのラベルで表示し、narrative は言い換えない(CLAUDE.md)
   before_bud: 色づき前
   early_bloom: 色づき始め
