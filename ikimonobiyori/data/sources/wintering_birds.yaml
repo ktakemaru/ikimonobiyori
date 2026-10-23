@@ -88,4 +88,4 @@ sources:
       note: "『飛来状況:<語や羽数>(M月D日現在)』の形で年がない。2026-10-23 の読みでは『数羽程度(3月8日現在)』(前のシーズン。ページの更新日 2026-03-09)。『参考:白鳥の平均飛来数』に旬ごとの平均(11月中旬 60 〜 1月下旬 380 〜 3月下旬 60)"
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-03-09", note: "robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, url: "https://www.city.sanjo.niigata.jp/soshiki/somubu/seisakusuishin/kohokocho/hp/8848.html", note: "ホームページ運営方針: 私的使用のための複製や引用などの場合を除き、無断で複製・転載・販売・貸与できない。さらに『御利用に当たってはあらかじめ三条市政策推進課広報広聴係までご連絡ください』とある(2026-10-23 の見直しのあと、ページを WebFetch で読んで確認。要約・自動取得の規定なし)。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
-    approval: {status: pending, reason: "ユーザーの見直し(2026-10-23)で pending。利用条件のページは読めたが、利用の前に市へ連絡するよう求める一文がある。承認するかはユーザーが決める(連絡するか)"}
+    approval: {status: pending, reason: "利用条件に、利用の前に市へ連絡するよう求める一文がある。個人利用の道具のため、事前連絡はしない。公開を検討するときに利用条件を見直す(ユーザーの判断 2026-10-23)。読まずに、人が開く URL として扱う"}
