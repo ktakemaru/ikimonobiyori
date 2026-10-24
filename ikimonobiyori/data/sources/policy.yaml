@@ -42,6 +42,29 @@ recommend:
   top_min: {value: 3, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
   top_max: {value: 5, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
 
+# 答えの形(段階17 フェーズ1。ikimonobiyori/answer.py が答えの下書きを組み立てるときに使う)。
+# 結論(今回のおすすめ)を先に、根拠 → 注意 → 公式の現況を読めていない名所 の順。同じ名所は 1 か所にだけ出す。日付は地点ごとに 1 つ
+answer:
+  source: "指示書(段階17 フェーズ1、2026-10-24 ユーザー承認)"
+  # 答えの本文に出してはいけない内部用語(指示書のとおり。URL の中は数えない)
+  forbidden_terms: [reader, code, record, 規則, access_notes, v0, 台帳, approved, pending, provisional, status_log, read_plan, out_of_season]
+  headings: {recommend: 今回のおすすめ, evidence: 根拠, notes: 注意, unread: 公式の現況を読めていない名所}
+  # おすすめの一言の理由。{stage} は段階の呼び方、{forecast} は公式の見頃予測の原文
+  reasons:
+    in_scope: "公式で「{stage}」"
+    forecast: "公式の見頃予測「{forecast}」が対象の日にかかる"
+    latest: "公式の最新の記載"
+  none_found: "公式の情報で、対象の日におすすめできる名所は見つかりませんでした。"
+  unread_no_url: "公式の現況のページがまだありません"
+  human_url: "公式ページ(ご自身で開いてください)"
+  typical_window: "例年 {start}〜{end}"
+  # 年のない日付(箱根など)を「○/○時点」と書くときに添える
+  year_unknown_suffix: "(年の記載なし)"
+  stale_display: "表示が昨シーズンのままの可能性があります。おすすめに使っていません"
+  conflict: "読み方によって状態が食い違っています。公式ページをご自身でご確認ください"
+  # 気温からの推定(v0 の出力)を答えに書くときの呼び方(内部の呼び名 v0 を出さない)
+  aux_estimate_label: "気温からの推定(未検証。答え合わせで不合格)"
+
 # 補助の推定: 現況がない名所だけに、v0 の気温判定(biyori-proposal/1 の出力)を添えるときの書き方(段階15 決定 D-06)
 aux_estimate:
   label: "推定(未検証・段階14で不合格)"

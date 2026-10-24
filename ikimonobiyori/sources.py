@@ -778,6 +778,45 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
     return res
 
 
+def answer_parts(subjects, *, policy, now, dates, early=False, late=False, region=None, terrain=None, access=None, env=None):
+    """答えの下書き(answer.compose)に渡す、対象ごとの部品。同じ日に読んだ記録と、候補の絞り込み。"""
+    from .profiles import load_profiles
+    profs = load_profiles()
+    parts = []
+    for subj in subjects:
+        registry, cat = load_registry(subj), catalog_mod.load_catalog(subj)
+        care = profs[subj].get("care") or {}
+        parts.append({"subject": subj, "name": profs[subj]["name"], "catalog": cat,
+                      "summary": summarize(records_on(subj, now.date(), env), registry=registry, catalog_doc=cat, policy=policy,
+                                           on=now.date(), dates=dates, early=early, late=late),
+                      "candidates": candidates(cat, registry, dates, policy, region=region, terrain=terrain, access=access),
+                      # 生き物に配慮が要る対象(位置を明かさない対象)だけ、マナーを添える
+                      "care": care.get("manners") if care.get("do_not_disclose_exact_location") else None})
+    return parts
+
+
+def _answer_cli(a):
+    from . import answer
+    policy, now = load_policy(), parse_now(a.now)
+    dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
+    ready = [s["subject"] for s in subjects_status() if s["implemented"]]
+    subjects = ready if a.subjects == ["all"] else (a.subjects or [a.subject])
+    bad = [s for s in subjects if s not in ready]
+    if bad:
+        print(f"この手順で答えられない対象: {bad}(subjects コマンドで確かめる)", file=sys.stderr)
+        return 2
+    region = None
+    if a.region:
+        region = resolve_region(a.region, load_regions())
+        if region is None:
+            print(f"地域の呼び名が data/regions.yaml にない: {a.region}", file=sys.stderr)
+            return 2
+    parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
+                         terrain=a.terrain, access=a.access)
+    print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note, record_failed=a.record_failed), end="")
+    return 0
+
+
 def main(argv=None, http_get=None):
     ap = argparse.ArgumentParser(prog="python -m ikimonobiyori.sources")
     ap.add_argument("--subject", default="autumn_leaves")
@@ -829,6 +868,17 @@ def main(argv=None, http_get=None):
     v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
     v.add_argument("--proposal", required=True)
     v.add_argument("--date", action="append")
+    an = sub.add_parser("answer", help="同じ日に読んだ記録から、答えの下書き(結論が先・内部用語なし)を出す(段階17。通信しない・書き込まない)")
+    an.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
+    an.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    an.add_argument("--subjects", action="append", help="対象(複数可。省略すると --subject の 1 つ。all で答えられる対象すべて)")
+    an.add_argument("--scope-note", help="扱える範囲が質問の一部だけのときに冒頭に出す 1 行")
+    an.add_argument("--early", action="store_true")
+    an.add_argument("--late", action="store_true")
+    an.add_argument("--region")
+    an.add_argument("--terrain", action="append")
+    an.add_argument("--access", action="append")
+    an.add_argument("--record-failed", action="store_true", help="読んだ事実を記録できなかった(答えの最後に 1 行)")
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
@@ -854,6 +904,8 @@ def main(argv=None, http_get=None):
         cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status() if s["implemented"]}
         _dump(region_report(region, catalogs=cats, catalog_policy=catalog_mod.load_policy()))
         return 0
+    if a.cmd == "answer":
+        return _answer_cli(a)
     policy, registry = load_policy(), load_registry(a.subject)
     if registry is None:
         print(f"台帳がない: {a.subject}", file=sys.stderr)

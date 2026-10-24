@@ -4,3 +4,4 @@
 
 ## 途中経過
 - フェーズ0: `stage17` を main(a78263c)から作成。決定の記録 `docs/stage17-decisions.md`(D-01〜D-18)、段階計画に段階17 を差し込んだ。
+- フェーズ1: 答えの形を直した(結論が先・内部用語なし・重複なし・日付は地点ごとに 1 つ)。答えの下書き `sources answer`(`answer.py`)、合成の答えの例、禁止語のテスト `tests/test_answer.py`。
