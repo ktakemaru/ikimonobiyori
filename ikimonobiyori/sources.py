@@ -839,14 +839,16 @@ def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=Non
 
 
 def _key(rec):
-    # 年の補い方(updated_year_inferred・observed_year_inferred)が違えば別の事実として扱う(段階17 の見直し: 年を補い直した記録が重複扱いで落ちた)
-    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
+    # 年の補い方(updated_year_inferred・observed_year_inferred)が違えば別の事実として扱う(段階17 の見直し: 年を補い直した記録が重複扱いで落ちた)。
+    # 読んだ日(read_at の暦日)も入れる(段階20): 重複とみなすのは同じ日のうちだけ。前の日と同じ内容でも、今日読んだものは今日の記録として残す
+    # (入れていなかったため、2026-10-25 08:10 の日光の 6 地点が 10/23 のコードの記録と同じ内容で落ち、今日の答えから消えた)
+    return (parse_now(rec["read_at"]).date().isoformat(),) + tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
                                       "official_forecast", "event_start", "event_end", "method",
                                       "updated_year_inferred", "observed_year_inferred"))
 
 
 def append_records(records, *, registry, policy, env=None):
-    """検査に通った記録を追記する。同じ事実(情報源・名所・状態・公式の更新日)がもうあれば足さない。
+    """検査に通った記録を追記する。同じ日に読んだ同じ事実(情報源・名所・状態・公式の更新日)がもうあれば足さない(前の日の記録とは比べない)。
     1 件でも検査に落ちたら何も書かない。→ (書いた件数, 重複で足さなかった件数)。"""
     bad = [(i, e) for i, r in enumerate(records) for e in validate_record(r, registry=registry, policy=policy)]
     if bad:
@@ -868,6 +870,35 @@ def append_records(records, *, registry, policy, env=None):
             for r in new:
                 f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
     return len(new), len(records) - len(new)
+
+
+def recording_check(records, subject, env=None):
+    """読んだ項目が、読んだ日の記録にすべて残ったか(段階20。読んだ数と記録した数を合わせ、漏れを黙って残さない)。
+    → {情報源 id: {"read": 読んだ地点の数, "recorded": そのうち読んだ日の記録にある数, "missing": [残っていない地点の書き方]}}。
+    誤りの印・置き換えの印の付いた記録は数えない。"""
+    have = {_key(r) for r in read_records(subject, env)}
+    out = {}
+    for r in records:
+        c = out.setdefault(r["source_id"], {"read": 0, "recorded": 0, "missing": []})
+        c["read"] += 1
+        if _key(r) in have:
+            c["recorded"] += 1
+        else:
+            c["missing"].append(r.get("label") or r.get("site") or r.get("name"))
+    return out
+
+
+def recording_gaps(check):
+    """recording_check の結果から、読んだ数と記録した数が合わない情報源だけ。"""
+    return {sid: c for sid, c in check.items() if c["recorded"] != c["read"]}
+
+
+def places_recorded_on(subject, day, env=None):
+    """day に読んだ記録の、情報源ごとの地点の数(地点 = 情報源・名所・地点の書き方)。答えで、読んだ数と照らす(段階20)。"""
+    out = {}
+    for r in records_on(subject, day, env):
+        out.setdefault(r["source_id"], set()).add(_place(r))
+    return {sid: len(v) for sid, v in out.items()}
 
 
 # ---- 答えの材料(同じ日に読んだ記録から) ----
@@ -962,7 +993,8 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
             continue
         reads, rep = status_pages.read_source(src, http_get=http_get, cfg=cfg, on=now.date(), max_requests=left)
         left -= rep["requests"]
-        out.append({**rep, "reads": reads})
+        # 台帳の地点の数と読み出した数(段階20。足りない地点は diag.missing・ambiguous・no_fields に出る)
+        out.append({**rep, "covers": len(src["covers"]), "read": len(reads), "reads": reads})
         reads_all += reads
     res = {"read_at": now.isoformat(), "results": out}
     if record and reads_all:
@@ -970,7 +1002,9 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
                             site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
                             method=it["method"], forecast=it.get("forecast")) for it in reads_all]
         written, dup = append_records(recs, registry=registry, policy=policy, env=env)
-        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env))}
+        check = recording_check(recs, registry["subject"], env)
+        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env)),
+                           "check": check, "gaps": recording_gaps(check)}
     return res
 
 
@@ -1034,6 +1068,29 @@ def _answer_inputs(a):
     return policy, now, dates, subjects, region
 
 
+def record_gaps_for_answer(read_counts, subjects, day, env=None):
+    """--read-count 情報源ID=N(読んだ地点の数)と、day の記録の地点の数を照らす(段階20)。
+    → [{"source", "publisher", "read", "recorded"}](記録が読んだ数より少ない情報源だけ)。"""
+    want = {}
+    for x in read_counts or []:
+        sid, n = x.split("=", 1)
+        want[sid] = int(n)
+    out = []
+    for subj in subjects:
+        srcs, have = sources_by_id(load_registry(subj)), places_recorded_on(subj, day, env)
+        for sid, n in want.items():
+            if sid in srcs and have.get(sid, 0) < n:
+                out.append({"source": sid, "publisher": srcs[sid].get("publisher") or sid, "read": n, "recorded": have.get(sid, 0)})
+    return out
+
+
+def _warn_gaps(gaps):
+    """読んだ数と記録した数が合わないとき、標準エラーに出す(黙って残さない。段階20)。"""
+    for sid, c in gaps.items():
+        print(f"警告: {sid} は {c['read']} 地点を読んだが、読んだ日の記録にあるのは {c['recorded']} 地点(残っていない: {c['missing']})",
+              file=sys.stderr)
+
+
 def _answer_cli(a):
     from . import answer
     got = _answer_inputs(a)
@@ -1043,8 +1100,9 @@ def _answer_cli(a):
     parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
                          terrain=a.terrain, access=a.access, flower_kind=a.flower_kind)
     reasons = dict(x.split("=", 1) for x in a.unread_reason or [])
+    gaps = record_gaps_for_answer(a.read_count, subjects, now.date())
     print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note,
-                         early=a.early, late=a.late, unread_reasons=reasons), end="")
+                         early=a.early, late=a.late, unread_reasons=reasons, record_gaps=gaps), end="")
     memo = answer.work_memo(policy, record_failed=a.record_failed)
     if memo:
         print()
@@ -1183,6 +1241,8 @@ def main(argv=None, http_get=None):
     an.add_argument("--scope-note", help="扱える範囲が質問の一部だけのときに冒頭に出す 1 行")
     an.add_argument("--unread-reason", action="append", metavar="情報源ID=理由",
                     help="読む予定の情報源を読まなかった理由(複数可)。答えの『公式の現況を読めていない名所』に理由を 1 行で添える")
+    an.add_argument("--read-count", action="append", metavar="情報源ID=地点の数",
+                    help="その情報源で読んだ地点の数(複数可)。今日の記録の地点の数が少なければ、答えの『注意』に警告を出す(段階20)")
     an.add_argument("--early", action="store_true")
     an.add_argument("--late", action="store_true")
     an.add_argument("--region")
@@ -1299,7 +1359,10 @@ def main(argv=None, http_get=None):
                          "stage": rc["stage"], "stage_label": stage_label(policy, a.subject, rc["stage"]), "updated": rc.get("official_updated"),
                          "observed": rc.get("official_observed"), "freshness_basis": rc.get("freshness_basis"), "basis_date": basis_d,
                          "freshness": fresh})
-        _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "rows": rows})
+        check = recording_check(recs, a.subject)
+        gaps = recording_gaps(check)
+        _warn_gaps(gaps)
+        _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "check": check, "gaps": gaps, "rows": rows})
         return 0
     if a.cmd == "v0":
         from .profiles import load_profiles
@@ -1363,6 +1426,7 @@ def main(argv=None, http_get=None):
         finally:
             if getter is not None:
                 getter.close()
+        _warn_gaps((res.get("recorded") or {}).get("gaps") or {})
         _dump(res)
         return 0 if all(r.get("reads") for r in res["results"]) else 1
     if a.cmd == "summary":

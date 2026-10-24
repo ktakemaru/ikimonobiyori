@@ -203,12 +203,14 @@ def _line(row, on, names, policy, multi):
     return f"- {place_name(row, names, multi)}: " + "、".join(bits) + (f" — {row['url']}" if row.get("url") else "")
 
 
-def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False, early=False, late=False, unread_reasons=None):
+def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False, early=False, late=False, unread_reasons=None,
+            record_gaps=None):
     """subject_parts: [{subject, name, summary, candidates, catalog, care?}](対象ごと)→ 答えの下書き(Markdown の文字列)。
     scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り。
     省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。
     early・late は質問の型③(始まり・終わりも含める。おすすめを段階ごとの見出しに分ける)。
-    unread_reasons は {情報源 id: 理由}(読む予定の情報源を読まなかった理由。答えの『読めていない名所』に 1 行で添える)。"""
+    unread_reasons は {情報源 id: 理由}(読む予定の情報源を読まなかった理由。答えの『読めていない名所』に 1 行で添える)。
+    record_gaps は読んだ地点の数より今日の記録が少ない情報源 [{source, publisher, read, recorded}](『注意』の先頭に警告。段階20)。"""
     ans = policy["answer"]
     unread_reasons = unread_reasons or {}
     if simple_read is None:
@@ -278,7 +280,7 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
             shown.add((p["subject"], r.get("site")))
     lines.append("")
 
-    notes = []
+    notes = [f"- {ans['record_gap'].format(publisher=g['publisher'], read=g['read'], recorded=g['recorded'])}" for g in record_gaps or []]
     for p in subject_parts:
         for r in p["summary"]["rows"]:
             if r["stale_display_suspect"]:
