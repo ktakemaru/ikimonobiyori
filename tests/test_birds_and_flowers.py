@@ -55,6 +55,39 @@ class Birds(unittest.TestCase):
         self.assertIn(f"試験の渓谷: {POLICY['answer']['tide_note']}", t)
 
 
+class Flowers(unittest.TestCase):
+    def test_one_profile_with_kinds_as_tags(self):
+        got = {s["subject"]: s for s in sources.subjects_status()}
+        self.assertTrue(got["flowers"]["implemented"])
+        self.assertEqual([s["label"] for s in POLICY["stages"]["flowers"]["items"]], ["つぼみ", "咲き始め", "見頃", "満開", "散り始め"])
+        self.assertEqual([s["order"] for s in POLICY["stages"]["flowers"]["items"]], [0, 1, 2, 3, 4])
+        for sid in ("cherry_blossom", "higanbana", "sunflower"):
+            self.assertFalse(got[sid]["implemented"], sid)                       # 既存の骨組みは残す(D-38)
+        self.assertEqual(dict((p.name, e) for p, e in sources.check_all())["flowers.yaml"], [])
+        entries = {e["id"]: e for e in catalog.approved_entries(catalog.load_catalog("flowers"))}
+        self.assertGreaterEqual(len(entries), 5)
+        for e in entries.values():
+            self.assertTrue(e["tags"].get("flower_kinds"), e["id"])
+        for s in sources.load_registry("flowers")["sources"]:
+            kinds = set(s.get("flower_kinds") or [])
+            for c in s["covers"]:
+                self.assertIn(c.get("flower_kind"), kinds, (s["id"], c))         # 地点ごとの種類は情報源の種類のどれか
+                self.assertIn(c["flower_kind"], entries[c["site"]]["tags"]["flower_kinds"], (s["id"], c))   # 名所の種類にもある
+
+    def test_kind_filter_and_topic(self):
+        self.assertEqual(sources.topic_subjects("花", POLICY), ["flowers"])
+        c = catalog.load_catalog("flowers")
+        got = sources.candidates(c, sources.load_registry("flowers"), [TA.DATES[0]], POLICY, flower_kind=["秋バラ"])
+        self.assertEqual(sorted(r["site"] for r in got["sites"]), ["hana-0002", "hana-0003", "hana-0005"])
+        reg = sources.load_registry("flowers")
+        r = sources.make_record(registry=reg, policy=POLICY, source_id="hitachi-flower-info", site="hana-0001", label="キバナコスモス（みはらしの丘）",
+                                read_at="2026-10-24T15:30:00+09:00", state="見頃（後半）", updated="2026-10-23", year_inferred=True)
+        self.assertEqual((r["stage"], r["freshness_basis"], sources.cover_kind(reg, r)), ("good", "observed_date", "キバナコスモス"))
+        self.assertEqual(sources.record_freshness(r, sources.sources_by_id(reg)["hitachi-flower-info"], TA.NOW.date(), POLICY)[2]["class"],
+                         "year_unknown")                                         # 撮影日に年がない → 新しさ不明
+        self.assertIsNone(sources.normalize_state(sources.sources_by_id(reg)["hitachi-flower-info"], "咲いています")[0])   # 段階を決められない語は推測しない
+
+
 class Topics(unittest.TestCase):
     def test_birds_in_general_use_both_subjects(self):
         self.assertEqual(sources.topic_subjects("野鳥", POLICY), ["birds", "wintering_birds"])

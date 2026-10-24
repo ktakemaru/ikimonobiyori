@@ -48,7 +48,7 @@ class Catalog(unittest.TestCase):
         self.assertEqual([(p.name, e) for p, e in res if e], [])
         names = sorted(f"{p.parent.name}/{p.name}" for p, _ in res)
         self.assertIn("catalog/autumn_leaves.yaml", names)
-        self.assertEqual(len([n for n in names if n.startswith("profiles/")]), 8)        # 段階16 C で wintering_birds を足した(指示書 フェーズ5)
+        self.assertEqual(len([n for n in names if n.startswith("profiles/")]), 9)        # 段階16 C で wintering_birds、段階17 フェーズ4 で flowers を足した
         self.assertNotIn("catalog/policy.yaml", names)                       # 方針のファイルはカタログとして検査しない
 
     def test_cli_exit_codes(self):
@@ -175,7 +175,8 @@ class Catalog(unittest.TestCase):
 class ProfileTimingType(unittest.TestCase):
     WANT = {"autumn_leaves": "temperature", "birds": "frequency", "cherry_blossom": "temperature", "higanbana": "calendar",
             "sunflower": "managed", "fireflies": "temperature", "bioluminescence": "episodic",
-            "wintering_birds": "calendar"}                                        # 段階16 C で足した対象(指示書 フェーズ5)
+            "wintering_birds": "calendar",                                        # 段階16 C で足した対象(指示書 フェーズ5)
+            "flowers": "managed"}                                                 # 段階17 フェーズ4 で足した対象(指示書)
 
     def test_every_profile_has_the_designed_timing_type(self):
         self.assertEqual({k: p["timing_type"] for k, p in load_profiles().items()}, self.WANT)

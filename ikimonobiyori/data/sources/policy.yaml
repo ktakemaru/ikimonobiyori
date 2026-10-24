@@ -121,12 +121,14 @@ topics:
     白鳥: [wintering_birds]
     冬鳥: [wintering_birds]
     紅葉: [autumn_leaves]
+    花: [flowers]
+    お花: [flowers]
 
 # 未実装の対象を聞かれたとき(段階17 修正⑩)。関係のない実装済みの対象を並べず、答えられない理由と、足すとどうなるかを 1〜2 文で。
 # 近い対象(related)が答えられる対象なら、それだけを示す
 unimplemented:
   source: "指示書(段階17 フェーズ3 の 5)"
-  text: "{name}は、まだお答えできません(公式の情報源と名所の一覧をまだ作っていないため)。足すと、公式の開花・観察情報のページを読んで、今の状態と場所をお答えできるようになります。"
+  text: "{name}は、まだお答えできません(公式の情報源と名所の一覧をまだ作っていないため)。足すと、現地の公式な発信(公園・自治体などの現況のページ)を読んで、今の状態と場所をお答えできるようになります。"
   related_text: "近い対象の「{related}」ならお答えできます。"
   related: {cherry_blossom: flowers, higanbana: flowers, sunflower: flowers}
 

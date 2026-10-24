@@ -1,0 +1,98 @@
+# 花の開花情報を発信する公式ページの台帳(ikimono-status-sources/1)。段階17 フェーズ4(2026-10-24)。
+# 2026-10-24 に Claude Code が各ページを 1 回読んで、readable・notation・terms を確かめた(WebFetch。原文との照合は人の目でしていない)。
+# 1 ページに複数の花がまとまることが多いので、covers に花ごとの地点の書き方(label)と種類(flower_kind)を書く。
+# 段階(つぼみ / 咲き始め / 見頃 / 満開 / 散り始め。プロファイル flowers の stages)は、読んで見た公式の語だけを notation.map に書く。
+# 「○種開花」のような数から段階を推測しない。読み方は要約の道具(コードで読む必要はない。指示書 段階17 フェーズ4 の 6)。
+# 承認: 段階16 と同じ条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)をすべて満たすものだけ Claude Code が仮承認。
+schema: ikimono-status-sources/1
+subject: flowers
+sources:
+  - id: hitachi-flower-info
+    publisher: 国営ひたち海浜公園(ひたち公園管理センター)
+    publisher_kind: park_manager
+    url: "https://www.hitachikaihin.jp/flower-plant/flower-info/"
+    kind: status_page
+    flower_kinds: [コキア, キバナコスモス, バラ]
+    covers:
+      - {site: hana-0001, label: "コキア＆ウェルカムガーデン", flower_kind: コキア}
+      - {site: hana-0001, label: "キバナコスモス（みはらしの丘）", flower_kind: キバナコスモス}
+      - {site: hana-0001, label: "バラ", flower_kind: バラ}
+    notation:
+      style: word
+      map: {"紅葉見頃（後半）": good, "見頃（後半）": good, "咲き始め": starting}
+      updated: per_item
+      year_shown: false
+      date_basis: observed_date
+      note: "『現在の花情報』。花ごとに状態の語と『撮影日:M月D日』(年はない。撮影の日 = 現地の状態の日付)。2026-10-24 の確認で コキア『紅葉見頃（後半）』・キバナコスモス『見頃（後半）』・バラ『咲き始め』(撮影日 10月23日)、サンパチェンス『咲いています』。凡例(段階の一覧)はない。『咲いています』は段階が決められないので map に入れない"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-23", note: "robots.txt は 404(なし)。トップページにもコキアの状況(『紅葉見頃（後半）』10月24日現在)"}
+    terms: {status: no_prohibition_found, url: "https://www.hitachikaihin.jp/about/link-copyright.html", note: "リンク及び著作権: リンクは原則自由(リンク元の連絡を求める)。私的使用や引用などを除き無断転載は不可、引用は出所を明示。要約・自動取得の規定なし。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす。迷った点: 日付に年がない(撮影日 M月D日)ので、新しさはいつも『新しさ不明』になる。トップページの要約の 1 回目で、読む道具が『フッターに指示文がある』と報告したが、フッターのリンクを列挙させると指示文はなく、『このサイトについて』『リンク及び著作権』のページにも指示文はなかった(道具の誤認と判断)"}
+
+  - id: tokyo-park-kyufurukawa-news
+    publisher: 東京都公園協会(旧古河庭園サービスセンター)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/park/kyu-furukawa/news/index.html"
+    kind: status_page
+    flower_kinds: [秋バラ]
+    covers:
+      - {site: hana-0002, label: "秋バラの開花状況", flower_kind: 秋バラ}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: "お知らせの一覧に『秋バラの開花状況について(M月D日現在)』(2026/10/08・10/14・10/19)。10/19 の記事は『現在約100種中80種のバラが開花』(10月19日現在)。2025 年は見出しに『見ごろ』『色づき始め』の語があったが、2026 年の見出しにはない。数から段階を推測しないので map は空"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-19", note: "同じサイトの robots.txt は 404(なし。段階15・16)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "段階15 の六義園と同じサイトポリシー。事実を出典つきで短く伝えるのは二次利用に当たらない、というユーザーの判断(2026-10-23)に合わせた"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす"}
+
+  - id: tokyo-park-jindai-news
+    publisher: 東京都公園協会(神代植物公園サービスセンター)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/park/jindai/news/index.html"
+    kind: status_page
+    flower_kinds: [秋バラ, 菊]
+    covers:
+      - {site: hana-0003, label: "バラ", flower_kind: 秋バラ}
+      - {site: hana-0003, label: "菊", flower_kind: 菊}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      note: "お知らせの一覧(バラのリーフレット・秋のバラフェスタ・神代花だより・菊花大会)。2026-10-24 の確認では開花状況の記事はない。状態の語はない"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-08", note: "同じサイトの robots.txt は 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "旧古河庭園と同じサイトポリシー"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす。迷った点: 開花状況の記事が見当たらず、読んでも今の状態が分からないことが多い"}
+
+  - id: showakinen-flower-information-flowers
+    publisher: 国営昭和記念公園(昭和管理センター)
+    publisher_kind: park_manager
+    url: "https://www.showakinen-koen.jp/flower-information/"
+    kind: status_page
+    flower_kinds: [コスモス]
+    covers:
+      - {site: hana-0004, label: "コスモス", flower_kind: コスモス}
+    notation: {style: none, map: {}, updated: none, note: "2026-10-24 は HTTP 504 で読めず、載り方は未確認(紅葉の台帳の showakinen-flower-information と同じページ)"}
+    readable: {status: unconfirmed, checked_on: "2026-10-24", robots: unknown, note: "HTTP 504 Gateway Timeout(段階16 でも応答がなかった)"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う"}
+
+  - id: keisei-rose-garden
+    publisher: 京成バラ園芸株式会社(京成バラ園)
+    publisher_kind: facility_operator
+    url: "https://www.keiseirose.co.jp/garden/"
+    kind: status_page
+    flower_kinds: [秋バラ]
+    covers:
+      - {site: hana-0005, label: "現在の開花状況", flower_kind: 秋バラ}
+    notation:
+      style: word
+      map: {"秋バラが見頃です。": good}
+      updated: per_item
+      year_shown: true
+      note: "トップの『現在の開花状況』(2026-10-24 の確認で『秋バラが開花中です。』2026.10.21)と、ピックアップ情報(『秋バラが見頃です。』2026.10.23)。『開花中』は段階が決められないので map に入れない。秋バラ見頃予報はグラフの画像(読まない)"
+    readable: {status: ok, checked_on: "2026-10-24", robots: unknown, observed_latest_update: "2026-10-23"}
+    terms: {status: not_checked, note: "利用規約・サイトポリシーのページが見つからなかった(個人情報保護方針・クッキーポリシーだけ)"}
+    approval: {status: pending, reason: "利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う"}

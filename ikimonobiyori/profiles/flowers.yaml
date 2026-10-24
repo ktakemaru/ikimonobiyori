@@ -1,0 +1,42 @@
+# 花(公園・植物園・花の名所の開花情報)プロファイル(骨組み。status: skeleton)。段階17 フェーズ4(2026-10-24)。
+# v0 の計算(エンジン)は持たない(not_applicable(profile_skeleton) を返す)。答えは「生き物の見頃・おすすめ」の手順で、
+# 公園・植物園の公式の花だより・開花情報(台帳 data/sources/flowers.yaml)を読んで出す。
+# 花の種類ごとにプロファイルを分けず、種類は名所カタログの tags.flower_kinds と台帳の flower_kinds(covers の flower_kind)で持つ(指示書 段階17 フェーズ4 の 1)。
+# 既存の骨組み(桜 cherry_blossom・彼岸花 higanbana・ひまわり sunflower)はそのまま残す(docs/stage17-decisions.md)。
+profile_id: flowers
+name: 花
+category: seasonal_progression
+validated: false
+status: skeleton
+timing_type: managed              # 時期の型(docs/design.md §3)。公園・植物園が植えて手入れする花が中心。名所カタログの各件は別の型を持てる
+interests: [flowers]
+season:
+  months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  months_source: "指示書(段階17 フェーズ4): 花の種類ごとに季節が違うので通年。今の季節(10月下旬〜冬)の花を優先して名所・情報源を集めた"
+  note: "季節は花の種類ごとに違う。名所カタログの例年の時期(typical_window)と公式の開花情報で答える"
+  out_of_season_rule: "骨組みの間は常に not_applicable(profile_skeleton)。手順(sources.py)はこの months を使わない"
+method:
+  kind: tbd                     # エンジンの手法はない(骨組み)。答えは公式の開花情報を読む手順(段階17 フェーズ4)
+  description: "公園・植物園が発信する花だより・開花情報を読む。段階は公式の語が台帳の notation.map にあるときだけ(『○種開花』などの数から段階を推測しない)"
+data_sources:
+  - {name: 公園・植物園の花だより・開花情報, type: official_notice, note: "台帳 data/sources/flowers.yaml(段階17 フェーズ4)"}
+confidence: {method: official-reports, validated: false, value_provided: false}
+care:
+  location_precision: exact
+  do_not_disclose_exact_location: false
+  manners:
+    - "花を摘まない・柵や花壇の中に入らない"
+    - "園の決まり(三脚・ペット・飲食)に従う"
+# 現況の段階(段階17 フェーズ4)。order は共通の順番(data/sources/policy.yaml の common_stages)
+stages:
+  source: "指示書(段階17 フェーズ4、2026-10-24 ユーザー承認): つぼみ / 咲き始め / 見頃 / 満開 / 散り始め"
+  provisional: true
+  items:
+    - {id: bud, order: 0, label: つぼみ}
+    - {id: starting, order: 1, label: 咲き始め}
+    - {id: good, order: 2, label: 見頃}
+    - {id: full, order: 3, label: 満開}
+    - {id: falling, order: 4, label: 散り始め}
+known_limits:
+  - "骨組み。エンジンの判定はない。段階は公式の語が台帳の notation.map にあるときだけ"
+  - "コキアの『紅葉見頃』のように花でない見どころも、名所の花だよりに載っていれば同じ段階の並びで扱う(flower_kinds に書く)"

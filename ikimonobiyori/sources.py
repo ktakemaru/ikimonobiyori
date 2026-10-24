@@ -339,9 +339,12 @@ def in_region(entry, region):
     return t.get("prefecture") in (m.get("prefectures") or []) or t.get("area") in (m.get("areas") or [])
 
 
-def site_filter(entry, *, region=None, terrain=None, access=None):
-    """質問の型②・④: 地域(regions.yaml)・地形(tags.terrain のどれか)・行き方(tags.access のどれか)で絞る。tags のない項目は「分からない」ので外す。"""
+def site_filter(entry, *, region=None, terrain=None, access=None, flower_kind=None):
+    """質問の型②・④: 地域(regions.yaml)・地形(tags.terrain のどれか)・行き方(tags.access のどれか)・花の種類(tags.flower_kinds のどれか。段階17)で絞る。
+    tags のない項目は「分からない」ので外す。"""
     t = entry.get("tags") or {}
+    if flower_kind and not set(flower_kind) & set(t.get("flower_kinds") or []):
+        return False
     if region is not None and not in_region(entry, region):
         return False
     if terrain and not set(terrain) & set(t.get("terrain") or []):
@@ -413,14 +416,14 @@ def next_window_start(d, tw):
     return s if s >= d else _md_date(d.year + 1, tw["start"])
 
 
-def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=None, access=None):
+def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=None, access=None, flower_kind=None):
     """名所カタログ(承認済み)から候補を絞り、読む情報源を 1 回ずつにまとめる。→ 辞書(JSON にできる)。
     region(regions.yaml の地域)・terrain・access を渡すと、名所の tags で先に絞る(段階16 B-4)。"""
     margin = val(policy["candidates"]["window_margin_days"])
     srcs = sources_by_id(registry)
     sites, out_of_season = [], []
     for e in catalog_mod.approved_entries(catalog_doc or {}):
-        if not site_filter(e, region=region, terrain=terrain, access=access):
+        if not site_filter(e, region=region, terrain=terrain, access=access, flower_kind=flower_kind):
             continue
         tw = e.get("typical_window")
         if tw:
@@ -851,18 +854,31 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
     return res
 
 
-def answer_parts(subjects, *, policy, now, dates, early=False, late=False, region=None, terrain=None, access=None, env=None):
-    """答えの下書き(answer.compose)に渡す、対象ごとの部品。同じ日に読んだ記録と、候補の絞り込み。"""
+def cover_kind(registry, rec):
+    """記録の地点(情報源の covers の同じ地点・書き方)の花の種類(段階17)。なければ None。"""
+    src = sources_by_id(registry).get(rec["source_id"]) or {}
+    for c in src.get("covers") or []:
+        if c.get("site", c.get("name")) == rec.get("site", rec.get("name")) and c.get("label") == rec.get("label"):
+            return c.get("flower_kind")
+    return None
+
+
+def answer_parts(subjects, *, policy, now, dates, early=False, late=False, region=None, terrain=None, access=None, flower_kind=None, env=None):
+    """答えの下書き(answer.compose)に渡す、対象ごとの部品。同じ日に読んだ記録と、候補の絞り込み。
+    flower_kind を渡すと、記録も候補もその花の種類だけにする(台帳の covers の flower_kind・名所の tags.flower_kinds)。"""
     from .profiles import load_profiles
     profs = load_profiles()
     parts = []
     for subj in subjects:
         registry, cat = load_registry(subj), catalog_mod.load_catalog(subj)
         care = profs[subj].get("care") or {}
+        recs = records_on(subj, now.date(), env)
+        if flower_kind:
+            recs = [r for r in recs if cover_kind(registry, r) in flower_kind]
         parts.append({"subject": subj, "name": profs[subj]["name"], "catalog": cat,
-                      "summary": summarize(records_on(subj, now.date(), env), registry=registry, catalog_doc=cat, policy=policy,
+                      "summary": summarize(recs, registry=registry, catalog_doc=cat, policy=policy,
                                            on=now.date(), dates=dates, early=early, late=late),
-                      "candidates": candidates(cat, registry, dates, policy, region=region, terrain=terrain, access=access),
+                      "candidates": candidates(cat, registry, dates, policy, region=region, terrain=terrain, access=access, flower_kind=flower_kind),
                       # 生き物に配慮が要る対象(位置を明かさない対象)だけ、マナーを添える
                       "care": care.get("manners") if care.get("do_not_disclose_exact_location") else None})
     return parts
@@ -885,7 +901,7 @@ def _answer_cli(a):
             print(f"地域の呼び名が data/regions.yaml にない: {a.region}", file=sys.stderr)
             return 2
     parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
-                         terrain=a.terrain, access=a.access)
+                         terrain=a.terrain, access=a.access, flower_kind=a.flower_kind)
     print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note, record_failed=a.record_failed), end="")
     return 0
 
@@ -903,6 +919,7 @@ def main(argv=None, http_get=None):
     w.add_argument("--region", help="地域の呼び名(data/regions.yaml の名前・別名)")
     w.add_argument("--terrain", action="append", help="地形(tags.terrain: mountain / highland / lake / urban / valley など。複数はどれか)")
     w.add_argument("--access", action="append", help="行き方(tags.access: ropeway / cable_car / walk_from_station / bus / car_only)")
+    w.add_argument("--flower-kind", action="append", help="花の種類(名所の tags.flower_kinds。flowers。段階17)")
     rg = sub.add_parser("region", help="地域の呼び名 → 名所カタログの件と、範囲(250 km)の内外(通信しない)")
     rg.add_argument("name")
     sub.add_parser("subjects", help="この手順で答えられる対象(台帳・名所カタログ・段階がそろったもの)と、まだの対象")
@@ -957,6 +974,7 @@ def main(argv=None, http_get=None):
     an.add_argument("--region")
     an.add_argument("--terrain", action="append")
     an.add_argument("--access", action="append")
+    an.add_argument("--flower-kind", action="append", help="花の種類(tags.flower_kinds。段階17)")
     an.add_argument("--record-failed", action="store_true", help="読んだ事実を記録できなかった(答えの最後に 1 行)")
     a = ap.parse_args(argv)
 
@@ -1004,7 +1022,8 @@ def main(argv=None, http_get=None):
                 return 2
         _dump({"now": now.isoformat(), "subject": a.subject, "horizon": horizon(now, dates, policy),
                "filters": {"region": region and region["name"], "terrain": a.terrain, "access": a.access},
-               **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy, region=region, terrain=a.terrain, access=a.access)})
+               **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy, region=region, terrain=a.terrain, access=a.access,
+                            flower_kind=a.flower_kind)})
         return 0
     if a.cmd == "follow":
         src = sources_by_id(registry).get(a.source)

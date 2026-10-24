@@ -26,7 +26,7 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
 1. **いつ**: 今週末(次の土日)・来週末・日付の指定。読んだ日から 14 日より先の日は、公式の現況では答えず、**公式の見頃予測と例年の時期だけ**で答え、そう明記する(`weekend` の `horizon.beyond`)。
 2. **どこで**: 地域の呼び名(富士山周辺・箱根・都内など)を `python -X utf8 -m ikimonobiyori.sources region <呼び名>` で、名所カタログの地域・都道府県に対応づける(`data/regions.yaml`。ないときは近いものを推測しない)。**その地域のカタログや情報源が薄いときは、そう明記し、追加候補になりそうな公式の情報源を挙げる**(読んでいないなら「未確認」と書く)。
 3. **どの段階まで**: 既定は「見ごろ・最盛」(共通の順番 2・3)。「早めに」「始まりも」と頼まれたら始まり(1)も、「終わりかけでも」と頼まれたら終わり(4)も含める(`summary --early` / `--late`)。答えでは段階の分け方を見出しで示す。
-4. **どんな場所で**: 名所カタログの `tags`(`terrain`: mountain / highland / lake / urban / valley / waterfall / garden / wetland など、`access`: ropeway / cable_car / walk_from_station / bus / car_only、`traffic_note`)で絞る(`weekend --terrain` / `--access`)。tags のない名所は「分からない」ので外れることを書く。山・高原の質問では、ロープウェイ・ゴンドラ・山小屋の公式発信(台帳の `publisher_kind: facility_operator`)を優先して読み、山の天気はヤマビヨリと組み合わせるべきことを添える。
+4. **どんな場所で**: 名所カタログの `tags`(`terrain`: mountain / highland / lake / urban / valley / waterfall / garden / wetland など、`access`: ropeway / cable_car / walk_from_station / bus / car_only、`traffic_note`)で絞る(`weekend --terrain` / `--access`)。花は種類でも絞れる(`--flower-kind コスモス` など。名所の `tags.flower_kinds`・台帳の covers の `flower_kind`。段階17)。tags のない名所は「分からない」ので外れることを書く。山・高原の質問では、ロープウェイ・ゴンドラ・山小屋の公式発信(台帳の `publisher_kind: facility_operator`)を優先して読み、山の天気はヤマビヨリと組み合わせるべきことを添える。
 5. **範囲の外**: 範囲は東京・横浜から直線 250 km。`region` の `status` が `out_of_range` なら扱わないと答える。`partial` なら、**範囲に入る部分を正確に言う**(`within_points_by_prefecture` の代表点と距離。代表点で見た目安であることも書く)。そのうえで、その部分の名所カタログ・情報源がまだないことを言う。
 
 対象の指定がない質問(「週末のおすすめは?」だけ)は、`python -X utf8 -m ikimonobiyori.sources subjects` で `implemented: true` の対象を**すべて**まとめて答える(対象ごとに見出し)。
