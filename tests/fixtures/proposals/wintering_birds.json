@@ -1,0 +1,673 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "ikimonobiyori-official-status:wintering_birds:2026-10-31+2026-11-01",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-24T13:54:00+09:00",
+ "data_as_of": [
+  {
+   "source": "試験の発信元(wintering_birds)",
+   "source_type": "official_notice",
+   "run_time": null,
+   "fetched_at": "2026-10-24T13:54:00+09:00",
+   "last_updated": "2026-10-23",
+   "url": "https://wintering-birds.example.org/wb-a"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:status:wintering_birds:2026-10-31:s-wb-1",
+   "title": "試験の沼 2026-10-31 冬鳥(白鳥などの飛来地)",
+   "subject": {
+    "category": "observation_record",
+    "name": "冬鳥(白鳥などの飛来地)",
+    "profile_id": "wintering_birds"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "試験の沼",
+    "lat": 36.12,
+    "lon": 139.99,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_1km",
+    "site_ref": "ikimonobiyori:s-wb-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-wb-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "初飛来",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_observed",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/01〜03/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の沼",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-wb-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "白鳥に餌を与えない・近づいたり触れたりしない(館林市の白鳥の情報。飛来地によっては管理者が給餌の時間を決めている)",
+     "鳥インフルエンザ予防のため、白鳥やカモに触らない(三条市の白鳥飛来状況)",
+     "フラッシュを使った撮影・ペットを連れての観察は控える(館林市の白鳥の情報)",
+     "静かに観察し、路上駐車をしない(那珂市の古徳沼のページ)"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "wintering_birds",
+    "site_id": "s-wb-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "wb-a",
+      "publisher": "試験の発信元(wintering_birds)",
+      "label": "試験の沼",
+      "official_state": "初飛来",
+      "stage": "arriving",
+      "stage_label": "飛来開始",
+      "order": 1,
+      "official_updated": "2026-10-23",
+      "official_observed": "2026-10-23",
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "observed_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://wintering-birds.example.org/wb-a"
+     }
+    ],
+    "representative_source": "wb-a",
+    "representative_label": "試験の沼",
+    "official_status": {
+     "stage": "arriving",
+     "stage_label": "飛来開始",
+     "order": 1,
+     "official_state": "初飛来"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:wintering_birds:2026-11-01:s-wb-1",
+   "title": "試験の沼 2026-11-01 冬鳥(白鳥などの飛来地)",
+   "subject": {
+    "category": "observation_record",
+    "name": "冬鳥(白鳥などの飛来地)",
+    "profile_id": "wintering_birds"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "試験の沼",
+    "lat": 36.12,
+    "lon": 139.99,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_1km",
+    "site_ref": "ikimonobiyori:s-wb-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-wb-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "初飛来",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_observed",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の沼)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/01〜03/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の沼",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-wb-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "白鳥に餌を与えない・近づいたり触れたりしない(館林市の白鳥の情報。飛来地によっては管理者が給餌の時間を決めている)",
+     "鳥インフルエンザ予防のため、白鳥やカモに触らない(三条市の白鳥飛来状況)",
+     "フラッシュを使った撮影・ペットを連れての観察は控える(館林市の白鳥の情報)",
+     "静かに観察し、路上駐車をしない(那珂市の古徳沼のページ)"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "wintering_birds",
+    "site_id": "s-wb-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "wb-a",
+      "publisher": "試験の発信元(wintering_birds)",
+      "label": "試験の沼",
+      "official_state": "初飛来",
+      "stage": "arriving",
+      "stage_label": "飛来開始",
+      "order": 1,
+      "official_updated": "2026-10-23",
+      "official_observed": "2026-10-23",
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "observed_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://wintering-birds.example.org/wb-a"
+     }
+    ],
+    "representative_source": "wb-a",
+    "representative_label": "試験の沼",
+    "official_status": {
+     "stage": "arriving",
+     "stage_label": "飛来開始",
+     "order": 1,
+     "official_state": "初飛来"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:wintering_birds:2026-10-31:s-wb-2",
+   "title": "試験の池 2026-10-31 冬鳥(白鳥などの飛来地)",
+   "subject": {
+    "category": "observation_record",
+    "name": "冬鳥(白鳥などの飛来地)",
+    "profile_id": "wintering_birds"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の池",
+    "lat": 36.5,
+    "lon": 140.25,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_1km",
+    "site_ref": "ikimonobiyori:s-wb-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-wb-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "飛来前",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の池)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の池)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "freshness",
+     "value": "やや古い",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "11/01〜03/15",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の池",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-wb-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "白鳥に餌を与えない・近づいたり触れたりしない(館林市の白鳥の情報。飛来地によっては管理者が給餌の時間を決めている)",
+     "鳥インフルエンザ予防のため、白鳥やカモに触らない(三条市の白鳥飛来状況)",
+     "フラッシュを使った撮影・ペットを連れての観察は控える(館林市の白鳥の情報)",
+     "静かに観察し、路上駐車をしない(那珂市の古徳沼のページ)"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "wintering_birds",
+    "site_id": "s-wb-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "wb-a",
+      "publisher": "試験の発信元(wintering_birds)",
+      "label": "試験の池",
+      "official_state": "飛来前",
+      "stage": "not_arrived",
+      "stage_label": "飛来前",
+      "order": 0,
+      "official_updated": "2026-10-20",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "やや古い",
+      "freshness_class": "somewhat_old",
+      "freshness_age_days": 4,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://wintering-birds.example.org/wb-a"
+     }
+    ],
+    "representative_source": "wb-a",
+    "representative_label": "試験の池",
+    "official_status": {
+     "stage": "not_arrived",
+     "stage_label": "飛来前",
+     "order": 0,
+     "official_state": "飛来前"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:wintering_birds:2026-11-01:s-wb-2",
+   "title": "試験の池 2026-11-01 冬鳥(白鳥などの飛来地)",
+   "subject": {
+    "category": "observation_record",
+    "name": "冬鳥(白鳥などの飛来地)",
+    "profile_id": "wintering_birds"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の池",
+    "lat": 36.5,
+    "lon": 140.25,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_1km",
+    "site_ref": "ikimonobiyori:s-wb-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-wb-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "飛来前",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の池)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(wintering_birds)(試験の池)",
+     "source_type": "official_notice",
+     "url": "https://wintering-birds.example.org/wb-a",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "freshness",
+     "value": "やや古い",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "11/01〜03/15",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の池",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-wb-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "白鳥に餌を与えない・近づいたり触れたりしない(館林市の白鳥の情報。飛来地によっては管理者が給餌の時間を決めている)",
+     "鳥インフルエンザ予防のため、白鳥やカモに触らない(三条市の白鳥飛来状況)",
+     "フラッシュを使った撮影・ペットを連れての観察は控える(館林市の白鳥の情報)",
+     "静かに観察し、路上駐車をしない(那珂市の古徳沼のページ)"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "wintering_birds",
+    "site_id": "s-wb-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "wb-a",
+      "publisher": "試験の発信元(wintering_birds)",
+      "label": "試験の池",
+      "official_state": "飛来前",
+      "stage": "not_arrived",
+      "stage_label": "飛来前",
+      "order": 0,
+      "official_updated": "2026-10-20",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "やや古い",
+      "freshness_class": "somewhat_old",
+      "freshness_age_days": 4,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://wintering-birds.example.org/wb-a"
+     }
+    ],
+    "representative_source": "wb-a",
+    "representative_label": "試験の池",
+    "official_status": {
+     "stage": "not_arrived",
+     "stage_label": "飛来前",
+     "order": 0,
+     "official_state": "飛来前"
+    },
+    "reference_links": []
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": []
+ }
+}

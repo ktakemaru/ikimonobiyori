@@ -8,6 +8,7 @@ import re
 from datetime import date
 
 from . import catalog as catalog_mod
+from .sources import usable_status_row
 
 URL_RE = re.compile(r"https?://\S+")
 WEEKDAYS = "月火水木金土日"
@@ -100,8 +101,7 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
     表示が古い可能性・食い違いのある地点は選ばない。同じ名所は 1 回だけ(exclude はほかの見出しで選んだ名所)。"""
     ans, top_max = policy["answer"], _val(policy["recommend"]["top_max"])
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
-    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"]
-              if r.get("kind") == "status_page" and not r["stale_display_suspect"] and not r["conflict"]]
+    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"] if usable_status_row(r)]   # 提案(proposals)と同じ判定(段階18)
     out, seen = [], set(exclude)
 
     def add(p, r, reason):

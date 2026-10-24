@@ -1,0 +1,691 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "ikimonobiyori-official-status:flowers:2026-10-31+2026-11-01",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-24T13:54:00+09:00",
+ "data_as_of": [
+  {
+   "source": "試験の発信元(flowers)",
+   "source_type": "official_notice",
+   "run_time": null,
+   "fetched_at": "2026-10-24T13:54:00+09:00",
+   "last_updated": "2026-10-23",
+   "url": "https://flowers.example.org/fl-a"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:status:flowers:2026-10-31:s-fl-1",
+   "title": "試験の花畑 2026-10-31 花",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "花",
+    "profile_id": "flowers"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の花畑",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-fl-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-fl-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 2,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "見頃",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の花畑)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の花畑)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/01〜11/15",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の花畑",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-fl-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "花を摘まない・柵や花壇の中に入らない",
+     "園の決まり(三脚・ペット・飲食)に従う"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "flowers",
+    "site_id": "s-fl-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "fl-a",
+      "publisher": "試験の発信元(flowers)",
+      "label": "試験の花畑",
+      "official_state": "見頃",
+      "stage": "good",
+      "stage_label": "見頃",
+      "order": 2,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://flowers.example.org/fl-a"
+     }
+    ],
+    "representative_source": "fl-a",
+    "representative_label": "試験の花畑",
+    "official_status": {
+     "stage": "good",
+     "stage_label": "見頃",
+     "order": 2,
+     "official_state": "見頃"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:flowers:2026-11-01:s-fl-1",
+   "title": "試験の花畑 2026-11-01 花",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "花",
+    "profile_id": "flowers"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の花畑",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-fl-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-fl-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 2,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "見頃",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の花畑)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の花畑)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/01〜11/15",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の花畑",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-fl-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "花を摘まない・柵や花壇の中に入らない",
+     "園の決まり(三脚・ペット・飲食)に従う"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "flowers",
+    "site_id": "s-fl-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "fl-a",
+      "publisher": "試験の発信元(flowers)",
+      "label": "試験の花畑",
+      "official_state": "見頃",
+      "stage": "good",
+      "stage_label": "見頃",
+      "order": 2,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://flowers.example.org/fl-a"
+     }
+    ],
+    "representative_source": "fl-a",
+    "representative_label": "試験の花畑",
+    "official_status": {
+     "stage": "good",
+     "stage_label": "見頃",
+     "order": 2,
+     "official_state": "見頃"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:flowers:2026-11-01:s-fl-2",
+   "title": "試験の園 2026-11-01 花",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "花",
+    "profile_id": "flowers"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の園",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-fl-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-fl-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "つぼみ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_forecast",
+     "value": "11月上旬",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "forecast_hits_target_date",
+     "value": true,
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/15〜11/30",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の園",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-fl-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "花を摘まない・柵や花壇の中に入らない",
+     "園の決まり(三脚・ペット・飲食)に従う"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "flowers",
+    "site_id": "s-fl-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "fl-a",
+      "publisher": "試験の発信元(flowers)",
+      "label": "試験の園",
+      "official_state": "つぼみ",
+      "stage": "bud",
+      "stage_label": "つぼみ",
+      "order": 0,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": "11月上旬",
+      "forecast_window": [
+       "2026-11-01",
+       "2026-11-10"
+      ],
+      "url": "https://flowers.example.org/fl-a"
+     }
+    ],
+    "representative_source": "fl-a",
+    "representative_label": "試験の園",
+    "official_status": {
+     "stage": "bud",
+     "stage_label": "つぼみ",
+     "order": 0,
+     "official_state": "つぼみ"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:status:flowers:2026-10-31:s-fl-2",
+   "title": "試験の園 2026-10-31 花",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "花",
+    "profile_id": "flowers"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の園",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-fl-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-fl-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "つぼみ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_forecast",
+     "value": "11月上旬",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(flowers)(試験の園)",
+     "source_type": "official_notice",
+     "url": "https://flowers.example.org/fl-a",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "forecast_hits_target_date",
+     "value": false,
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/15〜11/30",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の園",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-fl-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "花を摘まない・柵や花壇の中に入らない",
+     "園の決まり(三脚・ペット・飲食)に従う"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "flowers",
+    "site_id": "s-fl-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "fl-a",
+      "publisher": "試験の発信元(flowers)",
+      "label": "試験の園",
+      "official_state": "つぼみ",
+      "stage": "bud",
+      "stage_label": "つぼみ",
+      "order": 0,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": "11月上旬",
+      "forecast_window": [
+       "2026-11-01",
+       "2026-11-10"
+      ],
+      "url": "https://flowers.example.org/fl-a"
+     }
+    ],
+    "representative_source": "fl-a",
+    "representative_label": "試験の園",
+    "official_status": {
+     "stage": "bud",
+     "stage_label": "つぼみ",
+     "order": 0,
+     "official_state": "つぼみ"
+    },
+    "reference_links": []
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": []
+ }
+}

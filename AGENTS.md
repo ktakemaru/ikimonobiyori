@@ -32,6 +32,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
 - 対象を足すとき: プロファイルを足す(スキーマ `ikimonobiyori/schemas/ikimono-profile.schema.json` に通る)。骨組み(`status: skeleton`)は `not_applicable: profile_skeleton` を返す。実装済みにするには手法とテストが要る。
 - `ikimonobiyori/sources.py` 現況の情報源の台帳(`data/sources/<対象>.yaml`)の検査・状態の書き方の対応・候補の絞り込み(地域 `data/regions.yaml`・名所の `tags`)・読んだ結果の記録(`IKIMONOBIYORI_DATA_DIR` の下の `status_log/`)・答えの材料(`summary`)。段階の並びはプロファイルの `stages`。段階15・16。
+- `ikimonobiyori/proposals.py` 同じ日に読んだ記録・名所カタログ・情報源の一覧から `biyori-proposal/1` の提案を組み立てる(`sources proposals`。段階18。通信しない・LLM なし・`go` を出さない。対応と規則は `docs/proposal-mapping.md`、値は `policy.yaml` の `proposals`)。`answer` と同じ記録・同じ使える行の判定(`sources.usable_status_row`)を使う。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
 
@@ -130,6 +131,14 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
    - **内部用語を答えに出さない**(方針 `answer.forbidden_terms`。テストが確かめる): `reader`・`code`(読み方の意味で)・`record`・`規則`・`access_notes`・`v0`・`台帳`・`approved`・`pending`・`provisional`・`status_log`・`read_plan`・`out_of_season`。言い換える(承認待ち・情報源なし → 「公式の現況を読めていない名所」、v0 → 「気温からの推定」)。「『更新』は最終更新日」のような読み方の注記も書かない。
    - **同じ名所を 2 か所に出さない**: 読めなかった名所と現況の情報源がない名所は、「公式の現況を読めていない名所」に 1 回だけ(例年の時期と、あれば人が開く URL)。食い違いと表示が古い可能性は「注意」に。
    - 見出しの時刻(公式ページを読んだ時刻)と対象の日は、年月日とオフセットを省かない。
+
+10. **提案を出す(最後に。段階18)。** 現況を読んで記録したあと、同じ日の記録から、契約 `biyori-proposal/1` の提案を出す(通信しない・LLM を使わない。対応と規則は `docs/proposal-mapping.md`):
+    ```
+    python -X utf8 -m ikimonobiyori.sources proposals --now <今の時刻> [--subjects <対象> ...|--subjects all] [--date ...|--weekend next] [--early] [--late] [--region <呼び名>] [--out <ファイル>]
+    ```
+    - 答えの文章は提案と食い違わないようにする。`answer` のおすすめに出る名所は、提案では `band: maybe` になる(同じ記録・同じ使える行の判定を使う)。提案の `band` は `no` か `maybe` だけ(`go` は出さない)。
+    - 提案にならなかった名所(現況なし・表示が古い可能性・食い違い・名所カタログにない地点・古すぎる記録)は、提案の文書の `diagnostics.warnings` に 1 行ずつ出る。
+    - ビヨリコンシェル(biyori-hub の窓口)から呼ぶときは、読んで記録したあとの `proposals` だけで足りる(`answer` の文章は要らない)。
 
 ### 答えの例(合成。実在の名所の最新の状態ではない)
 ```

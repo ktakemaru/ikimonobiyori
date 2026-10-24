@@ -168,3 +168,47 @@ month_thirds:
     上旬: {first: 1, last: 10}
     中旬: {first: 11, last: 20}
     下旬: {first: 21, last: null}
+
+# 現地の情報の答えを biyori-proposal/1 で出す(段階18。ikimonobiyori/proposals.py、docs/proposal-mapping.md)。
+# 契約は変えない。go は出さない(上限 maybe)。新しさは band を変えず、known_limits と evidence に書く。
+proposals:
+  source: "指示書(段階18、2026-10-24 ユーザー承認)"
+  # 共通の順番(common_stages)→ 契約の phenology_stage。見ごろ(2)と最盛(3)はどちらも peak(契約に区別がない。細かい段階は details と evidence)
+  phenology_stage_by_order: {0: before_bud, 1: early_bloom, 2: peak, 3: peak, 4: late}
+  # stage_scope(既定は見ごろ・最盛)に加えて、いつでも maybe にする共通の順番: 始まり
+  maybe_orders: {value: [1], source: "指示書(段階18): 「始まり」は maybe", provisional: true}
+  score_scale: ikimonobiyori-official-stage-order-0-4-not-probability     # 点数は共通の順番そのもの(0〜4)。確率でも良さでもない
+  confidence_method: official-reports
+  # 古い記録の印(known_limits に「古い。参考程度」)。読んだ日から / 公式の日付から の日数。いずれも以上で印を付ける
+  old_read_days: {value: 7, source: "指示書(段階18)", provisional: true}
+  old_official_days: {value: 14, source: "指示書(段階18)", provisional: true}
+  # 公式の日付が対象の(最初の)日よりこの日数以上前の記録は使わない(昨シーズンの表示の残りの恐れ)
+  exclude_official_days_before_target: {value: 30, source: "指示書(段階18)", provisional: true}
+  # 「段階が分からない書き方」の記録を maybe にしてよい新しさ(answer の「公式の最新の記載」と同じ。docs/stage18-decisions.md D-14)
+  no_stage_maybe_freshness: [fresh, somewhat_old]
+  # 新しさの並び(表示の都合。新しいものから)
+  freshness_order: [fresh, somewhat_old, year_unknown, old, unknown]
+  evidence_source: "イキモノビヨリ(公式ページを読んだ結果から)"
+  # evidence の読み方(read_by)の値。最終文に出る言葉なので内部用語(code など)を使わない。details.observations[].read_by には元の値(code / summary / user)
+  read_by_labels: {code: 決まった形で読んだ, summary: 簡易な読み取り, user: 人が原文を確かめた}
+  known_limits:
+    common:
+      - "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない"
+      - "代表点の座標は名所の目安で、見る場所そのものではない"
+      - "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる"
+    old: "公式の日付または読んだ日が古い(古い。参考程度)"
+    year_unknown: "公式の日付に年の記載がないため、新しさは分からない(新しさ不明)"
+    year_inferred: "現地の状態の日付に年の記載がなく、同じ地点の年つきの最終更新日から年を補った"
+    no_stage: "公式の書き方から段階が分からないため、段階を付けていない"
+    beyond_horizon: "対象の日が先のため、今の状態では判断せず、公式の見頃予測だけで判断した"
+  # 警告(diagnostics.warnings)の書き方。答えと同じく内部用語を使わない(answer.forbidden_terms)
+  warnings:
+    no_status_source: "現況なし: {name}(公式の現況のページがまだありません)"
+    not_read: "現況なし: {name}(今日読んだ結果がありません)"
+    human_url: "現況なし: {name}(公式ページ(ご自身で開いてください): {url})"
+    no_state: "現況なし: {name}(公式ページに今の状態の記載がありません: {url})"
+    stale_display: "{name}: 表示が昨シーズンのままの可能性があります。提案にしていません"
+    conflict: "{name}: 読み方によって状態が食い違っています。提案にしていません(公式ページをご自身でご確認ください)"
+    too_old: "{name}: 公式の日付({date})が対象の日より {days} 日以上前のため、提案にしていません(昨シーズンの表示の恐れ)"
+    outside_catalog: "名所の一覧にない地点のため提案にしていない({subject}): {names}"
+    reference_link: "参考(公式ページ): {name} — {url}"

@@ -868,7 +868,8 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
                      "order": stage_order(policy, r["subject"], r.get("stage")),
                      "in_scope": stage_order(policy, r["subject"], r.get("stage")) in scope,
                      "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
-                     "official_observed": r.get("official_observed"), "basis_date": basis_d, "basis_year_unknown": basis_no_year,
+                     "official_observed": r.get("official_observed"), "observed_year_inferred": r.get("observed_year_inferred"),   # 補った年の印(段階18。提案に残す)
+                     "basis_date": basis_d, "basis_year_unknown": basis_no_year,
                      "freshness_basis": r.get("freshness_basis") or freshness_basis(r, src), "freshness": fresh,
                      "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
                      "official_forecast": r.get("official_forecast"),
@@ -885,6 +886,11 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
             "events": [x for x in rows if x["event_hits_dates"]],
             "unparsed_forecasts": [x for x in rows if x["official_forecast"] and x["forecast_window"] is None],
             "conflicts": [x for x in rows if x["conflict"]]}
+
+
+def usable_status_row(row):
+    """答え(answer)と提案(proposals)が共有する「使える行」の判定(段階18)。現況のページの行で、表示が古い可能性・食い違いがないもの。"""
+    return row.get("kind") == "status_page" and not row["stale_display_suspect"] and not row["conflict"]
 
 
 # ---- 補助の推定(v0 の出力を読むだけ。計算も通信もしない) ----
@@ -973,7 +979,7 @@ def answer_parts(subjects, *, policy, now, dates, early=False, late=False, regio
             region_only = region is not None and not (terrain or access or flower_kind)
             recs = [r for r in recs if r.get("site") in keep] +                    [r for r in recs if "site" not in r and region_only
                     and any(c.get("site") in keep for c in (srcs.get(r["source_id"]) or {}).get("covers") or [])]
-        parts.append({"subject": subj, "name": profs[subj]["name"], "catalog": cat,
+        parts.append({"subject": subj, "name": profs[subj]["name"], "catalog": cat, "registry": registry,
                       "summary": summarize(recs, registry=registry, catalog_doc=cat, policy=policy,
                                            on=now.date(), dates=dates, early=early, late=late),
                       "candidates": candidates(cat, registry, dates, policy, region=region, terrain=terrain, access=access, flower_kind=flower_kind),
@@ -982,10 +988,12 @@ def answer_parts(subjects, *, policy, now, dates, early=False, late=False, regio
     return parts
 
 
-def _answer_cli(a):
-    from . import answer
+def _answer_inputs(a):
+    """answer と proposals の共通の入力(対象・日・地域)。→ (policy, now, dates, subjects, region) か、エラーなら終了コード。"""
     policy, now = load_policy(), parse_now(a.now)
     dates = [date.fromisoformat(x) for x in a.date] if a.date else next_weekend(now)
+    if not a.date and getattr(a, "weekend", None) == "next":            # 来週末(proposals だけの指定。段階18)
+        dates = [d + timedelta(days=7) for d in next_weekend(now)]
     ready = [s["subject"] for s in subjects_status() if s["implemented"]]
     subjects = ready if a.subjects == ["all"] else (a.subjects or [a.subject])
     bad = [s for s in subjects if s not in ready]
@@ -998,10 +1006,40 @@ def _answer_cli(a):
         if region is None:
             print(f"地域の呼び名が data/regions.yaml にない: {a.region}", file=sys.stderr)
             return 2
+    return policy, now, dates, subjects, region
+
+
+def _answer_cli(a):
+    from . import answer
+    got = _answer_inputs(a)
+    if isinstance(got, int):
+        return got
+    policy, now, dates, subjects, region = got
     parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
                          terrain=a.terrain, access=a.access, flower_kind=a.flower_kind)
     print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note, record_failed=a.record_failed,
                          early=a.early, late=a.late), end="")
+    return 0
+
+
+def _proposals_cli(a):
+    """同じ日に読んだ記録から biyori-proposal/1 を出す(段階18。通信しない・書き込まない。--out を明示したときだけファイルに書く)。"""
+    from . import proposals
+    from .profiles import load_profiles
+    got = _answer_inputs(a)
+    if isinstance(got, int):
+        return got
+    policy, now, dates, subjects, region = got
+    parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
+                         terrain=a.terrain, access=a.access, flower_kind=a.flower_kind)
+    doc = proposals.build(parts, load_profiles(), policy=policy, catalog_policy=catalog_mod.load_policy(), now=now, dates=dates,
+                          early=a.early, late=a.late, request_id=a.request_id)
+    text = json.dumps(doc, ensure_ascii=False, indent=1) + "\n"
+    if a.out:
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(text, encoding="utf-8", newline="\n")
+    else:
+        sys.stdout.write(text)
     return 0
 
 
@@ -1081,6 +1119,19 @@ def main(argv=None, http_get=None):
     an.add_argument("--access", action="append")
     an.add_argument("--flower-kind", action="append", help="花の種類(tags.flower_kinds。段階17)")
     an.add_argument("--record-failed", action="store_true", help="読んだ事実を記録できなかった(答えの最後に 1 行)")
+    pr = sub.add_parser("proposals", help="同じ日に読んだ記録から biyori-proposal/1 の提案を出す(段階18。通信しない・LLM なし。標準出力、--out のときだけファイル)")
+    pr.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
+    pr.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    pr.add_argument("--weekend", choices=["this", "next"], default="this", help="--date がないとき: this = 次の土日、next = その翌週の土日(来週末)")
+    pr.add_argument("--subjects", action="append", help="対象(複数可。省略すると --subject の 1 つ。all で答えられる対象すべて)")
+    pr.add_argument("--early", action="store_true")
+    pr.add_argument("--late", action="store_true", help="終わり(共通の順番 4)も maybe にする")
+    pr.add_argument("--region")
+    pr.add_argument("--terrain", action="append")
+    pr.add_argument("--access", action="append")
+    pr.add_argument("--flower-kind", action="append")
+    pr.add_argument("--request-id", help="文書の request_id(省略すると対象と日から決まった形)")
+    pr.add_argument("--out", help="出力先のファイル(省略すると標準出力)")
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
@@ -1112,6 +1163,8 @@ def main(argv=None, http_get=None):
         return 0
     if a.cmd == "answer":
         return _answer_cli(a)
+    if a.cmd == "proposals":
+        return _proposals_cli(a)
     policy, registry = load_policy(), load_registry(a.subject)
     if registry is None:
         print(f"台帳がない: {a.subject}", file=sys.stderr)
