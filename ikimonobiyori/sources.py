@@ -777,8 +777,10 @@ def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=Non
 
 
 def _key(rec):
+    # 年の補い方(updated_year_inferred・observed_year_inferred)が違えば別の事実として扱う(段階17 の見直し: 年を補い直した記録が重複扱いで落ちた)
     return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
-                                      "official_forecast", "event_start", "event_end", "method"))
+                                      "official_forecast", "event_start", "event_end", "method",
+                                      "updated_year_inferred", "observed_year_inferred"))
 
 
 def append_records(records, *, registry, policy, env=None):

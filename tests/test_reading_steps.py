@@ -182,3 +182,13 @@ class YearFromTheSameItem(unittest.TestCase):
     def test_the_mark_is_checked(self):
         bad = {**rec(observed="2026-10-20"), "observed_year_inferred": self.MARK}  # 更新日がないのに印だけ
         self.assertTrue(any(self.MARK in e for e in sources.validate_record(bad, registry=TA.REG, policy=POLICY)))
+
+
+class DedupWithYearFlags(unittest.TestCase):
+    def test_a_record_with_a_better_year_is_not_a_duplicate(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        with mock.patch.dict(os.environ, {"IKIMONOBIYORI_DATA_DIR": d}):
+            self.assertEqual(sources.append_records([rec(updated="2026-10-22", year_inferred=True)], registry=TA.REG, policy=POLICY), (1, 0))
+            self.assertEqual(sources.append_records([rec(updated="2026-10-22")], registry=TA.REG, policy=POLICY), (1, 0))   # 年が分かる記録は別の事実
+            self.assertEqual(sources.append_records([rec(updated="2026-10-22")], registry=TA.REG, policy=POLICY), (0, 1))
