@@ -20,7 +20,7 @@
  ],
  "proposals": [
   {
-   "id": "ikimonobiyori:flowers:2026-10-31:s-fl-1",
+   "id": "ikimonobiyori:status:flowers:2026-10-31:s-fl-1",
    "title": "試験の花畑 2026-10-31 花",
    "subject": {
     "category": "seasonal_progression",
@@ -174,7 +174,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:flowers:2026-11-01:s-fl-1",
+   "id": "ikimonobiyori:status:flowers:2026-11-01:s-fl-1",
    "title": "試験の花畑 2026-11-01 花",
    "subject": {
     "category": "seasonal_progression",
@@ -328,7 +328,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:flowers:2026-11-01:s-fl-2",
+   "id": "ikimonobiyori:status:flowers:2026-11-01:s-fl-2",
    "title": "試験の園 2026-11-01 花",
    "subject": {
     "category": "seasonal_progression",
@@ -505,7 +505,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:flowers:2026-10-31:s-fl-2",
+   "id": "ikimonobiyori:status:flowers:2026-10-31:s-fl-2",
    "title": "試験の園 2026-10-31 花",
    "subject": {
     "category": "seasonal_progression",

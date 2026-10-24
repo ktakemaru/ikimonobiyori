@@ -20,7 +20,7 @@
  ],
  "proposals": [
   {
-   "id": "ikimonobiyori:wintering_birds:2026-10-31:s-wb-1",
+   "id": "ikimonobiyori:status:wintering_birds:2026-10-31:s-wb-1",
    "title": "試験の沼 2026-10-31 冬鳥(白鳥などの飛来地)",
    "subject": {
     "category": "observation_record",
@@ -186,7 +186,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:wintering_birds:2026-11-01:s-wb-1",
+   "id": "ikimonobiyori:status:wintering_birds:2026-11-01:s-wb-1",
    "title": "試験の沼 2026-11-01 冬鳥(白鳥などの飛来地)",
    "subject": {
     "category": "observation_record",
@@ -352,7 +352,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:wintering_birds:2026-10-31:s-wb-2",
+   "id": "ikimonobiyori:status:wintering_birds:2026-10-31:s-wb-2",
    "title": "試験の池 2026-10-31 冬鳥(白鳥などの飛来地)",
    "subject": {
     "category": "observation_record",
@@ -508,7 +508,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:wintering_birds:2026-11-01:s-wb-2",
+   "id": "ikimonobiyori:status:wintering_birds:2026-11-01:s-wb-2",
    "title": "試験の池 2026-11-01 冬鳥(白鳥などの飛来地)",
    "subject": {
     "category": "observation_record",

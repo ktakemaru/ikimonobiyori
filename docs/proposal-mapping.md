@@ -41,7 +41,7 @@
 
 その他の項目:
 
-- 提案の `id` は `ikimonobiyori:<対象>:<対象の日>:<名所 ID>`。名所カタログの地点に対する v0 の提案(`main.py --site-set catalog`)と同じ形。
+- 提案の `id` は `ikimonobiyori:status:<対象>:<対象の日>:<名所 ID>`。名所カタログの地点に対する気温の推定の提案(`main.py --site-set catalog`。`ikimonobiyori:<対象>:<対象の日>:<名所 ID>`)と区別するため、2 つ目に `status` を入れる(段階18 の確認、ユーザー 2026-10-24。`docs/stage18-decisions.md` D-29)。
 - `title` は「<名所名> <対象の日> <対象名>」。
 - `subject` はプロファイルの `category`・`name`・`profile_id`。
 - 文書は既存の出力にそろえる。

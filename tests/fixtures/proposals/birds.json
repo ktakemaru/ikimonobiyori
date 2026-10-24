@@ -20,7 +20,7 @@
  ],
  "proposals": [
   {
-   "id": "ikimonobiyori:birds:2026-10-31:s-bd-1",
+   "id": "ikimonobiyori:status:birds:2026-10-31:s-bd-1",
    "title": "試験の干潟 2026-10-31 野鳥",
    "subject": {
     "category": "observation_record",
@@ -174,7 +174,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:birds:2026-11-01:s-bd-1",
+   "id": "ikimonobiyori:status:birds:2026-11-01:s-bd-1",
    "title": "試験の干潟 2026-11-01 野鳥",
    "subject": {
     "category": "observation_record",
@@ -328,7 +328,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:birds:2026-10-31:s-bd-2",
+   "id": "ikimonobiyori:status:birds:2026-10-31:s-bd-2",
    "title": "試験の森 2026-10-31 野鳥",
    "subject": {
     "category": "observation_record",
@@ -483,7 +483,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:birds:2026-11-01:s-bd-2",
+   "id": "ikimonobiyori:status:birds:2026-11-01:s-bd-2",
    "title": "試験の森 2026-11-01 野鳥",
    "subject": {
     "category": "observation_record",

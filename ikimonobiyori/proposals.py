@@ -11,6 +11,7 @@ from . import catalog as catalog_mod
 from .engine import AGENT_ID, SCHEMA, day_window, round_coord
 from .sources import usable_status_row, val
 
+ID_KIND = "status"             # 提案の id の 2 つ目。気温の推定(engine)の id と区別する(段階18 の確認、ユーザー 2026-10-24)
 YEAR_FREE_DATE = "{m}/{d}"       # 年のない公式の日付の書き方(原文の形。答えの「○/○時点」と同じ)
 
 
@@ -211,7 +212,7 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
                 ev.append({"metric": "typical_window", "value": f"{tw['start'].replace('-', '/')}〜{tw['end'].replace('-', '/')}", "unit": None,
                            "valid_time": None, "source": entry["name"], "source_type": "static_reference", "url": tw.get("source_url"), "last_updated": None})
             stage_map = pp["phenology_stage_by_order"]
-            p = {"id": f"{AGENT_ID}:{part['subject']}:{d.isoformat()}:{sid}",
+            p = {"id": f"{AGENT_ID}:{ID_KIND}:{part['subject']}:{d.isoformat()}:{sid}",
                  "title": f"{entry['name']} {d.isoformat()} {profile['name']}",
                  "subject": {"category": profile["category"], "name": profile["name"], "profile_id": profile["profile_id"]}}
             if rep.get("order") is not None:

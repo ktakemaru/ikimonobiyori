@@ -4,14 +4,14 @@
 1. 結論: できた。止める条件には当たっていない。
    - 同じ日に読んだ記録・名所カタログ・情報源の一覧から、契約 `biyori-proposal/1` の提案を組み立てるコマンドを作った。通信も LLM も使わない。決定的で、`go` は出さない。
    - 契約は変えていない。新しいホストも足していない。
-2. 使い方: `python -X utf8 -m ikimonobiyori.sources proposals --now <時刻> [--subjects <対象>|all] [--date …|--weekend next] [--early] [--late] [--region …] [--out <ファイル>]`。既定は標準出力。
+2. 使い方: `python -X utf8 -m ikimonobiyori.sources proposals --now <時刻> [--subjects <対象>|all] [--date …|--weekend next] [--early] [--late] [--region …] [--out <ファイル>]`。既定は標準出力。提案の id は `ikimonobiyori:status:<対象>:<日>:<名所 ID>`(気温の推定の id と区別。D-29)。
 3. band: `maybe` か `no` だけ。
    - `maybe` になるのは、見ごろ・最盛、始まり、公式の見頃予測が対象の日にかかる、段階の分からない書き方で新しい(D-14)、のどれか。それ以外は `no`。
    - 新しさは band を変えず、`evidence` と `known_limits` に書く。公式の日付が対象の日より 30 日以上前の記録は使わない。
 4. 照合が要る値は `evidence` と `details` の両方に入れた: 公式の状態の原文・公式の日付の原文(年のない日付は `M/D`)・新しさ・読み方。
 5. ハブ側の検査: biyori-hub の `python hub/validate.py <ファイル>`(読むだけ)で、ゴールデン 4 つとも `OK (biyori-proposal/1)`(D-26)。
-6. テスト: `python -X utf8 -m unittest discover -s tests` → `Ran 383 tests` / `OK`(段階18 の前は 355 件)。
-7. 要確認: 紅葉の来週末の答えでは、おすすめ 10 か所のうち 6 か所が名所カタログにない地点だった。座標がないので提案にならない(D-16・D-28)。カタログに足すかを決めてほしい。
+6. テスト: `python -X utf8 -m unittest discover -s tests` → `Ran 386 tests` / `OK`(段階18 の前は 355 件。確認後の id の変更で 3 件を足した)。
+7. 確認後(2026-10-24): id を区別した(D-29)、D-14 の 3 つ目と段階の対応はユーザー確認済み(D-30・D-31)、カタログにない 23 地点は次の段階で足す(末尾に一覧。D-32)。
 
 ## 各フェーズでしたこと
 
@@ -49,11 +49,14 @@
 
 ## ユーザーの確認が要ること
 
-1. **カタログ外の地点**(D-28): 日光・箱根・大子町の発信にある地点で、紅葉では 23 か所。名所カタログに足すと提案になる。承認の流れは段階14b と同じ。
-2. **band の補い**(D-14)の 3 つ目: 段階の分からない書き方(冬鳥の羽数、花の「○種開花」など)で新しい記録を `maybe` にした。`no` にすると答えの文章と食い違う。これでよいか。
-3. **`phenology_stage` の対応**: 冬鳥・野鳥・花も、共通の順番から紅葉と同じ値に対応させた(例: 冬鳥の「飛来開始」→ `early_bloom`)。契約の値の名前は花・紅葉向けで、意味がずれる。細かい段階は `details.official_status` と `evidence` にある。
-4. **id の重なり**: 名所カタログの地点の v0 の提案(`main.py --site-set catalog`)と、id の形が同じ。ハブが同じ文書に混ぜると衝突する。
-5. push と PR はしていない。
+確認事項 1〜4 は、ユーザーの確認(2026-10-24)で決まった。
+
+1. **カタログ外の地点**: 次の段階で足す。今は足さず、末尾に一覧を残した(D-32)。
+2. **band の補い**(D-14)の 3 つ目: ユーザー確認済み(D-30)。
+3. **`phenology_stage` の対応**: ユーザー確認済み(D-31)。
+4. **id の重なり**: 現況の提案の id を `ikimonobiyori:status:…` に変えた。気温の推定の id は変わらない(D-29。テストで確認、ハブの `validate.py` でも 4 つとも OK)。
+
+push と PR はしていない。
 
 ## 次の段階への提案
 
@@ -77,3 +80,38 @@
 - フェーズ3: `answer` のおすすめの選び方が `sources.usable_status_row` を使うようにした(提案と同じ判定。答えの出力は変わらない。既存テストはそのまま通る)。スキル・AGENTS.md・CLAUDE.md の手順に「10. 提案を出す」を足した。整合のテスト `tests/test_proposals.py`(5 件。答えのおすすめ・根拠の名所と提案の名所が一致、おすすめは maybe)。
 - フェーズ4: `tests/test_proposals.py`(27 件: 整合・契約・ゴールデン 4 対象・決定的・go なし・evidence の照合値・年のない日付・年の補いの印・band の規則・古さ・30 日・14 日より先・警告の重複なし・同じ名所の複数行・位置の丸め・交通の注意・禁止語・印の付いた記録・子プロセスの CLI(ソケット禁止)・--out・--weekend next)。ハブの `validate.py` でゴールデン 4 つが OK(D-26)。不具合 3 つを直した(D-24)。
 - フェーズ5: 今日の記録で 5 通り(紅葉 次の土日・来週末、冬鳥、花、野鳥)を出した(`docs/stage18-trial.md`)。すべて契約の検査に通った。答えとの違いはカタログ外の地点だけ(D-28)。重複した警告の不具合を直した(D-27)。
+
+## 名所カタログにない紅葉の地点(2026-10-24 の記録。次の段階でカタログに足す。D-32)
+
+2026-10-24 に読んだ記録のうち、名所カタログにない地点(情報源の covers の `name` で記録したもの)。座標がないので提案にならず、警告の「名所の一覧にない地点」に出た。名前は情報源の covers の `name`。
+
+| # | 地点 | 情報源 ID |
+|---|---|---|
+| 1 | 八溝山 | `daigo-kanko-koyo` |
+| 2 | 月待の滝 | `daigo-kanko-koyo` |
+| 3 | 永源寺(大子町) | `daigo-kanko-koyo` |
+| 4 | 男体山(大子町) | `daigo-kanko-koyo` |
+| 5 | 元箱根 | `hakone-kankou-koyo` |
+| 6 | 宮ノ下 | `hakone-kankou-koyo` |
+| 7 | 旧街道 甘酒茶屋付近 | `hakone-kankou-koyo` |
+| 8 | 箱根湯本 | `hakone-kankou-koyo` |
+| 9 | 六方沢 | `nikko-kankou-autumn-leaves` |
+| 10 | 小網ダム | `nikko-kankou-autumn-leaves` |
+| 11 | 川治温泉 | `nikko-kankou-autumn-leaves` |
+| 12 | 平家の里 | `nikko-kankou-autumn-leaves` |
+| 13 | 日光だいや川公園 | `nikko-kankou-autumn-leaves` |
+| 14 | 日光の社寺 | `nikko-kankou-autumn-leaves` |
+| 15 | 杉並木公園 | `nikko-kankou-autumn-leaves` |
+| 16 | 湯西川水の郷 | `nikko-kankou-autumn-leaves` |
+| 17 | 蛇王の滝 | `nikko-kankou-autumn-leaves` |
+| 18 | 足尾 銀山平 | `nikko-kankou-autumn-leaves` |
+| 19 | 霧降滝 | `nikko-kankou-autumn-leaves` |
+| 20 | 鬼怒川温泉 丸山 | `nikko-kankou-autumn-leaves` |
+| 21 | 鬼怒楯岩大吊橋 | `nikko-kankou-autumn-leaves` |
+| 22 | 鬼怒沼 | `nikko-kankou-autumn-leaves` |
+| 23 | 龍王峡 | `nikko-kankou-autumn-leaves` |
+
+参考: 現況の情報源の covers には、ほかに名前で書かれた地点が 3 つある。2026-10-24 の記録にはなかった。
+- 接岨峡・長島ダム・奥大井湖上駅(`okuooi-koyo`)
+- 智満寺(`okuooi-koyo`)
+- 西沢渓谷(`yamanashi-kankou-koyo`)

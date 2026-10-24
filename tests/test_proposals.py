@@ -254,6 +254,44 @@ class Properties(unittest.TestCase):
             self.assertEqual(answer.forbidden_found(t, POLICY), [], k)
 
 
+class IdsAreSeparate(unittest.TestCase):
+    """現況の提案の id(ikimonobiyori:status:<対象>:<日>:<名所 ID>)は、気温の推定の id(ikimonobiyori:<対象>:<日>:<名所 ID>)と区別する。
+    気温の推定の id は変わらない(段階18 の確認、ユーザー 2026-10-24)。"""
+
+    def test_status_ids_have_the_status_part_and_pass_the_contract(self):
+        for s in F.SUBJECTS:
+            doc = subject_doc(s)
+            self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])
+            for p in doc["proposals"]:
+                parts = p["id"].split(":")
+                self.assertEqual((len(parts), parts[0], parts[1], parts[2], parts[3], parts[4]),
+                                 (5, "ikimonobiyori", "status", s, p["time_window"]["start"][:10], p["details"]["site_id"]))
+
+    def test_estimate_ids_are_unchanged_and_never_collide(self):
+        import test_site_sets as TS
+        rc, est, _ = TS.run("--site-set", "catalog")
+        self.assertEqual(rc, 0)
+        est_ids = {p["id"] for p in est["proposals"]}
+        for p in est["proposals"]:                                       # 気温の推定は今まで通り 4 つの部分
+            self.assertEqual(p["id"], f"ikimonobiyori:autumn_leaves:{p['time_window']['start'][:10]}:{p['details']['site_id']}")
+        recs = [sources.make_record(registry=sources.load_registry("autumn_leaves"), policy=POLICY, read_at=F.NOW.isoformat(),
+                                    source_id="nikko-kankou-autumn-leaves", site="kouyou-0001", label="【奥日光】湯ノ湖、湯滝", state="◎", updated="2026-10-22")]
+        d = date(2026, 10, 17)
+        cat, reg = catalog.load_catalog("autumn_leaves"), sources.load_registry("autumn_leaves")
+        part = {"subject": "autumn_leaves", "name": "紅葉", "catalog": cat, "registry": reg,
+                "summary": sources.summarize(recs, registry=reg, catalog_doc=cat, policy=POLICY, on=F.NOW.date(), dates=[d]),
+                "candidates": sources.candidates(cat, reg, [d], POLICY), "care": None}
+        st = proposals.build([part], PROFILES, policy=POLICY, catalog_policy=CAT_POLICY, now=F.NOW, dates=[d])
+        st_ids = {p["id"] for p in st["proposals"]}
+        self.assertIn("ikimonobiyori:status:autumn_leaves:2026-10-17:kouyou-0001", st_ids)
+        self.assertIn("ikimonobiyori:autumn_leaves:2026-10-17:kouyou-0001", est_ids)       # 同じ名所・同じ日でも
+        self.assertFalse(st_ids & est_ids)
+
+    def test_the_estimate_reader_ignores_status_proposals(self):
+        labels = PROFILES["autumn_leaves"]["phenology_labels"]
+        self.assertEqual(sources.v0_estimates(subject_doc("autumn_leaves"), subject="autumn_leaves", labels=labels, policy=POLICY), [])
+
+
 class MarkedRecordsAndCli(unittest.TestCase):
     """記録のファイル(IKIMONOBIYORI_DATA_DIR)からの経路と CLI。誤りの印・置き換えの印の記録は使わない。通信しない(子プロセスもソケット禁止)。"""
 
@@ -285,7 +323,7 @@ class MarkedRecordsAndCli(unittest.TestCase):
         self.assertEqual(outs[0].stdout, outs[1].stdout)
         doc = json.loads(outs[0].stdout)
         self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])
-        self.assertIn("ikimonobiyori:autumn_leaves:2026-10-31:kouyou-0001", {p["id"] for p in doc["proposals"]})
+        self.assertIn("ikimonobiyori:status:autumn_leaves:2026-10-31:kouyou-0001", {p["id"] for p in doc["proposals"]})
         self.assertEqual(doc["diagnostics"]["api_calls"], 0)
 
     def test_cli_writes_a_file_only_with_out(self):

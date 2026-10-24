@@ -28,7 +28,7 @@
  ],
  "proposals": [
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-1",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-10-31:s-al-1",
    "title": "試験の谷 2026-10-31 紅葉",
    "subject": {
     "category": "seasonal_progression",
@@ -268,7 +268,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-1",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-11-01:s-al-1",
    "title": "試験の谷 2026-11-01 紅葉",
    "subject": {
     "category": "seasonal_progression",
@@ -508,7 +508,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-4",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-10-31:s-al-4",
    "title": "試験の庭 2026-10-31 紅葉",
    "subject": {
     "category": "seasonal_progression",
@@ -663,7 +663,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-4",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-11-01:s-al-4",
    "title": "試験の庭 2026-11-01 紅葉",
    "subject": {
     "category": "seasonal_progression",
@@ -818,7 +818,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-2",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-10-31:s-al-2",
    "title": "試験の湖 2026-10-31 紅葉",
    "subject": {
     "category": "seasonal_progression",
@@ -972,7 +972,7 @@
    }
   },
   {
-   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-2",
+   "id": "ikimonobiyori:status:autumn_leaves:2026-11-01:s-al-2",
    "title": "試験の湖 2026-11-01 紅葉",
    "subject": {
     "category": "seasonal_progression",
