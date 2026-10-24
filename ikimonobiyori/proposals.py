@@ -48,9 +48,12 @@ def decide(row, d, *, policy, on, scope):
     order, keys = row.get("order"), []
     beyond = (d - on).days > val(policy["horizon_days"])
     hit = forecast_hits(row, d)
+    fw = row.get("forecast_window")
     if beyond:
         keys.append("beyond_horizon")
         band = "maybe" if hit else "no"
+    elif fw and fw[1] < d.isoformat():                       # 見頃予測がその日より前に終わる: answer がおすすめから外すのと同じ(段階20)
+        band = "no"
     elif order is not None and (order in scope or order in val(pp["maybe_orders"])):
         band = "maybe"
     elif hit:

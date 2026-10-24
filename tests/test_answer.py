@@ -120,7 +120,8 @@ class AnswerForm(unittest.TestCase):
 
     def test_one_date_per_place(self):
         for ln in body_lines(self.text, self.h["evidence"]) + body_lines(self.text, self.h["recommend"]):
-            self.assertEqual(len(re.findall(r"\d+/\d+時点", ln)), 1, ln)
+            # 段階20: 本文に「現在」の日付があれば「○/○時点」、更新日だけなら「公式の更新日は○/○」(どちらも 1 つ)
+            self.assertEqual(len(re.findall(r"\d+/\d+時点|公式の更新日は\d+/\d+", ln)), 1, ln)
         self.assertNotIn("更新」は", self.text)                                 # 読み方の注記を書かない
 
     def test_scope_note_first_and_traffic_note(self):
@@ -154,7 +155,10 @@ class AnswerOrdering(unittest.TestCase):
         recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22", forecast="10月上旬～10月中旬"),
                 mk(site="kouyou-0002", label="湖畔", state="◯", updated="2026-10-22", forecast="10月下旬～11月上旬")]
         rec_lines = body_lines(answer.compose(parts(recs), now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["recommend"])
-        self.assertEqual([re.search(r"\*\*(.+?)\*\*", ln).group(1) for ln in rec_lines], ["試験の湖畔", "試験の渓谷"])
+        # 段階20: 見頃予測が対象の日より前に終わる渓谷は、後ろに回すのではなくおすすめから外し、名前だけ 1 行で書く
+        picked = [re.search(r"\*\*(.+?)\*\*", ln).group(1) for ln in rec_lines if re.search(r"\*\*(.+?)\*\*", ln)]
+        self.assertEqual(picked, ["試験の湖畔"])
+        self.assertIn("予測の時期を過ぎる見込みのため外しました: 試験の渓谷", rec_lines)
 
     def test_each_subject_gets_its_own_recommendations(self):
         other = {**parts()[0], "subject": "wintering_birds", "name": "冬鳥"}
