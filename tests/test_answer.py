@@ -164,6 +164,41 @@ class AnswerOrdering(unittest.TestCase):
         self.assertIn("### 冬鳥", rec)
 
 
+class AnswerFilters(unittest.TestCase):
+    """段階17 フェーズ7 の答え直しで見つけた点: 地域で絞ったときの根拠、情報なしの書き方を見頃予測で選ばない。"""
+    def test_a_region_keeps_only_its_places(self):
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        reg = sources.load_registry("autumn_leaves")
+        at = NOW.isoformat()
+        recs = [sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", name="湖尻", label="湖尻",
+                                    state="色づきはじめ", updated="2026-10-22", year_inferred=True),
+                sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", site="kouyou-0034",
+                                    label="仙石原(長安寺)", state="色づきはじめ", updated="2026-10-23", year_inferred=True),
+                sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="nikko-kankou-autumn-leaves", site="kouyou-0028",
+                                    label="【湯西川・川俣・奥鬼怒】瀬戸合峡", state="◎", updated="2026-10-21")]
+        with mock.patch.dict(os.environ, {"IKIMONOBIYORI_DATA_DIR": d}):
+            sources.append_records(recs, registry=reg, policy=POLICY)
+            hakone = sources.resolve_region("箱根", sources.load_regions())
+            rows = sources.answer_parts(["autumn_leaves"], policy=POLICY, now=NOW, dates=DATES, region=hakone)[0]["summary"]["rows"]
+            self.assertEqual(sorted(r.get("site") or r.get("name") for r in rows), ["kouyou-0034", "湖尻"])   # 日光は出さない
+            rows = sources.answer_parts(["autumn_leaves"], policy=POLICY, now=NOW, dates=DATES, region=hakone, terrain=["highland"])[0]["summary"]["rows"]
+            self.assertEqual([r.get("site") or r.get("name") for r in rows], ["kouyou-0034"])   # カタログ外の地点は地形が分からないので外す
+
+    def test_places_before_their_season_get_the_typical_start(self):
+        notes = body_lines(answer.compose(parts(), now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["notes"])
+        self.assertIn("- 試験の美術館: 例年の時期はこれから(11月11日ごろから)", notes)
+
+    def test_no_info_is_not_recommended_by_forecast(self):
+        reg = {**REG, "sources": [{**REG["sources"][0], "notation": {**REG["sources"][0]["notation"], "no_info": ["現在、情報がありません"]}}] + REG["sources"][1:]}
+        r = sources.make_record(registry=reg, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", site="kouyou-0003", label="滝",
+                                state="現在、情報がありません", updated="2026-10-23", forecast="10月下旬～11月上旬")
+        p = [{**parts()[0], "summary": sources.summarize([r], registry=reg, catalog_doc=CAT, policy=POLICY, on=NOW.date(), dates=DATES)}]
+        t = answer.compose(p, now=NOW, dates=DATES, policy=POLICY)
+        self.assertEqual(body_lines(t, POLICY["answer"]["headings"]["recommend"]), [POLICY["answer"]["none_found"]])
+        self.assertIn("現在、情報がありません", "\n".join(body_lines(t, POLICY["answer"]["headings"]["evidence"])))   # 根拠には出す
+
+
 class SkillExample(unittest.TestCase):
     def test_the_example_in_the_steps_has_no_internal_terms(self):
         s = (ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")

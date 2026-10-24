@@ -775,7 +775,8 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
         fw = forecast_window(r.get("official_forecast"), parse_now(r["read_at"]).year, policy)
         ev = (date.fromisoformat(r["event_start"]), date.fromisoformat(r["event_end"])) if r.get("event_start") else None
         rows.append({"source": r["source_id"], "kind": src.get("kind"), "site": r.get("site"), "name": r.get("name"), "label": r.get("label"),
-                     "official_state": r.get("official_state"), "stage": r.get("stage"), "stage_label": stage_label(policy, r["subject"], r.get("stage")),
+                     "official_state": r.get("official_state"), "state_kind": normalize_state(src, r.get("official_state"))[1],
+                     "stage": r.get("stage"), "stage_label": stage_label(policy, r["subject"], r.get("stage")),
                      "order": stage_order(policy, r["subject"], r.get("stage")),
                      "in_scope": stage_order(policy, r["subject"], r.get("stage")) in scope,
                      "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
@@ -875,6 +876,15 @@ def answer_parts(subjects, *, policy, now, dates, early=False, late=False, regio
         recs = records_on(subj, now.date(), env)
         if flower_kind:
             recs = [r for r in recs if cover_kind(registry, r) in flower_kind]
+        if region is not None or terrain or access or flower_kind:
+            # 地域・条件で絞ったときは、絞った名所の記録だけ。カタログ外の地点(tags がない)は、地域だけで絞ったときに限り、
+            # その地点を伝えるページが絞った名所も伝えるなら残す(地形・行き方は分からないので外す)
+            keep = {e["id"] for e in catalog_mod.approved_entries(cat or {})
+                    if site_filter(e, region=region, terrain=terrain, access=access, flower_kind=flower_kind)}
+            srcs = sources_by_id(registry)
+            region_only = region is not None and not (terrain or access or flower_kind)
+            recs = [r for r in recs if r.get("site") in keep] +                    [r for r in recs if "site" not in r and region_only
+                    and any(c.get("site") in keep for c in (srcs.get(r["source_id"]) or {}).get("covers") or [])]
         parts.append({"subject": subj, "name": profs[subj]["name"], "catalog": cat,
                       "summary": summarize(recs, registry=registry, catalog_doc=cat, policy=policy,
                                            on=now.date(), dates=dates, early=early, late=late),

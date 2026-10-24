@@ -97,12 +97,13 @@ def pick(subject_parts, policy, dates):
     for p, r in sorted((x for x in usable if x[1]["in_scope"]),
                        key=lambda x: (forecast_past(x[1], dates), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
         add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
-    for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and not x[1]["in_scope"]),
+    # 公式の見頃予測で選ぶのは、公式の状態が段階の分かる語のとき(「現在、情報がありません」のような情報なしの書き方では選ばない)
+    for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and not x[1]["in_scope"] and x[1]["stage"] is not None),
                        key=lambda x: -(x[1]["order"] or 0)):
         add(p, r, ans["reasons"]["forecast"].format(forecast=r["official_forecast"]))
     if len(out) < _val(policy["recommend"]["top_min"]):
         for p, r in usable:
-            if r["stage"] is None and r.get("official_state") and r["freshness"]["class"] in FRESHNESS_ORDER[:2]:
+            if r["stage"] is None and r.get("official_state") and r.get("state_kind") != "no_info" and r["freshness"]["class"] in FRESHNESS_ORDER[:2]:
                 add(p, r, ans["reasons"]["latest"])
     return out
 
@@ -184,6 +185,10 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
             for u in (entries.get(sid) or {}).get("related_urls") or []:
                 if u["kind"] == "tide_table":
                     notes.append(f"- {names[sid]}: {ans['tide_note']} — {u['url']}")
+        for u in p["candidates"].get("upcoming_windows") or []:
+            d = date.fromisoformat(u["next_start"])
+            if (d - min(dates)).days <= _val(ans["upcoming_within_days"]):     # 近いうちに例年の時期が来る名所だけ
+                notes.append(f"- {u['name']}: " + ans["upcoming"].format(month=d.month, day=d.day))
         for m in p.get("care") or []:
             notes.append(f"- {m}")
     if notes:
