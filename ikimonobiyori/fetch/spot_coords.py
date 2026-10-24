@@ -84,10 +84,11 @@ def parse_page(html, bounds):
     return {**res, "status": "ok", "lat": lat, "lon": lon, "pattern": found[0][2]}
 
 
-def read_spots(urls, *, http_get, cfg, max_requests, sleep=time.sleep):
+def read_spots(urls, *, http_get, cfg, max_requests, sleep=time.sleep, progress=None):
     """スポットのページ(許可ホストだけ)の座標を読む。→ {requests, results: [{url, status, ...}], stopped}。
     ホストごとに robots.txt を先に 1 回読む(読めない・拒否ならそのホストのページは読まない)。リクエストの間は live.min_interval_s 以上空ける。
-    4xx/5xx(429 を含む)が返ったら、残りを読まずに止める(stopped に理由)。許可外のホストは、1 件も送らずに ValueError。"""
+    4xx/5xx(429 を含む)が返ったら、残りを読まずに止める(stopped に理由)。許可外のホストは、1 件も送らずに ValueError。
+    progress は結果が 1 件できるたびに呼ばれる(計測フックが途中で中止しても、読めた分を失わないため。数字・状態だけを渡す)。"""
     allowed = set(cfg["live"]["allowed_hosts_by_subject"][SUBJECT_HOSTS])
     bad = sorted({urlsplit(u).netloc for u in urls} - allowed)
     if bad:
@@ -122,9 +123,11 @@ def read_spots(urls, *, http_get, cfg, max_requests, sleep=time.sleep):
                     robots[host] = rp
             if isinstance(robots[host], str):
                 rep["results"].append({"url": u, "status": "not_read", "reason": robots[host]})
+                progress and progress(rep["results"][-1])
                 continue
             if not robots[host].can_fetch(ua, u):
                 rep["results"].append({"url": u, "status": "not_read", "reason": "robots.txt が拒否している。読まない"})
+                progress and progress(rep["results"][-1])
                 continue
             st, html = get(u)
         except LiveError as e:
@@ -132,9 +135,11 @@ def read_spots(urls, *, http_get, cfg, max_requests, sleep=time.sleep):
             break
         if st != HTTPStatus.OK:
             rep["results"].append({"url": u, "status": f"http_{int(st)}"})
+            progress and progress(rep["results"][-1])
             if st >= HTTPStatus.BAD_REQUEST:
                 rep["stopped"] = f"HTTP {int(st)}。残りを読まない"
                 break
             continue
         rep["results"].append({"url": u, **parse_page(html, bounds)})                  # HTML は、ここで捨てる(返さない・残さない)
+        progress and progress(rep["results"][-1])
     return rep

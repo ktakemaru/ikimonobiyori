@@ -1044,7 +1044,8 @@ def _spot_coords_cli(a, http_get=None):
         t = cfg["live"]["request_timeout"]
         getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
     try:
-        res = spot_coords.read_spots(a.url, http_get=http_get or getter, cfg=cfg, max_requests=a.max_requests)
+        res = spot_coords.read_spots(a.url, http_get=http_get or getter, cfg=cfg, max_requests=a.max_requests,
+                                     progress=lambda r: print("spot-coords " + json.dumps(r, ensure_ascii=False), file=sys.stderr, flush=True))
     except ValueError as ex:
         print(str(ex), file=sys.stderr)
         return 2
