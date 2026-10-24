@@ -209,7 +209,7 @@ class ReadCommand(unittest.TestCase):
         kojiri = next(r for r in recs if r.get("site") == "kouyou-0033")                        # 湖尻は段階17 の見直しで名所カタログに入った
         self.assertEqual((kojiri["official_state"], kojiri["stage"], kojiri["official_updated"], kojiri["method"], kojiri["updated_year_inferred"]),
                          ("まだまだ", "not_yet", "2026-10-15", "code", True))
-        moto = next(r for r in recs if r.get("site") == "kouyou-0038")                          # 元箱根は段階19 で名所カタログに入った(以前はカタログ外の地点の例)
+        moto = next(r for r in recs if r.get("name") == "元箱根")                                # カタログ外の地点の例(段階17 の見直しで湖尻から差し替え)
         self.assertEqual((moto["official_state"], moto["stage"], moto["method"]), ("まだまだ", "not_yet", "code"))
         raw = (self.d / "status_log" / "autumn_leaves.jsonl").read_text(encoding="utf-8")
         self.assertNotIn("見本の紹介文", raw)                                                    # 本文は残さない

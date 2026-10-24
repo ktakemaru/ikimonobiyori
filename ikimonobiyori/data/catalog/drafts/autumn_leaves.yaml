@@ -109,3 +109,260 @@ entries:
     sources:
       - {url: "https://okuooi.gr.jp/pickup/page.php?id=3", title: "川根本町まちづくり観光協会 紅葉情報"}
     note: "段階19。承認済みの現況の情報源がないので足さない(承認されたら座標を取る)"
+
+  # ---- 段階19(続き): 推定の座標で足した 20 地点を、座標未確認として戻した(承認済みから外した。推定の座標は使わない)。docs/stage19-decisions.md D-16 ----
+  - id: kouyou-0036
+    name: 月待の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 茨城県, area: 大子, terrain: [waterfall]}
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0004.html", title: "大子町観光協会 月待の滝", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町川山。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: daigo-kanko-koyo"
+  - id: kouyou-0037
+    name: 永源寺(大子町)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 茨城県, area: 大子, terrain: [temple_shrine]}
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0020.html", title: "大子町観光協会 永源寺(大子町)", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町大子。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: daigo-kanko-koyo"
+  - id: kouyou-0038
+    name: 箱根 元箱根
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は元箱根港のバス停(芦ノ湖の南側)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+  - id: kouyou-0039
+    name: 箱根 宮ノ下
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印はホテル前のバス停(芦ノ湖方面と強羅方面の分岐)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+  - id: kouyou-0040
+    name: 箱根 旧街道 甘酒茶屋付近
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は甘酒茶屋のバス停(旧道経由の元箱根行き)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+  - id: kouyou-0041
+    name: 箱根 湯本
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [walk_from_station]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。箱根湯本駅から下車すぐ。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+  - id: kouyou-0042
+    name: 小網ダム
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/1508", title: "日光市観光協会 小網ダム", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市藤原。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0043
+    name: 川治温泉
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。スポットのページへのリンクがない。温泉地の名前から日光市川治付近。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0044
+    name: 平家の里
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/54", title: "日光市観光協会 平家の里", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市湯西川。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0045
+    name: 日光だいや川公園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/883", title: "日光市観光協会 日光だいや川公園", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市瀬川。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0046
+    name: 日光の社寺(世界遺産)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, terrain: [temple_shrine], traffic_note: "大型バスは基本平日のみで、事前の問い合わせが要る"}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/2", title: "日光市観光協会 日光の社寺(世界遺産)", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市山内。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0047
+    name: 杉並木公園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/38", title: "日光市観光協会 杉並木公園", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市瀬川。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0048
+    name: 湯西川水の郷
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/52", title: "日光市観光協会 湯西川水の郷", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市湯西川。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0049
+    name: 蛇王の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall]}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/160", title: "日光市観光協会 蛇王の滝", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市若間。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0050
+    name: 足尾 銀山平
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/1548", title: "日光市観光協会 足尾 銀山平", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市足尾町銀山平。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0051
+    name: 霧降滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall]}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/120", title: "日光市観光協会 霧降滝", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市所野。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0052
+    name: 鬼怒楯岩大吊橋
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, traffic_note: "駐車場は予約できない"}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/41", title: "日光市観光協会 鬼怒楯岩大吊橋", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市鬼怒川温泉大原。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0053
+    name: 鬼怒沼
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, terrain: [wetland, highland]}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/59", title: "日光市観光協会 鬼怒沼", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。公式ページの標高は 2020 m 前後。試し点の標高(2062 m)と合う。『9月中旬に紅葉』と開始だけの記載で、期間にならないので例年の時期は入れない。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0054
+    name: 龍王峡
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光, terrain: [valley]}
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/42", title: "日光市観光協会 龍王峡", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市藤原。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0055
+    name: 西沢渓谷
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"
+    typical_window: {start: "10-01", end: "10-20", source_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", note: "やまなし観光ネットの一覧: 西沢渓谷 例年 10月上旬〜中旬(上旬を 01〜10 日・中旬を 11〜20 日に直した)"}
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 山梨県, area: 山梨市, terrain: [valley]}
+    sources:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", title: "やまなし観光推進機構 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。一覧ページの記載(標高 1,500 m 以上のグループ)は西沢渓谷単独の値ではないので、標高の確かめには使っていない。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: yamanashi-kankou-koyo"

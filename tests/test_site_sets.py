@@ -15,11 +15,6 @@ MOUNTAINS, _ = ip.load_sites()
 CATALOG = catalog.catalog_sites(catalog.load_catalog("autumn_leaves"))
 
 
-def distinct_points(*site_sets):
-    """取得の回数の期待: 同じ座標の地点は 1 回の取得を共有する(段階19 で、粗い座標を共有する地点が増えた)。"""
-    return len({(s["lat"], s["lon"]) for sites in site_sets for s in sites.values()})
-
-
 def resp():
     t0 = datetime(2026, 10, 11)
     return {"latitude": 0, "longitude": 0, "daily": {"time": [(t0 + timedelta(days=i)).date().isoformat() for i in range(8)],
@@ -86,7 +81,7 @@ class SiteSets(unittest.TestCase):
         rc, doc, http = run("--site-set", "catalog")
         self.assertEqual(rc, 0)
         self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])
-        self.assertEqual(len(http.calls), distinct_points(CATALOG))
+        self.assertEqual(len(http.calls), len(CATALOG))
         self.assertEqual({p["details"]["site_id"] for p in doc["proposals"]}, set(CATALOG))
         for p in doc["proposals"]:
             s = CATALOG[p["details"]["site_id"]]
@@ -103,7 +98,7 @@ class SiteSets(unittest.TestCase):
         rc, doc, http = run("--site-set", "both")
         self.assertEqual(rc, 0)
         self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])
-        self.assertEqual(len(http.calls), distinct_points(MOUNTAINS, CATALOG))
+        self.assertEqual(len(http.calls), len(MOUNTAINS) + len(CATALOG))
         self.assertEqual({p["details"]["site_id"] for p in doc["proposals"]}, set(MOUNTAINS) | set(CATALOG))
 
     def test_sites_list_works_within_the_set(self):
