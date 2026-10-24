@@ -30,6 +30,11 @@ freshness:
   fresh_max_days: {value: 3, source: "指示書(段階15): 3 日以内は『新しい』", provisional: true}
   somewhat_old_max_days: {value: 7, source: "指示書(段階15): 7 日以内は『やや古い』、それより古いものは『古い。参考程度』", provisional: true}
   labels: {fresh: 新しい, somewhat_old: やや古い, old: 古い。参考程度, unknown: 更新日不明, year_unknown: 新しさ不明}
+  # 年のない「M/D現在」の年の補い方(段階17 の見直し、2026-10-24 ユーザーの判断): 同じ地点に年つきの最終更新日があるときは、
+  # 「現在」の日付が更新日以前で、この日数以内に収まる年を選ぶ(記録の印は observed_year_inferred: from_same_item_update_date)。
+  # 年つきの日付がないもの(箱根など)は補わず「新しさ不明」のまま
+  observed_year_from_update_max_days: {value: 60, source: "ユーザーの判断(段階17 の見直し、2026-10-24)", provisional: true}
+  observed_year_from_update_mark: from_same_item_update_date
   # 年のない更新日(台帳の notation.year_shown: false。読んだ人が年を補ったもの)は日数で分けず year_unknown にする
   #   (ユーザーの見直し 2026-10-23: 箱根町観光協会。前年の日付かもしれないので、新しい・やや古いと判定しない)
 
@@ -42,6 +47,43 @@ recommend:
   top_min: {value: 3, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
   top_max: {value: 5, source: "指示書(段階15): 上位 3〜5 か所", provisional: true}
 
+# 答えの形(段階17 フェーズ1。ikimonobiyori/answer.py が答えの下書きを組み立てるときに使う)。
+# 結論(今回のおすすめ)を先に、根拠 → 注意 → 公式の現況を読めていない名所 の順。同じ名所は 1 か所にだけ出す。日付は地点ごとに 1 つ
+answer:
+  source: "指示書(段階17 フェーズ1、2026-10-24 ユーザー承認)"
+  # 答えの本文に出してはいけない内部用語(指示書のとおり。URL の中は数えない)
+  forbidden_terms: [reader, code, record, 規則, access_notes, v0, 台帳, approved, pending, provisional, status_log, read_plan, out_of_season]
+  headings: {recommend: 今回のおすすめ, evidence: 根拠, notes: 注意, unread: 公式の現況を読めていない名所}
+  # おすすめの一言の理由。{stage} は段階の呼び方、{forecast} は公式の見頃予測の原文
+  reasons:
+    in_scope: "公式で「{stage}」"
+    forecast: "公式の見頃予測「{forecast}」が対象の日にかかる"
+    latest: "公式の最新の記載"
+  none_found: "公式の情報で、対象の日におすすめできる名所は見つかりませんでした。"
+  # おすすめの見出し(段階17 の見直し、2026-10-24 ユーザー承認)。始まり・終わりも含めるときは段階ごと、対象の日が先のときは見頃予測の見出しを足す
+  stage_headings: {default: 見ごろ〜最盛, early: 始まり(早めに), late: 終わりかけ, ahead: 対象の日に公式の見頃予測の時期}
+  ahead_min_days: {value: 7, source: "ユーザーの指示(段階17 の見直し、2026-10-24):『来週末など対象の日が先のとき』。対象の最初の日が読んだ日から 7 日以上先", provisional: true}
+  # 状態が書かれていない発信(谷川岳など)・参考リンク(段階17 の見直し)
+  no_state: "公式ページに今の状態の記載がありません"
+  reference_link: "参考(公式ページ)"
+  unread_no_url: "公式の現況のページがまだありません"
+  human_url: "公式ページ(ご自身で開いてください)"
+  typical_window: "例年 {start}〜{end}"
+  # 年のない日付(箱根など)を「○/○時点」と書くときに添える
+  year_unknown_suffix: "(年の記載なし)"
+  stale_display: "表示が昨シーズンのままの可能性があります。おすすめに使っていません"
+  # 干潟の名所(名所カタログの related_urls に tide_table)を答えに出すときに添える(段階17 フェーズ3。潮位表は読まない)
+  tide_note: "潮の時刻は公式表で確かめてください(気象庁 潮位表)"
+  # 季節の前の名所(候補の upcoming_windows): 例年の時期の始まりを添える(段階16 C)
+  upcoming: "例年の時期はこれから({month}月{day}日ごろから)"
+  upcoming_within_days: {value: 30, source: "仮置き(段階17 フェーズ7)。来年の時期まで並べないため、対象の日から 30 日以内に始まる名所だけ添える", provisional: true}
+  # 要約の道具で読んだ記録を使ったとき(段階17 修正①)・読んだ事実を記録できなかったとき(修正④)に出す 1 行
+  simple_read_note: "今回は簡易な読み取りです。表記のぶれがありえます"
+  record_failed_note: "読んだ結果を記録できませんでした"
+  conflict: "読み方によって状態が食い違っています。公式ページをご自身でご確認ください"
+  # 気温からの推定(v0 の出力)を答えに書くときの呼び方(内部の呼び名 v0 を出さない)
+  aux_estimate_label: "気温からの推定(未検証。答え合わせで不合格)"
+
 # 補助の推定: 現況がない名所だけに、v0 の気温判定(biyori-proposal/1 の出力)を添えるときの書き方(段階15 決定 D-06)
 aux_estimate:
   label: "推定(未検証・段階14で不合格)"
@@ -53,7 +95,13 @@ record:
   # 記録に入れてよい項目(これ以外は拒否する。本文の写しを入れる欄を作らない)
   fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url,
            method, official_forecast, event_start, event_end, erroneous, erroneous_reason, corrected_on,
-           unmarked_on, unmarked_reason, user_checked_on, method_note]
+           unmarked_on, unmarked_reason, user_checked_on, method_note,
+           official_observed, observed_year_inferred, freshness_basis, read_by]
+  # 新しさの基準(段階17 修正⑤): ①ページが示す現地の状態の日付(「10/22現在」など。official_observed)、②なければ最終更新日(official_updated)。
+  # どちらを使ったかを freshness_basis に残す。日付が 1 つだけの情報源は、その日付の種類を台帳の notation.date_basis に書く(既定は updated_date)
+  freshness_bases: [observed_date, updated_date]
+  # 読み方(method)→ read_by(段階17 修正④)。summary = 要約の道具で読んだ(答えに「簡易な読み取り」と書く)
+  read_by: {agent_summary: summary, assistant_webfetch: summary, code: code, user_verified: user}
   # 読み方(記録の method)。agent_summary = エージェントが要約の道具(WebFetch など)で読んだ(段階15。method がない記録もこれ)、
   # code = 決まった形を読むコードで読んだ(段階16 A-4。日光・箱根だけ)、user_verified = ユーザーが原文を確かめた(段階16 A-1)
   # assistant_webfetch = 別の会話のアシスタント(Claude)が WebFetch で読んだもの。古いページ(キャッシュ)の可能性があり、ユーザーの確認として扱わない
@@ -76,6 +124,36 @@ record:
 reuse:
   same_day_only: true
   source: "指示書(段階16 A-2)"
+
+# 質問の話題 → 答える対象(段階17 修正⑦)。「野鳥全般」の質問は、通年の探鳥地(birds)と冬鳥の飛来地(wintering_birds)の両方で答える
+topics:
+  source: "指示書(段階17 フェーズ3・4、2026-10-24 ユーザー承認)"
+  items:
+    野鳥: [birds, wintering_birds]
+    鳥: [birds, wintering_birds]
+    探鳥: [birds, wintering_birds]
+    白鳥: [wintering_birds]
+    冬鳥: [wintering_birds]
+    紅葉: [autumn_leaves]
+    花: [flowers]
+    お花: [flowers]
+
+# 未実装の対象を聞かれたとき(段階17 修正⑩)。関係のない実装済みの対象を並べず、答えられない理由と、足すとどうなるかを 1〜2 文で。
+# 近い対象(related)が答えられる対象なら、それだけを示す
+unimplemented:
+  source: "指示書(段階17 フェーズ3 の 5)"
+  text: "{name}は、まだお答えできません(公式の情報源と名所の一覧をまだ作っていないため)。足すと、現地の公式な発信(公園・自治体などの現況のページ)を読んで、今の状態と場所をお答えできるようになります。"
+  related_text: "近い対象の「{related}」ならお答えできます。"
+  related: {cherry_blossom: flowers, higanbana: flowers, sunflower: flowers}
+
+# データ源の利用条件の確認の状態(段階17 修正⑦の 4)。答えを組み立てるときはここを読む(未確認と答えない)。正本の記録は docs/data-sources.md
+data_terms:
+  inaturalist: {status: user_confirmed, checked_on: "2026-10-21", ref: "docs/data-sources.md §3", note: "ユーザーが規約と API の推奨手順を確認し、集計値だけを使う使い方は適合と判断。Claude Code は原文を読めていない(HTTP 403)。実通信は計測フックの下で、その場の承認があるときだけ(CLAUDE.md 規則 6)"}
+
+# 和暦(段階17 修正⑥): 月ごとの記事の見出し(「令和8年10月の白鳥の渡来状況」)を作るため。令和元年 = 2019 年
+japanese_era:
+  name: 令和
+  first_year: {value: 2019, source: "元号を改める政令(平成31年政令第143号): 2019年5月1日から令和", provisional: false}
 
 # 公式の見頃予測の「上旬・中旬・下旬」→ 日の範囲(段階16 A-8)。下旬の終わりは月末
 # 出典: 気象庁 予報用語「上旬: 1日から10日まで、中旬: 11日から20日まで、下旬: 21日から月末まで」

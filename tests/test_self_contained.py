@@ -140,7 +140,7 @@ class Docs(unittest.TestCase):
     def test_license_is_mit_and_readme_states_the_terms(self):
         self.assertTrue((ROOT / "LICENSE").read_text(encoding="utf-8").startswith("MIT License"))
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        for needle in ("CC BY 4.0", "Open-Meteo", "iNaturalist", "まだ人の目で確認していません", "biyori-hub", "IKIMONOBIYORI_DATA_DIR"):
+        for needle in ("CC BY 4.0", "Open-Meteo", "iNaturalist", "ユーザー確認済み(2026-10-21、data-sources.md の記録)", "biyori-hub", "IKIMONOBIYORI_DATA_DIR"):   # 段階17 の見直し(2026-10-24、ユーザー承認)で文言を変えた
             self.assertIn(needle, readme)
 
     def test_no_real_inaturalist_response_in_the_repo(self):

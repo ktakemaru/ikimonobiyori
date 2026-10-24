@@ -58,11 +58,11 @@ sources:
     reader: code
     covers:
       - {site: kouyou-0018, label: "強羅(箱根美術館)"}
-      - {name: 仙石原 長安寺, label: "仙石原(長安寺)"}
+      - {site: kouyou-0034, label: "仙石原(長安寺)"}
       - {name: 宮ノ下, label: "宮ノ下"}
       - {name: 箱根湯本, label: "湯本"}
-      - {name: 湖尻, label: "湖尻"}
-      - {name: 恩賜箱根公園, label: "恩賜箱根公園"}
+      - {site: kouyou-0033, label: "湖尻"}
+      - {site: kouyou-0035, label: "恩賜箱根公園"}
       - {name: 元箱根, label: "元箱根"}
       - {name: 旧街道 甘酒茶屋付近, label: "旧街道甘酒茶屋付近"}
     notation:
@@ -71,6 +71,7 @@ sources:
       icons: {icon_lev1: まだまだ, icon_lev2: 色づきはじめ, icon_lev4: また来年}
       updated: per_item
       year_shown: false
+      date_basis: observed_date      # 段階17 修正⑤: 箱根の日付は地点ごとの「M/D現在」(現地の状態の日付)
       note: "状態はアイコン(icon_lev1 まだまだ / icon_lev2 色づきはじめ / icon_lev4 また来年。指示書 段階16 A-3。lev3 などは確かめていないので足さない)と語、日付は「○/○現在」の形で年がない。ページの『見どころ』の紹介文(例:「色づき始めた」)は今の状態ではない(段階16 A-1 の湖尻の読み違いの原因)。強羅の『また来年(10/06現在)』は例年の見頃(11月中旬〜下旬)と合わず、昨シーズンの表示の残りの可能性(段階16 A-3)。「また来年」は季節の終わりの意味と読んだ(推測。凡例の説明はない)"
     readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "robots.txt は User-agent: * だけ(拒否なし)。地点ごとの日付のうち最新は 10/22(年は今年と読んだ)"}
     terms: {status: no_prohibition_found, url: "https://www.hakone.or.jp/6338", note: "サイト利用規約: 商業目的の利用(複製・販売など)と、営利目的の情報の転用を禁じる(第11条・第13条)。引用・要約・自動取得の規定はない。イキモノビヨリの使い方(個人・非商用、事実だけ・出典つき)は禁止に当たらないと判断。商用にするなら見直す"}

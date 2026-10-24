@@ -1,0 +1,91 @@
+# 野鳥(探鳥地)の名所カタログ(ikimono-site-catalog/1)。段階17 フェーズ3(2026-10-24)。
+# 公式の観察情報(管理者・自治体の発信)がある探鳥地だけを載せる。公式ページの事実を Claude Code が自分の言葉で短くまとめたもの。
+# 代表点の座標は Claude Code が公式ページの所在地から推定した値(位置の下限 area_10km = 小数 1 桁。プロファイルの location_precision と同じ)。標高は不明(null)。
+# 通年の対象なので typical_window は書かない(季節の入れ替わりは公式の観察情報で答える)。
+# status_sources は台帳 data/sources/birds.yaml の id。干潟の名所には気象庁の潮位表への人が開く URL(related_urls。読まない)。
+# 承認: 段階16 と同じ条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)を満たすものを Claude Code が仮承認(docs/stage17-review.md)。
+schema: ikimono-site-catalog/1
+subject: birds
+entries:
+  - id: yacho-0001
+    name: 東京港野鳥公園
+    subjects: [birds]
+    timing_type: frequency
+    kind: area
+    point: {lat: 35.6, lon: 139.8, elevation_m: null}
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 東京都, area: 東京湾岸, terrain: [wetland, coast], source: "Claude Code が付けた(推定。干潟・淡水池・ヨシ原。段階17)"}
+    status_sources: [tokyo-port-birdpark-today]
+    related_urls:
+      - {kind: tide_table, url: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/index.php", note: "気象庁 潮位表。地点は『東京』を選ぶ(前浜干潟の観察は潮の時刻で変わる)"}
+    sources:
+      - {url: "https://wbsj-wildbirdpark.blog.jp/archives/cat_773662.html", title: "東京港野鳥公園 レンジャーブログ 今日の野鳥公園", checked_on: "2026-10-24"}
+    note: "管理は日本野鳥の会。レンジャーがその日に確認した鳥の種数と種名を『YYYY年M月D日の野鳥公園』の記事で発信(2026-10-24 の確認で 10/20 36種・10/21 29種・10/22 30種)。月曜休園"
+  - id: yacho-0002
+    name: 葛西臨海公園 鳥類園
+    subjects: [birds]
+    timing_type: frequency
+    kind: area
+    point: {lat: 35.6, lon: 139.9, elevation_m: null}
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 東京都, area: 東京湾岸, terrain: [wetland, coast], access: [walk_from_station], source: "Claude Code が付けた(推定。鳥類園の池と、隣の葛西海浜公園の干潟。段階17)"}
+    status_sources: [tokyo-park-kasai-news]
+    related_urls:
+      - {kind: tide_table, url: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/index.php", note: "気象庁 潮位表。地点は『東京』を選ぶ(隣の葛西海浜公園の干潟)"}
+    sources:
+      - {url: "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html", title: "葛西臨海公園 お知らせ(東京都公園協会)", checked_on: "2026-10-24"}
+    note: "お知らせに鳥類園のニュースレター・ガイドツアーの記事が不定期に出る(2026-10-24 の確認で、鳥類園の記事の最新は 10/15)。日々の確認種の発信はない"
+  - id: yacho-0003
+    name: 谷津干潟
+    subjects: [birds]
+    timing_type: frequency
+    kind: area
+    point: {lat: 35.7, lon: 140.0, elevation_m: null}
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 千葉県, area: 東京湾岸, terrain: [wetland, coast], access: [walk_from_station], source: "Claude Code が付けた(推定。ラムサール条約の登録湿地の干潟。段階17)"}
+    status_sources: [yatsu-higata-center]
+    related_urls:
+      - {kind: tide_table, url: "https://www.data.jma.go.jp/kaiyou/db/tide/suisan/index.php", note: "気象庁 潮位表。地点は『千葉』または『千葉港』を選ぶ(干潟の鳥は潮の時刻で大きく変わる)"}
+    sources:
+      - {url: "https://www.seibu-la.co.jp/yatsuhigata/", title: "谷津干潟自然観察センター", checked_on: "2026-10-24"}
+    note: "観察センターの公式サイトは 2026-10-24 の確認で HTTP 503(読めなかった)。名所としては公式の施設があるので載せ、情報源は承認待ち(人が開く URL)"
+  - id: yacho-0004
+    name: 横浜自然観察の森
+    subjects: [birds]
+    timing_type: frequency
+    kind: area
+    point: {lat: 35.3, lon: 139.6, elevation_m: null}
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 横浜, terrain: [mountain, wetland], source: "Claude Code が付けた(推定。雑木林・湿地・池。段階17)"}
+    status_sources: [wbsj-yokohama-blog]
+    sources:
+      - {url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/midori_up/1mori/kansatsu/kansatsunomori.html", title: "横浜市 横浜自然観察の森", checked_on: "2026-10-24"}
+      - {url: "https://wbsj-yokohama.blog.jp", title: "横浜自然観察の森 自然情報ブログ(日本野鳥の会)", checked_on: "2026-10-24"}
+    note: "指定管理者は日本野鳥の会。自然情報ブログは鳥以外(昆虫・植物)の記事も多い(2026-10-24 の確認で最新 3 件のうち鳥の記事は 10/12 の 1 件)。月曜休館"
+  - id: yacho-0005
+    name: 手賀沼(我孫子市鳥の博物館の周辺)
+    subjects: [birds]
+    timing_type: frequency
+    kind: area
+    point: {lat: 35.9, lon: 140.0, elevation_m: null}
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 千葉県, area: 手賀沼, terrain: [lake, wetland], source: "Claude Code が付けた(推定。段階17)"}
+    status_sources: [abiko-bird-museum-toridayori]
+    sources:
+      - {url: "https://www.city.abiko.chiba.jp/bird-mus/info2/shupambutsu/toridayori.html", title: "我孫子市鳥の博物館 あびこ鳥だより", checked_on: "2026-10-24"}
+    note: "博物館の学芸員が毎月手賀沼の鳥類調査をし、広報誌『あびこ鳥だより』で公表している(検索の要約。PDF の中身は確かめていない)。日々の観察情報の発信はない。月曜休館"

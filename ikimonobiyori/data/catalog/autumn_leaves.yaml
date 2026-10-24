@@ -139,7 +139,7 @@ entries:
     typical_window: {start: "10-11", end: "11-10", source_url: "https://www.go-nagano.net/nature-and-outdoors/id16956", note: "長野県観光機構: 例年10月中旬〜11月上旬"}
     access_notes: "紅葉期はとても混む。池の近くに駐車場がなく、公共交通を勧めている(軽井沢駅北口の町営駐車場など)。紅葉期に周辺道路の一方通行の規制がある"
     status: approved
-    tags: {prefecture: 長野県, area: 軽井沢, terrain: [lake, highland], access: [walk_from_station], traffic_note: "紅葉期はとても混む。池の近くに駐車場がない。周辺道路に一方通行の規制(カタログの access_notes)", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    tags: {prefecture: 長野県, area: 軽井沢, terrain: [lake, highland], access: [walk_from_station], traffic_note: "紅葉期はとても混む。池の近くに駐車場がない。周辺道路に一方通行の規制", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.go-nagano.net/nature-and-outdoors/id16956", title: "長野県観光機構 長野の紅葉名所", checked_on: "2026-10-22"}
@@ -171,7 +171,7 @@ entries:
     typical_window: {start: "10-21", end: "11-20", source_url: "https://fujisan.ne.jp/sightseeing/4218/", note: "富士河口湖町観光連盟: 例年10月下旬〜11月中旬"}
     access_notes: "専用の駐車場はなく、近くの駐車場を使う。河口湖駅から周遊バスで久保田一竹美術館下車、徒歩5分。秋の夜は冷える"
     status: approved
-    tags: {prefecture: 山梨県, area: 富士五湖, terrain: [lake], access: [bus], traffic_note: "専用の駐車場がない(カタログの access_notes)", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    tags: {prefecture: 山梨県, area: 富士五湖, terrain: [lake], access: [bus], traffic_note: "専用の駐車場がない", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
     status_sources: [yamanashi-kankou-koyo, fujikawaguchiko-koyo-matsuri]
     approved_at: "2026-10-22"
     sources:
@@ -335,7 +335,7 @@ entries:
     official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
     access_notes: "いろは坂は紅葉期に渋滞しやすく、普段約20分の上りが2〜3時間、連休に最大6時間かかった例がある。中禅寺湖の駐車場は奥日光県営駐車場(栃木県のページ)"
     status: approved
-    tags: {prefecture: 栃木県, area: 日光, terrain: [lake, mountain], access: [bus], traffic_note: "いろは坂は紅葉期に渋滞しやすい(普段約20分の上りが2〜3時間の例。カタログの access_notes)", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    tags: {prefecture: 栃木県, area: 日光, terrain: [lake, mountain], access: [bus], traffic_note: "いろは坂は紅葉期に渋滞しやすい(普段約20分の上りが2〜3時間の例)", source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
     status_sources: [nikko-kankou-autumn-leaves, nikko-kankou-congestion]
     approved_at: "2026-10-22"
     sources:
@@ -483,3 +483,53 @@ entries:
     sources:
       - {url: "https://www.tokyo-park.or.jp/event_search/event_57.html", title: "東京都公園協会 小石川後楽園「深山紅葉を楽しむ」", checked_on: "2026-10-23"}
     note: "段階16 A-6(都内)。都立庭園。催し「深山紅葉を楽しむ」は 2026-11-21〜12-06(イロハモミジの見ごろに合わせた催し)。現況のページは、東京都公園協会の「紅葉を見に行こう!」(2025 年は 11 月 10 日から提供)が今年はまだ見つからない。代表点は Claude Code の推定。例年の時期は書かない(公式の数値の記載がない)"
+  # 段階17 フェーズ5(2026-10-24): 箱根町観光協会の紅葉情報の地点を名所にした(段階16 D-67 の課題。湖尻は段階17 の見直し〔2026-10-24、ユーザー承認〕で足した。D-43)。例年の時期は公式ページに記載がなく書かない。
+  # 代表点の座標は Claude Code の推定(地名から。小数 2 桁)。標高は不明
+  - id: kouyou-0033
+    name: 箱根 湖尻
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.24, lon: 139.00, elevation_m: null}
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus], source: "Claude Code が付けた(推定。芦ノ湖の北岸。段階17)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "箱根町観光協会の紅葉情報の地点『湖尻』。例年の見頃の記載はない(2026-10-24 の確認)"
+  - id: kouyou-0034
+    name: 箱根 仙石原(長安寺)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.27, lon: 139.03, elevation_m: null}
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [temple_shrine, highland], access: [bus], source: "Claude Code が付けた(推定。段階17)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "箱根町観光協会の紅葉情報の地点『仙石原(長安寺)』。例年の見頃の記載はない(2026-10-24 の確認)。段階14b では仙石原を除いた(すすきの名所と重なるため。当時の指示書)が、段階16 D-67 の課題として足した"
+  - id: kouyou-0035
+    name: 恩賜箱根公園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.20, lon: 139.03, elevation_m: null}
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [garden, lake], access: [bus], source: "Claude Code が付けた(推定。芦ノ湖の南岸。段階17)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "箱根町観光協会の紅葉情報の地点『恩賜箱根公園』。例年の見頃の記載はない(2026-10-24 の確認)"

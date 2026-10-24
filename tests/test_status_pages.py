@@ -206,24 +206,26 @@ class ReadCommand(unittest.TestCase):
         self.assertEqual(res["recorded"]["written"], 4)
         with mock.patch.dict(os.environ, {paths.ENV_DATA_DIR: str(self.d)}):
             recs = sources.read_records("autumn_leaves")
-        kojiri = next(r for r in recs if r.get("name") == "湖尻")
+        kojiri = next(r for r in recs if r.get("site") == "kouyou-0033")                        # 湖尻は段階17 の見直しで名所カタログに入った
         self.assertEqual((kojiri["official_state"], kojiri["stage"], kojiri["official_updated"], kojiri["method"], kojiri["updated_year_inferred"]),
                          ("まだまだ", "not_yet", "2026-10-15", "code", True))
+        moto = next(r for r in recs if r.get("name") == "元箱根")                                # カタログ外の地点の例(段階17 の見直しで湖尻から差し替え)
+        self.assertEqual((moto["official_state"], moto["stage"], moto["method"]), ("まだまだ", "not_yet", "code"))
         raw = (self.d / "status_log" / "autumn_leaves.jsonl").read_text(encoding="utf-8")
         self.assertNotIn("見本の紹介文", raw)                                                    # 本文は残さない
         self.assertNotIn("<", raw)
 
     def test_user_verified_and_code_disagreeing_is_a_conflict(self):
         """ユーザーが確かめた事実とコードの読み取りが食い違えば、どちらも消さず、答えの材料で conflict として示す(推測で選ばない)。"""
-        mk = lambda **kw: sources.make_record(registry=REG, policy=POLICY, source_id="hakone-kankou-koyo", name="湖尻", label="湖尻",
-                                              year_inferred=True, **kw)
+        mk = lambda **kw: sources.make_record(registry=REG, policy=POLICY, source_id="hakone-kankou-koyo", name="宮ノ下", label="宮ノ下",
+                                              year_inferred=True, **kw)                          # カタログ外の地点の例(段階17 の見直しで湖尻から差し替え)
         recs = [mk(read_at="2026-10-23T07:10:00+09:00", state="まだまだ", updated="2026-10-15", method="user_verified"),
                 mk(read_at="2026-10-23T07:17:00+09:00", state="色づきはじめ", updated="2026-10-22", method="code"),
-                sources.make_record(registry=REG, policy=POLICY, source_id="hakone-kankou-koyo", name="宮ノ下", label="宮ノ下", year_inferred=True,
+                sources.make_record(registry=REG, policy=POLICY, source_id="hakone-kankou-koyo", name="元箱根", label="元箱根", year_inferred=True,
                                     read_at="2026-10-23T07:17:00+09:00", state="まだまだ", updated="2026-10-16", method="code")]
         got = sources.summarize(recs, registry=REG, catalog_doc=sources.catalog_mod.load_catalog("autumn_leaves"), policy=POLICY,
                                 on=date(2026, 10, 23), dates=[date(2026, 10, 24)])
-        self.assertEqual([x["name"] for x in got["conflicts"]], ["湖尻"])
+        self.assertEqual([x["name"] for x in got["conflicts"]], ["宮ノ下"])
         self.assertEqual([(c["method"], c["official_state"]) for c in got["conflicts"][0]["conflict"]],
                          [("user_verified", "まだまだ"), ("code", "色づきはじめ")])
         agree = [recs[0], {**recs[1], "official_state": "まだまだ", "stage": "not_yet", "official_updated": "2026-10-15"}]

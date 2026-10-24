@@ -1,0 +1,85 @@
+# 花の名所カタログ(ikimono-site-catalog/1)。段階17 フェーズ4(2026-10-24)。
+# 公園・植物園など、公式の花だより・開花情報がある名所だけを載せる。今の季節(10月下旬〜冬)の花を優先した。
+# 花の種類は tags.flower_kinds(種類ごとにプロファイルを分けない。指示書)。
+# 代表点の座標は Claude Code が公式ページの所在地(市区町村)から推定した値(小数 2 桁)。標高は不明(null)。
+# typical_window は、名所の公式ページで例年の時期を 1 つに決められなかったので書かない(花の種類ごとに違う。note に書く)。
+# status_sources は台帳 data/sources/flowers.yaml の id。
+# 承認: 段階16 と同じ条件を満たすものを Claude Code が仮承認(docs/stage17-review.md)。
+schema: ikimono-site-catalog/1
+subject: flowers
+entries:
+  - id: hana-0001
+    name: 国営ひたち海浜公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    point: {lat: 36.40, lon: 140.59, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 茨城県, area: ひたちなか, terrain: [garden, coast], flower_kinds: [コキア, キバナコスモス, バラ], source: "Claude Code が付けた(推定。花の種類は公式の『現在の花情報』の 2026-10-24 の掲載から)"}
+    status_sources: [hitachi-flower-info]
+    sources:
+      - {url: "https://www.hitachikaihin.jp/flower-plant/flower-info/", title: "国営ひたち海浜公園 現在の花情報", checked_on: "2026-10-24"}
+    note: "公式の花のカレンダーでは、コスモスは 10 月、コキア(紅葉)は 10 月中旬(トップページの一覧。2026-10-24 の確認)。花ごとの状態は『撮影日:M月D日』つき(年はない)"
+  - id: hana-0002
+    name: 旧古河庭園
+    subjects: [flowers]
+    timing_type: managed
+    kind: point
+    point: {lat: 35.74, lon: 139.75, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 東京都, area: 都心, terrain: [garden, urban], access: [walk_from_station], flower_kinds: [秋バラ], source: "Claude Code が付けた(推定。段階17)"}
+    status_sources: [tokyo-park-kyufurukawa-news]
+    sources:
+      - {url: "https://www.tokyo-park.or.jp/park/kyu-furukawa/news/index.html", title: "旧古河庭園 お知らせ(東京都公園協会)", checked_on: "2026-10-24"}
+    note: "お知らせに『秋バラの開花状況について(M月D日現在)』の記事が出る(2026-10-24 の確認で 10/8・10/14・10/19)。秋のバラフェスティバルは 11/6(金)まで(10/19 の記事)"
+  - id: hana-0003
+    name: 神代植物公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    point: {lat: 35.67, lon: 139.55, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], flower_kinds: [秋バラ, 菊], source: "Claude Code が付けた(推定。段階17)"}
+    status_sources: [tokyo-park-jindai-news]
+    sources:
+      - {url: "https://www.tokyo-park.or.jp/park/jindai/news/index.html", title: "神代植物公園 お知らせ(東京都公園協会)", checked_on: "2026-10-24"}
+    note: "お知らせに『秋のバラフェスタ 10/6(火)〜開催』(2026/09/09)、『神代花だより10・11・12月号』(2026/09/23)、菊花大会の案内。開花状況の記事は 2026-10-24 の確認では見つからなかった"
+  - id: hana-0004
+    name: 国営昭和記念公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    point: {lat: 35.71, lon: 139.40, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], access: [walk_from_station], flower_kinds: [コスモス], source: "Claude Code が付けた(推定。コスモスの丘。段階17)"}
+    status_sources: [showakinen-flower-information-flowers]
+    sources:
+      - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花情報", checked_on: "2026-10-24"}
+    note: "花情報のページは段階16 では応答がなく、2026-10-24 の再確認でも HTTP 504 で読めなかった。名所として載せ、情報源は承認待ち(人が開く URL)"
+  - id: hana-0005
+    name: 京成バラ園
+    subjects: [flowers]
+    timing_type: managed
+    kind: point
+    point: {lat: 35.73, lon: 140.08, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 千葉県, area: 八千代, terrain: [garden], flower_kinds: [秋バラ], source: "Claude Code が付けた(推定。段階17)"}
+    status_sources: [keisei-rose-garden]
+    sources:
+      - {url: "https://www.keiseirose.co.jp/garden/", title: "京成バラ園", checked_on: "2026-10-24"}
+    note: "トップに『現在の開花状況』と『秋バラ見頃予報』(グラフの画像)。運営は京成バラ園芸株式会社(民間の施設)"

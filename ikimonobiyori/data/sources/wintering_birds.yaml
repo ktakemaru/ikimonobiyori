@@ -14,6 +14,8 @@ sources:
     kind: status_page
     covers:
       - {site: hakucho-0001, label: "白鳥の渡来状況"}
+    # 段階17 修正⑥: url は月ごとの記事の一覧。今月の記事(「令和8年10月の白鳥の渡来状況」)をたどって羽数を読む(sources follow)
+    follow: {kind: monthly_article, link_text: "令和{era_year}年{month}月の白鳥の渡来状況", note: "2026-10-24 に一覧から令和8年10月の記事(16592.html)をたどれることを確かめた。記事の見出し『M月D日(曜日) N羽』の日付が現地の状態の日付(記録の observed)"}
     notation:
       style: none
       map: {}

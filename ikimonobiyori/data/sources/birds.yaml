@@ -1,0 +1,83 @@
+# 野鳥(探鳥地)の観察情報を発信する公式ページの台帳(ikimono-status-sources/1)。段階17 フェーズ3(2026-10-24)。
+# 2026-10-24 に Claude Code が各ページを 1 回読んで、readable・notation・terms を確かめた(WebFetch。原文との照合は人の目でしていない)。
+# 段階(少ない / 増えている / 多い / 減っている。プロファイル birds の stages)は、公式の語が notation.map にあるときだけ。
+# 確認種数・羽数から段階を推測しない(閾値の出典がない)。種数・羽数は state に原文のまま残す(例: 「30種」)。
+# 承認: 段階16 と同じ条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)をすべて満たすものだけ Claude Code が仮承認。満たさないものは pending と理由。
+schema: ikimono-status-sources/1
+subject: birds
+sources:
+  - id: tokyo-port-birdpark-today
+    publisher: 公益財団法人日本野鳥の会(東京港野鳥公園の管理者)
+    publisher_kind: park_manager
+    url: "https://wbsj-wildbirdpark.blog.jp/archives/cat_773662.html"
+    kind: status_page
+    covers:
+      - {site: yacho-0001, label: "今日の野鳥公園"}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: "レンジャーブログの分類『今日の野鳥公園』。記事の題名『YYYY年M月D日の野鳥公園』の日付が観察の日(現地の状態の日付)、記事に確認種数(『N種』)と種名。2026-10-24 の確認で最新は 10/22 30種。種数は state に原文のまま(例: 30種)。段階の語はない"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-22", note: "robots.txt は 404(なし)。読む道具は、ページ内に指示文はないと報告"}
+    terms: {status: no_prohibition_found, url: "https://www.wbsj.org/about-us/link/", note: "日本野鳥の会のリンクのページ: リンクは原則自由(トップページへ)。転載・引用・要約・自動取得の規定はなく、禁止もない(読む道具の要約)。サイトポリシー・著作権のページは見つからなかった"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす。迷った点: 発信の場所が日本野鳥の会の本サイトではなくブログ(blog.jp)。記事は管理者のレンジャーのもの"}
+
+  - id: tokyo-park-kasai-news
+    publisher: 東京都公園協会(葛西臨海公園サービスセンター)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html"
+    kind: reference_link      # 段階17 の見直し(2026-10-24、ユーザー承認): 取り消さずに参考リンクに(今の状態がほとんど載らない。現況の情報源に数えない)
+    covers:
+      - {site: yacho-0002, label: "鳥類園"}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      note: "お知らせの一覧に、鳥類園のニュースレター(例: 『鳥類園ニュースレター8/20号 カイツブリとアオサギ』)・ガイドツアーの記事が不定期に出る。2026-10-24 の確認で鳥類園の記事の最新は 2026/10/15(ガイドツアーのお知らせ)。日々の確認種の発信はない。状態の語はない"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-15", note: "同じサイト(tokyo-park.or.jp)の robots.txt は段階15・16 の確認で 404(なし)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "段階15 の六義園と同じサイトポリシー(情報・画像の二次利用は禁止、リンクは原則自由)。事実を出典つきで短く伝えるのは二次利用に当たらない、というユーザーの判断(2026-10-23)に合わせた"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす。迷った点: 観察情報の発信は不定期のニュースレターだけで、読んでも今の様子が分からないことが多い"}
+
+  - id: yatsu-higata-center
+    publisher: 谷津干潟自然観察センター(習志野市の施設)
+    publisher_kind: park_manager
+    url: "https://www.seibu-la.co.jp/yatsuhigata/"
+    kind: status_page
+    covers:
+      - {site: yacho-0003, label: "谷津干潟"}
+    notation: {style: none, map: {}, updated: none, note: "2026-10-24 は HTTP 503 で読めず、観察情報の載り方は未確認"}
+    readable: {status: unconfirmed, checked_on: "2026-10-24", robots: unknown, note: "HTTP 503 Service Unavailable(段階16 の長瀞と同じく、サーバーの障害の可能性)"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "読めなかった(HTTP 503)。利用条件も未確認。人が開く URL として扱う。次に読めたら条件を確かめる"}
+
+  - id: wbsj-yokohama-blog
+    publisher: 公益財団法人日本野鳥の会(横浜自然観察の森の指定管理者)
+    publisher_kind: park_manager
+    url: "https://wbsj-yokohama.blog.jp"
+    kind: reference_link      # 段階17 の見直し(2026-10-24、ユーザー承認): 取り消さずに参考リンクに(今の状態がほとんど載らない。現況の情報源に数えない)
+    covers:
+      - {site: yacho-0004, label: "自然情報ブログ"}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      note: "自然情報ブログ。記事ごとに投稿日(YYYY年MM月DD日)。鳥以外(昆虫・植物)の記事も多く、2026-10-24 の確認で最新 3 件のうち鳥の記事は 2026-10-12 の 1 件。状態の語・確認種数の決まった書き方はない"
+    readable: {status: ok, checked_on: "2026-10-24", robots: no_file, observed_latest_update: "2026-10-24", note: "robots.txt は 404(なし)。横浜市のページ(横浜自然観察の森)からリンクされた公式のサイト sancyokohama.sakura.ne.jp の『自然情報ブログ』"}
+    terms: {status: no_prohibition_found, url: "https://www.wbsj.org/about-us/link/", note: "日本野鳥の会のリンクのページに、転載・引用・要約・自動取得を禁じる文はない。施設のサイトに利用規約のページは見つからなかった(© 日本野鳥の会)"}
+    approval: {status: approved, approved_by: claude_code_provisional, approved_on: "2026-10-24", reason: "条件をすべて満たす。迷った点: 鳥の記事が少なく、今の鳥の様子が分からないことが多い"}
+
+  - id: abiko-bird-museum-toridayori
+    publisher: 我孫子市(鳥の博物館)
+    publisher_kind: municipality
+    url: "https://www.city.abiko.chiba.jp/bird-mus/info2/shupambutsu/toridayori.html"
+    kind: status_page
+    covers:
+      - {site: yacho-0005, label: "あびこ鳥だより"}
+    notation: {style: none, map: {}, updated: none, note: "広報誌『あびこ鳥だより』の PDF の一覧。最新は 2026No.1(vol.69)。ページに発行日・更新日の表示はない。手賀沼の鳥類調査の結果が載るかは PDF の中を見ないと分からない"}
+    readable: {status: partial, checked_on: "2026-10-24", robots: unknown, note: "一覧は読めたが、状態は PDF の中で、日付もない"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う"}
