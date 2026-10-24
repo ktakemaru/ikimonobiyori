@@ -483,8 +483,24 @@ entries:
     sources:
       - {url: "https://www.tokyo-park.or.jp/event_search/event_57.html", title: "東京都公園協会 小石川後楽園「深山紅葉を楽しむ」", checked_on: "2026-10-23"}
     note: "段階16 A-6(都内)。都立庭園。催し「深山紅葉を楽しむ」は 2026-11-21〜12-06(イロハモミジの見ごろに合わせた催し)。現況のページは、東京都公園協会の「紅葉を見に行こう!」(2025 年は 11 月 10 日から提供)が今年はまだ見つからない。代表点は Claude Code の推定。例年の時期は書かない(公式の数値の記載がない)"
-  # 段階17 フェーズ5(2026-10-24): 箱根町観光協会の紅葉情報の地点を名所にした(段階16 D-67 の課題。湖尻はカタログ外のまま。D-39)。例年の時期は公式ページに記載がなく書かない。
+  # 段階17 フェーズ5(2026-10-24): 箱根町観光協会の紅葉情報の地点を名所にした(段階16 D-67 の課題。湖尻は段階17 の見直し〔2026-10-24、ユーザー承認〕で足した。D-43)。例年の時期は公式ページに記載がなく書かない。
   # 代表点の座標は Claude Code の推定(地名から。小数 2 桁)。標高は不明
+  - id: kouyou-0033
+    name: 箱根 湖尻
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.24, lon: 139.00, elevation_m: null}
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus], source: "Claude Code が付けた(推定。芦ノ湖の北岸。段階17)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "箱根町観光協会の紅葉情報の地点『湖尻』。例年の見頃の記載はない(2026-10-24 の確認)"
   - id: kouyou-0034
     name: 箱根 仙石原(長安寺)
     subjects: [autumn_leaves]

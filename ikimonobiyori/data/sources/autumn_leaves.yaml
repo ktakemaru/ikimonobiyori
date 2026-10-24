@@ -61,7 +61,7 @@ sources:
       - {site: kouyou-0034, label: "仙石原(長安寺)"}
       - {name: 宮ノ下, label: "宮ノ下"}
       - {name: 箱根湯本, label: "湯本"}
-      - {name: 湖尻, label: "湖尻"}   # 段階17: 名所カタログに入れず、カタログ外のまま(既存テストが湖尻をカタログ外の地点として使う。docs/stage17-decisions.md D-39)
+      - {site: kouyou-0033, label: "湖尻"}
       - {site: kouyou-0035, label: "恩賜箱根公園"}
       - {name: 元箱根, label: "元箱根"}
       - {name: 旧街道 甘酒茶屋付近, label: "旧街道甘酒茶屋付近"}

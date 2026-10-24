@@ -36,7 +36,7 @@
         "publisher": {"type": "string", "minLength": 1, "description": "発信者(観光協会・自治体・公園の管理者など)"},
         "publisher_kind": {"enum": ["tourism_association", "municipality", "prefecture_tourism", "park_manager", "temple_shrine", "facility_operator"], "description": "公式の発信者の種類。facility_operator はロープウェイ・ゴンドラ・山小屋などの名所の運営者(段階16 A-9)。まとめサイト・旅行予約・天気会社・個人は台帳に入れない"},
         "url": {"$ref": "#/$defs/url"},
-        "kind": {"enum": ["status_page", "forecast_page", "event_page", "access_page", "opendata"], "description": "status_page 現況 / forecast_page 見頃予測 / event_page まつり・ライトアップ / access_page 交通・混雑・通行止め / opendata"},
+        "kind": {"enum": ["status_page", "forecast_page", "event_page", "access_page", "opendata", "reference_link"], "description": "status_page 現況 / forecast_page 見頃予測 / event_page まつり・ライトアップ / access_page 交通・混雑・通行止め / opendata / reference_link 参考リンク(公式だが今の状態がほとんど載らない。読む予定に入れず、現況の情報源に数えない。答えでは参考として URL だけ示す。段階17 の見直し)"},
         "reader": {"enum": ["agent", "code"], "description": "読み方。agent(既定)= エージェントが要約の道具で読む / code = 決まった形を読むコード(fetch/status_pages.py。段階16 A-4。日光市観光協会・箱根町観光協会だけ)"},
         "covers": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cover"}},
         "flower_kinds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "description": "この情報源が伝える花の種類(段階17 フェーズ4。1 ページに複数の花がまとまる)"},

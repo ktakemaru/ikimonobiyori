@@ -80,7 +80,7 @@ def body_lines(text, heading):
         if ln.startswith("## "):
             on = ln == f"## {heading}"
             continue
-        if on and ln.strip():
+        if on and ln.strip() and not ln.startswith("#") and not re.fullmatch(r"\*\*[^*]+\*\*", ln):   # 小見出し(段階・対象)は数えない
             out.append(ln)
     return out
 
@@ -171,7 +171,7 @@ class AnswerFilters(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, True)
         reg = sources.load_registry("autumn_leaves")
         at = NOW.isoformat()
-        recs = [sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", name="湖尻", label="湖尻",
+        recs = [sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", name="宮ノ下", label="宮ノ下",
                                     state="色づきはじめ", updated="2026-10-22", year_inferred=True),
                 sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", site="kouyou-0034",
                                     label="仙石原(長安寺)", state="色づきはじめ", updated="2026-10-23", year_inferred=True),
@@ -181,7 +181,7 @@ class AnswerFilters(unittest.TestCase):
             sources.append_records(recs, registry=reg, policy=POLICY)
             hakone = sources.resolve_region("箱根", sources.load_regions())
             rows = sources.answer_parts(["autumn_leaves"], policy=POLICY, now=NOW, dates=DATES, region=hakone)[0]["summary"]["rows"]
-            self.assertEqual(sorted(r.get("site") or r.get("name") for r in rows), ["kouyou-0034", "湖尻"])   # 日光は出さない
+            self.assertEqual(sorted(r.get("site") or r.get("name") for r in rows), ["kouyou-0034", "宮ノ下"])   # 日光は出さない
             rows = sources.answer_parts(["autumn_leaves"], policy=POLICY, now=NOW, dates=DATES, region=hakone, terrain=["highland"])[0]["summary"]["rows"]
             self.assertEqual([r.get("site") or r.get("name") for r in rows], ["kouyou-0034"])   # カタログ外の地点は地形が分からないので外す
 
@@ -231,3 +231,59 @@ class AnswerCli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewOfStage17(unittest.TestCase):
+    """段階17 の見直し(2026-10-24、ユーザー承認): 段階ごとの見出し・先の週末の見頃予測・状態の記載がない発信・参考リンク。"""
+    def compose(self, recs, dates=DATES, **kw):
+        p = [{**parts()[0], "summary": sources.summarize(recs, registry=REG, catalog_doc=CAT, policy=POLICY, on=NOW.date(), dates=dates,
+                                                         early=kw.get("early", False))}]
+        return answer.compose(p, now=NOW, dates=dates, policy=POLICY, **kw)
+
+    def mk(self, **kw):
+        return sources.make_record(registry=REG, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", **kw)
+
+    def test_early_gives_stage_headings(self):
+        recs = [self.mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22"),
+                self.mk(site="kouyou-0002", label="湖畔", state="△", updated="2026-10-22")]
+        t = self.compose(recs, dates=[date(2026, 10, 25)], early=True)
+        sh = POLICY["answer"]["stage_headings"]
+        rec = re.split(r"\n## ", t.split(f"## {POLICY['answer']['headings']['recommend']}")[1])[0]
+        self.assertLess(rec.index(f"### {sh['default']}"), rec.index("試験の渓谷"))
+        self.assertLess(rec.index(f"### {sh['early']}"), rec.index("試験の湖畔"))
+        self.assertLess(rec.index("試験の渓谷"), rec.index(f"### {sh['early']}"))
+
+    def test_a_later_weekend_lists_places_whose_forecast_hits(self):
+        recs = [self.mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22"),
+                self.mk(site="kouyou-0002", label="湖畔", state="◯", updated="2026-10-22"),
+                self.mk(site="kouyou-0003", label="滝", state="✕", updated="2026-10-22", forecast="10月下旬～11月上旬")]
+        sh = POLICY["answer"]["stage_headings"]
+        t = self.compose(recs)                                                   # 対象の日(10/31)が読んだ日(10/24)から 7 日先
+        self.assertIn(f"### {sh['ahead']}", t)
+        self.assertIn("試験の滝", t.split(f"### {sh['ahead']}")[1].split("\n## ")[0])   # 今は「まだ」でも見頃予測が対象の日にかかる
+        near = self.compose(recs, dates=[date(2026, 10, 25)])
+        self.assertNotIn(sh["ahead"], near)                                      # 今週末なら見出しを足さない
+
+    def test_a_page_without_a_state_is_a_human_url(self):
+        recs = [self.mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22"),
+                self.mk(site="kouyou-0002", label="湖畔", state=None)]
+        t = self.compose(recs)
+        unread = body_lines(t, POLICY["answer"]["headings"]["unread"])
+        self.assertIn(f"- 試験の湖畔: {POLICY['answer']['no_state']}、{POLICY['answer']['human_url']}: https://kankou.example.org/test-koyo", unread)
+        self.assertNotIn("試験の湖畔", "\n".join(body_lines(t, POLICY["answer"]["headings"]["evidence"])))
+
+    def test_reference_links_are_not_status_sources(self):
+        ref = {**src("test-ref", [{"site": "kouyou-0005", "label": "高原"}]), "kind": "reference_link"}
+        reg = {**REG, "sources": REG["sources"] + [ref]}
+        cat = {**CAT, "entries": [e if e["id"] != "kouyou-0005" else {**e, "status_sources": ["test-ref"]} for e in CAT["entries"]]}
+        self.assertEqual(sources.check_registry(reg, name="autumn_leaves", catalog_doc=cat, policy=POLICY), [])
+        c = sources.candidates(cat, reg, DATES, POLICY)
+        self.assertNotIn("test-ref", [x["id"] for x in c["read_plan"]])
+        self.assertEqual([x["id"] for x in c["reference_links"]], ["test-ref"])
+        self.assertIn("kouyou-0005", c["no_status_source"])                      # 現況の情報源には数えない
+        p = [{**parts()[0], "catalog": cat, "candidates": c}]
+        unread = body_lines(answer.compose(p, now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["unread"])
+        self.assertIn(f"- 試験の高原: 例年 10/11〜11/10、{POLICY['answer']['unread_no_url']}、{POLICY['answer']['reference_link']}: https://kankou.example.org/test-ref", unread)
+        for subj, sid in (("birds", "tokyo-park-kasai-news"), ("birds", "wbsj-yokohama-blog"), ("flowers", "tokyo-park-jindai-news")):
+            s = sources.sources_by_id(sources.load_registry(subj))[sid]
+            self.assertEqual((s["kind"], s["approval"]["status"]), ("reference_link", "approved"), sid)   # 取り消さずに参考リンク

@@ -30,6 +30,11 @@ freshness:
   fresh_max_days: {value: 3, source: "指示書(段階15): 3 日以内は『新しい』", provisional: true}
   somewhat_old_max_days: {value: 7, source: "指示書(段階15): 7 日以内は『やや古い』、それより古いものは『古い。参考程度』", provisional: true}
   labels: {fresh: 新しい, somewhat_old: やや古い, old: 古い。参考程度, unknown: 更新日不明, year_unknown: 新しさ不明}
+  # 年のない「M/D現在」の年の補い方(段階17 の見直し、2026-10-24 ユーザーの判断): 同じ地点に年つきの最終更新日があるときは、
+  # 「現在」の日付が更新日以前で、この日数以内に収まる年を選ぶ(記録の印は observed_year_inferred: from_same_item_update_date)。
+  # 年つきの日付がないもの(箱根など)は補わず「新しさ不明」のまま
+  observed_year_from_update_max_days: {value: 60, source: "ユーザーの判断(段階17 の見直し、2026-10-24)", provisional: true}
+  observed_year_from_update_mark: from_same_item_update_date
   # 年のない更新日(台帳の notation.year_shown: false。読んだ人が年を補ったもの)は日数で分けず year_unknown にする
   #   (ユーザーの見直し 2026-10-23: 箱根町観光協会。前年の日付かもしれないので、新しい・やや古いと判定しない)
 
@@ -55,6 +60,12 @@ answer:
     forecast: "公式の見頃予測「{forecast}」が対象の日にかかる"
     latest: "公式の最新の記載"
   none_found: "公式の情報で、対象の日におすすめできる名所は見つかりませんでした。"
+  # おすすめの見出し(段階17 の見直し、2026-10-24 ユーザー承認)。始まり・終わりも含めるときは段階ごと、対象の日が先のときは見頃予測の見出しを足す
+  stage_headings: {default: 見ごろ〜最盛, early: 始まり(早めに), late: 終わりかけ, ahead: 対象の日に公式の見頃予測の時期}
+  ahead_min_days: {value: 7, source: "ユーザーの指示(段階17 の見直し、2026-10-24):『来週末など対象の日が先のとき』。対象の最初の日が読んだ日から 7 日以上先", provisional: true}
+  # 状態が書かれていない発信(谷川岳など)・参考リンク(段階17 の見直し)
+  no_state: "公式ページに今の状態の記載がありません"
+  reference_link: "参考(公式ページ)"
   unread_no_url: "公式の現況のページがまだありません"
   human_url: "公式ページ(ご自身で開いてください)"
   typical_window: "例年 {start}〜{end}"

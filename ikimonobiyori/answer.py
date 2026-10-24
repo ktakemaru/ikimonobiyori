@@ -77,35 +77,65 @@ def state_text(row):
     return f"公式「{st}」" + (f"({lb})" if lb and lb != st else "")
 
 
-def pick(subject_parts, policy, dates):
+def place_key(p, r):
+    return (p["subject"], r.get("site") or r.get("name") or r.get("label"))
+
+
+def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=True, forecast_only=False, exclude=frozenset()):
     """おすすめを選ぶ。→ [(対象の部品, 行, 理由)]。
-    順: 範囲に入る段階(既定は見ごろ・最盛)で新しいもの(公式の見頃予測が対象の日より前に終わるものは後ろへ)
-    → 公式の見頃予測が対象の日にかかるもの → (足りなければ)段階のない公式の最新の記載。
-    表示が古い可能性・食い違いのある地点は選ばない。同じ名所は 1 回だけ。"""
+    順: 範囲に入る段階(orders を渡すとその共通の順番だけ。既定は見ごろ・最盛)で新しいもの(公式の見頃予測が対象の日より前に終わるものは後ろへ)
+    → 公式の見頃予測が対象の日にかかるもの(forecast) → (足りなければ)段階のない公式の最新の記載(fallback)。
+    forecast_only は見頃予測が対象の日にかかるものだけ(今は「まだ」でも。対象の日が先のときの見出し)。
+    表示が古い可能性・食い違いのある地点は選ばない。同じ名所は 1 回だけ(exclude はほかの見出しで選んだ名所)。"""
     ans, top_max = policy["answer"], _val(policy["recommend"]["top_max"])
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
     usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"]
               if r.get("kind") == "status_page" and not r["stale_display_suspect"] and not r["conflict"]]
-    out, seen = [], set()
+    out, seen = [], set(exclude)
 
     def add(p, r, reason):
-        k = (p["subject"], r.get("site") or r.get("name") or r.get("label"))
-        if k not in seen and len(out) < top_max:
-            seen.add(k)
+        if place_key(p, r) not in seen and len(out) < top_max:
+            seen.add(place_key(p, r))
             out.append((p, r, reason))
 
-    for p, r in sorted((x for x in usable if x[1]["in_scope"]),
-                       key=lambda x: (forecast_past(x[1], dates), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
-        add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
+    if not forecast_only:
+        for p, r in sorted((x for x in usable if x[1]["in_scope"] and (orders is None or x[1]["order"] in orders)),
+                           key=lambda x: (forecast_past(x[1], dates), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
+            add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
     # 公式の見頃予測で選ぶのは、公式の状態が段階の分かる語のとき(「現在、情報がありません」のような情報なしの書き方では選ばない)
-    for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and not x[1]["in_scope"] and x[1]["stage"] is not None),
-                       key=lambda x: -(x[1]["order"] or 0)):
-        add(p, r, ans["reasons"]["forecast"].format(forecast=r["official_forecast"]))
-    if len(out) < _val(policy["recommend"]["top_min"]):
+    if forecast or forecast_only:
+        for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and x[1]["stage"] is not None
+                            and (forecast_only or not x[1]["in_scope"])),
+                           key=lambda x: (x[1]["order"] is None, x[1]["order"] in set(policy["stage_scope"]["late"]), -(x[1]["order"] or 0))):
+            add(p, r, ans["reasons"]["forecast"].format(forecast=r["official_forecast"]))
+    if fallback and len(out) < _val(policy["recommend"]["top_min"]):
         for p, r in usable:
             if r["stage"] is None and r.get("official_state") and r.get("state_kind") != "no_info" and r["freshness"]["class"] in FRESHNESS_ORDER[:2]:
                 add(p, r, ans["reasons"]["latest"])
     return out
+
+
+def recommend_groups(parts, policy, dates, *, early, late, ahead):
+    """1 つの対象のおすすめを見出しごとに。→ [(見出し or None, [(部品, 行, 理由)])]。
+    early・late のときは段階ごとの見出し(見ごろ〜最盛/始まり/終わりかけ)。ahead(対象の日が先)のときは、
+    公式の見頃予測が対象の日にかかる地点の見出しを別に足す(今は「まだ」でも)。"""
+    sh, sc = policy["answer"]["stage_headings"], policy["stage_scope"]
+    groups, taken = [], set()
+    if early or late:
+        for key, on in (("default", True), ("early", early), ("late", late)):
+            if on:
+                g = pick(parts, policy, dates, orders=set(sc[key]), forecast=False, fallback=False, exclude=taken)
+                groups.append((sh[key], g))
+                taken |= {place_key(p, r) for p, r, _ in g}
+        if not any(g for _, g in groups):
+            groups.append((None, pick(parts, policy, dates, orders=set(sc["default"]), exclude=taken)))
+    else:
+        g = pick(parts, policy, dates, forecast=not ahead)
+        groups.append((sh["default"] if ahead else None, g))
+        taken |= {place_key(p, r) for p, r, _ in g}
+    if ahead:
+        groups.append((sh["ahead"], pick(parts, policy, dates, forecast_only=True, fallback=False, exclude=taken)))
+    return [(h, g) for h, g in groups if g or h is None]
 
 
 def _line(row, on, names, policy, multi):
@@ -117,10 +147,11 @@ def _line(row, on, names, policy, multi):
     return f"- {place_name(row, names, multi)}: " + "、".join(bits) + (f" — {row['url']}" if row.get("url") else "")
 
 
-def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False):
+def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False, early=False, late=False):
     """subject_parts: [{subject, name, summary, candidates, catalog, care?}](対象ごと)→ 答えの下書き(Markdown の文字列)。
     scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り。
-    省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。"""
+    省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。
+    early・late は質問の型③(始まり・終わりも含める。おすすめを段階ごとの見出しに分ける)。"""
     ans = policy["answer"]
     if simple_read is None:
         simple_read = any(r.get("read_by") == "summary" for p in subject_parts for r in p["summary"]["rows"])
@@ -137,26 +168,39 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
         lines += [ans["simple_read_note"], ""]
 
     multi = {p["subject"]: multi_label_sites(p["summary"]["rows"]) for p in subject_parts}
+    ahead = (min(dates) - on).days >= _val(ans["ahead_min_days"])           # 来週末など、対象の日が先
     # 対象が複数のときは対象ごとに選ぶ(1 つの対象がおすすめを埋めてしまわないように)
-    groups = [(p, pick([p], policy, dates)) for p in subject_parts] if len(subject_parts) > 1 else [(None, pick(subject_parts, policy, dates))]
-    chosen = [c for _, g in groups for c in g]
+    per_subject = [(p, recommend_groups([p], policy, dates, early=early, late=late, ahead=ahead)) for p in subject_parts]
+    chosen = [c for _, gs in per_subject for _, g in gs for c in g]
     lines.append(f"## {ans['headings']['recommend']}")
     if not chosen:
         lines.append(ans["none_found"])
-    for head, g in groups:
-        if head is not None:
-            lines.append(f"### {head['name']}")
-            if not g:
+    multi_subject = len(subject_parts) > 1
+    for p, gs in per_subject:
+        if multi_subject:
+            lines.append(f"### {p['name']}")
+            if not any(g for _, g in gs):
                 lines.append(ans["none_found"])
-        for i, (p, r, reason) in enumerate(g, 1):
-            bits = [x for x in (state_text(r), as_of(r, on, policy)) if x]
-            lines.append(f"{i}. **{place_name(r, names, multi[p['subject']])}** — " + "、".join(bits) + f"。{reason}")
+                continue
+        for head, g in gs:
+            if not g:
+                continue
+            if head:
+                lines.append(f"**{head}**" if multi_subject else f"### {head}")
+            for i, (p_, r, reason) in enumerate(g, 1):
+                bits = [x for x in (state_text(r), as_of(r, on, policy)) if x]
+                lines.append(f"{i}. **{place_name(r, names, multi[p_['subject']])}** — " + "、".join(bits) + f"。{reason}")
     lines.append("")
 
     lines.append(f"## {ans['headings']['evidence']}")
     shown = set()
+    no_state = {}                                                      # 状態が書かれていない発信(谷川岳など)→ 人が開く URL
     for p in subject_parts:
-        rows = [r for r in p["summary"]["rows"] if not r["stale_display_suspect"] and not r["conflict"]]
+        for r in p["summary"]["rows"]:
+            if r.get("kind") == "status_page" and r.get("official_state") is None and not r.get("event"):
+                no_state.setdefault((p["subject"], r.get("site") or r.get("name")), (place_name(r, names), r.get("url")))
+        rows = [r for r in p["summary"]["rows"] if not r["stale_display_suspect"] and not r["conflict"]
+                and (p["subject"], r.get("site") or r.get("name")) not in no_state]
         if not rows:
             continue
         if len(subject_parts) > 1:
@@ -197,22 +241,39 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
     unread = []
     for p in subject_parts:
         c = p["candidates"]
-        human = {}
+        human, refs, planned = {}, {}, {}
         for h in c.get("human_urls") or []:
-            for s in h["sites"]:
-                human.setdefault(s, h["url"])
+            for s_ in h["sites"]:
+                human.setdefault(s_, h["url"])
+        for h in c.get("reference_links") or []:
+            for s_ in h["sites"]:
+                refs.setdefault(s_, h["url"])
+        for h in c.get("read_plan") or []:
+            if h["kind"] == "status_page":
+                for s_ in h["sites"]:
+                    planned.setdefault(s_, h["url"])
+        tag = f"({p['name']})" if len(subject_parts) > 1 else ""
+        for (subj, key), (nm, url) in no_state.items():
+            if subj == p["subject"] and (subj, key) not in shown:
+                shown.add((subj, key))
+                unread.append(f"- {nm}{tag}: {ans['no_state']}、{ans['human_url']}: {url}")
         for row in c.get("sites") or []:
-            if (p["subject"], row["site"]) in shown:
+            sid = row["site"]
+            if (p["subject"], sid) in shown:
                 continue
-            if row["site"] not in human and row["site"] not in (c.get("no_status_source") or []):
+            # 承認待ち・現況の情報源なし、または読む予定だったが今日の記録がない(読めなかった)名所
+            if sid not in human and sid not in (c.get("no_status_source") or []) and sid not in planned:
                 continue
-            shown.add((p["subject"], row["site"]))
+            shown.add((p["subject"], sid))
             bits = []
             tw = row.get("typical_window")
             if tw:
                 bits.append(ans["typical_window"].format(start=tw["start"].replace("-", "/"), end=tw["end"].replace("-", "/")))
-            bits.append(f"{ans['human_url']}: {human[row['site']]}" if row["site"] in human else ans["unread_no_url"])
-            unread.append(f"- {row['name']}" + (f"({p['name']})" if len(subject_parts) > 1 else "") + ": " + "、".join(bits))
+            url = human.get(sid) or (planned.get(sid) if sid not in (c.get("no_status_source") or []) else None)
+            bits.append(f"{ans['human_url']}: {url}" if url else ans["unread_no_url"])
+            if sid in refs:
+                bits.append(f"{ans['reference_link']}: {refs[sid]}")
+            unread.append(f"- {row['name']}{tag}: " + "、".join(bits))
     if unread:
         lines += [f"## {ans['headings']['unread']}"] + unread + [""]
     if record_failed and ans.get("record_failed_note"):

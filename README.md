@@ -23,9 +23,9 @@
 - **Open-Meteo**(紅葉の気温): 非商用の無料枠(1 日 10,000 call)の範囲で使う。CC BY 4.0 の帰属表示:
   *Weather data by [Open-Meteo.com](https://open-meteo.com/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)*
   (`tests/fixtures/recorded_open_meteo_2026-10-14.json` は、2026-10-14 に取得した実際の応答の記録で、同じ帰属を付けている)。
-- **iNaturalist**(野鳥の観察記録): 公開 API から集計値(種ごとの件数と分類名)だけを取る。**利用規約・API の推奨手順は、まだ人の目で確認していません**
-  (二次的な要約のみ。`docs/ikimonobiyori-research.md` §12「要目視」)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認。
-  そのためこのリポジトリには iNaturalist の実際の応答を置かず、テストは合成データ(`tests/fixtures/synthetic_*.json`)で行う。**確認が済むまで、用途を個人・非商用の下調べに限る。**
+- **iNaturalist**(野鳥の観察記録): 公開 API から集計値(種ごとの件数と分類名)だけを取る。**利用規約・API の推奨手順は、ユーザー確認済み(2026-10-21、data-sources.md の記録)**
+  (`docs/data-sources.md` §3。Claude Code 自身は原文を読めていない〔HTTP 403〕)。投稿コンテンツの既定ライセンスは CC BY-NC の可能性があるが、個別記録のライセンスは未確認。
+  そのためこのリポジトリには iNaturalist の実際の応答を置かず、テストは合成データ(`tests/fixtures/synthetic_*.json`)で行う。**用途は個人・非商用の下調べに限る**(ユーザーの確認の範囲での使い方)。
   通信するときの自主制限: 30 リクエスト/分以下(間隔 2 秒以上)、429・4xx・5xx で即中止、User-Agent にアプリ名を付ける。
 - **地点カタログ**(`ikimonobiyori/data/sites.yaml`): [yamabiyori](https://github.com/ktakemaru/yamabiyori)(MIT)の山リスト(`MOUNTAINS`、commit `de66f10`)を一度だけ複製したもの。複製元は `copied_from` に記録。
 
@@ -82,4 +82,4 @@ python -X utf8 -m unittest discover -s tests
 
 ## ライセンス
 
-[MIT](LICENSE)。データの出典は上記のとおり(Open-Meteo は CC BY 4.0、iNaturalist は未確認)。
+[MIT](LICENSE)。データの出典は上記のとおり(Open-Meteo は CC BY 4.0、iNaturalist の利用条件はユーザー確認済み〔2026-10-21〕)。

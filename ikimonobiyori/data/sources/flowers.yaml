@@ -51,7 +51,7 @@ sources:
     publisher: 東京都公園協会(神代植物公園サービスセンター)
     publisher_kind: park_manager
     url: "https://www.tokyo-park.or.jp/park/jindai/news/index.html"
-    kind: status_page
+    kind: reference_link      # 段階17 の見直し(2026-10-24、ユーザー承認): 取り消さずに参考リンクに(今の状態がほとんど載らない。現況の情報源に数えない)
     flower_kinds: [秋バラ, 菊]
     covers:
       - {site: hana-0003, label: "バラ", flower_kind: 秋バラ}

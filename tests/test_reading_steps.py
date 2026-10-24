@@ -155,3 +155,30 @@ class Steps(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class YearFromTheSameItem(unittest.TestCase):
+    """段階17 の見直し(2026-10-24、ユーザーの判断): 年のない「M/D現在」は、同じ地点の年つきの最終更新日から年を補う。"""
+    MARK = POLICY["freshness"]["observed_year_from_update_mark"]
+
+    def test_the_year_comes_from_the_update_date_of_the_same_item(self):
+        r = rec(observed_md="10-20", updated="2026-10-22")
+        self.assertEqual((r["official_observed"], r["observed_year_inferred"]), ("2026-10-20", "from_same_item_update_date"))
+        self.assertEqual(self.MARK, "from_same_item_update_date")
+        self.assertEqual(sources.validate_record(r, registry=TA.REG, policy=POLICY), [])
+        self.assertEqual(fresh(r)[2]["class"], "somewhat_old")                 # 年が分かるので日数で分ける(4 日)
+        r = rec(observed_md="12-28", updated="2026-01-05")                      # 更新日の前の年(更新日以前で 60 日以内)
+        self.assertEqual((r["official_observed"], r["observed_year_inferred"]), ("2025-12-28", self.MARK))
+
+    def test_otherwise_the_year_stays_unknown(self):
+        for kw in ({"observed_md": "10-20"},                                     # 年つきの日付がない(箱根など)
+                   {"observed_md": "07-01", "updated": "2026-10-22"},            # 更新日から 60 日より前
+                   {"observed_md": "10-23", "updated": "2026-10-22"},            # 更新日より後
+                   {"observed_md": "10-20", "updated": "2026-10-22", "year_inferred": True}):   # 更新日の年も補ったもの
+            r = rec(**kw)
+            self.assertIs(r["observed_year_inferred"], True, kw)
+            self.assertEqual(fresh(r)[2]["class"], "year_unknown", kw)
+
+    def test_the_mark_is_checked(self):
+        bad = {**rec(observed="2026-10-20"), "observed_year_inferred": self.MARK}  # 更新日がないのに印だけ
+        self.assertTrue(any(self.MARK in e for e in sources.validate_record(bad, registry=TA.REG, policy=POLICY)))

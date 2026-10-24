@@ -28,7 +28,7 @@ sources:
     publisher: 東京都公園協会(葛西臨海公園サービスセンター)
     publisher_kind: park_manager
     url: "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html"
-    kind: status_page
+    kind: reference_link      # 段階17 の見直し(2026-10-24、ユーザー承認): 取り消さずに参考リンクに(今の状態がほとんど載らない。現況の情報源に数えない)
     covers:
       - {site: yacho-0002, label: "鳥類園"}
     notation:
@@ -57,7 +57,7 @@ sources:
     publisher: 公益財団法人日本野鳥の会(横浜自然観察の森の指定管理者)
     publisher_kind: park_manager
     url: "https://wbsj-yokohama.blog.jp"
-    kind: status_page
+    kind: reference_link      # 段階17 の見直し(2026-10-24、ユーザー承認): 取り消さずに参考リンクに(今の状態がほとんど載らない。現況の情報源に数えない)
     covers:
       - {site: yacho-0004, label: "自然情報ブログ"}
     notation:
