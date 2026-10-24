@@ -32,7 +32,7 @@ sources:
       - {site: kouyou-0045, label: "【今市】日光だいや川公園"}
       - {site: kouyou-0047, label: "【今市】杉並木公園"}
       - {site: kouyou-0050, label: "【足尾】CAMP THE 銀山平"}
-      - {name: 鬼怒川温泉 丸山, label: "【鬼怒川・川治】鬼怒川温泉 丸山"}
+      - {site: kouyou-0059, label: "【鬼怒川・川治】鬼怒川温泉 丸山"}
       - {site: kouyou-0052, label: "【鬼怒川・川治】鬼怒楯岩大吊橋"}
       - {site: kouyou-0054, label: "【鬼怒川・川治】龍王峡"}
       - {name: 川治温泉, label: "【鬼怒川・川治】川治温泉"}

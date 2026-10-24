@@ -69,16 +69,6 @@ entries:
     sources:
       - {url: "https://www.daigo-kanko.jp/mt_nantai.html", title: "大子町観光協会 男体山", checked_on: "2026-10-24"}
     note: "段階19。所在地の記載がない(観光協会の住所だけ)。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
-  - id: kouyou-0059
-    name: 鬼怒川温泉 丸山
-    subjects: [autumn_leaves]
-    timing_type: temperature
-    kind: point
-    location_precision: area_10km
-    status: candidate              # 保留: 公式ページの標高 約 700 m に対し、推定した試し点の標高が 405 m(295 m の差)。座標を取り直す
-    sources:
-      - {url: "https://www.nikko-kankou.org/spot/22", title: "日光市観光協会 鬼怒川温泉 丸山", checked_on: "2026-10-24"}
-    note: "段階19(続き)。所在地は日光市鬼怒川温泉滝。公式ページの地図の埋め込みの座標は取れたが(2026-10-24)、公式ページの標高 約 700 m(丸山山頂の記載)と取得した標高 468 m の差が 100 m 以上なので足さない。地図の点が山頂ではなく麓の駅などを指している可能性がある。座標は docs/stage19-coordinates.md"
   - id: kouyou-0060
     name: 接岨峡・長島ダム・奥大井湖上駅
     subjects: [autumn_leaves]
@@ -138,7 +128,7 @@ entries:
     tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus]}
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
-    note: "段階19。目印は元箱根港のバス停(芦ノ湖の南側)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+    note: "段階19。目印は元箱根港のバス停(芦ノ湖の南側)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページを探したが見つからなかった(2026-10-24。エリアのページにリンクなし。元箱根石仏群の /6319 は別の場所なので使わない)。pending のまま"
   - id: kouyou-0039
     name: 箱根 宮ノ下
     subjects: [autumn_leaves]
@@ -150,7 +140,7 @@ entries:
     tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
-    note: "段階19。目印はホテル前のバス停(芦ノ湖方面と強羅方面の分岐)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+    note: "段階19。目印はホテル前のバス停(芦ノ湖方面と強羅方面の分岐)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページ(宮ノ下温泉 https://www.hakone.or.jp/6899)をコードで読んだが、地図の座標の数字はなかった(2026-10-24)。pending のまま"
   - id: kouyou-0040
     name: 箱根 旧街道 甘酒茶屋付近
     subjects: [autumn_leaves]
@@ -162,7 +152,7 @@ entries:
     tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
-    note: "段階19。目印は甘酒茶屋のバス停(旧道経由の元箱根行き)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+    note: "段階19。目印は甘酒茶屋のバス停(旧道経由の元箱根行き)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページを探したが見つからなかった(2026-10-24。旧街道石畳の /6316 は別の場所なので使わない)。pending のまま"
   - id: kouyou-0041
     name: 箱根 湯本
     subjects: [autumn_leaves]
@@ -174,7 +164,7 @@ entries:
     tags: {prefecture: 神奈川県, area: 箱根, access: [walk_from_station]}
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
-    note: "段階19。箱根湯本駅から下車すぐ。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo"
+    note: "段階19。箱根湯本駅から下車すぐ。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページ(箱根湯本温泉 https://www.hakone.or.jp/6892)をコードで読んだが、地図の座標の数字はなかった(2026-10-24)。pending のまま"
   - id: kouyou-0043
     name: 川治温泉
     subjects: [autumn_leaves]

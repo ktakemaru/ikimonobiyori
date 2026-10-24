@@ -235,7 +235,8 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
                             "official_status": {"stage": rep.get("stage"), "stage_label": rep.get("stage_label"), "order": rep.get("order"),
                                                 "official_state": rep.get("official_state")},
                             "reference_links": refs.get(sid, []),
-                            **({"catalog_site_ref": entry["site_ref"]} if entry.get("site_ref") else {})},
+                            **({"catalog_site_ref": entry["site_ref"]} if entry.get("site_ref") else {}),
+                            **({"site_details": entry["site_details"]} if entry.get("site_details") else {})},
             })
             out.append((_sort_key(band, rep, policy), sid, d.isoformat(), p))
     return [p for *_, p in sorted(out, key=lambda x: x[:3])]

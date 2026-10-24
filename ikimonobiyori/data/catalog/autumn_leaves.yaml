@@ -754,3 +754,25 @@ entries:
       - {url: "https://www.nikko-kankou.org/spot/42", title: "日光市観光協会 龍王峡(地図の埋め込みの座標)", checked_on: "2026-10-24"}
       - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
     note: "段階19(続き)。所在地は日光市藤原。座標の出所: 公式ページの地図の埋め込み(2026-10-24 に取得。コードで数字だけを読んだ)。標高は Open-Meteo Elevation API の値(同じ座標)。公式ページに標高の記載がない(標高では確かめていない)。例年の時期の記載はない(2026-10-24 の確認)"
+  - id: kouyou-0059
+    name: 鬼怒川温泉 丸山
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.84, lon: 139.72, elevation_m: 468}
+    location_precision: area_1km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [mountain], access: [ropeway], source: "Claude Code が付けた(地形・行き方は名前と、公式ページの記載(鬼怒川温泉ロープウェイ・丸山山頂)から。座標は公式ページの地図の埋め込み。段階19 の続き)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/22", title: "日光市観光協会 鬼怒川温泉 丸山(鬼怒川温泉ロープウェイ。地図の埋め込みの座標)", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    site_details:
+      summit_elevation_m: 700
+      summit_elevation_note: "公式ページ(スポットのページ)の「標高約700mの丸山山頂へ」の記載。約 700 m は山頂の標高"
+      map_point: {lat: 36.837592, lon: 139.718757, source: "公式ページ(スポットのページ)の地図の埋め込みの座標(2026-10-24 に取得)"}
+      point_meaning: "地図の点は山麓駅(ロープウェイの乗り場)付近の可能性がある。取得した標高 468 m と山頂 約 700 m の差は 232 m(公式の標高は山頂、地図の点は山麓駅付近の可能性)"
+    note: "段階19(続き)。所在地は日光市鬼怒川温泉滝。座標の出所: 公式ページの地図の埋め込み(2026-10-24 に取得。コードで数字だけを読んだ)。代表点は地図の点(36.837592, 139.718757)で、山麓駅付近の可能性があるため location_precision を area_1km にし、座標は小数 2 桁に丸めた(原文は site_details)。標高 468 m は Open-Meteo Elevation API の値(同じ座標)。公式ページの標高(約 700 m)は山頂のもので、差 232 m(100 m 以上)は山頂と山麓駅付近の違いの可能性。ユーザーの確認(2026-10-24)で足した。例年の時期の記載はない"
