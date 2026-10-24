@@ -13,6 +13,7 @@
   python -X utf8 -m ikimonobiyori.sources log [--source ID] [--include-erroneous]
   python -X utf8 -m ikimonobiyori.sources summary --now 2026-10-23T21:00:00+09:00 [--date 2026-10-31 ...]
   python -X utf8 -m ikimonobiyori.sources mark-erroneous --match '{"name": "湖尻", ...}' --reason ... --corrected-on 2026-10-23
+  python -X utf8 -m ikimonobiyori.sources supersede --match '{"name": "湖尻", ...}' --reason ... --on 2026-10-24
   python -X utf8 -m ikimonobiyori.sources v0 --proposal OUT.json [--date 2026-10-24 ...]
 """
 import argparse
@@ -623,6 +624,11 @@ def validate_record(rec, *, registry, policy):
     if any(k in rec for k in rp["erroneous_fields"]):
         if rec.get("erroneous") is not True or not rec.get("erroneous_reason") or not catalog_mod.valid_date(rec.get("corrected_on") or ""):
             errs.append("誤りの印は erroneous: true・erroneous_reason・corrected_on(YYYY-MM-DD)をそろえて付ける")
+    if any(k in rec for k in rp["superseded_fields"]):
+        if rec.get("superseded") is not True or not rec.get("superseded_reason") or not catalog_mod.valid_date(rec.get("superseded_on") or ""):
+            errs.append("置き換えの印は superseded: true・superseded_reason・superseded_on(YYYY-MM-DD)をそろえて付ける")
+        elif rec.get("erroneous") is True:
+            errs.append("置き換えの印と誤りの印は同時に付けない(読み違いなら誤りの印だけ)")
     if "updated_year_inferred" in rec and not isinstance(rec["updated_year_inferred"], bool):
         errs.append("updated_year_inferred は真偽値")
     elif rec.get("official_updated") is not None and (src.get("notation") or {}).get("year_shown") is False and rec.get("updated_year_inferred") is not True:
@@ -664,13 +670,15 @@ def _read_all(subject, env=None):
     return [json.loads(ln) for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
 
 
-def read_records(subject, env=None, include_erroneous=False):
-    """記録を読む。誤りの印(erroneous: true)の付いた記録は、include_erroneous を明示しない限り使わない(段階16 A-1)。"""
-    return [r for r in _read_all(subject, env) if include_erroneous or r.get("erroneous") is not True]
+def read_records(subject, env=None, include_erroneous=False, include_superseded=False):
+    """記録を読む。誤りの印(erroneous: true。段階16 A-1)・置き換えの印(superseded: true。段階17b)の付いた記録は、
+    それぞれ include_erroneous・include_superseded を明示しない限り使わない。"""
+    return [r for r in _read_all(subject, env)
+            if (include_erroneous or r.get("erroneous") is not True) and (include_superseded or r.get("superseded") is not True)]
 
 
 def records_on(subject, day, env=None):
-    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。"""
+    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印・置き換えの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。"""
     return [r for r in read_records(subject, env) if parse_now(r["read_at"]).date() == day]
 
 
@@ -756,6 +764,36 @@ def amend_records(subject, match, updates, *, env=None, policy=None):
     return len(hit)
 
 
+def supersede_records(subject, match, *, reason, on, env=None):
+    """読み直して置き換えた記録に置き換えの印(superseded: true・superseded_on・superseded_reason)を付ける(消さない。段階17b)。
+    読み違いではない置き換え(名所カタログに入ったので site で記録し直した、など)に使う。読み違いは mark_erroneous。
+    誤りの印の付いた記録には付けない。1 件も一致しなければ ValueError。→ 印を付けた件数。"""
+    if not reason or not catalog_mod.valid_date(on or ""):
+        raise ValueError("reason と on(YYYY-MM-DD)が要る")
+    rows, hit = _matching(subject, match, env)
+    n = 0
+    for r in hit:
+        if r.get("superseded") is not True and r.get("erroneous") is not True:
+            r.update({"superseded": True, "superseded_on": on, "superseded_reason": reason})
+            n += 1
+    _rewrite(subject, rows, env)
+    return n
+
+
+def erroneous_to_superseded(subject, match, *, reason, on, env=None):
+    """読み違いではないのに誤りの印で置き換えた記録を、置き換えの印に付け替える(段階17b。湖尻の 10/24 の 1 件)。
+    誤りの印の項目は消し、置き換えの印を付ける。match は誤りの印の付いた記録だけに当たること(当たらなければ ValueError)。→ 付け替えた件数。"""
+    if not reason or not catalog_mod.valid_date(on or ""):
+        raise ValueError("reason と on(YYYY-MM-DD)が要る")
+    rows, hit = _matching(subject, {**match, "erroneous": True}, env)
+    for r in hit:
+        for k in ("erroneous", "erroneous_reason", "corrected_on"):
+            r.pop(k, None)
+        r.update({"superseded": True, "superseded_on": on, "superseded_reason": reason})
+    _rewrite(subject, rows, env)
+    return len(hit)
+
+
 def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=None):
     """match(項目 → 値)にすべて一致する記録に誤りの印を付ける(消さない。段階16 A-1)。→ 印を付けた件数。
     1 件も一致しなければ ValueError(取り違えを防ぐ)。すでに印のある記録はそのまま。ファイルは書き直す(一時ファイル → 置き換え)。"""
@@ -791,6 +829,8 @@ def append_records(records, *, registry, policy, env=None):
         raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
     if any(r.get("erroneous") is True for r in records):
         raise ValueError("誤りの印の付いた記録は足さない(印は mark_erroneous で付ける)")
+    if any(r.get("superseded") is True for r in records):
+        raise ValueError("置き換えの印の付いた記録は足さない(印は supersede で付ける)")
     seen = {_key(r) for r in _read_all(registry["subject"], env)}
     new = []
     for r in records:
@@ -992,9 +1032,15 @@ def main(argv=None, http_get=None):
     r.add_argument("--batch", required=True,
                    help="JSON の配列: [{source, site|name, label?, state, observed?, observed_md?(年のない M-D), observed_year_inferred?, updated?, year_inferred?, method?, "
                         "forecast?, event_start?, event_end?, url?}]")
-    lg = sub.add_parser("log", help="記録を表示する(誤りの印の付いた記録は --include-erroneous のときだけ)")
+    lg = sub.add_parser("log", help="記録を表示する(誤りの印・置き換えの印の付いた記録は --include-erroneous・--include-superseded のときだけ)")
     lg.add_argument("--source")
     lg.add_argument("--include-erroneous", action="store_true")
+    lg.add_argument("--include-superseded", action="store_true")
+    ss = sub.add_parser("supersede", help="読み直して置き換えた記録に置き換えの印を付ける(読み違いではないとき。消さない。段階17b)")
+    ss.add_argument("--match", required=True)
+    ss.add_argument("--reason", required=True)
+    ss.add_argument("--on", required=True, help="置き換えた日 YYYY-MM-DD")
+    ss.add_argument("--from-erroneous", action="store_true", help="読み違いではないのに誤りの印で置き換えた記録を、置き換えの印に付け替える")
     me = sub.add_parser("mark-erroneous", help="記録に誤りの印を付ける(消さない。IKIMONOBIYORI_DATA_DIR の下)")
     me.add_argument("--match", required=True, help='JSON の辞書(例: {"source_id": "...", "name": "湖尻", "official_state": "色づきはじめ"})')
     me.add_argument("--reason", required=True)
@@ -1131,7 +1177,8 @@ def main(argv=None, http_get=None):
         _dump(v0_estimates(doc, subject=a.subject, labels=labels, policy=policy, dates=dates))
         return 0
     if a.cmd == "log":
-        _dump([r for r in read_records(a.subject, include_erroneous=a.include_erroneous) if not a.source or r["source_id"] == a.source])
+        _dump([r for r in read_records(a.subject, include_erroneous=a.include_erroneous, include_superseded=a.include_superseded)
+               if not a.source or r["source_id"] == a.source])
         return 0
     if a.cmd in ("unmark-erroneous", "amend"):
         try:
@@ -1141,6 +1188,15 @@ def main(argv=None, http_get=None):
             print(f"直さなかった: {ex}", file=sys.stderr)
             return 1
         _dump({"changed": n, "path": str(log_path(a.subject))})
+        return 0
+    if a.cmd == "supersede":
+        try:
+            fn = erroneous_to_superseded if a.from_erroneous else supersede_records
+            n = fn(a.subject, json.loads(a.match), reason=a.reason, on=a.on)
+        except ValueError as ex:
+            print(f"印を付けなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"superseded": n, "path": str(log_path(a.subject))})
         return 0
     if a.cmd == "mark-erroneous":
         try:

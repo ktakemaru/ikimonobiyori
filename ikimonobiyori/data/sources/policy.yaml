@@ -96,7 +96,8 @@ record:
   fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url,
            method, official_forecast, event_start, event_end, erroneous, erroneous_reason, corrected_on,
            unmarked_on, unmarked_reason, user_checked_on, method_note,
-           official_observed, observed_year_inferred, freshness_basis, read_by]
+           official_observed, observed_year_inferred, freshness_basis, read_by,
+           superseded, superseded_on, superseded_reason]
   # 新しさの基準(段階17 修正⑤): ①ページが示す現地の状態の日付(「10/22現在」など。official_observed)、②なければ最終更新日(official_updated)。
   # どちらを使ったかを freshness_basis に残す。日付が 1 つだけの情報源は、その日付の種類を台帳の notation.date_basis に書く(既定は updated_date)
   freshness_bases: [observed_date, updated_date]
@@ -110,6 +111,9 @@ record:
   default_method: agent_summary
   # 誤りの印(段階16 A-1)。誤った記録は消さずに erroneous: true・理由・訂正日を付ける。印の付いた記録は読む処理が使わない
   erroneous_fields: [erroneous, erroneous_reason, corrected_on]
+  # 置き換えの印(段階17b、2026-10-24 ユーザーの指示)。読み直して置き換えた記録(読み違いではない。例: 名所カタログに入ったので site で記録し直した)は
+  # erroneous ではなく superseded: true・置き換えた日・理由を付ける。本物の読み違い(erroneous)と集計で混ざらないように。印の付いた記録は読む処理が使わない
+  superseded_fields: [superseded, superseded_on, superseded_reason]
   # 記録の直し方(段階16 の見直し): amend_records で直せる項目だけ。事実(状態・更新日・地点)は直さない(直すなら誤りの印を付けて新しい記録を足す)
   #   unmarked_on・unmarked_reason は誤りの印を外したときの記録(外した印は消すが、外した理由と日を残す)。user_checked_on はユーザーが目で確かめた日
   amendable_fields: [method, method_note, user_checked_on]

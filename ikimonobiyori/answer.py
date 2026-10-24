@@ -64,6 +64,16 @@ def multi_label_sites(rows):
     return frozenset(multi)
 
 
+def forecast_distance(row, dates):
+    """公式の見頃予測の時期の真ん中と、対象の日の真ん中との日数(近いほど小さい)。見頃予測がなければ None。"""
+    fw = row.get("forecast_window")
+    if not fw:
+        return None
+    s_, e_ = date.fromisoformat(fw[0]), date.fromisoformat(fw[1])
+    lo, hi = min(dates), max(dates)
+    return abs(((s_ - lo) + (e_ - hi)).days) / 2                    # (予測の真ん中 − 対象の真ん中)の絶対値
+
+
 def forecast_past(row, dates):
     """公式の見頃予測が、対象の最初の日より前に終わっている(見ごろを過ぎている見込み)。"""
     fw = row.get("forecast_window")
@@ -85,7 +95,8 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
     """おすすめを選ぶ。→ [(対象の部品, 行, 理由)]。
     順: 範囲に入る段階(orders を渡すとその共通の順番だけ。既定は見ごろ・最盛)で新しいもの(公式の見頃予測が対象の日より前に終わるものは後ろへ)
     → 公式の見頃予測が対象の日にかかるもの(forecast) → (足りなければ)段階のない公式の最新の記載(fallback)。
-    forecast_only は見頃予測が対象の日にかかるものだけ(今は「まだ」でも。対象の日が先のときの見出し)。
+    forecast_only は見頃予測が対象の日にかかるものだけ(対象の日が先のときの見出し)。今の段階に関わらず(「まだ」でも)、
+    予測の時期の真ん中が対象の日に近い順(段階17b、ユーザーの指示)。情報なしの書き方の地点は入れない。
     表示が古い可能性・食い違いのある地点は選ばない。同じ名所は 1 回だけ(exclude はほかの見出しで選んだ名所)。"""
     ans, top_max = policy["answer"], _val(policy["recommend"]["top_max"])
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
@@ -103,9 +114,13 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
                            key=lambda x: (forecast_past(x[1], dates), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
             add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
     # 公式の見頃予測で選ぶのは、公式の状態が段階の分かる語のとき(「現在、情報がありません」のような情報なしの書き方では選ばない)
-    if forecast or forecast_only:
-        for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and x[1]["stage"] is not None
-                            and (forecast_only or not x[1]["in_scope"])),
+    if forecast_only:
+        for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and x[1].get("official_state") is not None
+                            and x[1].get("state_kind") != "no_info"),
+                           key=lambda x: forecast_distance(x[1], dates)):
+            add(p, r, ans["reasons"]["forecast"].format(forecast=r["official_forecast"]))
+    elif forecast:
+        for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and x[1]["stage"] is not None and not x[1]["in_scope"]),
                            key=lambda x: (x[1]["order"] is None, x[1]["order"] in set(policy["stage_scope"]["late"]), -(x[1]["order"] or 0))):
             add(p, r, ans["reasons"]["forecast"].format(forecast=r["official_forecast"]))
     if fallback and len(out) < _val(policy["recommend"]["top_min"]):
@@ -134,7 +149,11 @@ def recommend_groups(parts, policy, dates, *, early, late, ahead):
         groups.append((sh["default"] if ahead else None, g))
         taken |= {place_key(p, r) for p, r, _ in g}
     if ahead:
-        groups.append((sh["ahead"], pick(parts, policy, dates, forecast_only=True, fallback=False, exclude=taken)))
+        ga = pick(parts, policy, dates, forecast_only=True, fallback=False, exclude=taken)
+        if ga:
+            groups.append((sh["ahead"], ga))
+        elif not (early or late):
+            groups = [(None, g) for _, g in groups]          # 見頃予測の見出しがなければ「見ごろ〜最盛」の小見出しも出さない
     return [(h, g) for h, g in groups if g or h is None]
 
 

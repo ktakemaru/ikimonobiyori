@@ -287,3 +287,31 @@ class ReviewOfStage17(unittest.TestCase):
         for subj, sid in (("birds", "tokyo-park-kasai-news"), ("birds", "wbsj-yokohama-blog"), ("flowers", "tokyo-park-jindai-news")):
             s = sources.sources_by_id(sources.load_registry(subj))[sid]
             self.assertEqual((s["kind"], s["approval"]["status"]), ("reference_link", "approved"), sid)   # 取り消さずに参考リンク
+
+
+class AheadHeadingOrder(unittest.TestCase):
+    """段階17b(2026-10-24、ユーザーの指示): 「対象の日に公式の見頃予測の時期」の見出しは、今の段階に関わらず、
+    公式の見頃予測が対象の日にかかる地点を、予測の時期が対象の日に近い順に最大 5 件。「見ごろ〜最盛」と重ねない。"""
+    def test_not_yet_places_whose_forecast_is_closest_come_first(self):
+        far = [f"色づき{i}" for i in range(4)]
+        covers = REG["sources"][0]["covers"] + [{"name": n, "label": n} for n in ["霧降滝", "日光の社寺"] + far]
+        reg = {**REG, "sources": [{**REG["sources"][0], "covers": covers}] + REG["sources"][1:]}
+        mk = lambda **kw: sources.make_record(registry=reg, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", **kw)
+        recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22", forecast="10月中旬～11月上旬"),
+                mk(name="霧降滝", label="霧降滝", state="✕", updated="2026-10-15", forecast="10月下旬～11月上旬"),      # 予測の真ん中 10/31
+                mk(name="日光の社寺", label="日光の社寺", state="✕", updated="2026-09-13", forecast="11月上旬～11月中旬")]  # 11/10
+        recs += [mk(name=n, label=n, state="△", updated="2026-10-22", forecast="10月上旬～11月上旬") for n in far]  # 10/21(遠い)
+        p = [{**parts()[0], "summary": sources.summarize(recs, registry=reg, catalog_doc=CAT, policy=POLICY, on=NOW.date(), dates=DATES)}]
+        t = answer.compose(p, now=NOW, dates=DATES, policy=POLICY)
+        sh = POLICY["answer"]["stage_headings"]
+        ahead = t.split(f"### {sh['ahead']}")[1].split("\n## ")[0]
+        got = [re.search(r"\*\*(.+?)\*\*", ln).group(1) for ln in ahead.splitlines() if re.match(r"\d+\. ", ln)]
+        self.assertEqual(got[:2], ["霧降滝", "日光の社寺"])                          # 今は「まだ」でも、予測の時期が近い順で先に
+        self.assertEqual(len(got), sources.val(POLICY["recommend"]["top_max"]))
+        self.assertNotIn("試験の渓谷", got)                                           # 「見ごろ〜最盛」で選んだ名所は重ねない
+        self.assertIn("試験の渓谷", t.split(f"### {sh['default']}")[1].split(f"### {sh['ahead']}")[0])
+
+    def test_distance(self):
+        row = {"forecast_window": ["2026-10-21", "2026-11-10"]}
+        self.assertEqual(answer.forecast_distance(row, DATES), 0.5)
+        self.assertIsNone(answer.forecast_distance({}, DATES))

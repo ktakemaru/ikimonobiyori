@@ -192,3 +192,42 @@ class DedupWithYearFlags(unittest.TestCase):
             self.assertEqual(sources.append_records([rec(updated="2026-10-22", year_inferred=True)], registry=TA.REG, policy=POLICY), (1, 0))
             self.assertEqual(sources.append_records([rec(updated="2026-10-22")], registry=TA.REG, policy=POLICY), (1, 0))   # 年が分かる記録は別の事実
             self.assertEqual(sources.append_records([rec(updated="2026-10-22")], registry=TA.REG, policy=POLICY), (0, 1))
+
+
+class Superseded(unittest.TestCase):
+    """段階17b(2026-10-24、ユーザーの指示): 読み直して置き換えた記録は erroneous ではなく superseded の印。読み違いと集計で混ざらない。"""
+    def setUp(self):
+        self.d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.d, True)
+        self.env = mock.patch.dict(os.environ, {"IKIMONOBIYORI_DATA_DIR": self.d})
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        sources.append_records([rec(observed="2026-10-22"), rec(site="kouyou-0002", label="湖畔", state="◯", observed="2026-10-22")],
+                               registry=TA.REG, policy=POLICY)
+
+    def test_superseded_records_are_kept_but_not_used(self):
+        self.assertEqual(sources.supersede_records("autumn_leaves", {"site": "kouyou-0002"}, reason="site で記録し直した", on="2026-10-24"), 1)
+        self.assertEqual([r["site"] for r in sources.read_records("autumn_leaves")], ["kouyou-0001"])
+        allr = sources.read_records("autumn_leaves", include_superseded=True)
+        sup = next(r for r in allr if r["site"] == "kouyou-0002")
+        self.assertEqual((sup["superseded"], sup["superseded_on"], "erroneous" in sup), (True, "2026-10-24", False))   # 誤りの印ではない
+        self.assertEqual(sources.validate_record(sup, registry=TA.REG, policy=POLICY), [])
+        self.assertEqual([r["site"] for r in sources.records_on("autumn_leaves", ON)], ["kouyou-0001"])
+        self.assertEqual(len(sources.read_records("autumn_leaves", include_erroneous=True)), 1)   # 誤りの集計(include_erroneous)には入らない
+        with self.assertRaises(ValueError):
+            sources.append_records([sup], registry=TA.REG, policy=POLICY)
+
+    def test_an_erroneous_mark_used_for_a_replacement_can_be_moved(self):
+        sources.mark_erroneous("autumn_leaves", {"site": "kouyou-0002"}, reason="(読み違いではない置き換え)", corrected_on="2026-10-24")
+        self.assertEqual(sources.erroneous_to_superseded("autumn_leaves", {"site": "kouyou-0002"}, reason="読み違いではない", on="2026-10-24"), 1)
+        r = next(x for x in sources.read_records("autumn_leaves", include_erroneous=True, include_superseded=True) if x["site"] == "kouyou-0002")
+        self.assertEqual((r.get("erroneous"), r.get("erroneous_reason"), r["superseded"]), (None, None, True))
+        with self.assertRaises(ValueError):                                       # 誤りの印のない記録には当たらない
+            sources.erroneous_to_superseded("autumn_leaves", {"site": "kouyou-0001"}, reason="x", on="2026-10-24")
+
+    def test_both_marks_together_are_rejected(self):
+        bad = {**rec(observed="2026-10-22"), "superseded": True, "superseded_on": "2026-10-24", "superseded_reason": "x",
+               "erroneous": True, "erroneous_reason": "y", "corrected_on": "2026-10-24"}
+        self.assertTrue(any("同時に" in e for e in sources.validate_record(bad, registry=TA.REG, policy=POLICY)))
+        half = {**rec(observed="2026-10-22"), "superseded": True}
+        self.assertTrue(any("そろえて" in e for e in sources.validate_record(half, registry=TA.REG, policy=POLICY)))
