@@ -1,0 +1,1140 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "ikimonobiyori-official-status:autumn_leaves:2026-10-31+2026-11-01",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "partial",
+ "generated_at": "2026-10-24T13:54:00+09:00",
+ "data_as_of": [
+  {
+   "source": "試験の発信元(autumn_leaves)",
+   "source_type": "official_notice",
+   "run_time": null,
+   "fetched_at": "2026-10-24T13:54:00+09:00",
+   "last_updated": "2026-10-23",
+   "url": "https://autumn-leaves.example.org/al-main"
+  },
+  {
+   "source": "試験の発信元(autumn_leaves)",
+   "source_type": "official_notice",
+   "run_time": null,
+   "fetched_at": "2026-10-24T13:54:00+09:00",
+   "last_updated": null,
+   "url": "https://autumn-leaves.example.org/al-noyear"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-1",
+   "title": "試験の谷 2026-10-31 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の谷",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 3,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "真っ盛り",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "official_state",
+     "value": "見ごろ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-22",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_forecast",
+     "value": "10月中旬～11月上旬",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "forecast_hits_target_date",
+     "value": true,
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/11〜11/10",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の谷",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない",
+     "紅葉期は試験の道が混みやすい"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "stage_label": "真っ盛り",
+      "order": 3,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
+     },
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・木々",
+      "official_state": "見ごろ",
+      "stage": "good",
+      "stage_label": "見ごろ",
+      "order": 2,
+      "official_updated": "2026-10-22",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 2,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": "10月中旬～11月上旬",
+      "forecast_window": [
+       "2026-10-11",
+       "2026-11-10"
+      ],
+      "url": "https://autumn-leaves.example.org/al-main"
+     }
+    ],
+    "representative_source": "al-main",
+    "representative_label": "試験の谷・草紅葉",
+    "official_status": {
+     "stage": "peak",
+     "stage_label": "真っ盛り",
+     "order": 3,
+     "official_state": "真っ盛り"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-1",
+   "title": "試験の谷 2026-11-01 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の谷",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 3,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "真っ盛り",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "official_state",
+     "value": "見ごろ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-22",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_forecast",
+     "value": "10月中旬～11月上旬",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・木々)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "forecast_hits_target_date",
+     "value": true,
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/11〜11/10",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の谷",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない",
+     "紅葉期は試験の道が混みやすい"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "stage_label": "真っ盛り",
+      "order": 3,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
+     },
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・木々",
+      "official_state": "見ごろ",
+      "stage": "good",
+      "stage_label": "見ごろ",
+      "order": 2,
+      "official_updated": "2026-10-22",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 2,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": "10月中旬～11月上旬",
+      "forecast_window": [
+       "2026-10-11",
+       "2026-11-10"
+      ],
+      "url": "https://autumn-leaves.example.org/al-main"
+     }
+    ],
+    "representative_source": "al-main",
+    "representative_label": "試験の谷・草紅葉",
+    "official_status": {
+     "stage": "peak",
+     "stage_label": "真っ盛り",
+     "order": 3,
+     "official_state": "真っ盛り"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-4",
+   "title": "試験の庭 2026-10-31 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "試験の庭",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-4",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-4",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "色づき始め",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の庭)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-noyear",
+     "last_updated": null
+    },
+    {
+     "metric": "official_observed",
+     "value": "10/21",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の庭)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-noyear",
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しさ不明",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/21〜11/20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の庭",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-4/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "公式の日付に年の記載がないため、新しさは分からない(新しさ不明)",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-4",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-noyear",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の庭",
+      "official_state": "色づき始め",
+      "stage": "starting",
+      "stage_label": "色づき始め",
+      "order": 1,
+      "official_updated": null,
+      "official_observed": "10/21",
+      "updated_year_inferred": false,
+      "observed_year_inferred": true,
+      "freshness_basis": "observed_date",
+      "freshness": "新しさ不明",
+      "freshness_class": "year_unknown",
+      "freshness_age_days": null,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-noyear"
+     }
+    ],
+    "representative_source": "al-noyear",
+    "representative_label": "試験の庭",
+    "official_status": {
+     "stage": "starting",
+     "stage_label": "色づき始め",
+     "order": 1,
+     "official_state": "色づき始め"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-4",
+   "title": "試験の庭 2026-11-01 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "early_bloom",
+   "place": {
+    "name": "試験の庭",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-4",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-4",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 1,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "色づき始め",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の庭)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-noyear",
+     "last_updated": null
+    },
+    {
+     "metric": "official_observed",
+     "value": "10/21",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の庭)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-noyear",
+     "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しさ不明",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/21〜11/20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の庭",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-4/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "公式の日付に年の記載がないため、新しさは分からない(新しさ不明)",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-4",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-noyear",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の庭",
+      "official_state": "色づき始め",
+      "stage": "starting",
+      "stage_label": "色づき始め",
+      "order": 1,
+      "official_updated": null,
+      "official_observed": "10/21",
+      "updated_year_inferred": false,
+      "observed_year_inferred": true,
+      "freshness_basis": "observed_date",
+      "freshness": "新しさ不明",
+      "freshness_class": "year_unknown",
+      "freshness_age_days": null,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-noyear"
+     }
+    ],
+    "representative_source": "al-noyear",
+    "representative_label": "試験の庭",
+    "official_status": {
+     "stage": "starting",
+     "stage_label": "色づき始め",
+     "order": 1,
+     "official_state": "色づき始め"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-10-31:s-al-2",
+   "title": "試験の湖 2026-10-31 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の湖",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "まだ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の湖)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の湖)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "freshness",
+     "value": "やや古い",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/11〜11/10",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の湖",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の湖",
+      "official_state": "まだ",
+      "stage": "not_yet",
+      "stage_label": "まだ",
+      "order": 0,
+      "official_updated": "2026-10-20",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "やや古い",
+      "freshness_class": "somewhat_old",
+      "freshness_age_days": 4,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
+     }
+    ],
+    "representative_source": "al-main",
+    "representative_label": "試験の湖",
+    "official_status": {
+     "stage": "not_yet",
+     "stage_label": "まだ",
+     "order": 0,
+     "official_state": "まだ"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:autumn_leaves:2026-11-01:s-al-2",
+   "title": "試験の湖 2026-11-01 紅葉",
+   "subject": {
+    "category": "seasonal_progression",
+    "name": "紅葉",
+    "profile_id": "autumn_leaves"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の湖",
+    "lat": 35.5,
+    "lon": 139.5,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "exact",
+    "site_ref": "ikimonobiyori:s-al-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-al-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "まだ",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の湖)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-20",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の湖)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-20"
+    },
+    {
+     "metric": "freshness",
+     "value": "やや古い",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "10/11〜11/10",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の湖",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-al-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "指定の駐車場・歩道を使う",
+     "枝や葉を採らない"
+    ],
+    "do_not_disclose_exact_location": false
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "autumn_leaves",
+    "site_id": "s-al-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の湖",
+      "official_state": "まだ",
+      "stage": "not_yet",
+      "stage_label": "まだ",
+      "order": 0,
+      "official_updated": "2026-10-20",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "やや古い",
+      "freshness_class": "somewhat_old",
+      "freshness_age_days": 4,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
+     }
+    ],
+    "representative_source": "al-main",
+    "representative_label": "試験の湖",
+    "official_status": {
+     "stage": "not_yet",
+     "stage_label": "まだ",
+     "order": 0,
+     "official_state": "まだ"
+    },
+    "reference_links": []
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": [
+   "試験の峠: 公式の日付(2026-09-20)が対象の日より 30 日以上前のため、提案にしていません(昨シーズンの表示の恐れ)",
+   "名所の一覧にない地点のため提案にしていない(紅葉): 試験の外の滝",
+   "現況なし: 試験の高原(公式の現況のページがまだありません)"
+  ]
+ },
+ "status_reason": "some_places_without_official_status"
+}

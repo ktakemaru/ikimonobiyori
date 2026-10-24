@@ -95,7 +95,8 @@ def observation(row, source_name):
             "stage": row.get("stage"), "stage_label": row.get("stage_label"), "order": row.get("order"),
             "official_updated": official_date_text(row.get("official_updated"), updated_year_known(row)),
             "official_observed": official_date_text(row.get("official_observed"), observed_year_known(row)),
-            "updated_year_inferred": bool(row.get("year_inferred")), "observed_year_inferred": row.get("observed_year_inferred") or False,
+            "updated_year_inferred": bool(row.get("official_updated")) and bool(row.get("year_inferred")),
+            "observed_year_inferred": (row.get("observed_year_inferred") or False) if row.get("official_observed") else False,
             "freshness_basis": row.get("freshness_basis"), "freshness": row["freshness"]["label"], "freshness_class": row["freshness"]["class"],
             "freshness_age_days": row["freshness"].get("age_days"), "read_by": row.get("read_by"), "read_at": row["read_at"],
             "official_forecast": row.get("official_forecast"), "forecast_window": row.get("forecast_window"), "url": row.get("url")}
@@ -119,7 +120,7 @@ def row_evidence(row, d, source_name, policy):
         ev.append({"metric": "official_forecast", "value": row["official_forecast"], "unit": None, "valid_time": None, **official})
         ev.append({"metric": "forecast_hits_target_date", "value": forecast_hits(row, d), "unit": None, "valid_time": None, **derived})
     ev.append({"metric": "freshness", "value": row["freshness"]["label"], "unit": None, "valid_time": None, **derived})
-    ev.append({"metric": "read_by", "value": row.get("read_by"), "unit": None, "valid_time": None, **derived})
+    ev.append({"metric": "read_by", "value": pp["read_by_labels"].get(row.get("read_by")), "unit": None, "valid_time": None, **derived})
     return ev
 
 
@@ -297,7 +298,8 @@ def build(parts, profiles, *, policy, catalog_policy, now, dates, early=False, l
     data_as_of = []
     for (pub, read_at, sid), v in sorted(sources_used.items()):
         v["url"] = (regs.get(sid) or {}).get("url")
-        v["last_updated"] = max(v.pop("_dates")) if v["_dates"] else None
+        ds = v.pop("_dates")
+        v["last_updated"] = max(ds) if ds else None
         data_as_of.append(v)
     subjects = [p["subject"] for p in parts]
     doc = {"schema": SCHEMA,

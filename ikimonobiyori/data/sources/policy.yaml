@@ -189,6 +189,8 @@ proposals:
   # 新しさの並び(表示の都合。新しいものから)
   freshness_order: [fresh, somewhat_old, year_unknown, old, unknown]
   evidence_source: "イキモノビヨリ(公式ページを読んだ結果から)"
+  # evidence の読み方(read_by)の値。最終文に出る言葉なので内部用語(code など)を使わない。details.observations[].read_by には元の値(code / summary / user)
+  read_by_labels: {code: 決まった形で読んだ, summary: 簡易な読み取り, user: 人が原文を確かめた}
   known_limits:
     common:
       - "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない"

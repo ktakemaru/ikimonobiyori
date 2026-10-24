@@ -1,0 +1,647 @@
+{
+ "schema": "biyori-proposal/1",
+ "request_id": "ikimonobiyori-official-status:birds:2026-10-31+2026-11-01",
+ "agent": {
+  "id": "ikimonobiyori",
+  "version": "0.1.0",
+  "commit": null
+ },
+ "status": "ok",
+ "generated_at": "2026-10-24T13:54:00+09:00",
+ "data_as_of": [
+  {
+   "source": "試験の発信元(birds)",
+   "source_type": "official_notice",
+   "run_time": null,
+   "fetched_at": "2026-10-24T13:54:00+09:00",
+   "last_updated": "2026-10-22",
+   "url": "https://birds.example.org/bd-a"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "ikimonobiyori:birds:2026-10-31:s-bd-1",
+   "title": "試験の干潟 2026-10-31 野鳥",
+   "subject": {
+    "category": "observation_record",
+    "name": "野鳥",
+    "profile_id": "birds"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の干潟",
+    "lat": 35.6,
+    "lon": 139.9,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_10km",
+    "site_ref": "ikimonobiyori:s-bd-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-bd-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 2,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "多い",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の干潟)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-22",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の干潟)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "決まった形で読んだ",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "01/01〜12/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の干潟",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-bd-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "site_id": "s-bd-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "bd-a",
+      "publisher": "試験の発信元(birds)",
+      "label": "試験の干潟",
+      "official_state": "多い",
+      "stage": "many",
+      "stage_label": "多い",
+      "order": 2,
+      "official_updated": "2026-10-22",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 2,
+      "read_by": "code",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://birds.example.org/bd-a"
+     }
+    ],
+    "representative_source": "bd-a",
+    "representative_label": "試験の干潟",
+    "official_status": {
+     "stage": "many",
+     "stage_label": "多い",
+     "order": 2,
+     "official_state": "多い"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-11-01:s-bd-1",
+   "title": "試験の干潟 2026-11-01 野鳥",
+   "subject": {
+    "category": "observation_record",
+    "name": "野鳥",
+    "profile_id": "birds"
+   },
+   "phenology_stage": "peak",
+   "place": {
+    "name": "試験の干潟",
+    "lat": 35.6,
+    "lon": 139.9,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_10km",
+    "site_ref": "ikimonobiyori:s-bd-1",
+    "sources": [
+     {
+      "url": "https://example.org/s-bd-1",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "maybe",
+    "score": {
+     "value": 2,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "多い",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の干潟)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-22",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の干潟)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-22"
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "決まった形で読んだ",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "01/01〜12/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の干潟",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-bd-1/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "site_id": "s-bd-1",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "bd-a",
+      "publisher": "試験の発信元(birds)",
+      "label": "試験の干潟",
+      "official_state": "多い",
+      "stage": "many",
+      "stage_label": "多い",
+      "order": 2,
+      "official_updated": "2026-10-22",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 2,
+      "read_by": "code",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://birds.example.org/bd-a"
+     }
+    ],
+    "representative_source": "bd-a",
+    "representative_label": "試験の干潟",
+    "official_status": {
+     "stage": "many",
+     "stage_label": "多い",
+     "order": 2,
+     "official_state": "多い"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-10-31:s-bd-2",
+   "title": "試験の森 2026-10-31 野鳥",
+   "subject": {
+    "category": "observation_record",
+    "name": "野鳥",
+    "profile_id": "birds"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の森",
+    "lat": 35.7,
+    "lon": 139.3,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_10km",
+    "site_ref": "ikimonobiyori:s-bd-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-bd-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-10-31T00:00:00+09:00",
+    "end": "2026-11-01T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "少ない",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の森)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-12"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-12",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の森)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-12"
+    },
+    {
+     "metric": "freshness",
+     "value": "古い。参考程度",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "01/01〜12/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の森",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-bd-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 7,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "site_id": "s-bd-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "bd-a",
+      "publisher": "試験の発信元(birds)",
+      "label": "試験の森",
+      "official_state": "少ない",
+      "stage": "few",
+      "stage_label": "少ない",
+      "order": 0,
+      "official_updated": "2026-10-12",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "古い。参考程度",
+      "freshness_class": "old",
+      "freshness_age_days": 12,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://birds.example.org/bd-a"
+     }
+    ],
+    "representative_source": "bd-a",
+    "representative_label": "試験の森",
+    "official_status": {
+     "stage": "few",
+     "stage_label": "少ない",
+     "order": 0,
+     "official_state": "少ない"
+    },
+    "reference_links": []
+   }
+  },
+  {
+   "id": "ikimonobiyori:birds:2026-11-01:s-bd-2",
+   "title": "試験の森 2026-11-01 野鳥",
+   "subject": {
+    "category": "observation_record",
+    "name": "野鳥",
+    "profile_id": "birds"
+   },
+   "phenology_stage": "before_bud",
+   "place": {
+    "name": "試験の森",
+    "lat": 35.7,
+    "lon": 139.3,
+    "elevation_m": null,
+    "region": "東京都",
+    "location_precision": "area_10km",
+    "site_ref": "ikimonobiyori:s-bd-2",
+    "sources": [
+     {
+      "url": "https://example.org/s-bd-2",
+      "title": "試験の出典",
+      "checked_on": "2026-10-22"
+     }
+    ]
+   },
+   "time_window": {
+    "start": "2026-11-01T00:00:00+09:00",
+    "end": "2026-11-02T00:00:00+09:00",
+    "kind": "calendar_day"
+   },
+   "suitability": {
+    "band": "no",
+    "score": {
+     "value": 0,
+     "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
+     "go_threshold": null
+    }
+   },
+   "evidence": [
+    {
+     "metric": "official_state",
+     "value": "少ない",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の森)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-12"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-12",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(birds)(試験の森)",
+     "source_type": "official_notice",
+     "url": "https://birds.example.org/bd-a",
+     "last_updated": "2026-10-12"
+    },
+    {
+     "metric": "freshness",
+     "value": "古い。参考程度",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "typical_window",
+     "value": "01/01〜12/31",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の森",
+     "source_type": "static_reference",
+     "url": "https://example.org/s-bd-2/tw",
+     "last_updated": null
+    }
+   ],
+   "constraints": [],
+   "uncertainty": {
+    "lead_days": 8,
+    "reliable_up_to_days": null,
+    "confidence": {
+     "value": null,
+     "scale": null,
+     "method": "official-reports",
+     "validated": false
+    },
+    "known_limits": [
+     "公式ページに書かれた状態を読んだもので、行く価値の判定は答え合わせで確かめていない",
+     "代表点の座標は名所の目安で、見る場所そのものではない",
+     "生き物の様子は数日で変わることがある。公式の日付から対象の日までに変わりうる",
+     "今回は簡易な読み取りです。表記のぶれがありえます"
+    ]
+   },
+   "care": {
+    "manners": [
+     "巣・ねぐらに近づかない",
+     "給餌をしない",
+     "録音の再生で誘引しない"
+    ],
+    "do_not_disclose_exact_location": true
+   },
+   "native_ref": null,
+   "details": {
+    "profile_id": "birds",
+    "site_id": "s-bd-2",
+    "kind": "official_status",
+    "observations": [
+     {
+      "source": "bd-a",
+      "publisher": "試験の発信元(birds)",
+      "label": "試験の森",
+      "official_state": "少ない",
+      "stage": "few",
+      "stage_label": "少ない",
+      "order": 0,
+      "official_updated": "2026-10-12",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "古い。参考程度",
+      "freshness_class": "old",
+      "freshness_age_days": 12,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://birds.example.org/bd-a"
+     }
+    ],
+    "representative_source": "bd-a",
+    "representative_label": "試験の森",
+    "official_status": {
+     "stage": "few",
+     "stage_label": "少ない",
+     "order": 0,
+     "official_state": "少ない"
+    },
+    "reference_links": []
+   }
+  }
+ ],
+ "diagnostics": {
+  "api_calls": 0,
+  "cache_hit": null,
+  "runtime_s": null,
+  "warnings": []
+ }
+}
