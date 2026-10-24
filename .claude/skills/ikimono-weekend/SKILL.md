@@ -29,7 +29,11 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
 4. **どんな場所で**: 名所カタログの `tags`(`terrain`: mountain / highland / lake / urban / valley / waterfall / garden / wetland など、`access`: ropeway / cable_car / walk_from_station / bus / car_only、`traffic_note`)で絞る(`weekend --terrain` / `--access`)。tags のない名所は「分からない」ので外れることを書く。山・高原の質問では、ロープウェイ・ゴンドラ・山小屋の公式発信(台帳の `publisher_kind: facility_operator`)を優先して読み、山の天気はヤマビヨリと組み合わせるべきことを添える。
 5. **範囲の外**: 範囲は東京・横浜から直線 250 km。`region` の `status` が `out_of_range` なら扱わないと答える。`partial` なら、**範囲に入る部分を正確に言う**(`within_points_by_prefecture` の代表点と距離。代表点で見た目安であることも書く)。そのうえで、その部分の名所カタログ・情報源がまだないことを言う。
 
-対象の指定がない質問(「週末のおすすめは?」だけ)は、`python -X utf8 -m ikimonobiyori.sources subjects` で `implemented: true` の対象を**すべて**まとめて答える(対象ごとに見出し)。未実装の対象を聞かれたら、そう答え、実装済みの対象を示す。
+対象の指定がない質問(「週末のおすすめは?」だけ)は、`python -X utf8 -m ikimonobiyori.sources subjects` で `implemented: true` の対象を**すべて**まとめて答える(対象ごとに見出し)。
+- **話題 → 対象**(段階17): 「野鳥」「鳥」のような話題は `python -X utf8 -m ikimonobiyori.sources topic <語>` で答える対象を決める(方針 `topics`)。**野鳥全般の質問は、通年の探鳥地(`birds`)と冬鳥の飛来地(`wintering_birds`)の両方で答える**。`implemented` はこの手順で答えられるかで、プロファイルの `status`(`engine_status`。v0 の計算の状態)とは別。
+- **未実装の対象を聞かれたら**(段階17 修正⑩): `subjects` の `unimplemented_answer`(1〜2 文。答えられない理由と、足すとどうなるか)で答える。**関係のない実装済みの対象(花の質問に紅葉など)を並べない**。近い対象が答えられるときだけ、その 1 つを示す(`unimplemented_answer` に入っている)。
+- **干潟の名所**(名所カタログの `related_urls` に `tide_table`): 「潮の時刻は公式表で確かめてください」と気象庁の潮位表の URL を添える(下書きの `answer` が出す)。潮位表は読まない(新しいホストを許可に足さない)。
+- **iNaturalist の利用条件**は方針 `data_terms.inaturalist`(ユーザー確認済み 2026-10-21)を読む。答えで「未確認」「人の目でまだ確認していない」と言わない。実通信は規則 6 のとおり(計測フックの下・その場の承認)。
 
 ### 手順
 

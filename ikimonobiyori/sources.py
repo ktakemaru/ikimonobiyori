@@ -372,17 +372,33 @@ def region_report(region, *, catalogs, catalog_policy):
             "catalog_sites": sites, "note": region.get("note")}
 
 
-def subjects_status(sources_dir=None, profiles_dir=None, catalog_dir=None):
-    """対象ごとに、この手順で答えられるか(台帳・名所カタログ・プロファイルの stages がそろっている = implemented)。→ [{subject, name, implemented, missing}]"""
+def subjects_status(sources_dir=None, profiles_dir=None, catalog_dir=None, policy=None):
+    """対象ごとに、この手順で答えられるか(台帳・名所カタログ・プロファイルの stages がそろっている = implemented)。
+    → [{subject, name, implemented, missing, engine_status, unimplemented_answer?}]
+    implemented は「見頃・おすすめの手順で答えられるか」。プロファイルの status(engine_status)は v0 の計算(エンジン)の状態で、別のもの
+    (段階17: birds は engine_status が implemented なのに手順では答えられなかった。docs/stage17-decisions.md)。
+    答えられない対象には、答え方の 1〜2 文(方針の unimplemented。近い対象が答えられるときだけ添える)。"""
     from .profiles import load_profiles
+    profs = load_profiles(profiles_dir)
     out = []
-    for pid, prof in load_profiles(profiles_dir).items():
+    for pid, prof in profs.items():
         checks = (("stages", bool(prof.get("stages"))),
                   ("台帳", (Path(sources_dir or SOURCES_DIR) / f"{pid}.yaml").is_file()),
                   ("名所カタログ", bool(catalog_mod.approved_entries(catalog_mod.load_catalog(pid, catalog_dir) or {}))))
         missing = [k for k, ok in checks if not ok]
-        out.append({"subject": pid, "name": prof["name"], "implemented": not missing, "missing": missing})
+        out.append({"subject": pid, "name": prof["name"], "implemented": not missing, "missing": missing, "engine_status": prof.get("status")})
+    ready = {r["subject"]: r["name"] for r in out if r["implemented"]}
+    un = (policy or load_policy(profiles_dir=profiles_dir))["unimplemented"]
+    for r in out:
+        if not r["implemented"]:
+            rel = (un.get("related") or {}).get(r["subject"])
+            r["unimplemented_answer"] = un["text"].format(name=r["name"]) + (un["related_text"].format(related=ready[rel]) if rel in ready else "")
     return out
+
+
+def topic_subjects(word, policy):
+    """質問の話題(「野鳥」など。方針の topics)→ 答える対象のリスト。なければ None(推測で選ばない)。"""
+    return (policy.get("topics") or {}).get("items", {}).get((word or "").strip())
 
 
 def horizon(now, dates, policy):
@@ -890,6 +906,8 @@ def main(argv=None, http_get=None):
     rg = sub.add_parser("region", help="地域の呼び名 → 名所カタログの件と、範囲(250 km)の内外(通信しない)")
     rg.add_argument("name")
     sub.add_parser("subjects", help="この手順で答えられる対象(台帳・名所カタログ・段階がそろったもの)と、まだの対象")
+    tp = sub.add_parser("topic", help="質問の話題(野鳥など)→ 答える対象(方針の topics。段階17)")
+    tp.add_argument("word")
     n = sub.add_parser("normalize", help="公式の状態 → 共通の段階")
     n.add_argument("--source", required=True)
     n.add_argument("--state", required=True)
@@ -957,6 +975,10 @@ def main(argv=None, http_get=None):
     if a.cmd == "subjects":
         _dump(subjects_status())
         return 0
+    if a.cmd == "topic":
+        got = topic_subjects(a.word, load_policy())
+        _dump({"topic": a.word, "subjects": got})
+        return 0 if got else 1
     if a.cmd == "region":
         region = resolve_region(a.name, load_regions())
         if region is None:

@@ -179,6 +179,11 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
                 tn = (entries.get(r.get("site")) or {}).get("tags", {}).get("traffic_note")
                 if tn:
                     notes.append(f"- {place_name(r, names)}: {tn}")
+        tide_sites = [r.get("site") for _, r, _ in [c for c in chosen if c[0] is p]] +                      [r.get("site") for r in p["summary"]["rows"]] + [row["site"] for row in (p["candidates"].get("sites") or [])]
+        for sid in dict.fromkeys(x for x in tide_sites if x):
+            for u in (entries.get(sid) or {}).get("related_urls") or []:
+                if u["kind"] == "tide_table":
+                    notes.append(f"- {names[sid]}: {ans['tide_note']} — {u['url']}")
         for m in p.get("care") or []:
             notes.append(f"- {m}")
     if notes:

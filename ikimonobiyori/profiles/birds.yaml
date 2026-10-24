@@ -49,6 +49,16 @@ care:
     - "巣・ねぐらに近づかない"
     - "給餌をしない"
     - "録音の再生で誘引しない"
+# 現況の段階(段階17 修正⑧)。種ではなく場所の状況で決める(渡り・季節の入れ替わりで種ごとに違うため)。order は共通の順番(data/sources/policy.yaml の common_stages)。
+# 公式の書き方(台帳 data/sources/birds.yaml の notation.map)がこの id に対応するときだけ段階を付ける。確認種数・羽数から段階を推測しない(閾値の出典がない)
+stages:
+  source: "指示書(段階17 フェーズ3、2026-10-24 ユーザー承認): 少ない / 増えている / 多い / 減っている"
+  provisional: true
+  items:
+    - {id: few, order: 0, label: 少ない}
+    - {id: increasing, order: 1, label: 増えている}
+    - {id: many, order: 2, label: 多い}
+    - {id: decreasing, order: 4, label: 減っている}
 # 相対頻度の平易な説明(5d)。式(種の件数 ÷ 鳥類の観察記録の総数。条件は場所×半径、対象日の前後 window_weeks 週、過去 history_years 年。docs/ikimonobiyori-mapping.md)から
 # 機械的に出す一文。式と一致する言い方だけ。窓口の narrative は details.score_explain を逐語で引用する
 score_explain: "過去{years}年のこの時期(前後{weeks}週間・半径{radius}km)の鳥類の記録{total}件のうち、{name}は{count}件(約{rf:.0%})"

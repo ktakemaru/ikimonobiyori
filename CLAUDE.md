@@ -20,7 +20,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
    - テストは通信しない(ソケットは `tests/nonet.py` で禁止、子プロセスも `tests/nonet_child/` で禁止、`BIYORI_UNDER_TEST=1` は `--live` を常に拒否)。テストから子プロセスを起動するのは `tests/helpers.py` の `run_child` / `run_child_env` だけ。
    - `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る。このリポジトリ単独で実通信しない。単独で使うための別の上限の仕組みは作らない(作るなら提案として報告)。
    - 許可ホストは `config.yaml` の `live.allowed_hosts_by_subject`(紅葉: `api.open-meteo.com`、野鳥: `api.inaturalist.org`、紅葉の答え合わせ `autumn_leaves_backtest`: `archive-api.open-meteo.com`。最後はユーザー承認 2026-10-22)だけ。自分では広げない。Open-Meteo は無料枠(1 日 10,000 call、非商用、CC BY 4.0 の表示)を守る。
-   - **iNaturalist の利用規約・推奨手順は、人の目で確認するまで未確認**(`docs/ikimonobiyori-research.md` §12)。野鳥の実通信を増やさない。実際の応答をこのリポジトリに置かない(テストは合成データ)。
+   - **iNaturalist の利用規約・推奨手順は、ユーザー確認済み(2026-10-21。`docs/data-sources.md` §3。方針 `data_terms`)**。Claude Code は原文を読めていない(HTTP 403)。答えで「未確認」と言わない。それでも野鳥の実通信は増やさない(計測フックの下で、その場の承認があるときだけ)。実際の応答をこのリポジトリに置かない(テストは合成データ)。
 7. **野鳥の位置は粗く丸める**(プロファイルの `location_precision`、既定は小数 1 桁)。正確な座標・観察者・写真はクエリ・キャッシュ・ログ・出力のどこにも出さない。`care`(マナー)を出力に付ける。
 8. **書き込み先は `IKIMONOBIYORI_DATA_DIR` の下だけ**(キャッシュ・読めなかった応答・部品)。未設定のときは `runtime/ikimonobiyori/`(`.gitignore` 済み)。リポジトリの追跡ファイルを実行で変えない。biyori-hub は取り込んだこのコードを `vendor/` から動かすので、`ikimonobiyori/` の中に書き込まない。
 9. **`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しない**(`tests/test_self_contained.py` が検査する)。使ってよい外部ライブラリは PyYAML・jsonschema・requests だけ。
@@ -59,7 +59,11 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 4. **どんな場所で**: 名所カタログの `tags`(`terrain`: mountain / highland / lake / urban / valley / waterfall / garden / wetland など、`access`: ropeway / cable_car / walk_from_station / bus / car_only、`traffic_note`)で絞る(`weekend --terrain` / `--access`)。tags のない名所は「分からない」ので外れることを書く。山・高原の質問では、ロープウェイ・ゴンドラ・山小屋の公式発信(台帳の `publisher_kind: facility_operator`)を優先して読み、山の天気はヤマビヨリと組み合わせるべきことを添える。
 5. **範囲の外**: 範囲は東京・横浜から直線 250 km。`region` の `status` が `out_of_range` なら扱わないと答える。`partial` なら、**範囲に入る部分を正確に言う**(`within_points_by_prefecture` の代表点と距離。代表点で見た目安であることも書く)。そのうえで、その部分の名所カタログ・情報源がまだないことを言う。
 
-対象の指定がない質問(「週末のおすすめは?」だけ)は、`python -X utf8 -m ikimonobiyori.sources subjects` で `implemented: true` の対象を**すべて**まとめて答える(対象ごとに見出し)。未実装の対象を聞かれたら、そう答え、実装済みの対象を示す。
+対象の指定がない質問(「週末のおすすめは?」だけ)は、`python -X utf8 -m ikimonobiyori.sources subjects` で `implemented: true` の対象を**すべて**まとめて答える(対象ごとに見出し)。
+- **話題 → 対象**(段階17): 「野鳥」「鳥」のような話題は `python -X utf8 -m ikimonobiyori.sources topic <語>` で答える対象を決める(方針 `topics`)。**野鳥全般の質問は、通年の探鳥地(`birds`)と冬鳥の飛来地(`wintering_birds`)の両方で答える**。`implemented` はこの手順で答えられるかで、プロファイルの `status`(`engine_status`。v0 の計算の状態)とは別。
+- **未実装の対象を聞かれたら**(段階17 修正⑩): `subjects` の `unimplemented_answer`(1〜2 文。答えられない理由と、足すとどうなるか)で答える。**関係のない実装済みの対象(花の質問に紅葉など)を並べない**。近い対象が答えられるときだけ、その 1 つを示す(`unimplemented_answer` に入っている)。
+- **干潟の名所**(名所カタログの `related_urls` に `tide_table`): 「潮の時刻は公式表で確かめてください」と気象庁の潮位表の URL を添える(下書きの `answer` が出す)。潮位表は読まない(新しいホストを許可に足さない)。
+- **iNaturalist の利用条件**は方針 `data_terms.inaturalist`(ユーザー確認済み 2026-10-21)を読む。答えで「未確認」「人の目でまだ確認していない」と言わない。実通信は規則 6 のとおり(計測フックの下・その場の承認)。
 
 ### 手順
 

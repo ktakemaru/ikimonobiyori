@@ -61,6 +61,8 @@ answer:
   # 年のない日付(箱根など)を「○/○時点」と書くときに添える
   year_unknown_suffix: "(年の記載なし)"
   stale_display: "表示が昨シーズンのままの可能性があります。おすすめに使っていません"
+  # 干潟の名所(名所カタログの related_urls に tide_table)を答えに出すときに添える(段階17 フェーズ3。潮位表は読まない)
+  tide_note: "潮の時刻は公式表で確かめてください(気象庁 潮位表)"
   # 要約の道具で読んだ記録を使ったとき(段階17 修正①)・読んだ事実を記録できなかったとき(修正④)に出す 1 行
   simple_read_note: "今回は簡易な読み取りです。表記のぶれがありえます"
   record_failed_note: "読んだ結果を記録できませんでした"
@@ -108,6 +110,29 @@ record:
 reuse:
   same_day_only: true
   source: "指示書(段階16 A-2)"
+
+# 質問の話題 → 答える対象(段階17 修正⑦)。「野鳥全般」の質問は、通年の探鳥地(birds)と冬鳥の飛来地(wintering_birds)の両方で答える
+topics:
+  source: "指示書(段階17 フェーズ3・4、2026-10-24 ユーザー承認)"
+  items:
+    野鳥: [birds, wintering_birds]
+    鳥: [birds, wintering_birds]
+    探鳥: [birds, wintering_birds]
+    白鳥: [wintering_birds]
+    冬鳥: [wintering_birds]
+    紅葉: [autumn_leaves]
+
+# 未実装の対象を聞かれたとき(段階17 修正⑩)。関係のない実装済みの対象を並べず、答えられない理由と、足すとどうなるかを 1〜2 文で。
+# 近い対象(related)が答えられる対象なら、それだけを示す
+unimplemented:
+  source: "指示書(段階17 フェーズ3 の 5)"
+  text: "{name}は、まだお答えできません(公式の情報源と名所の一覧をまだ作っていないため)。足すと、公式の開花・観察情報のページを読んで、今の状態と場所をお答えできるようになります。"
+  related_text: "近い対象の「{related}」ならお答えできます。"
+  related: {cherry_blossom: flowers, higanbana: flowers, sunflower: flowers}
+
+# データ源の利用条件の確認の状態(段階17 修正⑦の 4)。答えを組み立てるときはここを読む(未確認と答えない)。正本の記録は docs/data-sources.md
+data_terms:
+  inaturalist: {status: user_confirmed, checked_on: "2026-10-21", ref: "docs/data-sources.md §3", note: "ユーザーが規約と API の推奨手順を確認し、集計値だけを使う使い方は適合と判断。Claude Code は原文を読めていない(HTTP 403)。実通信は計測フックの下で、その場の承認があるときだけ(CLAUDE.md 規則 6)"}
 
 # 和暦(段階17 修正⑥): 月ごとの記事の見出し(「令和8年10月の白鳥の渡来状況」)を作るため。令和元年 = 2019 年
 japanese_era:

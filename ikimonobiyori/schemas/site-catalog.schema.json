@@ -73,6 +73,7 @@
         "description": {"type": "string", "description": "人が承認した短い解説。sources と approved_at がそろったものだけを提案に使う(catalog.usable_description)"},
         "access_notes": {"type": "string"},
         "manners": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "related_urls": {"type": "array", "items": {"type": "object", "required": ["kind", "url"], "additionalProperties": false, "properties": {"kind": {"enum": ["tide_table"], "description": "tide_table = 気象庁の潮位表(干潟の名所。人が開く URL。読まない。段階17)"}, "url": {"$ref": "#/$defs/url"}, "note": {"type": "string"}}}, "description": "人が開く関連の公式ページ(段階17。読む情報源ではない)"},
         "site_ref": {"type": "string", "pattern": "^(yamabiyori|hoshibiyori|ikimonobiyori):[A-Za-z0-9_-]+$", "description": "他のビヨリの地点への参照(例: yamabiyori:m012)"},
         "status": {"enum": ["candidate", "approved", "retired"]},
         "approved_by": {"enum": ["user", "claude_code_provisional"], "description": "承認した人(段階16)。ないものはユーザーの承認(段階14b)。claude_code_provisional は無人の間の仮承認(ユーザーが見直す)"}, "approved_at": {"type": "string", "format": "date", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "ユーザーが approved にした日。status: approved なら必須"},
