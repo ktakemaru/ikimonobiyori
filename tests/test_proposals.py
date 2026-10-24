@@ -210,6 +210,20 @@ class Properties(unittest.TestCase):
         self.assertTrue(any("試験の外の滝" in x for x in w))
         self.assertEqual(sum("試験の峠" in x for x in w), 1)
 
+    def test_a_place_with_a_proposal_is_not_also_without_status(self):
+        reg, _, _ = F.scenario("wintering_birds")
+        reg = copy.deepcopy(reg)
+        reg["sources"].append(F.src("wb-b", "wintering_birds", [{"site": "s-wb-1", "label": "試験の沼・別"}], {"初飛来": "arriving"}))
+        mk = lambda sid, label, state: sources.make_record(registry=reg, policy=POLICY, read_at=F.NOW.isoformat(), source_id=sid,  # noqa: E731
+                                                           site="s-wb-1", label=label, state=state, updated="2026-10-23")
+        recs = [mk("wb-a", "試験の沼", "初飛来"), mk("wb-b", "試験の沼・別", None)]
+        part = F.part("wintering_birds", recs=recs, profile_name="冬鳥")
+        part["registry"] = reg
+        part["summary"] = sources.summarize(recs, registry=reg, catalog_doc=part["catalog"], policy=POLICY, on=F.NOW.date(), dates=F.DATES)
+        doc = proposals.build([part], PROFILES, policy=POLICY, catalog_policy=CAT_POLICY, now=F.NOW, dates=F.DATES)
+        self.assertIn("s-wb-1", {p["details"]["site_id"] for p in doc["proposals"]})
+        self.assertFalse([w for w in doc["diagnostics"]["warnings"] if "試験の沼" in w])
+
     def test_two_labels_of_one_place_become_one_proposal(self):
         doc = subject_doc("autumn_leaves")
         ps = [p for p in doc["proposals"] if p["details"]["site_id"] == "s-al-1"]

@@ -7,3 +7,4 @@
 - フェーズ2: `ikimonobiyori/proposals.py` と `python -X utf8 -m ikimonobiyori.sources proposals`(`answer` と同じ入力 + `--weekend this|next`・`--request-id`・`--out`)。共通の入力の読み取りを `_answer_inputs` に、使える行の判定を `sources.usable_status_row` に分けた。合成データで契約の検査に通った。
 - フェーズ3: `answer` のおすすめの選び方が `sources.usable_status_row` を使うようにした(提案と同じ判定。答えの出力は変わらない。既存テストはそのまま通る)。スキル・AGENTS.md・CLAUDE.md の手順に「10. 提案を出す」を足した。整合のテスト `tests/test_proposals.py`(5 件。答えのおすすめ・根拠の名所と提案の名所が一致、おすすめは maybe)。
 - フェーズ4: `tests/test_proposals.py`(27 件: 整合・契約・ゴールデン 4 対象・決定的・go なし・evidence の照合値・年のない日付・年の補いの印・band の規則・古さ・30 日・14 日より先・警告の重複なし・同じ名所の複数行・位置の丸め・交通の注意・禁止語・印の付いた記録・子プロセスの CLI(ソケット禁止)・--out・--weekend next)。ハブの `validate.py` でゴールデン 4 つが OK(D-26)。不具合 3 つを直した(D-24)。
+- フェーズ5: 今日の記録で 5 通り(紅葉 次の土日・来週末、冬鳥、花、野鳥)を出した(`docs/stage18-trial.md`)。すべて契約の検査に通った。答えとの違いはカタログ外の地点だけ(D-28)。重複した警告の不具合を直した(D-27)。

@@ -161,7 +161,7 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
     entries = {e["id"]: e for e in catalog_mod.approved_entries(part["catalog"] or {})}
     names = {k: e["name"] for k, e in entries.items()}
     publishers = {s["id"]: s.get("publisher") for s in (part.get("registry") or {}).get("sources") or []}
-    by_site, outside = {}, []
+    by_site, outside, no_state = {}, [], []
     for r in part["summary"]["rows"]:
         if r.get("kind") != "status_page":
             continue
@@ -173,7 +173,7 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
             warn(r.get("site") or nm, wt["conflict"].format(name=nm))
             continue
         if not usable_status_row(r) or r.get("official_state") is None or r.get("state_kind") == "no_info":
-            warn(r.get("site") or nm, wt["no_state"].format(name=nm, url=r.get("url")))
+            no_state.append((r.get("site") or nm, wt["no_state"].format(name=nm, url=r.get("url"))))
             continue
         if r.get("site") not in entries:
             outside.append(nm)
@@ -184,6 +184,9 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
                                                  days=val(pp["exclude_official_days_before_target"])))
             continue
         by_site.setdefault(r["site"], []).append(r)
+    for key, text in no_state:                       # 同じ名所に状態の分かる行があれば(提案になる)、「現況なし」とは書かない
+        if key not in by_site:
+            warn(key, text)
     if outside:
         warn(("outside", part["subject"]), wt["outside_catalog"].format(subject=part["name"], names="、".join(dict.fromkeys(outside))))
 
