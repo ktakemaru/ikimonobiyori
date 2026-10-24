@@ -47,3 +47,65 @@ entries:
     sources:
       - {url: "https://www.takaotozan.co.jp/StationStaff/archives/14100", title: "高尾登山電鉄 高尾山の紅葉情報"}
     note: "代表点: ケーブルカー清滝駅(推定)。76地点の高尾山(山頂)とは別に山麓を代表点にした"
+
+  # ---- 段階19: 座標の確認で外れた地点・承認待ちの情報源の地点(足さない。ユーザーが見直す。docs/stage19-review.md) ----
+  - id: kouyou-0056
+    name: 八溝山
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 1022 m に対し、所在地から推定した試し点の標高が 303 m(719 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0003.html", title: "大子町観光協会 八溝山", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町上野宮。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0057
+    name: 男体山(大子町)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 654 m に対し、推定した試し点の標高が 270 m(384 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.daigo-kanko.jp/mt_nantai.html", title: "大子町観光協会 男体山", checked_on: "2026-10-24"}
+    note: "段階19。所在地の記載がない(観光協会の住所だけ)。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0058
+    name: 六方沢(六方沢橋)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 1434 m に対し、推定した試し点の標高が 531 m(903 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/37", title: "日光市観光協会 六方沢", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市瀬尾。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0059
+    name: 鬼怒川温泉 丸山
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 約 700 m に対し、推定した試し点の標高が 405 m(295 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/22", title: "日光市観光協会 鬼怒川温泉 丸山", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市鬼怒川温泉滝。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0060
+    name: 接岨峡・長島ダム・奥大井湖上駅
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: area_10km
+    status: candidate              # 保留: 情報源 okuooi-koyo が承認待ち(pending)で、スポットのページを読んでいない
+    sources:
+      - {url: "https://okuooi.gr.jp/pickup/page.php?id=3", title: "川根本町まちづくり観光協会 紅葉情報"}
+    note: "段階19。承認済みの現況の情報源がないので足さない(承認されたら座標を取る)"
+  - id: kouyou-0061
+    name: 智満寺
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 情報源 okuooi-koyo が承認待ち(pending)で、スポットのページを読んでいない
+    sources:
+      - {url: "https://okuooi.gr.jp/pickup/page.php?id=3", title: "川根本町まちづくり観光協会 紅葉情報"}
+    note: "段階19。承認済みの現況の情報源がないので足さない(承認されたら座標を取る)"

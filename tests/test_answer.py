@@ -1,6 +1,7 @@
 """答えの形(段階17 フェーズ1。ikimonobiyori/answer.py と、スキルの答えの例)。通信なし。合成のデータだけ。
 結論が先・内部用語なし・同じ名所を 2 か所に出さない・日付は地点ごとに 1 つ・扱える範囲の 1 行。"""
 import contextlib
+import copy
 import io
 import os
 import re
@@ -169,7 +170,8 @@ class AnswerFilters(unittest.TestCase):
     def test_a_region_keeps_only_its_places(self):
         d = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, d, True)
-        reg = sources.load_registry("autumn_leaves")
+        reg = copy.deepcopy(sources.load_registry("autumn_leaves"))
+        next(s for s in reg["sources"] if s["id"] == "hakone-kankou-koyo")["covers"].append({"name": "宮ノ下", "label": "宮ノ下"})   # カタログ外の地点の例(宮ノ下は段階19 でカタログに入ったので、写しに名前の covers を足す)
         at = NOW.isoformat()
         recs = [sources.make_record(registry=reg, policy=POLICY, read_at=at, source_id="hakone-kankou-koyo", name="宮ノ下", label="宮ノ下",
                                     state="色づきはじめ", updated="2026-10-22", year_inferred=True),

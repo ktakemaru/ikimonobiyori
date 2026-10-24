@@ -533,3 +533,338 @@ entries:
     sources:
       - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
     note: "箱根町観光協会の紅葉情報の地点『恩賜箱根公園』。例年の見頃の記載はない(2026-10-24 の確認)"
+  - id: kouyou-0036
+    name: 月待の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.8, lon: 140.4, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 茨城県, area: 大子, terrain: [waterfall], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [daigo-kanko-koyo]
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0004.html", title: "大子町観光協会 月待の滝", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町川山。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0037
+    name: 永源寺(大子町)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.8, lon: 140.4, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 茨城県, area: 大子, terrain: [temple_shrine], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [daigo-kanko-koyo]
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0020.html", title: "大子町観光協会 永源寺(大子町)", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町大子。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0038
+    name: 箱根 元箱根
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.19, lon: 139.02, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は元箱根港のバス停(芦ノ湖の南側)。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_1km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0039
+    name: 箱根 宮ノ下
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.24, lon: 139.08, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印はホテル前のバス停(芦ノ湖方面と強羅方面の分岐)。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_1km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0040
+    name: 箱根 旧街道 甘酒茶屋付近
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 35.2, lon: 139.0, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は甘酒茶屋のバス停(旧道経由の元箱根行き)。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0041
+    name: 箱根 湯本
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.23, lon: 139.11, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 神奈川県, area: 箱根, access: [walk_from_station], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [hakone-kankou-koyo]
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。箱根湯本駅から下車すぐ。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_1km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0042
+    name: 小網ダム
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/1508", title: "日光市観光協会 小網ダム", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市藤原。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0043
+    name: 川治温泉
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。スポットのページへのリンクがない。温泉地の名前から日光市川治付近。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0044
+    name: 平家の里
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/54", title: "日光市観光協会 平家の里", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市湯西川。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0045
+    name: 日光だいや川公園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.7, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/883", title: "日光市観光協会 日光だいや川公園", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市瀬川。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0046
+    name: 日光の社寺(世界遺産)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.76, lon: 139.6, elevation_m: null}
+    location_precision: area_1km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [temple_shrine], traffic_note: "大型バスは基本平日のみで、事前の問い合わせが要る", source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/2", title: "日光市観光協会 日光の社寺(世界遺産)", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市山内。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_1km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0047
+    name: 杉並木公園
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.7, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/38", title: "日光市観光協会 杉並木公園", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市瀬川。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0048
+    name: 湯西川水の郷
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/52", title: "日光市観光協会 湯西川水の郷", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市湯西川。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0049
+    name: 蛇王の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/160", title: "日光市観光協会 蛇王の滝", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市若間。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0050
+    name: 足尾 銀山平
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.7, lon: 139.4, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/1548", title: "日光市観光協会 足尾 銀山平", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市足尾町銀山平。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0051
+    name: 霧降滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.8, lon: 139.6, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [waterfall], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/120", title: "日光市観光協会 霧降滝", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市所野。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0052
+    name: 鬼怒楯岩大吊橋
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, traffic_note: "駐車場は予約できない", source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/41", title: "日光市観光協会 鬼怒楯岩大吊橋", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市鬼怒川温泉大原。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0053
+    name: 鬼怒沼
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.9, lon: 139.4, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [wetland, highland], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/59", title: "日光市観光協会 鬼怒沼", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。公式ページの標高は 2020 m 前後。試し点の標高(2062 m)と合う。『9月中旬に紅葉』と開始だけの記載で、期間にならないので例年の時期は入れない。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km)。標高は入れない"
+  - id: kouyou-0054
+    name: 龍王峡
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 36.9, lon: 139.7, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 栃木県, area: 日光, terrain: [valley], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [nikko-kankou-autumn-leaves]
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/42", title: "日光市観光協会 龍王峡", checked_on: "2026-10-24"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は日光市藤原。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km。確かめは範囲・地域・重複だけで、標高を確かめられたのは鬼怒沼だけ)。標高は入れない。例年の時期の記載はない(2026-10-24 の確認)。"
+  - id: kouyou-0055
+    name: 西沢渓谷
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    point: {lat: 35.9, lon: 138.8, elevation_m: null}
+    location_precision: area_10km
+    official_status_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"
+    typical_window: {start: "10-01", end: "10-20", source_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", note: "やまなし観光ネットの一覧: 西沢渓谷 例年 10月上旬〜中旬(上旬を 01〜10 日・中旬を 11〜20 日に直した)"}
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: "2026-10-24"
+    tags: {prefecture: 山梨県, area: 山梨市, terrain: [valley], source: "Claude Code が付けた(推定。座標は所在地・目印からの推定。段階19)"}
+    status_sources: [yamanashi-kankou-koyo]
+    sources:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", title: "やまなし観光推進機構 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。一覧ページの記載(標高 1,500 m 以上のグループ)は西沢渓谷単独の値ではないので、標高の確かめには使っていない。公式ページに座標はなく、代表点は所在地・目印からの推定(粗さ area_10km)。標高は入れない"
