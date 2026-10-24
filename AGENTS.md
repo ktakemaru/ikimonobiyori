@@ -32,6 +32,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
 - 対象を足すとき: プロファイルを足す(スキーマ `ikimonobiyori/schemas/ikimono-profile.schema.json` に通る)。骨組み(`status: skeleton`)は `not_applicable: profile_skeleton` を返す。実装済みにするには手法とテストが要る。
 - `ikimonobiyori/sources.py` 現況の情報源の台帳(`data/sources/<対象>.yaml`)の検査・状態の書き方の対応・候補の絞り込み(地域 `data/regions.yaml`・名所の `tags`)・読んだ結果の記録(`IKIMONOBIYORI_DATA_DIR` の下の `status_log/`)・答えの材料(`summary`)。段階の並びはプロファイルの `stages`。段階15・16。
+- `ikimonobiyori/fetch/spot_coords.py` 公式のスポットのページ(日光市観光協会・箱根町観光協会だけ)の、地図の埋め込み(iframe の src)の座標の数字の組だけを読む小さなコード(`sources spot-coords`。段階19 の続き。HTML・本文は保存しない。数字がなければ「座標なし」で推測しない。計測フックの下・robots.txt を先に・2 秒以上空ける・429 で止める)。名所カタログの座標は、これで確認できたものだけを承認する(推定の座標は使わない)。
 - `ikimonobiyori/proposals.py` 同じ日に読んだ記録・名所カタログ・情報源の一覧から `biyori-proposal/1` の提案を組み立てる(`sources proposals`。段階18。通信しない・LLM なし・`go` を出さない。対応と規則は `docs/proposal-mapping.md`、値は `policy.yaml` の `proposals`)。`answer` と同じ記録・同じ使える行の判定(`sources.usable_status_row`)を使う。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。

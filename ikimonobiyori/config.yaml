@@ -17,6 +17,9 @@ live:
     autumn_leaves_backtest: [archive-api.open-meteo.com]   # 紅葉の答え合わせ(段階14)の過去の気温(Historical API)だけ。ユーザー承認 2026-10-22(docs/validation-plan.md §0)。GET のみ・認証なし。allowed_hosts(上の紅葉の実行)には足さない
     autumn_leaves_status: [www.nikko-kankou.org, www.hakone.or.jp]   # 紅葉の公式の現況ページをコードで読む(段階16 A-4。fetch/status_pages.py)。この 2 つだけ。ユーザー承認 2026-10-23。GET のみ(robots.txt とページ)。本文は保存しない
   min_interval_s: 2                           # リクエスト間隔の下限(30リクエスト/分以下)
+  spot_coords:                                # スポットのページの地図の埋め込みから読む座標の範囲(段階19 の続き。fetch/spot_coords.py)。日本の範囲の目安。**仮置き**(根拠のある値ではない)。範囲の外の数字は読まない
+    lat: [20, 46]
+    lon: [122, 154]
   retry:                                      # 紅葉(fetch/live.py)の通信エラー(接続・TLS・タイムアウト)だけの再試行。HTTP の非 200 は、下の http の 502/503/504 だけ再試行する(それ以外は即中止)。野鳥は対象外。再試行も 1 リクエストと数える。**仮置き**(GitHub Actions の実験でのタイムアウトを受けた値。根拠のある値ではない)
     max_retries: 2
     wait_s: [2, 5]                            # 1 回目・2 回目の再試行の前の待ち(秒)

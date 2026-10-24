@@ -1022,6 +1022,44 @@ def _answer_cli(a):
     return 0
 
 
+def _spot_coords_cli(a, http_get=None):
+    """スポットのページの地図の埋め込みの座標だけを読む(段階19 の続き)。read と同じ実通信の条件(--live・BIYORI_ALLOW_LIVE=1・--max-requests・計測フック)。"""
+    from .fetch import spot_coords
+    if not a.live:
+        print("spot-coords は --live が必要です(読むのは必要なときに 1 回だけ。キャッシュはない)", file=sys.stderr)
+        return 2
+    if http_get is None and not livegate.live_allowed():
+        print(livegate.refusal(), file=sys.stderr)
+        return 2
+    if a.max_requests is None or a.max_requests < 1:
+        print("--live は明示的な --max-requests (1 以上)が必要です", file=sys.stderr)
+        return 2
+    if http_get is None and not os.environ.get("BIYORI_REQ_LOG"):
+        print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します(許可リスト・上限の強制のため)", file=sys.stderr)
+        return 2
+    cfg, now = load_config(), parse_now(a.now)
+    getter = None
+    if http_get is None:
+        from .fetch.live import SessionGetter
+        t = cfg["live"]["request_timeout"]
+        getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
+    try:
+        res = spot_coords.read_spots(a.url, http_get=http_get or getter, cfg=cfg, max_requests=a.max_requests)
+    except ValueError as ex:
+        print(str(ex), file=sys.stderr)
+        return 2
+    finally:
+        if getter is not None:
+            getter.close()
+    text = json.dumps({"read_at": now.isoformat(), **res}, ensure_ascii=False, indent=1) + "\n"
+    if a.out:
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(text, encoding="utf-8", newline="\n")
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
 def _proposals_cli(a):
     """同じ日に読んだ記録から biyori-proposal/1 を出す(段階18。通信しない・書き込まない。--out を明示したときだけファイルに書く)。"""
     from . import proposals
@@ -1119,6 +1157,12 @@ def main(argv=None, http_get=None):
     an.add_argument("--access", action="append")
     an.add_argument("--flower-kind", action="append", help="花の種類(tags.flower_kinds。段階17)")
     an.add_argument("--record-failed", action="store_true", help="読んだ事実を記録できなかった(答えの最後に 1 行)")
+    sc = sub.add_parser("spot-coords", help="スポットのページの地図の埋め込みの座標だけを読む(段階19 の続き。日光市観光協会・箱根町観光協会だけ。--live・--max-requests・計測フックが要る)")
+    sc.add_argument("--url", action="append", required=True, help="スポットのページの URL(許可ホストだけ)")
+    sc.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
+    sc.add_argument("--live", action="store_true")
+    sc.add_argument("--max-requests", type=int)
+    sc.add_argument("--out", help="結果(数字・状態だけ。HTML は含まない)の出力先(省略すると標準出力)")
     pr = sub.add_parser("proposals", help="同じ日に読んだ記録から biyori-proposal/1 の提案を出す(段階18。通信しない・LLM なし。標準出力、--out のときだけファイル)")
     pr.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     pr.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
@@ -1165,6 +1209,8 @@ def main(argv=None, http_get=None):
         return _answer_cli(a)
     if a.cmd == "proposals":
         return _proposals_cli(a)
+    if a.cmd == "spot-coords":
+        return _spot_coords_cli(a, http_get)
     policy, registry = load_policy(), load_registry(a.subject)
     if registry is None:
         print(f"台帳がない: {a.subject}", file=sys.stderr)
