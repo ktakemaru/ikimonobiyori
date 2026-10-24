@@ -80,6 +80,24 @@ answer:
   # 要約の道具で読んだ記録を使ったとき(段階17 修正①)・読んだ事実を記録できなかったとき(修正④)に出す 1 行
   simple_read_note: "今回は簡易な読み取りです。表記のぶれがありえます"
   record_failed_note: "読んだ結果を記録できませんでした"
+  # 読んだ地点の数より今日の記録が少ないとき(answer --read-count)。漏れを黙って残さない(段階20)
+  record_gap: "{publisher}のページで読んだ {read} 地点のうち、今日の結果に残っているのは {recorded} 地点です。答えから抜けている地点があるかもしれません。公式ページをご自身でもご確認ください"
+  # 見頃予測が対象の日より前に終わる名所はおすすめから外し、名前だけ 1 行で書く。対象の日が予測の最後の旬に入るときは終盤の注意(段階20、ユーザーの指示 2026-10-25)。
+  # 旬の分け方は month_thirds(上旬 1〜10・中旬 11〜20・下旬 21〜月末。ハブのコンシェルと同じ)
+  forecast_ended: "予測の時期を過ぎる見込みのため外しました: {names}"
+  forecast_last_third: "終盤の可能性があります"
+  other_candidates: "ほかの候補(公式の見頃予測が対象の日にかかる): {names}"
+  # 日付の書き方(段階20): 本文に「○/○現在」があれば「○/○時点」、更新日だけなら「公式の更新日は○/○」。両方あって離れていれば両方書く
+  updated_only: "公式の更新日は{md}"
+  also_updated: "公式の更新日は{md}"
+  date_gap_days: {value: 3, source: "仮置き(段階20)。『現在』の日付と更新日が離れている目安。新しさの『新しい』の上限 fresh_max_days と同じ日数。ユーザーの確認待ち", provisional: true}
+  # 部位ごとに状態が違う地点(山頂・中腹・山麓など)は、1 つの記号にまとめず本文の部位ごとの状態を原文のまま書く
+  parts_label: "公式の状態は部位ごと"
+  # 読む予定の情報源を読まなかったとき、答えに添える理由(--unread-reason で渡す。なければこの文)
+  unread_reason_unknown: "今回は読んでいません(理由の記録なし)"
+  unread_reason: "読めなかった理由: {reason}"
+  # 作業メモ(答えには含めない。答えの後ろに分けて出す)
+  work_memo_heading: "作業メモ(答えには含めません)"
   conflict: "読み方によって状態が食い違っています。公式ページをご自身でご確認ください"
   # 気温からの推定(v0 の出力)を答えに書くときの呼び方(内部の呼び名 v0 を出さない)
   aux_estimate_label: "気温からの推定(未検証。答え合わせで不合格)"
@@ -97,7 +115,7 @@ record:
            method, official_forecast, event_start, event_end, erroneous, erroneous_reason, corrected_on,
            unmarked_on, unmarked_reason, user_checked_on, method_note,
            official_observed, observed_year_inferred, freshness_basis, read_by,
-           superseded, superseded_on, superseded_reason]
+           superseded, superseded_on, superseded_reason, official_parts]
   # 新しさの基準(段階17 修正⑤): ①ページが示す現地の状態の日付(「10/22現在」など。official_observed)、②なければ最終更新日(official_updated)。
   # どちらを使ったかを freshness_basis に残す。日付が 1 つだけの情報源は、その日付の種類を台帳の notation.date_basis に書く(既定は updated_date)
   freshness_bases: [observed_date, updated_date]

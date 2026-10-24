@@ -22,6 +22,7 @@ SUBJECT_HOSTS = "autumn_leaves_status"
 SKIP_TAGS = ("script", "style", "noscript", "template")
 NIKKO_FIELDS = {"state": "現在の状況", "updated": "最終更新日", "forecast": "見頃予測"}
 NIKKO_DATE_RE = re.compile(r"(?P<y>\d{4})年(?P<m>\d{1,2})月(?P<d>\d{1,2})日")
+NIKKO_OBSERVED_RE = re.compile(r"^(?P<m>\d{1,2})/(?P<d>\d{1,2})現在")
 HAKONE_DATE_RE = re.compile(r"(?P<m>\d{1,2})/(?P<d>\d{1,2})現在")
 HAKONE_ICON_RE = re.compile(r"(?P<icon>icon_lev\d+)\.\w+$")
 
@@ -109,9 +110,32 @@ def _pick(cands, label, diag):
     return None
 
 
+def _body_head(block):
+    """地点の塊の、本文(見出しつきの欄とその値を除いたテキスト)の最初の断片。なければ None。"""
+    texts = [t[1] for t in block if t[0] == "text"]
+    heads = [norm(h) for h in NIKKO_FIELDS.values()]
+    skip = set()
+    for k, raw in enumerate(texts):
+        n = norm(raw)
+        h = next((h for h in heads if n.startswith(h)), None)
+        if h is not None:
+            skip.add(k)
+            if not n[len(h):].lstrip(":").strip():
+                skip.add(k + 1)                                        # 見出しと値が別の断片
+    return next((raw for k, raw in enumerate(texts) if k not in skip), None)
+
+
+def _observed_md(block):
+    """本文の先頭が「M/D現在」(年なし)なら "MM-DD"(状態の観察日。段階20、ユーザーの指示 2026-10-25)。
+    「10/18山頂 終盤・中腹 見ごろ…」のように書き出しが違うものは取らない(日付は更新日だけ)。状態は本文から取らない。"""
+    m = NIKKO_OBSERVED_RE.match(norm(_body_head(block) or ""))
+    return f"{int(m['m']):02d}-{int(m['d']):02d}" if m else None
+
+
 def parse_nikko(html, covers):
-    """日光市観光協会の紅葉状況。地点ごとの「現在の状況:記号」「最終更新日:YYYY年M月D日」「見頃予測:…」。
-    → (items, diag)。items: [{label, state, updated, forecast}](cover の site/name は呼び出し側が付ける)。紹介文の日付(「10/20現在」など)は使わない。"""
+    """日光市観光協会の紅葉状況。地点ごとの「現在の状況:記号」「最終更新日:YYYY年M月D日」「見頃予測:…」と、本文の先頭の「M/D現在」。
+    → (items, diag)。items: [{label, state, updated, forecast?, observed_md?}](cover の site/name は呼び出し側が付ける)。
+    状態は「現在の状況」の欄の原文だけ(紹介文から状態を取らない)。「M/D現在」の年は呼び出し側の記録で、同じ地点の更新日から補う。"""
     labels = [c["label"] for c in covers]
     diag = {"labels_seen": 0, "ambiguous": [], "missing": [], "no_fields": []}
     found = {}
@@ -127,6 +151,9 @@ def parse_nikko(html, covers):
         item = {"label": lb, "state": st, "updated": date(int(m["y"]), int(m["m"]), int(m["d"])).isoformat()}
         if fc:
             item["forecast"] = fc
+        md = _observed_md(block)
+        if md:
+            item["observed_md"] = md
         found.setdefault(lb, []).append(item)
     items = [it for lb in labels if lb in found and (it := _pick(found[lb], lb, diag))]
     diag["missing"] = [lb for lb in labels if lb not in found]
@@ -184,7 +211,7 @@ def robots_url(url):
 
 def read_source(src, *, http_get, cfg, on, max_requests):
     """承認済みの情報源 1 件を読む(robots.txt → ページ)。→ (reads, report)。
-    reads は sources record の batch の形([{source, site|name, label, state, updated, year_inferred?, forecast?, method: code}])。
+    reads は sources record の batch の形([{source, site|name, label, state, updated, year_inferred?, forecast?, observed_md?, method: code}])。
     読めなかったとき(robots.txt が拒否・HTTP の非 200・形が違う)は reads が空で、report.status に理由。本文は返さない・残さない。"""
     sid = src["id"]
     if sid not in PARSERS:
@@ -228,7 +255,7 @@ def read_source(src, *, http_get, cfg, on, max_requests):
         c = by_label[it["label"]]
         r = {"source": sid, ("site" if "site" in c else "name"): c.get("site") or c.get("name"), "label": it["label"],
              "state": it["state"], "updated": it["updated"], "method": "code"}
-        for k in ("year_inferred", "forecast"):
+        for k in ("year_inferred", "forecast", "observed_md"):
             if k in it:
                 r[k] = it[k]
         reads.append(r)

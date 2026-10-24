@@ -271,6 +271,22 @@ def forecast_window(text, year, policy):
     return (start, end) if start <= end else None
 
 
+def last_third_start(end, policy):
+    """見頃予測の終わりの日(date)が入る旬の始まりの日。旬の分け方は方針の month_thirds(上旬 1〜10・中旬 11〜20・下旬 21〜月末)。"""
+    firsts = sorted(t["first"] for t in policy["month_thirds"]["items"].values())
+    return end.replace(day=max(f for f in firsts if f <= end.day))
+
+
+def forecast_ended(window, dates):
+    """見頃予測が、対象の最初の日より前に終わっている(見ごろを過ぎている見込み)。"""
+    return window is not None and window[1] < min(dates)
+
+
+def forecast_in_last_third(window, dates, policy):
+    """対象の日が、見頃予測の最後の旬に入る(終盤の可能性)。"""
+    return window is not None and any(last_third_start(window[1], policy) <= d <= window[1] for d in dates)
+
+
 def overlaps(window, dates):
     return window is not None and any(window[0] <= d <= window[1] for d in dates)
 
@@ -497,7 +513,7 @@ def log_path(subject, env=None):
 
 def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None,
                 method=None, forecast=None, event_start=None, event_end=None, observed=None, observed_year_inferred=None, url=None,
-                observed_md=None):
+                observed_md=None, parts=None):
     """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。
     method は読み方(agent_summary / code / user_verified。既定は方針の default_method)、forecast は公式の見頃予測の原文、
     event_start・event_end はまつり・ライトアップの期間(YYYY-MM-DD)。
@@ -505,6 +521,7 @@ def make_record(*, registry, policy, source_id, read_at, state, updated=None, si
     url は実際に読んだページ(一覧からたどった今月の記事など。情報源と同じホスト。省略すると情報源の url)。
     observed_md は年のない現地の状態の日付(「10/20現在」→ "10-20")。同じ地点の年つきの最終更新日(updated。年を補っていないもの)から年を補う
     (observed_year_from_update)。補えなければ読んだ日に近い過去の日付にして observed_year_inferred: true(新しさ不明)。
+    parts は部位ごとに状態が違う地点(山頂・中腹・山麓など)の、本文の部位ごとの状態の原文 [{"part": ..., "state": ...}]。
     freshness_basis(新しさの基準にした日付の種類)と read_by(読み方の区分)はコードが決める。"""
     src = sources_by_id(registry).get(source_id)
     stage = normalize_state(src, state)[0] if src else None
@@ -521,7 +538,7 @@ def make_record(*, registry, policy, source_id, read_at, state, updated=None, si
            "url": url or (src["url"] if src else None), "method": method, "read_by": policy["record"]["read_by"].get(method)}
     for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred),
                  ("official_forecast", forecast), ("event_start", event_start), ("event_end", event_end),
-                 ("official_observed", observed), ("observed_year_inferred", observed_year_inferred)):
+                 ("official_observed", observed), ("observed_year_inferred", observed_year_inferred), ("official_parts", parts)):
         if v is not None:
             rec[k] = v
     basis = freshness_basis(rec, src)
@@ -611,6 +628,13 @@ def validate_record(rec, *, registry, policy):
     fc = rec.get("official_forecast")
     if fc is not None and (not isinstance(fc, str) or len(fc) > val(rp["max_forecast_chars"])):
         errs.append(f"official_forecast は {val(rp['max_forecast_chars'])} 文字以内の見頃予測の原文(本文を写さない)")
+    parts = rec.get("official_parts")
+    if parts is not None:
+        lim_s, lim_l = val(rp["max_state_chars"]), val(rp["max_label_chars"])
+        if not (isinstance(parts, list) and parts and all(
+                isinstance(x, dict) and set(x) == {"part", "state"} and isinstance(x["part"], str) and isinstance(x["state"], str)
+                and 0 < len(x["part"]) <= lim_l and 0 < len(x["state"]) <= lim_s for x in parts)):
+            errs.append(f"official_parts は [{{part, state}}] の配列(part は {lim_l} 文字以内、state は {lim_s} 文字以内の原文)")
     ev = [rec.get(k) for k in ("event_start", "event_end")]
     if any(v is not None for v in ev):
         if not all(v is not None and catalog_mod.valid_date(v) for v in ev):
@@ -815,14 +839,16 @@ def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=Non
 
 
 def _key(rec):
-    # 年の補い方(updated_year_inferred・observed_year_inferred)が違えば別の事実として扱う(段階17 の見直し: 年を補い直した記録が重複扱いで落ちた)
-    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
+    # 年の補い方(updated_year_inferred・observed_year_inferred)が違えば別の事実として扱う(段階17 の見直し: 年を補い直した記録が重複扱いで落ちた)。
+    # 読んだ日(read_at の暦日)も入れる(段階20): 重複とみなすのは同じ日のうちだけ。前の日と同じ内容でも、今日読んだものは今日の記録として残す
+    # (入れていなかったため、2026-10-25 08:10 の日光の 6 地点が 10/23 のコードの記録と同じ内容で落ち、今日の答えから消えた)
+    return (parse_now(rec["read_at"]).date().isoformat(),) + tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
                                       "official_forecast", "event_start", "event_end", "method",
                                       "updated_year_inferred", "observed_year_inferred"))
 
 
 def append_records(records, *, registry, policy, env=None):
-    """検査に通った記録を追記する。同じ事実(情報源・名所・状態・公式の更新日)がもうあれば足さない。
+    """検査に通った記録を追記する。同じ日に読んだ同じ事実(情報源・名所・状態・公式の更新日)がもうあれば足さない(前の日の記録とは比べない)。
     1 件でも検査に落ちたら何も書かない。→ (書いた件数, 重複で足さなかった件数)。"""
     bad = [(i, e) for i, r in enumerate(records) for e in validate_record(r, registry=registry, policy=policy)]
     if bad:
@@ -844,6 +870,35 @@ def append_records(records, *, registry, policy, env=None):
             for r in new:
                 f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
     return len(new), len(records) - len(new)
+
+
+def recording_check(records, subject, env=None):
+    """読んだ項目が、読んだ日の記録にすべて残ったか(段階20。読んだ数と記録した数を合わせ、漏れを黙って残さない)。
+    → {情報源 id: {"read": 読んだ地点の数, "recorded": そのうち読んだ日の記録にある数, "missing": [残っていない地点の書き方]}}。
+    誤りの印・置き換えの印の付いた記録は数えない。"""
+    have = {_key(r) for r in read_records(subject, env)}
+    out = {}
+    for r in records:
+        c = out.setdefault(r["source_id"], {"read": 0, "recorded": 0, "missing": []})
+        c["read"] += 1
+        if _key(r) in have:
+            c["recorded"] += 1
+        else:
+            c["missing"].append(r.get("label") or r.get("site") or r.get("name"))
+    return out
+
+
+def recording_gaps(check):
+    """recording_check の結果から、読んだ数と記録した数が合わない情報源だけ。"""
+    return {sid: c for sid, c in check.items() if c["recorded"] != c["read"]}
+
+
+def places_recorded_on(subject, day, env=None):
+    """day に読んだ記録の、情報源ごとの地点の数(地点 = 情報源・名所・地点の書き方)。答えで、読んだ数と照らす(段階20)。"""
+    out = {}
+    for r in records_on(subject, day, env):
+        out.setdefault(r["source_id"], set()).add(_place(r))
+    return {sid: len(v) for sid, v in out.items()}
 
 
 # ---- 答えの材料(同じ日に読んだ記録から) ----
@@ -872,7 +927,8 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
                      "basis_date": basis_d, "basis_year_unknown": basis_no_year,
                      "freshness_basis": r.get("freshness_basis") or freshness_basis(r, src), "freshness": fresh,
                      "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
-                     "official_forecast": r.get("official_forecast"),
+                     "official_forecast": r.get("official_forecast"), "official_parts": r.get("official_parts"),
+                     "forecast_ended": forecast_ended(fw, dates), "forecast_last_third": forecast_in_last_third(fw, dates, policy),
                      "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
                      "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
                      "method": r.get("method", policy["record"]["default_method"]),
@@ -937,15 +993,18 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
             continue
         reads, rep = status_pages.read_source(src, http_get=http_get, cfg=cfg, on=now.date(), max_requests=left)
         left -= rep["requests"]
-        out.append({**rep, "reads": reads})
+        # 台帳の地点の数と読み出した数(段階20。足りない地点は diag.missing・ambiguous・no_fields に出る)
+        out.append({**rep, "covers": len(src["covers"]), "read": len(reads), "reads": reads})
         reads_all += reads
     res = {"read_at": now.isoformat(), "results": out}
     if record and reads_all:
         recs = [make_record(registry=registry, policy=policy, source_id=it["source"], read_at=now.isoformat(), state=it["state"], updated=it["updated"],
                             site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
-                            method=it["method"], forecast=it.get("forecast")) for it in reads_all]
+                            method=it["method"], forecast=it.get("forecast"), observed_md=it.get("observed_md")) for it in reads_all]
         written, dup = append_records(recs, registry=registry, policy=policy, env=env)
-        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env))}
+        check = recording_check(recs, registry["subject"], env)
+        res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env)),
+                           "check": check, "gaps": recording_gaps(check)}
     return res
 
 
@@ -1009,6 +1068,29 @@ def _answer_inputs(a):
     return policy, now, dates, subjects, region
 
 
+def record_gaps_for_answer(read_counts, subjects, day, env=None):
+    """--read-count 情報源ID=N(読んだ地点の数)と、day の記録の地点の数を照らす(段階20)。
+    → [{"source", "publisher", "read", "recorded"}](記録が読んだ数より少ない情報源だけ)。"""
+    want = {}
+    for x in read_counts or []:
+        sid, n = x.split("=", 1)
+        want[sid] = int(n)
+    out = []
+    for subj in subjects:
+        srcs, have = sources_by_id(load_registry(subj)), places_recorded_on(subj, day, env)
+        for sid, n in want.items():
+            if sid in srcs and have.get(sid, 0) < n:
+                out.append({"source": sid, "publisher": srcs[sid].get("publisher") or sid, "read": n, "recorded": have.get(sid, 0)})
+    return out
+
+
+def _warn_gaps(gaps):
+    """読んだ数と記録した数が合わないとき、標準エラーに出す(黙って残さない。段階20)。"""
+    for sid, c in gaps.items():
+        print(f"警告: {sid} は {c['read']} 地点を読んだが、読んだ日の記録にあるのは {c['recorded']} 地点(残っていない: {c['missing']})",
+              file=sys.stderr)
+
+
 def _answer_cli(a):
     from . import answer
     got = _answer_inputs(a)
@@ -1017,8 +1099,14 @@ def _answer_cli(a):
     policy, now, dates, subjects, region = got
     parts = answer_parts(subjects, policy=policy, now=now, dates=dates, early=a.early, late=a.late, region=region,
                          terrain=a.terrain, access=a.access, flower_kind=a.flower_kind)
-    print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note, record_failed=a.record_failed,
-                         early=a.early, late=a.late), end="")
+    reasons = dict(x.split("=", 1) for x in a.unread_reason or [])
+    gaps = record_gaps_for_answer(a.read_count, subjects, now.date())
+    print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note,
+                         early=a.early, late=a.late, unread_reasons=reasons, record_gaps=gaps), end="")
+    memo = answer.work_memo(policy, record_failed=a.record_failed)
+    if memo:
+        print()
+        print(memo, end="")
     return 0
 
 
@@ -1108,7 +1196,7 @@ def main(argv=None, http_get=None):
     r.add_argument("--read-at", required=True, help="読んだ時刻。ISO 8601(オフセット必須)")
     r.add_argument("--batch", required=True,
                    help="JSON の配列: [{source, site|name, label?, state, observed?, observed_md?(年のない M-D), observed_year_inferred?, updated?, year_inferred?, method?, "
-                        "forecast?, event_start?, event_end?, url?}]")
+                        "forecast?, event_start?, event_end?, url?, parts?(部位ごとの状態の原文 [{part, state}])}]")
     lg = sub.add_parser("log", help="記録を表示する(誤りの印・置き換えの印の付いた記録は --include-erroneous・--include-superseded のときだけ)")
     lg.add_argument("--source")
     lg.add_argument("--include-erroneous", action="store_true")
@@ -1151,6 +1239,10 @@ def main(argv=None, http_get=None):
     an.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
     an.add_argument("--subjects", action="append", help="対象(複数可。省略すると --subject の 1 つ。all で答えられる対象すべて)")
     an.add_argument("--scope-note", help="扱える範囲が質問の一部だけのときに冒頭に出す 1 行")
+    an.add_argument("--unread-reason", action="append", metavar="情報源ID=理由",
+                    help="読む予定の情報源を読まなかった理由(複数可)。答えの『公式の現況を読めていない名所』に理由を 1 行で添える")
+    an.add_argument("--read-count", action="append", metavar="情報源ID=地点の数",
+                    help="その情報源で読んだ地点の数(複数可)。今日の記録の地点の数が少なければ、答えの『注意』に警告を出す(段階20)")
     an.add_argument("--early", action="store_true")
     an.add_argument("--late", action="store_true")
     an.add_argument("--region")
@@ -1254,7 +1346,7 @@ def main(argv=None, http_get=None):
                             year_inferred=it.get("year_inferred"), method=it.get("method"), forecast=it.get("forecast"),
                             event_start=it.get("event_start"), event_end=it.get("event_end"), observed=it.get("observed"),
                             observed_year_inferred=it.get("observed_year_inferred"), url=it.get("url"),
-                            observed_md=it.get("observed_md")) for it in items]
+                            observed_md=it.get("observed_md"), parts=it.get("parts")) for it in items]
         try:
             written, dup = append_records(recs, registry=registry, policy=policy)
         except ValueError as ex:
@@ -1267,7 +1359,10 @@ def main(argv=None, http_get=None):
                          "stage": rc["stage"], "stage_label": stage_label(policy, a.subject, rc["stage"]), "updated": rc.get("official_updated"),
                          "observed": rc.get("official_observed"), "freshness_basis": rc.get("freshness_basis"), "basis_date": basis_d,
                          "freshness": fresh})
-        _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "rows": rows})
+        check = recording_check(recs, a.subject)
+        gaps = recording_gaps(check)
+        _warn_gaps(gaps)
+        _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "check": check, "gaps": gaps, "rows": rows})
         return 0
     if a.cmd == "v0":
         from .profiles import load_profiles
@@ -1331,6 +1426,7 @@ def main(argv=None, http_get=None):
         finally:
             if getter is not None:
                 getter.close()
+        _warn_gaps((res.get("recorded") or {}).get("gaps") or {})
         _dump(res)
         return 0 if all(r.get("reads") for r in res["results"]) else 1
     if a.cmd == "summary":
