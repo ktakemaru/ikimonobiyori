@@ -149,7 +149,8 @@ class ReadSource(unittest.TestCase):
         self.assertEqual(rep["status"], "ok")
         r = next(x for x in reads if x["label"] == "【奥日光】湯ノ湖、湯滝")
         self.assertEqual(r, {"source": "nikko-kankou-autumn-leaves", "site": "kouyou-0001", "label": "【奥日光】湯ノ湖、湯滝", "state": "◎",
-                             "updated": "2026-10-20", "method": "code", "forecast": "10月上旬～10月中旬"})
+                             "updated": "2026-10-20", "method": "code", "forecast": "10月上旬～10月中旬",
+                             "observed_md": "10-19"})                                       # 本文の先頭の「10/19現在」(段階20。ユーザー承認 2026-10-25)
         self.assertEqual(set(rep), {"source", "requests", "status", "diag"})                # 報告に本文の欄はない
         self.assertNotIn("見本の紹介文", json.dumps(rep, ensure_ascii=False))
 

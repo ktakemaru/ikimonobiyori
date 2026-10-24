@@ -1000,7 +1000,7 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
     if record and reads_all:
         recs = [make_record(registry=registry, policy=policy, source_id=it["source"], read_at=now.isoformat(), state=it["state"], updated=it["updated"],
                             site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
-                            method=it["method"], forecast=it.get("forecast")) for it in reads_all]
+                            method=it["method"], forecast=it.get("forecast"), observed_md=it.get("observed_md")) for it in reads_all]
         written, dup = append_records(recs, registry=registry, policy=policy, env=env)
         check = recording_check(recs, registry["subject"], env)
         res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env)),
