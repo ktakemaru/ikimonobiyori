@@ -448,6 +448,24 @@ def candidates(catalog_doc, registry, dates, policy, *, region=None, terrain=Non
             "no_status_source": no_status}
 
 
+# ---- 一覧 → 今月の記事(段階17 修正⑥) ----
+
+def era_year(year, policy):
+    """西暦 → 和暦の年(方針の japanese_era。令和元年 = 2019)。"""
+    return year - val(policy["japanese_era"]["first_year"]) + 1
+
+
+def monthly_targets(src, on, policy):
+    """follow: monthly_article の情報源で、一覧ページから探すリンクの文字列。→ [{year, month, link_text}](今月 → 先月の順)。
+    今月の記事がまだなければ先月の記事(その日付で新しさが分かる)。どちらもなければ一覧の URL を人が開く URL として示す(手順)。"""
+    fl = src.get("follow")
+    if not fl:
+        return []
+    prev = (on.replace(day=1) - timedelta(days=1))
+    return [{"year": d.year, "month": d.month, "link_text": fl["link_text"].format(era_year=era_year(d.year, policy), month=d.month)}
+            for d in (on, prev)]
+
+
 # ---- 記録(JSON Lines) ----
 
 def log_path(subject, env=None):
@@ -455,20 +473,48 @@ def log_path(subject, env=None):
 
 
 def make_record(*, registry, policy, source_id, read_at, state, updated=None, site=None, name=None, label=None, year_inferred=None,
-                method=None, forecast=None, event_start=None, event_end=None):
+                method=None, forecast=None, event_start=None, event_end=None, observed=None, observed_year_inferred=None, url=None):
     """読んだ結果 1 件 → 記録(段階はコードが決める)。検査は validate_record。
     method は読み方(agent_summary / code / user_verified。既定は方針の default_method)、forecast は公式の見頃予測の原文、
-    event_start・event_end はまつり・ライトアップの期間(YYYY-MM-DD)。"""
+    event_start・event_end はまつり・ライトアップの期間(YYYY-MM-DD)。
+    observed は現地の状態の日付(「10/22現在」。段階17 修正⑤)、observed_year_inferred はその年を補ったとき。
+    url は実際に読んだページ(一覧からたどった今月の記事など。情報源と同じホスト。省略すると情報源の url)。
+    freshness_basis(新しさの基準にした日付の種類)と read_by(読み方の区分)はコードが決める。"""
     src = sources_by_id(registry).get(source_id)
     stage = normalize_state(src, state)[0] if src else None
+    method = method or policy["record"]["default_method"]
     rec = {"schema": policy["record"]["schema"], "subject": registry["subject"], "source_id": source_id,
            "official_state": state, "stage": stage, "official_updated": updated, "read_at": read_at,
-           "url": src["url"] if src else None, "method": method or policy["record"]["default_method"]}
+           "url": url or (src["url"] if src else None), "method": method, "read_by": policy["record"]["read_by"].get(method)}
     for k, v in (("site", site), ("name", name), ("label", label), ("updated_year_inferred", year_inferred),
-                 ("official_forecast", forecast), ("event_start", event_start), ("event_end", event_end)):
+                 ("official_forecast", forecast), ("event_start", event_start), ("event_end", event_end),
+                 ("official_observed", observed), ("observed_year_inferred", observed_year_inferred)):
         if v is not None:
             rec[k] = v
+    basis = freshness_basis(rec, src)
+    if basis:
+        rec["freshness_basis"] = basis
     return rec
+
+
+def freshness_basis(rec, src):
+    """新しさの基準にした日付の種類(段階17 修正⑤)。現地の状態の日付があれば observed_date、なければ最終更新日の updated_date。
+    日付が 1 つだけの情報源は、台帳の notation.date_basis がその日付の種類(箱根の「M/D現在」は observed_date)。日付がなければ None。"""
+    if rec.get("official_observed"):
+        return "observed_date"
+    if rec.get("official_updated"):
+        return ((src or {}).get("notation") or {}).get("date_basis") or "updated_date"
+    return None
+
+
+def record_freshness(rec, src, on, policy):
+    """記録の新しさ。→ (基準の日付の文字列 or None, 年が分からないか, freshness の辞書)。
+    ①現地の状態の日付(年を補ったものは「新しさ不明」)、②なければ最終更新日(年のない情報源・年を補ったものは「新しさ不明」)。"""
+    if rec.get("official_observed"):
+        d, no_year = rec["official_observed"], bool(rec.get("observed_year_inferred"))
+    else:
+        d, no_year = rec.get("official_updated"), year_unknown(src, rec)
+    return d, no_year, freshness(date.fromisoformat(d) if d else None, on, policy, no_year)
 
 
 def validate_record(rec, *, registry, policy):
@@ -525,16 +571,24 @@ def validate_record(rec, *, registry, policy):
         errs.append("updated_year_inferred は真偽値")
     elif rec.get("official_updated") is not None and (src.get("notation") or {}).get("year_shown") is False and rec.get("updated_year_inferred") is not True:
         errs.append(f"情報源 {src['id']} の日付には年がない(notation.year_shown: false)。年を補った更新日には updated_year_inferred: true が要る")
+    if "observed_year_inferred" in rec and not isinstance(rec["observed_year_inferred"], bool):
+        errs.append("observed_year_inferred は真偽値")
+    if "freshness_basis" in rec and rec["freshness_basis"] != freshness_basis(rec, src):
+        errs.append(f"freshness_basis={rec['freshness_basis']} が日付の種類({freshness_basis(rec, src)})と違う")
+    if "read_by" in rec and rec["read_by"] != rp["read_by"].get(rec.get("method", rp["default_method"])):
+        errs.append(f"read_by={rec['read_by']} が読み方 method={rec.get('method')} と合わない")
     try:
         ra = parse_now(rec["read_at"])
     except (TypeError, ValueError) as ex:
         return errs + [f"read_at: {ex}"]
-    up = rec.get("official_updated")
-    if up is not None:
-        if not catalog_mod.valid_date(up):
-            errs.append(f"official_updated={up} は日付でない")
-        elif date.fromisoformat(up) > ra.date():
-            errs.append(f"official_updated={up} が読んだ日 {ra.date()} より後")
+    for k in ("official_updated", "official_observed"):
+        v = rec.get(k)
+        if v is None:
+            continue
+        if not catalog_mod.valid_date(v):
+            errs.append(f"{k}={v} は日付でない")
+        elif date.fromisoformat(v) > ra.date():
+            errs.append(f"{k}={v} が読んだ日 {ra.date()} より後")
     return errs
 
 
@@ -658,7 +712,7 @@ def mark_erroneous(subject, match, *, reason, corrected_on, env=None, policy=Non
 
 
 def _key(rec):
-    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated",
+    return tuple(rec.get(k) for k in ("source_id", "site", "name", "label", "official_state", "official_updated", "official_observed",
                                       "official_forecast", "event_start", "event_end", "method"))
 
 
@@ -698,7 +752,7 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
     rows, clash, scope = [], conflicts(records), scope_orders(policy, early=early, late=late)
     for r in sorted(latest_by_place(records), key=lambda r: (r["source_id"], r.get("site") or "", r.get("name") or "", r.get("label") or "")):
         src = srcs.get(r["source_id"]) or {}
-        up = date.fromisoformat(r["official_updated"]) if r.get("official_updated") else None
+        basis_d, basis_no_year, fresh = record_freshness(r, src, on, policy)
         fw = forecast_window(r.get("official_forecast"), parse_now(r["read_at"]).year, policy)
         ev = (date.fromisoformat(r["event_start"]), date.fromisoformat(r["event_end"])) if r.get("event_start") else None
         rows.append({"source": r["source_id"], "kind": src.get("kind"), "site": r.get("site"), "name": r.get("name"), "label": r.get("label"),
@@ -706,12 +760,15 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
                      "order": stage_order(policy, r["subject"], r.get("stage")),
                      "in_scope": stage_order(policy, r["subject"], r.get("stage")) in scope,
                      "official_updated": r.get("official_updated"), "year_inferred": year_unknown(src, r),
-                     "freshness": freshness(up, on, policy, year_unknown(src, r)),
+                     "official_observed": r.get("official_observed"), "basis_date": basis_d, "basis_year_unknown": basis_no_year,
+                     "freshness_basis": r.get("freshness_basis") or freshness_basis(r, src), "freshness": fresh,
                      "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
                      "official_forecast": r.get("official_forecast"),
                      "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
                      "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
-                     "method": r.get("method", policy["record"]["default_method"]), "read_at": r["read_at"], "url": r.get("url"),
+                     "method": r.get("method", policy["record"]["default_method"]),
+                     "read_by": r.get("read_by") or policy["record"]["read_by"].get(r.get("method", policy["record"]["default_method"])),
+                     "read_at": r["read_at"], "url": r.get("url"),
                      "conflict": clash.get(_place(r))})
     common = {s["order"]: s["label"] for s in policy["common_stages"]["items"]}
     return {"on": on.isoformat(), "dates": [d.isoformat() for d in dates], "horizon": horizon(datetime.combine(on, datetime.min.time()), dates, policy),
@@ -839,7 +896,8 @@ def main(argv=None, http_get=None):
     r = sub.add_parser("record", help="読んだ結果(事実だけ)を記録に追記する(IKIMONOBIYORI_DATA_DIR の下)")
     r.add_argument("--read-at", required=True, help="読んだ時刻。ISO 8601(オフセット必須)")
     r.add_argument("--batch", required=True,
-                   help="JSON の配列: [{source, site|name, label?, state, updated?, year_inferred?, method?, forecast?, event_start?, event_end?}]")
+                   help="JSON の配列: [{source, site|name, label?, state, observed?, observed_year_inferred?, updated?, year_inferred?, method?, "
+                        "forecast?, event_start?, event_end?, url?}]")
     lg = sub.add_parser("log", help="記録を表示する(誤りの印の付いた記録は --include-erroneous のときだけ)")
     lg.add_argument("--source")
     lg.add_argument("--include-erroneous", action="store_true")
@@ -868,6 +926,9 @@ def main(argv=None, http_get=None):
     v = sub.add_parser("v0", help="v0 の出力(biyori-proposal/1)から名所ごとの補助の推定を取り出す(通信しない)")
     v.add_argument("--proposal", required=True)
     v.add_argument("--date", action="append")
+    fo = sub.add_parser("follow", help="一覧ページから今月の記事をたどる情報源(瓢湖など)で、探すリンクの文字列を出す(段階17。通信しない)")
+    fo.add_argument("--source", required=True)
+    fo.add_argument("--now", required=True)
     an = sub.add_parser("answer", help="同じ日に読んだ記録から、答えの下書き(結論が先・内部用語なし)を出す(段階17。通信しない・書き込まない)")
     an.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     an.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
@@ -923,6 +984,14 @@ def main(argv=None, http_get=None):
                "filters": {"region": region and region["name"], "terrain": a.terrain, "access": a.access},
                **candidates(catalog_mod.load_catalog(a.subject), registry, dates, policy, region=region, terrain=a.terrain, access=a.access)})
         return 0
+    if a.cmd == "follow":
+        src = sources_by_id(registry).get(a.source)
+        if src is None or not src.get("follow"):
+            print(f"一覧から記事をたどる情報源ではない: {a.source}", file=sys.stderr)
+            return 2
+        _dump({"source": a.source, "list_url": src["url"], "look_for": monthly_targets(src, parse_now(a.now).date(), policy),
+               "if_missing": {"human_url": src["url"]}})
+        return 0
     if a.cmd == "normalize":
         src = sources_by_id(registry).get(a.source)
         if src is None:
@@ -937,7 +1006,8 @@ def main(argv=None, http_get=None):
         recs = [make_record(registry=registry, policy=policy, source_id=it.get("source"), read_at=read_at.isoformat(), state=it.get("state"),
                             updated=it.get("updated"), site=it.get("site"), name=it.get("name"), label=it.get("label"),
                             year_inferred=it.get("year_inferred"), method=it.get("method"), forecast=it.get("forecast"),
-                            event_start=it.get("event_start"), event_end=it.get("event_end")) for it in items]
+                            event_start=it.get("event_start"), event_end=it.get("event_end"), observed=it.get("observed"),
+                            observed_year_inferred=it.get("observed_year_inferred"), url=it.get("url")) for it in items]
         try:
             written, dup = append_records(recs, registry=registry, policy=policy)
         except ValueError as ex:
@@ -945,10 +1015,11 @@ def main(argv=None, http_get=None):
             return 1
         rows, by_id = [], sources_by_id(registry)
         for rc in recs:
-            up = date.fromisoformat(rc["official_updated"]) if rc.get("official_updated") else None
+            basis_d, _, fresh = record_freshness(rc, by_id.get(rc["source_id"]), read_at.date(), policy)
             rows.append({"source": rc["source_id"], "where": rc.get("site") or rc.get("name"), "state": rc["official_state"],
                          "stage": rc["stage"], "stage_label": stage_label(policy, a.subject, rc["stage"]), "updated": rc.get("official_updated"),
-                         "freshness": freshness(up, read_at.date(), policy, year_unknown(by_id.get(rc["source_id"]), rc))})
+                         "observed": rc.get("official_observed"), "freshness_basis": rc.get("freshness_basis"), "basis_date": basis_d,
+                         "freshness": fresh})
         _dump({"written": written, "duplicates": dup, "path": str(log_path(a.subject)), "rows": rows})
         return 0
     if a.cmd == "v0":

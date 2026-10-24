@@ -30,6 +30,25 @@
 - 読んだ結果の記録: `IKIMONOBIYORI_DATA_DIR` の下の JSON Lines(`status_log/<subject>.jsonl`)。来年の答え合わせの正解データにする。
 - 手順: Claude Code のスキル `.claude/skills/ikimono-weekend/SKILL.md`、Codex は `AGENTS.md` に同じ手順。ページの読み取り自体はエージェントが行う(スクレイピングのコードは書かない)。
 
+### 0.1 コードで読む情報源の通信を、ユーザーが事前に許可する方法(段階17 修正①)
+
+日光市観光協会・箱根町観光協会(台帳で `reader: code`)は、コードで読むと通信が発生する。CLAUDE.md 規則 6 により、実通信には**その場のユーザーの承認**が要る。手順では、答えの最初に 1 回だけ「公式ページをコードで読みます(通信が発生します)。よいですか」と聞き、承認されたらその会話のあいだは聞き直さない。聞けない・承認されないときは要約の道具で読み、答えに「今回は簡易な読み取りです。表記のぶれがありえます」と書く。
+
+毎回聞かれたくないときは、**ユーザー自身が** `.claude/settings.local.json`(git の追跡外)の `permissions.allow` に、該当のコマンドだけを入れる。エージェント(Claude Code・Codex)はこのファイルを書き換えない。例(パスは自分の環境に合わせる。`--source` を日光・箱根に限り、`--max-requests` を明示する):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(BIYORI_ALLOW_LIVE=1 BIYORI_REQ_LOG=C:/biyori-hub/runtime/req.log BIYORI_REQ_MAX=4 BIYORI_ALLOW_HOSTS=www.nikko-kankou.org,www.hakone.or.jp PYTHONPATH=C:/biyori-hub/hub/measure python -X utf8 -m ikimonobiyori.sources read --source nikko-kankou-autumn-leaves --source hakone-kankou-koyo:*)"
+    ]
+  }
+}
+```
+
+- これは「このコマンドを実行してよい」という道具の許可で、規則 6 の条件(計測フック `BIYORI_REQ_LOG`・明示的な `--max-requests`・許可ホスト)は変わらない。コードの側も、条件がそろわなければ通信しない(`sources read` が `--live`・`--max-requests`・`BIYORI_REQ_LOG` を確かめる)。
+- 許可を入れたことは、会話の中で「事前に許可済み」と扱ってよい合図になる。取り消すときは、その行を消す。
+
 ## 1. 役割の分担(2026-10-21 決定)
 
 | ビヨリ | 受け持つもの |

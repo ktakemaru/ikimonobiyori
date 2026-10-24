@@ -139,6 +139,31 @@ class AnswerForm(unittest.TestCase):
         self.assertEqual(answer.forbidden_found(t, POLICY), [])
 
 
+class AnswerOrdering(unittest.TestCase):
+    """段階17 フェーズ2 で実際の記録に当てて見つけた点: 同じ名所の複数の地点・見頃予測を過ぎた地点・複数の対象。"""
+    def test_two_labels_of_one_site_are_told_apart(self):
+        reg = {**REG, "sources": [src("test-koyo", REG["sources"][0]["covers"] + [{"site": "kouyou-0001", "label": "【北】渓谷の上流"}])] + REG["sources"][1:]}
+        mk = lambda **kw: sources.make_record(registry=reg, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", **kw)
+        recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22"), mk(site="kouyou-0001", label="【北】渓谷の上流", state="△", updated="2026-10-22")]
+        p = [{**parts()[0], "summary": sources.summarize(recs, registry=reg, catalog_doc=CAT, policy=POLICY, on=NOW.date(), dates=DATES)}]
+        ev = body_lines(answer.compose(p, now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["evidence"])
+        self.assertEqual([ln[2:].split(":")[0] for ln in ev], ["試験の渓谷・渓谷", "試験の渓谷・渓谷の上流"])   # 【…】は外して添える
+
+    def test_a_place_past_its_forecast_goes_after(self):
+        mk = lambda **kw: sources.make_record(registry=REG, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", **kw)
+        recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22", forecast="10月上旬～10月中旬"),
+                mk(site="kouyou-0002", label="湖畔", state="◯", updated="2026-10-22", forecast="10月下旬～11月上旬")]
+        rec_lines = body_lines(answer.compose(parts(recs), now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["recommend"])
+        self.assertEqual([re.search(r"\*\*(.+?)\*\*", ln).group(1) for ln in rec_lines], ["試験の湖畔", "試験の渓谷"])
+
+    def test_each_subject_gets_its_own_recommendations(self):
+        other = {**parts()[0], "subject": "wintering_birds", "name": "冬鳥"}
+        t = answer.compose(parts() + [other], now=NOW, dates=DATES, policy=POLICY)
+        rec = re.split(r"\n## ", t.split(f"## {POLICY['answer']['headings']['recommend']}")[1])[0]
+        self.assertIn("### 紅葉", rec)
+        self.assertIn("### 冬鳥", rec)
+
+
 class SkillExample(unittest.TestCase):
     def test_the_example_in_the_steps_has_no_internal_terms(self):
         s = (ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")

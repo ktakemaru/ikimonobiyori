@@ -30,8 +30,9 @@ def time_label(t):
 
 def basis_date(row):
     """新しさの基準にした日付(現地の状態の日付があればそれ、なければ最終更新日)。→ (日付の文字列 or None, 年がないか)。"""
-    d = row.get("basis_date") or row.get("official_updated")
-    return d, bool(row.get("year_inferred"))
+    if "basis_date" in row:
+        return row["basis_date"], bool(row.get("basis_year_unknown"))
+    return row.get("official_updated"), bool(row.get("year_inferred"))
 
 
 def as_of(row, on, policy):
@@ -44,8 +45,29 @@ def as_of(row, on, policy):
     return s + (policy["answer"]["year_unknown_suffix"] if no_year else "")
 
 
-def place_name(row, names):
-    return names.get(row.get("site")) or row.get("name") or row.get("label")
+LABEL_PREFIX_RE = re.compile(r"^【[^】]*】")
+
+
+def place_name(row, names, multi=frozenset()):
+    """名所の名前。同じ名所に地点の書き方が複数ある(戦場ヶ原と小田代原など)ときは、公式の地点の書き方を添えて区別する。"""
+    n = names.get(row.get("site")) or row.get("name") or row.get("label")
+    if row.get("site") in multi and row.get("label"):
+        n += f"・{LABEL_PREFIX_RE.sub('', row['label'])}"
+    return n
+
+
+def multi_label_sites(rows):
+    seen, multi = set(), set()
+    for r in rows:
+        if r.get("site"):
+            (multi if r["site"] in seen else seen).add(r["site"])
+    return frozenset(multi)
+
+
+def forecast_past(row, dates):
+    """公式の見頃予測が、対象の最初の日より前に終わっている(見ごろを過ぎている見込み)。"""
+    fw = row.get("forecast_window")
+    return bool(fw) and fw[1] < min(dates).isoformat()
 
 
 def state_text(row):
@@ -55,9 +77,10 @@ def state_text(row):
     return f"公式「{st}」" + (f"({lb})" if lb and lb != st else "")
 
 
-def pick(subject_parts, policy):
+def pick(subject_parts, policy, dates):
     """おすすめを選ぶ。→ [(対象の部品, 行, 理由)]。
-    順: 範囲に入る段階(既定は見ごろ・最盛)で新しいもの → 公式の見頃予測が対象の日にかかるもの → (足りなければ)段階のない公式の最新の記載。
+    順: 範囲に入る段階(既定は見ごろ・最盛)で新しいもの(公式の見頃予測が対象の日より前に終わるものは後ろへ)
+    → 公式の見頃予測が対象の日にかかるもの → (足りなければ)段階のない公式の最新の記載。
     表示が古い可能性・食い違いのある地点は選ばない。同じ名所は 1 回だけ。"""
     ans, top_max = policy["answer"], _val(policy["recommend"]["top_max"])
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
@@ -72,7 +95,7 @@ def pick(subject_parts, policy):
             out.append((p, r, reason))
 
     for p, r in sorted((x for x in usable if x[1]["in_scope"]),
-                       key=lambda x: (rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
+                       key=lambda x: (forecast_past(x[1], dates), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
         add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
     for p, r in sorted((x for x in usable if x[1]["forecast_hits_dates"] and not x[1]["in_scope"]),
                        key=lambda x: -(x[1]["order"] or 0)):
@@ -84,20 +107,22 @@ def pick(subject_parts, policy):
     return out
 
 
-def _line(row, on, names, policy):
+def _line(row, on, names, policy, multi):
     bits = [x for x in (state_text(row), as_of(row, on, policy)) if x]
     if row.get("official_forecast"):
         bits.append(f"見頃予測「{row['official_forecast']}」")
     if row.get("event"):
         bits.append(f"期間 {row['event'][0]}〜{row['event'][1]}")
-    return f"- {place_name(row, names)}: " + "、".join(bits) + (f" — {row['url']}" if row.get("url") else "")
+    return f"- {place_name(row, names, multi)}: " + "、".join(bits) + (f" — {row['url']}" if row.get("url") else "")
 
 
-def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=False, record_failed=False):
+def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False):
     """subject_parts: [{subject, name, summary, candidates, catalog, care?}](対象ごと)→ 答えの下書き(Markdown の文字列)。
-    scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り)、
-    record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。"""
+    scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り。
+    省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。"""
     ans = policy["answer"]
+    if simple_read is None:
+        simple_read = any(r.get("read_by") == "summary" for p in subject_parts for r in p["summary"]["rows"])
     on = now.date()
     names, entries = {}, {}
     for p in subject_parts:
@@ -110,13 +135,21 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=F
     if simple_read and ans.get("simple_read_note"):
         lines += [ans["simple_read_note"], ""]
 
-    chosen = pick(subject_parts, policy)
+    multi = {p["subject"]: multi_label_sites(p["summary"]["rows"]) for p in subject_parts}
+    # 対象が複数のときは対象ごとに選ぶ(1 つの対象がおすすめを埋めてしまわないように)
+    groups = [(p, pick([p], policy, dates)) for p in subject_parts] if len(subject_parts) > 1 else [(None, pick(subject_parts, policy, dates))]
+    chosen = [c for _, g in groups for c in g]
     lines.append(f"## {ans['headings']['recommend']}")
     if not chosen:
         lines.append(ans["none_found"])
-    for i, (p, r, reason) in enumerate(chosen, 1):
-        bits = [x for x in (state_text(r), as_of(r, on, policy)) if x]
-        lines.append(f"{i}. **{place_name(r, names)}**" + (f"({p['name']})" if len(subject_parts) > 1 else "") + " — " + "、".join(bits) + f"。{reason}")
+    for head, g in groups:
+        if head is not None:
+            lines.append(f"### {head['name']}")
+            if not g:
+                lines.append(ans["none_found"])
+        for i, (p, r, reason) in enumerate(g, 1):
+            bits = [x for x in (state_text(r), as_of(r, on, policy)) if x]
+            lines.append(f"{i}. **{place_name(r, names, multi[p['subject']])}** — " + "、".join(bits) + f"。{reason}")
     lines.append("")
 
     lines.append(f"## {ans['headings']['evidence']}")
@@ -127,8 +160,10 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=F
             continue
         if len(subject_parts) > 1:
             lines.append(f"### {p['name']}")
-        for r in rows:
-            lines.append(_line(r, on, names, policy))
+        late = set(policy["stage_scope"]["late"])          # 根拠の並び: 範囲に入るもの → 始まり・前 → 終わり(段階のないものは最後)
+        for r in sorted(rows, key=lambda r: (not r["in_scope"], r["order"] is None, r["order"] in late, -(r["order"] or 0),
+                                             place_name(r, names, multi[p["subject"]]))):
+            lines.append(_line(r, on, names, policy, multi[p["subject"]]))
             shown.add((p["subject"], r.get("site")))
     lines.append("")
 
@@ -136,9 +171,9 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=F
     for p in subject_parts:
         for r in p["summary"]["rows"]:
             if r["stale_display_suspect"]:
-                notes.append(f"- {place_name(r, names)}: {state_text(r)}、{as_of(r, on, policy)}。{ans['stale_display']} — {r.get('url')}")
+                notes.append(f"- {place_name(r, names, multi[p['subject']])}: {state_text(r)}、{as_of(r, on, policy)}。{ans['stale_display']} — {r.get('url')}")
             elif r["conflict"]:
-                notes.append(f"- {place_name(r, names)}: {ans['conflict']} — {r.get('url')}")
+                notes.append(f"- {place_name(r, names, multi[p['subject']])}: {ans['conflict']} — {r.get('url')}")
         for p_, r, _ in chosen:
             if p_ is p:
                 tn = (entries.get(r.get("site")) or {}).get("tags", {}).get("traffic_note")

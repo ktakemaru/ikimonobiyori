@@ -41,25 +41,27 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
 
 2. **候補を絞る。** `sites` は、名所カタログの例年の時期に対象の日が入る(`in_window`)か前後 7 日以内(`near`)の名所と、例年の時期の記載がない名所(`no_window`)。`out_of_season` の名所は、`covered_by_read_plan` があれば(読むページがついでに伝えていれば)公式の現況を示してよい(例年より遅い・早い年がある)。**地域を指定したとき(`--region`)は、その地域の時期の外の名所の承認済みの情報源も `read_plan` に入る**(`out_of_season_sites` に名所)。答えでは、その名所を「**例年の時期の外**」と明記する。地域の指定がないときは入らない。来週以降の質問では、名所カタログの例年の時期より**公式の見頃予測を優先**する(手順 6 の `forecast_hits`)。
 
-3. **現況を読む。** `read_plan` の情報源を上から順に読む。`status_page` を先に。名所ごとに「公式の状態(記号・語)」「公式の更新日」を取る。台帳の `covers[].label` が公式ページでの地点の書き方。
-   - 台帳で `reader: code` の情報源は、biyori-hub の計測フックの下で、コードで 1 回読む(読めた事実は `--record` で記録される):
+3. **現況を読む。** `read_plan` の情報源を上から順に読む。`status_page` を先に。名所ごとに「公式の状態(記号・語)」「現地の状態の日付(「10/22現在」など)」「最終更新日」を取る(どちらかしかなければ、あるほうだけ)。台帳の `covers[].label` が公式ページでの地点の書き方。
+   - **コードで読む前に 1 回だけ聞く**(段階17 修正①。規則 6 は変えない): `read_plan` に台帳で `reader: code` の情報源があれば、最初に 1 回だけ「公式ページをコードで読みます(通信が発生します)。よいですか」と聞く。承認されたら、その会話のあいだは聞き直さない。聞けない状況(無人の実行など)や、承認されなかったときは要約の道具で読み、答えに「**今回は簡易な読み取りです。表記のぶれがありえます**」と書く(下書きの `answer` は、要約で読んだ記録を使うと自動でこの 1 行を出す)。事前に許可する方法は `docs/design.md` §0.1(ユーザーが自分で `.claude/settings.local.json` に入れる。エージェントはこのファイルを書き換えない)。
+   - 承認されたら、台帳で `reader: code` の情報源は、biyori-hub の計測フックの下で、コードで 1 回読む(読めた事実は `--record` で記録される):
      ```
      BIYORI_ALLOW_LIVE=1 BIYORI_REQ_LOG=<絶対パス> BIYORI_REQ_MAX=<N> BIYORI_ALLOW_HOSTS=www.nikko-kankou.org,www.hakone.or.jp PYTHONPATH=<biyori-hub>/hub/measure
          python -X utf8 -m ikimonobiyori.sources read --source <id> [--source <id>] --now <今の時刻> --live --max-requests <N> --record
      ```
-     N は 1 情報源あたり 2(robots.txt とページ)。計測フックの下で動かせないとき・`status` が `ok` でないとき・地点が `missing` に残ったときは、要約の道具で読む手順(上の「読み方を厳しくする」)に戻り、答えに「**コードで読めなかった**」と書く。
+     N は 1 情報源あたり 2(robots.txt とページ)。計測フックの下で動かせないとき・`status` が `ok` でないとき・地点が `missing` に残ったときは、要約の道具で読む手順(上の「読み方を厳しくする」)に戻る。答えには「コードで読めなかった」とは書かず、上の「簡易な読み取り」の 1 行を書く(内部用語を出さない)。
+   - **一覧から今月の記事をたどる情報源**(台帳の `follow: monthly_article`。阿賀野市の瓢湖)は、`python -X utf8 -m ikimonobiyori.sources --subject <対象> follow --source <id> --now <今の時刻>` が出す `look_for` のリンクの文字列(今月 → 先月の順)を一覧ページで探し、そのリンクの記事を読む(羽数と、見出しの日付)。月が変わったら、一覧から次の月の記事を探す。どちらも見つからなければ、一覧の URL(`if_missing.human_url`)を人が開く URL として示す。記録には読んだ記事の URL を `url` に入れる。
    - 状態の書き方の対応は台帳の `notation.map`(アイコンは `notation.icons`)。確かめたいときは
      `python -X utf8 -m ikimonobiyori.sources --subject <対象> normalize --source <id> --state <記号・語>`。
    - カタログ外の地点(台帳の `covers[].name`)も、同じページで分かれば答えに使ってよい(カタログ外と明記)。
    - 台帳の `notation.forecast: per_item` の情報源は、地点ごとの**公式の見頃予測**(「見頃予測」の見出しの文字列)も書かれたとおりに取る。まつり・ライトアップのページは、期間(開始日・終了日)を取る。
 
-4. **新しさを示す。** 公式の更新日から読んだ日までが 3 日以内は「新しい」、7 日以内は「やや古い」、それより古いものは「古い。参考程度」(値は `ikimonobiyori/data/sources/policy.yaml`。記録のコマンドが計算する)。年を補った更新日(箱根など)は日数で分けず「新しさ不明」と書く(新しい・やや古いとしない)。対象の日までの日数も書く(生き物の様子は 1 週間で大きく変わることがある)。
+4. **新しさを示す。** 基準の日付は、①ページが示す**現地の状態の日付**(「10/22現在」など)、②なければ**最終更新日**(段階17 修正⑤。記録の `freshness_basis` が `observed_date` / `updated_date` のどちらを使ったかを残す。日付が 1 つだけの情報源は台帳の `notation.date_basis`)。基準の日付から読んだ日までが 3 日以内は「新しい」、7 日以内は「やや古い」、それより古いものは「古い。参考程度」(値は `ikimonobiyori/data/sources/policy.yaml`。記録のコマンドが計算する)。年のない日付(箱根の「M/D現在」、年の書いていない「10/20現在」など)は日数で分けず「新しさ不明」と書く(新しい・やや古いとしない)。答えには「○/○時点」とだけ書く。対象の日までの日数も書く(生き物の様子は 1 週間で大きく変わることがある)。
 
-5. **記録を残す。** 要約の道具で読んだ結果の事実だけを JSON の配列にして(作業用フォルダに置く)、記録に追記する(コードで読んだものは `read --record` で記録済み)。
+5. **記録を残す(必ず。答えの前に)。** 現況ページを読んだら、要約の道具で読んだ結果の事実だけを JSON の配列にして(作業用フォルダに置く)、答える前に記録に追記する(コードで読んだものは `read --record` で記録済み)。同じ事実は追記されない。記録できなかったときは、答えの最後に 1 行「読んだ結果を記録できませんでした」と書く(`answer --record-failed`)。
    ```
    python -X utf8 -m ikimonobiyori.sources --subject <対象> record --read-at <読んだ時刻 ISO 8601 +09:00> --batch <reads.json>
    ```
-   `reads.json` の 1 件: `{"source": "<情報源 id>", "site": "<カタログ id>" または "name": "<カタログ外の名前>", "label": "<公式の地点の書き方>", "state": "<公式の記号・語>", "updated": "YYYY-MM-DD", "year_inferred": true(年を補ったときだけ), "forecast": "<公式の見頃予測の原文>"(あれば), "event_start"・"event_end": "YYYY-MM-DD"(期間があれば), "method": "agent_summary"(既定)/"code"/"user_verified"}`。
+   `reads.json` の 1 件: `{"source": "<情報源 id>", "site": "<カタログ id>" または "name": "<カタログ外の名前>", "label": "<公式の地点の書き方>", "state": "<公式の記号・語>", "observed": "YYYY-MM-DD"(現地の状態の日付。あれば), "observed_year_inferred": true(その日付に年がなく補ったときだけ), "updated": "YYYY-MM-DD"(最終更新日。あれば), "year_inferred": true(更新日の年を補ったときだけ), "forecast": "<公式の見頃予測の原文>"(あれば), "event_start"・"event_end": "YYYY-MM-DD"(期間があれば), "url": "<読んだ記事の URL>"(一覧からたどったときだけ), "method": "agent_summary"(既定)/"code"/"user_verified"}`。要約で読んだ記録には `read_by: summary` が付く(コードが付ける)。
    - 書き込み先は `IKIMONOBIYORI_DATA_DIR` の下の `status_log/<対象>.jsonl`(git の追跡外)。承認済みの情報源・台帳の covers にある地点・事実の項目だけが通る。同じ事実は二重に書かれない。来年の答え合わせの正解データになる。
    - 読み違いが分かったら、記録を消さずに誤りの印を付け、正しい事実を足す(段階16 A-1):
      `python -X utf8 -m ikimonobiyori.sources --subject <対象> mark-erroneous --match '<一致させる項目の JSON>' --reason <理由> --corrected-on YYYY-MM-DD`。

@@ -61,6 +61,9 @@ answer:
   # 年のない日付(箱根など)を「○/○時点」と書くときに添える
   year_unknown_suffix: "(年の記載なし)"
   stale_display: "表示が昨シーズンのままの可能性があります。おすすめに使っていません"
+  # 要約の道具で読んだ記録を使ったとき(段階17 修正①)・読んだ事実を記録できなかったとき(修正④)に出す 1 行
+  simple_read_note: "今回は簡易な読み取りです。表記のぶれがありえます"
+  record_failed_note: "読んだ結果を記録できませんでした"
   conflict: "読み方によって状態が食い違っています。公式ページをご自身でご確認ください"
   # 気温からの推定(v0 の出力)を答えに書くときの呼び方(内部の呼び名 v0 を出さない)
   aux_estimate_label: "気温からの推定(未検証。答え合わせで不合格)"
@@ -76,7 +79,13 @@ record:
   # 記録に入れてよい項目(これ以外は拒否する。本文の写しを入れる欄を作らない)
   fields: [schema, subject, source_id, site, name, label, official_state, stage, official_updated, updated_year_inferred, read_at, url,
            method, official_forecast, event_start, event_end, erroneous, erroneous_reason, corrected_on,
-           unmarked_on, unmarked_reason, user_checked_on, method_note]
+           unmarked_on, unmarked_reason, user_checked_on, method_note,
+           official_observed, observed_year_inferred, freshness_basis, read_by]
+  # 新しさの基準(段階17 修正⑤): ①ページが示す現地の状態の日付(「10/22現在」など。official_observed)、②なければ最終更新日(official_updated)。
+  # どちらを使ったかを freshness_basis に残す。日付が 1 つだけの情報源は、その日付の種類を台帳の notation.date_basis に書く(既定は updated_date)
+  freshness_bases: [observed_date, updated_date]
+  # 読み方(method)→ read_by(段階17 修正④)。summary = 要約の道具で読んだ(答えに「簡易な読み取り」と書く)
+  read_by: {agent_summary: summary, assistant_webfetch: summary, code: code, user_verified: user}
   # 読み方(記録の method)。agent_summary = エージェントが要約の道具(WebFetch など)で読んだ(段階15。method がない記録もこれ)、
   # code = 決まった形を読むコードで読んだ(段階16 A-4。日光・箱根だけ)、user_verified = ユーザーが原文を確かめた(段階16 A-1)
   # assistant_webfetch = 別の会話のアシスタント(Claude)が WebFetch で読んだもの。古いページ(キャッシュ)の可能性があり、ユーザーの確認として扱わない
@@ -99,6 +108,11 @@ record:
 reuse:
   same_day_only: true
   source: "指示書(段階16 A-2)"
+
+# 和暦(段階17 修正⑥): 月ごとの記事の見出し(「令和8年10月の白鳥の渡来状況」)を作るため。令和元年 = 2019 年
+japanese_era:
+  name: 令和
+  first_year: {value: 2019, source: "元号を改める政令(平成31年政令第143号): 2019年5月1日から令和", provisional: false}
 
 # 公式の見頃予測の「上旬・中旬・下旬」→ 日の範囲(段階16 A-8)。下旬の終わりは月末
 # 出典: 気象庁 予報用語「上旬: 1日から10日まで、中旬: 11日から20日まで、下旬: 21日から月末まで」
