@@ -24,21 +24,21 @@ sources:
       - {site: kouyou-0029, label: "【日光】日光市霧降高原 キスゲ平園地"}
       - {site: kouyou-0027, label: "【鬼怒川・川治】日塩もみじライン"}
       - {site: kouyou-0028, label: "【湯西川・川俣・奥鬼怒】瀬戸合峡"}
-      - {name: 蛇王の滝, label: "【湯西川・川俣・奥鬼怒】蛇王の滝"}
-      - {name: 鬼怒沼, label: "【湯西川・川俣・奥鬼怒】鬼怒沼"}
-      - {name: 平家の里, label: "【湯西川・川俣・奥鬼怒】平家の里"}
-      - {name: 湯西川水の郷, label: "【湯西川・川俣・奥鬼怒】湯西川水の郷"}
-      - {name: 六方沢, label: "【今市】六方沢"}
-      - {name: 日光だいや川公園, label: "【今市】日光だいや川公園"}
-      - {name: 杉並木公園, label: "【今市】杉並木公園"}
-      - {name: 足尾 銀山平, label: "【足尾】CAMP THE 銀山平"}
-      - {name: 鬼怒川温泉 丸山, label: "【鬼怒川・川治】鬼怒川温泉 丸山"}
-      - {name: 鬼怒楯岩大吊橋, label: "【鬼怒川・川治】鬼怒楯岩大吊橋"}
-      - {name: 龍王峡, label: "【鬼怒川・川治】龍王峡"}
+      - {site: kouyou-0049, label: "【湯西川・川俣・奥鬼怒】蛇王の滝"}
+      - {site: kouyou-0053, label: "【湯西川・川俣・奥鬼怒】鬼怒沼"}
+      - {site: kouyou-0044, label: "【湯西川・川俣・奥鬼怒】平家の里"}
+      - {site: kouyou-0048, label: "【湯西川・川俣・奥鬼怒】湯西川水の郷"}
+      - {site: kouyou-0058, label: "【今市】六方沢"}
+      - {site: kouyou-0045, label: "【今市】日光だいや川公園"}
+      - {site: kouyou-0047, label: "【今市】杉並木公園"}
+      - {site: kouyou-0050, label: "【足尾】CAMP THE 銀山平"}
+      - {site: kouyou-0059, label: "【鬼怒川・川治】鬼怒川温泉 丸山"}
+      - {site: kouyou-0052, label: "【鬼怒川・川治】鬼怒楯岩大吊橋"}
+      - {site: kouyou-0054, label: "【鬼怒川・川治】龍王峡"}
       - {name: 川治温泉, label: "【鬼怒川・川治】川治温泉"}
-      - {name: 小網ダム, label: "【鬼怒川・川治】小網ダム"}
-      - {name: 霧降滝, label: "【日光】霧降滝"}
-      - {name: 日光の社寺, label: "【日光】世界遺産 日光の社寺"}
+      - {site: kouyou-0042, label: "【鬼怒川・川治】小網ダム"}
+      - {site: kouyou-0051, label: "【日光】霧降滝"}
+      - {site: kouyou-0046, label: "【日光】世界遺産 日光の社寺"}
     notation:
       style: symbol
       map: {"✕": not_yet, "△": starting, "〇": good, "◯": good, "◎": peak, "▼": fading}

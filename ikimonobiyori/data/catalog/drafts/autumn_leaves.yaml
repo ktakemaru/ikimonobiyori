@@ -47,3 +47,146 @@ entries:
     sources:
       - {url: "https://www.takaotozan.co.jp/StationStaff/archives/14100", title: "高尾登山電鉄 高尾山の紅葉情報"}
     note: "代表点: ケーブルカー清滝駅(推定)。76地点の高尾山(山頂)とは別に山麓を代表点にした"
+
+  # ---- 段階19: 座標の確認で外れた地点・承認待ちの情報源の地点(足さない。ユーザーが見直す。docs/stage19-review.md) ----
+  - id: kouyou-0056
+    name: 八溝山
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 1022 m に対し、所在地から推定した試し点の標高が 303 m(719 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0003.html", title: "大子町観光協会 八溝山", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町上野宮。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0057
+    name: 男体山(大子町)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 公式ページの標高 654 m に対し、推定した試し点の標高が 270 m(384 m の差)。座標を取り直す
+    sources:
+      - {url: "https://www.daigo-kanko.jp/mt_nantai.html", title: "大子町観光協会 男体山", checked_on: "2026-10-24"}
+    note: "段階19。所在地の記載がない(観光協会の住所だけ)。公式ページに座標はない。推定した点は標高が合わなかったので記録しない"
+  - id: kouyou-0060
+    name: 接岨峡・長島ダム・奥大井湖上駅
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: area_10km
+    status: candidate              # 保留: 情報源 okuooi-koyo が承認待ち(pending)で、スポットのページを読んでいない
+    sources:
+      - {url: "https://okuooi.gr.jp/pickup/page.php?id=3", title: "川根本町まちづくり観光協会 紅葉情報"}
+    note: "段階19。承認済みの現況の情報源がないので足さない(承認されたら座標を取る)"
+  - id: kouyou-0061
+    name: 智満寺
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: area_10km
+    status: candidate              # 保留: 情報源 okuooi-koyo が承認待ち(pending)で、スポットのページを読んでいない
+    sources:
+      - {url: "https://okuooi.gr.jp/pickup/page.php?id=3", title: "川根本町まちづくり観光協会 紅葉情報"}
+    note: "段階19。承認済みの現況の情報源がないので足さない(承認されたら座標を取る)"
+
+  # ---- 段階19(続き): 推定の座標で足した 20 地点を、座標未確認として戻した(承認済みから外した。推定の座標は使わない)。docs/stage19-decisions.md D-16 ----
+  - id: kouyou-0036
+    name: 月待の滝
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 茨城県, area: 大子, terrain: [waterfall]}
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0004.html", title: "大子町観光協会 月待の滝", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町川山。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: daigo-kanko-koyo"
+  - id: kouyou-0037
+    name: 永源寺(大子町)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.daigo-kanko.jp/themes/koyo.html"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 茨城県, area: 大子, terrain: [temple_shrine]}
+    sources:
+      - {url: "https://www.daigo-kanko.jp/spot-0020.html", title: "大子町観光協会 永源寺(大子町)", checked_on: "2026-10-24"}
+      - {url: "https://www.daigo-kanko.jp/themes/koyo.html", title: "大子町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。所在地は大子町大子。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: daigo-kanko-koyo"
+  - id: kouyou-0038
+    name: 箱根 元箱根
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, terrain: [lake], access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は元箱根港のバス停(芦ノ湖の南側)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページを探したが見つからなかった(2026-10-24。エリアのページにリンクなし。元箱根石仏群の /6319 は別の場所なので使わない)。pending のまま"
+  - id: kouyou-0039
+    name: 箱根 宮ノ下
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印はホテル前のバス停(芦ノ湖方面と強羅方面の分岐)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページ(宮ノ下温泉 https://www.hakone.or.jp/6899)をコードで読んだが、地図の座標の数字はなかった(2026-10-24)。pending のまま"
+  - id: kouyou-0040
+    name: 箱根 旧街道 甘酒茶屋付近
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [bus]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。目印は甘酒茶屋のバス停(旧道経由の元箱根行き)。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページを探したが見つからなかった(2026-10-24。旧街道石畳の /6316 は別の場所なので使わない)。pending のまま"
+  - id: kouyou-0041
+    name: 箱根 湯本
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.hakone.or.jp/1804"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 神奈川県, area: 箱根, access: [walk_from_station]}
+    sources:
+      - {url: "https://www.hakone.or.jp/1804", title: "箱根町観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。箱根湯本駅から下車すぐ。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: hakone-kankou-koyo。続き: 個別のスポットページ(箱根湯本温泉 https://www.hakone.or.jp/6892)をコードで読んだが、地図の座標の数字はなかった(2026-10-24)。pending のまま"
+  - id: kouyou-0043
+    name: 川治温泉
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.nikko-kankou.org/flowering/autumn-leaves"
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 栃木県, area: 日光}
+    sources:
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。スポットのページへのリンクがない。温泉地の名前から日光市川治付近。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: nikko-kankou-autumn-leaves"
+  - id: kouyou-0055
+    name: 西沢渓谷
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: area
+    location_precision: exact
+    official_status_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"
+    typical_window: {start: "10-01", end: "10-20", source_url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", note: "やまなし観光ネットの一覧: 西沢渓谷 例年 10月上旬〜中旬(上旬を 01〜10 日・中旬を 11〜20 日に直した)"}
+    status: candidate              # 保留: 座標未確認(推定の座標は使わない。公式ページの地図の埋め込みの座標を確認できたら承認する)
+    tags: {prefecture: 山梨県, area: 山梨市, terrain: [valley]}
+    sources:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", title: "やまなし観光推進機構 紅葉情報", checked_on: "2026-10-24"}
+    note: "段階19。一覧ページの記載(標高 1,500 m 以上のグループ)は西沢渓谷単独の値ではないので、標高の確かめには使っていない。座標未確認。先に推定の座標(所在地・目印から)で承認していたが、推定は使わないことにしたので戻した。承認済みの情報源: yamanashi-kankou-koyo"
