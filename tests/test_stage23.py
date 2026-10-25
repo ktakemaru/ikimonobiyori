@@ -355,5 +355,49 @@ class Steps(unittest.TestCase):
         self.assertIsNone(guide.theme_of("恐竜", P))
 
 
+class ReadTimeFromTheClock(unittest.TestCase):
+    """段階23 フェーズ6: 記録の読んだ時刻はパソコンの時計から入れる。渡された時刻は警告を出して使わない。未来の時刻の記録は今日の記録に使わない。"""
+
+    def setUp(self):
+        from ikimonobiyori import sources
+        self.S = sources
+        self.d = Path(tempfile.mkdtemp(prefix="ikimono-s23t-"))
+        self.addCleanup(shutil.rmtree, self.d, True)
+        self.env = {paths.ENV_DATA_DIR: str(self.d)}
+
+    def test_given_time_is_ignored_outside_tests(self):
+        err = io.StringIO()
+        with mock.patch.object(self.S.livegate, "under_test", return_value=False), mock.patch.object(self.S, "clock_now", return_value=NOW),                 contextlib.redirect_stderr(err):
+            self.assertEqual(self.S.read_time("2030-01-01T00:00:00+09:00"), NOW)
+            self.assertEqual(self.S.read_time(None), NOW)
+        self.assertIn("使わない", err.getvalue())
+
+    def test_record_cli_uses_the_clock(self):
+        batch = self.d / "reads.json"
+        batch.write_text(json.dumps([{"source": "hakone-kankou-koyo", "site": "kouyou-0018", "label": "強羅(箱根美術館)",
+                                      "state": "色づきはじめ", "updated": "2026-10-22", "year_inferred": True}], ensure_ascii=False), encoding="utf-8")
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(self.S.livegate, "under_test", return_value=False),                 mock.patch.object(self.S, "clock_now", return_value=NOW), contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            self.assertEqual(self.S.main(["record", "--read-at", "2030-01-01T00:00:00+09:00", "--batch", str(batch)]), 0)
+            got = self.S.read_records("autumn_leaves")
+        self.assertEqual([r["read_at"] for r in got], [NOW.isoformat()])
+        self.assertIn("使わない", err.getvalue())
+
+    def test_future_records_are_not_used_today(self):
+        log = self.d / "status_log" / "autumn_leaves.jsonl"
+        log.parent.mkdir(parents=True)
+        base = {"schema": "x", "subject": "autumn_leaves", "source_id": "s", "site": "kouyou-0001", "official_state": "◎", "url": "https://example.org/"}
+        rows = [{**base, "read_at": "2026-10-25T08:00:00+09:00"}, {**base, "read_at": "2026-10-25T23:00:00+09:00", "official_state": "◯"}]
+        log.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+        err = io.StringIO()
+        with mock.patch.dict(os.environ, self.env), mock.patch.object(self.S, "clock_now", return_value=NOW), contextlib.redirect_stderr(err):
+            got = self.S.records_on("autumn_leaves", date(2026, 10, 25))
+            fut = guide.future_status_records(now=NOW)
+        self.assertEqual([r["official_state"] for r in got], ["◎"])
+        self.assertIn("未来", err.getvalue())
+        self.assertEqual([r["read_at"] for r in fut], ["2026-10-25T23:00:00+09:00"])
+        self.assertEqual(len(log.read_text(encoding="utf-8").splitlines()), 2)          # 書き換えない
+
+
 if __name__ == "__main__":
     unittest.main()

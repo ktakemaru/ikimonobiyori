@@ -9,7 +9,7 @@
   python -X utf8 -m ikimonobiyori.sources check
   python -X utf8 -m ikimonobiyori.sources weekend --now 2026-10-23T21:00:00+09:00 [--date 2026-10-24 ...]
   python -X utf8 -m ikimonobiyori.sources normalize --source nikko-kankou-autumn-leaves --state ◎
-  python -X utf8 -m ikimonobiyori.sources record --read-at 2026-10-23T21:00:00+09:00 --batch reads.json
+  python -X utf8 -m ikimonobiyori.sources record --batch reads.json   (読んだ時刻はコードが時計から入れる)
   python -X utf8 -m ikimonobiyori.sources log [--source ID] [--include-erroneous]
   python -X utf8 -m ikimonobiyori.sources summary --now 2026-10-23T21:00:00+09:00 [--date 2026-10-31 ...]
   python -X utf8 -m ikimonobiyori.sources mark-erroneous --match '{"name": "湖尻", ...}' --reason ... --corrected-on 2026-10-23
@@ -774,9 +774,37 @@ def read_records(subject, env=None, include_erroneous=False, include_superseded=
             if (include_erroneous or r.get("erroneous") is not True) and (include_superseded or r.get("superseded") is not True)]
 
 
+def clock_now():
+    """パソコンの時計(オフセットつき)。記録の読んだ時刻はここから入れる(段階23 フェーズ6。モデルが書いた時刻は使わない)。"""
+    return datetime.now().astimezone().replace(microsecond=0)
+
+
+def read_time(given=None):
+    """記録に入れる読んだ時刻。パソコンの時計から入れ、渡された時刻(--read-at・read の --now)は警告を出して使わない(段階23 フェーズ6)。
+    テスト中(BIYORI_UNDER_TEST=1)だけは、渡された時刻をテストの時計として使う(決まった出力のため。テストは通信も実時刻も使わない)。"""
+    if given is not None and livegate.under_test():
+        return parse_now(given)
+    if given is not None:
+        print(f"警告: 読んだ時刻 {given} は使わない(読んだ時刻はコードがパソコンの時計から入れる)", file=sys.stderr)
+    return clock_now()
+
+
+def future_records(records, now=None):
+    """読んだ時刻がパソコンの時計より後の記録(段階23 フェーズ6)。"""
+    now = now or clock_now()
+    return [r for r in records if parse_now(r["read_at"]) > now]
+
+
 def records_on(subject, day, env=None):
-    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印・置き換えの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。"""
-    return [r for r in read_records(subject, env) if parse_now(r["read_at"]).date() == day]
+    """day(date)に読んだ記録だけ(読んだ時刻のオフセットでの暦日)。誤りの印・置き換えの印の付いたものは除く。記録の再利用は同じ日のうちだけ(段階16 A-2)。
+    読んだ時刻が未来の記録は、警告を出して「今日の記録」に使わない(段階23 フェーズ6。記録は書き換えない)。"""
+    rows = [r for r in read_records(subject, env) if parse_now(r["read_at"]).date() == day]
+    fut = future_records(rows)
+    if fut:
+        print(f"警告: {subject} の記録に、読んだ時刻が未来のものが {len(fut)} 件ある(使わない): "
+              + ", ".join(sorted({r["read_at"] for r in fut})), file=sys.stderr)
+        rows = [r for r in rows if r not in fut]
+    return rows
 
 
 def latest_by_place(records):
@@ -1268,7 +1296,7 @@ def main(argv=None, http_get=None):
     n.add_argument("--source", required=True)
     n.add_argument("--state", required=True)
     r = sub.add_parser("record", help="読んだ結果(事実だけ)を記録に追記する(IKIMONOBIYORI_DATA_DIR の下)")
-    r.add_argument("--read-at", required=True, help="読んだ時刻。ISO 8601(オフセット必須)")
+    r.add_argument("--read-at", help="渡しても使わない(読んだ時刻はコードがパソコンの時計から入れる。段階23)")
     r.add_argument("--batch", required=True,
                    help="JSON の配列: [{source, site|name, label?, state, observed?, observed_md?(年のない M-D), observed_year_inferred?, updated?, year_inferred?, method?, "
                         "forecast?, event_start?, event_end?, url?, parts?(部位ごとの状態の原文 [{part, state}])}]")
@@ -1299,7 +1327,7 @@ def main(argv=None, http_get=None):
     sm.add_argument("--late", action="store_true", help="質問の型③: 終わり(色褪せ・落葉など)も含める")
     rd = sub.add_parser("read", help="reader: code の情報源をコードで 1 回読む(段階16 A-4。--live・--max-requests・計測フックが要る)")
     rd.add_argument("--source", action="append", required=True)
-    rd.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
+    rd.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。記録の読んだ時刻には使わない(コードがパソコンの時計から入れる。段階23)")
     rd.add_argument("--live", action="store_true")
     rd.add_argument("--max-requests", type=int)
     rd.add_argument("--record", action="store_true", help="読めた事実を記録に足す(IKIMONOBIYORI_DATA_DIR の下)")
@@ -1414,7 +1442,7 @@ def main(argv=None, http_get=None):
         _dump({"source": a.source, "official_state": a.state, "stage": stage, "label": stage_label(policy, a.subject, stage), "how": how})
         return 0
     if a.cmd == "record":
-        read_at = parse_now(a.read_at)
+        read_at = read_time(a.read_at)
         items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
         recs = [make_record(registry=registry, policy=policy, source_id=it.get("source"), read_at=read_at.isoformat(), state=it.get("state"),
                             updated=it.get("updated"), site=it.get("site"), name=it.get("name"), label=it.get("label"),
@@ -1496,7 +1524,7 @@ def main(argv=None, http_get=None):
             t = cfg["live"]["request_timeout"]
             getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
         try:
-            res = read_live(a.source, registry=registry, policy=policy, cfg=cfg, now=parse_now(a.now), http_get=http_get or getter,
+            res = read_live(a.source, registry=registry, policy=policy, cfg=cfg, now=read_time(a.now), http_get=http_get or getter,
                             max_requests=a.max_requests, record=a.record)
         finally:
             if getter is not None:
