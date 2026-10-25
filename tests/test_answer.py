@@ -152,7 +152,7 @@ class AnswerOrdering(unittest.TestCase):
 
     def test_a_place_past_its_forecast_goes_after(self):
         mk = lambda **kw: sources.make_record(registry=REG, policy=POLICY, read_at=NOW.isoformat(), source_id="test-koyo", **kw)
-        recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-22", forecast="10月上旬～10月中旬"),
+        recs = [mk(site="kouyou-0001", label="渓谷", state="◎", updated="2026-10-18", forecast="10月上旬～10月中旬"),     # 段階21: 状態が 3 日より古い
                 mk(site="kouyou-0002", label="湖畔", state="◯", updated="2026-10-22", forecast="10月下旬～11月上旬")]
         rec_lines = body_lines(answer.compose(parts(recs), now=NOW, dates=DATES, policy=POLICY), POLICY["answer"]["headings"]["recommend"])
         # 段階20: 見頃予測が対象の日より前に終わる渓谷は、後ろに回すのではなくおすすめから外し、名前だけ 1 行で書く

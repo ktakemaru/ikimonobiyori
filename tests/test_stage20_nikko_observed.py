@@ -72,7 +72,8 @@ class Recorded(unittest.TestCase):
         self.assertEqual(recs["【鬼怒川・川治】日塩もみじライン"]["official_state"], "◎")
         raw = (self.d / "status_log" / "autumn_leaves.jsonl").read_text(encoding="utf-8")
         self.assertNotIn("見本の本文", raw)                                       # 本文は残さない
-        self.assertNotIn("山頂", raw)
+        self.assertEqual(recs["【鬼怒川・川治】日塩もみじライン"]["official_parts"][0], {"part": "山頂", "state": "終盤"})   # 段階21: 本文の部位ごとの状態は記録に残る
+        self.assertNotIn("見本の本文", raw)
 
 
 if __name__ == "__main__":

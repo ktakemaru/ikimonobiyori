@@ -9,7 +9,7 @@ from datetime import date
 from . import __version__
 from . import catalog as catalog_mod
 from .engine import AGENT_ID, SCHEMA, day_window, round_coord
-from .sources import usable_status_row, val
+from .sources import forecast_day_status, usable_status_row, val
 
 ID_KIND = "status"             # 提案の id の 2 つ目。気温の推定(engine)の id と区別する(段階18 の確認、ユーザー 2026-10-24)
 YEAR_FREE_DATE = "{m}/{d}"       # 年のない公式の日付の書き方(原文の形。答えの「○/○時点」と同じ)
@@ -52,7 +52,7 @@ def decide(row, d, *, policy, on, scope):
     if beyond:
         keys.append("beyond_horizon")
         band = "maybe" if hit else "no"
-    elif fw and fw[1] < d.isoformat():                       # 見頃予測がその日より前に終わる: answer がおすすめから外すのと同じ(段階20)
+    elif forecast_day_status(row, d, policy) == "drop":     # 見頃予測がその日より前に終わり、残す条件も満たさない: answer がおすすめから外すのと同じ(段階20・21)
         band = "no"
     elif order is not None and (order in scope or order in val(pp["maybe_orders"])):
         band = "maybe"
@@ -64,6 +64,8 @@ def decide(row, d, *, policy, on, scope):
         band = "no"
     if order is None:
         keys.append("no_stage")
+    if band == "maybe" and forecast_day_status(row, d, policy) == "keep":
+        keys.append("forecast_past")                          # 予測の時期は過ぎているが公式の状態が新しいので残した(段階21)
     return band, keys
 
 
