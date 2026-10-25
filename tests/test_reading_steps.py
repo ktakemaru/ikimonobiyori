@@ -142,9 +142,9 @@ class MonthlyArticle(unittest.TestCase):
 
 
 class Steps(unittest.TestCase):
-    def test_the_steps_ask_once_and_record_before_answering(self):
+    def test_the_steps_do_not_ask_back_and_record_before_answering(self):
         s = (ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")
-        for needle in ("1 回だけ「公式ページをコードで読みます(通信が発生します)。よいですか」", "今回は簡易な読み取りです。表記のぶれがありえます",
+        for needle in ("**聞き返さない**(段階23", "今回は簡易な読み取りです。表記のぶれがありえます",
                        "記録を残す(必ず。答えの前に)", "読んだ結果を記録できませんでした", "現地の状態の日付", "freshness_basis",
                        "follow --source", "if_missing.human_url"):
             self.assertIn(needle, s)

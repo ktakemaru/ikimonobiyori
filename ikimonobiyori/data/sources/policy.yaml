@@ -181,6 +181,23 @@ topics:
     紅葉: [autumn_leaves]
     花: [flowers]
     お花: [flowers]
+    # 段階23(指示書 フェーズ5 の 1): 言い換え。現況の対象が実装済みのものだけ(桜・ホタルは現況の対象がないので、ガイド型だけ。data/guide/policy.yaml の words)
+    渡り鳥: [wintering_birds, birds]
+    ハクチョウ: [wintering_birds]
+    カモ: [wintering_birds, birds]
+    ツル: [wintering_birds]
+    カワセミ: [birds]
+    梅: [flowers]
+    水仙: [flowers]
+    スイセン: [flowers]
+    さざんか: [flowers]
+    サザンカ: [flowers]
+    山茶花: [flowers]
+    ロウバイ: [flowers]
+    蝋梅: [flowers]
+    ツバキ: [flowers]
+    椿: [flowers]
+    バラ: [flowers]
 
 # 未実装の対象を聞かれたとき(段階17 修正⑩)。関係のない実装済みの対象を並べず、答えられない理由と、足すとどうなるかを 1〜2 文で。
 # 近い対象(related)が答えられる対象なら、それだけを示す

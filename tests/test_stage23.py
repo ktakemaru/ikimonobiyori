@@ -337,5 +337,23 @@ class Review(unittest.TestCase):
                 self.assertIn(e["id"], md)
 
 
+class Steps(unittest.TestCase):
+    """段階23 フェーズ5: 3 つのファイルの同じ節に、ガイド型の答え方がある(一致は test_sources.Procedure が確かめる)。"""
+
+    def test_the_guide_steps_are_in_the_skill(self):
+        s = (H.ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")
+        for needle in ("### 現況型とガイド型(段階23)", "### ガイド型の答え方(段階23)", "guide find --word", "検索せずに答える", "**仮**(検索で集めたもの)",
+                       "独立した出どころが 1 件も見つからないときだけ", "「補足」として最大 2 行まで", "「これから」の欄", "guide unanswered",
+                       "聞き返さない", "`--read-at` は渡さない"):
+            self.assertIn(needle, s)
+        self.assertNotIn("よいですか」と聞く", s)
+
+    def test_new_words_map_to_themes(self):
+        for w in ("渡り鳥", "冬鳥", "白鳥", "ハクチョウ", "カモ", "ツル", "ホタル", "蛍", "桜", "早咲き", "冬桜", "寒桜", "河津桜", "十月桜",
+                  "さざんか", "ロウバイ", "ツバキ", "梅", "水仙", "カワセミ"):
+            self.assertIsNotNone(guide.theme_of(w, P), w)
+        self.assertIsNone(guide.theme_of("恐竜", P))
+
+
 if __name__ == "__main__":
     unittest.main()
