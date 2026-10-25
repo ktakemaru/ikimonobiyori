@@ -21,6 +21,10 @@ sensitive_min_location_precision: area_10km
 # 起点の座標は東京駅・横浜駅の付近(Claude Code の知識による値。小数 3 桁)。地球の半径は球の近似(km)
 range_limit:
   max_km: 250
+  # 出発地(段階23 の続き。ユーザーの指示 2026-10-25: ハブのコンシェルと同じく既定は横浜、東京などを選べる)。距離は出発地から測り、範囲は出発地ごとに判定する
+  default_origin: 横浜
+  # 範囲の端(ユーザーの指示 2026-10-25): 出発地から edge_min_km 以上 max_km 以下は「範囲の端」と書く
+  edge_min_km: {value: 240, source: "ユーザーの指示(2026-10-25):『240〜250 kmは「範囲の端」と書く』", provisional: false}
   earth_radius_km: 6371.0
   origins:
     - {name: 東京, lat: 35.681, lon: 139.767}

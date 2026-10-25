@@ -286,13 +286,15 @@ def _line(row, on, names, policy, multi):
 
 
 def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False, early=False, late=False, unread_reasons=None,
-            record_gaps=None):
+            record_gaps=None, origin=None):
     """subject_parts: [{subject, name, summary, candidates, catalog, care?}](対象ごと)→ 答えの下書き(Markdown の文字列)。
     scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り。
     省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。
     early・late は質問の型③(始まり・終わりも含める。おすすめを段階ごとの見出しに分ける)。
     unread_reasons は {情報源 id: 理由}(読む予定の情報源を読まなかった理由。答えの『読めていない名所』に 1 行で添える)。
-    record_gaps は読んだ地点の数より今日の記録が少ない情報源 [{source, publisher, read, recorded}](『注意』の先頭に警告。段階20)。"""
+    record_gaps は読んだ地点の数より今日の記録が少ない情報源 [{source, publisher, read, recorded}](『注意』の先頭に警告。段階20)。
+    origin は出発地(省略すると名所カタログの方針の default_origin = 横浜。段階23 の続き)。冒頭に 1 行で書き、名所の代表点から出発地までの
+    距離で範囲を判定する: 範囲の外はおすすめに入れず『注意』に、範囲の端はおすすめの理由に添える。"""
     ans = policy["answer"]
     unread_reasons = unread_reasons or {}
     if simple_read is None:
@@ -303,16 +305,32 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
         for e in catalog_mod.approved_entries(p.get("catalog") or {}):
             names[e["id"]], entries[e["id"]] = e["name"], e
     title = "・".join(p["name"] for p in subject_parts)
+    cpol = catalog_mod.load_policy()
+    origin = catalog_mod.resolve_origin(cpol, origin)
+    rl = cpol["range_limit"]
     lines = [f"**{'・'.join(day_label(d) for d in dates)}の{title}**({time_label(now)}に公式ページを読んだ結果)", ""]
+    ranges = {}                                                        # (対象, 名所) → 出発地から見た範囲(代表点のある名所だけ)
+    for p in subject_parts:
+        for r in p["summary"]["rows"]:
+            pt = (entries.get(r.get("site")) or {}).get("point")
+            if pt and (p["subject"], r["site"]) not in ranges:
+                ranges[(p["subject"], r["site"])] = catalog_mod.range_from(cpol, pt, origin)
+    far = {k for k, v in ranges.items() if v["status"] == "out_of_range"}
+    near_parts = {id(p): {**p, "summary": {**p["summary"], "rows": [r for r in p["summary"]["rows"] if (p["subject"], r.get("site")) not in far]}}
+                  for p in subject_parts}
     if scope_note:
         lines += [scope_note, ""]
     if simple_read and ans.get("simple_read_note"):
         lines += [ans["simple_read_note"], ""]
+    # 出発地の 1 行(段階23 の続き)。冒頭の注記(扱える範囲・簡易な読み取り)のあと、おすすめの前
+    lines += [ans["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=_val(rl["edge_min_km"])), ""]
 
     multi = {p["subject"]: multi_label_sites(p["summary"]["rows"]) for p in subject_parts}
     ahead = (min(dates) - on).days >= _val(ans["ahead_min_days"])           # 来週末など、対象の日が先
     # 対象が複数のときは対象ごとに選ぶ(1 つの対象がおすすめを埋めてしまわないように)
-    per_subject = [(p, recommend_groups([p], policy, dates, early=early, late=late, ahead=ahead)) for p in subject_parts]
+    # 範囲の外(出発地から)の名所はおすすめに入れない(段階23 の続き)。選ぶのは範囲内・範囲の端の行だけ
+    per_subject = [(p, [(h, [(p, r, why) for _, r, why in g]) for h, g in recommend_groups([near_parts[id(p)]], policy, dates, early=early, late=late, ahead=ahead)])
+                   for p in subject_parts]
     chosen = [c for _, gs in per_subject for _, g in gs for c in g]
     lines.append(f"## {ans['headings']['recommend']}")
     if not chosen:
@@ -331,11 +349,14 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
                 lines.append(f"**{head}**" if multi_subject else f"### {head}")
             for i, (p_, r, reason) in enumerate(g, 1):
                 bits = [x for x in (state_text(r, policy), as_of(r, on, policy)) if x]
+                rg = ranges.get((p_["subject"], r.get("site")))
+                if rg and rg["status"] == "edge":
+                    reason += "。" + ans["edge_note"].format(origin=origin, km=rg["km"])
                 lines.append(f"{i}. **{place_name(r, names, multi[p_['subject']])}** — " + "、".join(bits) + f"。{reason}"
                              + "".join(f"。{n}" for n in forecast_notes(r, dates, on, policy)))
         mine = [c for c in chosen if c[0] is p]
         orders = None if not (early or late) else set(policy["stage_scope"]["default"]) | (set(policy["stage_scope"]["early"]) if early else set()) | (set(policy["stage_scope"]["late"]) if late else set())
-        ended, others = left_out([p], policy, dates, mine, orders=orders)
+        ended, others = left_out([near_parts[id(p)]], policy, dates, mine, orders=orders)
         if ended:
             lines.append(ans["forecast_ended"].format(names="、".join(dict.fromkeys(place_name(r, names, multi[p["subject"]]) for _, r in ended))))
         if others:
@@ -372,6 +393,8 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
                 notes.append(f"- {place_name(r, names, multi[p['subject']])}: {state_text(r, policy)}、{as_of(r, on, policy)}。{ans['stale_display']} — {r.get('url')}")
             elif r["conflict"]:
                 notes.append(f"- {place_name(r, names, multi[p['subject']])}: {ans['conflict']} — {r.get('url')}")
+        for (subj, sid) in sorted(k for k in far if k[0] == p["subject"]):
+            notes.append(f"- {names.get(sid, sid)}: " + ans["out_of_range_note"].format(origin=origin, km=ranges[(subj, sid)]["km"]))
         for p_, r, _ in chosen:
             if p_ is p:
                 tn = (entries.get(r.get("site")) or {}).get("tags", {}).get("traffic_note")

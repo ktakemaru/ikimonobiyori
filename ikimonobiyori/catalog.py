@@ -73,6 +73,30 @@ def nearest_origin_km(policy, pt):
     return min((distance_km(pt["lat"], pt["lon"], o["lat"], o["lon"], rl["earth_radius_km"]), o["name"]) for o in rl["origins"])
 
 
+def origin_names(policy):
+    return [o["name"] for o in policy["range_limit"]["origins"]]
+
+
+def resolve_origin(policy, origin=None):
+    """出発地の名前(省略すると方針の default_origin)。方針の origins にない名前は ValueError(推測しない)。"""
+    name = origin or policy["range_limit"]["default_origin"]
+    if name not in origin_names(policy):
+        raise ValueError(f"出発地 {name} は {origin_names(policy)} のどれでもない")
+    return name
+
+
+def range_from(policy, pt, origin=None):
+    """出発地から見た範囲(段階23 の続き)。→ {"origin", "km"(整数), "status": in_range / edge / out_of_range}。
+    max_km より先は範囲の外、edge_min_km 以上 max_km 以下は範囲の端。"""
+    rl = policy["range_limit"]
+    name = resolve_origin(policy, origin)
+    o = next(x for x in rl["origins"] if x["name"] == name)
+    km = distance_km(pt["lat"], pt["lon"], o["lat"], o["lon"], rl["earth_radius_km"])
+    edge = rl["edge_min_km"]["value"] if isinstance(rl["edge_min_km"], dict) else rl["edge_min_km"]
+    status = "out_of_range" if km > rl["max_km"] else "edge" if km >= edge else "in_range"
+    return {"origin": name, "km": int(round(km)), "status": status}
+
+
 def valid_month_day(s):
     m, d = (int(x) for x in s.split("-"))
     try:
