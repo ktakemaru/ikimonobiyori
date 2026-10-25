@@ -1,0 +1,166 @@
+# ガイド型の質問(「どこで・いつごろ・どんな種類?」)のための方針(段階23。ikimonobiyori/guide.py が読む。コードに値を持たない)。
+# 現況型の質問(「今どうなっている?」)は、これまでどおり data/sources/ の台帳と status_log で答える(このファイルは使わない)。
+# 正本の決定は docs/stage23-decisions.md。指示書 stage23-instructions.md(ユーザー承認 2026-10-25)。
+schema: ikimono-guide-policy/1
+source: "指示書 段階23(2026-10-25 ユーザー承認)"
+
+# 信頼の段階(D-02)。ホシビヨリの curated_external(定評)・viewpoint_reference(参考)と言葉の意味をそろえる
+tiers:
+  order: [verified, curated, reference]                  # 強い順。表示の並びにも使う
+  curated:
+    min_independent: {value: 3, source: "指示書 段階23 フェーズ2 の 4(ユーザー承認 2026-10-25)", provisional: true}
+    needs_class_any: [A, B, C]
+  verified:
+    status_classes: [A]                                  # 現地の発信(A)で、日付つきの状態が読めたもの。または、ユーザーが「行って確認した」と記録したもの
+  labels: {verified: 確認済み, curated: 定評, reference: 参考}
+# 実在の確認(フェーズ2 の 5): 自治体・公園・観光協会・メディア(A・B・C)の出どころで 1 件以上
+existence_classes: [A, B, C]
+# 取り出した種名・時期を、ガイドの答えに出してよい下限(独立した出どころの数。フェーズ3 の 2)
+show_fact_min_independent: {value: 2, source: "指示書 段階23 フェーズ3 の 2", provisional: true}
+# 範囲(250 km。data/catalog/policy.yaml の range_limit を使う)の距離の丸め(フェーズ2 の 6)
+distance_step_km: {value: 10, source: "指示書 段階23 フェーズ2 の 6『距離は10 km単位でよい』", provisional: true}
+# 「これから」の欄(フェーズ5): 例年の時期の始まりが、対象の日からこの日数以内に来る名所。仮置き
+upcoming_days: {value: 60, source: "仮置き(段階23)。根拠のある値ではない。季節の前の『これから』を 2 か月ほど先まで見せるため", provisional: true}
+
+# 出どころの区分(フェーズ2 の 2)。信頼の段階は区分ではなく、独立した出どころの数と新しさで決める(D-02)
+classes:
+  A: 運営者の発信
+  B: 公的機関の資料
+  C: 報道・観光メディア
+  D: 個人の発信
+default_class: C                                         # 表にないホストは C(指示書)
+# 公的なドメインの PDF は「資料」(B)として扱う(調査報告など。運営者のお知らせのページは A のまま)
+pdf_class_by_suffix: {lg.jp: B, go.jp: B}
+# 読まない・記録しないホスト(SNS。ログインが要る・自動アクセスを拒むことが多い。指示書の取得の条件)
+unreadable_hosts: [x.com, twitter.com, instagram.com, facebook.com, tiktok.com, threads.net, youtube.com, line.me]
+# 発行元の数え方(フェーズ2 の 3)。表にないホストは、下の公開接尾辞の 1 つ下までを発行元とする(rurubu.jp と kids.rurubu.jp は同じ)
+public_suffixes: [co.jp, or.jp, ne.jp, go.jp, ac.jp, ed.jp, gr.jp, lg.jp, ad.jp, blog.jp, hatenablog.com, hatenablog.jp, fc2.com, livedoor.blog,
+                  tokyo.jp, kanagawa.jp, saitama.jp, chiba.jp, ibaraki.jp, tochigi.jp, gunma.jp, yamanashi.jp, shizuoka.jp, nagano.jp, niigata.jp, fukushima.jp]
+# 1 つのホストに多くの個人がいる場所(パスの最初の部分までを発行元とする)
+path_platforms: [ameblo.jp, note.com]
+
+# ホストの既定の表(後ろが一致する最長のものを使う)。publisher は発行元(同じ発行元の別のホストは 1 件と数える)
+hosts:
+  # ---- A 運営者の発信(公園・自治体・観光協会・管理者) ----
+  - {suffix: wbsj-wildbirdpark.blog.jp, class: A, publisher: 東京港野鳥公園}
+  - {suffix: gotokyo.org, class: A, publisher: 東京観光財団}
+  - {suffix: tokyo-park.or.jp, class: A, publisher: 東京都公園協会}
+  - {suffix: showakinen-koen.jp, class: A, publisher: 国営昭和記念公園}
+  - {suffix: hitachikaihin.jp, class: A, publisher: 国営ひたち海浜公園}
+  - {suffix: kanagawa-kankou.or.jp, class: A, publisher: 神奈川県観光協会}
+  - {suffix: niigata-kankou.or.jp, class: A, publisher: 新潟県観光協会}
+  - {suffix: nikko-kankou.org, class: A, publisher: 日光市観光協会}
+  - {suffix: hakone.or.jp, class: A, publisher: 箱根町観光協会}
+  - {suffix: metro.tokyo.lg.jp, class: A, publisher: 東京都}
+  - {suffix: kankyo.metro.tokyo.lg.jp, class: B, publisher: 東京都}
+  - {suffix: kensetsu.metro.tokyo.lg.jp, class: B, publisher: 東京都}
+  - {suffix: lg.jp, class: A}
+  - {suffix: tokyo.jp, class: A}
+  - {suffix: env.go.jp, class: B, publisher: 環境省}
+  - {suffix: go.jp, class: B}
+  # ---- C 報道・観光メディア ----
+  - {suffix: rurubu.jp, class: C, publisher: るるぶ}
+  - {suffix: walkerplus.com, class: C, publisher: ウォーカープラス}
+  - {suffix: tabi-mag.jp, class: C, publisher: 旅行総合研究所タビリス}
+  - {suffix: matcha-jp.com, class: C, publisher: MATCHA}
+  - {suffix: co-trip.jp, class: C, publisher: ことりっぷ}
+  - {suffix: jalan.net, class: C, publisher: じゃらん}
+  - {suffix: tenki.jp, class: C, publisher: tenki.jp}
+  - {suffix: weathernews.jp, class: C, publisher: ウェザーニュース}
+  - {suffix: allabout.co.jp, class: C, publisher: All About}
+  - {suffix: jreast.co.jp, class: C, publisher: JR東日本}
+  - {suffix: kanaloco.jp, class: C, publisher: 神奈川新聞}
+  - {suffix: nta.co.jp, class: C, publisher: 日本旅行}
+  - {suffix: jorudan.co.jp, class: C, publisher: ジョルダン}
+  - {suffix: timeout.jp, class: C, publisher: Time Out}
+  - {suffix: asoview.com, class: C, publisher: アソビュー}
+  - {suffix: enjoytokyo.jp, class: C, publisher: レッツエンジョイ東京}
+  - {suffix: iko-yo.net, class: C, publisher: いこーよ}
+  - {suffix: veltra.com, class: C, publisher: VELTRA}
+  - {suffix: bepal.net, class: C, publisher: BE-PAL}
+  - {suffix: kotobank.jp, class: C, publisher: コトバンク}
+  # ---- D 個人の発信(個人のブログ・登山アプリ) ----
+  - {suffix: banzokubiology.com, class: D}
+  - {suffix: yamap.com, class: D, publisher: YAMAP}
+  - {suffix: ameblo.jp, class: D}
+  - {suffix: note.com, class: D}
+  - {suffix: hatenablog.com, class: D}
+  - {suffix: hatenablog.jp, class: D}
+  - {suffix: fc2.com, class: D}
+  - {suffix: livedoor.blog, class: D}
+
+# テーマ(themes)。種類(kinds)の例は答えの材料ではなく、言い換えの表の目安
+themes: [野鳥, 冬鳥, 桜, 花, ホタル, 紅葉]
+# 質問の言葉 → テーマ・種類・答えられる現況の対象(フェーズ5 の 1)。現況の対象は data/sources/policy.yaml の topics と同じ考え方
+words:
+  野鳥: {themes: [野鳥, 冬鳥]}
+  鳥: {themes: [野鳥, 冬鳥]}
+  探鳥: {themes: [野鳥, 冬鳥]}
+  渡り鳥: {themes: [冬鳥, 野鳥]}
+  冬鳥: {themes: [冬鳥]}
+  白鳥: {themes: [冬鳥], kinds: [ハクチョウ]}
+  ハクチョウ: {themes: [冬鳥], kinds: [ハクチョウ]}
+  カモ: {themes: [冬鳥], kinds: [カモ]}
+  ツル: {themes: [冬鳥], kinds: [ツル]}
+  カワセミ: {themes: [野鳥], kinds: [カワセミ]}
+  ホタル: {themes: [ホタル]}
+  蛍: {themes: [ホタル]}
+  桜: {themes: [桜]}
+  早咲き: {themes: [桜]}
+  早咲きの桜: {themes: [桜]}
+  冬桜: {themes: [桜], kinds: [冬桜]}
+  十月桜: {themes: [桜], kinds: [十月桜, 冬桜]}
+  寒桜: {themes: [桜], kinds: [寒桜]}
+  河津桜: {themes: [桜], kinds: [河津桜]}
+  寒緋桜: {themes: [桜], kinds: [寒緋桜]}
+  花: {themes: [花]}
+  お花: {themes: [花]}
+  梅: {themes: [花], kinds: [梅]}
+  水仙: {themes: [花], kinds: [水仙]}
+  スイセン: {themes: [花], kinds: [水仙]}
+  さざんか: {themes: [花], kinds: [サザンカ]}
+  サザンカ: {themes: [花], kinds: [サザンカ]}
+  山茶花: {themes: [花], kinds: [サザンカ]}
+  ロウバイ: {themes: [花], kinds: [ロウバイ]}
+  蝋梅: {themes: [花], kinds: [ロウバイ]}
+  ツバキ: {themes: [花], kinds: [ツバキ]}
+  椿: {themes: [花], kinds: [ツバキ]}
+  バラ: {themes: [花], kinds: [バラ]}
+  紅葉: {themes: [紅葉]}
+
+# 候補の記録(record-candidate)の項目。本文を写さないための長さの上限(仮置き。data/sources/policy.yaml の record と同じ考え方)
+record:
+  schema: ikimono-guide-candidate/1
+  dir: guide                                             # 書き込み先の基準(IKIMONOBIYORI_DATA_DIR)からの相対
+  fields: [schema, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id,
+           read_at, read_at_note, read_by, host, publisher, class]
+  input_fields: [theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id]
+  origins: [search, fetch, seed, user]                   # search = 検索結果の抜粋、fetch = 要約の道具でページを読んだ、seed = 付録A、user = ユーザーが行って確認した
+  read_by: summary                                       # 種名・数字はコードが原文で確かめられないので「要約で読んだ」(フェーズ3 の 2)
+  access_values: [walk_from_station, bus, car_only, ropeway, cable_car]
+  max_name_chars: {value: 40, source: "仮置き(段階23)。本文を写さないための上限", provisional: true}
+  max_kind_chars: {value: 20, source: "仮置き(段階23)", provisional: true}
+  max_kinds: {value: 12, source: "仮置き(段階23)", provisional: true}
+  max_note_chars: {value: 80, source: "仮置き(段階23)。事実の短い要約(「冬桜 約600本」程度)", provisional: true}
+  max_title_chars: {value: 60, source: "仮置き(段階23)", provisional: true}
+  max_season_chars: {value: 40, source: "仮置き(段階23)", provisional: true}
+  max_state_chars: {value: 20, source: "data/sources/policy.yaml の record.max_state_chars と同じ", provisional: true}
+
+# 検索・取得の回数の上限(指示書の通信の承認。ユーザー承認 2026-10-25)。guide log-request が数え、上限で止める
+budget:
+  collect: {search: 80, fetch: 60}
+  trial: {search: 60, fetch: 40}
+  answer: {search: 8, fetch: 8}                          # 1 質問あたり(試験の質問も、これと試験の合計の両方に入る)
+  places_requests: 100                                   # 市区町村の代表点(www.wikidata.org)
+
+# 答えられなかった質問の記録(フェーズ5 の 4。IKIMONOBIYORI_DATA_DIR の下。コミットしない)
+unanswered_file: unanswered.jsonl
+max_question_chars: {value: 200, source: "仮置き(段階23)", provisional: true}
+
+# 市区町村の代表点の座標の桁(小数 2 桁 ≒ 1 km。範囲の判定は 10 km 単位なので足りる)
+places_decimals: {value: 2, source: "仮置き(段階23)。data/catalog/policy.yaml の area_1km と同じ桁", provisional: true}
+# 地域の呼び名 → 市区町村(都道府県で絞れない地域だけ。data/regions.yaml の areas はガイドの名所に付けていないため)
+region_municipalities:
+  富士山周辺:
+    source: "Claude Code が付けた(段階23)。山梨県の富士五湖の 6 市町村と、静岡県の富士山の麓の 5 市町(富士山を囲む市町村)"
+    municipalities: [富士吉田市, 富士河口湖町, 山中湖村, 忍野村, 鳴沢村, 西桂町, 富士宮市, 御殿場市, 小山町, 裾野市, 富士市]

@@ -48,3 +48,41 @@
 ### 5. 計測フックと通信の承認
 - 実通信は `livegate.live_allowed()`(`BIYORI_ALLOW_LIVE=1`、テスト中は常に拒否)+ 明示の `--max-requests` + 計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/sitecustomize.py` を PYTHONPATH に足した子プロセスで、許可ホスト `BIYORI_ALLOW_HOSTS`・件数の上限 `BIYORI_REQ_MAX`・4xx/5xx で即中止・最小間隔を強制)。許可ホストは `config.yaml` の `live.allowed_hosts_by_subject`。
 - エージェントの道具(WebSearch・WebFetch)は計測フックの外。これまでは回数を手で数えていた。
+
+## D-05 ガイド用のデータの形(フェーズ2)
+- **既存の名所カタログ(`data/catalog/`)とは別に、ガイド用のデータを `ikimonobiyori/data/guide/` に置く**(指示書の「カタログと並ぶガイド用のデータ」)。理由: 既存のカタログは現況の提案(`proposals`)・台帳の検査・ゴールデンが読む。ガイドの名所を混ぜると、契約の出力や既存の検査が変わる。ガイドの名所は `proposals` に出さない(指示書)。
+- コード: `ikimonobiyori/guide.py`(CLI `python -X utf8 -m ikimonobiyori.guide`)。値は `data/guide/policy.yaml`(区分の表・段階の規則・上限)。コードに値を持たない。
+- ファイル:
+  - `data/guide/records.jsonl`: 候補の記録(1 行 = 1 つの出どころが 1 つの名所について言った事実)。手元(`IKIMONOBIYORI_DATA_DIR/guide/candidates.jsonl`)に書いた記録を、見直して `guide build` の書き出し(`guide/export/`)から写す。**実行でリポジトリの追跡ファイルを変えない**(CLAUDE.md 規則 8)ため、写すのはエージェントの作業(これまでのカタログの仮承認と同じ)。
+  - `data/guide/places.yaml`: 市区町村の代表点(Wikidata。項目の id・座標 小数 2 桁・読んだ時刻)。
+  - `data/guide/reviews.yaml`: ユーザーの見直し(外した・承認した・行って確認した)。手元の `guide reject` などは `IKIMONOBIYORI_DATA_DIR/guide/reviews.jsonl` に書き、build はどちらも読む(あと勝ち)。
+  - `data/guide/catalog.yaml`(仮承認・承認した名所)・`data/guide/candidates.yaml`(候補のまま・外したもの、理由つき): records・places・reviews から `guide build` が作る。テストが、写した結果と作り直した結果の一致を確かめる。
+- 名所の項目(build の結果): `id`(テーマ・都道府県・名前から決まる `g-` + 16 進 10 桁)・`theme`・`name`・`prefecture`・`municipality`・`kinds`(種類ごとの独立した出どころの数と、答えに出してよいか `shown`)・`season`(例年の時期の原文 `text`、月日の窓 `window`、一致する独立した出どころの数、`shown`)・`tier`・`independent_sources`・`classes`・`exists_confirmed`・`range`(status・km・起点・項目の id)・`approval`(`state`: provisional / approved / rejected / candidate、`at`、`by`: auto-rule / user、候補の理由 `reasons`)・`sources`(URL・ホスト・発行元・区分・読んだ時刻・読み方)・`latest_status`(運営者の日付つきの状態があれば)・`access`。
+  - 指示書の `approval.state` は provisional / approved / rejected の 3 つ。規則を満たさないものを表すために `candidate` を足した(カタログには入れず、`candidates.yaml` に置く)。
+- テーマ: 野鳥・冬鳥・桜・花・ホタル・紅葉(方針 `themes`)。同じ場所でもテーマが違えば別の名所として数える(桜山公園の桜と紅葉など)。理由: 例年の時期と出どころがテーマごとに違うため。
+- 例年の時期: 出どころごとに `{text, from, to}`(「10月下旬」「2月末」「1月」の形。旬は既存の `month_thirds`)か `{text, year_round: true}`。年は持たない(例年)。表示する時期は、区分の強い出どころ(A→B→C→D)の原文。重なる時期を言う独立した出どころの数を数える。
+
+## D-06 出どころの区分と、独立した出どころの数え方(フェーズ2 の 2・3)
+- 区分はホストの表(`hosts`。後ろが一致する最長のもの)で決める。表にないホストは C(指示書)。`lg.jp`・`tokyo.jp` の自治体のページは A、`go.jp` は B。**公的なドメイン(lg.jp・go.jp)の PDF は B**(調査・資料)にした(`pdf_class_by_suffix`)。理由: 指示書の B「都・環境省などの調査・資料の PDF」。東京都の環境局・建設局のホスト(`kankyo.metro.tokyo.lg.jp`・`kensetsu.metro.tokyo.lg.jp`)は B。
+- GO TOKYO(東京観光財団)は指示書の例に従い A。
+- 発行元: 表の `publisher`(東京都の 3 つのホストは「東京都」で 1 件)。表にないものは公開接尾辞(`co.jp`・`lg.jp`・`blog.jp` など)の 1 つ下まで(`rurubu.jp` と `kids.rurubu.jp` は同じ)。`ameblo.jp`・`note.com` はパスの最初の部分まで(別の人は別の発行元)。
+- **独立した出どころ**: 同じ発行元・同じ URL・書き写し(記録の `copies_of` に元の URL。元の発行元とも 1 つ)を 1 つにまとめた数(union-find)。同じ個人のブログの複数ページは、同じホストなので 1 件。
+- 安全側の判断: YAMAP(`yamap.com`)は、別の利用者の記録でも 1 件と数える(個人を区別する手がかりをコードで確かめられないため。少なめに数える)。
+- SNS(x.com・instagram.com など。方針 `unreadable_hosts`)の URL は記録しない(指示書: SNS は読まない)。
+
+## D-07 信頼の段階・実在・範囲(フェーズ2 の 4〜6)
+- `verified`: 運営者の発信(A)で日付つきの状態(`status: {state, date}`)が読めたもの、またはユーザーが `guide visited <id>` で「行って確認した」と記録したもの。メディア(C)の「見ごろ」では確認済みにしない。
+- `curated`: 独立した出どころ 3 件以上で、A・B・C が 1 件以上。`reference`: それ以外(1〜2 件、または D だけ)。強い順に verified → curated → reference。
+- 実在の確認: A・B・C の出どころが 1 件以上(D だけの名所は候補のまま)。
+- 範囲: 名所の市区町村の代表点(Wikidata)から、起点(東京・横浜。`data/catalog/policy.yaml` の `range_limit`)までの直線距離。表示は 10 km 単位。代表点のない名所は `pending`(「範囲は未確認」。仮承認しない)。座標を推定で作らない。
+- 仮承認の条件: 段階が verified か curated・実在の確認あり・範囲内・外されていない。満たすものは `approval: {state: provisional, by: auto-rule, at: 最後に読んだ日}`。
+- 種類・時期を答えに出すのは、独立した出どころ 2 件以上が同じことを言うときだけ(`shown`。フェーズ3 の 2)。1 件だけの種類は見直しの一覧にも出さない(記録には残る)。
+
+## D-08 市区町村の代表点の読み方(フェーズ2 の 6)
+- `www.wikidata.org` の `wbgetentities`(日本語版ウィキペディアの記事名 → 項目)で、座標(P625)と日本語の説明だけを読む(`fetch/wikidata.py`)。1 回に 10 件の記事名(`config.yaml` の `live.wikidata.titles_per_request`)。
+- 記事名は「市区町村名」→「市区町村名 (都道府県)」→「市区町村名 (都道府県の略)」の順に試す。**項目の日本語の説明に都道府県の名前がないものは使わない**(同じ名前の別の市町村を取らないため)。
+- 実通信は sources の read と同じゲート(`BIYORI_ALLOW_LIVE=1`・`--max-requests`・計測フック `BIYORI_REQ_LOG`)。テスト中は常に拒否。回数は手元の `guide/places_requests.jsonl` に数え、方針の上限 100 回を超えない。
+- 政令市の区(横浜市鶴見区など)は市(横浜市)の代表点を使う(10 km 単位の判定には足りる)。
+
+## D-09 検索・取得の回数の数え方
+- エージェントの道具(WebSearch・WebFetch)は計測フックの外なので、`guide log-request --kind search|fetch --phase collect|trial --text <言葉・URL> [--question Qn]` で、使う前に 1 回ずつ数える。上限(方針 `budget`)に達していたら終了コード 3 で、その回は使わない。合計は `guide usage`。記録は手元(コミットしない)。
