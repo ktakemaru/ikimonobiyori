@@ -8,6 +8,7 @@
   段階15 までの _unparsed/ の保存はここでは使わない)。キャッシュもしない(答えるときに 1 回だけ読む)。
 - 形が想定と違って読めないときは、推測で補わず「読めなかった」と返す(呼び出し側は要約で読む手順に戻る)。
 - 地点は台帳の covers[].label で探す(全角・半角の違いは NFKC でそろえて比べる)。紹介文・見どころの文から状態を取らない(段階16 A-1・A-2)。"""
+import json
 import re
 import unicodedata
 from datetime import date
@@ -102,7 +103,7 @@ def _field(block, heading):
 
 def _pick(cands, label, diag):
     """同じ地点の候補が複数あるとき: 1 つならそれ。中身が同じならその 1 つ。違えば推測で選ばず、読めなかったとする。"""
-    uniq = {tuple(sorted(c.items())) for c in cands}
+    uniq = {json.dumps(c, sort_keys=True, ensure_ascii=False) for c in cands}
     if len(uniq) == 1:
         return cands[0]
     if cands:
@@ -132,6 +133,24 @@ def _observed_md(block):
     return f"{int(m['m']):02d}-{int(m['d']):02d}" if m else None
 
 
+BODY_PART_RE = re.compile(r"^(?P<part>\S+)\s+(?P<state>\S+)$")
+BODY_HEAD_DATE_RE = re.compile(r"^\d{1,2}/\d{1,2}(?:現在)?\s*")
+
+
+def _body_parts(block):
+    """本文が部位ごとに状態を書いているとき(「10/18山頂 終盤・中腹 見ごろ・山麓 色づき始め」)→ [{part, state}](書かれたとおり)。
+    先頭の日付(「10/18」)は観察日として取らない(日付は「M/D現在」で始まるときだけ。段階20の指示)。
+    「・」で分けた 2 つ以上の断片がすべて「部位 状態」の形のときだけ。本文の文章は読まない・残さない。なければ None(段階21)。"""
+    head = _body_head(block)
+    if not head:
+        return None
+    segs = [s for s in norm(BODY_HEAD_DATE_RE.sub("", norm(head), count=1)).split("・")]
+    got = [BODY_PART_RE.match(s.strip()) for s in segs]
+    if len(segs) < 2 or not all(got):
+        return None
+    return [{"part": m["part"], "state": m["state"]} for m in got]
+
+
 def parse_nikko(html, covers):
     """日光市観光協会の紅葉状況。地点ごとの「現在の状況:記号」「最終更新日:YYYY年M月D日」「見頃予測:…」と、本文の先頭の「M/D現在」。
     → (items, diag)。items: [{label, state, updated, forecast?, observed_md?}](cover の site/name は呼び出し側が付ける)。
@@ -154,6 +173,9 @@ def parse_nikko(html, covers):
         md = _observed_md(block)
         if md:
             item["observed_md"] = md
+        parts = _body_parts(block)
+        if parts:
+            item["parts"] = parts
         found.setdefault(lb, []).append(item)
     items = [it for lb in labels if lb in found and (it := _pick(found[lb], lb, diag))]
     diag["missing"] = [lb for lb in labels if lb not in found]
@@ -255,7 +277,7 @@ def read_source(src, *, http_get, cfg, on, max_requests):
         c = by_label[it["label"]]
         r = {"source": sid, ("site" if "site" in c else "name"): c.get("site") or c.get("name"), "label": it["label"],
              "state": it["state"], "updated": it["updated"], "method": "code"}
-        for k in ("year_inferred", "forecast", "observed_md"):
+        for k in ("year_inferred", "forecast", "observed_md", "parts"):
             if k in it:
                 r[k] = it[k]
         reads.append(r)

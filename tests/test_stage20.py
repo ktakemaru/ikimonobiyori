@@ -35,7 +35,7 @@ class ThirdsAndEnded(unittest.TestCase):
                          [date(2026, 10, 1), date(2026, 10, 11), date(2026, 10, 11), date(2026, 10, 21), date(2026, 10, 21), date(2026, 11, 1)])
 
     def test_a_forecast_ending_before_the_day_is_left_out_by_name_only(self):
-        t = text([rec(state="◎", updated="2026-10-22", forecast="10月上旬～10月中旬"),                       # 10/20 に終わる
+        t = text([rec(state="◎", updated="2026-10-18", forecast="10月上旬～10月中旬"),                       # 10/20 に終わる。状態は 6 日前(段階21: 3 日より古いので外す)
                   rec("kouyou-0002", "湖畔", state="◯", updated="2026-10-22", forecast="10月中旬～11月上旬")])
         self.assertEqual(picked(t), ["試験の湖畔"])
         self.assertIn(A["forecast_ended"].format(names="試験の渓谷"), lines(t, "recommend"))
@@ -47,7 +47,7 @@ class ThirdsAndEnded(unittest.TestCase):
         self.assertIn(A["forecast_last_third"], t)
 
     def test_the_day_after_the_last_third_it_is_out(self):
-        t = text([rec(state="◎", updated="2026-10-22", forecast="10月中旬～10月下旬")], dates=[date(2026, 11, 1)])
+        t = text([rec(state="◎", updated="2026-10-18", forecast="10月中旬～10月下旬")], dates=[date(2026, 11, 1)])      # 状態は 6 日前(段階21)
         self.assertEqual(picked(t), [])
         self.assertIn(A["forecast_ended"].format(names="試験の渓谷"), lines(t, "recommend"))
 

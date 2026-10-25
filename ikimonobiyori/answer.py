@@ -8,7 +8,7 @@ import re
 from datetime import date
 
 from . import catalog as catalog_mod
-from .sources import usable_status_row
+from .sources import forecast_day_status, last_third_start, usable_status_row
 
 URL_RE = re.compile(r"https?://\S+")
 WEEKDAYS = "月火水木金土日"
@@ -62,11 +62,18 @@ def as_of(row, on, policy):
 LABEL_PREFIX_RE = re.compile(r"^【[^】]*】")
 
 
+TOKEN_SPLIT_RE = re.compile(r"[、,・/／\s()（）]+")
+
+
 def place_name(row, names, multi=frozenset()):
-    """名所の名前。同じ名所に地点の書き方が複数ある(戦場ヶ原と小田代原など)ときは、公式の地点の書き方を添えて区別する。"""
+    """名所の名前。同じ名所に地点の書き方が複数ある(戦場ヶ原と小田代原など)ときは、公式の地点の書き方を添えて区別する。
+    地点の書き方のうち、名所の名前にすでに入っている語は足さない(「中禅寺湖・いろは坂(…)・中禅寺湖、華厳滝」のように重ねない。段階21)。"""
     n = names.get(row.get("site")) or row.get("name") or row.get("label")
     if row.get("site") in multi and row.get("label"):
-        n += f"・{LABEL_PREFIX_RE.sub('', row['label'])}"
+        have = {t for t in TOKEN_SPLIT_RE.split(n) if t}
+        extra = [t for t in TOKEN_SPLIT_RE.split(LABEL_PREFIX_RE.sub("", row["label"])) if t and t not in have]
+        if extra:
+            n += "・" + "・".join(extra)
     return n
 
 
@@ -88,21 +95,74 @@ def forecast_distance(row, dates):
     return abs(((s_ - lo) + (e_ - hi)).days) / 2                    # (予測の真ん中 − 対象の真ん中)の絶対値
 
 
-def forecast_past(row, dates):
-    """公式の見頃予測が、対象の最初の日より前に終わっている(見ごろを過ぎている見込み)。"""
-    fw = row.get("forecast_window")
-    return bool(fw) and fw[1] < min(dates).isoformat()
+def day_statuses(row, dates, policy):
+    """対象の日ごとの、見頃予測の扱い(sources.forecast_day_status。見頃予測がなければ全部 None)。"""
+    return {d: forecast_day_status(row, d, policy) for d in dates}
 
 
-def state_text(row, policy=None):
-    parts = row.get("official_parts")
-    if parts:                                              # 部位ごとに状態が違う地点: 1 つにまとめず、本文の部位ごとの状態を原文のまま(段階20)
-        label = policy["answer"]["parts_label"] if policy else "公式の状態は部位ごと"
-        return f"{label}: " + "、".join(f"{x['part']}「{x['state']}」" for x in parts)
-    st, lb = row.get("official_state"), row.get("stage_label")
+def forecast_dropped(row, dates, policy):
+    """公式の見頃予測が、対象のどの日にも使えない(すべて予測の時期を過ぎていて、残す条件も満たさない)。おすすめから外す(段階20・21)。"""
+    st = day_statuses(row, dates, policy).values()
+    return bool(row.get("forecast_window")) and all(s == "drop" for s in st)
+
+
+def forecast_late(row, dates, policy):
+    """予測の時期を過ぎているが残す行(どの日も予測の終わりまでに入らず、少なくとも 1 日は残す条件を満たす)。順位は後ろ(段階21)。"""
+    st = list(day_statuses(row, dates, policy).values())
+    return bool(row.get("forecast_window")) and "current" not in st and "keep" in st
+
+
+def day_text(ds):
+    """日のリスト → 「11/1(日)」を「・」でつないだもの。"""
+    return "・".join(f"{d.month}/{d.day}({WEEKDAYS[d.weekday()]})" for d in ds)
+
+
+def day_note(ds, dates, sentence, policy):
+    """日ごとの注意の文。すべての日に当てはまるときは日を省き、一部の日だけなら先頭に日を書く(段階21)。"""
+    if len(ds) == len(dates):
+        return sentence
+    return policy["answer"]["day_prefix"].format(days=day_text(ds)) + sentence
+
+
+def forecast_notes(row, dates, on, policy):
+    """おすすめの行に添える、見頃予測まわりの注意の文のリスト(段階21)。
+    ①対象の日が予測の最後の旬に入る日だけ「終盤の可能性があります」 ②予測の時期を過ぎても残した日に、決まった文(状態の段階で二通り)。"""
+    ans, notes, fw = policy["answer"], [], row.get("forecast_window")
+    if not fw:
+        return notes
+    end = date.fromisoformat(fw[1])
+    start = last_third_start(end, policy)
+    late = [d for d in dates if start <= d <= end]
+    if late:
+        notes.append(day_note(late, dates, ans["forecast_last_third"], policy))
+    st = day_statuses(row, dates, policy)
+    kept = [d for d in dates if st[d] == "keep"]
+    if kept:
+        pp = ans["past_forecast"]
+        d0, _ = basis_date(row)
+        md = _md(d0, on)
+        updated_only = row.get("freshness_basis") == "updated_date" or (row.get("freshness_basis") is None and not row.get("official_observed"))
+        when = (pp["when_updated"] if updated_only else pp["when_observed"]).format(md=md)
+        sentence = pp["sentences"][pp["sentence_by_order"][str(row["order"])]].format(
+            forecast=row.get("official_forecast"), when=when, state=row.get("official_state"))
+        notes.append(day_note(kept, dates, sentence, policy))
+    return notes
+
+
+def state_text(row, policy=None, with_parts=False):
+    """公式の状態。部位ごとに状態が違う地点(official_parts)は、1 つにまとめず、本文の部位ごとの状態を原文のまま(段階20)。
+    状態の欄の記号もあるとき(日塩もみじラインの「◎」など)は、with_parts(根拠の欄)のときだけ、本文の部位ごとの状態を添える(段階21)。"""
+    parts, st, lb = row.get("official_parts"), row.get("official_state"), row.get("stage_label")
+    body = None
+    if parts:
+        label = policy["answer"]["parts_label" if st is None else "parts_with_state"] if policy else "公式の状態は部位ごと"
+        body = f"{label}: " + "、".join(f"{x['part']}「{x['state']}」" for x in parts)
+        if st is None:
+            return body
     if st is None:
         return None
-    return f"公式「{st}」" + (f"({lb})" if lb and lb != st else "")
+    text = f"公式「{st}」" + (f"({lb})" if lb and lb != st else "")
+    return f"{text}、{body}" if body and with_parts else text
 
 
 def place_key(p, r):
@@ -119,7 +179,8 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
     ans, top_max = policy["answer"], _val(policy["recommend"]["top_max"])
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
     # 提案(proposals)と同じ判定(段階18)。見頃予測が対象の日より前に終わる地点は外す(段階20。名前は compose が 1 行で書く)
-    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"] if usable_status_row(r) and not forecast_past(r, dates)]
+    # 見頃予測が対象のどの日にも使えない地点は外す。予測を過ぎても残す地点(公式の状態が新しい)は、順位を予測がかかる地点より後ろにする(段階21)
+    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"] if usable_status_row(r) and not forecast_dropped(r, dates, policy)]
     out, seen = [], set(exclude)
 
     def add(p, r, reason):
@@ -129,7 +190,7 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
 
     if not forecast_only:
         for p, r in sorted((x for x in usable if x[1]["in_scope"] and (orders is None or x[1]["order"] in orders)),
-                           key=lambda x: (rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
+                           key=lambda x: (forecast_late(x[1], dates, policy), rank.get(x[1]["freshness"]["class"], len(rank)), -(x[1]["order"] or 0))):
             add(p, r, ans["reasons"]["in_scope"].format(stage=r["stage_label"]))
     # 公式の見頃予測で選ぶのは、公式の状態が段階の分かる語のとき(「現在、情報がありません」のような情報なしの書き方では選ばない)
     if forecast_only:
@@ -150,15 +211,15 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
 
 def left_out(subject_parts, policy, dates, chosen, *, orders=None):
     """おすすめに入れなかった地点の名前(段階20)。→ (見頃予測が対象の日より前に終わるため外した名前, ほかの候補の名前)。
-    外した名前は、範囲に入る段階(orders。既定は見ごろ・最盛)だったもの。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
+    外した名前は、公式の状態がある地点(段階21: ▼・✕や状態が古いために外したものも)。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
     keys = {place_key(p, r) for p, r, _ in chosen}
     ended, others = {}, {}
     for p in subject_parts:
         for r in p["summary"]["rows"]:
             if not usable_status_row(r) or place_key(p, r) in keys:
                 continue
-            if forecast_past(r, dates):
-                if r["in_scope"] and (orders is None or r["order"] in orders):
+            if forecast_dropped(r, dates, policy):
+                if r.get("official_state") is not None:       # 公式の状態がある地点は、段階に関わらず名前を書く(▼・✕で外したものも。段階21)
                     ended.setdefault(place_key(p, r), (p, r))
             elif r["forecast_hits_dates"] and r.get("official_state") is not None and r.get("state_kind") != "no_info":
                 others.setdefault(place_key(p, r), (p, r))
@@ -195,7 +256,7 @@ def recommend_groups(parts, policy, dates, *, early, late, ahead):
 
 
 def _line(row, on, names, policy, multi):
-    bits = [x for x in (state_text(row, policy), as_of(row, on, policy)) if x]
+    bits = [x for x in (state_text(row, policy, with_parts=True), as_of(row, on, policy)) if x]
     if row.get("official_forecast"):
         bits.append(f"見頃予測「{row['official_forecast']}」")
     if row.get("event"):
@@ -250,7 +311,7 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
             for i, (p_, r, reason) in enumerate(g, 1):
                 bits = [x for x in (state_text(r, policy), as_of(r, on, policy)) if x]
                 lines.append(f"{i}. **{place_name(r, names, multi[p_['subject']])}** — " + "、".join(bits) + f"。{reason}"
-                             + (f"。{ans['forecast_last_third']}" if r.get("forecast_last_third") else ""))
+                             + "".join(f"。{n}" for n in forecast_notes(r, dates, on, policy)))
         mine = [c for c in chosen if c[0] is p]
         orders = None if not (early or late) else set(policy["stage_scope"]["default"]) | (set(policy["stage_scope"]["early"]) if early else set()) | (set(policy["stage_scope"]["late"]) if late else set())
         ended, others = left_out([p], policy, dates, mine, orders=orders)

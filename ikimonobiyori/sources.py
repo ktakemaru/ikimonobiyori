@@ -287,6 +287,30 @@ def forecast_in_last_third(window, dates, policy):
     return window is not None and any(last_third_start(window[1], policy) <= d <= window[1] for d in dates)
 
 
+def forecast_last_third_dates(window, dates, policy):
+    """見頃予測の最後の旬に入る対象の日(date のリスト)。日ごとに「終盤の可能性」を書くために使う(段階21)。"""
+    if window is None:
+        return []
+    start = last_third_start(window[1], policy)
+    return [d for d in dates if start <= d <= window[1]]
+
+
+def forecast_day_status(row, d, policy):
+    """見頃予測がある行の、対象の日 d ごとの扱い(段階21。ユーザー承認 2026-10-25、案B)。→ None(見頃予測なし)/ "current"(予測の終わりまで)/
+    "keep"(予測の時期は過ぎたが、公式の最新の状態が方針の段階で、その状態の日付が読んだ日から方針の日数以内。外さず、順位は後ろ)/
+    "drop"(それ以外。状態が▼・✕など、状態が古い、状態の日付が分からない)。"""
+    fw = row.get("forecast_window")
+    if not fw:
+        return None
+    if d.isoformat() <= fw[1]:
+        return "current"
+    pp = policy["answer"]["past_forecast"]
+    age = (row.get("freshness") or {}).get("age_days")             # 状態の日付(現地の日付、なければ更新日)から読んだ日までの日数。年が分からなければ None
+    if str(row.get("order")) in pp["sentence_by_order"] and age is not None and age <= val(pp["state_max_days"]):
+        return "keep"
+    return "drop"
+
+
 def overlaps(window, dates):
     return window is not None and any(window[0] <= d <= window[1] for d in dates)
 
@@ -929,6 +953,7 @@ def summarize(records, *, registry, catalog_doc, policy, on, dates, early=False,
                      "stale_display_suspect": stale_display_suspect(r, entries.get(r.get("site")), policy, src),
                      "official_forecast": r.get("official_forecast"), "official_parts": r.get("official_parts"),
                      "forecast_ended": forecast_ended(fw, dates), "forecast_last_third": forecast_in_last_third(fw, dates, policy),
+                     "forecast_last_third_dates": [d.isoformat() for d in forecast_last_third_dates(fw, dates, policy)],
                      "forecast_window": [d.isoformat() for d in fw] if fw else None, "forecast_hits_dates": overlaps(fw, dates),
                      "event": [d.isoformat() for d in ev] if ev else None, "event_hits_dates": overlaps(ev, dates),
                      "method": r.get("method", policy["record"]["default_method"]),
@@ -1000,7 +1025,8 @@ def read_live(source_ids, *, registry, policy, cfg, now, http_get, max_requests,
     if record and reads_all:
         recs = [make_record(registry=registry, policy=policy, source_id=it["source"], read_at=now.isoformat(), state=it["state"], updated=it["updated"],
                             site=it.get("site"), name=it.get("name"), label=it["label"], year_inferred=it.get("year_inferred"),
-                            method=it["method"], forecast=it.get("forecast"), observed_md=it.get("observed_md")) for it in reads_all]
+                            method=it["method"], forecast=it.get("forecast"), observed_md=it.get("observed_md"),
+                            parts=it.get("parts")) for it in reads_all]
         written, dup = append_records(recs, registry=registry, policy=policy, env=env)
         check = recording_check(recs, registry["subject"], env)
         res["recorded"] = {"written": written, "duplicates": dup, "path": str(log_path(registry["subject"], env)),
