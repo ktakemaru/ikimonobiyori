@@ -738,39 +738,53 @@ def committed_entries():
 
 # ---- 見直しの一覧(Markdown) ----
 
+def _place_row(e, labels, state_label):
+    kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"]) or "—"
+    se = e["season"]
+    stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
+    rng = e["range"]
+    where = f"{e['prefecture'] or ''}{e.get('municipality') or ''}" + (f"(約{rng['km']}km)" if rng.get("km") is not None else "")
+    why = "; ".join(e["approval"].get("reasons") or []) or ("外した: " + (e["approval"].get("reason") or "") if e["approval"]["state"] == "rejected" else "規則を満たす")
+    return (f"| {e['name']} | {where} | {kinds} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
+            f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
+
+
+def _kind_row(e, labels, state_label):
+    se = e["season"]
+    stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
+    why = "; ".join(e["approval"].get("reasons") or []) or "規則を満たす"
+    return (f"| {e['name']} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
+            f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
+
+
+PLACE_HEAD = ["| 名所 | 所在(東京・横浜から) | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
+KIND_HEAD = ["| 種類 | 時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|"]
+
+
 def review_markdown(entries, policy):
+    """見直しの一覧(テーマごと。仮承認の表を先に、候補のままは折りたたむ)。"""
     labels = policy["tiers"]["labels"]
     state_label = {"provisional": "仮承認", "approved": "承認", "candidate": "候補", "rejected": "外した"}
+    rank = lambda e: (policy["tiers"]["order"].index(e["tier"]), -e["independent_sources"], e["name"])
     lines = []
     for th in policy["themes"]:
         es = [e for e in entries if e["theme"] == th and e.get("scope", "place") == "place"]
         ks = [e for e in entries if e["theme"] == th and e.get("scope") == "kind"]
         if not es and not ks:
             continue
-        es.sort(key=lambda e: (0 if approved(e) else 1, policy["tiers"]["order"].index(e["tier"]), -e["independent_sources"], e["name"]))
-        lines += [f"## {th}(名所 {sum(approved(e) for e in es)} 件 仮承認 / {len(es)} 件)", ""]
-        if es:
-            lines += ["| 名所 | 所在 | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
-        for e in es:
-            kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"]) or "—"
-            se = e["season"]
-            stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
-            rng = e["range"]
-            where = f"{e['prefecture'] or ''}{e.get('municipality') or ''}" + (f"(約{rng['km']}km)" if rng.get("km") is not None else "")
-            why = "; ".join(e["approval"].get("reasons") or []) or ("外した: " + (e["approval"].get("reason") or "") if e["approval"]["state"] == "rejected" else "規則を満たす")
-            lines.append(f"| {e['name']} | {where} | {kinds} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
-                         f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
-        lines.append("")
+        ok, rest = sorted((e for e in es if approved(e)), key=rank), sorted((e for e in es if not approved(e)), key=rank)
+        lines += [f"## {th}(名所: 仮承認 {len(ok)} 件・候補 {len(rest)} 件)", ""]
+        if ok:
+            lines += PLACE_HEAD + [_place_row(e, labels, state_label) for e in ok] + [""]
+        if rest:
+            lines += [f"<details><summary>候補のまま {len(rest)} 件(おすすめには出さない)</summary>", ""] + PLACE_HEAD +                      [_place_row(e, labels, state_label) for e in rest] + ["", "</details>", ""]
         if ks:
-            lines += [f"### {th}: 種類の説明({sum(approved(e) for e in ks)} 件 仮承認 / {len(ks)} 件)", "",
-                      "| 種類 | 時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|"]
-            for e in sorted(ks, key=lambda e: (0 if approved(e) else 1, -e["independent_sources"], e["name"])):
-                se = e["season"]
-                stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
-                why = "; ".join(e["approval"].get("reasons") or []) or "規則を満たす"
-                lines.append(f"| {e['name']} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
-                             f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
-            lines.append("")
+            kok, krest = sorted((e for e in ks if approved(e)), key=rank), sorted((e for e in ks if not approved(e)), key=rank)
+            lines += [f"### {th}: 種類の説明(仮承認 {len(kok)} 件・候補 {len(krest)} 件)", ""]
+            if kok:
+                lines += KIND_HEAD + [_kind_row(e, labels, state_label) for e in kok] + [""]
+            if krest:
+                lines += [f"<details><summary>候補のまま {len(krest)} 件</summary>", ""] + KIND_HEAD +                          [_kind_row(e, labels, state_label) for e in krest] + ["", "</details>", ""]
     return "\n".join(lines)
 
 

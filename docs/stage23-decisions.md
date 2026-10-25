@@ -113,3 +113,9 @@
 - おすすめ(`recommend`): 仮承認・承認・範囲内で、対象の日が例年の時期に入るもの。時期の分からない名所・時期を言う出どころが 1 件だけの名所は、対象の日に合うと言わない(`no_season`)。種類で絞るときは、その種類を言う独立した出どころが 2 件以上の名所だけをおすすめにし、1 件だけなら参考(`reference`)。
 - これから(`upcoming`): 例年の時期の始まりが対象の日から 60 日以内(方針 `upcoming_days`。仮置き)。
 - 範囲の外(`out_of_range`)は別の欄。名指しの質問のときだけ答えに使う。
+
+## D-14 仮承認と見直しの一覧(フェーズ4)
+- 規則(D-07・D-11)を満たすものを `guide build` が仮承認(`approval: {state: provisional, by: auto-rule}`)にし、`data/guide/catalog.yaml` に置いた。満たさないものは `candidates.yaml`(理由つき)。
+- 見直しの一覧 `docs/stage23-review.md` は `guide review` の出力に、読み方と外し方を足したもの。テーマごとに、仮承認の表を先に出し、候補は `<details>` で折りたたんだ(朝 5 分で仮承認だけを見られるように)。
+- 外す: `guide reject <id> --reason ...`(手元の `guide/reviews.jsonl` に、時刻はコードの時計)。build は `data/guide/reviews.yaml` と手元の見直しの両方を読み、外した名所は理由があっても仮承認しない(`rejected`)。リポジトリに残すときは reviews.yaml に写す(実行で追跡ファイルを変えないため)。
+- 承認(`guide approve`)・行って確認した(`guide visited`。段階が verified になる)も同じ形で記録する。

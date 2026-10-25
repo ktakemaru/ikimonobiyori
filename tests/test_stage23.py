@@ -311,5 +311,31 @@ class CommittedData(unittest.TestCase):
             self.assertRegex(p["qid"], r"^Q[0-9]+$")
 
 
+class Review(unittest.TestCase):
+    def test_review_lists_provisional_first_and_folds_candidates(self):
+        rows = recs(item("https://www.gotokyo.org/x"), item("https://www.jalan.net/y"), item("https://rurubu.jp/z"),
+                    item("https://rurubu.jp/w", name="参考の公園"))
+        md = guide.review_markdown(guide.build_entries(rows, PLACES, P, CP), P)
+        self.assertIn("## 桜(名所: 仮承認 1 件・候補 1 件)", md)
+        self.assertLess(md.index("試験の公園"), md.index("<details>"))
+        self.assertGreater(md.index("参考の公園"), md.index("<details>"))
+        self.assertIn(guide.entry_id("桜", "東京都", "試験の公園"), md)
+
+    def test_reject_cli_writes_under_the_data_dir(self):
+        d = Path(tempfile.mkdtemp(prefix="ikimono-s23r-"))
+        self.addCleanup(shutil.rmtree, d, True)
+        out = io.StringIO()
+        with mock.patch.dict(os.environ, {paths.ENV_DATA_DIR: str(d)}), contextlib.redirect_stdout(out):
+            self.assertEqual(guide.main(["reject", "g-0123456789", "--reason", "閉園"]), 0)
+        self.assertEqual(json.loads(out.getvalue())["state"], "rejected")
+        self.assertTrue((d / "guide" / "reviews.jsonl").is_file())
+
+    def test_the_review_document_lists_every_provisional_place(self):
+        md = (H.ROOT / "docs" / "stage23-review.md").read_text(encoding="utf-8")
+        for e in guide.committed_entries():
+            if guide.approved(e):
+                self.assertIn(e["id"], md)
+
+
 if __name__ == "__main__":
     unittest.main()
