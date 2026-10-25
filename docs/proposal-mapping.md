@@ -60,6 +60,21 @@
 - 主でない項目は `details.secondary_items`(`label`・`official_state`・`stage`・`official_observed`・`official_updated`・`official_forecast`・`forecast_status`)。補助の項目がない名所には付けない。
 - 主項目と補助の項目で、見頃予測の扱い(予測の内 `current` か、過ぎた `keep`/`drop` か)が食い違うときは `details.item_notes` に決まった文(方針 `answer.item_disagreement`)。答えの根拠の欄の 1 行と同じ文。
 
+## 注意の文の型(段階21・22。ハブも同じ型を使う)
+
+答え(`answer`)とハブが使う決まった文。値は方針 `ikimonobiyori/data/sources/policy.yaml` の `answer`(正本はそちら。ここは写しで、`tests/test_stage22.py` が一致を確かめる)。**見頃予測の部分は必ず「」で囲む。** モデルが自分で文を書かない。
+
+- 予測の時期を過ぎたが残した名所(案B。状態が ◎・◯ のとき。`past_forecast.sentences.peak`):
+  `公式の見頃予測は「{forecast}」ですが、{when}公式は「{state}」です。予測の時期は過ぎており、終わりに近い可能性が高いです。`
+- 同じ(状態が △ のとき。`past_forecast.sentences.starting`):
+  `公式の見頃予測は「{forecast}」ですが、{when}公式はまだ色づき始めです。予測より遅れている可能性があります。`
+- `{when}` は、現地の日付があれば `{md}時点で`、更新日だけなら `公式の更新日は{md}で、`(`{md}` は「10/25」の形)。`{state}` は公式の状態の原文(「◎」など)。
+- 一部の対象の日だけに当てはまるときは、先頭に日を書く(`day_prefix`: `{days}は`。`{days}` は「11/1(日)」を「・」でつないだもの)。全部の日なら日を省く。「終盤の可能性があります」も同じ。
+- 主項目と補助の項目で見頃予測の扱いが食い違うとき(`item_disagreement`。`{other}`・`{main}` は地点の書き方から先頭の【…】を除いたもの):
+  - 補助の項目の予測を過ぎた: `「{other}」は公式の見頃予測「{forecast}」の時期を過ぎています(この名所は「{main}」の状態で判断しました)`
+  - 補助の項目の予測が対象の日にかかる: `「{other}」は公式の見頃予測「{forecast}」が対象の日にかかります(この名所は「{main}」の状態で判断しました)`
+- 予測の時期を過ぎたために外した名所(▼・✕は書かない): `予測の時期を過ぎる見込みのため外しました: {names}`
+
 ## band の決め方(暫定。`docs/stage18-decisions.md` D-10・D-14)
 
 | 条件(上から順に) | band |

@@ -142,5 +142,38 @@ class PrimaryItem(unittest.TestCase):
                          {"kouyou-0002": "【奥日光】戦場ヶ原、小田代原の木々", "kouyou-0003": "【奥日光】中禅寺湖、華厳滝"})
 
 
+
+class LeftOutLine(unittest.TestCase):
+    """A-2 の 1: 「外しました」の行は、予測の時期を過ぎたために外した名所だけ。▼・✕は書かない。"""
+    def lake(self, reg):
+        return mk(reg, "湖畔", site="kouyou-0002", state="◯", updated="2026-10-24", forecast="10月中旬～11月上旬")
+
+    def test_which_names_are_written(self):
+        reg = registry()
+        head = A["forecast_ended"].split(":")[0]
+        for state, updated, listed in (("◎", "2026-10-18", True), ("◯", "2026-10-18", True), ("△", "2026-10-18", True),
+                                       ("◎", None, True), ("▼", "2026-10-24", False), ("✕", "2026-10-24", False), ("▼", "2026-10-18", False)):
+            with self.subTest(state=state, updated=updated):
+                t = text(reg, [mk(reg, "【北】木々", state=state, updated=updated, forecast="10月上旬～10月中旬"), self.lake(reg)])
+                got = [ln for ln in rec_lines(t) if ln.startswith(head)]
+                self.assertEqual(bool(got), listed, t)
+                if listed:
+                    self.assertEqual(got, [A["forecast_ended"].format(names="試験の渓谷")])
+
+
+class SentenceTypes(unittest.TestCase):
+    """A-2 の 2: 注意の文の見頃予測の部分は「」で囲む(ハブも同じ型を使う。docs/proposal-mapping.md)。"""
+    def test_forecast_is_quoted_in_every_fixed_sentence(self):
+        for t in list(A["past_forecast"]["sentences"].values()) + list(A["item_disagreement"].values()) + [A["reasons"]["forecast"]]:
+            self.assertIn("「{forecast}」", t)
+            self.assertEqual(t.count("{forecast}"), 1)
+
+    def test_the_mapping_doc_has_the_same_sentences(self):
+        from pathlib import Path
+        doc_text = (Path(__file__).resolve().parents[1] / "docs" / "proposal-mapping.md").read_text(encoding="utf-8")
+        for t in list(A["past_forecast"]["sentences"].values()) + list(A["item_disagreement"].values()):
+            self.assertIn(t, doc_text)
+
+
 if __name__ == "__main__":
     unittest.main()

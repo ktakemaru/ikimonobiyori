@@ -72,7 +72,8 @@ class PastForecastKept(unittest.TestCase):
     def test_fading_is_left_out_even_if_new(self):
         t = text([rec(state="▼", updated="2026-10-23", forecast="10月上旬～10月中旬"), lake()])
         self.assertEqual(picked(t), ["試験の湖畔"])
-        self.assertIn(A["forecast_ended"].format(names="試験の渓谷"), lines(t, "recommend"))                    # 外したことは名前だけ 1 行
+        # 段階22 A-2(ユーザー承認): ▼・✕はもともと候補ではないので「外しました」の行に書かない
+        self.assertNotIn(A["forecast_ended"].split(":")[0], t)
 
     def test_a_new_starting_state_is_kept_with_the_starting_sentence(self):
         t = text([rec(state="△", updated="2026-10-23", forecast="10月上旬～10月中旬")], early=True)             # 始まりも含める質問

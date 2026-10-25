@@ -229,7 +229,7 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
 
 def left_out(subject_parts, policy, dates, chosen, *, orders=None):
     """おすすめに入れなかった地点の名前(段階20)。→ (見頃予測が対象の日より前に終わるため外した名前, ほかの候補の名前)。
-    外した名前は、公式の状態がある地点(段階21: ▼・✕や状態が古いために外したものも)。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
+    外した名前は、予測の時期を過ぎたために外した地点(公式の状態が◎・◯・△で、状態が古い・日付が分からないもの。▼・✕は書かない。段階22 A-2)。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
     keys = {place_key(p, r) for p, r, _ in chosen}
     ended, others = {}, {}
     for p in subject_parts:
@@ -238,7 +238,9 @@ def left_out(subject_parts, policy, dates, chosen, *, orders=None):
             if not usable_status_row(r) or place_key(p, r) in keys or is_secondary(r, items):
                 continue
             if forecast_dropped(r, dates, policy):
-                if r.get("official_state") is not None:       # 公式の状態がある地点は、段階に関わらず名前を書く(▼・✕で外したものも。段階21)
+                # 予測の時期を過ぎたために外した名所だけ(状態が古い・日付が分からないため残せなかったものを含む)。
+                # ▼・✕(案B で残す段階でないもの)・段階の分からない書き方は、もともと候補ではないので書かない(段階22 A-2)
+                if str(r.get("order")) in policy["answer"]["past_forecast"]["sentence_by_order"]:
                     ended.setdefault(place_key(p, r), (p, r))
             elif r["forecast_hits_dates"] and r.get("official_state") is not None and r.get("state_kind") != "no_info":
                 others.setdefault(place_key(p, r), (p, r))
