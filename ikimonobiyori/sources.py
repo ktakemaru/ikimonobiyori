@@ -129,6 +129,11 @@ def check_source(src, *, subject, policy, catalog_ids):
     for c in src["covers"]:
         if "site" in c and c["site"] not in catalog_ids:
             errs.append(f"{sid}: covers の site={c['site']} が名所カタログの承認済みの件にない")
+        if c.get("primary") and "site" not in c:
+            errs.append(f"{sid}: covers の primary は名所カタログの名所(site)の地点にだけ付ける({c.get('name')})")
+    prim = [c["site"] for c in src["covers"] if c.get("primary") and "site" in c]
+    for s_ in sorted({x for x in prim if prim.count(x) > 1}):
+        errs.append(f"{sid}: 名所 {s_} の主項目(primary)が 2 つ以上ある")
     rd, ap, terms = src["readable"], src["approval"], src["terms"]
     for k, v in (("readable.checked_on", rd.get("checked_on")), ("readable.observed_latest_update", rd.get("observed_latest_update")),
                  ("approval.approved_on", ap.get("approved_on"))):
@@ -309,6 +314,50 @@ def forecast_day_status(row, d, policy):
     if str(row.get("order")) in pp["sentence_by_order"] and age is not None and age <= val(pp["state_max_days"]):
         return "keep"
     return "drop"
+
+
+def primary_cover(registry, row):
+    """台帳で、この行の地点の書き方が名所の主項目(covers[].primary)に指定されているか(段階22 A-1 ④)。"""
+    src = sources_by_id(registry or {}).get(row.get("source") or row.get("source_id")) or {}
+    return any(c.get("primary") and c.get("site") == row.get("site") and c.get("label") == row.get("label") for c in src.get("covers") or [])
+
+
+def primary_key(row, d, registry, policy):
+    """同じ名所の複数の項目から主項目を選ぶ並びの鍵(小さいほうが主)。対象の日 d ごと(段階22 A-1。ユーザー承認 2026-10-25)。
+    ▼(終わり)は主にしない → ①公式の見頃予測が d にかかる → ②状態の日付(現地の日付、なければ更新日)が新しい
+    → ③状態が進んでいる(◎ > ◯ > △ > ✕。段階の分からない書き方はその後)→ ④台帳の主項目(covers[].primary)→ 地点の書き方の順(決まった並びにするため)。"""
+    late = set(policy["stage_scope"]["late"])
+    order = row.get("order")
+    fw = row.get("forecast_window")
+    hit = bool(fw) and fw[0] <= d.isoformat() <= fw[1]
+    bd = row.get("basis_date")
+    return (order in late, not hit, -(date.fromisoformat(bd).toordinal() if bd else 0),
+            -(order if order is not None and order not in late else -1), not primary_cover(registry, row), row.get("label") or "")
+
+
+def primary_for(rows, d, registry, policy):
+    """同じ名所の行のリスト → (主項目の行, 補助の項目の行のリスト)。答え(answer)と提案(proposals)が共有する(段階22 A-1 ⑤)。"""
+    ordered = sorted(rows, key=lambda r: primary_key(r, d, registry, policy))
+    return ordered[0], ordered[1:]
+
+
+def item_disagreements(primary, others, d, policy):
+    """主項目と補助の項目で、見頃予測の扱い(予測の時期の内か、過ぎたか)が対象の日 d で食い違う補助の項目(段階22 A-1 ③)。"""
+    st = forecast_day_status(primary, d, policy)
+    return [r for r in others if r.get("forecast_window") and forecast_day_status(r, d, policy) != st
+            and "current" in (st, forecast_day_status(r, d, policy))]
+
+
+def item_note(main, other, d, policy):
+    """主項目と補助の項目で見頃予測の扱いが食い違うときの決まった文(answer の根拠の欄と提案の details.item_notes で共有。段階22 A-1 ③)。
+    補助の項目の予測が対象の日 d に過ぎていれば past、かかっていれば current の型。"""
+    kind = "current" if forecast_day_status(other, d, policy) == "current" else "past"
+    return policy["answer"]["item_disagreement"][kind].format(other=strip_label(other.get("label")), forecast=other.get("official_forecast"),
+                                                             main=strip_label(main.get("label")))
+
+
+def strip_label(label):
+    return re.sub(r"^【[^】]*】", "", label or "")
 
 
 def overlaps(window, dates):

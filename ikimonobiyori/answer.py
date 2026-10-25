@@ -8,7 +8,7 @@ import re
 from datetime import date
 
 from . import catalog as catalog_mod
-from .sources import forecast_day_status, last_third_start, usable_status_row
+from .sources import forecast_day_status, item_disagreements, item_note, last_third_start, primary_for, usable_status_row
 
 URL_RE = re.compile(r"https?://\S+")
 WEEKDAYS = "月火水木金土日"
@@ -165,6 +165,22 @@ def state_text(row, policy=None, with_parts=False):
     return f"{text}、{body}" if body and with_parts else text
 
 
+def site_items(p, dates, policy):
+    """1 つの対象の部品 → {名所 id: (主項目の行, 補助の項目の行のリスト)}(同じ名所に公式の項目が複数あるとき。段階22 A-1)。
+    選び方は提案と同じ sources.primary_for。答えは対象の日が複数でも 1 行なので、最初の対象の日で選ぶ。"""
+    groups = {}
+    for r in p["summary"]["rows"]:
+        if usable_status_row(r) and r.get("site") and r.get("official_state") is not None and r.get("state_kind") != "no_info":
+            groups.setdefault(r["site"], []).append(r)
+    return {sid: primary_for(rows, min(dates), p.get("registry"), policy) for sid, rows in groups.items()}
+
+
+def is_secondary(r, items):
+    """同じ名所の補助の項目(主項目でない行)か。おすすめ・外した名所の判定には主項目だけを使う。"""
+    got = items.get(r.get("site"))
+    return got is not None and r is not got[0] and r in got[1]
+
+
 def place_key(p, r):
     return (p["subject"], r.get("site") or r.get("name") or r.get("label"))
 
@@ -180,7 +196,9 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
     rank = {c: i for i, c in enumerate(FRESHNESS_ORDER)}
     # 提案(proposals)と同じ判定(段階18)。見頃予測が対象の日より前に終わる地点は外す(段階20。名前は compose が 1 行で書く)
     # 見頃予測が対象のどの日にも使えない地点は外す。予測を過ぎても残す地点(公式の状態が新しい)は、順位を予測がかかる地点より後ろにする(段階21)
-    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"] if usable_status_row(r) and not forecast_dropped(r, dates, policy)]
+    items = {id(p): site_items(p, dates, policy) for p in subject_parts}
+    usable = [(p, r) for p in subject_parts for r in p["summary"]["rows"]
+              if usable_status_row(r) and not is_secondary(r, items[id(p)]) and not forecast_dropped(r, dates, policy)]
     out, seen = [], set(exclude)
 
     def add(p, r, reason):
@@ -211,15 +229,18 @@ def pick(subject_parts, policy, dates, *, orders=None, forecast=True, fallback=T
 
 def left_out(subject_parts, policy, dates, chosen, *, orders=None):
     """おすすめに入れなかった地点の名前(段階20)。→ (見頃予測が対象の日より前に終わるため外した名前, ほかの候補の名前)。
-    外した名前は、公式の状態がある地点(段階21: ▼・✕や状態が古いために外したものも)。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
+    外した名前は、予測の時期を過ぎたために外した地点(公式の状態が◎・◯・△で、状態が古い・日付が分からないもの。▼・✕は書かない。段階22 A-2)。ほかの候補は、公式の見頃予測が対象の日にかかるのに選ばなかったもの。"""
     keys = {place_key(p, r) for p, r, _ in chosen}
     ended, others = {}, {}
     for p in subject_parts:
+        items = site_items(p, dates, policy)
         for r in p["summary"]["rows"]:
-            if not usable_status_row(r) or place_key(p, r) in keys:
+            if not usable_status_row(r) or place_key(p, r) in keys or is_secondary(r, items):
                 continue
             if forecast_dropped(r, dates, policy):
-                if r.get("official_state") is not None:       # 公式の状態がある地点は、段階に関わらず名前を書く(▼・✕で外したものも。段階21)
+                # 予測の時期を過ぎたために外した名所だけ(状態が古い・日付が分からないため残せなかったものを含む)。
+                # ▼・✕(案B で残す段階でないもの)・段階の分からない書き方は、もともと候補ではないので書かない(段階22 A-2)
+                if str(r.get("order")) in policy["answer"]["past_forecast"]["sentence_by_order"]:
                     ended.setdefault(place_key(p, r), (p, r))
             elif r["forecast_hits_dates"] and r.get("official_state") is not None and r.get("state_kind") != "no_info":
                 others.setdefault(place_key(p, r), (p, r))
@@ -339,6 +360,9 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
                                              place_name(r, names, multi[p["subject"]]))):
             lines.append(_line(r, on, names, policy, multi[p["subject"]]))
             shown.add((p["subject"], r.get("site")))
+        for sid, (main, others) in site_items(p, dates, policy).items():     # 主項目と補助の項目で見頃予測の扱いが食い違うとき 1 行(段階22 A-1 ③)
+            for o in item_disagreements(main, others, min(dates), policy):
+                lines.append(f"- {names.get(sid, sid)}: {item_note(main, o, min(dates), policy)}")
     lines.append("")
 
     notes = [f"- {ans['record_gap'].format(publisher=g['publisher'], read=g['read'], recorded=g['recorded'])}" for g in record_gaps or []]

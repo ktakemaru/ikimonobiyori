@@ -60,52 +60,12 @@
    "suitability": {
     "band": "maybe",
     "score": {
-     "value": 3,
+     "value": 2,
      "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
      "go_threshold": null
     }
    },
    "evidence": [
-    {
-     "metric": "official_state",
-     "value": "真っ盛り",
-     "unit": null,
-     "valid_time": null,
-     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
-     "source_type": "official_notice",
-     "url": "https://autumn-leaves.example.org/al-main",
-     "last_updated": "2026-10-23"
-    },
-    {
-     "metric": "official_updated",
-     "value": "2026-10-23",
-     "unit": null,
-     "valid_time": null,
-     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
-     "source_type": "official_notice",
-     "url": "https://autumn-leaves.example.org/al-main",
-     "last_updated": "2026-10-23"
-    },
-    {
-     "metric": "freshness",
-     "value": "新しい",
-     "unit": null,
-     "valid_time": null,
-     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
-     "source_type": "model_derived",
-     "url": null,
-     "last_updated": null
-    },
-    {
-     "metric": "read_by",
-     "value": "簡易な読み取り",
-     "unit": null,
-     "valid_time": null,
-     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
-     "source_type": "model_derived",
-     "url": null,
-     "last_updated": null
-    },
     {
      "metric": "official_state",
      "value": "見ごろ",
@@ -145,6 +105,46 @@
      "source_type": "model_derived",
      "url": null,
      "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "official_state",
+     "value": "真っ盛り",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
     },
     {
      "metric": "freshness",
@@ -211,28 +211,6 @@
      {
       "source": "al-main",
       "publisher": "試験の発信元(autumn_leaves)",
-      "label": "試験の谷・草紅葉",
-      "official_state": "真っ盛り",
-      "stage": "peak",
-      "stage_label": "真っ盛り",
-      "order": 3,
-      "official_updated": "2026-10-23",
-      "official_observed": null,
-      "updated_year_inferred": false,
-      "observed_year_inferred": false,
-      "freshness_basis": "updated_date",
-      "freshness": "新しい",
-      "freshness_class": "fresh",
-      "freshness_age_days": 1,
-      "read_by": "summary",
-      "read_at": "2026-10-24T13:54:00+09:00",
-      "official_forecast": null,
-      "forecast_window": null,
-      "url": "https://autumn-leaves.example.org/al-main"
-     },
-     {
-      "source": "al-main",
-      "publisher": "試験の発信元(autumn_leaves)",
       "label": "試験の谷・木々",
       "official_state": "見ごろ",
       "stage": "good",
@@ -254,15 +232,48 @@
        "2026-11-10"
       ],
       "url": "https://autumn-leaves.example.org/al-main"
+     },
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "stage_label": "真っ盛り",
+      "order": 3,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
      }
     ],
     "representative_source": "al-main",
-    "representative_label": "試験の谷・草紅葉",
+    "representative_label": "試験の谷・木々",
+    "secondary_items": [
+     {
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "official_observed": null,
+      "official_updated": "2026-10-23",
+      "official_forecast": null,
+      "forecast_status": null
+     }
+    ],
     "official_status": {
-     "stage": "peak",
-     "stage_label": "真っ盛り",
-     "order": 3,
-     "official_state": "真っ盛り"
+     "stage": "good",
+     "stage_label": "見ごろ",
+     "order": 2,
+     "official_state": "見ごろ"
     },
     "reference_links": []
    }
@@ -300,52 +311,12 @@
    "suitability": {
     "band": "maybe",
     "score": {
-     "value": 3,
+     "value": 2,
      "scale": "ikimonobiyori-official-stage-order-0-4-not-probability",
      "go_threshold": null
     }
    },
    "evidence": [
-    {
-     "metric": "official_state",
-     "value": "真っ盛り",
-     "unit": null,
-     "valid_time": null,
-     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
-     "source_type": "official_notice",
-     "url": "https://autumn-leaves.example.org/al-main",
-     "last_updated": "2026-10-23"
-    },
-    {
-     "metric": "official_updated",
-     "value": "2026-10-23",
-     "unit": null,
-     "valid_time": null,
-     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
-     "source_type": "official_notice",
-     "url": "https://autumn-leaves.example.org/al-main",
-     "last_updated": "2026-10-23"
-    },
-    {
-     "metric": "freshness",
-     "value": "新しい",
-     "unit": null,
-     "valid_time": null,
-     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
-     "source_type": "model_derived",
-     "url": null,
-     "last_updated": null
-    },
-    {
-     "metric": "read_by",
-     "value": "簡易な読み取り",
-     "unit": null,
-     "valid_time": null,
-     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
-     "source_type": "model_derived",
-     "url": null,
-     "last_updated": null
-    },
     {
      "metric": "official_state",
      "value": "見ごろ",
@@ -385,6 +356,46 @@
      "source_type": "model_derived",
      "url": null,
      "last_updated": null
+    },
+    {
+     "metric": "freshness",
+     "value": "新しい",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "read_by",
+     "value": "簡易な読み取り",
+     "unit": null,
+     "valid_time": null,
+     "source": "イキモノビヨリ(公式ページを読んだ結果から)",
+     "source_type": "model_derived",
+     "url": null,
+     "last_updated": null
+    },
+    {
+     "metric": "official_state",
+     "value": "真っ盛り",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
+    },
+    {
+     "metric": "official_updated",
+     "value": "2026-10-23",
+     "unit": null,
+     "valid_time": null,
+     "source": "試験の発信元(autumn_leaves)(試験の谷・草紅葉)",
+     "source_type": "official_notice",
+     "url": "https://autumn-leaves.example.org/al-main",
+     "last_updated": "2026-10-23"
     },
     {
      "metric": "freshness",
@@ -451,28 +462,6 @@
      {
       "source": "al-main",
       "publisher": "試験の発信元(autumn_leaves)",
-      "label": "試験の谷・草紅葉",
-      "official_state": "真っ盛り",
-      "stage": "peak",
-      "stage_label": "真っ盛り",
-      "order": 3,
-      "official_updated": "2026-10-23",
-      "official_observed": null,
-      "updated_year_inferred": false,
-      "observed_year_inferred": false,
-      "freshness_basis": "updated_date",
-      "freshness": "新しい",
-      "freshness_class": "fresh",
-      "freshness_age_days": 1,
-      "read_by": "summary",
-      "read_at": "2026-10-24T13:54:00+09:00",
-      "official_forecast": null,
-      "forecast_window": null,
-      "url": "https://autumn-leaves.example.org/al-main"
-     },
-     {
-      "source": "al-main",
-      "publisher": "試験の発信元(autumn_leaves)",
       "label": "試験の谷・木々",
       "official_state": "見ごろ",
       "stage": "good",
@@ -494,15 +483,48 @@
        "2026-11-10"
       ],
       "url": "https://autumn-leaves.example.org/al-main"
+     },
+     {
+      "source": "al-main",
+      "publisher": "試験の発信元(autumn_leaves)",
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "stage_label": "真っ盛り",
+      "order": 3,
+      "official_updated": "2026-10-23",
+      "official_observed": null,
+      "updated_year_inferred": false,
+      "observed_year_inferred": false,
+      "freshness_basis": "updated_date",
+      "freshness": "新しい",
+      "freshness_class": "fresh",
+      "freshness_age_days": 1,
+      "read_by": "summary",
+      "read_at": "2026-10-24T13:54:00+09:00",
+      "official_forecast": null,
+      "forecast_window": null,
+      "url": "https://autumn-leaves.example.org/al-main"
      }
     ],
     "representative_source": "al-main",
-    "representative_label": "試験の谷・草紅葉",
+    "representative_label": "試験の谷・木々",
+    "secondary_items": [
+     {
+      "label": "試験の谷・草紅葉",
+      "official_state": "真っ盛り",
+      "stage": "peak",
+      "official_observed": null,
+      "official_updated": "2026-10-23",
+      "official_forecast": null,
+      "forecast_status": null
+     }
+    ],
     "official_status": {
-     "stage": "peak",
-     "stage_label": "真っ盛り",
-     "order": 3,
-     "official_state": "真っ盛り"
+     "stage": "good",
+     "stage_label": "見ごろ",
+     "order": 2,
+     "official_state": "見ごろ"
     },
     "reference_links": []
    }

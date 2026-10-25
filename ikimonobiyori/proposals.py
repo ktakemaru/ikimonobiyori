@@ -9,7 +9,7 @@ from datetime import date
 from . import __version__
 from . import catalog as catalog_mod
 from .engine import AGENT_ID, SCHEMA, day_window, round_coord
-from .sources import forecast_day_status, usable_status_row, val
+from .sources import forecast_day_status, item_disagreements, item_note, primary_for, usable_status_row, val
 
 ID_KIND = "status"             # 提案の id の 2 つ目。気温の推定(engine)の id と区別する(段階18 の確認、ユーザー 2026-10-24)
 YEAR_FREE_DATE = "{m}/{d}"       # 年のない公式の日付の書き方(原文の形。答えの「○/○時点」と同じ)
@@ -204,9 +204,12 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
     for sid, rows in by_site.items():
         entry = entries[sid]
         for d in dates:
-            decided = [(r, *decide(r, d, policy=policy, on=on, scope=scope)) for r in rows]
-            decided.sort(key=lambda x: _sort_key(x[1], x[0], policy))
+            # 主項目は答えと同じ選び方(sources.primary_for。段階22 A-1)。band・案B の判定は主項目に対して行う。
+            # これまでは行ごとの band で並べて先頭を代表にしていたため、同じ条件の行では地点の書き方の順で先のものが代表になっていた
+            main, others = primary_for(rows, d, part.get("registry"), policy)
+            decided = [(r, *decide(r, d, policy=policy, on=on, scope=scope)) for r in [main] + others]
             rep, band, keys = decided[0]
+            disagree = item_disagreements(main, others, d, policy)
             limits = list(pp["known_limits"]["common"])
             for r, _, k in decided:
                 limits += row_limits(r, policy=policy, on=on)
@@ -237,6 +240,9 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
                 "details": {"profile_id": profile["profile_id"], "site_id": sid, "kind": "official_status",
                             "observations": [observation(r, publishers.get(r["source"]) or r["source"]) for r, _, _ in decided],
                             "representative_source": rep["source"], "representative_label": rep.get("label"),
+                            # 補助の項目(主でない項目。隠さない。段階22 A-1 ③)と、見頃予測の扱いが主項目と食い違う補助の項目の文
+                            **({"secondary_items": [secondary_item(r, d, policy) for r in others]} if others else {}),
+                            **({"item_notes": [item_note(main, r, d, policy) for r in disagree]} if disagree else {}),
                             "official_status": {"stage": rep.get("stage"), "stage_label": rep.get("stage_label"), "order": rep.get("order"),
                                                 "official_state": rep.get("official_state")},
                             "reference_links": refs.get(sid, []),
@@ -245,6 +251,14 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
             })
             out.append((_sort_key(band, rep, policy), sid, d.isoformat(), p))
     return [p for *_, p in sorted(out, key=lambda x: x[:3])]
+
+
+def secondary_item(row, d, policy):
+    """補助の項目(details.secondary_items の 1 件): 地点の書き方・状態・観察日・更新日・見頃予測と、その日の見頃予測の扱い。"""
+    return {"label": row.get("label"), "official_state": row.get("official_state"), "stage": row.get("stage"),
+            "official_observed": official_date_text(row.get("official_observed"), observed_year_known(row)),
+            "official_updated": official_date_text(row.get("official_updated"), updated_year_known(row)),
+            "official_forecast": row.get("official_forecast"), "forecast_status": forecast_day_status(row, d, policy)}
 
 
 def unread_warnings(part, proposed_sites, warn, policy):
