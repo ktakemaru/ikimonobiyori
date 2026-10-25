@@ -23,7 +23,8 @@
         "site": {"type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)+$"},
         "name": {"type": "string", "minLength": 1},
         "label": {"type": "string", "minLength": 1},
-        "flower_kind": {"type": "string", "minLength": 1, "description": "この地点の書き方が伝える花の種類(段階17 フェーズ4。flowers の情報源)"}
+        "flower_kind": {"type": "string", "minLength": 1, "description": "この地点の書き方が伝える花の種類(段階17 フェーズ4。flowers の情報源)"},
+        "primary": {"const": true, "description": "同じ名所に地点の書き方が複数あるとき、ほかの決め方(見頃予測・状態の日付・状態の進み)で主項目が決まらないときに使う主項目(段階22 A-1 ④)。1 つの情報源で名所ごとに 1 つまで。site のある cover だけ"}
       },
       "oneOf": [{"required": ["site"], "not": {"required": ["name"]}}, {"required": ["name"], "not": {"required": ["site"]}}]
     },

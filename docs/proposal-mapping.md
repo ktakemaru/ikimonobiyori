@@ -51,6 +51,15 @@
   - `diagnostics.api_calls`: 0
 - **同じ名所に地点の書き方が複数ある**とき(例: 1 つの名所に「木々」と「草紅葉」の 2 行): 提案は名所・日ごとに 1 件にまとめる。`evidence` と `details.observations` に行ごとの値を入れ、`evidence[].source` に地点の書き方を添える。`band`・`phenology_stage`・`score` は、行のうち下の順で最初のものから決める: band が `maybe` → 段階が進んでいる → 新しい。
 
+## 同じ名所の複数の項目(段階22 A-1)
+
+同じ名所(名所カタログの id)に公式の項目(地点の書き方)が複数あるとき、対象の日ごとに主項目を 1 つ選ぶ(`sources.primary_for`。答えと共有)。
+▼は主にしない → ①見頃予測がその日にかかる → ②状態の日付(現地の日付、なければ更新日)が新しい → ③状態が進んでいる(◎ > ◯ > △ > ✕)→ ④台帳の主項目(`covers[].primary`)→ 地点の書き方の文字の順。
+
+- band・案B は主項目に対して決める。`details.observations` は主項目が先。
+- 主でない項目は `details.secondary_items`(`label`・`official_state`・`stage`・`official_observed`・`official_updated`・`official_forecast`・`forecast_status`)。補助の項目がない名所には付けない。
+- 主項目と補助の項目で、見頃予測の扱い(予測の内 `current` か、過ぎた `keep`/`drop` か)が食い違うときは `details.item_notes` に決まった文(方針 `answer.item_disagreement`)。答えの根拠の欄の 1 行と同じ文。
+
 ## band の決め方(暫定。`docs/stage18-decisions.md` D-10・D-14)
 
 | 条件(上から順に) | band |

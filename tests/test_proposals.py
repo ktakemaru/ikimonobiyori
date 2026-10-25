@@ -229,7 +229,9 @@ class Properties(unittest.TestCase):
         ps = [p for p in doc["proposals"] if p["details"]["site_id"] == "s-al-1"]
         self.assertEqual(len(ps), len(F.DATES))
         self.assertEqual({o["label"] for o in ps[0]["details"]["observations"]}, {"試験の谷・木々", "試験の谷・草紅葉"})
-        self.assertEqual((ps[0]["phenology_stage"], ps[0]["suitability"]["score"]["value"]), ("peak", 3))   # 真っ盛り(3)が代表
+        # 段階22 A-1: 主項目は見頃予測が対象の日にかかる「木々」(見ごろ=2)。予測のない「草紅葉」(真っ盛り=3)は補助の項目
+        self.assertEqual((ps[0]["phenology_stage"], ps[0]["suitability"]["score"]["value"]), ("peak", 2))
+        self.assertEqual([x["label"] for x in ps[0]["details"]["secondary_items"]], ["試験の谷・草紅葉"])
 
     def test_sensitive_places_are_rounded(self):
         p = subject_doc("wintering_birds")["proposals"][0]

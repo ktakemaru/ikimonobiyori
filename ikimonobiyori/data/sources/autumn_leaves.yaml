@@ -16,9 +16,9 @@ sources:
     reader: code
     covers:
       - {site: kouyou-0001, label: "【奥日光】湯ノ湖、湯滝"}
-      - {site: kouyou-0002, label: "【奥日光】戦場ヶ原、小田代原の木々"}
+      - {site: kouyou-0002, label: "【奥日光】戦場ヶ原、小田代原の木々", primary: true}   # 主項目(段階22 A-1 ④。ユーザーの指示 2026-10-25)
       - {site: kouyou-0002, label: "【奥日光】小田代原の草紅葉"}
-      - {site: kouyou-0003, label: "【奥日光】中禅寺湖、華厳滝"}
+      - {site: kouyou-0003, label: "【奥日光】中禅寺湖、華厳滝", primary: true}   # 主項目(段階22 A-1 ④。ユーザーの指示 2026-10-25)
       - {site: kouyou-0003, label: "【奥日光】いろは坂"}
       - {site: kouyou-0026, label: "【奥日光】竜頭滝"}
       - {site: kouyou-0029, label: "【日光】日光市霧降高原 キスゲ平園地"}
