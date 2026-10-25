@@ -1,0 +1,2744 @@
+# build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)
+schema: ikimono-guide-catalog/1
+entries:
+- id: g-03191977ee
+  scope: place
+  theme: 冬鳥
+  name: 越辺川(川島町)
+  prefecture: 埼玉県
+  municipality: 川島町
+  kinds:
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q1203970
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-03292672de
+  scope: place
+  theme: 花
+  name: 城山公園 つばきの径
+  prefecture: 千葉県
+  municipality: 館山市
+  kinds:
+  - kind: ツバキ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 横浜
+    qid: Q646755
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.asoview.com/leisure/143/location/are0122600/
+    host: asoview.com
+    publisher: アソビュー
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H05
+    note: 時期は未確認(探索の起点)
+- id: g-0683487685
+  scope: place
+  theme: ホタル
+  name: 箱島地区
+  prefecture: 群馬県
+  municipality: 東吾妻町
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  - kind: ヘイケボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 6月中旬〜7月下旬(2026年の情報)
+    window:
+      start: 06-11
+      end: 07-31
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/2036/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 130
+    from: 東京
+    qid: Q1203419
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kids.rurubu.jp/article/2036/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-13d144ebf6
+  scope: place
+  theme: ホタル
+  name: 天神谷津
+  prefecture: 千葉県
+  municipality: 富里市
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - A
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 東京
+    qid: Q692857
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://maruchiba.jp/event/detail_15500.html
+    host: maruchiba.jp
+    publisher: 千葉県観光物産協会
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: ガイド付きの観賞会(2026年は7/10〜26)
+- id: g-1c29763a98
+  scope: place
+  theme: 冬鳥
+  name: 五行川白鳥飛来地
+  prefecture: 栃木県
+  municipality: 真岡市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月下旬〜3月下旬
+    window:
+      start: 10-21
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 90
+    from: 東京
+    qid: Q498060
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-27f7fcd41b
+  scope: place
+  theme: 野鳥
+  name: 明治神宮
+  prefecture: 東京都
+  municipality: 渋谷区
+  kinds:
+  - kind: キビタキ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - D
+  exists_confirmed: false
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q193638
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件(個人の発信だけ)
+    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
+  sources:
+  - url: https://banzokubiology.com/tokyo-tanntyouchi-train/
+    host: banzokubiology.com
+    publisher: banzokubiology.com
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B09
+    note: 森の小鳥。春・秋の渡りの時期
+- id: g-2aa88bae76
+  scope: place
+  theme: 野鳥
+  name: 自然教育園
+  prefecture: 東京都
+  municipality: 港区
+  kinds:
+  - kind: カワセミ
+    independent_sources: 2
+    shown: true
+  season: null
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q190088
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://ins.kahaku.go.jp/event/2023/11kawasemi/imgs/kawasemi2023_leaflet.pdf
+    host: ins.kahaku.go.jp
+    publisher: kahaku.go.jp
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: カワセミの繁殖の観察記録
+  - url: https://www.city.minato.tokyo.jp/documents/40174/oshietekawasemi.pdf
+    host: city.minato.tokyo.jp
+    publisher: minato.tokyo.jp
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: カワセミが巣作りや餌取りに使う場所
+- id: g-2b68ca0bb4
+  scope: place
+  theme: 花
+  name: 赤塚溜池公園
+  prefecture: 東京都
+  municipality: 板橋区
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q232635
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約150本
+- id: g-2d115d5adc
+  scope: place
+  theme: 桜
+  name: 桜神宮
+  prefecture: 東京都
+  municipality: 世田谷区
+  kinds:
+  - kind: 河津桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 2〜3月
+    window:
+      start: 02-01
+      end: 03-31
+    independent_sources: 2
+    shown: true
+    from_url: https://co-trip.jp/article/643572
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q231645
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://co-trip.jp/article/643572
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S08
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/tokyo-9-places-to-enjoy-winter-cherry-blossoms
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S08
+- id: g-2fed93a32b
+  scope: place
+  theme: 花
+  name: 国営昭和記念公園
+  prefecture: 東京都
+  municipality: 立川市
+  kinds:
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - D
+  exists_confirmed: false
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q269634
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件(個人の発信だけ)
+    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
+  sources:
+  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
+    host: ne.jp
+    publisher: ne.jp
+    class: D
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-3415f6d876
+  scope: place
+  theme: 花
+  name: 井の頭恩賜公園
+  prefecture: 東京都
+  municipality: 武蔵野市
+  kinds:
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11月から12月ごろ
+    window:
+      start: 11-01
+      end: 12-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/flower20251212-pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q210661
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/flower20251212-pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+    note: 園内各所で見られる
+- id: g-3492aa25a0
+  scope: place
+  theme: 花
+  name: 亀戸天神社
+  prefecture: 東京都
+  municipality: 江東区
+  kinds:
+  - kind: 梅
+    independent_sources: 2
+    shown: true
+  season:
+    text: 2月上旬〜3月上旬
+    window:
+      start: 02-01
+      end: 03-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q215175
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/tokyo-umematsuri-2022
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 亀戸天神梅まつり
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 300本以上
+- id: g-35937add6e
+  scope: kind
+  theme: 花
+  name: ツバキ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ツバキ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 12月〜4月頃
+    window:
+      start: 12-01
+      end: 04-30
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kankomie.or.jp/season/article/314
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kankomie.or.jp/season/article/314
+    host: kankomie.or.jp
+    publisher: kankomie.or.jp
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-36cd878e09
+  scope: kind
+  theme: 冬鳥
+  name: スズガモ・カンムリカイツブリ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: カンムリカイツブリ
+    independent_sources: 1
+    shown: false
+  - kind: スズガモ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬(東京湾で越冬)
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_170227
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_170227
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T05
+    note: スズガモは数万羽、カンムリカイツブリは数千羽(日本野鳥の会東京)
+- id: g-37c5138ac4
+  scope: place
+  theme: 花
+  name: 城山公園 梅園
+  prefecture: 千葉県
+  municipality: 館山市
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月上旬〜3月中旬
+    window:
+      start: 01-01
+      end: 03-20
+    independent_sources: 1
+    shown: false
+    from_url: https://www.asoview.com/leisure/143/location/are0122600/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 横浜
+    qid: Q646755
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.asoview.com/leisure/143/location/are0122600/
+    host: asoview.com
+    publisher: アソビュー
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H04
+    note: 園内に梅 約150本
+- id: g-381e6c25be
+  scope: place
+  theme: 花
+  name: 新宿御苑
+  prefecture: 東京都
+  municipality: 新宿区
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 2月中旬〜3月中旬
+    window:
+      start: 02-11
+      end: 03-20
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q179645
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 紅白 約350本
+- id: g-3848f354bf
+  scope: place
+  theme: 花
+  name: 亀戸中央公園
+  prefecture: 東京都
+  municipality: 江東区
+  kinds:
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - D
+  exists_confirmed: false
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q215175
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件(個人の発信だけ)
+    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
+  sources:
+  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
+    host: ne.jp
+    publisher: ne.jp
+    class: D
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-385e4867e6
+  scope: place
+  theme: 桜
+  name: 荏原神社
+  prefecture: 東京都
+  municipality: 品川区
+  kinds:
+  - kind: 寒緋桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 例年1月の終わりごろから
+    window:
+      start: 01-21
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://co-trip.jp/article/643572
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q233495
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://co-trip.jp/article/643572
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S04
+    note: 寒緋桜 2本。区内でいちばん早く咲く桜
+- id: g-3c7c824336
+  scope: place
+  theme: 花
+  name: 平磯・千田のお花畑
+  prefecture: 千葉県
+  municipality: 南房総市
+  kinds:
+  - kind: キンセンカ
+    independent_sources: 1
+    shown: false
+  - kind: 菜の花
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月上旬〜3月中旬
+    window:
+      start: 01-01
+      end: 03-20
+    independent_sources: 1
+    shown: false
+    from_url: https://tabi-mag.jp/minamibouso-flower/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 横浜
+    qid: Q873521
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://tabi-mag.jp/minamibouso-flower/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H06
+    note: 花摘み
+  - url: https://tabi-mag.jp/nanbou-flower/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H06
+    note: 花摘み
+- id: g-3e2f10b691
+  scope: place
+  theme: 花
+  name: 皇居東御苑 梅林坂
+  prefecture: 東京都
+  municipality: 千代田区
+  kinds:
+  - kind: 梅
+    independent_sources: 2
+    shown: true
+  season:
+    text: 1月中旬〜3月初旬
+    window:
+      start: 01-11
+      end: 03-10
+    independent_sources: 2
+    shown: true
+    from_url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q214051
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H01
+    note: 紅白の梅 約50本
+  - url: https://www.nta.co.jp/media/tripa/articles/UcoPh
+    host: nta.co.jp
+    publisher: 日本旅行
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H01
+    note: 紅白の梅 約50本
+- id: g-4284a6f516
+  scope: place
+  theme: 桜
+  name: 熱海の あたみ桜
+  prefecture: 静岡県
+  municipality: 熱海市
+  kinds:
+  - kind: あたみ桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 12月下旬から咲き始め、1月中旬〜2月上旬がピーク
+    window:
+      start: 01-11
+      end: 02-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.timeout.jp/tokyo/ja/things-to-do/near-kanto-beautiful-early-blooming-cherry-blossoms
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 横浜
+    qid: Q653364
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/near-kanto-beautiful-early-blooming-cherry-blossoms
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S11
+    note: アカオフォレストなど
+- id: g-4931b7db46
+  scope: place
+  theme: 桜
+  name: 田貫湖
+  prefecture: 静岡県
+  municipality: 富士宮市
+  kinds:
+  - kind: 桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 4月上旬
+    window:
+      start: 04-01
+      end: 04-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.mapple.net/region/a0305040000_g04030200/spot/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.mapple.net/region/a0305040000_g04030200/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+- id: g-49bf0f028d
+  scope: place
+  theme: 花
+  name: 秩父宮記念公園
+  prefecture: 静岡県
+  municipality: 御殿場市
+  kinds:
+  - kind: しだれ桜
+    independent_sources: 1
+    shown: false
+  - kind: フジザクラ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 横浜
+    qid: Q735175
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.mapple.net/region/a0305040202_s-season=spring/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+    note: 四季の草花の花壇。春に約10種類の桜
+- id: g-4c08eaaa64
+  scope: kind
+  theme: 花
+  name: ロウバイ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ロウバイ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月〜2月上旬
+    window:
+      start: 01-01
+      end: 02-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.isesaki.lg.jp/material/files/group/54/1-3syousai.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.city.isesaki.lg.jp/material/files/group/54/1-3syousai.pdf
+    host: city.isesaki.lg.jp
+    publisher: isesaki.lg.jp
+    class: B
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+- id: g-4f69d201ab
+  scope: kind
+  theme: 冬鳥
+  name: ヒドリガモ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ヒドリガモ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬にやってくる渡り鳥
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/pondwatching202412_pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/pondwatching202412_pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-5aa117e5e0
+  scope: place
+  theme: 花
+  name: 府中市郷土の森博物館
+  prefecture: 東京都
+  municipality: 府中市
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q208818
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約1,300本・約120種類
+- id: g-5f0cc34fdb
+  scope: place
+  theme: 花
+  name: 国営武蔵丘陵森林公園
+  prefecture: 埼玉県
+  municipality: 滑川町
+  kinds:
+  - kind: ツバキ
+    independent_sources: 2
+    shown: true
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 12月中旬〜2月下旬(2025〜26年の催し)
+    window:
+      start: 12-11
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.walkerplus.com/event/ar0311e574817/price.html
+    other_texts:
+    - 見頃は4月上旬まで
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 東京
+    qid: Q1346985
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://www.walkerplus.com/event/ar0311e574817/price.html
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://newswitch.jp/p/21354
+    host: newswitch.jp
+    publisher: newswitch.jp
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+- id: g-6042e58c8a
+  scope: place
+  theme: ホタル
+  name: 名草ほたるの里
+  prefecture: 栃木県
+  municipality: 足利市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 6月中旬〜下旬
+    window:
+      start: 06-11
+      end: 06-30
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/2034/
+    other_texts:
+    - 6月中旬(毎年6月10〜25日に名草ホタル祭り)
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q374477
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kids.rurubu.jp/article/2034/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F11
+  - url: https://kids.rurubu.jp/article/2030/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-62c3d19ddb
+  scope: place
+  theme: 花
+  name: 小石川後楽園
+  prefecture: 東京都
+  municipality: 文京区
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 2月ごろ
+    window:
+      start: 02-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q212713
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+- id: g-684890478d
+  scope: place
+  theme: 冬鳥
+  name: 大塚池公園
+  prefecture: 茨城県
+  municipality: 水戸市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月中旬〜3月下旬ごろ
+    window:
+      start: 10-11
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/83265/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 100
+    from: 東京
+    qid: Q204249
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 最大300羽ほど
+- id: g-6d6fe7c0df
+  scope: place
+  theme: 花
+  name: 寄ロウバイ園
+  prefecture: 神奈川県
+  municipality: 松田町
+  kinds:
+  - kind: ロウバイ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 横浜
+    qid: Q1202796
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://co-trip.jp/post/604602
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 日本最大級 3000株・2万本。寄ロウバイまつり
+- id: g-7693a95ee4
+  scope: place
+  theme: ホタル
+  name: 下吉田関地区
+  prefecture: 埼玉県
+  municipality: 秩父市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  - kind: ヘイケボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 6月中旬〜7月上旬
+    window:
+      start: 06-11
+      end: 07-10
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/2037/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 東京
+    qid: Q647079
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kids.rurubu.jp/article/2037/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F07
+- id: g-77fbff361e
+  scope: place
+  theme: 冬鳥
+  name: 城沼
+  prefecture: 群馬県
+  municipality: 館林市
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 東京
+    qid: Q858016
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-7899119ffe
+  scope: kind
+  theme: 冬鳥
+  name: キンクロハジロ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: キンクロハジロ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬鳥
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/pondwatching202412_pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/pondwatching202412_pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-7c57300703
+  scope: place
+  theme: 桜
+  name: 富士仏舎利塔平和公園
+  prefecture: 静岡県
+  municipality: 御殿場市
+  kinds:
+  - kind: 桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 例年4月上旬〜4月中旬
+    window:
+      start: 04-01
+      end: 04-20
+    independent_sources: 1
+    shown: false
+    from_url: https://www.mapple.net/region/a0305040202_s-season=spring/spot/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 横浜
+    qid: Q735175
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.mapple.net/region/a0305040202_s-season=spring/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+- id: g-7c80184cd6
+  scope: place
+  theme: ホタル
+  name: 北本自然観察公園
+  prefecture: 埼玉県
+  municipality: 北本市
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q857285
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 同ランキング2位
+- id: g-87225ca5d5
+  scope: place
+  theme: ホタル
+  name: ほたる公園周辺(福生ほたる祭り)
+  prefecture: 東京都
+  municipality: 福生市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 5月下旬〜6月上旬
+    window:
+      start: 05-21
+      end: 06-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.gotokyo.org/jp/spot/ev036/index.html
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q317813
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://www.gotokyo.org/jp/spot/ev036/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F05
+    note: 2026年は5/31ごろ
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 同ランキング3位(ほたる公園)
+- id: g-89169f4d0a
+  scope: place
+  theme: 桜
+  name: 代々木公園
+  prefecture: 東京都
+  municipality: 渋谷区
+  kinds:
+  - kind: 河津桜
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q193638
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/tokyo-9-places-to-enjoy-winter-cherry-blossoms
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+    note: 中央広場の河津桜
+- id: g-8e285a1de5
+  scope: kind
+  theme: 冬鳥
+  name: ホシハジロ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11月〜3月(手賀沼)
+    window:
+      start: 11-01
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.abiko.chiba.jp/bird-mus/info2/tegatan/tegatan2017_.files/tega201901.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.city.abiko.chiba.jp/bird-mus/info2/tegatan/tegatan2017_.files/tega201901.pdf
+    host: city.abiko.chiba.jp
+    publisher: abiko.chiba.jp
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+- id: g-8fd53c31c1
+  scope: place
+  theme: 冬鳥
+  name: 白鳥の里(北浦)
+  prefecture: 茨城県
+  municipality: 潮来市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  season:
+    text: ピークは例年1月中旬〜下旬頃
+    window:
+      start: 01-11
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/83265/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q840598
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-91b0201d5b
+  scope: place
+  theme: ホタル
+  name: 湯河原惣湯 万葉公園
+  prefecture: 神奈川県
+  municipality: 湯河原町
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 横浜
+    qid: Q532346
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-94cd25d0c1
+  scope: place
+  theme: 野鳥
+  name: 東京湾の干潟(お台場海浜公園・森ヶ崎の鼻)
+  prefecture: 東京都
+  municipality: 大田区
+  kinds:
+  - kind: シギ
+    independent_sources: 1
+    shown: false
+  - kind: スズガモ
+    independent_sources: 1
+    shown: false
+  - kind: チドリ
+    independent_sources: 1
+    shown: false
+  - kind: ミサゴ
+    independent_sources: 1
+    shown: false
+  - kind: ユリカモメ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 秋〜冬
+    window:
+      start: 09-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_160915
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q217234
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_160915
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B10
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-r4_10_bird
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B10
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B10
+- id: g-96244229fe
+  scope: place
+  theme: 花
+  name: 靖國神社
+  prefecture: 東京都
+  municipality: 千代田区
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月中旬〜3月初旬
+    window:
+      start: 01-11
+      end: 03-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.nta.co.jp/media/tripa/articles/UcoPh
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q214051
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.nta.co.jp/media/tripa/articles/UcoPh
+    host: nta.co.jp
+    publisher: 日本旅行
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H03
+- id: g-9b73fdb471
+  scope: kind
+  theme: 冬鳥
+  name: ジョウビタキ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ジョウビタキ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月下旬ごろから渡来
+    window:
+      start: 10-21
+      end: 10-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.pref.mie.lg.jp/ONORIN/HP/000125341-04-01.htm
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - A
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.pref.mie.lg.jp/ONORIN/HP/000125341-04-01.htm
+    host: pref.mie.lg.jp
+    publisher: mie.lg.jp
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T02
+    note: 市街地・公園でも見られる
+- id: g-9c66c0f305
+  scope: kind
+  theme: 冬鳥
+  name: 漂鳥(ルリビタキ・アオジなど)
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: アオジ
+    independent_sources: 1
+    shown: false
+  - kind: アカハラ
+    independent_sources: 1
+    shown: false
+  - kind: イカル
+    independent_sources: 1
+    shown: false
+  - kind: シメ
+    independent_sources: 1
+    shown: false
+  - kind: トラツグミ
+    independent_sources: 1
+    shown: false
+  - kind: ルリビタキ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11月に国内の北や山地から来る
+    window:
+      start: 11-01
+      end: 11-30
+    independent_sources: 1
+    shown: false
+    from_url: https://www.unesco.or.jp/manabiya/doc/kansatsukai/20260124-kansatsukai.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.unesco.or.jp/manabiya/doc/kansatsukai/20260124-kansatsukai.pdf
+    host: unesco.or.jp
+    publisher: unesco.or.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T06
+- id: g-9f1fc68552
+  scope: place
+  theme: ホタル
+  name: 吉田ほたるの郷
+  prefecture: 埼玉県
+  municipality: 秩父市
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 東京
+    qid: Q647079
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 関東のランキング8位
+- id: g-a1eb5cc67f
+  scope: place
+  theme: 桜
+  name: 富士桜自然墓地公園
+  prefecture: 静岡県
+  municipality: 富士宮市
+  kinds:
+  - kind: ソメイヨシノ
+    independent_sources: 1
+    shown: false
+  - kind: 桜
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://weathernews.jp/sakura/area/shizuoka/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+  - url: https://www.mapple.net/region/a0305040000_g04030200/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+    note: 約8000本
+- id: g-a760949611
+  scope: place
+  theme: 花
+  name: 東京農工大学
+  prefecture: 東京都
+  municipality: 府中市
+  kinds:
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - D
+  exists_confirmed: false
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q208818
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件(個人の発信だけ)
+    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
+  sources:
+  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
+    host: ne.jp
+    publisher: ne.jp
+    class: D
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+- id: g-a9faf188ca
+  scope: place
+  theme: 野鳥
+  name: 新宿御苑
+  prefecture: 東京都
+  municipality: 新宿区
+  kinds:
+  - kind: オシドリ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q179645
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.bepal.net/archives/608241
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 日本庭園の池に毎年オシドリ
+- id: g-adae064599
+  scope: place
+  theme: 冬鳥
+  name: 古徳沼
+  prefecture: 茨城県
+  municipality: 那珂市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 110
+    from: 東京
+    qid: Q633647
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 合わせて250羽を超える年も
+  - url: https://tabi-mag.jp/ib0274/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 1966年にオオハクチョウが初飛来。瓜連駅から徒歩30分
+- id: g-aea29f6084
+  scope: place
+  theme: ホタル
+  name: 瀬戸屋敷
+  prefecture: 神奈川県
+  municipality: 開成町
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - A
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 横浜
+    qid: Q1202613
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kanagawa-kankou.or.jp/features/hotaru
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 夜の古民家のライトアップでホタルを見る催し
+- id: g-b10d167fba
+  scope: place
+  theme: ホタル
+  name: 千葉市ほたる生態園
+  prefecture: 千葉県
+  municipality: 千葉市
+  kinds: []
+  season:
+    text: 毎年5月末から6月初旬
+    window:
+      start: 05-21
+      end: 06-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.chiba.jp/school/es/108/gakkoseikatsu/documents/5hotaru-seitaien.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q170616
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.city.chiba.jp/school/es/108/gakkoseikatsu/documents/5hotaru-seitaien.pdf
+    host: city.chiba.jp
+    publisher: city.chiba.jp
+    class: B
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 泉谷公園の隣
+- id: g-b2d23fc938
+  scope: place
+  theme: ホタル
+  name: 東武動物公園「ほたリウム」
+  prefecture: 埼玉県
+  municipality: 宮代町
+  kinds:
+  - kind: ヘイケボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年(室内、12〜14時)
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/2037/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q155317
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://kids.rurubu.jp/article/2037/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F14
+    note: 飼育下で繁殖。室内で見られる
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-b8f6d230db
+  scope: place
+  theme: 花
+  name: 岩本山公園
+  prefecture: 静岡県
+  municipality: 富士市
+  kinds:
+  - kind: 桜
+    independent_sources: 1
+    shown: false
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 梅は1月上旬から咲き始め2月下旬〜3月下旬頃まで
+    window:
+      start: 01-01
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
+    host: pref.shizuoka.jp
+    publisher: pref.shizuoka.jp
+    class: B
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+    note: 桜は3月下旬〜4月上旬
+- id: g-c19a04371d
+  scope: place
+  theme: 桜
+  name: 県立三ツ池公園
+  prefecture: 神奈川県
+  municipality: 横浜市
+  kinds:
+  - kind: 寒緋桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 2月中旬〜4月中旬
+    window:
+      start: 02-11
+      end: 04-20
+    independent_sources: 1
+    shown: false
+    from_url: https://www.walkerplus.com/article/1068351/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 横浜
+    qid: Q38283
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.walkerplus.com/article/1068351/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S07
+    note: カンヒザクラ
+- id: g-c225832437
+  scope: place
+  theme: 桜
+  name: 新宿御苑
+  prefecture: 東京都
+  municipality: 新宿区
+  kinds:
+  - kind: 寒桜
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q179645
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.timeout.jp/tokyo/ja/news/enjoying-early-blooming-cherry-blossoms-at-shinjuku-gyoen-021623
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+    note: 早咲きの桜(2023年の記事)
+- id: g-c95757adad
+  scope: place
+  theme: 花
+  name: 富士花鳥園
+  prefecture: 静岡県
+  municipality: 富士宮市
+  kinds:
+  - kind: フクシア
+    independent_sources: 1
+    shown: false
+  - kind: ベゴニア
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://www.mapple.net/region/a0305000000_g04030200_s-season=spring/spot/
+    other_texts:
+    - 通年(温室)
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.mapple.net/region/a0305000000_g04030200_s-season=spring/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+  - url: https://www.mapple.net/region/a0305040000_g04030200/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+- id: g-cbb7f0a5e5
+  scope: place
+  theme: 花
+  name: 吉野梅郷
+  prefecture: 東京都
+  municipality: 青梅市
+  kinds:
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 東京
+    qid: Q237683
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://media.jreast.co.jp/articles/2723
+    host: media.jreast.co.jp
+    publisher: JR東日本
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 2026年は2/21〜3/22に吉野梅郷梅まつり
+- id: g-ceb669f799
+  scope: kind
+  theme: 桜
+  name: 河津桜
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: 河津桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月下旬からつぼみがほころび、3月上旬まで
+    window:
+      start: 01-21
+      end: 03-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.walkerplus.com/article/1329757/
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.walkerplus.com/article/1329757/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-kawazu
+    note: 寒緋桜系と早咲きの大島桜系の自然交配種と考えられる
+- id: g-d1c208996f
+  scope: place
+  theme: ホタル
+  name: ロマンの森共和国
+  prefecture: 千葉県
+  municipality: 君津市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  - kind: ヘイケボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 5月下旬〜7月下旬
+    window:
+      start: 05-21
+      end: 07-31
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/2039/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 横浜
+    qid: Q637928
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://kids.rurubu.jp/article/2039/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F13
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-d2c2c70e7c
+  scope: place
+  theme: ホタル
+  name: 成木川・養沢川
+  prefecture: 東京都
+  municipality: 青梅市
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - A
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 東京
+    qid: Q237683
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.gotokyo.org/jp/destinations/waterfront/seeing-fireflies-at-tokyo.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 6月に「蛍をみる夕べ」
+- id: g-d51900a1bc
+  scope: kind
+  theme: 冬鳥
+  name: シロハラ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: シロハラ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬に渡来
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://kotobank.jp/word/%E3%83%84%E3%82%B0%E3%83%9F-3159481
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://kotobank.jp/word/%E3%83%84%E3%82%B0%E3%83%9F-3159481
+    host: kotobank.jp
+    publisher: コトバンク
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T03
+- id: g-dabf5033ce
+  scope: place
+  theme: ホタル
+  name: 埼玉県自然学習センター
+  prefecture: 埼玉県
+  municipality: 北本市
+  kinds:
+  - kind: ヘイケボタル
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q857285
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.pref.saitama.lg.jp/documents/63660/9999910017.pdf
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: B
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 入園無料。室内で解説ののち野外で観察
+- id: g-dfc98276a6
+  scope: place
+  theme: ホタル
+  name: 足立区生物園
+  prefecture: 東京都
+  municipality: 足立区
+  kinds: []
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - A
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q213464
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.gotokyo.org/jp/destinations/waterfront/seeing-fireflies-at-tokyo.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 初夏に屋外観察会「ホタルの夕べ」(2026年は5/28〜31)
+- id: g-e56a77429e
+  scope: place
+  theme: ホタル
+  name: 生田緑地
+  prefecture: 神奈川県
+  municipality: 川崎市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 1
+    shown: false
+  season:
+    text: 6月(年により前後)
+    window:
+      start: 06-01
+      end: 06-30
+    independent_sources: 1
+    shown: false
+    from_url: https://www.kanaloco.jp/news/life/entry-31252.html
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q164234
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.kanaloco.jp/news/life/entry-31252.html
+    host: kanaloco.jp
+    publisher: 神奈川新聞
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F10
+    note: ホタルの里・飛森谷戸
+  - url: https://www.kanaloco.jp/news/life/entry-77016.html
+    host: kanaloco.jp
+    publisher: 神奈川新聞
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F10
+    note: ホタルの里・飛森谷戸
+  - url: https://www.kanaloco.jp/taxonomy/term/2860
+    host: kanaloco.jp
+    publisher: 神奈川新聞
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: ホタルが年々増えている(神奈川新聞)
+- id: g-ebe9152aeb
+  scope: place
+  theme: 桜
+  name: 龍巌淵
+  prefecture: 静岡県
+  municipality: 富士市
+  kinds:
+  - kind: 桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 3月下旬〜4月上旬
+    window:
+      start: 03-21
+      end: 04-10
+    independent_sources: 1
+    shown: false
+    from_url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
+    host: pref.shizuoka.jp
+    publisher: pref.shizuoka.jp
+    class: B
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+- id: g-f69a06a4b5
+  scope: place
+  theme: 桜
+  name: 北浅羽桜堤公園
+  prefecture: 埼玉県
+  municipality: 坂戸市
+  kinds:
+  - kind: 安行寒桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 3月上旬〜中旬
+    window:
+      start: 03-01
+      end: 03-20
+    independent_sources: 2
+    shown: true
+    from_url: https://co-trip.jp/article/643572
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 東京
+    qid: Q850344
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 2 件
+  sources:
+  - url: https://co-trip.jp/article/643572
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S10
+    note: ソメイヨシノより1週間〜10日早い
+  - url: https://www.walkerplus.com/article/1182619/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S10
+    note: ソメイヨシノより1週間〜10日早い
+- id: g-f863a8d037
+  scope: kind
+  theme: 冬鳥
+  name: タシギ・コガモ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: タシギ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.ichikawa.lg.jp/common/pr/file/0000502402.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://www.city.ichikawa.lg.jp/common/pr/file/0000502402.pdf
+    host: city.ichikawa.lg.jp
+    publisher: ichikawa.lg.jp
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T10
+- id: g-fb7756b6b5
+  scope: place
+  theme: 野鳥
+  name: 水元公園(水元かわせみの里)
+  prefecture: 東京都
+  municipality: 葛飾区
+  kinds:
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q232628
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://eco-plan.jp/pdf/eigyou_mizumoto.pdf
+    host: eco-plan.jp
+    publisher: eco-plan.jp
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 自然解説員が常駐。付近のカワセミがほぼ毎日観察できる

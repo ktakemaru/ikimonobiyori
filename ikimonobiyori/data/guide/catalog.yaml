@@ -1,0 +1,3844 @@
+# build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)
+schema: ikimono-guide-catalog/1
+entries:
+- id: g-01fcdf72d4
+  scope: place
+  theme: 花
+  name: 池上梅園
+  prefecture: 東京都
+  municipality: 大田区
+  kinds:
+  - kind: 梅
+    independent_sources: 5
+    shown: true
+  season:
+    text: 2月〜3月(花暦)
+    window:
+      start: 02-01
+      end: 03-31
+    independent_sources: 3
+    shown: true
+    from_url: https://www.city.ota.tokyo.jp/shisetsu/park/ikegamibaien.html
+    other_texts:
+    - 2月中旬〜3月中旬
+    - ピークは2月下旬〜3月上旬
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q217234
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約370本・約30種類
+  - url: https://www.city.ota.tokyo.jp/shisetsu/park/ikegamibaien.html
+    host: city.ota.tokyo.jp
+    publisher: ota.tokyo.jp
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.gltjp.com/ja/directory/item/13943/
+    host: gltjp.com
+    publisher: gltjp.com
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.gotokyo.org/en/spot/539/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.veltra.com/jp/yokka/article/ikegami-spring-flower-plum-park/
+    host: veltra.com
+    publisher: VELTRA
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 約30種。早咲きは1月下旬から
+- id: g-0fd7a72914
+  scope: kind
+  theme: 花
+  name: 梅
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: 梅
+    independent_sources: 2
+    shown: true
+  season:
+    text: 2月上旬〜3月中旬
+    window:
+      start: 02-01
+      end: 03-20
+    independent_sources: 2
+    shown: true
+    from_url: https://www.city.isesaki.lg.jp/material/files/group/54/1-3syousai.pdf
+    other_texts:
+    - 東京都内は2月中旬〜3月ごろ
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://www.city.isesaki.lg.jp/material/files/group/54/1-3syousai.pdf
+    host: city.isesaki.lg.jp
+    publisher: isesaki.lg.jp
+    class: B
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+- id: g-1fdecc5fd5
+  scope: place
+  theme: 野鳥
+  name: 葛西海浜公園
+  prefecture: 東京都
+  municipality: 江戸川区
+  kinds:
+  - kind: スズガモ
+    independent_sources: 3
+    shown: true
+  - kind: カンムリカイツブリ
+    independent_sources: 2
+    shown: true
+  - kind: ヘラサギ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://www.city.edogawa.tokyo.jp/e004/kurashi/chiikicommunity/johokyoku/edogawavoice/scene-2.html
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q214056
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.city.edogawa.tokyo.jp/e004/kurashi/chiikicommunity/johokyoku/edogawavoice/scene-2.html
+    host: city.edogawa.tokyo.jp
+    publisher: edogawa.tokyo.jp
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B03
+    note: ラムサール条約湿地(都内初、2018年10月登録)
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_170227
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B03
+    note: ラムサール条約湿地(都内初、2018年10月登録)
+  - url: https://www.metro.tokyo.lg.jp/information/press/2026/10/2026101616
+    host: metro.tokyo.lg.jp
+    publisher: 東京都
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B03
+    note: ラムサール条約湿地(都内初、2018年10月登録)
+  - url: https://ramsarsite.jp/wp-content/uploads/★葛西海浜公園に行ってみよう.pdf
+    host: ramsarsite.jp
+    publisher: ramsarsite.jp
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 東なぎさは普段は立ち入り禁止
+  - url: https://www.city.edogawa.tokyo.jp/documents/10974/ri-furetto.pdf
+    host: city.edogawa.tokyo.jp
+    publisher: edogawa.tokyo.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+- id: g-28c7d2d0ec
+  scope: place
+  theme: ホタル
+  name: 秩父ミューズパーク
+  prefecture: 埼玉県
+  municipality: 秩父市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 2
+    shown: true
+  season:
+    text: 6月下旬〜7月上旬
+    window:
+      start: 06-21
+      end: 07-10
+    independent_sources: 2
+    shown: true
+    from_url: https://allabout.co.jp/gm/gc/463681/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 東京
+    qid: Q647079
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://allabout.co.jp/gm/gc/463681/
+    host: allabout.co.jp
+    publisher: All About
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F08
+  - url: https://kids.rurubu.jp/article/2037/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F08
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-313288ecab
+  scope: place
+  theme: 桜
+  name: 城峯公園
+  prefecture: 埼玉県
+  municipality: 神川町
+  kinds:
+  - kind: 冬桜
+    independent_sources: 4
+    shown: true
+  - kind: 十月桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 10月下旬〜12月上旬
+    window:
+      start: 10-21
+      end: 12-10
+    independent_sources: 3
+    shown: true
+    from_url: https://www.pref.saitama.lg.jp/b0111/photographs/huyuzakurar7.html
+    other_texts:
+    - 10月中旬〜12月上旬
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q1346757
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/tag/%e5%86%ac%e6%a1%9c/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S01
+    note: 冬桜 約600本。標高約500m。毎年10月の最終日曜日に冬桜まつり
+  - url: https://www.pref.saitama.lg.jp/b0111/photographs/huyuzakurar7.html
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S01
+    note: 冬桜 約600本。標高約500m。毎年10月の最終日曜日に冬桜まつり
+  - url: https://sp.jorudan.co.jp/hanami/spot_97.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://www.jeepe.jp/ja/articles/jomine-park-2644
+    host: jeepe.jp
+    publisher: jeepe.jp
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://www.pref.saitama.lg.jp/b0111/tiikimeguri/fuyuzakura.html
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: A
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+- id: g-318dac63cd
+  scope: place
+  theme: 花
+  name: 長瀞宝登山臘梅園
+  prefecture: 埼玉県
+  municipality: 長瀞町
+  kinds:
+  - kind: ロウバイ
+    independent_sources: 3
+    shown: true
+  season:
+    text: 1月中旬〜2月下旬ごろ
+    window:
+      start: 01-11
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://zaikei.co.jp/releases/3272031/
+    other_texts:
+    - 1月下旬〜2月下旬(2026年)
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q1345299
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://newscast.jp/news/6082694
+    host: newscast.jp
+    publisher: newscast.jp
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    copies_of: https://zaikei.co.jp/releases/3272031/
+  - url: https://zaikei.co.jp/releases/3272031/
+    host: zaikei.co.jp
+    publisher: zaikei.co.jp
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 山頂一帯に約3,000本。宝登山ロープウェイ
+  - url: https://sp.jorudan.co.jp/hanami/news/jrd_260128_1.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://yamap.com/activities/29863084/article
+    host: yamap.com
+    publisher: YAMAP
+    class: D
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  access:
+  - ropeway
+- id: g-34f9b908c4
+  scope: place
+  theme: 花
+  name: 向島百花園
+  prefecture: 東京都
+  municipality: 墨田区
+  kinds:
+  - kind: 梅
+    independent_sources: 4
+    shown: true
+  season:
+    text: 2〜3月
+    window:
+      start: 02-01
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q235135
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約20種類
+  - url: https://rurubu.jp/andmore/spot/20004401
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.metro.tokyo.lg.jp/information/press/2025/12/2025121008
+    host: metro.tokyo.lg.jp
+    publisher: 東京都
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 20種類以上・約70本。梅まつり(2026年は2/7〜3/1)。東向島駅から徒歩8分
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/向島百花園-梅まつり
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-3667c07510
+  scope: kind
+  theme: 冬鳥
+  name: シギ・チドリ類
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: シギ
+    independent_sources: 2
+    shown: true
+  - kind: チドリ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 春と秋の渡り(秋は9月ごろ)
+    window:
+      start: 09-01
+      end: 09-30
+    independent_sources: 2
+    shown: true
+    from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_160915
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_160915
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T07
+    note: 旅鳥
+  - url: https://www.pref.kagoshima.jp/bc05/hakubutsukan/iimono/documents/87361_20211031164515-1.pdf
+    host: pref.kagoshima.jp
+    publisher: kagoshima.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T07
+    note: 旅鳥
+- id: g-3ca63141f5
+  scope: place
+  theme: 花
+  name: 高尾梅郷
+  prefecture: 東京都
+  municipality: 八王子市
+  kinds:
+  - kind: 梅
+    independent_sources: 4
+    shown: true
+  season:
+    text: 例年2月中旬〜3月中旬
+    window:
+      start: 02-11
+      end: 03-20
+    independent_sources: 2
+    shown: true
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 横浜
+    qid: Q208863
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約1万本
+  - url: https://co-trip.jp/article/230907/
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 約4.5kmにおよそ1万本。高尾駅から徒歩約15分
+  - url: https://rurubu.jp/andmore/spot/20003679
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.gltjp.com/ja/directory/item/14110/
+    host: gltjp.com
+    publisher: gltjp.com
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-406f1a6a6d
+  scope: place
+  theme: 桜
+  name: 抱湖園
+  prefecture: 千葉県
+  municipality: 南房総市
+  kinds:
+  - kind: 元朝桜
+    independent_sources: 4
+    shown: true
+  - kind: 寒桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 例年1月下旬〜2月末頃
+    window:
+      start: 01-21
+      end: 02-29
+    independent_sources: 3
+    shown: true
+    from_url: https://maruchiba.jp/spot/detail_10412.html
+    other_texts:
+    - 1月下旬〜2月末
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 横浜
+    qid: Q873521
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://sp.jorudan.co.jp/hanami/spot_695.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S03
+    note: 元朝桜(寒桜)約60本
+  - url: https://tabi-mag.jp/ch0235/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S03
+    note: 元朝桜(寒桜)約60本
+  - url: https://tabi-mag.jp/ganchozakura/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S03
+    note: 元朝桜(寒桜)約60本
+  - url: https://maruchiba.jp/spot/detail_10412.html
+    host: maruchiba.jp
+    publisher: 千葉県観光物産協会
+    class: A
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 和田浦駅から徒歩約25分
+  - url: https://matcha-jp.com/jp/23738
+    host: matcha-jp.com
+    publisher: MATCHA
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+- id: g-46af45bc29
+  scope: place
+  theme: ホタル
+  name: 市川市動植物園 大町公園(自然観察園)
+  prefecture: 千葉県
+  municipality: 市川市
+  kinds:
+  - kind: ヘイケボタル
+    independent_sources: 2
+    shown: true
+  season:
+    text: 7月の観賞会(2026年は7/11〜26)
+    window:
+      start: 07-11
+      end: 07-31
+    independent_sources: 1
+    shown: false
+    from_url: https://weathernews.jp/hotaru/spot/4505/
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q209785
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: ウェザーニュースの関東のホタルの人気ランキング1位
+  - url: https://keiyobank.co.jp/ir/csr/information/pdf/miryo36.pdf
+    host: keiyobank.co.jp
+    publisher: keiyobank.co.jp
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://iko-yo.net/events/502809
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://weathernews.jp/hotaru/spot/4505/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 野生のヘイケボタル。大町駅から徒歩約10分
+  - url: https://www.city.ichikawa.lg.jp/common/new01/file/0000461577.pdf
+    host: city.ichikawa.lg.jp
+    publisher: ichikawa.lg.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-4a6dca3e7f
+  scope: place
+  theme: 紅葉
+  name: 新宿御苑
+  prefecture: 東京都
+  municipality: 新宿区
+  kinds:
+  - kind: イチョウ
+    independent_sources: 1
+    shown: false
+  - kind: カエデ
+    independent_sources: 1
+    shown: false
+  - kind: プラタナス
+    independent_sources: 1
+    shown: false
+  - kind: メタセコイア
+    independent_sources: 1
+    shown: false
+  season:
+    text: 例年11月下旬〜12月上旬
+    window:
+      start: 11-21
+      end: 12-10
+    independent_sources: 2
+    shown: true
+    from_url: https://koyo.walkerplus.com/detail/ar0313e392494/data.html
+    other_texts:
+    - 例年11月下旬〜12月中旬
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q179645
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://co-trip.jp/post/316376
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://koyo.walkerplus.com/detail/ar0313e392494/data.html
+    host: koyo.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://sp.jorudan.co.jp/leaf/spot_J0002.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://weathernews.jp/koyo/spot/24435/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+- id: g-52c3ab96e5
+  scope: place
+  theme: 桜
+  name: 三浦海岸の河津桜
+  prefecture: 神奈川県
+  municipality: 三浦市
+  kinds:
+  - kind: 河津桜
+    independent_sources: 4
+    shown: true
+  season:
+    text: 2月上旬に咲き始め、2月中旬〜下旬が見頃
+    window:
+      start: 02-11
+      end: 02-29
+    independent_sources: 4
+    shown: true
+    from_url: https://matcha-jp.com/jp/23700
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 横浜
+    qid: Q823886
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://banzokubiology.com/?p=20253
+    host: banzokubiology.com
+    publisher: banzokubiology.com
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S06
+    note: 三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花
+  - url: https://matcha-jp.com/jp/23700
+    host: matcha-jp.com
+    publisher: MATCHA
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S06
+    note: 三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花
+  - url: https://sp.jorudan.co.jp/hanami/miura-sakura/
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S06
+    note: 三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花
+  - url: https://www.walkerplus.com/article/1328182/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S06
+    note: 三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花
+  access:
+  - walk_from_station
+- id: g-5da79dd6d3
+  scope: place
+  theme: ホタル
+  name: 熊谷市江南地域
+  prefecture: 埼玉県
+  municipality: 熊谷市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 2
+    shown: true
+  season:
+    text: 5月下旬〜6月中旬
+    window:
+      start: 05-21
+      end: 06-20
+    independent_sources: 2
+    shown: true
+    from_url: https://www.city.kumagaya.lg.jp/kanko/matsuri/konanhotarumatsuri.files/15hotaru.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 東京
+    qid: Q41106
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://kids.rurubu.jp/article/2037/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F06
+    note: 自然発生
+  - url: https://www.city.kumagaya.lg.jp/kanko/matsuri/konanhotarumatsuri.files/15hotaru.pdf
+    host: city.kumagaya.lg.jp
+    publisher: kumagaya.lg.jp
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F06
+    note: 自然発生
+  - url: https://www.pref.saitama.lg.jp/documents/63660/9999910017.pdf
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: B
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 千代地区。NPOによる保護活動
+- id: g-64d2858e99
+  scope: place
+  theme: 花
+  name: 湯島天満宮
+  prefecture: 東京都
+  municipality: 文京区
+  kinds:
+  - kind: 梅
+    independent_sources: 5
+    shown: true
+  season:
+    text: 2月中旬〜3月上旬
+    window:
+      start: 02-11
+      end: 03-10
+    independent_sources: 3
+    shown: true
+    from_url: https://www.gotokyo.org/jp/spot/ev149/index.html
+    other_texts:
+    - 2月上旬〜3月上旬
+    - 2月中旬〜3月中旬
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q212713
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.enjoytokyo.jp/article/110339/
+    host: enjoytokyo.jp
+    publisher: レッツエンジョイ東京
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+    note: 約20種・約300本
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+  - url: https://matcha-jp.com/jp/23606
+    host: matcha-jp.com
+    publisher: MATCHA
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.gotokyo.org/jp/spot/ev149/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 約300本。白加賀が多い。湯島駅から徒歩2〜3分
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/bunkyo-ume-matsuri
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-65354893b4
+  scope: place
+  theme: 花
+  name: 北の丸公園
+  prefecture: 東京都
+  municipality: 千代田区
+  kinds:
+  - kind: 梅
+    independent_sources: 2
+    shown: true
+  - kind: サザンカ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月下旬〜2月中旬
+    window:
+      start: 01-21
+      end: 02-20
+    independent_sources: 2
+    shown: true
+    from_url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q214051
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H02
+  - url: https://www.nta.co.jp/media/tripa/articles/UcoPh
+    host: nta.co.jp
+    publisher: 日本旅行
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: H02
+  - url: https://www.env.go.jp/garden/kokyogaien/news/2014/11/303.html
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+    note: 2014年11月の記録
+- id: g-6550e587c1
+  scope: place
+  theme: 野鳥
+  name: 東京港野鳥公園
+  prefecture: 東京都
+  municipality: 大田区
+  kinds:
+  - kind: カモ
+    independent_sources: 6
+    shown: true
+  - kind: シギ
+    independent_sources: 6
+    shown: true
+  - kind: チドリ
+    independent_sources: 6
+    shown: true
+  - kind: 猛禽類
+    independent_sources: 6
+    shown: true
+  season:
+    text: 通年(秋〜春にカモ・シギ)
+    window: year_round
+    independent_sources: 6
+    shown: true
+    from_url: https://wbsj-wildbirdpark.blog.jp/
+    other_texts: []
+  tier: curated
+  independent_sources: 6
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q217234
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://rurubu.jp/andmore/spot/80011687
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  - url: https://summer.walkerplus.com/odekake/detail/ar0313s46239/
+    host: summer.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  - url: https://tabi-mag.jp/tk0135/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  - url: https://wbsj-wildbirdpark.blog.jp/
+    host: wbsj-wildbirdpark.blog.jp
+    publisher: 東京港野鳥公園
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  - url: https://www.gotokyo.org/jp/spot/497/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  - url: https://www.nta.co.jp/media/tripa/articles/cr7Ka
+    host: nta.co.jp
+    publisher: 日本旅行
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B01
+    note: 干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地
+  access:
+  - walk_from_station
+- id: g-66ac72027e
+  scope: place
+  theme: 花
+  name: 山中湖花の都公園
+  prefecture: 山梨県
+  municipality: 山中湖村
+  kinds:
+  - kind: ひまわり
+    independent_sources: 2
+    shown: true
+  - kind: チューリップ
+    independent_sources: 2
+    shown: true
+  - kind: 百日草
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年開園(季節の花畑)
+    window: year_round
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/yamanakako-tulip/
+    other_texts:
+    - 通年開園
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 横浜
+    qid: Q1204394
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://co-trip.jp/post/390113
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://rurubu.jp/andmore/spot/80018374/sakura
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://tabi-mag.jp/fuji-sunflower/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+    note: ひまわりは8月中旬〜下旬に約13万本
+  - url: https://tabi-mag.jp/yamanakako-tulip/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+    note: チューリップは4月下旬〜5月上旬
+  - url: https://www.mapple.net/region/a0305000000_g04030200/spot/
+    host: mapple.net
+    publisher: マップル
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://www.yamanashi-kankou.jp/kankou/internettv/n_1067.html
+    host: yamanashi-kankou.jp
+    publisher: やまなし観光推進機構
+    class: A
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+- id: g-69f6bbe0c4
+  scope: place
+  theme: 紅葉
+  name: 小石川後楽園
+  prefecture: 東京都
+  municipality: 文京区
+  kinds:
+  - kind: イチョウ
+    independent_sources: 1
+    shown: false
+  - kind: イロハモミジ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 例年11月下旬〜12月上旬
+    window:
+      start: 11-21
+      end: 12-10
+    independent_sources: 2
+    shown: true
+    from_url: https://www.nap-camp.com/mag/16120
+    other_texts:
+    - 11月下旬〜12月上旬
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q212713
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://www.nap-camp.com/mag/16120
+    host: nap-camp.com
+    publisher: nap-camp.com
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://www.walkerplus.com/article/1232725/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+- id: g-6b3980ef77
+  scope: place
+  theme: 花
+  name: 神代植物公園
+  prefecture: 東京都
+  municipality: 調布市
+  kinds:
+  - kind: サザンカ
+    independent_sources: 2
+    shown: true
+  - kind: ツバキ
+    independent_sources: 1
+    shown: false
+  - kind: 梅
+    independent_sources: 1
+    shown: false
+  season:
+    text: 2月上旬頃から4月にかけて春の植物(ウメ・ツバキ・サクラ)
+    window:
+      start: 02-01
+      end: 04-30
+    independent_sources: 1
+    shown: false
+    from_url: https://www.metro.tokyo.lg.jp/information/press/2025/01/2025012216
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q210667
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
+    host: ne.jp
+    publisher: ne.jp
+    class: D
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+  - url: https://co-trip.jp/post/551339
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+  - url: https://www.metro.tokyo.lg.jp/information/press/2025/01/2025012216
+    host: metro.tokyo.lg.jp
+    publisher: 東京都
+    class: A
+    read_at: '2026-10-25T16:44:44+09:00'
+    origin: search
+    note: つばき・さざんか園。ツバキの見頃に椿ウィーク
+- id: g-6d78e0fa72
+  scope: kind
+  theme: ホタル
+  name: ヒメボタル
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ヒメボタル
+    independent_sources: 2
+    shown: true
+  season:
+    text: 5月下旬〜7月下旬ごろ
+    window:
+      start: 05-21
+      end: 07-31
+    independent_sources: 2
+    shown: true
+    from_url: https://weathernews.jp/news/202505/270196/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://weathernews.jp/news/202505/270196/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-hime
+    note: 水辺ではなく湿った森。黄色く激しく点滅
+  - url: https://www.pref.iwate.jp/_res/projects/default_project/_page_/001/014/229/himehoraruannai.pdf
+    host: pref.iwate.jp
+    publisher: iwate.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-hime
+    note: 水辺ではなく湿った森。黄色く激しく点滅
+- id: g-6fe61f68dd
+  scope: place
+  theme: 野鳥
+  name: 谷津干潟
+  prefecture: 千葉県
+  municipality: 習志野市
+  kinds:
+  - kind: シギ
+    independent_sources: 2
+    shown: true
+  - kind: チドリ
+    independent_sources: 2
+    shown: true
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: ハマシギ
+    independent_sources: 1
+    shown: false
+  - kind: ユリカモメ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年(冬にカモ・ハマシギ、春と秋にシギ・チドリ)
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://www.env.go.jp/nature/ramsar/conv/ramsarleaflet/25_Yatsu-higata.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q318047
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.env.go.jp/nature/ramsar/conv/ramsarleaflet/25_Yatsu-higata.pdf
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: ラムサール条約湿地。一年に約110種
+  - url: https://www.smtb.jp/about/sustainability/withyou/environment/yatsu
+    host: smtb.jp
+    publisher: smtb.jp
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: 東京湾最奥部の渡り鳥の中継地
+  - url: https://www.wbsj.org/nature/hogo/others/iba/search/sites/kanto/imgs/JP074.pdf
+    host: wbsj.org
+    publisher: wbsj.org
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: 重要野鳥生息地(IBA)の資料
+- id: g-774a95768f
+  scope: place
+  theme: 野鳥
+  name: 手賀沼
+  prefecture: 千葉県
+  municipality: 我孫子市
+  kinds:
+  - kind: アオジ
+    independent_sources: 1
+    shown: false
+  - kind: オナガガモ
+    independent_sources: 1
+    shown: false
+  - kind: カンムリカイツブリ
+    independent_sources: 1
+    shown: false
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: シロハラ
+    independent_sources: 1
+    shown: false
+  - kind: ハジロカイツブリ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  - kind: ミコアイサ
+    independent_sources: 1
+    shown: false
+  - kind: ユリカモメ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬鳥は11月〜3月ごろ
+    window:
+      start: 11-01
+      end: 03-31
+    independent_sources: 2
+    shown: true
+    from_url: https://www.city.abiko.chiba.jp/bird-mus/info2/tegatan/tegatan2017_.files/tega201901.pdf
+    other_texts:
+    - 10月下旬〜2月は冬鳥
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q243859
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/ch0023/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+  - url: https://www.city.abiko.chiba.jp/bird-mus/info2/tegatan/tegatan2006_2016.files/tegatanpanf201601.pdf
+    host: city.abiko.chiba.jp
+    publisher: abiko.chiba.jp
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: 我孫子市鳥の博物館の定例観察会(冬鳥)
+  - url: https://www.city.abiko.chiba.jp/bird-mus/info2/tegatan/tegatan2017_.files/tega201901.pdf
+    host: city.abiko.chiba.jp
+    publisher: abiko.chiba.jp
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+  - url: https://www.minnacamera.com/spots/917
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+- id: g-796edbc8ca
+  scope: place
+  theme: 野鳥
+  name: 皇居周辺(北の丸公園・お濠)
+  prefecture: 東京都
+  municipality: 千代田区
+  kinds:
+  - kind: オオバン
+    independent_sources: 2
+    shown: true
+  - kind: オカヨシガモ
+    independent_sources: 2
+    shown: true
+  - kind: カイツブリ
+    independent_sources: 2
+    shown: true
+  - kind: キンクロハジロ
+    independent_sources: 2
+    shown: true
+  - kind: ジョウビタキ
+    independent_sources: 2
+    shown: true
+  - kind: ハシビロガモ
+    independent_sources: 2
+    shown: true
+  - kind: ミコアイサ
+    independent_sources: 2
+    shown: true
+  - kind: ユリカモメ
+    independent_sources: 2
+    shown: true
+  - kind: ヨシガモ
+    independent_sources: 2
+    shown: true
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 秋〜冬
+    window:
+      start: 09-01
+      end: 02-29
+    independent_sources: 3
+    shown: true
+    from_url: https://www.env.go.jp/garden/kokyogaien/news/2016/05/09
+    other_texts:
+    - 冬
+  tier: curated
+  independent_sources: 4
+  classes:
+  - B
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q214051
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://banzokubiology.com/tokyo-tanntyouchi-train/
+    host: banzokubiology.com
+    publisher: banzokubiology.com
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B07
+  - url: https://www.env.go.jp/garden/kokyogaien/news/2016/05/09
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B07
+  - url: https://www.env.go.jp/garden/kokyogaien/news/2019/12/post_358.html
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 北の丸公園の池でカモなどの水鳥
+  - url: https://www.hosei.ac.jp/application/files/9315/8080/1035/2018_.pdf
+    host: hosei.ac.jp
+    publisher: hosei.ac.jp
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 12のお濠
+  - url: https://www.mlit.go.jp/tagengo-db/common/001556104.pdf
+    host: mlit.go.jp
+    publisher: mlit.go.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+- id: g-7cf3bab45a
+  scope: kind
+  theme: 冬鳥
+  name: ユリカモメ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ユリカモメ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T08
+    note: 都民の鳥
+  - url: https://www.env.go.jp/nature/ramsar/conv/ramsarleaflet/25_Yatsu-higata.pdf
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+- id: g-7eeca0c6ed
+  scope: place
+  theme: 花
+  name: 羽根木公園
+  prefecture: 東京都
+  municipality: 世田谷区
+  kinds:
+  - kind: 梅
+    independent_sources: 4
+    shown: true
+  season:
+    text: 例年2月中旬〜下旬
+    window:
+      start: 02-11
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.enjoytokyo.jp/article/109318/
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q231645
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約650本・約60種類
+  - url: https://www.city.setagaya.lg.jp/02074/4719.html
+    host: city.setagaya.lg.jp
+    publisher: setagaya.lg.jp
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 梅ヶ丘駅から徒歩5分。駐車場なし
+  - url: https://www.enjoytokyo.jp/article/109318/
+    host: enjoytokyo.jp
+    publisher: レッツエンジョイ東京
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 紅白 約650本・約60種類。せたがや梅まつり
+  - url: https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-8734878638
+  scope: place
+  theme: 桜
+  name: 西平畑公園
+  prefecture: 神奈川県
+  municipality: 松田町
+  kinds:
+  - kind: 河津桜
+    independent_sources: 4
+    shown: true
+  season:
+    text: 2月中旬〜3月上旬(年により前後)
+    window:
+      start: 02-11
+      end: 03-10
+    independent_sources: 4
+    shown: true
+    from_url: https://kanagawa-kankou.or.jp/features/report4
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 50
+    from: 横浜
+    qid: Q1202796
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://kanagawa-kankou.or.jp/features/report4
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S05
+    note: 河津桜 約360本。富士山と菜の花
+  - url: https://matcha-jp.com/jp/23689
+    host: matcha-jp.com
+    publisher: MATCHA
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S05
+    note: 河津桜 約360本。富士山と菜の花
+  - url: https://weathernews.jp/news/202601/260096/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S05
+    note: 河津桜 約360本。富士山と菜の花
+  - url: https://www.kanaloco.jp/news/life/article-859712.html
+    host: kanaloco.jp
+    publisher: 神奈川新聞
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S05
+    note: 河津桜 約360本。富士山と菜の花
+- id: g-8909f28d50
+  scope: place
+  theme: 野鳥
+  name: 多摩川河口
+  prefecture: 東京都
+  municipality: 大田区
+  kinds:
+  - kind: シギ
+    independent_sources: 1
+    shown: false
+  - kind: スズガモ
+    independent_sources: 1
+    shown: false
+  - kind: チドリ
+    independent_sources: 1
+    shown: false
+  - kind: ハマシギ
+    independent_sources: 1
+    shown: false
+  - kind: ヒドリガモ
+    independent_sources: 1
+    shown: false
+  - kind: ユリカモメ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬の水鳥観察会(1月)
+    window:
+      start: 01-01
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.ideacon.co.jp/technology/inet/news_file/file/vol16_gec.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q217234
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://nh.kanagawa-museum.jp/assets/icp/pdf/nhr13_009_012kuwahara.pdf
+    host: nh.kanagawa-museum.jp
+    publisher: kanagawa-museum.jp
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 東京湾でも有数の水鳥の渡来地
+  - url: https://www.city.ota.tokyo.jp/kuho/kuho_web/20180321/tokusyu.html
+    host: city.ota.tokyo.jp
+    publisher: ota.tokyo.jp
+    class: A
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 六郷橋〜大師橋の『川と干潟のみち』
+  - url: https://www.ideacon.co.jp/technology/inet/news_file/file/vol16_gec.pdf
+    host: ideacon.co.jp
+    publisher: ideacon.co.jp
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-8aee58f71f
+  scope: place
+  theme: 野鳥
+  name: 石神井公園
+  prefecture: 東京都
+  municipality: 練馬区
+  kinds:
+  - kind: オナガガモ
+    independent_sources: 2
+    shown: true
+  - kind: カモ
+    independent_sources: 2
+    shown: true
+  - kind: カワセミ
+    independent_sources: 2
+    shown: true
+  - kind: キンクロハジロ
+    independent_sources: 2
+    shown: true
+  - kind: シロハラ
+    independent_sources: 2
+    shown: true
+  - kind: ジョウビタキ
+    independent_sources: 2
+    shown: true
+  - kind: ダイサギ
+    independent_sources: 2
+    shown: true
+  - kind: ホシハジロ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 秋〜春
+    window:
+      start: 09-01
+      end: 05-31
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/tk0137/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q232655
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/tk0137/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B04
+    note: 三宝寺池。野鳥誘致林と木道
+  - url: https://yamap.com/activities/10125875/article
+    host: yamap.com
+    publisher: YAMAP
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B04
+    note: 三宝寺池。野鳥誘致林と木道
+  - url: https://www.gltjp.com/ja/directory/item/11040/
+    host: gltjp.com
+    publisher: gltjp.com
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: 季節の花や野鳥を観ることができる
+- id: g-8e39276b90
+  scope: kind
+  theme: 冬鳥
+  name: ツグミ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ツグミ
+    independent_sources: 3
+    shown: true
+  season:
+    text: 10月に飛来。関東の低地では11月中旬〜12月に普通
+    window:
+      start: 10-01
+      end: 12-31
+    independent_sources: 3
+    shown: true
+    from_url: https://global.canon/ja/environment/bird-branch/photo-gallery/tsugumi/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://global.canon/ja/environment/bird-branch/photo-gallery/tsugumi/
+    host: global.canon
+    publisher: global.canon
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T01
+  - url: https://kotobank.jp/word/%E3%83%84%E3%82%B0%E3%83%9F-3159481
+    host: kotobank.jp
+    publisher: コトバンク
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T01
+  - url: https://www.ecosys.or.jp/certification/jhep/img/model/tsugumi.pdf
+    host: ecosys.or.jp
+    publisher: ecosys.or.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T01
+- id: g-905d954297
+  scope: place
+  theme: ホタル
+  name: 夕やけ小やけふれあいの里
+  prefecture: 東京都
+  municipality: 八王子市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 2
+    shown: true
+  season:
+    text: 6月中旬〜下旬
+    window:
+      start: 06-11
+      end: 06-30
+    independent_sources: 2
+    shown: true
+    from_url: https://www.gotokyo.org/jp/see-and-do/nature/waterfront/seeing-fireflies-at-tokyo.html
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 横浜
+    qid: Q208863
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.gotokyo.org/jp/see-and-do/nature/waterfront/seeing-fireflies-at-tokyo.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F04
+    note: ゲンジボタル約2,500匹が生息
+  - url: https://www.veltra.com/jp/yokka/article/2022-tokyo-firefly-5-spots/
+    host: veltra.com
+    publisher: VELTRA
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F04
+    note: ゲンジボタル約2,500匹が生息
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/special-hotaru-spot
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-931267a892
+  scope: place
+  theme: ホタル
+  name: ホテル椿山荘東京
+  prefecture: 東京都
+  municipality: 文京区
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 4
+    shown: true
+  season:
+    text: 5月中旬〜6月下旬
+    window:
+      start: 05-11
+      end: 06-30
+    independent_sources: 3
+    shown: true
+    from_url: https://kids.rurubu.jp/article/2041/
+    other_texts: []
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q212713
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://kids.rurubu.jp/article/2041/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F02
+    note: 庭園・ビオトープ。2026年の「ほたるの夕べ」は6/6〜21
+  - url: https://report.iko-yo.net/articles/1406
+    host: report.iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F02
+    note: 庭園・ビオトープ。2026年の「ほたるの夕べ」は6/6〜21
+  - url: https://www.enjoytokyo.jp/article/110664/
+    host: enjoytokyo.jp
+    publisher: レッツエンジョイ東京
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F02
+    note: 庭園・ビオトープ。2026年の「ほたるの夕べ」は6/6〜21
+  - url: https://www.gotokyo.org/jp/destinations/waterfront/seeing-fireflies-at-tokyo.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://www.timeout.jp/tokyo/ja/things-to-do/special-hotaru-spot
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-9578a150ee
+  scope: place
+  theme: 花
+  name: 谷保天満宮
+  prefecture: 東京都
+  municipality: 国立市
+  kinds:
+  - kind: 梅
+    independent_sources: 4
+    shown: true
+  season:
+    text: 1月中旬ごろから咲き始め、3月にかけて見頃
+    window:
+      start: 01-11
+      end: 03-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/486548
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 横浜
+    qid: Q330007
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/486548
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:32:40+09:00'
+    origin: fetch
+    note: 約350本
+  - url: https://rurubu.jp/andmore/spot/80012632
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+    note: 梅林 約350本。谷保駅から徒歩3分
+  - url: https://tabi-mag.jp/tk0488/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  - url: https://www.fukushihoken.metro.tokyo.lg.jp/walkmap/map/detail/pdf/kunitachi_2022_3.pdf
+    host: fukushihoken.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:33:21+09:00'
+    origin: search
+  access:
+  - walk_from_station
+- id: g-97b5f394da
+  scope: kind
+  theme: 桜
+  name: 寒桜(カンザクラ)
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: 寒桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 1〜2月
+    window:
+      start: 01-01
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/gu0100/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/gu0100/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-kanzakura
+    note: 淡紅色の一重。冬桜とは別の種
+  - url: https://www.walkerplus.com/article/1068351/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-kanzakura
+    note: 淡紅色の一重。冬桜とは別の種
+- id: g-9d8db3cffd
+  scope: place
+  theme: 野鳥
+  name: 葛西臨海公園 鳥類園
+  prefecture: 東京都
+  municipality: 江戸川区
+  kinds: []
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 3
+    shown: true
+    from_url: https://eco-plan.jp/pdf/eigyou_kasai.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 7
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q214056
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://eco-plan.jp/pdf/eigyou_kasai.pdf
+    host: eco-plan.jp
+    publisher: eco-plan.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B02
+    note: 干潟・湿地・淡水池。年間100種超
+  - url: https://rurubu.jp/andmore/spot/80012290
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B02
+    note: 干潟・湿地・淡水池。年間100種超
+  - url: https://www.bepal.net/archives/608241
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B02
+    note: 干潟・湿地・淡水池。年間100種超
+  - url: https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/kasai.html
+    host: city.edogawa.tokyo.jp
+    publisher: edogawa.tokyo.jp
+    class: A
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://www.gltjp.com/zh-hant/directory/item/10209/
+    host: gltjp.com
+    publisher: gltjp.com
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 池が2つと観察舎。四季の水鳥・野鳥
+  - url: https://www.gotokyo.org/jp/destinations/eastern-tokyo/kasai/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/content/000059716.pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 葛西臨海公園駅 西口から徒歩1分
+  access:
+  - walk_from_station
+- id: g-a0ba9c9b0a
+  scope: place
+  theme: 紅葉
+  name: 城峯公園
+  prefecture: 埼玉県
+  municipality: 神川町
+  kinds: []
+  season: null
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q1346757
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://koyo.walkerplus.com/detail/ar0311e154492
+    host: koyo.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://rurubu.jp/andmore/spot/80009140/koyo
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://sp.jorudan.co.jp/leaf/spot_J0061.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+    note: 例年11月は紅葉と冬桜が同時に楽しめる
+  - url: https://weathernews.jp/koyo/spot/24326/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+- id: g-a56cd0a51c
+  scope: kind
+  theme: ホタル
+  name: ヘイケボタル
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ヘイケボタル
+    independent_sources: 3
+    shown: true
+  season:
+    text: 関東では6月中旬〜8月ごろ
+    window:
+      start: 06-11
+      end: 08-31
+    independent_sources: 3
+    shown: true
+    from_url: https://allabout.co.jp/gm/gc/463681/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://allabout.co.jp/gm/gc/463681/
+    host: allabout.co.jp
+    publisher: All About
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-heike
+    note: 小さく光が弱い。水田・池・湿地
+  - url: https://tenki.jp/suppl/usagida/2016/06/13/13151.html
+    host: tenki.jp
+    publisher: tenki.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-heike
+    note: 小さく光が弱い。水田・池・湿地
+  - url: https://weathernews.jp/news/202505/270196/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-heike
+    note: 小さく光が弱い。水田・池・湿地
+- id: g-a75ad6be74
+  scope: place
+  theme: 桜
+  name: 皇居周辺(乾濠・代官町通り・東御苑)
+  prefecture: 東京都
+  municipality: 千代田区
+  kinds:
+  - kind: 大寒桜
+    independent_sources: 2
+    shown: true
+  - kind: 寒緋桜
+    independent_sources: 2
+    shown: true
+  - kind: 椿寒桜
+    independent_sources: 2
+    shown: true
+  - kind: 寒桜
+    independent_sources: 1
+    shown: false
+  season:
+    text: 2月下旬〜3月上旬
+    window:
+      start: 02-21
+      end: 03-10
+    independent_sources: 2
+    shown: true
+    from_url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q214051
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://sp.jorudan.co.jp/hanami/news/jrd_230123_1.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S09
+    note: 椿寒桜は2月、大寒桜は3月上旬
+  - url: https://www.nta.co.jp/media/tripa/articles/UcoPh
+    host: nta.co.jp
+    publisher: 日本旅行
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S09
+    note: 椿寒桜は2月、大寒桜は3月上旬
+  - url: https://www.walkerplus.com/article/1068351/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+- id: g-a8c5f0aafc
+  scope: place
+  theme: 冬鳥
+  name: 菅生沼
+  prefecture: 茨城県
+  municipality: 坂東市
+  kinds:
+  - kind: コハクチョウ
+    independent_sources: 5
+    shown: true
+  - kind: オオハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 例年11月〜2月頃
+    window:
+      start: 11-01
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://iko-yo.net/facilities/41292
+    other_texts:
+    - 毎年10月末頃に飛来し3月初旬まで
+  tier: curated
+  independent_sources: 6
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q583931
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 冬に300羽近いコハクチョウが越冬
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://iko-yo.net/facilities/41292
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.biodic.go.jp/moni1000/findings/newsflash/pdf/anatidae_h27h28.pdf
+    host: biodic.go.jp
+    publisher: biodic.go.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.minnacamera.com/spots/737
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/06_shimin/shimin-dantai/id_1142.html
+    host: pref.ibaraki.jp
+    publisher: pref.ibaraki.jp
+    class: A
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+- id: g-aef3a8eca7
+  scope: kind
+  theme: ホタル
+  name: ゲンジボタル
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 4
+    shown: true
+  season:
+    text: 関東では5月下旬〜6月中旬
+    window:
+      start: 05-21
+      end: 06-20
+    independent_sources: 4
+    shown: true
+    from_url: https://allabout.co.jp/gm/gc/463681/
+    other_texts: []
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://allabout.co.jp/gm/gc/463681/
+    host: allabout.co.jp
+    publisher: All About
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-genji
+    note: 大きく光が強い。水のきれいな川
+  - url: https://tenki.jp/suppl/usagida/2016/06/13/13151.html
+    host: tenki.jp
+    publisher: tenki.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-genji
+    note: 大きく光が強い。水のきれいな川
+  - url: https://weathernews.jp/news/202505/270196/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-genji
+    note: 大きく光が強い。水のきれいな川
+  - url: https://www.pref.miyagi.jp/documents/53315/arikabetikugennzibotaru.pdf
+    host: pref.miyagi.jp
+    publisher: miyagi.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-genji
+    note: 大きく光が強い。水のきれいな川
+- id: g-af868f1743
+  scope: place
+  theme: 紅葉
+  name: 国営昭和記念公園
+  prefecture: 東京都
+  municipality: 立川市
+  kinds:
+  - kind: イチョウ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 例年10月下旬〜11月下旬
+    window:
+      start: 10-21
+      end: 11-30
+    independent_sources: 1
+    shown: false
+    from_url: https://tenki.jp/lite/kouyou/3/16/30110.html
+    other_texts: []
+  tier: curated
+  independent_sources: 5
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 30
+    from: 東京
+    qid: Q269634
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://koyo.walkerplus.com/topics/article/1222701/
+    host: koyo.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+    note: かたらいのイチョウ並木(約100本・約300m)。黄葉・紅葉まつり
+  - url: https://rurubu.jp/andmore/spot/80012348/koyo
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://sp.jorudan.co.jp/leaf/spot_55011.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://tenki.jp/lite/kouyou/3/16/30110.html
+    host: tenki.jp
+    publisher: tenki.jp
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://weathernews.jp/koyo/spot/24417/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+- id: g-bbd23443f8
+  scope: place
+  theme: 野鳥
+  name: 井の頭恩賜公園
+  prefecture: 東京都
+  municipality: 武蔵野市
+  kinds:
+  - kind: カモ
+    independent_sources: 2
+    shown: true
+  - kind: カイツブリ
+    independent_sources: 1
+    shown: false
+  - kind: キンクロハジロ
+    independent_sources: 1
+    shown: false
+  - kind: ヒドリガモ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 3
+    shown: true
+    from_url: https://www.kensetsu.metro.tokyo.lg.jp/content/000047055.pdf
+    other_texts:
+    - 11〜3月はカモ類などの水鳥
+    - 秋から冬にかけて多くの鳥
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q210661
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/content/000047055.pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B05
+    note: 井の頭池。冬の水鳥の観察会。かいぼり隊が水鳥の種類と羽数を調査
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/content/000065924.pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B05
+    note: 井の頭池。冬の水鳥の観察会。かいぼり隊が水鳥の種類と羽数を調査
+  - url: https://oggi.jp/193617
+    host: oggi.jp
+    publisher: oggi.jp
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/pondwatching202412_pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://www.minnacamera.com/spots/811
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+- id: g-c1b2a5ddcf
+  scope: kind
+  theme: 冬鳥
+  name: ハマシギ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: ハマシギ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 冬(越冬)
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 2
+    shown: true
+    from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
+    host: kankyo.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T09
+  - url: https://www.env.go.jp/nature/ramsar/conv/ramsarleaflet/25_Yatsu-higata.pdf
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+- id: g-c225e0395a
+  scope: place
+  theme: 桜
+  name: 河津川沿いの桜並木
+  prefecture: 静岡県
+  municipality: 河津町
+  kinds:
+  - kind: 河津桜
+    independent_sources: 3
+    shown: true
+  season:
+    text: 2月上旬〜3月上旬
+    window:
+      start: 02-01
+      end: 03-10
+    independent_sources: 3
+    shown: true
+    from_url: https://media.jreast.co.jp/articles/549
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 100
+    from: 横浜
+    qid: Q1203861
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://media.jreast.co.jp/articles/549
+    host: media.jreast.co.jp
+    publisher: JR東日本
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S12
+    note: 河津桜 約850本(発祥の地)。河津桜まつり(2026年は2/7〜3/8)
+  - url: https://www.asoview.com/note/4375/
+    host: asoview.com
+    publisher: アソビュー
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S12
+    note: 河津桜 約850本(発祥の地)。河津桜まつり(2026年は2/7〜3/8)
+  - url: https://www.walkerplus.com/article/1329757/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S12
+    note: 河津桜 約850本(発祥の地)。河津桜まつり(2026年は2/7〜3/8)
+- id: g-c35158e21e
+  scope: place
+  theme: 野鳥
+  name: 不忍池
+  prefecture: 東京都
+  municipality: 台東区
+  kinds:
+  - kind: キンクロハジロ
+    independent_sources: 2
+    shown: true
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: カモメ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬は水鳥
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 3
+    shown: true
+    from_url: https://ekitan.com/local-info/leisure/genre-nature/pref-13
+    other_texts:
+    - 冬
+  tier: curated
+  independent_sources: 5
+  classes:
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q232641
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://banzokubiology.com/?p=20455
+    host: banzokubiology.com
+    publisher: banzokubiology.com
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B06
+    note: 上野恩賜公園。上野駅から徒歩約5分
+  - url: https://banzokubiology.com/?p=20459
+    host: banzokubiology.com
+    publisher: banzokubiology.com
+    class: D
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B06
+    note: 上野恩賜公園。上野駅から徒歩約5分
+  - url: https://co-trip.jp/post/342512
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:29:11+09:00'
+    origin: search
+    note: 冬の渡り鳥。蓮池・ボート池・鵜の池
+  - url: https://ekitan.com/local-info/leisure/genre-nature/pref-13
+    host: ekitan.com
+    publisher: ekitan.com
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://rurubu.jp/andmore/spot/80011344
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.minnacamera.com/spots/805
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 鵜の池の周辺。餌やり禁止
+  access:
+  - walk_from_station
+- id: g-c359e1d868
+  scope: place
+  theme: ホタル
+  name: 源氏ぼたるの里
+  prefecture: 千葉県
+  municipality: いすみ市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 3
+    shown: true
+  season:
+    text: 5月下旬〜6月中旬
+    window:
+      start: 05-21
+      end: 06-20
+    independent_sources: 1
+    shown: false
+    from_url: https://allabout.co.jp/gm/gc/463681/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 70
+    from: 横浜
+    qid: Q840834
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://allabout.co.jp/gm/gc/463681/
+    host: allabout.co.jp
+    publisher: All About
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F01
+  - url: https://weathernews.jp/hotaru/area/kanto/ranking.html
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 関東のランキング4位
+  - url: https://weathernews.jp/hotaru/spot/4502/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 捕獲しない
+  - url: https://www.maff.go.jp/kanto/kikaku/attach/pdf/3photo_syuhen4-1.pdf
+    host: maff.go.jp
+    publisher: maff.go.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 山田川周辺。毎年5月下旬にほたる祭り
+- id: g-cab22e5dd6
+  scope: kind
+  theme: 桜
+  name: 冬桜(フユザクラ)
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: 冬桜
+    independent_sources: 2
+    shown: true
+  season:
+    text: 秋〜冬(10月下旬〜12月)に咲き、春にも咲く二度咲き
+    window:
+      start: 10-21
+      end: 12-31
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/gu0100/
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/gu0100/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-fuyuzakura
+    note: 山桜と豆桜の交配種といわれる。花は小さく白〜淡紅色
+  - url: https://www.walkerplus.com/article/1068351/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: K-fuyuzakura
+    note: 山桜と豆桜の交配種といわれる。花は小さく白〜淡紅色
+- id: g-cd57aa9365
+  scope: place
+  theme: 紅葉
+  name: 桜山公園
+  prefecture: 群馬県
+  municipality: 藤岡市
+  kinds: []
+  season:
+    text: 10月下旬〜11月中旬
+    window:
+      start: 10-21
+      end: 11-20
+    independent_sources: 4
+    shown: true
+    from_url: https://rurubu.jp/andmore/spot/80007869/koyo
+    other_texts:
+    - 11月中旬〜11月下旬
+  tier: curated
+  independent_sources: 5
+  classes:
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 90
+    from: 東京
+    qid: Q596486
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://rurubu.jp/andmore/spot/80007869/koyo
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S02-koyo
+    note: 冬桜と同時に楽しめる
+  - url: https://tenki.jp/kouyou/3/13/30672.html
+    host: tenki.jp
+    publisher: tenki.jp
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S02-koyo
+    note: 冬桜と同時に楽しめる
+  - url: https://4travel.jp/travelogue/11430077
+    host: 4travel.jp
+    publisher: フォートラベル
+    class: D
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://koyo.walkerplus.com/detail/ar0310e154484/
+    host: koyo.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+    note: 11月中旬〜下旬は紅葉と冬桜が一緒に楽しめる
+  - url: https://sp.jorudan.co.jp/leaf/spot_J0059.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+- id: g-cd6996cee9
+  scope: place
+  theme: ホタル
+  name: 県立座間谷戸山公園
+  prefecture: 神奈川県
+  municipality: 座間市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 3
+    shown: true
+  season:
+    text: 観賞のピークは6月中旬
+    window:
+      start: 06-11
+      end: 06-20
+    independent_sources: 3
+    shown: true
+    from_url: https://kanagawa-kankou.or.jp/features/hotaru
+    other_texts:
+    - 6月中旬がピーク
+    - ピークは6月中旬(19〜20時)
+  tier: curated
+  independent_sources: 4
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 横浜
+    qid: Q145333
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://kids.rurubu.jp/article/2043
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F09
+    note: 自然発生
+  - url: https://kanagawa-kankou.or.jp/features/hotaru
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://www.city.zama.kanagawa.jp/_res/projects/default_project/_page_/001/003/116/zamap06.pdf
+    host: city.zama.kanagawa.jp
+    publisher: zama.kanagawa.jp
+    class: B
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.pref.kanagawa.jp/docs/u5r/cnt/f550/tabi-055.html
+    host: pref.kanagawa.jp
+    publisher: pref.kanagawa.jp
+    class: A
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 座間駅・相武台前駅から徒歩約15分
+  access:
+  - walk_from_station
+- id: g-d1e2c0b5ad
+  scope: kind
+  theme: 花
+  name: サザンカ
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: サザンカ
+    independent_sources: 3
+    shown: true
+  season:
+    text: 11月から12月
+    window:
+      start: 11-01
+      end: 12-31
+    independent_sources: 3
+    shown: true
+    from_url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/flower20251212-pdf
+    other_texts:
+    - 11月〜12月
+    - 晩秋から初冬
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.kankomie.or.jp/season/article/314
+    host: kankomie.or.jp
+    publisher: kankomie.or.jp
+    class: C
+    read_at: '2026-10-25T16:32:09+09:00'
+    origin: search
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/documents/d/kensetsu/flower20251212-pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://www.maff.go.jp/kanto/chiikinet/kanagawa/kanagawa_flower_report/index_2025.html
+    host: maff.go.jp
+    publisher: maff.go.jp
+    class: B
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+- id: g-d59a24d42a
+  scope: place
+  theme: 花
+  name: 富士芝桜まつり(富士本栖湖リゾート)
+  prefecture: 山梨県
+  municipality: 富士河口湖町
+  kinds:
+  - kind: 芝桜
+    independent_sources: 4
+    shown: true
+  season:
+    text: 例年4月中旬〜5月下旬
+    window:
+      start: 04-11
+      end: 05-31
+    independent_sources: 2
+    shown: true
+    from_url: https://sp.jorudan.co.jp/hanami/spot_1401.html
+    other_texts:
+    - 4月下旬〜5月上旬
+  tier: curated
+  independent_sources: 4
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 横浜
+    qid: Q1004231
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://matcha-jp.com/jp/26901
+    host: matcha-jp.com
+    publisher: MATCHA
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://serai.jp/kajin/1120205
+    host: serai.jp
+    publisher: serai.jp
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+  - url: https://sp.jorudan.co.jp/hanami/spot_1401.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+    note: 約50万株
+  - url: https://www.ozmall.co.jp/garden/article/23119/
+    host: ozmall.co.jp
+    publisher: ozmall.co.jp
+    class: C
+    read_at: '2026-10-25T16:34:05+09:00'
+    origin: search
+- id: g-d82f31f871
+  scope: kind
+  theme: 冬鳥
+  name: カモ類
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: オナガガモ
+    independent_sources: 2
+    shown: true
+  - kind: キンクロハジロ
+    independent_sources: 2
+    shown: true
+  - kind: コガモ
+    independent_sources: 2
+    shown: true
+  - kind: ハシビロガモ
+    independent_sources: 2
+    shown: true
+  - kind: ヒドリガモ
+    independent_sources: 2
+    shown: true
+  - kind: ホシハジロ
+    independent_sources: 2
+    shown: true
+  - kind: マガモ
+    independent_sources: 2
+    shown: true
+  season:
+    text: 秋から冬に飛来し、春に戻る
+    window:
+      start: 09-01
+      end: 05-31
+    independent_sources: 2
+    shown: true
+    from_url: https://www.city.ichikawa.lg.jp/common/pr/file/0000502402.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 2
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://global.honda/jp/philanthropy/hondawoods/forest/library/057/
+    host: global.honda
+    publisher: global.honda
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T04
+  - url: https://www.city.ichikawa.lg.jp/common/pr/file/0000502402.pdf
+    host: city.ichikawa.lg.jp
+    publisher: ichikawa.lg.jp
+    class: B
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: T04
+- id: g-d86e7dd97f
+  scope: place
+  theme: ホタル
+  name: HANA・BIYORI
+  prefecture: 東京都
+  municipality: 稲城市
+  kinds:
+  - kind: ゲンジボタル
+    independent_sources: 4
+    shown: true
+  - kind: ヘイケボタル
+    independent_sources: 3
+    shown: true
+  season:
+    text: 例年5月下旬〜6月下旬(ほたるびより)
+    window:
+      start: 05-21
+      end: 06-30
+    independent_sources: 2
+    shown: true
+    from_url: https://www.gotokyo.org/jp/destinations/waterfront/seeing-fireflies-at-tokyo.html
+    other_texts:
+    - 5月下旬〜6月下旬
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 横浜
+    qid: Q317847
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.enjoytokyo.jp/article/110664/
+    host: enjoytokyo.jp
+    publisher: レッツエンジョイ東京
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F03
+  - url: https://www.gotokyo.org/jp/destinations/waterfront/seeing-fireflies-at-tokyo.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://report.iko-yo.net/articles/16735
+    host: report.iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://www.timeout.jp/tokyo/ja/news/firefly-watching-event-begins-at-hanabiyori-060321
+    host: timeout.jp
+    publisher: Time Out
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+  - url: https://yomiuriland.co.jp/news/wp-content/uploads/2024/04/release_240423.pdf
+    host: yomiuriland.co.jp
+    publisher: よみうりランド
+    class: A
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 6月中旬ごろまではゲンジ、以降はヘイケ
+- id: g-e96ac14d29
+  scope: kind
+  theme: 冬鳥
+  name: ハクチョウ類(関東)
+  prefecture: null
+  municipality: null
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: コハクチョウ
+    independent_sources: 2
+    shown: true
+  season:
+    text: おおむね10月〜3月ごろ
+    window:
+      start: 10-01
+      end: 03-31
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    other_texts:
+    - 11月下旬から3月上旬
+  tier: reference
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: not_applicable
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 茨城・栃木はおもにオオハクチョウ、千葉・群馬・埼玉はコハクチョウ
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-ea53121caf
+  scope: place
+  theme: ホタル
+  name: 月夜野ホタルの里
+  prefecture: 群馬県
+  municipality: みなかみ町
+  kinds:
+  - kind: クロマドボタル
+    independent_sources: 3
+    shown: true
+  - kind: ゲンジボタル
+    independent_sources: 3
+    shown: true
+  - kind: ヘイケボタル
+    independent_sources: 3
+    shown: true
+  season:
+    text: 6月中旬〜7月中旬
+    window:
+      start: 06-11
+      end: 07-20
+    independent_sources: 3
+    shown: true
+    from_url: https://kids.rurubu.jp/article/2036/
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 130
+    from: 東京
+    qid: Q1345518
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://kids.rurubu.jp/article/2036/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F12
+    note: 北関東一の自然発生の数
+  - url: https://media.jreast.co.jp/articles/1425
+    host: media.jreast.co.jp
+    publisher: JR東日本
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F12
+    note: 北関東一の自然発生の数
+  - url: https://weathernews.jp/hotaru/spot/4201/
+    host: weathernews.jp
+    publisher: ウェザーニュース
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: F12
+    note: 北関東一の自然発生の数
+- id: g-ec2d15e8d9
+  scope: place
+  theme: 冬鳥
+  name: 本埜白鳥の郷
+  prefecture: 千葉県
+  municipality: 印西市
+  kinds:
+  - kind: コハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: アメリカコハクチョウ
+    independent_sources: 1
+    shown: false
+  - kind: オオハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月下旬〜3月上旬
+    window:
+      start: 10-21
+      end: 03-10
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    other_texts:
+    - 11月下旬〜3月上旬頃
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q637901
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: 厳冬期のピークに1000羽に達することも
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 毎年1000羽以上
+  - url: https://www.driveplaza.com/sapa/1120/1120046/2/concierge/amp/2021/02/
+    host: driveplaza.com
+    publisher: driveplaza.com
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 車・自転車で近づけない。ペット不可。餌やり禁止
+- id: g-f36e81927d
+  scope: place
+  theme: 紅葉
+  name: 六義園
+  prefecture: 東京都
+  municipality: 文京区
+  kinds:
+  - kind: イチョウ
+    independent_sources: 1
+    shown: false
+  - kind: イロハカエデ
+    independent_sources: 1
+    shown: false
+  - kind: ドウダンツツジ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11月下旬
+    window:
+      start: 11-21
+      end: 11-30
+    independent_sources: 1
+    shown: false
+    from_url: https://www.nap-camp.com/mag/16120
+    other_texts: []
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q212713
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://koyo.walkerplus.com/list/ar0313/
+    host: koyo.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+    note: 東京都の紅葉の人気スポット(3位)。ライトアップ
+  - url: https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+  - url: https://www.nap-camp.com/mag/16120
+    host: nap-camp.com
+    publisher: nap-camp.com
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+    note: イロハカエデ約400本など計約560本
+  - url: https://www.walkerplus.com/article/1232725/
+    host: walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-25T16:34:49+09:00'
+    origin: search
+- id: g-f7874d3806
+  scope: place
+  theme: 野鳥
+  name: 光が丘公園
+  prefecture: 東京都
+  municipality: 練馬区
+  kinds:
+  - kind: オオタカ
+    independent_sources: 2
+    shown: true
+  - kind: アオサギ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://www.bepal.net/archives/608241
+    other_texts: []
+  tier: curated
+  independent_sources: 5
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 東京
+    qid: Q232655
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://www.bepal.net/archives/608241
+    host: bepal.net
+    publisher: BE-PAL
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: B08
+    note: バードサンクチュアリ(観察窓は土日祝のみ)
+  - url: https://fun-japan.jp/jp/articles/11550
+    host: fun-japan.jp
+    publisher: fun-japan.jp
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://www.gotokyo.org/jp/spot/426/index.html
+    host: gotokyo.org
+    publisher: 東京観光財団
+    class: A
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 広さ2.4haの野鳥保護区。観察は土日祝の観察舎から
+  - url: https://www.kensetsu.metro.tokyo.lg.jp/content/000063167.pdf
+    host: kensetsu.metro.tokyo.lg.jp
+    publisher: 東京都
+    class: B
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+  - url: https://www.minnacamera.com/spots/865
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+- id: g-fd369d77cf
+  scope: place
+  theme: 桜
+  name: 桜山公園
+  prefecture: 群馬県
+  municipality: 藤岡市
+  kinds:
+  - kind: 冬桜
+    independent_sources: 6
+    shown: true
+  season:
+    text: 11月中旬〜12月中旬
+    window:
+      start: 11-11
+      end: 12-20
+    independent_sources: 4
+    shown: true
+    from_url: https://rurubu.jp/andmore/spot/80007869/sakura
+    other_texts: []
+  tier: curated
+  independent_sources: 6
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 90
+    from: 東京
+    qid: Q596486
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://rurubu.jp/andmore/spot/80007869/sakura
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S02
+    note: 冬桜 約7000本(国の名勝・天然記念物)。紅葉と同時に楽しめる
+  - url: https://tabi-mag.jp/gu0100/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S02
+    note: 冬桜 約7000本(国の名勝・天然記念物)。紅葉と同時に楽しめる
+  - url: https://www.jalan.net/news/article/491571/3
+    host: jalan.net
+    publisher: じゃらん
+    class: C
+    read_at: '2026-10-25T16:26:45+09:00'
+    origin: seed
+    seed_id: S02
+    note: 冬桜 約7000本(国の名勝・天然記念物)。紅葉と同時に楽しめる
+  - url: https://allabout.co.jp/gm/gc/19218/
+    host: allabout.co.jp
+    publisher: All About
+    class: C
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+    note: 冬桜 約7000本。国の名勝・天然記念物
+  - url: https://www.city.fujioka.gunma.jp/material/files/group/1/kouhou_R040501-04-05.pdf
+    host: city.fujioka.gunma.jp
+    publisher: fujioka.gunma.jp
+    class: B
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search
+  - url: https://www.visit-gunma.jp/spots/sakurayama-park-winter-cherry-blossoms/
+    host: visit-gunma.jp
+    publisher: 群馬県観光物産国際協会
+    class: A
+    read_at: '2026-10-25T16:31:23+09:00'
+    origin: search

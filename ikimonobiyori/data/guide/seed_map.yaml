@@ -1,0 +1,80 @@
+# 付録A(docs/seeds/stage23-seeds.md)の行 → 候補の項目(guide import-seed が読む)。段階23 フェーズ3 の 3。
+# 表の「所在」「特徴・種類」「例年の時期」を、Claude Code が項目の形に直した(言い換えはしない。数字は表のまま)。区分・発行元・独立の数・段階はコードが計算する。
+# 季節の言葉だけの時期(「冬」「秋〜春」)は、気象庁の季節の区分(春 3〜5月・夏 6〜8月・秋 9〜11月・冬 12〜2月)で月に直した(D-10)。
+# urls: 行の URL のうち一部だけを使うとき(1 つの行に 2 つのテーマが入っているとき)。
+schema: ikimono-guide-seed-map/1
+rows:
+  # ---- A-1 野鳥(都内) ----
+  B01: {theme: 野鳥, name: 東京港野鳥公園, prefecture: 東京都, municipality: 大田区, kinds: [シギ, チドリ, カモ, 猛禽類], season: {text: 通年(秋〜春にカモ・シギ), year_round: true}, note: "干潟・ヨシ原・森・淡水池・田んぼ。100種以上。渡りの中継地", access: [walk_from_station]}
+  B02: {theme: 野鳥, name: 葛西臨海公園 鳥類園, prefecture: 東京都, municipality: 江戸川区, season: {text: 通年, year_round: true}, note: "干潟・湿地・淡水池。年間100種超"}
+  B03: {theme: 野鳥, name: 葛西海浜公園, prefecture: 東京都, municipality: 江戸川区, kinds: [スズガモ, カンムリカイツブリ, ヘラサギ], season: {text: 冬, from: 12月, to: 2月}, note: "ラムサール条約湿地(都内初、2018年10月登録)"}
+  B04: {theme: 野鳥, name: 石神井公園, prefecture: 東京都, municipality: 練馬区, kinds: [カワセミ, カモ, ダイサギ, ジョウビタキ, シロハラ, ホシハジロ, キンクロハジロ, オナガガモ], season: {text: 秋〜春, from: 9月, to: 5月}, note: "三宝寺池。野鳥誘致林と木道"}
+  B05: {theme: 野鳥, name: 井の頭恩賜公園, prefecture: 東京都, municipality: 武蔵野市, kinds: [カモ], season: {text: 冬, from: 12月, to: 2月}, note: "井の頭池。冬の水鳥の観察会。かいぼり隊が水鳥の種類と羽数を調査"}
+  B06: {theme: 野鳥, name: 不忍池, prefecture: 東京都, municipality: 台東区, kinds: [キンクロハジロ], season: {text: 冬, from: 12月, to: 2月}, note: "上野恩賜公園。上野駅から徒歩約5分", access: [walk_from_station]}
+  B07: {theme: 野鳥, name: 皇居周辺(北の丸公園・お濠), prefecture: 東京都, municipality: 千代田区, kinds: [ジョウビタキ, オカヨシガモ, ヨシガモ, ハシビロガモ, ミコアイサ, ユリカモメ, オオバン, カイツブリ], season: {text: 秋〜冬, from: 9月, to: 2月}}
+  B08: {theme: 野鳥, name: 光が丘公園, prefecture: 東京都, municipality: 練馬区, kinds: [カワセミ, オオタカ], season: {text: 通年, year_round: true}, note: "バードサンクチュアリ(観察窓は土日祝のみ)"}
+  B09: {theme: 野鳥, name: 明治神宮, prefecture: 東京都, municipality: 渋谷区, kinds: [キビタキ], note: "森の小鳥。春・秋の渡りの時期"}
+  B10: {theme: 野鳥, name: 東京湾の干潟(お台場海浜公園・森ヶ崎の鼻), prefecture: 東京都, municipality: 大田区, kinds: [スズガモ, ユリカモメ, ミサゴ, シギ, チドリ], season: {text: 秋〜冬, from: 9月, to: 2月}}
+  # ---- A-2 冬の渡り鳥(種類と時期。場所を持たない種類の説明) ----
+  T01: {scope: kind, theme: 冬鳥, name: ツグミ, kinds: [ツグミ], season: {text: 10月に飛来。関東の低地では11月中旬〜12月に普通, from: 10月, to: 12月}}
+  T02: {scope: kind, theme: 冬鳥, name: ジョウビタキ, kinds: [ジョウビタキ], season: {text: 10月下旬ごろから渡来, from: 10月下旬, to: 10月下旬}, note: "市街地・公園でも見られる"}
+  T03: {scope: kind, theme: 冬鳥, name: シロハラ, kinds: [シロハラ], season: {text: 冬に渡来, from: 12月, to: 2月}}
+  T04: {scope: kind, theme: 冬鳥, name: カモ類, kinds: [コガモ, オナガガモ, ヒドリガモ, ハシビロガモ, マガモ, ホシハジロ, キンクロハジロ], season: {text: 秋から冬に飛来し、春に戻る, from: 9月, to: 5月}}
+  T05: {scope: kind, theme: 冬鳥, name: スズガモ・カンムリカイツブリ, kinds: [スズガモ, カンムリカイツブリ], season: {text: 冬(東京湾で越冬), from: 12月, to: 2月}, note: "スズガモは数万羽、カンムリカイツブリは数千羽(日本野鳥の会東京)"}
+  T06: {scope: kind, theme: 冬鳥, name: 漂鳥(ルリビタキ・アオジなど), kinds: [ルリビタキ, アオジ, アカハラ, トラツグミ, シメ, イカル], season: {text: 11月に国内の北や山地から来る, from: 11月, to: 11月}}
+  T07: {scope: kind, theme: 冬鳥, name: シギ・チドリ類, kinds: [シギ, チドリ], season: {text: 春と秋の渡り(秋は9月ごろ), from: 9月, to: 9月}, note: "旅鳥"}
+  T08: {scope: kind, theme: 冬鳥, name: ユリカモメ, kinds: [ユリカモメ], season: {text: 冬, from: 12月, to: 2月}, note: "都民の鳥"}
+  T09: {scope: kind, theme: 冬鳥, name: ハマシギ, kinds: [ハマシギ], season: {text: 冬(越冬), from: 12月, to: 2月}}
+  T10: {scope: kind, theme: 冬鳥, name: タシギ・コガモ, kinds: [タシギ, コガモ], season: {text: 冬, from: 12月, to: 2月}}
+  # ---- A-3 桜(早咲き・冬桜) ----
+  S01: {theme: 桜, name: 城峯公園, prefecture: 埼玉県, municipality: 神川町, kinds: [冬桜, 十月桜], season: {text: 10月下旬〜12月上旬, from: 10月下旬, to: 12月上旬}, note: "冬桜 約600本。標高約500m。毎年10月の最終日曜日に冬桜まつり"}
+  S02: {theme: 桜, name: 桜山公園, prefecture: 群馬県, municipality: 藤岡市, kinds: [冬桜], season: {text: 11月中旬〜12月中旬, from: 11月中旬, to: 12月中旬}, note: "冬桜 約7000本(国の名勝・天然記念物)。紅葉と同時に楽しめる",
+        urls: ["https://rurubu.jp/andmore/spot/80007869/sakura", "https://tabi-mag.jp/gu0100/", "https://www.jalan.net/news/article/491571/3"]}
+  S03: {theme: 桜, name: 抱湖園, prefecture: 千葉県, municipality: 南房総市, kinds: [元朝桜, 寒桜], season: {text: 1月下旬〜2月末, from: 1月下旬, to: 2月末}, note: "元朝桜(寒桜)約60本"}
+  S04: {theme: 桜, name: 荏原神社, prefecture: 東京都, municipality: 品川区, kinds: [寒緋桜], season: {text: 例年1月の終わりごろから, from: 1月下旬, to: 1月下旬}, note: "寒緋桜 2本。区内でいちばん早く咲く桜"}
+  S05: {theme: 桜, name: 西平畑公園, prefecture: 神奈川県, municipality: 松田町, kinds: [河津桜], season: {text: 2月中旬〜3月上旬(年により前後), from: 2月中旬, to: 3月上旬}, note: "河津桜 約360本。富士山と菜の花"}
+  S06: {theme: 桜, name: 三浦海岸の河津桜, prefecture: 神奈川県, municipality: 三浦市, kinds: [河津桜], season: {text: 2月上旬に咲き始め、2月中旬〜下旬が見頃, from: 2月中旬, to: 2月下旬}, note: "三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花", access: [walk_from_station]}
+  S07: {theme: 桜, name: 県立三ツ池公園, prefecture: 神奈川県, municipality: 横浜市, kinds: [寒緋桜], season: {text: 2月中旬〜4月中旬, from: 2月中旬, to: 4月中旬}, note: "カンヒザクラ"}
+  S08: {theme: 桜, name: 桜神宮, prefecture: 東京都, municipality: 世田谷区, kinds: [河津桜], season: {text: 2〜3月, from: 2月, to: 3月}}
+  S09: {theme: 桜, name: 皇居周辺(乾濠・代官町通り・東御苑), prefecture: 東京都, municipality: 千代田区, kinds: [大寒桜, 寒緋桜, 椿寒桜], season: {text: 2月下旬〜3月上旬, from: 2月下旬, to: 3月上旬}, note: "椿寒桜は2月、大寒桜は3月上旬"}
+  S10: {theme: 桜, name: 北浅羽桜堤公園, prefecture: 埼玉県, municipality: 坂戸市, kinds: [安行寒桜], season: {text: 3月上旬〜中旬, from: 3月上旬, to: 3月中旬}, note: "ソメイヨシノより1週間〜10日早い"}
+  S11: {theme: 桜, name: 熱海の あたみ桜, prefecture: 静岡県, municipality: 熱海市, kinds: [あたみ桜], season: {text: 12月下旬から咲き始め、1月中旬〜2月上旬がピーク, from: 1月中旬, to: 2月上旬}, note: "アカオフォレストなど"}
+  S12: {theme: 桜, name: 河津川沿いの桜並木, prefecture: 静岡県, municipality: 河津町, kinds: [河津桜], season: {text: 2月上旬〜3月上旬, from: 2月上旬, to: 3月上旬}, note: "河津桜 約850本(発祥の地)。河津桜まつり(2026年は2/7〜3/8)"}
+  # ---- A-4 ホタル(関東) ----
+  F01: {theme: ホタル, name: 源氏ぼたるの里, prefecture: 千葉県, municipality: いすみ市, kinds: [ゲンジボタル], season: {text: 5月下旬〜6月中旬, from: 5月下旬, to: 6月中旬}}
+  F02: {theme: ホタル, name: ホテル椿山荘東京, prefecture: 東京都, municipality: 文京区, kinds: [ゲンジボタル], season: {text: 5月中旬〜6月下旬, from: 5月中旬, to: 6月下旬}, note: "庭園・ビオトープ。2026年の「ほたるの夕べ」は6/6〜21"}
+  F03: {theme: ホタル, name: HANA・BIYORI, prefecture: 東京都, municipality: 稲城市, kinds: [ゲンジボタル, ヘイケボタル], season: {text: 5月下旬〜6月下旬, from: 5月下旬, to: 6月下旬}}
+  F04: {theme: ホタル, name: 夕やけ小やけふれあいの里, prefecture: 東京都, municipality: 八王子市, kinds: [ゲンジボタル], season: {text: 6月中旬〜下旬, from: 6月中旬, to: 6月下旬}, note: "ゲンジボタル約2,500匹が生息"}
+  F05: {theme: ホタル, name: ほたる公園周辺(福生ほたる祭り), prefecture: 東京都, municipality: 福生市, kinds: [ゲンジボタル], season: {text: 5月下旬〜6月上旬, from: 5月下旬, to: 6月上旬}, note: "2026年は5/31ごろ"}
+  F06: {theme: ホタル, name: 熊谷市江南地域, prefecture: 埼玉県, municipality: 熊谷市, kinds: [ゲンジボタル], season: {text: 5月下旬〜6月中旬, from: 5月下旬, to: 6月中旬}, note: "自然発生"}
+  F07: {theme: ホタル, name: 下吉田関地区, prefecture: 埼玉県, municipality: 秩父市, kinds: [ゲンジボタル, ヘイケボタル], season: {text: 6月中旬〜7月上旬, from: 6月中旬, to: 7月上旬}}
+  F08: {theme: ホタル, name: 秩父ミューズパーク, prefecture: 埼玉県, municipality: 秩父市, kinds: [ゲンジボタル], season: {text: 6月下旬〜7月上旬, from: 6月下旬, to: 7月上旬}}
+  F09: {theme: ホタル, name: 県立座間谷戸山公園, prefecture: 神奈川県, municipality: 座間市, kinds: [ゲンジボタル], season: {text: 6月中旬がピーク, from: 6月中旬, to: 6月中旬}, note: "自然発生"}
+  F10: {theme: ホタル, name: 生田緑地, prefecture: 神奈川県, municipality: 川崎市, kinds: [ゲンジボタル], season: {text: 6月(年により前後), from: 6月, to: 6月}, note: "ホタルの里・飛森谷戸"}
+  F11: {theme: ホタル, name: 名草ほたるの里, prefecture: 栃木県, municipality: 足利市, kinds: [ゲンジボタル], season: {text: 6月中旬〜下旬, from: 6月中旬, to: 6月下旬}}
+  F12: {theme: ホタル, name: 月夜野ホタルの里, prefecture: 群馬県, municipality: みなかみ町, kinds: [ゲンジボタル, ヘイケボタル, クロマドボタル], season: {text: 6月中旬〜7月中旬, from: 6月中旬, to: 7月中旬}, note: "北関東一の自然発生の数"}
+  F13: {theme: ホタル, name: ロマンの森共和国, prefecture: 千葉県, municipality: 君津市, kinds: [ゲンジボタル, ヘイケボタル], season: {text: 5月下旬〜7月下旬, from: 5月下旬, to: 7月下旬}}
+  F14: {theme: ホタル, name: 東武動物公園「ほたリウム」, prefecture: 埼玉県, municipality: 宮代町, kinds: [ヘイケボタル], season: {text: 通年(室内、12〜14時), year_round: true}, note: "飼育下で繁殖。室内で見られる"}
+  # ---- A-5 花(冬・梅・ツバキ) ----
+  H01: {theme: 花, name: 皇居東御苑 梅林坂, prefecture: 東京都, municipality: 千代田区, kinds: [梅], season: {text: 1月中旬〜3月初旬, from: 1月中旬, to: 3月初旬}, note: "紅白の梅 約50本"}
+  H02: {theme: 花, name: 北の丸公園, prefecture: 東京都, municipality: 千代田区, kinds: [梅], season: {text: 1月下旬〜2月中旬, from: 1月下旬, to: 2月中旬}}
+  H03: {theme: 花, name: 靖國神社, prefecture: 東京都, municipality: 千代田区, kinds: [梅], season: {text: 1月中旬〜3月初旬, from: 1月中旬, to: 3月初旬}}
+  H04: {theme: 花, name: 城山公園 梅園, prefecture: 千葉県, municipality: 館山市, kinds: [梅], season: {text: 1月上旬〜3月中旬, from: 1月上旬, to: 3月中旬}, note: "園内に梅 約150本"}
+  H05: {theme: 花, name: 城山公園 つばきの径, prefecture: 千葉県, municipality: 館山市, kinds: [ツバキ], note: "時期は未確認(探索の起点)"}
+  H06: {theme: 花, name: 平磯・千田のお花畑, prefecture: 千葉県, municipality: 南房総市, kinds: [菜の花, キンセンカ], season: {text: 1月上旬〜3月中旬, from: 1月上旬, to: 3月中旬}, note: "花摘み"}
+# 表ではない節(付録A の箇条書き)。行と同じ形で、URL を明示する
+extra:
+  - {id: S02-koyo, theme: 紅葉, name: 桜山公園, prefecture: 群馬県, municipality: 藤岡市, season: {text: 10月下旬〜11月中旬, from: 10月下旬, to: 11月中旬}, note: "冬桜と同時に楽しめる",
+     urls: ["https://rurubu.jp/andmore/spot/80007869/koyo", "https://tenki.jp/kouyou/3/13/30672.html"]}
+  - {id: K-fuyuzakura, scope: kind, theme: 桜, name: 冬桜(フユザクラ), kinds: [冬桜], season: {text: 秋〜冬(10月下旬〜12月)に咲き、春にも咲く二度咲き, from: 10月下旬, to: 12月}, note: "山桜と豆桜の交配種といわれる。花は小さく白〜淡紅色",
+     urls: ["https://tabi-mag.jp/gu0100/", "https://www.walkerplus.com/article/1068351/"]}
+  - {id: K-kanzakura, scope: kind, theme: 桜, name: 寒桜(カンザクラ), kinds: [寒桜], season: {text: 1〜2月, from: 1月, to: 2月}, note: "淡紅色の一重。冬桜とは別の種",
+     urls: ["https://tabi-mag.jp/gu0100/", "https://www.walkerplus.com/article/1068351/"]}
+  - {id: K-kawazu, scope: kind, theme: 桜, name: 河津桜, kinds: [河津桜], season: {text: 1月下旬からつぼみがほころび、3月上旬まで, from: 1月下旬, to: 3月上旬}, note: "寒緋桜系と早咲きの大島桜系の自然交配種と考えられる",
+     urls: ["https://www.walkerplus.com/article/1329757/"]}
+  - {id: K-genji, scope: kind, theme: ホタル, name: ゲンジボタル, kinds: [ゲンジボタル], season: {text: 関東では5月下旬〜6月中旬, from: 5月下旬, to: 6月中旬}, note: "大きく光が強い。水のきれいな川",
+     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://tenki.jp/suppl/usagida/2016/06/13/13151.html", "https://www.pref.miyagi.jp/documents/53315/arikabetikugennzibotaru.pdf", "https://weathernews.jp/news/202505/270196/"]}
+  - {id: K-heike, scope: kind, theme: ホタル, name: ヘイケボタル, kinds: [ヘイケボタル], season: {text: 関東では6月中旬〜8月ごろ, from: 6月中旬, to: 8月}, note: "小さく光が弱い。水田・池・湿地",
+     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://tenki.jp/suppl/usagida/2016/06/13/13151.html", "https://weathernews.jp/news/202505/270196/"]}
+  - {id: K-hime, scope: kind, theme: ホタル, name: ヒメボタル, kinds: [ヒメボタル], season: {text: 5月下旬〜7月下旬ごろ, from: 5月下旬, to: 7月下旬}, note: "水辺ではなく湿った森。黄色く激しく点滅",
+     urls: ["https://weathernews.jp/news/202505/270196/", "https://www.pref.iwate.jp/_res/projects/default_project/_page_/001/014/229/himehoraruannai.pdf"]}

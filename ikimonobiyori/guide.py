@@ -17,6 +17,7 @@
 """
 import argparse
 import calendar
+import functools
 import hashlib
 import json
 import os
@@ -134,7 +135,9 @@ def _md(month, third, policy, end):
     return f"{month:02d}-{day:02d}"
 
 
+@functools.lru_cache(maxsize=None)
 def load_sources_thirds():
+    """旬の分け方(data/sources/policy.yaml の month_thirds)。読み込みは 1 回だけ。"""
     from .sources import load_policy as sp
     return sp()["month_thirds"]["items"]
 
@@ -196,8 +199,10 @@ def norm_name(s):
     return re.sub(r"\s+", "", unicodedata.normalize("NFKC", s or ""))
 
 
-def entry_id(theme, prefecture, name):
-    h = hashlib.sha1(f"{theme}|{prefecture}|{norm_name(name)}".encode("utf-8")).hexdigest()
+def entry_id(theme, prefecture, name, scope="place"):
+    """名所(scope=place)はテーマ・都道府県・名前、種類の説明(scope=kind)はテーマ・名前から決まる id。"""
+    key = f"{theme}|{prefecture}|{norm_name(name)}" if scope == "place" else f"kind|{theme}|{norm_name(name)}"
+    h = hashlib.sha1(key.encode("utf-8")).hexdigest()
     return "g-" + h[:ID_HEX]
 
 
@@ -207,7 +212,10 @@ def validate_item(item, policy):
     extra = sorted(set(item) - set(rp["input_fields"]))
     if extra:
         errs.append(f"受け取れない項目(本文・時刻などは渡さない): {extra}")
-    for k in ("theme", "name", "prefecture", "url"):
+    scope = item.get("scope", "place")
+    if scope not in rp["scopes"]:
+        errs.append(f"scope は {rp['scopes']} のどれか")
+    for k in ("theme", "name", "url") + (("prefecture",) if scope == "place" else ()):
         if not isinstance(item.get(k), str) or not item.get(k).strip():
             errs.append(f"{k} がない")
     if errs:
@@ -261,7 +269,7 @@ def make_candidate(item, policy, now):
 
 
 def _cand_key(r):
-    return (r["theme"], r["prefecture"], norm_name(r["name"]), r["url"])
+    return (r.get("scope", "place"), r["theme"], r.get("prefecture"), norm_name(r["name"]), r["url"])
 
 
 def record_candidates(items, *, policy=None, now=None, env=None):
@@ -317,7 +325,7 @@ def place_range(rec_or_entry, places, catalog_policy, policy):
 
 
 def places_needed(records, places):
-    return sorted({(r["prefecture"], r["municipality"]) for r in records if r.get("municipality")} - set(places))
+    return sorted({(r["prefecture"], r["municipality"]) for r in records if r.get("municipality") and r.get("scope", "place") == "place"} - set(places))
 
 
 def place_titles(prefecture, municipality):
@@ -401,9 +409,11 @@ def load_reviews(env=None, include_runtime=True):
 def build_entries(records, places, policy, catalog_policy, reviews=None):
     """候補の記録 → 名所ごとの 1 件(テーマ・都道府県・名前が同じものをまとめる)。段階・実在・範囲・承認をコードが決める。決まった並び。"""
     reviews = reviews or {}
+    # 区分・発行元は、読んだときではなく今の方針の表で決め直す(表に足したホストを、前に読んだ記録にも効かせる)
+    records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
     by = {}
     for r in records:
-        by.setdefault(entry_id(r["theme"], r["prefecture"], r["name"]), []).append(r)
+        by.setdefault(entry_id(r["theme"], r.get("prefecture"), r["name"], r.get("scope", "place")), []).append(r)
     show_min = val(policy["show_fact_min_independent"])
     out = []
     for eid, rows in sorted(by.items()):
@@ -438,9 +448,15 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
         tier = tier_of(srcs, groups, visits, policy)
         exists = any(s["class"] in policy["existence_classes"] for s in srcs)
         muni = next((r.get("municipality") for r in sorted(rows, key=lambda x: (CLASS_RANK.index(x["class"]), x["read_at"])) if r.get("municipality")), None)
-        rng = place_range({"prefecture": rows[0]["prefecture"], "municipality": muni}, places, catalog_policy, policy)
+        scope = rows[0].get("scope", "place")
+        rng = (place_range({"prefecture": rows[0]["prefecture"], "municipality": muni}, places, catalog_policy, policy)
+               if scope == "place" else {"status": "not_applicable"})
         reasons = []
-        if tier == "reference":
+        if scope == "kind":
+            # 種類の説明は場所を持たない。独立した出どころ 2 件以上が言うことだけを答えに出す(フェーズ3 の 2。D-11)
+            if len(groups) < show_min and tier != "verified":
+                reasons.append(f"独立した出どころが {len(groups)} 件")
+        elif tier == "reference":
             reasons.append(f"独立した出どころが {len(groups)} 件" + ("(個人の発信だけ)" if not exists else ""))
         if not exists:
             reasons.append("実在を、自治体・公園・観光協会・メディアの出どころで確認できていない")
@@ -459,8 +475,8 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
             approval = {"state": "candidate", "reasons": reasons}
         status = sorted((s for s in srcs if s.get("status")), key=lambda s: s["status"]["date"], reverse=True)
         acc = sorted({a for s in srcs for a in s["_access"]})
-        e = {"id": eid, "theme": rows[0]["theme"], "name": sorted(rows, key=lambda x: (CLASS_RANK.index(x["class"]), x["read_at"]))[0]["name"],
-             "prefecture": rows[0]["prefecture"], "municipality": muni, "kinds": kinds, "season": season,
+        e = {"id": eid, "scope": scope, "theme": rows[0]["theme"], "name": sorted(rows, key=lambda x: (CLASS_RANK.index(x["class"]), x["read_at"]))[0]["name"],
+             "prefecture": rows[0].get("prefecture"), "municipality": muni, "kinds": kinds, "season": season,
              "tier": tier, "independent_sources": len(groups), "classes": sorted({s["class"] for s in srcs}),
              "exists_confirmed": exists, "range": rng, "approval": approval,
              "sources": [{k: v for k, v in s.items() if not k.startswith("_") and k != "copies_of_publisher"} for s in srcs]}
@@ -483,22 +499,32 @@ def theme_of(word, policy):
     return (policy.get("words") or {}).get((word or "").strip())
 
 
-def kind_match(entry, kinds):
+def kind_match(entry, kinds, shown_only=False):
+    """種類で絞る。shown_only なら、独立した出どころ 2 件以上が言う種類だけで見る(答えのおすすめに使う)。"""
     if not kinds:
         return True
-    names = [k["kind"] for k in entry["kinds"]]
+    names = [k["kind"] for k in entry["kinds"] if k["shown"] or not shown_only]
     return any(q in n or n in q for q in kinds for n in names)
 
 
 def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipalities=None, names=None, policy=None):
     """→ {"recommend": おすすめにできる名所(承認・範囲内・時期が合う), "upcoming": これから(時期の始まりが近い),
-    "other_season": 承認済みだが時期の外, "reference": 参考(段階が参考・候補のまま), "out_of_range": 範囲の外(名指しのときだけ答えに使う)}。"""
+    "other_season": 承認済みだが時期の外, "no_season": 承認済みだが例年の時期が確かめられない, "reference": 参考(段階が参考・候補のまま), "out_of_range": 範囲の外(名指しのときだけ答えに使う)}。"""
     policy = policy or load_policy()
     up_days = val(policy["upcoming_days"])
-    out = {k: [] for k in ("recommend", "upcoming", "other_season", "reference", "out_of_range")}
+    out = {k: [] for k in ("recommend", "upcoming", "other_season", "no_season", "reference", "out_of_range", "kind_notes")}
     order = policy["tiers"]["order"]
     for e in entries:
-        if e["theme"] not in themes or e["approval"]["state"] == "rejected" or not kind_match(e, kinds):
+        if e["theme"] not in themes or e["approval"]["state"] == "rejected":
+            continue
+        if e.get("scope") == "kind":
+            if not kinds or any(q in e["name"] or e["name"] in q for q in kinds) or kind_match(e, kinds):
+                out["kind_notes"].append(e)
+            continue
+        if not kind_match(e, kinds):
+            continue
+        if not kind_match(e, kinds, shown_only=True) and e["range"]["status"] != "out_of_range":
+            out["reference"].append(e)                   # その種類を言う出どころが 1 件だけ(おすすめにしない。参考)
             continue
         if prefectures and e["prefecture"] not in prefectures:
             continue
@@ -514,8 +540,10 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
             continue
         w = (e["season"] or {}).get("window")
         w = w if w in (None, "year_round") else (w["start"], w["end"])
-        if on is None or w is None:
+        if on is None:
             out["recommend"].append(e)
+        elif w is None or not (e["season"] or {}).get("shown"):
+            out["no_season"].append(e)                   # 例年の時期が分からない・1 件だけ(対象の日に合うかを言わない)
         elif in_window(f"{on.month:02d}-{on.day:02d}", w):
             out["recommend"].append(e)
         elif (days_until_start(on, w) or 0) <= up_days:
@@ -633,26 +661,42 @@ def seed_items(rows, mapping):
     """種の表の行 → record-candidate の項目(URL ごとに 1 件)。mapping は data/guide/seed_map.yaml(節ごとのテーマ・ID ごとの所在・種類・時期)。
     種類・時期は表の行のもの(付録A の行は、その行の出どころの URL をまとめたもの。D-06)。区分・独立の数はコードが計算し直す。"""
     items, skipped = [], []
+    seen_urls = {}
+    for r in rows:
+        seen_urls[r.get("ID")] = URL_RE.findall(r.get("出どころのURL", ""))
+
+    def add(sid, m, urls):
+        for u in urls:
+            it = {"theme": m["theme"], "name": m["name"], "url": u, "origin": "seed", "seed_id": sid}
+            for k in ("scope", "prefecture", "municipality", "kinds", "season", "note", "access"):
+                if m.get(k) is not None:
+                    it[k] = m[k]
+            items.append(it)
+
     for r in rows:
         sid = r.get("ID")
         m = (mapping.get("rows") or {}).get(sid)
         if not m:
             skipped.append(sid)
             continue
-        urls = URL_RE.findall(r.get("出どころのURL", ""))
-        for u in urls:
-            it = {"theme": m["theme"], "name": m["name"], "prefecture": m["prefecture"], "url": u, "origin": "seed", "seed_id": sid}
-            for k in ("municipality", "kinds", "season", "note", "access"):
-                if m.get(k) is not None:
-                    it[k] = m[k]
-            items.append(it)
+        urls = seen_urls[sid]
+        if m.get("urls"):
+            missing = [u for u in m["urls"] if u not in urls]
+            if missing:
+                raise ValueError(f"{sid}: 対応表の urls が付録A の行にない: {missing}")
+            urls = m["urls"]
+        add(sid, m, urls)
+    for m in mapping.get("extra") or []:
+        add(m["id"], m, m["urls"])
     return items, skipped
 
 
 # ---- 書き出し(見直して data/guide/ に写す) ----
 
-def export(entries, records, places, out_dir):
+def export(entries, records, places, out_dir, policy=None):
     out_dir.mkdir(parents=True, exist_ok=True)
+    policy = policy or load_policy()
+    records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
     cat = [e for e in entries if approved(e)]
     rest = [e for e in entries if not approved(e)]
     head = "# build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)\n"
@@ -661,7 +705,7 @@ def export(entries, records, places, out_dir):
     (out_dir / "candidates.yaml").write_text(head + yaml.safe_dump({"schema": "ikimono-guide-catalog/1", "entries": rest}, allow_unicode=True,
                                                                    sort_keys=False, width=200), encoding="utf-8", newline="\n")
     with (out_dir / "records.jsonl").open("w", encoding="utf-8", newline="\n") as f:
-        for r in sorted(records, key=lambda r: (r["theme"], r["prefecture"], norm_name(r["name"]), r["url"])):
+        for r in sorted(records, key=lambda r: (r.get("scope", "place"), r["theme"], r.get("prefecture") or "", norm_name(r["name"]), r["url"])):
             f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
     pl = sorted(places.values(), key=lambda p: (p["prefecture"], p["municipality"]))
     (out_dir / "places.yaml").write_text("# 市区町村の代表点(Wikidata の座標。CC0)。guide places-fetch の結果。推定で足さない\n" +
@@ -675,6 +719,12 @@ def build(env=None, include_runtime=True):
     recs = all_records(env, include_runtime)
     places = load_places(env, include_runtime)
     return build_entries(recs, places, policy, catalog_mod.load_policy(), load_reviews(env, include_runtime)), recs, places
+
+
+def sources_mod_parse(s):
+    """ISO 8601(オフセット必須)→ datetime(sources.parse_now と同じ)。"""
+    from .sources import parse_now
+    return parse_now(s)
 
 
 def committed_entries():
@@ -693,22 +743,34 @@ def review_markdown(entries, policy):
     state_label = {"provisional": "仮承認", "approved": "承認", "candidate": "候補", "rejected": "外した"}
     lines = []
     for th in policy["themes"]:
-        es = [e for e in entries if e["theme"] == th]
-        if not es:
+        es = [e for e in entries if e["theme"] == th and e.get("scope", "place") == "place"]
+        ks = [e for e in entries if e["theme"] == th and e.get("scope") == "kind"]
+        if not es and not ks:
             continue
         es.sort(key=lambda e: (0 if approved(e) else 1, policy["tiers"]["order"].index(e["tier"]), -e["independent_sources"], e["name"]))
-        lines += [f"## {th}({sum(approved(e) for e in es)} 件 仮承認 / {len(es)} 件)", "",
-                  "| 名所 | 所在 | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
+        lines += [f"## {th}(名所 {sum(approved(e) for e in es)} 件 仮承認 / {len(es)} 件)", ""]
+        if es:
+            lines += ["| 名所 | 所在 | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
         for e in es:
             kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"]) or "—"
             se = e["season"]
             stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
             rng = e["range"]
-            where = f"{e['prefecture']}{e.get('municipality') or ''}" + (f"(約{rng['km']}km)" if rng.get("km") is not None else "")
+            where = f"{e['prefecture'] or ''}{e.get('municipality') or ''}" + (f"(約{rng['km']}km)" if rng.get("km") is not None else "")
             why = "; ".join(e["approval"].get("reasons") or []) or ("外した: " + (e["approval"].get("reason") or "") if e["approval"]["state"] == "rejected" else "規則を満たす")
             lines.append(f"| {e['name']} | {where} | {kinds} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
                          f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
         lines.append("")
+        if ks:
+            lines += [f"### {th}: 種類の説明({sum(approved(e) for e in ks)} 件 仮承認 / {len(ks)} 件)", "",
+                      "| 種類 | 時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|"]
+            for e in sorted(ks, key=lambda e: (0 if approved(e) else 1, -e["independent_sources"], e["name"])):
+                se = e["season"]
+                stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
+                why = "; ".join(e["approval"].get("reasons") or []) or "規則を満たす"
+                lines.append(f"| {e['name']} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
+                             f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
+            lines.append("")
     return "\n".join(lines)
 
 

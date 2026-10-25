@@ -264,5 +264,52 @@ class Wikidata(unittest.TestCase):
         self.assertEqual([k for k, v in hosts.items() if "www.wikidata.org" in v], ["guide_places"])
 
 
+class KindsAndBuckets(unittest.TestCase):
+    def test_kind_notes_have_no_place_and_need_two_sources(self):
+        k = {"scope": "kind", "theme": "冬鳥", "name": "試験の鳥", "kinds": ["試験の鳥"], "season": {"text": "冬", "from": "12月", "to": "2月"}}
+        self.assertEqual(guide.validate_item({**k, "url": "https://www.jalan.net/a"}, P), [])
+        one = build(recs({**k, "url": "https://www.jalan.net/a"}))["試験の鳥"]
+        self.assertEqual((one["range"]["status"], one["approval"]["state"]), ("not_applicable", "candidate"))
+        two = build(recs({**k, "url": "https://www.jalan.net/a"}, {**k, "url": "https://rurubu.jp/b"}))["試験の鳥"]
+        self.assertEqual(two["approval"]["state"], "provisional")
+        got = guide.find([two], themes={"冬鳥"}, policy=P)
+        self.assertEqual(([e["name"] for e in got["kind_notes"]], got["recommend"]), (["試験の鳥"], []))
+
+    def test_unknown_season_and_single_source_kind_are_not_recommended(self):
+        three = ("https://www.gotokyo.org/x", "https://www.jalan.net/y", "https://rurubu.jp/z")
+        rows = recs(*(item(u, kinds=["梅"] if i else ["梅", "ツバキ"]) for i, u in enumerate(three)))
+        es = guide.build_entries(rows, PLACES, P, CP)
+        got = guide.find(es, themes={"桜"}, on=date(2026, 2, 1), policy=P)
+        self.assertEqual([e["name"] for e in got["no_season"]], ["試験の公園"])           # 時期が分からないものは、対象の日に合うと言わない
+        got = guide.find(es, themes={"桜"}, kinds=["ツバキ"], policy=P)
+        self.assertEqual((got["recommend"], [e["name"] for e in got["reference"]]), ([], ["試験の公園"]))   # 1 件だけの種類ではおすすめにしない
+        self.assertEqual([e["name"] for e in guide.find(es, themes={"桜"}, kinds=["梅"], policy=P)["recommend"]], ["試験の公園"])
+
+
+class CommittedData(unittest.TestCase):
+    """data/guide/ に置いた記録・代表点・見直しから作り直した結果が、置いたカタログと一致する(手で直していない)。本文を含まない。"""
+
+    def test_catalog_is_rebuilt_from_the_records(self):
+        recs_ = guide.all_records(include_runtime=False)
+        places = guide.load_places(include_runtime=False)
+        entries = guide.build_entries(recs_, places, P, CP, guide.load_reviews(include_runtime=False))
+        key = lambda e: e["id"]
+        self.assertEqual(sorted(json.loads(json.dumps(entries, ensure_ascii=False)), key=key), sorted(guide.committed_entries(), key=key))
+
+    def test_records_hold_facts_only(self):
+        fields = set(P["record"]["fields"])
+        for r in guide.all_records(include_runtime=False):
+            self.assertLessEqual(set(r), fields, r["url"])
+            it = {k: v for k, v in r.items() if k in P["record"]["input_fields"]}
+            self.assertEqual(guide.validate_item(it, P), [], r["url"])
+            self.assertEqual((r["class"], r["publisher"]), guide.classify(r["url"], P), r["url"])
+            self.assertTrue(guide.sources_mod_parse(r["read_at"]).utcoffset() is not None)
+
+    def test_places_come_from_wikidata_only(self):
+        for p in guide.load_places(include_runtime=False).values():
+            self.assertEqual(p["source"], "wikidata")
+            self.assertRegex(p["qid"], r"^Q[0-9]+$")
+
+
 if __name__ == "__main__":
     unittest.main()

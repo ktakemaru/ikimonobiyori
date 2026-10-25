@@ -30,7 +30,7 @@ classes:
   D: 個人の発信
 default_class: C                                         # 表にないホストは C(指示書)
 # 公的なドメインの PDF は「資料」(B)として扱う(調査報告など。運営者のお知らせのページは A のまま)
-pdf_class_by_suffix: {lg.jp: B, go.jp: B}
+pdf_class_by_suffix: {lg.jp: B, go.jp: B, tokyo.jp: B, kanagawa.jp: B, saitama.jp: B, chiba.jp: B, ibaraki.jp: B, tochigi.jp: B, gunma.jp: B, yamanashi.jp: B, shizuoka.jp: B, nagano.jp: B, niigata.jp: B, fukushima.jp: B}
 # 読まない・記録しないホスト(SNS。ログインが要る・自動アクセスを拒むことが多い。指示書の取得の条件)
 unreadable_hosts: [x.com, twitter.com, instagram.com, facebook.com, tiktok.com, threads.net, youtube.com, line.me]
 # 発行元の数え方(フェーズ2 の 3)。表にないホストは、下の公開接尾辞の 1 つ下までを発行元とする(rurubu.jp と kids.rurubu.jp は同じ)
@@ -48,6 +48,11 @@ hosts:
   - {suffix: showakinen-koen.jp, class: A, publisher: 国営昭和記念公園}
   - {suffix: hitachikaihin.jp, class: A, publisher: 国営ひたち海浜公園}
   - {suffix: kanagawa-kankou.or.jp, class: A, publisher: 神奈川県観光協会}
+  - {suffix: visit-gunma.jp, class: A, publisher: 群馬県観光物産国際協会}
+  - {suffix: yamanashi-kankou.jp, class: A, publisher: やまなし観光推進機構}
+  - {suffix: maruchiba.jp, class: A, publisher: 千葉県観光物産協会}
+  - {suffix: yomiuriland.co.jp, class: A, publisher: よみうりランド}
+  - {suffix: metro.tokyo.jp, class: A, publisher: 東京都}
   - {suffix: niigata-kankou.or.jp, class: A, publisher: 新潟県観光協会}
   - {suffix: nikko-kankou.org, class: A, publisher: 日光市観光協会}
   - {suffix: hakone.or.jp, class: A, publisher: 箱根町観光協会}
@@ -56,6 +61,17 @@ hosts:
   - {suffix: kensetsu.metro.tokyo.lg.jp, class: B, publisher: 東京都}
   - {suffix: lg.jp, class: A}
   - {suffix: tokyo.jp, class: A}
+  - {suffix: kanagawa.jp, class: A}
+  - {suffix: saitama.jp, class: A}
+  - {suffix: chiba.jp, class: A}
+  - {suffix: ibaraki.jp, class: A}
+  - {suffix: tochigi.jp, class: A}
+  - {suffix: gunma.jp, class: A}
+  - {suffix: yamanashi.jp, class: A}
+  - {suffix: shizuoka.jp, class: A}
+  - {suffix: nagano.jp, class: A}
+  - {suffix: niigata.jp, class: A}
+  - {suffix: fukushima.jp, class: A}
   - {suffix: env.go.jp, class: B, publisher: 環境省}
   - {suffix: go.jp, class: B}
   # ---- C 報道・観光メディア ----
@@ -79,8 +95,11 @@ hosts:
   - {suffix: veltra.com, class: C, publisher: VELTRA}
   - {suffix: bepal.net, class: C, publisher: BE-PAL}
   - {suffix: kotobank.jp, class: C, publisher: コトバンク}
+  - {suffix: mapple.net, class: C, publisher: マップル}
   # ---- D 個人の発信(個人のブログ・登山アプリ) ----
   - {suffix: banzokubiology.com, class: D}
+  - {suffix: ne.jp, class: D}                          # プロバイダーの個人のページ(asahi.ne.jp など)。発行元はプロバイダーまでで 1 件(少なめに数える)
+  - {suffix: 4travel.jp, class: D, publisher: フォートラベル}
   - {suffix: yamap.com, class: D, publisher: YAMAP}
   - {suffix: ameblo.jp, class: D}
   - {suffix: note.com, class: D}
@@ -132,9 +151,10 @@ words:
 record:
   schema: ikimono-guide-candidate/1
   dir: guide                                             # 書き込み先の基準(IKIMONOBIYORI_DATA_DIR)からの相対
-  fields: [schema, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id,
+  fields: [schema, scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id,
            read_at, read_at_note, read_by, host, publisher, class]
-  input_fields: [theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id]
+  input_fields: [scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id]
+  scopes: [place, kind]                                  # place = 名所、kind = 種類の説明(冬の渡り鳥の種類と時期、桜・ホタルの種類など。場所を持たない)
   origins: [search, fetch, seed, user]                   # search = 検索結果の抜粋、fetch = 要約の道具でページを読んだ、seed = 付録A、user = ユーザーが行って確認した
   read_by: summary                                       # 種名・数字はコードが原文で確かめられないので「要約で読んだ」(フェーズ3 の 2)
   access_values: [walk_from_station, bus, car_only, ropeway, cable_car]
