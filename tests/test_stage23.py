@@ -399,5 +399,15 @@ class ReadTimeFromTheClock(unittest.TestCase):
         self.assertEqual(len(log.read_text(encoding="utf-8").splitlines()), 2)          # 書き換えない
 
 
+class Closure(unittest.TestCase):
+    def test_a_closed_place_is_never_provisional(self):
+        cl = {"state": "休園", "since": "2025-01-14"}
+        rows = recs(item("https://www.gotokyo.org/x"), item("https://www.jalan.net/y"), item("https://rurubu.jp/z", closure=cl))
+        e = build(rows)["試験の公園"]
+        self.assertEqual((e["tier"], e["approval"]["state"]), ("curated", "candidate"))
+        self.assertTrue(any("休園" in r for r in e["approval"]["reasons"]))
+        self.assertTrue(guide.validate_item(item("https://rurubu.jp/z", closure={"state": "休園", "since": "いつか"}), P))
+
+
 if __name__ == "__main__":
     unittest.main()

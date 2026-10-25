@@ -151,9 +151,9 @@ words:
 record:
   schema: ikimono-guide-candidate/1
   dir: guide                                             # 書き込み先の基準(IKIMONOBIYORI_DATA_DIR)からの相対
-  fields: [schema, scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id,
+  fields: [schema, scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, closure, access, origin, seed_id,
            read_at, read_at_note, read_by, host, publisher, class]
-  input_fields: [scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, access, origin, seed_id]
+  input_fields: [scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, closure, access, origin, seed_id]
   scopes: [place, kind]                                  # place = 名所、kind = 種類の説明(冬の渡り鳥の種類と時期、桜・ホタルの種類など。場所を持たない)
   origins: [search, fetch, seed, user]                   # search = 検索結果の抜粋、fetch = 要約の道具でページを読んだ、seed = 付録A、user = ユーザーが行って確認した
   read_by: summary                                       # 種名・数字はコードが原文で確かめられないので「要約で読んだ」(フェーズ3 の 2)

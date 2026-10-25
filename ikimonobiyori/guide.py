@@ -251,6 +251,10 @@ def validate_item(item, policy):
         if not isinstance(st, dict) or set(st) != {"state", "date"} or not isinstance(st["state"], str) or len(st["state"]) > lim["state"] \
                 or not catalog_mod.valid_date(st["date"]):
             errs.append(f"status は {{state(≦{lim['state']} 文字の原文), date(YYYY-MM-DD)}}")
+    cl = item.get("closure")
+    if cl is not None and (not isinstance(cl, dict) or set(cl) - {"state", "since"} or not isinstance(cl.get("state"), str)
+                           or len(cl["state"]) > lim["state"] or ("since" in cl and not catalog_mod.valid_date(cl["since"]))):
+        errs.append(f"closure は {{state(≦{lim['state']} 文字の原文。「休園」など), since?(YYYY-MM-DD)}}")
     acc = item.get("access")
     if acc is not None and (not isinstance(acc, list) or not set(acc) <= set(rp["access_values"])):
         errs.append(f"access は {rp['access_values']} の配列")
@@ -420,7 +424,7 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
         srcs = []
         for r in sorted(rows, key=lambda x: (x["read_at"], x["url"])):
             s = {k: r[k] for k in ("url", "host", "publisher", "class", "read_at", "origin") if k in r}
-            for k in ("title", "copies_of", "status", "seed_id", "note"):
+            for k in ("title", "copies_of", "status", "seed_id", "note", "closure"):
                 if r.get(k):
                     s[k] = r[k]
             if r.get("copies_of"):
@@ -464,6 +468,11 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
             reasons.append("範囲は未確認(市区町村の代表点がない)")
         elif rng["status"] == "out_of_range":
             reasons.append(f"範囲の外(約 {rng['km']} km)")
+        closed = [s for s in srcs if s.get("closure")]
+        if closed:
+            # 休園・閉園・立入禁止の記載が 1 件でもあれば仮承認しない(安全側。間違うと損が大きいもの。D-18)
+            c0 = closed[0]["closure"]
+            reasons.append(f"「{c0['state']}」の記載あり" + (f"({c0['since']} から)" if c0.get("since") else "") + f"(出どころ {len(closed)} 件)")
         last = max(s["read_at"] for s in srcs)
         rv = reviews.get(eid)
         if rv and rv.get("state") == "rejected":

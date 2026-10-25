@@ -224,6 +224,14 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 墨田区
+- lat: 34.75
+  lon: 139.36
+  municipality: 大島町
+  prefecture: 東京都
+  qid: Q1204507
+  read_at: '2026-10-25T16:59:01+09:00'
+  source: wikidata
+  title: 大島町
 - lat: 35.56
   lon: 139.72
   municipality: 大田区
@@ -504,6 +512,22 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 那珂市
+- lat: 35.22
+  lon: 138.62
+  municipality: 富士宮市
+  prefecture: 静岡県
+  qid: Q496072
+  read_at: '2026-10-25T16:59:01+09:00'
+  source: wikidata
+  title: 富士宮市
+- lat: 35.16
+  lon: 138.68
+  municipality: 富士市
+  prefecture: 静岡県
+  qid: Q328613
+  read_at: '2026-10-25T16:59:01+09:00'
+  source: wikidata
+  title: 富士市
 - lat: 35.31
   lon: 138.93
   municipality: 御殿場市

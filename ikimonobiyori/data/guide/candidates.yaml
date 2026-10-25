@@ -255,6 +255,13 @@ entries:
     read_at: '2026-10-25T16:30:17+09:00'
     origin: search
     note: カワセミが巣作りや餌取りに使う場所
+  - url: https://web.kahaku.go.jp/research/publication/meguro/download/33/ns-r-33_32.pdf
+    host: web.kahaku.go.jp
+    publisher: kahaku.go.jp
+    class: B
+    read_at: '2026-10-25T16:58:18+09:00'
+    origin: search
+    note: 園内での繁殖の記録
 - id: g-2b68ca0bb4
   scope: place
   theme: 花
@@ -336,39 +343,6 @@ entries:
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
     seed_id: S08
-- id: g-2fed93a32b
-  scope: place
-  theme: 花
-  name: 国営昭和記念公園
-  prefecture: 東京都
-  municipality: 立川市
-  kinds:
-  - kind: サザンカ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 1
-  classes:
-  - D
-  exists_confirmed: false
-  range:
-    status: in_range
-    km: 30
-    from: 東京
-    qid: Q269634
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件(個人の発信だけ)
-    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
-  sources:
-  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
-    host: ne.jp
-    publisher: ne.jp
-    class: D
-    read_at: '2026-10-25T16:32:09+09:00'
-    origin: search
 - id: g-3415f6d876
   scope: place
   theme: 花
@@ -620,39 +594,6 @@ entries:
     read_at: '2026-10-25T16:32:40+09:00'
     origin: fetch
     note: 紅白 約350本
-- id: g-3848f354bf
-  scope: place
-  theme: 花
-  name: 亀戸中央公園
-  prefecture: 東京都
-  municipality: 江東区
-  kinds:
-  - kind: サザンカ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 1
-  classes:
-  - D
-  exists_confirmed: false
-  range:
-    status: in_range
-    km: 0
-    from: 東京
-    qid: Q215175
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件(個人の発信だけ)
-    - 実在を、自治体・公園・観光協会・メディアの出どころで確認できていない
-  sources:
-  - url: https://www.ne.jp/asahi/ashikawa/smile/sazankaguidemain.html
-    host: ne.jp
-    publisher: ne.jp
-    class: D
-    read_at: '2026-10-25T16:32:09+09:00'
-    origin: search
 - id: g-385e4867e6
   scope: place
   theme: 桜
@@ -865,12 +806,14 @@ entries:
   - C
   exists_confirmed: true
   range:
-    status: pending
+    status: in_range
+    km: 90
+    from: 横浜
+    qid: Q496072
   approval:
     state: candidate
     reasons:
     - 独立した出どころが 1 件
-    - 範囲は未確認(市区町村の代表点がない)
   sources:
   - url: https://www.mapple.net/region/a0305040000_g04030200/spot/
     host: mapple.net
@@ -1233,6 +1176,15 @@ entries:
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
     note: 日本最大級 3000株・2万本。寄ロウバイまつり
+  - url: https://co-trip.jp/post/603660
+    host: co-trip.jp
+    publisher: ことりっぷ
+    class: C
+    read_at: '2026-10-25T16:58:59+09:00'
+    origin: search
+    note: 新松田駅からバスで約25分
+  access:
+  - bus
 - id: g-7693a95ee4
   scope: place
   theme: ホタル
@@ -1716,45 +1668,6 @@ entries:
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
     seed_id: H03
-- id: g-9b73fdb471
-  scope: kind
-  theme: 冬鳥
-  name: ジョウビタキ
-  prefecture: null
-  municipality: null
-  kinds:
-  - kind: ジョウビタキ
-    independent_sources: 1
-    shown: false
-  season:
-    text: 10月下旬ごろから渡来
-    window:
-      start: 10-21
-      end: 10-31
-    independent_sources: 1
-    shown: false
-    from_url: https://www.pref.mie.lg.jp/ONORIN/HP/000125341-04-01.htm
-    other_texts: []
-  tier: reference
-  independent_sources: 1
-  classes:
-  - A
-  exists_confirmed: true
-  range:
-    status: not_applicable
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://www.pref.mie.lg.jp/ONORIN/HP/000125341-04-01.htm
-    host: pref.mie.lg.jp
-    publisher: mie.lg.jp
-    class: A
-    read_at: '2026-10-25T16:26:45+09:00'
-    origin: seed
-    seed_id: T02
-    note: 市街地・公園でも見られる
 - id: g-9c66c0f305
   scope: kind
   theme: 冬鳥
@@ -1858,12 +1771,14 @@ entries:
   - C
   exists_confirmed: true
   range:
-    status: pending
+    status: in_range
+    km: 90
+    from: 横浜
+    qid: Q496072
   approval:
     state: candidate
     reasons:
     - 独立した出どころが 2 件
-    - 範囲は未確認(市区町村の代表点がない)
   sources:
   - url: https://weathernews.jp/sakura/area/shizuoka/ranking.html
     host: weathernews.jp
@@ -2107,48 +2022,6 @@ entries:
     class: C
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
-- id: g-b8f6d230db
-  scope: place
-  theme: 花
-  name: 岩本山公園
-  prefecture: 静岡県
-  municipality: 富士市
-  kinds:
-  - kind: 桜
-    independent_sources: 1
-    shown: false
-  - kind: 梅
-    independent_sources: 1
-    shown: false
-  season:
-    text: 梅は1月上旬から咲き始め2月下旬〜3月下旬頃まで
-    window:
-      start: 01-01
-      end: 03-31
-    independent_sources: 1
-    shown: false
-    from_url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
-    other_texts: []
-  tier: reference
-  independent_sources: 1
-  classes:
-  - B
-  exists_confirmed: true
-  range:
-    status: pending
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-    - 範囲は未確認(市区町村の代表点がない)
-  sources:
-  - url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
-    host: pref.shizuoka.jp
-    publisher: pref.shizuoka.jp
-    class: B
-    read_at: '2026-10-25T16:44:44+09:00'
-    origin: search
-    note: 桜は3月下旬〜4月上旬
 - id: g-c19a04371d
   scope: place
   theme: 桜
@@ -2245,18 +2118,20 @@ entries:
     from_url: https://www.mapple.net/region/a0305000000_g04030200_s-season=spring/spot/
     other_texts:
     - 通年(温室)
-  tier: reference
-  independent_sources: 1
+  tier: curated
+  independent_sources: 3
   classes:
   - C
   exists_confirmed: true
   range:
-    status: pending
+    status: in_range
+    km: 90
+    from: 横浜
+    qid: Q496072
   approval:
     state: candidate
     reasons:
-    - 独立した出どころが 1 件
-    - 範囲は未確認(市区町村の代表点がない)
+    - 「休園」の記載あり(2025-01-14 から)(出どころ 2 件)
   sources:
   - url: https://www.mapple.net/region/a0305000000_g04030200_s-season=spring/spot/
     host: mapple.net
@@ -2270,6 +2145,26 @@ entries:
     class: C
     read_at: '2026-10-25T16:44:44+09:00'
     origin: search
+  - url: https://iko-yo.net/facilities/2447
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-25T16:58:59+09:00'
+    origin: search
+    note: 2025年1月14日から休園(いこーよの掲載)
+    closure:
+      since: '2025-01-14'
+      state: 休園
+  - url: https://sp.jorudan.co.jp/zoo_aqua/spot_6675.html
+    host: sp.jorudan.co.jp
+    publisher: ジョルダン
+    class: C
+    read_at: '2026-10-25T16:58:59+09:00'
+    origin: search
+    note: 2025年1月14日から休園(ジョルダンの掲載)
+    closure:
+      since: '2025-01-14'
+      state: 休園
 - id: g-cbb7f0a5e5
   scope: place
   theme: 花
@@ -2422,44 +2317,6 @@ entries:
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
     note: 6月に「蛍をみる夕べ」
-- id: g-d51900a1bc
-  scope: kind
-  theme: 冬鳥
-  name: シロハラ
-  prefecture: null
-  municipality: null
-  kinds:
-  - kind: シロハラ
-    independent_sources: 1
-    shown: false
-  season:
-    text: 冬に渡来
-    window:
-      start: 12-01
-      end: 02-29
-    independent_sources: 1
-    shown: false
-    from_url: https://kotobank.jp/word/%E3%83%84%E3%82%B0%E3%83%9F-3159481
-    other_texts: []
-  tier: reference
-  independent_sources: 1
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: not_applicable
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://kotobank.jp/word/%E3%83%84%E3%82%B0%E3%83%9F-3159481
-    host: kotobank.jp
-    publisher: コトバンク
-    class: C
-    read_at: '2026-10-25T16:26:45+09:00'
-    origin: seed
-    seed_id: T03
 - id: g-dabf5033ce
   scope: place
   theme: ホタル
@@ -2605,12 +2462,14 @@ entries:
   - B
   exists_confirmed: true
   range:
-    status: pending
+    status: in_range
+    km: 90
+    from: 横浜
+    qid: Q328613
   approval:
     state: candidate
     reasons:
     - 独立した出どころが 1 件
-    - 範囲は未確認(市区町村の代表点がない)
   sources:
   - url: https://www.pref.shizuoka.jp/_res/projects/default_project/_page_/001/005/023/no16_1.pdf
     host: pref.shizuoka.jp
@@ -2709,36 +2568,3 @@ entries:
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
     seed_id: T10
-- id: g-fb7756b6b5
-  scope: place
-  theme: 野鳥
-  name: 水元公園(水元かわせみの里)
-  prefecture: 東京都
-  municipality: 葛飾区
-  kinds:
-  - kind: カワセミ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 1
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 10
-    from: 東京
-    qid: Q232628
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://eco-plan.jp/pdf/eigyou_mizumoto.pdf
-    host: eco-plan.jp
-    publisher: eco-plan.jp
-    class: C
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
-    note: 自然解説員が常駐。付近のカワセミがほぼ毎日観察できる
