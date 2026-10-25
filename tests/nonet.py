@@ -23,3 +23,5 @@ block()
 # 実通信の許可を、テストでは常に取り除く(子プロセスに引き継がれる)。ゲート(hub/livegate.py)は BIYORI_UNDER_TEST=1 なら常に拒否する
 os.environ.pop("BIYORI_ALLOW_LIVE", None)
 os.environ["BIYORI_UNDER_TEST"] = "1"
+# テスト専用の時計(ikimonobiyori.sources.read_time。段階23)。このプロセスだけ。子プロセス(helpers.child_env)には渡さない = 子プロセスはふだんの実行と同じく、渡された時刻を使わない
+os.environ["IKIMONOBIYORI_TEST_CLOCK"] = "1"

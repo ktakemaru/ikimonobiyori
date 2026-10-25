@@ -33,6 +33,13 @@ entries:
     km: 10
     from: 横浜
     qid: Q217234
+    by_origin:
+      東京:
+        km: 14
+        status: in_range
+      横浜:
+        km: 14
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -145,6 +152,13 @@ entries:
     km: 80
     from: 横浜
     qid: Q1204507
+    by_origin:
+      東京:
+        km: 110
+        status: in_range
+      横浜:
+        km: 83
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -219,6 +233,13 @@ entries:
     km: 10
     from: 東京
     qid: Q214056
+    by_origin:
+      東京:
+        km: 10
+        status: in_range
+      横浜:
+        km: 35
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -290,6 +311,13 @@ entries:
     km: 70
     from: 東京
     qid: Q647079
+    by_origin:
+      東京:
+        km: 70
+        status: in_range
+      横浜:
+        km: 76
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -351,6 +379,13 @@ entries:
     km: 30
     from: 東京
     qid: Q269634
+    by_origin:
+      東京:
+        km: 32
+        status: in_range
+      横浜:
+        km: 33
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -408,6 +443,13 @@ entries:
     km: 80
     from: 東京
     qid: Q1346757
+    by_origin:
+      東京:
+        km: 84
+        status: in_range
+      横浜:
+        km: 95
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -478,6 +520,13 @@ entries:
     km: 80
     from: 東京
     qid: Q1345299
+    by_origin:
+      東京:
+        km: 76
+        status: in_range
+      横浜:
+        km: 85
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -541,6 +590,13 @@ entries:
     km: 0
     from: 東京
     qid: Q235135
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 32
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -656,6 +712,13 @@ entries:
     km: 0
     from: 東京
     qid: Q215175
+    by_origin:
+      東京:
+        km: 5
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -718,6 +781,13 @@ entries:
     km: 40
     from: 横浜
     qid: Q208863
+    by_origin:
+      東京:
+        km: 40
+        status: in_range
+      横浜:
+        km: 36
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -785,6 +855,13 @@ entries:
     km: 50
     from: 横浜
     qid: Q873521
+    by_origin:
+      東京:
+        km: 72
+        status: in_range
+      横浜:
+        km: 51
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -857,6 +934,13 @@ entries:
     km: 20
     from: 東京
     qid: Q209785
+    by_origin:
+      東京:
+        km: 15
+        status: in_range
+      横浜:
+        km: 40
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -935,6 +1019,13 @@ entries:
     km: 10
     from: 東京
     qid: Q179645
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -994,6 +1085,13 @@ entries:
     km: 40
     from: 横浜
     qid: Q823886
+    by_origin:
+      東京:
+        km: 62
+        status: in_range
+      横浜:
+        km: 36
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1063,6 +1161,13 @@ entries:
     km: 60
     from: 東京
     qid: Q41106
+    by_origin:
+      東京:
+        km: 62
+        status: in_range
+      横浜:
+        km: 79
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1123,6 +1228,13 @@ entries:
     km: 0
     from: 東京
     qid: Q212713
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1195,6 +1307,13 @@ entries:
     km: 0
     from: 東京
     qid: Q214051
+    by_origin:
+      東京:
+        km: 2
+        status: in_range
+      横浜:
+        km: 27
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1258,6 +1377,13 @@ entries:
     km: 10
     from: 横浜
     qid: Q217234
+    by_origin:
+      東京:
+        km: 14
+        status: in_range
+      横浜:
+        km: 14
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1348,6 +1474,13 @@ entries:
     km: 70
     from: 横浜
     qid: Q1204394
+    by_origin:
+      東京:
+        km: 87
+        status: in_range
+      横浜:
+        km: 69
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1425,6 +1558,13 @@ entries:
     km: 0
     from: 東京
     qid: Q212713
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1485,6 +1625,13 @@ entries:
     km: 20
     from: 東京
     qid: Q210667
+    by_origin:
+      東京:
+        km: 21
+        status: in_range
+      横浜:
+        km: 22
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1596,6 +1743,13 @@ entries:
     km: 20
     from: 東京
     qid: Q318047
+    by_origin:
+      東京:
+        km: 24
+        status: in_range
+      横浜:
+        km: 44
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1677,6 +1831,13 @@ entries:
     km: 30
     from: 東京
     qid: Q243859
+    by_origin:
+      東京:
+        km: 31
+        status: in_range
+      横浜:
+        km: 57
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1769,6 +1930,13 @@ entries:
     km: 0
     from: 東京
     qid: Q214051
+    by_origin:
+      東京:
+        km: 2
+        status: in_range
+      横浜:
+        km: 27
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1883,6 +2051,13 @@ entries:
     km: 10
     from: 東京
     qid: Q231645
+    by_origin:
+      東京:
+        km: 11
+        status: in_range
+      横浜:
+        km: 21
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -1947,6 +2122,13 @@ entries:
     km: 50
     from: 横浜
     qid: Q1202796
+    by_origin:
+      東京:
+        km: 68
+        status: in_range
+      横浜:
+        km: 46
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2029,6 +2211,13 @@ entries:
     km: 10
     from: 横浜
     qid: Q217234
+    by_origin:
+      東京:
+        km: 14
+        status: in_range
+      横浜:
+        km: 14
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2105,6 +2294,13 @@ entries:
     km: 10
     from: 東京
     qid: Q232655
+    by_origin:
+      東京:
+        km: 12
+        status: in_range
+      横浜:
+        km: 31
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2215,6 +2411,13 @@ entries:
     km: 40
     from: 横浜
     qid: Q208863
+    by_origin:
+      東京:
+        km: 40
+        status: in_range
+      横浜:
+        km: 36
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2272,6 +2475,13 @@ entries:
     km: 0
     from: 東京
     qid: Q212713
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2343,6 +2553,13 @@ entries:
     km: 30
     from: 横浜
     qid: Q330007
+    by_origin:
+      東京:
+        km: 30
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2503,6 +2720,13 @@ entries:
     km: 10
     from: 東京
     qid: Q214056
+    by_origin:
+      東京:
+        km: 10
+        status: in_range
+      横浜:
+        km: 35
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2578,6 +2802,13 @@ entries:
     km: 80
     from: 東京
     qid: Q1346757
+    by_origin:
+      東京:
+        km: 84
+        status: in_range
+      横浜:
+        km: 95
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2701,6 +2932,13 @@ entries:
     km: 0
     from: 東京
     qid: Q214051
+    by_origin:
+      東京:
+        km: 2
+        status: in_range
+      横浜:
+        km: 27
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2763,6 +3001,13 @@ entries:
     km: 40
     from: 東京
     qid: Q583931
+    by_origin:
+      東京:
+        km: 43
+        status: in_range
+      横浜:
+        km: 69
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2897,6 +3142,13 @@ entries:
     km: 30
     from: 東京
     qid: Q269634
+    by_origin:
+      東京:
+        km: 32
+        status: in_range
+      横浜:
+        km: 33
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -2967,6 +3219,13 @@ entries:
     km: 90
     from: 横浜
     qid: Q328613
+    by_origin:
+      東京:
+        km: 114
+        status: in_range
+      横浜:
+        km: 92
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3045,6 +3304,13 @@ entries:
     km: 20
     from: 東京
     qid: Q210661
+    by_origin:
+      東京:
+        km: 18
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3157,6 +3423,13 @@ entries:
     km: 100
     from: 横浜
     qid: Q1203861
+    by_origin:
+      東京:
+        km: 124
+        status: in_range
+      横浜:
+        km: 97
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3223,6 +3496,13 @@ entries:
     km: 0
     from: 東京
     qid: Q232641
+    by_origin:
+      東京:
+        km: 3
+        status: in_range
+      横浜:
+        km: 31
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3302,6 +3582,13 @@ entries:
     km: 70
     from: 横浜
     qid: Q840834
+    by_origin:
+      東京:
+        km: 74
+        status: in_range
+      横浜:
+        km: 74
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3410,6 +3697,13 @@ entries:
     km: 90
     from: 東京
     qid: Q596486
+    by_origin:
+      東京:
+        km: 90
+        status: in_range
+      横浜:
+        km: 101
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3483,6 +3777,13 @@ entries:
     km: 20
     from: 横浜
     qid: Q145333
+    by_origin:
+      東京:
+        km: 39
+        status: in_range
+      横浜:
+        km: 19
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3660,6 +3961,13 @@ entries:
     km: 80
     from: 横浜
     qid: Q1004231
+    by_origin:
+      東京:
+        km: 94
+        status: in_range
+      横浜:
+        km: 79
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3788,6 +4096,13 @@ entries:
     km: 20
     from: 横浜
     qid: Q317847
+    by_origin:
+      東京:
+        km: 25
+        status: in_range
+      横浜:
+        km: 22
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3924,6 +4239,13 @@ entries:
     km: 130
     from: 東京
     qid: Q1345518
+    by_origin:
+      東京:
+        km: 131
+        status: in_range
+      横浜:
+        km: 146
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -3989,6 +4311,13 @@ entries:
     km: 40
     from: 東京
     qid: Q637901
+    by_origin:
+      東京:
+        km: 38
+        status: in_range
+      横浜:
+        km: 63
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -4051,6 +4380,13 @@ entries:
     km: 0
     from: 東京
     qid: Q212713
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -4117,6 +4453,13 @@ entries:
     km: 10
     from: 東京
     qid: Q232655
+    by_origin:
+      東京:
+        km: 12
+        status: in_range
+      横浜:
+        km: 31
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -4185,6 +4528,13 @@ entries:
     km: 10
     from: 東京
     qid: Q232628
+    by_origin:
+      東京:
+        km: 10
+        status: in_range
+      横浜:
+        km: 37
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'
@@ -4254,6 +4604,13 @@ entries:
     km: 90
     from: 東京
     qid: Q596486
+    by_origin:
+      東京:
+        km: 90
+        status: in_range
+      横浜:
+        km: 101
+        status: in_range
   approval:
     state: provisional
     at: '2026-10-25'

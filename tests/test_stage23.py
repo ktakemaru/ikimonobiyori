@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 from datetime import date, datetime, timedelta, timezone
@@ -407,6 +408,123 @@ class Closure(unittest.TestCase):
         self.assertEqual((e["tier"], e["approval"]["state"]), ("curated", "candidate"))
         self.assertTrue(any("休園" in r for r in e["approval"]["reasons"]))
         self.assertTrue(guide.validate_item(item("https://rurubu.jp/z", closure={"state": "休園", "since": "いつか"}), P))
+
+
+class TestClockSwitch(unittest.TestCase):
+    """段階23 の続き(ユーザーの条件 2026-10-25): 渡された時刻を使うテスト専用の切り替えは、環境変数を明示したときだけ働く。
+    ふだんの実行(子プロセス = 切り替えを引き継がない)と、スキル(モデル)の入力では有効にならない。"""
+
+    def setUp(self):
+        from ikimonobiyori import sources
+        self.S = sources
+        self.d = Path(tempfile.mkdtemp(prefix="ikimono-s23c-"))
+        self.addCleanup(shutil.rmtree, self.d, True)
+
+    def test_switch_needs_the_explicit_variable(self):
+        self.assertTrue(self.S.test_clock_enabled())                                     # tests/nonet.py が明示的に設定している
+        env = {k: v for k, v in os.environ.items() if k != self.S.TEST_CLOCK_ENV}
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(self.S, "clock_now", return_value=NOW),                 contextlib.redirect_stderr(io.StringIO()):
+            self.assertFalse(self.S.test_clock_enabled())                                # BIYORI_UNDER_TEST=1 だけでは有効にならない
+            self.assertEqual(self.S.read_time("2030-01-01T00:00:00+09:00"), NOW)
+        with mock.patch.dict(os.environ, {self.S.TEST_CLOCK_ENV: "1", "BIYORI_UNDER_TEST": "0"}), mock.patch.object(self.S.livegate, "under_test", return_value=False),                 mock.patch.object(self.S, "clock_now", return_value=NOW), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(self.S.read_time("2030-01-01T00:00:00+09:00"), NOW)          # テスト中でなければ、切り替えだけでも有効にならない
+
+    def test_normal_run_ignores_the_model_time(self):
+        """ふだんの実行と同じ子プロセス(切り替えを引き継がない)で record を実行すると、渡した時刻は使われず、時計の時刻が入る。"""
+        batch = self.d / "reads.json"
+        batch.write_text(json.dumps([{"source": "hakone-kankou-koyo", "site": "kouyou-0018", "label": "強羅(箱根美術館)", "state": "色づきはじめ",
+                                      "updated": "2026-10-22", "year_inferred": True, "read_at": "2030-01-01T00:00:00+09:00"}], ensure_ascii=False),
+                         encoding="utf-8")                                                 # 入力の JSON に時刻を入れても使われない
+        before = datetime.now().astimezone()
+        cmd = [sys.executable, "-X", "utf8", "-m", "ikimonobiyori.sources", "record", "--read-at", "2030-01-01T00:00:00+09:00", "--batch", str(batch)]
+        r = H.run_child_env(cmd, {paths.ENV_DATA_DIR: str(self.d)}, cwd=str(H.ROOT), capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("使わない", r.stderr)
+        rows = [json.loads(x) for x in (self.d / "status_log" / "autumn_leaves.jsonl").read_text(encoding="utf-8").splitlines()]
+        got = self.S.parse_now(rows[0]["read_at"])
+        self.assertNotEqual(rows[0]["read_at"], "2030-01-01T00:00:00+09:00")
+        self.assertTrue(before.replace(microsecond=0) <= got <= datetime.now().astimezone())
+
+    def test_the_switch_is_not_in_the_steps(self):
+        for f in (H.ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md", H.ROOT / "AGENTS.md", H.ROOT / "CLAUDE.md"):
+            self.assertNotIn(self.S.TEST_CLOCK_ENV, f.read_text(encoding="utf-8"), f.name)
+        self.assertNotIn(self.S.TEST_CLOCK_ENV, H.child_env())
+
+
+class Origin(unittest.TestCase):
+    """段階23 の続き(ユーザーの指示 2026-10-25): 出発地は既定で横浜、東京も選べる。距離は出発地から測り、範囲は出発地ごとに判定する。
+    240〜250 km は範囲の端。答えの冒頭に出発地を 1 行。瓢湖は横浜からは範囲の外、東京からは範囲の端。"""
+
+    def setUp(self):
+        from ikimonobiyori import answer, sources
+        self.A, self.S = answer, sources
+        self.SP = sources.load_policy()
+        self.cat = catalog.load_catalog("wintering_birds")
+        self.reg = sources.load_registry("wintering_birds")
+        self.hyoko = next(e for e in self.cat["entries"] if e["id"] == "hakucho-0001")
+
+    def test_default_origin_is_yokohama_and_tokyo_can_be_chosen(self):
+        self.assertEqual(catalog.resolve_origin(CP), "横浜")
+        self.assertEqual(catalog.resolve_origin(CP, "東京"), "東京")
+        with self.assertRaises(ValueError):
+            catalog.resolve_origin(CP, "大阪")
+
+    def test_hyoko_is_out_from_yokohama_and_edge_from_tokyo(self):
+        self.assertIn("瓢湖", self.hyoko["name"])
+        y, t = catalog.range_from(CP, self.hyoko["point"]), catalog.range_from(CP, self.hyoko["point"], "東京")
+        self.assertEqual((y["origin"], y["status"]), ("横浜", "out_of_range"))
+        self.assertGreater(y["km"], CP["range_limit"]["max_km"])
+        self.assertEqual((t["origin"], t["status"]), ("東京", "edge"))
+        self.assertTrue(guide.val(CP["range_limit"]["edge_min_km"]) <= t["km"] <= CP["range_limit"]["max_km"])
+        self.assertEqual(catalog.range_from(CP, {"lat": 35.47, "lon": 139.62})["status"], "in_range")
+
+    def part(self):
+        on = NOW.replace(hour=12)
+        rec = self.S.make_record(registry=self.reg, policy=self.SP, source_id="agano-hyoko-monthly", site="hakucho-0001", label="白鳥の渡来状況",
+                                 read_at=on.isoformat(), state="3,386羽", observed="2026-10-23",
+                                 url="https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2/16592.html")
+        dates = [date(2026, 10, 25)]
+        return on, dates, {"subject": "wintering_birds", "name": "冬鳥", "catalog": self.cat, "registry": self.reg, "care": None,
+                           "summary": self.S.summarize([rec], registry=self.reg, catalog_doc=self.cat, policy=self.SP, on=on.date(), dates=dates),
+                           "candidates": self.S.candidates(self.cat, self.reg, dates, self.SP)}
+
+    def test_answer_says_out_of_range_from_yokohama(self):
+        on, dates, p = self.part()
+        t = self.A.compose([p], now=on, dates=dates, policy=self.SP)
+        head = t.split("## ")[0]
+        self.assertIn("出発地: 横浜", head)                                              # 冒頭に 1 行
+        rec = t.split("## 今回のおすすめ")[1].split("## ")[0]
+        self.assertNotIn("瓢湖", rec)
+        self.assertIn("横浜から約", t.split("## 注意")[1])
+        self.assertIn("範囲の外", t.split("## 注意")[1])
+
+    def test_answer_says_edge_from_tokyo(self):
+        on, dates, p = self.part()
+        t = self.A.compose([p], now=on, dates=dates, policy=self.SP, origin="東京")
+        self.assertIn("出発地: 東京", t.split("## ")[0])
+        rec = t.split("## 今回のおすすめ")[1].split("## ")[0]
+        self.assertIn("瓢湖", rec)
+        self.assertIn("範囲の端(東京から約", rec)
+        self.assertNotIn("範囲の外のため", t)
+
+    def test_guide_find_measures_from_the_origin(self):
+        far = {("新潟県", "試験市"): {"prefecture": "新潟県", "municipality": "試験市", "qid": "Q9", **self.hyoko["point"]}}
+        rows = recs(*(item(u, name="端の公園", pref="新潟県", muni="試験市") for u in ("https://www.gotokyo.org/x", "https://www.jalan.net/y", "https://rurubu.jp/z")))
+        es = guide.build_entries(rows, far, P, CP)
+        y = guide.find(es, themes={"桜"}, policy=P)
+        self.assertEqual(([e["name"] for e in y["out_of_range"]], y["recommend"]), (["端の公園"], []))
+        self.assertEqual(y["out_of_range"][0]["distance"]["origin"], "横浜")
+        t = guide.find(es, themes={"桜"}, policy=P, origin="東京")
+        self.assertEqual([(e["name"], e["distance"]["status"]) for e in t["recommend"]], [("端の公園", "edge")])
+
+    def test_cli_puts_the_origin_line(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(guide.main(["find", "--word", "冬鳥", "--origin", "東京", "--committed-only"]), 0)
+        d = json.loads(out.getvalue())
+        self.assertEqual(d["origin"], "東京")
+        self.assertTrue(d["origin_line"].startswith("出発地: 東京"))
+        self.assertTrue(all(e["distance"]["origin"] == "東京" for e in d["recommend"]))
 
 
 if __name__ == "__main__":

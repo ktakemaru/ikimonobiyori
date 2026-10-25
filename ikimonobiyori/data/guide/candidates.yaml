@@ -22,6 +22,13 @@ entries:
     km: 40
     from: 東京
     qid: Q1203970
+    by_origin:
+      東京:
+        km: 42
+        status: in_range
+      横浜:
+        km: 59
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -54,6 +61,13 @@ entries:
     km: 60
     from: 横浜
     qid: Q646755
+    by_origin:
+      東京:
+        km: 76
+        status: in_range
+      横浜:
+        km: 57
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -99,6 +113,13 @@ entries:
     km: 130
     from: 東京
     qid: Q1203419
+    by_origin:
+      東京:
+        km: 130
+        status: in_range
+      横浜:
+        km: 142
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -128,6 +149,13 @@ entries:
     km: 50
     from: 東京
     qid: Q692857
+    by_origin:
+      東京:
+        km: 52
+        status: in_range
+      横浜:
+        km: 71
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -169,6 +197,13 @@ entries:
     km: 90
     from: 東京
     qid: Q498060
+    by_origin:
+      東京:
+        km: 87
+        status: in_range
+      横浜:
+        km: 114
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -201,6 +236,13 @@ entries:
     km: 10
     from: 東京
     qid: Q193638
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 23
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -236,6 +278,13 @@ entries:
     km: 0
     from: 東京
     qid: Q190088
+    by_origin:
+      東京:
+        km: 3
+        status: in_range
+      横浜:
+        km: 24
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -283,6 +332,13 @@ entries:
     km: 10
     from: 東京
     qid: Q232635
+    by_origin:
+      東京:
+        km: 9
+        status: in_range
+      横浜:
+        km: 33
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -324,6 +380,13 @@ entries:
     km: 10
     from: 東京
     qid: Q231645
+    by_origin:
+      東京:
+        km: 11
+        status: in_range
+      横浜:
+        km: 21
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -372,6 +435,13 @@ entries:
     km: 20
     from: 東京
     qid: Q210661
+    by_origin:
+      東京:
+        km: 18
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -413,6 +483,13 @@ entries:
     km: 0
     from: 東京
     qid: Q215175
+    by_origin:
+      東京:
+        km: 5
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -540,6 +617,13 @@ entries:
     km: 60
     from: 横浜
     qid: Q646755
+    by_origin:
+      東京:
+        km: 76
+        status: in_range
+      横浜:
+        km: 57
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -582,6 +666,13 @@ entries:
     km: 10
     from: 東京
     qid: Q179645
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -623,6 +714,13 @@ entries:
     km: 10
     from: 東京
     qid: Q233495
+    by_origin:
+      東京:
+        km: 9
+        status: in_range
+      横浜:
+        km: 19
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -668,6 +766,13 @@ entries:
     km: 50
     from: 横浜
     qid: Q873521
+    by_origin:
+      東京:
+        km: 72
+        status: in_range
+      横浜:
+        km: 51
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -718,6 +823,13 @@ entries:
     km: 0
     from: 東京
     qid: Q214051
+    by_origin:
+      東京:
+        km: 2
+        status: in_range
+      横浜:
+        km: 27
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -768,6 +880,13 @@ entries:
     km: 60
     from: 横浜
     qid: Q653364
+    by_origin:
+      東京:
+        km: 90
+        status: in_range
+      横浜:
+        km: 65
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -810,6 +929,13 @@ entries:
     km: 90
     from: 横浜
     qid: Q496072
+    by_origin:
+      東京:
+        km: 116
+        status: in_range
+      横浜:
+        km: 95
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -845,6 +971,13 @@ entries:
     km: 70
     from: 横浜
     qid: Q735175
+    by_origin:
+      東京:
+        km: 86
+        status: in_range
+      横浜:
+        km: 65
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -952,6 +1085,13 @@ entries:
     km: 30
     from: 東京
     qid: Q208818
+    by_origin:
+      東京:
+        km: 26
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -997,6 +1137,13 @@ entries:
     km: 60
     from: 東京
     qid: Q1346985
+    by_origin:
+      東京:
+        km: 57
+        status: in_range
+      横浜:
+        km: 71
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1044,6 +1191,13 @@ entries:
     km: 80
     from: 東京
     qid: Q374477
+    by_origin:
+      東京:
+        km: 79
+        status: in_range
+      横浜:
+        km: 98
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1091,6 +1245,13 @@ entries:
     km: 0
     from: 東京
     qid: Q212713
+    by_origin:
+      東京:
+        km: 4
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1131,6 +1292,13 @@ entries:
     km: 100
     from: 東京
     qid: Q204249
+    by_origin:
+      東京:
+        km: 99
+        status: in_range
+      横浜:
+        km: 126
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1164,6 +1332,13 @@ entries:
     km: 50
     from: 横浜
     qid: Q1202796
+    by_origin:
+      東京:
+        km: 68
+        status: in_range
+      横浜:
+        km: 46
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1217,6 +1392,13 @@ entries:
     km: 70
     from: 東京
     qid: Q647079
+    by_origin:
+      東京:
+        km: 70
+        status: in_range
+      横浜:
+        km: 76
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1247,6 +1429,13 @@ entries:
     km: 70
     from: 東京
     qid: Q858016
+    by_origin:
+      東京:
+        km: 65
+        status: in_range
+      横浜:
+        km: 86
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1324,6 +1513,13 @@ entries:
     km: 70
     from: 横浜
     qid: Q735175
+    by_origin:
+      東京:
+        km: 86
+        status: in_range
+      横浜:
+        km: 65
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1353,6 +1549,13 @@ entries:
     km: 40
     from: 東京
     qid: Q857285
+    by_origin:
+      東京:
+        km: 44
+        status: in_range
+      横浜:
+        km: 63
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1395,6 +1598,13 @@ entries:
     km: 40
     from: 東京
     qid: Q317813
+    by_origin:
+      東京:
+        km: 40
+        status: in_range
+      横浜:
+        km: 40
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1436,6 +1646,13 @@ entries:
     km: 10
     from: 東京
     qid: Q193638
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 23
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1514,6 +1731,13 @@ entries:
     km: 80
     from: 東京
     qid: Q840598
+    by_origin:
+      東京:
+        km: 78
+        status: in_range
+      横浜:
+        km: 100
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1549,6 +1773,13 @@ entries:
     km: 60
     from: 横浜
     qid: Q532346
+    by_origin:
+      東京:
+        km: 84
+        status: in_range
+      横浜:
+        km: 58
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1601,6 +1832,13 @@ entries:
     km: 10
     from: 横浜
     qid: Q217234
+    by_origin:
+      東京:
+        km: 14
+        status: in_range
+      横浜:
+        km: 14
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1656,6 +1894,13 @@ entries:
     km: 0
     from: 東京
     qid: Q214051
+    by_origin:
+      東京:
+        km: 2
+        status: in_range
+      横浜:
+        km: 27
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1739,6 +1984,13 @@ entries:
     km: 70
     from: 東京
     qid: Q647079
+    by_origin:
+      東京:
+        km: 70
+        status: in_range
+      横浜:
+        km: 76
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1775,6 +2027,13 @@ entries:
     km: 90
     from: 横浜
     qid: Q496072
+    by_origin:
+      東京:
+        km: 116
+        status: in_range
+      横浜:
+        km: 95
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1814,6 +2073,13 @@ entries:
     km: 30
     from: 東京
     qid: Q208818
+    by_origin:
+      東京:
+        km: 26
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1847,6 +2113,13 @@ entries:
     km: 10
     from: 東京
     qid: Q179645
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1883,6 +2156,13 @@ entries:
     km: 110
     from: 東京
     qid: Q633647
+    by_origin:
+      東京:
+        km: 108
+        status: in_range
+      横浜:
+        km: 135
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1926,6 +2206,13 @@ entries:
     km: 50
     from: 横浜
     qid: Q1202613
+    by_origin:
+      東京:
+        km: 70
+        status: in_range
+      横浜:
+        km: 48
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -1964,6 +2251,13 @@ entries:
     km: 30
     from: 東京
     qid: Q170616
+    by_origin:
+      東京:
+        km: 32
+        status: in_range
+      横浜:
+        km: 47
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2003,6 +2297,13 @@ entries:
     km: 40
     from: 東京
     qid: Q155317
+    by_origin:
+      東京:
+        km: 38
+        status: in_range
+      横浜:
+        km: 62
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2051,6 +2352,13 @@ entries:
     km: 0
     from: 横浜
     qid: Q38283
+    by_origin:
+      東京:
+        km: 29
+        status: in_range
+      横浜:
+        km: 2
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2085,6 +2393,13 @@ entries:
     km: 10
     from: 東京
     qid: Q179645
+    by_origin:
+      東京:
+        km: 6
+        status: in_range
+      横浜:
+        km: 26
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2128,6 +2443,13 @@ entries:
     km: 90
     from: 横浜
     qid: Q496072
+    by_origin:
+      東京:
+        km: 116
+        status: in_range
+      横浜:
+        km: 95
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2186,6 +2508,13 @@ entries:
     km: 50
     from: 東京
     qid: Q237683
+    by_origin:
+      東京:
+        km: 46
+        status: in_range
+      横浜:
+        km: 47
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2269,6 +2598,13 @@ entries:
     km: 30
     from: 横浜
     qid: Q637928
+    by_origin:
+      東京:
+        km: 41
+        status: in_range
+      横浜:
+        km: 29
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2305,6 +2641,13 @@ entries:
     km: 50
     from: 東京
     qid: Q237683
+    by_origin:
+      東京:
+        km: 46
+        status: in_range
+      横浜:
+        km: 47
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2338,6 +2681,13 @@ entries:
     km: 40
     from: 東京
     qid: Q857285
+    by_origin:
+      東京:
+        km: 44
+        status: in_range
+      横浜:
+        km: 63
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2368,6 +2718,13 @@ entries:
     km: 10
     from: 東京
     qid: Q213464
+    by_origin:
+      東京:
+        km: 10
+        status: in_range
+      横浜:
+        km: 37
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2409,6 +2766,13 @@ entries:
     km: 10
     from: 横浜
     qid: Q164234
+    by_origin:
+      東京:
+        km: 18
+        status: in_range
+      横浜:
+        km: 10
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2466,6 +2830,13 @@ entries:
     km: 90
     from: 横浜
     qid: Q328613
+    by_origin:
+      東京:
+        km: 114
+        status: in_range
+      横浜:
+        km: 92
+        status: in_range
   approval:
     state: candidate
     reasons:
@@ -2506,6 +2877,13 @@ entries:
     km: 50
     from: 東京
     qid: Q850344
+    by_origin:
+      東京:
+        km: 45
+        status: in_range
+      横浜:
+        km: 58
+        status: in_range
   approval:
     state: candidate
     reasons:

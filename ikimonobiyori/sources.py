@@ -779,10 +779,19 @@ def clock_now():
     return datetime.now().astimezone().replace(microsecond=0)
 
 
+TEST_CLOCK_ENV = "IKIMONOBIYORI_TEST_CLOCK"     # テスト専用の時計の切り替え(tests/nonet.py だけが設定する。手順の文書には書かない)
+
+
+def test_clock_enabled():
+    """渡された時刻をテストの時計として使ってよいか。プロセスの環境変数 IKIMONOBIYORI_TEST_CLOCK=1 と BIYORI_UNDER_TEST=1 の両方を、
+    明示的に設定したときだけ(段階23。ユーザーの条件 2026-10-25)。コマンドの引数・入力の JSON からは有効にできない。子プロセスには引き継がない。"""
+    return os.environ.get(TEST_CLOCK_ENV) == "1" and livegate.under_test()
+
+
 def read_time(given=None):
     """記録に入れる読んだ時刻。パソコンの時計から入れ、渡された時刻(--read-at・read の --now)は警告を出して使わない(段階23 フェーズ6)。
-    テスト中(BIYORI_UNDER_TEST=1)だけは、渡された時刻をテストの時計として使う(決まった出力のため。テストは通信も実時刻も使わない)。"""
-    if given is not None and livegate.under_test():
+    テスト専用の時計(test_clock_enabled)が有効なときだけ、渡された時刻をテストの時計として使う(既存のテストの決まった出力のため)。"""
+    if given is not None and test_clock_enabled():
         return parse_now(given)
     if given is not None:
         print(f"警告: 読んだ時刻 {given} は使わない(読んだ時刻はコードがパソコンの時計から入れる)", file=sys.stderr)
@@ -1205,7 +1214,7 @@ def _answer_cli(a):
     reasons = dict(x.split("=", 1) for x in a.unread_reason or [])
     gaps = record_gaps_for_answer(a.read_count, subjects, now.date())
     print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note,
-                         early=a.early, late=a.late, unread_reasons=reasons, record_gaps=gaps), end="")
+                         early=a.early, late=a.late, unread_reasons=reasons, record_gaps=gaps, origin=a.origin), end="")
     memo = answer.work_memo(policy, record_failed=a.record_failed)
     if memo:
         print()
@@ -1353,6 +1362,7 @@ def main(argv=None, http_get=None):
     an.add_argument("--access", action="append")
     an.add_argument("--flower-kind", action="append", help="花の種類(tags.flower_kinds。段階17)")
     an.add_argument("--record-failed", action="store_true", help="読んだ事実を記録できなかった(答えの最後に 1 行)")
+    an.add_argument("--origin", help="出発地(名所カタログの方針 range_limit.origins の名前。省略すると横浜。段階23 の続き)")
     sc = sub.add_parser("spot-coords", help="スポットのページの地図の埋め込みの座標だけを読む(段階19 の続き。日光市観光協会・箱根町観光協会だけ。--live・--max-requests・計測フックが要る)")
     sc.add_argument("--url", action="append", required=True, help="スポットのページの URL(許可ホストだけ)")
     sc.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")

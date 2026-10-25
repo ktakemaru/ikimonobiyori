@@ -135,6 +135,12 @@ def _md(month, third, policy, end):
     return f"{month:02d}-{day:02d}"
 
 
+def load_sources_answer():
+    """答えの決まった文(data/sources/policy.yaml の answer)。出発地の 1 行は現況型の答えと同じ文を使う。"""
+    from .sources import load_policy as sp
+    return sp()["answer"]
+
+
 @functools.lru_cache(maxsize=None)
 def load_sources_thirds():
     """旬の分け方(data/sources/policy.yaml の month_thirds)。読み込みは 1 回だけ。"""
@@ -324,8 +330,11 @@ def place_range(rec_or_entry, places, catalog_policy, policy):
         return {"status": "pending"}
     km, origin = catalog_mod.nearest_origin_km(catalog_policy, p)
     step = val(policy["distance_step_km"])
+    # 出発地ごとの距離と範囲(段階23 の続き。答えは出発地から測って書く。240〜250 km は範囲の端)
+    by_origin = {n: {k: v for k, v in catalog_mod.range_from(catalog_policy, p, n).items() if k != "origin"}
+                 for n in catalog_mod.origin_names(catalog_policy)}
     return {"status": "in_range" if km <= catalog_policy["range_limit"]["max_km"] else "out_of_range",
-            "km": int(round(km / step) * step), "from": origin, "qid": p.get("qid")}
+            "km": int(round(km / step) * step), "from": origin, "qid": p.get("qid"), "by_origin": by_origin}
 
 
 def places_needed(records, places):
@@ -516,10 +525,13 @@ def kind_match(entry, kinds, shown_only=False):
     return any(q in n or n in q for q in kinds for n in names)
 
 
-def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipalities=None, names=None, policy=None):
+def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipalities=None, names=None, policy=None, origin=None, catalog_policy=None):
     """→ {"recommend": おすすめにできる名所(承認・範囲内・時期が合う), "upcoming": これから(時期の始まりが近い),
+    出発地(origin。省略すると横浜)から見て 250 km より先の名所は out_of_range。各名所に distance {origin, km, status}(240〜250 km は edge = 範囲の端)。
     "other_season": 承認済みだが時期の外, "no_season": 承認済みだが例年の時期が確かめられない, "reference": 参考(段階が参考・候補のまま), "out_of_range": 範囲の外(名指しのときだけ答えに使う)}。"""
     policy = policy or load_policy()
+    cpol = catalog_policy or catalog_mod.load_policy()
+    origin = catalog_mod.resolve_origin(cpol, origin)
     up_days = val(policy["upcoming_days"])
     out = {k: [] for k in ("recommend", "upcoming", "other_season", "no_season", "reference", "out_of_range", "kind_notes")}
     order = policy["tiers"]["order"]
@@ -541,8 +553,11 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
             continue
         if names and not any(norm_name(n) in norm_name(e["name"]) for n in names):
             continue
-        if e["range"]["status"] == "out_of_range":
-            out["out_of_range"].append(e)
+        dist = (e["range"].get("by_origin") or {}).get(origin)
+        if dist:
+            e = {**e, "distance": {"origin": origin, **dist}}             # 出発地から見た距離と範囲(in_range / edge / out_of_range)
+        if e["range"]["status"] == "out_of_range" or (dist and dist["status"] == "out_of_range"):
+            out["out_of_range"].append(e)                             # 出発地から 250 km より先(名指しの質問のときだけ答えに使う)
             continue
         if not approved(e):
             out["reference"].append(e)
@@ -752,7 +767,10 @@ def _place_row(e, labels, state_label):
     se = e["season"]
     stext = (se["text"] + ("" if se["shown"] else "(1件のみ)")) if se else "—"
     rng = e["range"]
-    where = f"{e['prefecture'] or ''}{e.get('municipality') or ''}" + (f"(約{rng['km']}km)" if rng.get("km") is not None else "")
+    bo = rng.get("by_origin") or {}
+    mark = {"edge": "・範囲の端", "out_of_range": "・範囲の外"}
+    dist = "・".join(f"{n}から約{d['km']}km{mark.get(d['status'], '')}" for n, d in bo.items())
+    where = f"{e['prefecture'] or ''}{e.get('municipality') or ''}" + (f"({dist})" if dist else "")
     why = "; ".join(e["approval"].get("reasons") or []) or ("外した: " + (e["approval"].get("reason") or "") if e["approval"]["state"] == "rejected" else "規則を満たす")
     return (f"| {e['name']} | {where} | {kinds} | {stext} | {labels[e['tier']]} | {e['independent_sources']} | {''.join(e['classes'])} | "
             f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
@@ -766,7 +784,7 @@ def _kind_row(e, labels, state_label):
             f"{state_label[e['approval']['state']]} | {why} | `{e['id']}` |")
 
 
-PLACE_HEAD = ["| 名所 | 所在(東京・横浜から) | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
+PLACE_HEAD = ["| 名所 | 所在(東京・横浜からの距離) | 種類 | 例年の時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|---|---|"]
 KIND_HEAD = ["| 種類 | 時期 | 段階 | 独立した出どころ | 区分 | 状態 | 理由 | id |", "|---|---|---|---|---|---|---|---|"]
 
 
@@ -903,6 +921,7 @@ def main(argv=None, http_get=None):
     f.add_argument("--prefecture", action="append")
     f.add_argument("--region", help="地域の呼び名(方針 region_municipalities か data/regions.yaml の都道府県)")
     f.add_argument("--name", action="append", help="名所の名前(名指しの質問)")
+    f.add_argument("--origin", help="出発地(data/catalog/policy.yaml の range_limit.origins。省略すると横浜)")
     f.add_argument("--committed-only", action="store_true")
     for name in ("reject", "approve", "visited"):
         p = sub.add_parser(name, help={"reject": "仮承認・候補を外す(同じ候補は再び仮承認されない)", "approve": "承認する(ユーザーの見直し)",
@@ -982,8 +1001,12 @@ def main(argv=None, http_get=None):
                 prefs = reg["match"]["prefectures"]
         entries = committed_entries() if a.committed_only else build()[0]
         got = find(entries, themes=themes, kinds=kinds, on=date.fromisoformat(a.date) if a.date else None, prefectures=prefs,
-                   municipalities=munis, names=a.name, policy=policy)
-        _dump({"themes": sorted(themes), "kinds": kinds, "date": a.date, **{k: v for k, v in got.items()},
+                   municipalities=munis, names=a.name, policy=policy, origin=a.origin)
+        cpol = catalog_mod.load_policy()
+        origin = catalog_mod.resolve_origin(cpol, a.origin)
+        rl = cpol["range_limit"]
+        line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
+        _dump({"origin": origin, "origin_line": line, "themes": sorted(themes), "kinds": kinds, "date": a.date, **{k: v for k, v in got.items()},
                "counts": {k: len(v) for k, v in got.items()}})
         return 0
     if a.cmd in ("reject", "approve", "visited"):
