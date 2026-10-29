@@ -197,7 +197,7 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
     if outside:
         warn(("outside", part["subject"]), wt["outside_catalog"].format(subject=part["name"], names="、".join(dict.fromkeys(outside))))
 
-    gpol, gcounts = guide.load_policy(), guide.reference_counts()          # 参照数(段階24)。ガイドのカタログに同じ場所があるときだけ details に入れる
+    gresolve = guide.reference_resolver(guide.load_policy())          # 参照数(段階24)。ガイドのカタログに同じ場所があるときだけ details に入れる
     refs = {}
     for h in part["candidates"].get("reference_links") or []:
         for s_ in h["sites"]:
@@ -248,7 +248,7 @@ def subject_proposals(part, profile, *, policy, catalog_policy, now, dates, scop
                             "official_status": {"stage": rep.get("stage"), "stage_label": rep.get("stage_label"), "order": rep.get("order"),
                                                 "official_state": rep.get("official_state")},
                             "reference_links": refs.get(sid, []),
-                            **({"reference_count": n_ref} if (n_ref := guide.reference_count_for(gcounts, part["subject"], entry["name"], gpol)) is not None else {}),
+                            **({"reference_count": n_ref} if (n_ref := gresolve(part["subject"], entry["name"])) is not None else {}),
                             **({"catalog_site_ref": entry["site_ref"]} if entry.get("site_ref") else {}),
                             **({"site_details": entry["site_details"]} if entry.get("site_details") else {})},
             })

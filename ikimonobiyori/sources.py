@@ -1214,12 +1214,11 @@ def _answer_cli(a):
     reasons = dict(x.split("=", 1) for x in a.unread_reason or [])
     gaps = record_gaps_for_answer(a.read_count, subjects, now.date())
     from . import guide
-    gpol = guide.load_policy()
-    counts = guide.reference_counts()
+    resolve = guide.reference_resolver(guide.load_policy())
     stats = {}
     print(answer.compose(parts, now=now, dates=dates, policy=policy, scope_note=a.scope_note,
                          early=a.early, late=a.late, unread_reasons=reasons, record_gaps=gaps, origin=a.origin,
-                         refs=lambda subject, name: guide.reference_count_for(counts, subject, name, gpol), ref_stats=stats), end="")
+                         refs=resolve, ref_stats=stats), end="")
     memo = answer.work_memo(policy, record_failed=a.record_failed, ref_stats=stats)
     if memo:
         print()

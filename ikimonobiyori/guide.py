@@ -41,6 +41,7 @@ RECORDS_PATH = GUIDE_DIR / "records.jsonl"            # 見直して置いた候
 PLACES_PATH = GUIDE_DIR / "places.yaml"               # 市区町村の代表点(Wikidata)。export の出力を写す
 REVIEWS_PATH = GUIDE_DIR / "reviews.yaml"             # ユーザーの見直し(外した・承認した)。ユーザーが確かめて置く
 ANNOTATIONS_PATH = GUIDE_DIR / "annotations.jsonl"    # 既存の記録への追記の記録(段階26。guide annotate)。export の出力を写す
+STATUS_ALIAS_PATH = GUIDE_DIR / "status_alias.yaml"    # 現況の名所 → ガイドの名所の対応表(段階26)。コードは表を読むだけ
 CATALOG_PATH = GUIDE_DIR / "catalog.yaml"             # build の結果(仮承認・承認した名所)。records と places から作り直せる(テストが一致を確かめる)
 CANDIDATES_PATH = GUIDE_DIR / "candidates.yaml"       # build の結果(候補のまま・外したもの。理由つき)
 SEASON_RE = re.compile(r"^\s*(\d{1,2})月(上旬|初旬|中旬|下旬|末|頃|ごろ)?\s*$")
@@ -893,6 +894,69 @@ def reference_count_for(counts, subject, name, policy):
     return counts.get((theme, _base_name(name)))
 
 
+def load_status_alias(path=None):
+    p = Path(path or STATUS_ALIAS_PATH)
+    return (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("aliases") or [] if p.is_file() else []
+
+
+def check_status_alias(aliases, policy, guide_entries, status_catalogs):
+    """対応表の検査 → エラーのリスト(空 = 合格)。status_catalogs: {対象: 現況の名所カタログ}。
+    存在しない現況の id・ガイドの id、承認されていないガイドの名所、対象とテーマの食い違い、根拠の欠け、重複を落とす。"""
+    errs, seen = [], set()
+    by_id = {e["id"]: e for e in guide_entries}
+    themes = policy["reference_count"]["subject_theme"]
+    for i, a in enumerate(aliases):
+        tag = f"aliases[{i}]"
+        extra = sorted(set(a) - {"subject", "status_id", "guide_id", "basis"})
+        if extra:
+            errs.append(f"{tag}: 受け取れない項目 {extra}")
+        subj, sid, gid = a.get("subject"), a.get("status_id"), a.get("guide_id")
+        if subj not in themes:
+            errs.append(f"{tag}: subject={subj} は対象の表(reference_count.subject_theme)にない")
+            continue
+        names = {e["id"]: e["name"] for e in catalog_mod.approved_entries(status_catalogs.get(subj) or {})}
+        if sid not in names:
+            errs.append(f"{tag}: 現況の名所 id が {subj} のカタログ(承認済み)にない: {sid}")
+        g = by_id.get(gid)
+        if g is None:
+            errs.append(f"{tag}: ガイドの名所 id がない: {gid}")
+        else:
+            if g.get("scope", "place") != "place":
+                errs.append(f"{tag}: ガイドの id が名所ではない: {gid}")
+            if g["theme"] != themes[subj]:
+                errs.append(f"{tag}: テーマが違う({subj} は {themes[subj]}、ガイドの {gid} は {g['theme']})")
+            if not approved(g):
+                errs.append(f"{tag}: ガイドの名所が承認されていない: {gid}")
+        if not isinstance(a.get("basis"), str) or not a["basis"].strip():
+            errs.append(f"{tag}: 根拠(basis)を 1 行で書く")
+        if (subj, sid) in seen:
+            errs.append(f"{tag}: 同じ現況の名所が重複: {subj} {sid}")
+        seen.add((subj, sid))
+    return errs
+
+
+def reference_resolver(policy=None, aliases=None, entries=None, status_catalogs=None):
+    """現況型の答え・提案の参照数を引く関数 (対象, 名所の名前) → 参照数 or None を作る。
+    1. 名前が完全一致するガイドの名所(基の名前。段階24)  2. 対応表(status_alias.yaml)にある場所。どちらでもなければ None(推測しない)。"""
+    policy = policy or load_policy()
+    entries = committed_entries(catalog_only=True) if entries is None else entries
+    counts = reference_counts(entries)
+    aliases = load_status_alias() if aliases is None else aliases
+    by_id = {e["id"]: e for e in entries}
+    alias_by_name = {}
+    for a in aliases:
+        cat = (status_catalogs or {}).get(a["subject"]) if status_catalogs is not None else catalog_mod.load_catalog(a["subject"])
+        names = {e["id"]: e["name"] for e in catalog_mod.approved_entries(cat or {})}
+        g = by_id.get(a["guide_id"])
+        if a["status_id"] in names and g is not None and approved(g):
+            alias_by_name[(a["subject"], names[a["status_id"]])] = g["independent_sources"]
+
+    def resolve(subject, name):
+        n = reference_count_for(counts, subject, name, policy)
+        return n if n is not None else alias_by_name.get((subject, name))
+    return resolve
+
+
 def count_suffix(n, policy):
     return policy["reference_count"]["suffix"].format(n=n) if n is not None else ""
 
@@ -1084,6 +1148,7 @@ def main(argv=None, http_get=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("theme", help="質問の言葉 → テーマ・種類(方針の words)")
     t.add_argument("word")
+    sub.add_parser("check-alias", help="現況の名所 → ガイドの名所の対応表(data/guide/status_alias.yaml)を検査する(通信しない)")
     an = sub.add_parser("annotate", help="既存の記録(同じ名所・同じ URL)に、後から分かった所在の市区町村・種名・時期を追記する(追記の記録が残る。段階26)")
     an.add_argument("--batch", required=True, help="追記の JSON(配列。各件は theme・name・prefecture・url と、municipality・kinds・season のどれか、summary)")
     rc = sub.add_parser("record-candidate", help="検索・取得で見つけた事実(名所・所在・種類・例年の時期・URL)を候補として記録する")
@@ -1143,6 +1208,12 @@ def main(argv=None, http_get=None):
             return 1
         _dump({"written": n, "duplicates": dup, "rows": [{k: r[k] for k in ("name", "host", "class", "publisher", "read_at")} for r in new]})
         return 0
+    if a.cmd == "check-alias":
+        subjects = list(policy["reference_count"]["subject_theme"])
+        errs = check_status_alias(load_status_alias(), policy, committed_entries(catalog_only=True),
+                                  {s_: catalog_mod.load_catalog(s_) for s_ in subjects})
+        _dump({"aliases": len(load_status_alias()), "errors": errs})
+        return 1 if errs else 0
     if a.cmd == "annotate":
         items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
         try:

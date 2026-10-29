@@ -121,3 +121,55 @@ class Annotate(unittest.TestCase):
 
     def test_committed_annotations_file_exists(self):
         self.assertTrue(guide.ANNOTATIONS_PATH.is_file())
+
+
+from ikimonobiyori import catalog  # noqa: E402
+
+SUBJ = list(P["reference_count"]["subject_theme"])
+STATUS = {s: catalog.load_catalog(s) for s in SUBJ}
+GUIDE = guide.committed_entries(catalog_only=True)
+SHINJUKU = next(e for e in GUIDE if e["name"] == "新宿御苑" and e["theme"] == "紅葉")
+BIRD = next(e for e in GUIDE if e["theme"] == "野鳥")
+YUNOKO = "kouyou-0001"                                              # 奥日光 湯ノ湖(試験のための仮の対応。実データの表には入れていない)
+
+
+class StatusAlias(unittest.TestCase):
+    def _alias(self, **kw):
+        return {**dict(subject="autumn_leaves", status_id=YUNOKO, guide_id=SHINJUKU["id"], basis="試験の根拠"), **kw}
+
+    def test_the_committed_table_passes_the_check(self):
+        self.assertEqual(guide.check_status_alias(guide.load_status_alias(), P, GUIDE, STATUS), [])
+
+    def test_place_in_the_table_gets_the_count_and_others_do_not(self):
+        r = guide.reference_resolver(P, aliases=[self._alias()], entries=GUIDE, status_catalogs=STATUS)
+        self.assertEqual(r("autumn_leaves", "奥日光 湯ノ湖"), SHINJUKU["independent_sources"])
+        self.assertIsNone(r("autumn_leaves", "奥日光 竜頭滝"))                      # 表にない場所は推測しない
+        self.assertIsNone(r("autumn_leaves", "奥日光"))                            # 部分一致はしない
+        self.assertEqual(r("autumn_leaves", "六義園"), next(e for e in GUIDE if e["name"] == "六義園")["independent_sources"])   # 完全一致は今までどおり
+
+    def test_without_a_table_it_is_the_exact_name_match_only(self):
+        r = guide.reference_resolver(P, aliases=[], entries=GUIDE, status_catalogs=STATUS)
+        self.assertIsNone(r("autumn_leaves", "奥日光 湯ノ湖"))
+
+    def test_broken_tables_fail_the_check(self):
+        for bad, word in ((self._alias(guide_id="g-0000000000"), "ガイドの名所 id がない"),
+                          (self._alias(status_id="kouyou-9999"), "現況の名所 id"),
+                          (self._alias(guide_id=BIRD["id"]), "テーマが違う"),
+                          (self._alias(basis=""), "根拠"),
+                          (self._alias(subject="no_such"), "subject")):
+            errs = guide.check_status_alias([bad], P, GUIDE, STATUS)
+            self.assertTrue(any(word in e for e in errs), (word, errs))
+        self.assertTrue(any("重複" in e for e in guide.check_status_alias([self._alias(), self._alias()], P, GUIDE, STATUS)))
+
+    def test_broken_table_makes_the_cli_fail(self):
+        import contextlib
+        import io
+        with mock.patch.object(guide, "load_status_alias", return_value=[self._alias(guide_id="g-0000000000")]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(guide.main(["check-alias"]), 1)
+
+    def test_the_resolver_is_used_by_the_status_answer_and_the_proposals(self):
+        import inspect
+        from ikimonobiyori import proposals, sources
+        self.assertIn("reference_resolver", inspect.getsource(sources._answer_cli))
+        self.assertIn("reference_resolver", inspect.getsource(proposals))
