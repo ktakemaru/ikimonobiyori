@@ -21,7 +21,7 @@ class Phase1Range(unittest.TestCase):
             self.assertEqual(set(e["range"]["by_origin"]), {"東京", "横浜"})
 
     def test_one_source_places_stay_reference_even_in_range(self):
-        for name in ("ふなばし三番瀬海浜公園", "彩湖"):
+        for name in ("ふなばし三番瀬海浜公園",):                                  # 彩湖はフェーズ3 で 2 件になり定評(Phase3 のテスト)
             e = entry(name, "野鳥")
             self.assertEqual((e["tier"], e["range"]["status"], e["approval"]["state"]), ("reference", "in_range", "candidate"), name)
 
@@ -97,3 +97,29 @@ class YokohamaForest(unittest.TestCase):
 
     def test_a_retired_naka_style_guard_does_not_touch_it(self):
         self.assertNotIn("横浜自然観察の森", guide.load_retired(P)["names"])
+
+
+class Phase3(unittest.TestCase):
+    def test_promoted_in_phase3(self):
+        for name, theme, n in (("大塚池公園", "冬鳥", 3), ("五行川白鳥飛来地", "冬鳥", 2), ("越辺川(川島町)", "冬鳥", 2), ("彩湖", "野鳥", 2)):
+            e = entry(name, theme)
+            self.assertEqual((e["tier"], e["independent_sources"], e["range"]["status"], e["approval"]["state"]), ("curated", n, "in_range", "provisional"), name)
+
+    def test_one_source_places_stay_candidates(self):
+        for name, theme in (("稲波干拓", "冬鳥"), ("行徳鳥獣保護区", "野鳥")):
+            e = entry(name, theme)
+            self.assertEqual((e["tier"], e["approval"]["state"]), ("reference", "candidate"), name)
+
+    def test_search_cap_is_140_and_fetch_cap_unchanged(self):
+        b = P["budget"]["collect"]
+        self.assertEqual((b["search"], b["fetch"]), (140, 60))
+
+    def test_places_added_have_wikidata_ids(self):
+        import yaml
+        pl = yaml.safe_load(guide.PLACES_PATH.read_text(encoding="utf-8"))["places"]
+        want = {("栃木県", "栃木市"), ("埼玉県", "さいたま市"), ("埼玉県", "戸田市"), ("栃木県", "日光市"), ("神奈川県", "大和市"), ("千葉県", "船橋市"), ("茨城県", "稲敷市")}
+        have = {(p["prefecture"], p["municipality"]) for p in pl}
+        self.assertTrue(want <= have)
+        for p in pl:
+            if (p["prefecture"], p["municipality"]) in want:
+                self.assertTrue(p["qid"].startswith("Q"))

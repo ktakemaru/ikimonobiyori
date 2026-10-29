@@ -552,6 +552,14 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 潮来市
+- lat: 35.96
+  lon: 140.32
+  municipality: 稲敷市
+  prefecture: 茨城県
+  qid: Q838675
+  read_at: '2026-10-30T07:39:48+09:00'
+  source: wikidata
+  title: 稲敷市
 - lat: 36.46
   lon: 140.49
   municipality: 那珂市

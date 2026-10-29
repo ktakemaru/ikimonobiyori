@@ -129,6 +129,68 @@ entries:
     read_at: '2026-10-25T16:33:21+09:00'
     origin: search
     note: 約30種。早咲きは1月下旬から
+- id: g-03191977ee
+  scope: place
+  theme: 冬鳥
+  name: 越辺川(川島町)
+  prefecture: 埼玉県
+  municipality: 川島町
+  kinds:
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11月中旬〜3月上旬
+    window:
+      start: 11-11
+      end: 03-10
+    independent_sources: 1
+    shown: false
+    from_url: https://tabi-mag.jp/sa0289/
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 40
+    from: 東京
+    qid: Q1203970
+    by_origin:
+      東京:
+        km: 42
+        status: in_range
+      横浜:
+        km: 59
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://tabi-mag.jp/sa0289/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-30T07:42:09+09:00'
+    origin: fetch
+    note: 最盛期は1月下旬〜2月。最大80羽ほど
+  - url: https://www.pref.saitama.lg.jp/e1601/photo19/a4.html
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: A
+    read_at: '2026-10-30T07:42:09+09:00'
+    origin: fetch
+    note: シベリアからの白鳥の飛来地として知られる(埼玉県)
 - id: g-0fd7a72914
   scope: kind
   theme: 花
@@ -238,6 +300,63 @@ entries:
     read_at: '2026-10-30T07:04:26+09:00'
     origin: search
     note: 晩秋に野鳥の森で観察した記録
+- id: g-1c29763a98
+  scope: place
+  theme: 冬鳥
+  name: 五行川白鳥飛来地
+  prefecture: 栃木県
+  municipality: 真岡市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月下旬〜3月下旬
+    window:
+      start: 10-21
+      end: 03-31
+    independent_sources: 2
+    shown: true
+    from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 90
+    from: 東京
+    qid: Q498060
+    by_origin:
+      東京:
+        km: 87
+        status: in_range
+      横浜:
+        km: 114
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://www.tochinavi.net/spot/home/?id=19294
+    host: tochinavi.net
+    publisher: tochinavi.net
+    class: C
+    read_at: '2026-10-30T07:39:38+09:00'
+    origin: fetch
+    note: 多い時には約100羽
 - id: g-1c303ec185
   scope: place
   theme: 花
@@ -1694,6 +1813,72 @@ entries:
     class: A
     read_at: '2026-10-25T16:34:05+09:00'
     origin: search
+- id: g-684890478d
+  scope: place
+  theme: 冬鳥
+  name: 大塚池公園
+  prefecture: 茨城県
+  municipality: 水戸市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 10月中旬〜3月下旬ごろ
+    window:
+      start: 10-11
+      end: 03-31
+    independent_sources: 3
+    shown: true
+    from_url: https://kids.rurubu.jp/article/83265/
+    other_texts:
+    - 10月中旬〜3月下旬
+    - 冬
+  tier: curated
+  independent_sources: 3
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 100
+    from: 東京
+    qid: Q204249
+    by_origin:
+      東京:
+        km: 99
+        status: in_range
+      横浜:
+        km: 126
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 最大300羽ほど
+  - url: https://report.iko-yo.net/articles/15620
+    host: report.iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:39:38+09:00'
+    origin: fetch
+  - url: https://summer.walkerplus.com/odekake/detail/ar0308s77263/
+    host: summer.walkerplus.com
+    publisher: ウォーカープラス
+    class: C
+    read_at: '2026-10-30T07:39:38+09:00'
+    origin: fetch
+    note: 冬はハクチョウが飛来
 - id: g-69f6bbe0c4
   scope: place
   theme: 紅葉
@@ -4714,6 +4899,76 @@ entries:
   access:
   - bus
   - walk_from_station
+- id: g-e86ab2c78f
+  scope: place
+  theme: 野鳥
+  name: 彩湖
+  prefecture: 埼玉県
+  municipality: 戸田市
+  kinds:
+  - kind: ウミネコ
+    independent_sources: 1
+    shown: false
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: キンクロハジロ
+    independent_sources: 1
+    shown: false
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  - kind: マガモ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.toda.saitama.jp/uploaded/attachment/76486.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q823874
+    by_origin:
+      東京:
+        km: 17
+        status: in_range
+      横浜:
+        km: 40
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://www.city.toda.saitama.jp/uploaded/attachment/76486.pdf
+    host: city.toda.saitama.jp
+    publisher: toda.saitama.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+  - url: https://san-tatsu.jp/supporter/reports/2685/
+    host: san-tatsu.jp
+    publisher: san-tatsu.jp
+    class: C
+    read_at: '2026-10-30T07:42:09+09:00'
+    origin: fetch
+    note: 湖畔の散歩の記事。カモやウミネコを眺める
 - id: g-e96ac14d29
   scope: kind
   theme: 冬鳥
