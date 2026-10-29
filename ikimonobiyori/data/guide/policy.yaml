@@ -9,10 +9,19 @@ tiers:
   order: [verified, curated, reference]                  # 強い順。表示の並びにも使う
   curated:
     min_independent: {value: 3, source: "指示書 段階23 フェーズ2 の 4(ユーザー承認 2026-10-25)", provisional: true}
+    # テーマごとの上書き(段階24。ユーザーの決定 2026-10-30)。ここにないテーマは上の既定。「冬鳥」を野鳥と同じ扱いにするのは解釈(野鳥の一部と考えた。docs/stage24-decisions.md)
+    min_independent_by_theme:
+      野鳥: {value: 2, source: "ユーザー指示 2026-10-30(段階24)", provisional: false}
+      冬鳥: {value: 2, source: "ユーザー指示 2026-10-30(段階24。冬鳥は野鳥の一部と解釈)", provisional: false}
     needs_class_any: [A, B, C]
   verified:
     status_classes: [A]                                  # 現地の発信(A)で、日付つきの状態が読めたもの。または、ユーザーが「行って確認した」と記録したもの
   labels: {verified: 確認済み, curated: 定評, reference: 参考}
+# 却下・退役した対象と出どころは、件数が足りても自動で定評にしない(段階24。ユーザーの決定 2026-10-30)
+#   catalog_status: 名所カタログ(data/catalog/*.yaml)の status がこの値の件(名前と出どころの URL を使う)。review_states: reviews の state がこの値の件
+retired_guard:
+  catalog_status: [retired]
+  review_states: [rejected]
 # 実在の確認(フェーズ2 の 5): 自治体・公園・観光協会・メディア(A・B・C)の出どころで 1 件以上
 existence_classes: [A, B, C]
 # 取り出した種名・時期を、ガイドの答えに出してよい下限(独立した出どころの数。フェーズ3 の 2)

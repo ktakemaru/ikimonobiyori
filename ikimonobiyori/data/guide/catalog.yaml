@@ -343,6 +343,60 @@ entries:
     class: C
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
+- id: g-2aa88bae76
+  scope: place
+  theme: 野鳥
+  name: 自然教育園
+  prefecture: 東京都
+  municipality: 港区
+  kinds:
+  - kind: カワセミ
+    independent_sources: 2
+    shown: true
+  season: null
+  tier: curated
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 東京
+    qid: Q190088
+    by_origin:
+      東京:
+        km: 3
+        status: in_range
+      横浜:
+        km: 24
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://ins.kahaku.go.jp/event/2023/11kawasemi/imgs/kawasemi2023_leaflet.pdf
+    host: ins.kahaku.go.jp
+    publisher: kahaku.go.jp
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: カワセミの繁殖の観察記録
+  - url: https://www.city.minato.tokyo.jp/documents/40174/oshietekawasemi.pdf
+    host: city.minato.tokyo.jp
+    publisher: minato.tokyo.jp
+    class: B
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+    note: カワセミが巣作りや餌取りに使う場所
+  - url: https://web.kahaku.go.jp/research/publication/meguro/download/33/ns-r-33_32.pdf
+    host: web.kahaku.go.jp
+    publisher: kahaku.go.jp
+    class: B
+    read_at: '2026-10-25T16:58:18+09:00'
+    origin: search
+    note: 園内での繁殖の記録
 - id: g-2fed93a32b
   scope: place
   theme: 花
@@ -652,7 +706,7 @@ entries:
     shown: true
     from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-bird_report_160915
     other_texts: []
-  tier: reference
+  tier: curated
   independent_sources: 2
   classes:
   - B
@@ -1995,7 +2049,7 @@ entries:
     shown: true
     from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
     other_texts: []
-  tier: reference
+  tier: curated
   independent_sources: 2
   classes:
   - B
@@ -2381,6 +2435,59 @@ entries:
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
     seed_id: T01
+- id: g-8fd53c31c1
+  scope: place
+  theme: 冬鳥
+  name: 白鳥の里(北浦)
+  prefecture: 茨城県
+  municipality: 潮来市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  season:
+    text: ピークは例年1月中旬〜下旬頃
+    window:
+      start: 01-11
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://kids.rurubu.jp/article/83265/
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q840598
+    by_origin:
+      東京:
+        km: 78
+        status: in_range
+      横浜:
+        km: 100
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-25'
+    by: auto-rule
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
 - id: g-905d954297
   scope: place
   theme: ホタル
@@ -3369,7 +3476,7 @@ entries:
     shown: true
     from_url: https://www.kankyo.metro.tokyo.lg.jp/documents/d/kankyo/creature-aquatic_creature-files-tyourui_report_150126
     other_texts: []
-  tier: reference
+  tier: curated
   independent_sources: 2
   classes:
   - B
@@ -4035,7 +4142,7 @@ entries:
     shown: true
     from_url: https://www.city.ichikawa.lg.jp/common/pr/file/0000502402.pdf
     other_texts: []
-  tier: reference
+  tier: curated
   independent_sources: 2
   classes:
   - B
@@ -4179,7 +4286,7 @@ entries:
     from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
     other_texts:
     - 11月下旬から3月上旬
-  tier: reference
+  tier: curated
   independent_sources: 2
   classes:
   - C

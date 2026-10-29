@@ -389,14 +389,43 @@ def independent_groups(sources):
     return list(groups.values())
 
 
-def tier_of(sources, groups, visits, policy):
+def curated_min(policy, theme=None):
+    """定評にする独立した発行元の下限。テーマごとの上書き(min_independent_by_theme)があればそれ、なければ既定(段階24)。"""
+    c = policy["tiers"]["curated"]
+    return val((c.get("min_independent_by_theme") or {}).get(theme, c["min_independent"]))
+
+
+def tier_of(sources, groups, visits, policy, theme=None):
     """信頼の段階(D-02 / フェーズ2 の 4)。verified → curated → reference の順に見る。"""
     t = policy["tiers"]
     if visits or any(s.get("status") and s["class"] in t["verified"]["status_classes"] for s in sources):
         return "verified"
-    if len(groups) >= val(t["curated"]["min_independent"]) and any(s["class"] in t["curated"]["needs_class_any"] for s in sources):
+    if len(groups) >= curated_min(policy, theme) and any(s["class"] in t["curated"]["needs_class_any"] for s in sources):
         return "curated"
     return "reference"
+
+
+def _base_name(s):
+    """名前の末尾のかっこ(「白鳥の郷公苑(三条市)」の所在)を除いて、比べる形にする。"""
+    return norm_name(re.sub(r"[(（][^)）]*[)）]\s*$", "", s or ""))
+
+
+def load_retired(policy, reviews=None, catalog_dir=None):
+    """却下・退役した対象 → {"names": {基の名前: 理由}, "urls": {URL: 理由}}。名所カタログの retired と、見直しの rejected から作る(データを参照する)。"""
+    g = policy.get("retired_guard") or {}
+    names, urls = {}, {}
+    for p in sorted(Path(catalog_dir or catalog_mod.CATALOG_DIR).glob("*.yaml")):
+        doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        for e in doc.get("entries") or []:
+            if e.get("status") in (g.get("catalog_status") or []):
+                why = e.get("retired_reason") or "退役"
+                names[_base_name(e["name"])] = why
+                for src in e.get("sources") or []:
+                    urls[src["url"]] = why
+    for rv in (reviews or {}).values():
+        if rv.get("state") in (g.get("review_states") or []) and rv.get("name"):
+            names[_base_name(rv["name"])] = rv.get("reason") or "却下"
+    return {"names": names, "urls": urls}
 
 
 # ---- まとめる ----
@@ -419,9 +448,11 @@ def load_reviews(env=None, include_runtime=True):
     return out
 
 
-def build_entries(records, places, policy, catalog_policy, reviews=None):
-    """候補の記録 → 名所ごとの 1 件(テーマ・都道府県・名前が同じものをまとめる)。段階・実在・範囲・承認をコードが決める。決まった並び。"""
+def build_entries(records, places, policy, catalog_policy, reviews=None, retired=None):
+    """候補の記録 → 名所ごとの 1 件(テーマ・都道府県・名前が同じものをまとめる)。段階・実在・範囲・承認をコードが決める。決まった並び。
+    retired(load_retired の結果。省略すると名所カタログ・見直しから読む): 却下・退役した名前の名所は定評にしない。退役した出どころの URL は定評の件数に数えない(段階24)。"""
     reviews = reviews or {}
+    retired = retired if retired is not None else load_retired(policy, reviews)
     # 区分・発行元は、読んだときではなく今の方針の表で決め直す(表に足したホストを、前に読んだ記録にも効かせる)
     records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
     by = {}
@@ -458,7 +489,11 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
                       "independent_sources": len(agree), "shown": len(agree) >= show_min, "from_url": s0["url"],
                       "other_texts": sorted({s["_season"]["text"] for s, _ in seasons[1:] if s["_season"]["text"] != s0["_season"]["text"]})}
         visits = [v for v in [reviews.get(eid)] if v and v.get("state") == "visited"]
-        tier = tier_of(srcs, groups, visits, policy)
+        retired_name = retired["names"].get(_base_name(rows[0]["name"]))
+        live = [s for s in srcs if s["url"] not in retired["urls"]]
+        tier = tier_of(live, independent_groups(live), visits, policy, rows[0]["theme"])
+        if retired_name and tier == "curated":
+            tier = "reference"                           # 却下・退役した対象は自動で定評にしない
         exists = any(s["class"] in policy["existence_classes"] for s in srcs)
         muni = next((r.get("municipality") for r in sorted(rows, key=lambda x: (CLASS_RANK.index(x["class"]), x["read_at"])) if r.get("municipality")), None)
         scope = rows[0].get("scope", "place")
@@ -471,6 +506,8 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
                 reasons.append(f"独立した出どころが {len(groups)} 件")
         elif tier == "reference":
             reasons.append(f"独立した出どころが {len(groups)} 件" + ("(個人の発信だけ)" if not exists else ""))
+        if scope != "kind" and retired_name:
+            reasons.append(f"却下・退役済み({retired_name})")
         if not exists:
             reasons.append("実在を、自治体・公園・観光協会・メディアの出どころで確認できていない")
         if rng["status"] == "pending":
