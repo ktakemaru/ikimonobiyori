@@ -286,7 +286,7 @@ def _line(row, on, names, policy, multi):
 
 
 def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=None, record_failed=False, early=False, late=False, unread_reasons=None,
-            record_gaps=None, origin=None):
+            record_gaps=None, origin=None, refs=None, ref_stats=None):
     """subject_parts: [{subject, name, summary, candidates, catalog, care?}](対象ごと)→ 答えの下書き(Markdown の文字列)。
     scope_note は扱える範囲が質問の一部だけのときの 1 行(冒頭に出す)。simple_read は要約で読んだ(簡易な読み取り。
     省略すると、使う記録に read_by: summary があるかで決める)、record_failed は読んだ事実を記録できなかったとき(答えの最後に 1 行)。
@@ -352,8 +352,12 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
                 rg = ranges.get((p_["subject"], r.get("site")))
                 if rg and rg["status"] == "edge":
                     reason += "。" + ans["edge_note"].format(origin=origin, km=rg["km"])
+                n_ref = refs(p_["subject"], (entries.get(r.get("site")) or {}).get("name") or place_name(r, names)) if refs else None
+                if refs and ref_stats is not None:
+                    ref_stats["attached" if n_ref is not None else "missing"] = ref_stats.get("attached" if n_ref is not None else "missing", 0) + 1
                 lines.append(f"{i}. **{place_name(r, names, multi[p_['subject']])}** — " + "、".join(bits) + f"。{reason}"
-                             + "".join(f"。{n}" for n in forecast_notes(r, dates, on, policy)))
+                             + "".join(f"。{n}" for n in forecast_notes(r, dates, on, policy))
+                             + (ans["reference_suffix"].format(n=n_ref) if n_ref is not None else ""))
         mine = [c for c in chosen if c[0] is p]
         orders = None if not (early or late) else set(policy["stage_scope"]["default"]) | (set(policy["stage_scope"]["early"]) if early else set()) | (set(policy["stage_scope"]["late"]) if late else set())
         ended, others = left_out([near_parts[id(p)]], policy, dates, mine, orders=orders)
@@ -458,13 +462,17 @@ def compose(subject_parts, *, now, dates, policy, scope_note=None, simple_read=N
         lines += [f"## {ans['headings']['unread']}"] + unread + [""]
     if record_failed and ans.get("record_failed_note"):
         lines.append(ans["record_failed_note"])
+    if ref_stats and ref_stats.get("attached"):
+        lines += ["", ans["reference_legend"]]                    # 凡例は 1 回だけ(答えの最後)
     return "\n".join(lines).rstrip() + "\n"
 
 
-def work_memo(policy, *, record_failed=False):
+def work_memo(policy, *, record_failed=False, ref_stats=None):
     """作業メモ(答えには含めない。答えの後ろに分けて出す。段階20)。実装・記録の報告はここに書く。なければ None。"""
     ans = policy["answer"]
     notes = [ans["record_failed_note"]] if record_failed and ans.get("record_failed_note") else []
+    if ref_stats and ref_stats.get("missing"):
+        notes.append(ans["reference_missing_note"].format(n=ref_stats["missing"]))
     if not notes:
         return None
     return chr(10).join(["---", f"## {ans['work_memo_heading']}"] + [f"- {n}" for n in notes]) + chr(10)

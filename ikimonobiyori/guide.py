@@ -788,12 +788,79 @@ def sources_mod_parse(s):
     return parse_now(s)
 
 
-def committed_entries():
-    """data/guide/catalog.yaml + candidates.yaml(見直して置いたもの)。"""
+def committed_entries(catalog_only=False):
+    """data/guide/catalog.yaml + candidates.yaml(見直して置いたもの)。catalog_only なら catalog.yaml だけ。"""
     out = []
-    for p in (CATALOG_PATH, CANDIDATES_PATH):
+    for p in ((CATALOG_PATH,) if catalog_only else (CATALOG_PATH, CANDIDATES_PATH)):
         if p.is_file():
             out += (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("entries") or []
+    return out
+
+
+# ---- 参照数の表示(段階24) ----
+
+def reference_counts(entries=None, policy=None):
+    """ガイドのカタログの場所 → 参照数 {(テーマ, 基の名前): 独立した発行元の数}。承認(仮承認・承認)済みの場所だけ。"""
+    entries = committed_entries(catalog_only=True) if entries is None else entries
+    return {(e["theme"], _base_name(e["name"])): e["independent_sources"]
+            for e in entries if e.get("scope", "place") == "place" and approved(e)}
+
+
+def reference_count_for(counts, subject, name, policy):
+    """現況の対象と名所の名前 → 参照数。ガイドのカタログに同じ場所がなければ None(推測や 1 の仮置きをしない)。"""
+    theme = policy["reference_count"]["subject_theme"].get(subject)
+    return counts.get((theme, _base_name(name)))
+
+
+def count_suffix(n, policy):
+    return policy["reference_count"]["suffix"].format(n=n) if n is not None else ""
+
+
+def render_answer(found, policy, origin_line=None, on=None):
+    """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
+    ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
+    a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
+    rc = policy["reference_count"]
+    shown = [False]
+
+    def row(e, i=None):
+        where = f"{e.get('prefecture') or ''}{e.get('municipality') or ''}"
+        bits = []
+        se = e.get("season")
+        if se and se["shown"]:
+            bits.append(a["bits"]["season"].format(text=se["text"]))
+        kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"])
+        if kinds:
+            bits.append(a["bits"]["kinds"].format(text=kinds))
+        bits.append(a["bits"]["tier"].format(label=labels[e["tier"]]))
+        bits.append(a["bits"]["classes"].format(text="・".join(classes[c] for c in e["classes"])))
+        d = e.get("distance")
+        if d:
+            bits.append(a["bits"]["distance"].format(origin=d["origin"], km=d["km"]) + ("、" + a["bits"]["edge"] if d["status"] == "edge" else ""))
+        head = a["place"].format(i=i, name=e["name"], where=where) if i else a["reference_item"].format(name=e["name"], where=where)
+        shown[0] = True
+        return head + " — " + "、".join(bits) + count_suffix(e["independent_sources"], policy)
+
+    lines = [origin_line, ""] if origin_line else []
+    lines.append(f"## {a['headings']['recommend']}")
+    rec = found.get("recommend") or []
+    lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
+    for key in ("upcoming", "reference"):
+        es = found.get(key) or []
+        if es:
+            lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]
+    if shown[0]:
+        lines += ["", rc["legend"]]
+    return "\n".join(lines) + "\n"
+
+
+def forbidden_in_answer(text, policy):
+    """ガイド型の答えに出ている内部用語(空 = 合格)。英字の語は単語の区切りで探す。"""
+    out = []
+    for t in policy["answer"]["forbidden_terms"]:
+        pat = rf"(?<![A-Za-z0-9_]){re.escape(t)}(?![A-Za-z0-9_])" if t.isascii() else re.escape(t)
+        if re.search(pat, re.sub(r"https?://\S+", " ", text), flags=re.IGNORECASE):
+            out.append(t)
     return out
 
 
@@ -960,6 +1027,7 @@ def main(argv=None, http_get=None):
     f.add_argument("--name", action="append", help="名所の名前(名指しの質問)")
     f.add_argument("--origin", help="出発地(data/catalog/policy.yaml の range_limit.origins。省略すると横浜)")
     f.add_argument("--committed-only", action="store_true")
+    f.add_argument("--text", action="store_true", help="JSON ではなく、コードが組み立てたガイド型の答えの文を出す(参照数と凡例つき。段階24)")
     for name in ("reject", "approve", "visited"):
         p = sub.add_parser(name, help={"reject": "仮承認・候補を外す(同じ候補は再び仮承認されない)", "approve": "承認する(ユーザーの見直し)",
                                        "visited": "ユーザーが行って確認した(確認済みになる)"}[name])
@@ -1043,6 +1111,14 @@ def main(argv=None, http_get=None):
         origin = catalog_mod.resolve_origin(cpol, a.origin)
         rl = cpol["range_limit"]
         line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
+        if a.text:
+            text = render_answer(got, policy, origin_line=line)
+            bad = forbidden_in_answer(text, policy)
+            if bad:
+                print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)
+                return 1
+            print(text, end="")
+            return 0
         _dump({"origin": origin, "origin_line": line, "themes": sorted(themes), "kinds": kinds, "date": a.date, **{k: v for k, v in got.items()},
                "counts": {k: len(v) for k, v in got.items()}})
         return 0

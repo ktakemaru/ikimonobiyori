@@ -193,3 +193,18 @@ region_municipalities:
   富士山周辺:
     source: "Claude Code が付けた(段階23)。山梨県の富士五湖の 6 市町村と、静岡県の富士山の麓の 5 市町(富士山を囲む市町村)"
     municipalities: [富士吉田市, 富士河口湖町, 山中湖村, 忍野村, 鳴沢村, 西桂町, 富士宮市, 御殿場市, 小山町, 裾野市, 富士市]
+
+# 参照数の表示(段階24。ユーザーの決定 2026-10-30)。ガイド型の場所の行・現況型のおすすめの行の文末に「（参照数 N）」。N = その場所の独立した発行元の数
+reference_count:
+  suffix: "（参照数 {n}）"
+  legend: "参照数は、その場所を紹介している独立した発行元の数です。"
+  # 現況の対象 → ガイドのテーマ(現況型の場所をガイドのカタログの同じ場所と照らす)
+  subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
+# ガイド型の答え(コードが組み立てる文。guide find --text)の文言。段階の表示は labels(確認済み / 定評 / 参考)。内部用語を出さない
+answer:
+  headings: {recommend: おすすめ, upcoming: これから, reference: 参考, notes: 注意}
+  none_found: "おすすめにできる名所は見つかりませんでした。"
+  place: "{i}. **{name}**({where})"
+  bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
+  reference_item: "- {name}({where})"
+  forbidden_terms: [tier, independent_sources, auto-rule, reference, curated, verified, provisional, candidate]

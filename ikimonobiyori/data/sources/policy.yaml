@@ -60,6 +60,10 @@ answer:
     forecast: "公式の見頃予測「{forecast}」が対象の日にかかる"
     latest: "公式の最新の記載"
   none_found: "公式の情報で、対象の日におすすめできる名所は見つかりませんでした。"
+  # 参照数(段階24。ユーザーの決定 2026-10-30)。ガイドのカタログに同じ場所があるおすすめだけ、行の文末に付ける(値は data/guide/policy.yaml の reference_count と同じ)
+  reference_suffix: "（参照数 {n}）"
+  reference_legend: "参照数は、その場所を紹介している独立した発行元の数です。"
+  reference_missing_note: "参照数を付けられなかったおすすめの場所: {n} 件(ガイドの名所の一覧に同じ場所がない)"
   # 出発地(段階23 の続き。ユーザーの指示 2026-10-25)。答えの冒頭に 1 行。距離は出発地から測る。範囲の外の名所はおすすめに入れず注意に、範囲の端は理由に添える
   origin_line: "出発地: {origin}(距離は{origin}からの直線距離。{max_km} km より先は範囲の外、{edge_km}〜{max_km} km は範囲の端)"
   out_of_range_note: "{origin}から約{km} kmで範囲の外のため、おすすめに入れていません"

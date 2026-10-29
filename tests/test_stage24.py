@@ -96,5 +96,74 @@ class RetiredGuard(unittest.TestCase):
         self.assertNotIn("古徳沼", names)
 
 
+class ReferenceCountDisplay(unittest.TestCase):
+    """参照数の表示(段階24 フェーズ3)。コードが組み立てた文だけ。"""
+
+    def _entries(self):
+        rows = recs(item(A1, name="試験の沼", theme="野鳥"), item(C1, name="試験の沼", theme="野鳥"), item(C2, name="試験の沼", theme="野鳥"),
+                    item(C1, name="一件の池", theme="野鳥"))
+        return guide.build_entries(rows, PLACES, P, CP)
+
+    def _found(self):
+        es = self._entries()
+        return {"recommend": [e for e in es if e["name"] == "試験の沼"], "upcoming": [], "reference": [e for e in es if e["name"] == "一件の池"]}
+
+    def test_suffix_and_single_legend(self):
+        text = guide.render_answer(self._found(), P, origin_line="出発地: 横浜")
+        self.assertIn("（参照数 3）", text)                     # 発行元 3 件(A・るるぶ・ウォーカープラス)
+        self.assertIn("（参照数 1）", text)
+        self.assertEqual(text.count(P["reference_count"]["legend"]), 1)
+        self.assertTrue(text.rstrip().endswith(P["reference_count"]["legend"]))
+
+    def test_no_legend_when_no_places(self):
+        text = guide.render_answer({"recommend": []}, P)
+        self.assertNotIn(P["reference_count"]["legend"], text)
+
+    def test_no_internal_terms(self):
+        text = guide.render_answer(self._found(), P, origin_line="出発地: 横浜")
+        self.assertEqual(guide.forbidden_in_answer(text, P), [])
+        for w in ("定評", "参考"):
+            self.assertIn(w, text)
+
+    def test_reference_counts_lookup_only_for_catalog_places(self):
+        counts = guide.reference_counts(self._entries())
+        self.assertEqual(guide.reference_count_for(counts, "birds", "試験の沼", P), 3)
+        self.assertIsNone(guide.reference_count_for(counts, "birds", "カタログにない場所", P))
+        self.assertIsNone(guide.reference_count_for(counts, "autumn_leaves", "試験の沼", P))      # テーマが違えば別の場所
+
+    def test_real_committed_catalog_counts(self):
+        counts = guide.reference_counts()
+        self.assertEqual(guide.reference_count_for(counts, "birds", "東京港野鳥公園", P), 6)
+
+    def test_status_answer_gets_counts_only_where_known(self):
+        from test_answer import DATES, NOW, POLICY, parts
+        from ikimonobiyori import answer
+        counts = {("紅葉", "試験の渓谷"): 4}                          # ガイドの一覧にあるのは渓谷だけ
+        stats = {}
+        text = answer.compose(parts(), now=NOW, dates=DATES, policy=POLICY,
+                              refs=lambda subject, name: guide.reference_count_for(counts, subject, name, P), ref_stats=stats)
+        rec = text.split("## 根拠")[0]
+        self.assertIn("**試験の渓谷**", rec)
+        self.assertEqual([ln for ln in rec.splitlines() if "（参照数 4）" in ln and "試験の渓谷" in ln].__len__(), 1)
+        self.assertEqual(rec.count("参照数"), 1)                      # 湖畔・滝には付かない(推測や 1 の仮置きをしない)
+        self.assertEqual(stats, {"attached": 1, "missing": 2})
+        self.assertEqual(text.count(POLICY["answer"]["reference_legend"]), 1)
+        self.assertEqual(answer.forbidden_found(text, POLICY), [])
+        memo = answer.work_memo(POLICY, ref_stats=stats)
+        self.assertIn("2 件", memo)                                   # 付けられなかった件数は作業メモに(答えには出さない)
+        self.assertNotIn("付けられなかった", text)
+
+    def test_status_answer_without_refs_is_unchanged(self):
+        from test_answer import DATES, NOW, POLICY, parts
+        from ikimonobiyori import answer
+        text = answer.compose(parts(), now=NOW, dates=DATES, policy=POLICY)
+        self.assertNotIn("参照数", text)
+
+    def test_proposal_details_carry_the_count_only_when_known(self):
+        counts = {("紅葉", "試験の渓谷"): 4}
+        self.assertEqual(guide.reference_count_for(counts, "autumn_leaves", "試験の渓谷", P), 4)
+        self.assertIsNone(guide.reference_count_for(counts, "autumn_leaves", "試験の湖畔", P))
+
+
 if __name__ == "__main__":
     unittest.main()
