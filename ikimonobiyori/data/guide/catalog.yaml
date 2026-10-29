@@ -1,6 +1,58 @@
 # build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)
 schema: ikimono-guide-catalog/1
 entries:
+- id: g-00e0df55e2
+  scope: place
+  theme: 野鳥
+  name: 渡良瀬遊水地
+  prefecture: 栃木県
+  municipality: 栃木市
+  kinds: []
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 80
+    from: 東京
+    qid: Q44830
+    by_origin:
+      東京:
+        km: 78
+        status: in_range
+      横浜:
+        km: 102
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://mobile.wbsj.org/nature/public/strix/16/Strix16_01.pdf
+    host: mobile.wbsj.org
+    publisher: wbsj.org
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: チュウヒの代表的な越冬地の一つ(検索の要約)
+  - url: https://www.city.tochigi.lg.jp/uploaded/attachment/42210.pdf
+    host: city.tochigi.lg.jp
+    publisher: tochigi.lg.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 冬にチュウヒなどが確認できる(検索の要約)
+  - url: https://www.gmnh.pref.gunma.jp/wp-content/uploads/report2015_15.pdf
+    host: gmnh.pref.gunma.jp
+    publisher: pref.gunma.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: チュウヒの越冬地の報告(検索の要約)
 - id: g-01fcdf72d4
   scope: place
   theme: 花
@@ -122,6 +174,70 @@ entries:
     class: B
     read_at: '2026-10-25T16:34:05+09:00'
     origin: search
+- id: g-131e9a4128
+  scope: place
+  theme: 野鳥
+  name: 秋ヶ瀬公園
+  prefecture: 埼玉県
+  municipality: さいたま市
+  kinds:
+  - kind: アオジ
+    independent_sources: 1
+    shown: false
+  - kind: アトリ
+    independent_sources: 1
+    shown: false
+  - kind: ノスリ
+    independent_sources: 1
+    shown: false
+  - kind: ハイタカ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q134635
+    by_origin:
+      東京:
+        km: 23
+        status: in_range
+      横浜:
+        km: 44
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://rurubu.jp/andmore/spot/80008463
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+  - url: https://www.pref.saitama.lg.jp/shisetsu/koen/004.html
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 野鳥園がある(検索の要約)
+  - url: https://yamap.com/activities/14724112/article
+    host: yamap.com
+    publisher: YAMAP
+    class: D
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 晩秋に野鳥の森で観察した記録
 - id: g-1c303ec185
   scope: place
   theme: 花
@@ -2146,6 +2262,68 @@ entries:
     origin: search
   access:
   - walk_from_station
+- id: g-84b8be3d20
+  scope: place
+  theme: 野鳥
+  name: 奥日光(戦場ヶ原・中禅寺湖)
+  prefecture: 栃木県
+  municipality: 日光市
+  kinds:
+  - kind: アオゲラ
+    independent_sources: 1
+    shown: false
+  - kind: ウグイス
+    independent_sources: 1
+    shown: false
+  - kind: エナガ
+    independent_sources: 1
+    shown: false
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  - kind: キセキレイ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 120
+    from: 東京
+    qid: Q235753
+    by_origin:
+      東京:
+        km: 116
+        status: in_range
+      横浜:
+        km: 140
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://mobile.wbsj.org/nature/hogo/others/iba/search/sites/touhoku/imgs/JP067.pdf
+    host: mobile.wbsj.org
+    publisher: wbsj.org
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 冬は中禅寺湖・湯ノ湖にカモ類。日光地方で180種近く
+  - url: https://www.ana.co.jp/ja/kr/japan-travel-planner/tochigi/0000019.html
+    host: ana.co.jp
+    publisher: ana.co.jp
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 戦場ヶ原の自然探究路。多様な野鳥が生息(検索の要約)
 - id: g-8734878638
   scope: place
   theme: 桜
@@ -3783,6 +3961,60 @@ entries:
     read_at: '2026-10-25T16:40:48+09:00'
     origin: search
     note: 山田川周辺。毎年5月下旬にほたる祭り
+- id: g-c69629403d
+  scope: place
+  theme: 野鳥
+  name: 泉の森
+  prefecture: 神奈川県
+  municipality: 大和市
+  kinds:
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://kanagawa-kankou.or.jp/spot/471
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 10
+    from: 横浜
+    qid: Q386697
+    by_origin:
+      東京:
+        km: 35
+        status: in_range
+      横浜:
+        km: 15
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://iko-yo.net/facilities/12362
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 年間を通じて野鳥約80種(検索の要約)
+  - url: https://kanagawa-kankou.or.jp/spot/471
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: fetch
+    note: 野鳥約50種を1年間で観察できる
 - id: g-cab22e5dd6
   scope: kind
   theme: 桜

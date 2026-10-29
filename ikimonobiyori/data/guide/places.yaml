@@ -72,6 +72,14 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 習志野市
+- lat: 35.69
+  lon: 139.98
+  municipality: 船橋市
+  prefecture: 千葉県
+  qid: Q271417
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: 船橋市
 - lat: 35.0
   lon: 139.87
   municipality: 館山市
@@ -80,6 +88,14 @@ places:
   read_at: '2026-10-25T16:27:47+09:00'
   source: wikidata
   title: 館山市
+- lat: 35.86
+  lon: 139.65
+  municipality: さいたま市
+  prefecture: 埼玉県
+  qid: Q134635
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: さいたま市
 - lat: 36.03
   lon: 139.53
   municipality: 北本市
@@ -112,6 +128,14 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 川島町
+- lat: 35.82
+  lon: 139.68
+  municipality: 戸田市
+  prefecture: 埼玉県
+  qid: Q823874
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: 戸田市
 - lat: 36.07
   lon: 139.36
   municipality: 滑川町
@@ -376,6 +400,22 @@ places:
   read_at: '2026-10-25T16:36:00+09:00'
   source: wikidata
   title: 青梅市
+- lat: 36.72
+  lon: 139.7
+  municipality: 日光市
+  prefecture: 栃木県
+  qid: Q235753
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: 日光市
+- lat: 36.38
+  lon: 139.73
+  municipality: 栃木市
+  prefecture: 栃木県
+  qid: Q44830
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: 栃木市
 - lat: 36.44
   lon: 140.01
   municipality: 真岡市
@@ -400,6 +440,14 @@ places:
   read_at: '2026-10-25T16:27:47+09:00'
   source: wikidata
   title: 三浦市
+- lat: 35.49
+  lon: 139.46
+  municipality: 大和市
+  prefecture: 神奈川県
+  qid: Q386697
+  read_at: '2026-10-30T07:29:05+09:00'
+  source: wikidata
+  title: 大和市
 - lat: 35.53
   lon: 139.7
   municipality: 川崎市
