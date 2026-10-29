@@ -26,7 +26,10 @@ class Phase1Range(unittest.TestCase):
             self.assertEqual((e["tier"], e["range"]["status"], e["approval"]["state"]), ("reference", "in_range", "candidate"), name)
 
     def test_unknown_municipality_stays_unconfirmed(self):
-        e = entry("妙岐ノ鼻・和田公園(霞ヶ浦)", "野鳥")
+        # 妙岐ノ鼻・和田公園は段階26 の追記で市区町村(稲敷市)が付いた。市区町村のない記録は今までどおり「範囲は未確認」(合成の記録で確かめる)
+        from test_stage23 import CP, PLACES, item, recs
+        rows = recs(item("https://rurubu.jp/andmore/spot/9", name="市のない池", theme="野鳥", muni=None), item("https://www.walkerplus.com/article/9/", name="市のない池", theme="野鳥", muni=None))
+        e = {x["name"]: x for x in guide.build_entries(rows, PLACES, guide.load_policy(), CP)}["市のない池"]
         self.assertEqual((e["range"]["status"], e["approval"]["state"]), ("pending", "candidate"))
 
 

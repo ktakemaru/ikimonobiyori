@@ -101,7 +101,7 @@ class Annotate(unittest.TestCase):
         merged = self._mine()
         for k in ("url", "class", "publisher", "host", "read_at"):
             self.assertEqual(merged[k], raw0[k])
-        hist = guide.all_annotations()
+        hist = [a for a in guide.all_annotations() if a["name"] == "追記の沼"]
         self.assertEqual((hist[0]["summary"], hist[0]["url"], hist[0]["municipality"]), ("所在が書かれていた", C1, "追記区"))
         self.assertIn("at", hist[0])
         self.assertTrue((self.d / "guide" / "annotations.jsonl").is_file())
@@ -173,3 +173,35 @@ class StatusAlias(unittest.TestCase):
         from ikimonobiyori import proposals, sources
         self.assertIn("reference_resolver", inspect.getsource(sources._answer_cli))
         self.assertIn("reference_resolver", inspect.getsource(proposals))
+
+
+class Phase4Data(unittest.TestCase):
+    def _e(self, name, theme="野鳥"):
+        return next(e for e in guide.committed_entries() if e["name"] == name and e["theme"] == theme)
+
+    def test_myokibana_has_a_municipality_from_the_annotation_and_is_in_range(self):
+        e = self._e("妙岐ノ鼻・和田公園(霞ヶ浦)")
+        self.assertEqual((e["municipality"], e["range"]["status"], e["approval"]["state"], e["tier"]), ("稲敷市", "in_range", "provisional", "curated"))
+        anns = [a for a in guide.all_annotations(include_runtime=False) if a["name"].startswith("妙岐ノ鼻")]
+        self.assertEqual(len(anns), 1)
+        self.assertEqual((anns[0]["municipality"], anns[0]["url"]), ("稲敷市", "https://www.ktr.mlit.go.jp/kasumi/kasumi00778.html"))
+        self.assertTrue(anns[0]["summary"])
+
+    def test_izumi_no_mori_season_is_shown_by_two_publishers(self):
+        s = self._e("泉の森")["season"]
+        self.assertEqual((s["independent_sources"], s["shown"]), (2, True))
+
+    def test_inanami_stays_a_candidate_with_one_source(self):
+        e = self._e("稲波干拓", "冬鳥")
+        self.assertEqual((e["independent_sources"], e["tier"], e["approval"]["state"]), (1, "reference", "candidate"))
+        self.assertFalse(any(k["shown"] for k in e["kinds"]))                    # 1 件だけの記載は答えに出ない
+
+    def test_single_source_facts_are_not_shown(self):
+        e = self._e("渡良瀬遊水地")
+        self.assertFalse(any(k["shown"] for k in e["kinds"]))
+        self.assertFalse(e["season"]["shown"])
+
+    def test_every_annotation_points_to_an_existing_record(self):
+        keys = {guide._cand_key(r) for r in guide.all_records(include_runtime=False, annotated=False)}
+        for a in guide.all_annotations(include_runtime=False):
+            self.assertIn(guide._cand_key(a), keys)

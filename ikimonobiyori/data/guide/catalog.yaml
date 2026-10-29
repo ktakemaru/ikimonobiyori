@@ -7,10 +7,21 @@ entries:
   name: 渡良瀬遊水地
   prefecture: 栃木県
   municipality: 栃木市
-  kinds: []
-  season: null
+  kinds:
+  - kind: チュウヒ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 11〜2月
+    window:
+      start: 11-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.minnacamera.com/spots/618
+    other_texts: []
   tier: curated
-  independent_sources: 3
+  independent_sources: 4
   classes:
   - B
   - C
@@ -53,6 +64,13 @@ entries:
     read_at: '2026-10-30T07:04:26+09:00'
     origin: search
     note: チュウヒの越冬地の報告(検索の要約)
+  - url: https://www.minnacamera.com/spots/618
+    host: minnacamera.com
+    publisher: minnacamera.com
+    class: C
+    read_at: '2026-10-30T08:13:41+09:00'
+    origin: fetch
+    note: 11〜2月はチュウヒなど猛禽(撮影スポットの紹介)
 - id: g-01fcdf72d4
   scope: place
   theme: 花
@@ -1420,6 +1438,73 @@ entries:
     note: 三浦海岸駅〜小松ヶ池公園。河津桜 約1000本。菜の花
   access:
   - walk_from_station
+- id: g-5c5ee4cc45
+  scope: place
+  theme: 野鳥
+  name: 妙岐ノ鼻・和田公園(霞ヶ浦)
+  prefecture: 茨城県
+  municipality: 稲敷市
+  kinds:
+  - kind: チュウヒ
+    independent_sources: 1
+    shown: false
+  - kind: ハヤブサ
+    independent_sources: 1
+    shown: false
+  - kind: ヒドリガモ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  - kind: ミサゴ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月の観察会
+    window:
+      start: 01-01
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2025_shizen9_kekka.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 東京
+    qid: Q838675
+    by_origin:
+      東京:
+        km: 59
+        status: in_range
+      横浜:
+        km: 84
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://www.ktr.mlit.go.jp/kasumi/kasumi00778.html
+    host: ktr.mlit.go.jp
+    publisher: mlit.go.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 妙岐ノ鼻は霞ヶ浦最大のヨシ原。渡り鳥の越冬地・繁殖地
+  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2025_shizen9_kekka.pdf
+    host: pref.ibaraki.jp
+    publisher: pref.ibaraki.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 自然観察会の結果(2025年1月)
 - id: g-5da79dd6d3
   scope: place
   theme: ホタル
@@ -4324,10 +4409,11 @@ entries:
   season:
     text: 通年
     window: year_round
-    independent_sources: 1
-    shown: false
+    independent_sources: 2
+    shown: true
     from_url: https://kanagawa-kankou.or.jp/spot/471
-    other_texts: []
+    other_texts:
+    - 年間を通じて
   tier: curated
   independent_sources: 2
   classes:
