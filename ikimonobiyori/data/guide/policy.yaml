@@ -177,7 +177,7 @@ record:
 
 # 検索・取得の回数の上限(指示書の通信の承認。ユーザー承認 2026-10-25)。guide log-request が数え、上限で止める
 budget:
-  collect: {search: 80, fetch: 60}
+  collect: {search: 140, fetch: 60}                      # search は 80 → 140(段階25 承認B、ユーザー 2026-10-30)。fetch は 60 のまま
   trial: {search: 60, fetch: 40}
   answer: {search: 8, fetch: 8}                          # 1 質問あたり(試験の質問も、これと試験の合計の両方に入る)
   places_requests: 100                                   # 市区町村の代表点(www.wikidata.org)
@@ -202,7 +202,7 @@ reference_count:
   subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
 # ガイド型の答え(コードが組み立てる文。guide find --text)の文言。段階の表示は labels(確認済み / 定評 / 参考)。内部用語を出さない
 answer:
-  headings: {recommend: おすすめ, upcoming: これから, reference: 参考, notes: 注意}
+  headings: {recommend: おすすめ, upcoming: これから, no_season: 例年の時期を確かめられていない名所, reference: 参考, notes: 注意}
   none_found: "おすすめにできる名所は見つかりませんでした。"
   place: "{i}. **{name}**({where})"
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}

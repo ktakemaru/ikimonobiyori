@@ -28,3 +28,72 @@ class Phase1Range(unittest.TestCase):
     def test_unknown_municipality_stays_unconfirmed(self):
         e = entry("妙岐ノ鼻・和田公園(霞ヶ浦)", "野鳥")
         self.assertEqual((e["range"]["status"], e["approval"]["state"]), ("pending", "candidate"))
+
+
+from test_stage23 import CP, PLACES, build, item, recs  # noqa: E402
+
+NAKA = "https://www.city.naka.lg.jp/event-kankou/kankou-spot/page000276.html"
+C1, C2 = "https://rurubu.jp/andmore/spot/1", "https://www.walkerplus.com/article/1/"
+
+
+class KotokuNuma(unittest.TestCase):
+    """承認 D: 古徳沼はユーザーの承認で載る。那珂市のページは数えない。ほかの退役・却下の保証は今までどおり。"""
+
+    def test_real_data_kotoku_is_approved_by_user_without_naka(self):
+        e = entry("古徳沼", "冬鳥")
+        self.assertEqual((e["tier"], e["independent_sources"], e["approval"]["state"], e["approval"]["by"]), ("curated", 2, "approved", "user"))
+        self.assertNotIn(NAKA, [s["url"] for s in e["sources"]])
+        rv = guide.load_reviews(include_runtime=False)[e["id"]]
+        self.assertEqual((rv["state"], str(rv["at"]), rv["by"]), ("approved", "2026-10-30", "user"))
+
+    def test_kotoku_is_shown_in_the_answer_with_count(self):
+        found = guide.find(guide.committed_entries(), themes={"冬鳥"}, names=["古徳沼"], policy=P)
+        text = guide.render_answer(found, P)
+        self.assertIn("古徳沼", text)
+        self.assertIn("（参照数 2）", text)
+
+    def test_the_retired_catalog_record_is_kept(self):
+        r = guide.load_retired(P)
+        self.assertIn("古徳沼", r["names"])
+        self.assertIn(NAKA, r["urls"])
+
+    def test_user_approval_lifts_only_that_places_name_guard(self):
+        rows = recs(*[item(u, name="古徳沼", theme="冬鳥") for u in (C1, C2)] + [item(u, name="別の池", theme="冬鳥") for u in (C1, C2)])
+        retired = {"names": {"古徳沼": "退役", "別の池": "退役"}, "urls": {}}
+        kid = guide.entry_id("冬鳥", "東京都", "古徳沼")
+        rv = {kid: {"id": kid, "state": "approved", "at": "2026-10-30", "by": "user"}}
+        es = {e["name"]: e for e in guide.build_entries(rows, PLACES, P, CP, rv, retired)}
+        self.assertEqual(es["古徳沼"]["approval"]["state"], "approved")
+        self.assertEqual(es["別の池"]["approval"]["state"], "candidate")           # 承認していない退役の名前は今までどおり
+        self.assertTrue(any("退役" in r for r in es["別の池"]["approval"]["reasons"]))
+
+    def test_the_retired_source_url_is_still_not_counted_after_approval(self):
+        rows = recs(item(NAKA, name="古徳沼", theme="冬鳥"), item(C1, name="古徳沼", theme="冬鳥"))
+        kid = guide.entry_id("冬鳥", "東京都", "古徳沼")
+        rv = {kid: {"id": kid, "state": "approved", "at": "2026-10-30", "by": "user"}}
+        e = {x["name"]: x for x in guide.build_entries(rows, PLACES, P, CP, rv, {"names": {"古徳沼": "退役"}, "urls": {NAKA: "退役"}})}["古徳沼"]
+        self.assertEqual(e["tier"], "reference")                                  # 数えられるのは 1 件だけ
+
+    def test_no_season_places_are_rendered(self):
+        found = {"recommend": [], "no_season": [entry("古徳沼", "冬鳥")]}
+        self.assertIn(P["answer"]["headings"]["no_season"], guide.render_answer(found, P))
+
+
+class YokohamaForest(unittest.TestCase):
+    """承認 C: 横浜自然観察の森(野鳥)。現況の名所カタログ(yacho-0004)と同じ名前で、現況の答えにも参照数が付く。"""
+
+    def test_curated_and_provisional_with_three_publishers(self):
+        e = entry("横浜自然観察の森", "野鳥")
+        self.assertEqual((e["tier"], e["independent_sources"], e["range"]["status"], e["approval"]["state"], e["approval"]["by"]),
+                         ("curated", 3, "in_range", "provisional", "auto-rule"))
+        self.assertTrue(set(e["classes"]) & {"A", "B", "C"})
+
+    def test_the_name_matches_the_status_catalog_so_the_status_answer_gets_a_count(self):
+        from ikimonobiyori import catalog
+        names = {x["id"]: x["name"] for x in catalog.approved_entries(catalog.load_catalog("birds"))}
+        self.assertEqual(names["yacho-0004"], "横浜自然観察の森")
+        counts = guide.reference_counts()
+        self.assertEqual(guide.reference_count_for(counts, "birds", names["yacho-0004"], P), 3)
+
+    def test_a_retired_naka_style_guard_does_not_touch_it(self):
+        self.assertNotIn("横浜自然観察の森", guide.load_retired(P)["names"])

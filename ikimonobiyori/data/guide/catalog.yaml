@@ -2613,6 +2613,115 @@ entries:
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
     seed_id: T01
+- id: g-8f96ff6859
+  scope: place
+  theme: 野鳥
+  name: 横浜自然観察の森
+  prefecture: 神奈川県
+  municipality: 横浜市
+  kinds:
+  - kind: キビタキ
+    independent_sources: 2
+    shown: true
+  - kind: ウグイス
+    independent_sources: 1
+    shown: false
+  - kind: エゾビタキ
+    independent_sources: 1
+    shown: false
+  - kind: オオルリ
+    independent_sources: 1
+    shown: false
+  - kind: オシドリ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: サシバ
+    independent_sources: 1
+    shown: false
+  - kind: シメ
+    independent_sources: 1
+    shown: false
+  - kind: ジョウビタキ
+    independent_sources: 1
+    shown: false
+  - kind: ツグミ
+    independent_sources: 1
+    shown: false
+  - kind: ノスリ
+    independent_sources: 1
+    shown: false
+  - kind: ハイタカ
+    independent_sources: 1
+    shown: false
+  - kind: ハシビロガモ
+    independent_sources: 1
+    shown: false
+  - kind: フクロウ
+    independent_sources: 1
+    shown: false
+  - kind: ホオジロ
+    independent_sources: 1
+    shown: false
+  - kind: マガモ
+    independent_sources: 1
+    shown: false
+  - kind: マヒワ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 0
+    from: 横浜
+    qid: Q38283
+    by_origin:
+      東京:
+        km: 29
+        status: in_range
+      横浜:
+        km: 2
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://wbsj-yokohama.blog.jp
+    host: wbsj-yokohama.blog.jp
+    publisher: wbsj-yokohama.blog.jp
+    class: C
+    read_at: '2026-10-30T07:33:44+09:00'
+    origin: fetch
+    note: 日本野鳥の会のレンジャーらの記事。秋の渡りと冬のカモ類(2026年10月)
+  - url: https://www.city.yokohama.lg.jp/sakae/kurashi/machizukuri_kankyo/midori_eco/miryoku/introductionforest.html
+    host: city.yokohama.lg.jp
+    publisher: yokohama.lg.jp
+    class: A
+    read_at: '2026-10-30T07:33:44+09:00'
+    origin: fetch
+    note: 横浜市栄区の森の紹介ページに掲載(種名の記載はない)
+  - url: https://www.env.go.jp/nature/nats/kansatsu/yoko.html
+    host: env.go.jp
+    publisher: 環境省
+    class: B
+    read_at: '2026-10-30T07:33:44+09:00'
+    origin: fetch
+    note: 自然観察の森の紹介。四季の鳥を紹介(環境省)
+  access:
+  - bus
 - id: g-8fd53c31c1
   scope: place
   theme: 冬鳥
@@ -3389,6 +3498,62 @@ entries:
     note: 自然生態観察公園(検索の要約)
   access:
   - walk_from_station
+- id: g-adae064599
+  scope: place
+  theme: 冬鳥
+  name: 古徳沼
+  prefecture: 茨城県
+  municipality: 那珂市
+  kinds:
+  - kind: オオハクチョウ
+    independent_sources: 2
+    shown: true
+  - kind: コハクチョウ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 110
+    from: 東京
+    qid: Q633647
+    by_origin:
+      東京:
+        km: 108
+        status: in_range
+      横浜:
+        km: 135
+        status: in_range
+  approval:
+    state: approved
+    at: '2026-10-30'
+    by: user
+  sources:
+  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:30:17+09:00'
+    origin: search
+  - url: https://kids.rurubu.jp/article/83265/
+    host: kids.rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-25T16:37:52+09:00'
+    origin: search
+    note: 合わせて250羽を超える年も
+  - url: https://tabi-mag.jp/ib0274/
+    host: tabi-mag.jp
+    publisher: 旅行総合研究所タビリス
+    class: C
+    read_at: '2026-10-25T16:40:48+09:00'
+    origin: search
+    note: 1966年にオオハクチョウが初飛来。瓜連駅から徒歩30分
 - id: g-aef3a8eca7
   scope: kind
   theme: ホタル

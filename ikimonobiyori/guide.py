@@ -489,7 +489,9 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
                       "independent_sources": len(agree), "shown": len(agree) >= show_min, "from_url": s0["url"],
                       "other_texts": sorted({s["_season"]["text"] for s, _ in seasons[1:] if s["_season"]["text"] != s0["_season"]["text"]})}
         visits = [v for v in [reviews.get(eid)] if v and v.get("state") == "visited"]
-        retired_name = retired["names"].get(_base_name(rows[0]["name"]))
+        rv_ = reviews.get(eid)
+        # ユーザーが見直しで承認した場所は、名前の退役・却下の保証を外す(人の判断が自動の保証より先。出どころの URL の保証は残る。段階25)
+        retired_name = None if (rv_ and rv_.get("state") == "approved") else retired["names"].get(_base_name(rows[0]["name"]))
         live = [s for s in srcs if s["url"] not in retired["urls"]]
         tier = tier_of(live, independent_groups(live), visits, policy, rows[0]["theme"])
         if retired_name and tier == "curated":
@@ -845,7 +847,7 @@ def render_answer(found, policy, origin_line=None, on=None):
     lines.append(f"## {a['headings']['recommend']}")
     rec = found.get("recommend") or []
     lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
-    for key in ("upcoming", "reference"):
+    for key in ("upcoming", "no_season", "reference"):
         es = found.get(key) or []
         if es:
             lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]

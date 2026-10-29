@@ -90,10 +90,12 @@ class RetiredGuard(unittest.TestCase):
         self.assertNotEqual(e["approval"]["state"], "provisional")
 
     def test_committed_catalog_has_no_retired_promotion(self):
-        import yaml
-        cat = yaml.safe_load((guide.CATALOG_PATH).read_text(encoding="utf-8"))
-        names = {e["name"] for e in (cat.get("entries") or cat.get("catalog") or [])}
-        self.assertNotIn("古徳沼", names)
+        # 退役・却下の名前の場所がカタログにあるなら、それはユーザーの承認(approved / by: user)によるものだけ(自動の昇格は 1 件もない)。
+        # 段階25 の承認 D で古徳沼がユーザー承認で載ったため、「1 件もない」から「ユーザー承認だけ」に直した(理由: docs/stage25-decisions.md)
+        retired = guide.load_retired(P)["names"]
+        for e in guide.committed_entries(catalog_only=True):
+            if guide._base_name(e["name"]) in retired:
+                self.assertEqual((e["approval"]["state"], e["approval"]["by"]), ("approved", "user"), e["name"])
 
 
 class ReferenceCountDisplay(unittest.TestCase):
