@@ -22,6 +22,9 @@ tiers:
 retired_guard:
   catalog_status: [retired]
   review_states: [rejected]
+  # 出どころの URL だけを退役する(名所カタログの retired にない出どころ。定評の件数に数えない)。指示文の中身は書かない(存在と URL だけ)
+  urls:
+    - {url: "https://www.city.funabashi.lg.jp/kids/facilities/p000586.html", reason: "ページ内に指示文(段階25、2026-10-30)"}
 # 実在の確認(フェーズ2 の 5): 自治体・公園・観光協会・メディア(A・B・C)の出どころで 1 件以上
 existence_classes: [A, B, C]
 # 取り出した種名・時期を、ガイドの答えに出してよい下限(独立した出どころの数。フェーズ3 の 2)

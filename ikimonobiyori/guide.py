@@ -422,6 +422,8 @@ def load_retired(policy, reviews=None, catalog_dir=None):
                 names[_base_name(e["name"])] = why
                 for src in e.get("sources") or []:
                     urls[src["url"]] = why
+    for u in g.get("urls") or []:
+        urls[u["url"]] = u["reason"]
     for rv in (reviews or {}).values():
         if rv.get("state") in (g.get("review_states") or []) and rv.get("name"):
             names[_base_name(rv["name"])] = rv.get("reason") or "却下"
