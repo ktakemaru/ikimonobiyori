@@ -40,6 +40,7 @@ POLICY_PATH = GUIDE_DIR / "policy.yaml"
 RECORDS_PATH = GUIDE_DIR / "records.jsonl"            # 見直して置いた候補の記録(事実だけ)。export の出力を写す
 PLACES_PATH = GUIDE_DIR / "places.yaml"               # 市区町村の代表点(Wikidata)。export の出力を写す
 REVIEWS_PATH = GUIDE_DIR / "reviews.yaml"             # ユーザーの見直し(外した・承認した)。ユーザーが確かめて置く
+ANNOTATIONS_PATH = GUIDE_DIR / "annotations.jsonl"    # 既存の記録への追記の記録(段階26。guide annotate)。export の出力を写す
 CATALOG_PATH = GUIDE_DIR / "catalog.yaml"             # build の結果(仮承認・承認した名所)。records と places から作り直せる(テストが一致を確かめる)
 CANDIDATES_PATH = GUIDE_DIR / "candidates.yaml"       # build の結果(候補のまま・外したもの。理由つき)
 SEASON_RE = re.compile(r"^\s*(\d{1,2})月(上旬|初旬|中旬|下旬|末|頃|ごろ)?\s*$")
@@ -302,15 +303,87 @@ def record_candidates(items, *, policy=None, now=None, env=None):
     return len(new), len(items) - len(new), new
 
 
-def all_records(env=None, include_runtime=True):
-    """見直して置いた記録(data/guide/records.jsonl)+ 手元の記録(IKIMONOBIYORI_DATA_DIR の下)。同じ名所・同じ URL は先のもの。"""
+def all_records(env=None, include_runtime=True, annotated=True):
+    """見直して置いた記録(data/guide/records.jsonl)+ 手元の記録(IKIMONOBIYORI_DATA_DIR の下)。同じ名所・同じ URL は先のもの。
+    annotated なら、追記の記録(annotations.jsonl)を重ねた形(元の記録は変えない。出どころの URL・区分・発行元は追記で変わらない)。"""
     out, seen = [], set()
     rows = _jsonl(RECORDS_PATH) + (_jsonl(guide_dir(env) / "candidates.jsonl") if include_runtime else [])
     for r in rows:
         if _cand_key(r) not in seen:
             seen.add(_cand_key(r))
             out.append(r)
+    return apply_annotations(out, all_annotations(env, include_runtime)) if annotated else out
+
+
+def all_annotations(env=None, include_runtime=True):
+    """追記の記録(data/guide/annotations.jsonl + 手元の guide/annotations.jsonl)。同じ内容は先のもの。"""
+    name = load_policy()["annotation"]["file"]
+    rows = _jsonl(ANNOTATIONS_PATH) + (_jsonl(guide_dir(env) / name) if include_runtime else [])
+    out, seen = [], set()
+    for a in rows:
+        k = json.dumps({x: a.get(x) for x in a if x not in ("at",)}, ensure_ascii=False, sort_keys=True)
+        if k not in seen:
+            seen.add(k)
+            out.append(a)
     return out
+
+
+def apply_annotations(records, annotations):
+    """記録に追記を重ねる。市区町村は記録に無いときだけ入れる(あるものは変えない)。種名は足す(同じ名前は 1 つ)。時期は記録に無いときだけ入れる。
+    出どころの URL・区分・発行元・読んだ時刻は変えない。"""
+    by = {}
+    for a in annotations:
+        by.setdefault(_cand_key(a), []).append(a)
+    out = []
+    for r in records:
+        anns = by.get(_cand_key(r))
+        if not anns:
+            out.append(r)
+            continue
+        r = dict(r)
+        for a in anns:
+            if a.get("municipality") and not r.get("municipality"):
+                r["municipality"] = a["municipality"]
+            if a.get("kinds"):
+                r["kinds"] = list(dict.fromkeys(list(r.get("kinds") or []) + list(a["kinds"])))
+            if a.get("season") and not r.get("season"):
+                r["season"] = a["season"]
+        out.append(r)
+    return out
+
+
+def validate_annotation(item, policy, existing_keys):
+    """追記の 1 件 → エラーのリスト。対象は既存の記録(同じ名所・同じ URL)。追記できるのは市区町村・種名・時期だけ。"""
+    ap = policy["annotation"]
+    extra = sorted(set(item) - set(ap["input_fields"]))
+    if extra:
+        return [f"受け取れない項目(出どころの URL・区分・発行元などは変えられない): {extra}"]
+    errs = []
+    base = {k: v for k, v in item.items() if k != "summary"}
+    if not any(item.get(f) for f in ap["fields"]):
+        errs.append(f"追記する項目がない({ap['fields']} のどれか)")
+    errs += validate_item(base, policy)
+    s = item.get("summary")
+    lim = val(ap["max_summary_chars"])
+    if not isinstance(s, str) or not s.strip() or len(s) > lim:
+        errs.append(f"summary(ページの記載の短い要約)が必要。{lim} 文字以内")
+    if not errs and _cand_key(item) not in existing_keys:
+        errs.append("対象の記録(同じ名所・同じ URL)がない。先に record-candidate で記録する")
+    return errs
+
+
+def annotate(items, *, policy=None, now=None, env=None):
+    """既存の記録に事実を追記する(IKIMONOBIYORI_DATA_DIR の下の guide/annotations.jsonl)。1 件でも検査に落ちたら何も書かない。
+    → (書いた件数, 書いた記録)。いつ(at。コードが時計から入れる)・何を・どのページの記載か(summary と URL)が残る。"""
+    policy = policy or load_policy()
+    existing = {_cand_key(r) for r in all_records(env, annotated=False)}
+    bad = [(i, e) for i, it in enumerate(items) for e in validate_annotation(it, policy, existing)]
+    if bad:
+        raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
+    now = now or clock_now()
+    new = [{"schema": policy["annotation"]["schema"], **{k: v for k, v in it.items() if v is not None}, "at": now.isoformat()} for it in items]
+    _append_jsonl(guide_dir(env) / policy["annotation"]["file"], new)
+    return len(new), new
 
 
 # ---- 市区町村の代表点 ----
@@ -758,7 +831,7 @@ def seed_items(rows, mapping):
 
 # ---- 書き出し(見直して data/guide/ に写す) ----
 
-def export(entries, records, places, out_dir, policy=None):
+def export(entries, records, places, out_dir, policy=None, annotations=()):
     out_dir.mkdir(parents=True, exist_ok=True)
     policy = policy or load_policy()
     records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
@@ -772,6 +845,9 @@ def export(entries, records, places, out_dir, policy=None):
     with (out_dir / "records.jsonl").open("w", encoding="utf-8", newline="\n") as f:
         for r in sorted(records, key=lambda r: (r.get("scope", "place"), r["theme"], r.get("prefecture") or "", norm_name(r["name"]), r["url"])):
             f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    with (out_dir / "annotations.jsonl").open("w", encoding="utf-8", newline="\n") as f:
+        for a in annotations:
+            f.write(json.dumps(a, ensure_ascii=False, sort_keys=True) + "\n")
     pl = sorted(places.values(), key=lambda p: (p["prefecture"], p["municipality"]))
     (out_dir / "places.yaml").write_text("# 市区町村の代表点(Wikidata の座標。CC0)。guide places-fetch の結果。推定で足さない\n" +
                                          yaml.safe_dump({"places": pl}, allow_unicode=True, sort_keys=False, width=200),
@@ -781,9 +857,10 @@ def export(entries, records, places, out_dir, policy=None):
 
 def build(env=None, include_runtime=True):
     policy = load_policy()
-    recs = all_records(env, include_runtime)
+    recs = all_records(env, include_runtime, annotated=False)                 # 書き出すのは元の記録(追記は annotations.jsonl に別に残す)
     places = load_places(env, include_runtime)
-    return build_entries(recs, places, policy, catalog_mod.load_policy(), load_reviews(env, include_runtime)), recs, places
+    return (build_entries(all_records(env, include_runtime), places, policy, catalog_mod.load_policy(), load_reviews(env, include_runtime)),
+            recs, places)
 
 
 def sources_mod_parse(s):
@@ -1007,6 +1084,8 @@ def main(argv=None, http_get=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("theme", help="質問の言葉 → テーマ・種類(方針の words)")
     t.add_argument("word")
+    an = sub.add_parser("annotate", help="既存の記録(同じ名所・同じ URL)に、後から分かった所在の市区町村・種名・時期を追記する(追記の記録が残る。段階26)")
+    an.add_argument("--batch", required=True, help="追記の JSON(配列。各件は theme・name・prefecture・url と、municipality・kinds・season のどれか、summary)")
     rc = sub.add_parser("record-candidate", help="検索・取得で見つけた事実(名所・所在・種類・例年の時期・URL)を候補として記録する")
     rc.add_argument("--batch", required=True, help="JSON の配列: [{theme, name, prefecture, municipality?, kinds?, season?{text,from,to}|{text,year_round}, url, "
                                                    "title?, note?, copies_of?, status?{state,date}, access?, origin?(search/fetch/seed/user)}]")
@@ -1064,6 +1143,15 @@ def main(argv=None, http_get=None):
             return 1
         _dump({"written": n, "duplicates": dup, "rows": [{k: r[k] for k in ("name", "host", "class", "publisher", "read_at")} for r in new]})
         return 0
+    if a.cmd == "annotate":
+        items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
+        try:
+            n, new = annotate(items, policy=policy)
+        except ValueError as ex:
+            print(f"追記しなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"written": n, "rows": [{k: r.get(k) for k in ("name", "url", "municipality", "kinds", "season", "summary", "at")} for r in new]})
+        return 0
     if a.cmd == "import-seed":
         rows = parse_seed(Path(a.file).read_text(encoding="utf-8"))
         mapping = yaml.safe_load(Path(a.map).read_text(encoding="utf-8"))
@@ -1082,7 +1170,7 @@ def main(argv=None, http_get=None):
         return _places_fetch(a, http_get)
     if a.cmd == "build":
         entries, recs, places = build(include_runtime=not a.committed_only)
-        _dump(export(entries, recs, places, guide_dir() / "export"))
+        _dump(export(entries, recs, places, guide_dir() / "export", annotations=all_annotations(include_runtime=not a.committed_only)))
         return 0
     if a.cmd == "review":
         print(review_markdown(build()[0], policy))

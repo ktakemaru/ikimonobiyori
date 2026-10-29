@@ -211,3 +211,12 @@ answer:
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
   reference_item: "- {name}({where})"
   forbidden_terms: [tier, independent_sources, auto-rule, reference, curated, verified, provisional, candidate]
+
+# 既存の記録への追記(段階26。guide annotate)。同じ URL の記録は重複で足せないため、後から分かった事実(所在の市区町村・種名・時期)を「追記の記録」として別に残す。
+# 出どころの URL・区分・発行元は変えられない。追記は記録の上書きではない(いつ・何を・どのページの記載かが残る)。独立した発行元の数え方・種名を出す下限は変えない
+annotation:
+  schema: ikimono-guide-annotation/1
+  file: annotations.jsonl                                 # 書き込み先は IKIMONOBIYORI_DATA_DIR の下の guide/。見直して置いた写しは data/guide/annotations.jsonl
+  input_fields: [scope, theme, name, prefecture, url, municipality, kinds, season, summary]
+  fields: [municipality, kinds, season]                   # 追記できる項目
+  max_summary_chars: {value: 80, source: "仮置き(段階26)。ページの記載の短い要約(本文を写さない)", provisional: true}
