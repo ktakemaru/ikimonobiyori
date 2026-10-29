@@ -1,6 +1,48 @@
 # build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)
 schema: ikimono-guide-catalog/1
 entries:
+- id: g-00e0df55e2
+  scope: place
+  theme: 野鳥
+  name: 渡良瀬遊水地
+  prefecture: 栃木県
+  municipality: 栃木市
+  kinds: []
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://mobile.wbsj.org/nature/public/strix/16/Strix16_01.pdf
+    host: mobile.wbsj.org
+    publisher: wbsj.org
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: チュウヒの代表的な越冬地の一つ(検索の要約)
+  - url: https://www.city.tochigi.lg.jp/uploaded/attachment/42210.pdf
+    host: city.tochigi.lg.jp
+    publisher: tochigi.lg.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 冬にチュウヒなどが確認できる(検索の要約)
+  - url: https://www.gmnh.pref.gunma.jp/wp-content/uploads/report2015_15.pdf
+    host: gmnh.pref.gunma.jp
+    publisher: pref.gunma.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: チュウヒの越冬地の報告(検索の要約)
 - id: g-03191977ee
   scope: place
   theme: 冬鳥
@@ -131,6 +173,60 @@ entries:
     class: C
     read_at: '2026-10-25T16:32:09+09:00'
     origin: search
+- id: g-131e9a4128
+  scope: place
+  theme: 野鳥
+  name: 秋ヶ瀬公園
+  prefecture: 埼玉県
+  municipality: さいたま市
+  kinds:
+  - kind: アオジ
+    independent_sources: 1
+    shown: false
+  - kind: アトリ
+    independent_sources: 1
+    shown: false
+  - kind: ノスリ
+    independent_sources: 1
+    shown: false
+  - kind: ハイタカ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  - D
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://rurubu.jp/andmore/spot/80008463
+    host: rurubu.jp
+    publisher: るるぶ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+  - url: https://www.pref.saitama.lg.jp/shisetsu/koen/004.html
+    host: pref.saitama.lg.jp
+    publisher: saitama.lg.jp
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 野鳥園がある(検索の要約)
+  - url: https://yamap.com/activities/14724112/article
+    host: yamap.com
+    publisher: YAMAP
+    class: D
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 晩秋に野鳥の森で観察した記録
 - id: g-13d144ebf6
   scope: place
   theme: ホタル
@@ -1050,6 +1146,63 @@ entries:
     read_at: '2026-10-25T16:32:40+09:00'
     origin: fetch
     note: 約1,300本・約120種類
+- id: g-5c5ee4cc45
+  scope: place
+  theme: 野鳥
+  name: 妙岐ノ鼻・和田公園(霞ヶ浦)
+  prefecture: 茨城県
+  municipality: null
+  kinds:
+  - kind: チュウヒ
+    independent_sources: 1
+    shown: false
+  - kind: ハヤブサ
+    independent_sources: 1
+    shown: false
+  - kind: ヒドリガモ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  - kind: ミサゴ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 1月の観察会
+    window:
+      start: 01-01
+      end: 01-31
+    independent_sources: 1
+    shown: false
+    from_url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2025_shizen9_kekka.pdf
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.ktr.mlit.go.jp/kasumi/kasumi00778.html
+    host: ktr.mlit.go.jp
+    publisher: mlit.go.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 妙岐ノ鼻は霞ヶ浦最大のヨシ原。渡り鳥の越冬地・繁殖地
+  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2025_shizen9_kekka.pdf
+    host: pref.ibaraki.jp
+    publisher: pref.ibaraki.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 自然観察会の結果(2025年1月)
 - id: g-5f0cc34fdb
   scope: place
   theme: 花
@@ -1430,6 +1583,49 @@ entries:
     class: B
     read_at: '2026-10-25T16:30:17+09:00'
     origin: search
+- id: g-78f80a6300
+  scope: place
+  theme: 野鳥
+  name: ふなばし三番瀬海浜公園
+  prefecture: 千葉県
+  municipality: 船橋市
+  kinds:
+  - kind: スズガモ
+    independent_sources: 1
+    shown: false
+  - kind: ハマシギ
+    independent_sources: 1
+    shown: false
+  - kind: ミヤコドリ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://iko-yo.net/facilities/569
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://iko-yo.net/facilities/569
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: fetch
+    note: 冬はハマシギ・スズガモ。日本一のミヤコドリ渡来地と紹介
 - id: g-7c57300703
   scope: place
   theme: 桜
@@ -1514,6 +1710,58 @@ entries:
     read_at: '2026-10-25T16:32:09+09:00'
     origin: search
     note: 同ランキング2位
+- id: g-84b8be3d20
+  scope: place
+  theme: 野鳥
+  name: 奥日光(戦場ヶ原・中禅寺湖)
+  prefecture: 栃木県
+  municipality: 日光市
+  kinds:
+  - kind: アオゲラ
+    independent_sources: 1
+    shown: false
+  - kind: ウグイス
+    independent_sources: 1
+    shown: false
+  - kind: エナガ
+    independent_sources: 1
+    shown: false
+  - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  - kind: キセキレイ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 2
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://mobile.wbsj.org/nature/hogo/others/iba/search/sites/touhoku/imgs/JP067.pdf
+    host: mobile.wbsj.org
+    publisher: wbsj.org
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 冬は中禅寺湖・湯ノ湖にカモ類。日光地方で180種近く
+  - url: https://www.ana.co.jp/ja/kr/japan-travel-planner/tochigi/0000019.html
+    host: ana.co.jp
+    publisher: ana.co.jp
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 戦場ヶ原の自然探究路。多様な野鳥が生息(検索の要約)
 - id: g-87225ca5d5
   scope: place
   theme: ホタル
@@ -2306,6 +2554,50 @@ entries:
     read_at: '2026-10-25T16:31:23+09:00'
     origin: search
     note: 早咲きの桜(2023年の記事)
+- id: g-c69629403d
+  scope: place
+  theme: 野鳥
+  name: 泉の森
+  prefecture: 神奈川県
+  municipality: 大和市
+  kinds:
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://kanagawa-kankou.or.jp/spot/471
+    other_texts: []
+  tier: curated
+  independent_sources: 2
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://iko-yo.net/facilities/12362
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 年間を通じて野鳥約80種(検索の要約)
+  - url: https://kanagawa-kankou.or.jp/spot/471
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: fetch
+    note: 野鳥約50種を1年間で観察できる
 - id: g-c95757adad
   scope: place
   theme: 花
@@ -2695,6 +2987,53 @@ entries:
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
     note: ホタルが年々増えている(神奈川新聞)
+- id: g-e86ab2c78f
+  scope: place
+  theme: 野鳥
+  name: 彩湖
+  prefecture: 埼玉県
+  municipality: 戸田市
+  kinds:
+  - kind: キンクロハジロ
+    independent_sources: 1
+    shown: false
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: ホシハジロ
+    independent_sources: 1
+    shown: false
+  - kind: マガモ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 冬
+    window:
+      start: 12-01
+      end: 02-29
+    independent_sources: 1
+    shown: false
+    from_url: https://www.city.toda.saitama.jp/uploaded/attachment/76486.pdf
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - B
+  exists_confirmed: true
+  range:
+    status: pending
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+    - 範囲は未確認(市区町村の代表点がない)
+  sources:
+  - url: https://www.city.toda.saitama.jp/uploaded/attachment/76486.pdf
+    host: city.toda.saitama.jp
+    publisher: toda.saitama.jp
+    class: B
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
 - id: g-ebe9152aeb
   scope: place
   theme: 桜

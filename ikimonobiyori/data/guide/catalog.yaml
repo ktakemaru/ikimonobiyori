@@ -3157,6 +3157,60 @@ entries:
     class: A
     read_at: '2026-10-25T16:40:48+09:00'
     origin: search
+- id: g-a8e874aedd
+  scope: place
+  theme: 野鳥
+  name: 県立座間谷戸山公園
+  prefecture: 神奈川県
+  municipality: 座間市
+  kinds: []
+  season: null
+  tier: curated
+  independent_sources: 3
+  classes:
+  - A
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 横浜
+    qid: Q145333
+    by_origin:
+      東京:
+        km: 39
+        status: in_range
+      横浜:
+        km: 19
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://kanagawa-kankou.or.jp/spot/1513
+    host: kanagawa-kankou.or.jp
+    publisher: 神奈川県観光協会
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 毎月第3日曜に定例自然観察会(検索の要約)
+  - url: https://kanagawa-park.or.jp/information/pdf/h25/zamayato.pdf
+    host: kanagawa-park.or.jp
+    publisher: kanagawa-park.or.jp
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 野鳥の会などのボランティアが観察活動(検索の要約)
+  - url: https://www.pref.kanagawa.jp/docs/tu5/cnt/f6599/p19708.html
+    host: pref.kanagawa.jp
+    publisher: pref.kanagawa.jp
+    class: A
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: search
+    note: 自然生態観察公園(検索の要約)
+  access:
+  - walk_from_station
 - id: g-aef3a8eca7
   scope: kind
   theme: ホタル
