@@ -683,7 +683,13 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
         if on is None:
             out["recommend"].append(e)
         elif w is None or not (e["season"] or {}).get("shown"):
-            out["no_season"].append(e)                   # 例年の時期が分からない・1 件だけ(対象の日に合うかを言わない)
+            default = (policy.get("season_default_by_theme") or {}).get(e["theme"])
+            if default:                                  # 野鳥: 表示してよい時期の窓が無いときは通年が目安(段階27。ほかのテーマは時期不明のまま)
+                one = (e["season"] or {}).get("text")
+                a = policy["answer"]["season_default"]
+                out["recommend"].append({**e, "season_default": a["with_text"].format(text=one) if one else a["plain"]})
+            else:
+                out["no_season"].append(e)               # 例年の時期が分からない・1 件だけ(対象の日に合うかを言わない)
         elif in_window(f"{on.month:02d}-{on.day:02d}", w):
             out["recommend"].append(e)
         elif (days_until_start(on, w) or 0) <= up_days:
@@ -988,7 +994,9 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
         where = f"{e.get('prefecture') or ''}{e.get('municipality') or ''}"
         bits = []
         se = e.get("season")
-        if se and se["shown"]:
+        if e.get("season_default"):
+            bits.append(a["bits"]["season"].format(text=e["season_default"]))
+        elif se and se["shown"]:
             bits.append(a["bits"]["season"].format(text=se["text"]))
         kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"])
         if kinds:

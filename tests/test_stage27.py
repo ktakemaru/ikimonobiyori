@@ -107,5 +107,63 @@ class WholeAnswerFromCode(unittest.TestCase):
             self.assertIn("一字一句そのまま出す", s, p)
 
 
+U1, U2, U3 = "https://rurubu.jp/andmore/spot/1", "https://www.walkerplus.com/article/1/", "https://www.city.example.lg.jp/kanko/a.html"
+
+
+def found_for(theme, items, on=date(2026, 10, 30)):
+    es = list(build(recs(*items)).values())
+    return guide.find(es, themes={theme}, on=on, policy=P), es
+
+
+class BirdSeasonDefault(unittest.TestCase):
+    """フェーズB: 野鳥は、表示してよい時期の窓が無ければ通年が目安(おすすめ)。冬鳥・ほかのテーマは変えない。"""
+
+    def test_policy_row_has_the_approval(self):
+        row = P["season_default_by_theme"]["野鳥"]
+        self.assertEqual((row["window"], row["provisional"]), ("year_round", False))
+        self.assertIn("2026-10-30", row["source"])
+        for theme in ("冬鳥", "桜", "花", "ホタル", "紅葉"):
+            self.assertNotIn(theme, P["season_default_by_theme"])
+
+    def test_birds_without_a_window_are_recommended_with_a_plain_note(self):
+        found, _ = found_for("野鳥", [item(U1, name="試験の沼", theme="野鳥"), item(U2, name="試験の沼", theme="野鳥")])
+        self.assertEqual([e["name"] for e in found["recommend"]], ["試験の沼"])
+        self.assertEqual(found["no_season"], [])
+        text = guide.render_answer(found, P)
+        self.assertIn("例年の時期: " + P["answer"]["season_default"]["plain"], text)
+        self.assertEqual(guide.forbidden_in_answer(text, P), [])
+
+    def test_birds_with_one_source_season_show_that_sentence_in_brackets(self):
+        found, _ = found_for("野鳥", [item(U1, name="試験の沼", theme="野鳥", season=WINTER), item(U2, name="試験の沼", theme="野鳥")])
+        self.assertEqual(len(found["recommend"]), 1)
+        text = guide.render_answer(found, P)
+        self.assertIn("通年が目安（出どころ1件の記載: 11月〜2月）", text)
+
+    def test_winter_birds_without_a_window_stay_unknown(self):
+        found, _ = found_for("冬鳥", [item(U1, name="試験の沼", theme="冬鳥"), item(U2, name="試験の沼", theme="冬鳥")])
+        self.assertEqual(found["recommend"], [])
+        self.assertEqual([e["name"] for e in found["no_season"]], ["試験の沼"])
+
+    def test_other_themes_without_a_window_stay_unknown(self):
+        found, _ = found_for("桜", [item(U1, name="試験の沼", theme="桜"), item(U2, name="試験の沼", theme="桜"), item(U3, name="試験の沼", theme="桜")])
+        self.assertEqual(found["recommend"], [])
+        self.assertEqual(len(found["no_season"]), 1)
+
+    def test_birds_with_a_shown_window_follow_the_window(self):
+        two = [item(U1, name="試験の沼", theme="野鳥", season=WINTER), item(U2, name="試験の沼", theme="野鳥", season=WINTER)]
+        in_win, _ = found_for("野鳥", two, on=date(2026, 12, 15))
+        self.assertEqual(len(in_win["recommend"]), 1)
+        self.assertNotIn("season_default", in_win["recommend"][0])
+        before, _ = found_for("野鳥", two, on=date(2026, 9, 20))
+        self.assertEqual((len(before["recommend"]), len(before["upcoming"])), (0, 1))     # 窓に従う(これから)
+        out, _ = found_for("野鳥", two, on=date(2026, 5, 1))
+        self.assertEqual((len(out["recommend"]), len(out["other_season"])), (0, 1))
+
+    def test_a_single_source_place_is_still_reference_not_recommended(self):
+        found, _ = found_for("野鳥", [item(U1, name="一件の池", theme="野鳥")])
+        self.assertEqual(found["recommend"], [])
+        self.assertEqual(len(found["reference"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
