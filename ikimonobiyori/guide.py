@@ -40,6 +40,8 @@ POLICY_PATH = GUIDE_DIR / "policy.yaml"
 RECORDS_PATH = GUIDE_DIR / "records.jsonl"            # 見直して置いた候補の記録(事実だけ)。export の出力を写す
 PLACES_PATH = GUIDE_DIR / "places.yaml"               # 市区町村の代表点(Wikidata)。export の出力を写す
 REVIEWS_PATH = GUIDE_DIR / "reviews.yaml"             # ユーザーの見直し(外した・承認した)。ユーザーが確かめて置く
+ANNOTATIONS_PATH = GUIDE_DIR / "annotations.jsonl"    # 既存の記録への追記の記録(段階26。guide annotate)。export の出力を写す
+STATUS_ALIAS_PATH = GUIDE_DIR / "status_alias.yaml"    # 現況の名所 → ガイドの名所の対応表(段階26)。コードは表を読むだけ
 CATALOG_PATH = GUIDE_DIR / "catalog.yaml"             # build の結果(仮承認・承認した名所)。records と places から作り直せる(テストが一致を確かめる)
 CANDIDATES_PATH = GUIDE_DIR / "candidates.yaml"       # build の結果(候補のまま・外したもの。理由つき)
 SEASON_RE = re.compile(r"^\s*(\d{1,2})月(上旬|初旬|中旬|下旬|末|頃|ごろ)?\s*$")
@@ -302,15 +304,87 @@ def record_candidates(items, *, policy=None, now=None, env=None):
     return len(new), len(items) - len(new), new
 
 
-def all_records(env=None, include_runtime=True):
-    """見直して置いた記録(data/guide/records.jsonl)+ 手元の記録(IKIMONOBIYORI_DATA_DIR の下)。同じ名所・同じ URL は先のもの。"""
+def all_records(env=None, include_runtime=True, annotated=True):
+    """見直して置いた記録(data/guide/records.jsonl)+ 手元の記録(IKIMONOBIYORI_DATA_DIR の下)。同じ名所・同じ URL は先のもの。
+    annotated なら、追記の記録(annotations.jsonl)を重ねた形(元の記録は変えない。出どころの URL・区分・発行元は追記で変わらない)。"""
     out, seen = [], set()
     rows = _jsonl(RECORDS_PATH) + (_jsonl(guide_dir(env) / "candidates.jsonl") if include_runtime else [])
     for r in rows:
         if _cand_key(r) not in seen:
             seen.add(_cand_key(r))
             out.append(r)
+    return apply_annotations(out, all_annotations(env, include_runtime)) if annotated else out
+
+
+def all_annotations(env=None, include_runtime=True):
+    """追記の記録(data/guide/annotations.jsonl + 手元の guide/annotations.jsonl)。同じ内容は先のもの。"""
+    name = load_policy()["annotation"]["file"]
+    rows = _jsonl(ANNOTATIONS_PATH) + (_jsonl(guide_dir(env) / name) if include_runtime else [])
+    out, seen = [], set()
+    for a in rows:
+        k = json.dumps({x: a.get(x) for x in a if x not in ("at",)}, ensure_ascii=False, sort_keys=True)
+        if k not in seen:
+            seen.add(k)
+            out.append(a)
     return out
+
+
+def apply_annotations(records, annotations):
+    """記録に追記を重ねる。市区町村は記録に無いときだけ入れる(あるものは変えない)。種名は足す(同じ名前は 1 つ)。時期は記録に無いときだけ入れる。
+    出どころの URL・区分・発行元・読んだ時刻は変えない。"""
+    by = {}
+    for a in annotations:
+        by.setdefault(_cand_key(a), []).append(a)
+    out = []
+    for r in records:
+        anns = by.get(_cand_key(r))
+        if not anns:
+            out.append(r)
+            continue
+        r = dict(r)
+        for a in anns:
+            if a.get("municipality") and not r.get("municipality"):
+                r["municipality"] = a["municipality"]
+            if a.get("kinds"):
+                r["kinds"] = list(dict.fromkeys(list(r.get("kinds") or []) + list(a["kinds"])))
+            if a.get("season") and not r.get("season"):
+                r["season"] = a["season"]
+        out.append(r)
+    return out
+
+
+def validate_annotation(item, policy, existing_keys):
+    """追記の 1 件 → エラーのリスト。対象は既存の記録(同じ名所・同じ URL)。追記できるのは市区町村・種名・時期だけ。"""
+    ap = policy["annotation"]
+    extra = sorted(set(item) - set(ap["input_fields"]))
+    if extra:
+        return [f"受け取れない項目(出どころの URL・区分・発行元などは変えられない): {extra}"]
+    errs = []
+    base = {k: v for k, v in item.items() if k != "summary"}
+    if not any(item.get(f) for f in ap["fields"]):
+        errs.append(f"追記する項目がない({ap['fields']} のどれか)")
+    errs += validate_item(base, policy)
+    s = item.get("summary")
+    lim = val(ap["max_summary_chars"])
+    if not isinstance(s, str) or not s.strip() or len(s) > lim:
+        errs.append(f"summary(ページの記載の短い要約)が必要。{lim} 文字以内")
+    if not errs and _cand_key(item) not in existing_keys:
+        errs.append("対象の記録(同じ名所・同じ URL)がない。先に record-candidate で記録する")
+    return errs
+
+
+def annotate(items, *, policy=None, now=None, env=None):
+    """既存の記録に事実を追記する(IKIMONOBIYORI_DATA_DIR の下の guide/annotations.jsonl)。1 件でも検査に落ちたら何も書かない。
+    → (書いた件数, 書いた記録)。いつ(at。コードが時計から入れる)・何を・どのページの記載か(summary と URL)が残る。"""
+    policy = policy or load_policy()
+    existing = {_cand_key(r) for r in all_records(env, annotated=False)}
+    bad = [(i, e) for i, it in enumerate(items) for e in validate_annotation(it, policy, existing)]
+    if bad:
+        raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
+    now = now or clock_now()
+    new = [{"schema": policy["annotation"]["schema"], **{k: v for k, v in it.items() if v is not None}, "at": now.isoformat()} for it in items]
+    _append_jsonl(guide_dir(env) / policy["annotation"]["file"], new)
+    return len(new), new
 
 
 # ---- 市区町村の代表点 ----
@@ -389,14 +463,45 @@ def independent_groups(sources):
     return list(groups.values())
 
 
-def tier_of(sources, groups, visits, policy):
+def curated_min(policy, theme=None):
+    """定評にする独立した発行元の下限。テーマごとの上書き(min_independent_by_theme)があればそれ、なければ既定(段階24)。"""
+    c = policy["tiers"]["curated"]
+    return val((c.get("min_independent_by_theme") or {}).get(theme, c["min_independent"]))
+
+
+def tier_of(sources, groups, visits, policy, theme=None):
     """信頼の段階(D-02 / フェーズ2 の 4)。verified → curated → reference の順に見る。"""
     t = policy["tiers"]
     if visits or any(s.get("status") and s["class"] in t["verified"]["status_classes"] for s in sources):
         return "verified"
-    if len(groups) >= val(t["curated"]["min_independent"]) and any(s["class"] in t["curated"]["needs_class_any"] for s in sources):
+    if len(groups) >= curated_min(policy, theme) and any(s["class"] in t["curated"]["needs_class_any"] for s in sources):
         return "curated"
     return "reference"
+
+
+def _base_name(s):
+    """名前の末尾のかっこ(「白鳥の郷公苑(三条市)」の所在)を除いて、比べる形にする。"""
+    return norm_name(re.sub(r"[(（][^)）]*[)）]\s*$", "", s or ""))
+
+
+def load_retired(policy, reviews=None, catalog_dir=None):
+    """却下・退役した対象 → {"names": {基の名前: 理由}, "urls": {URL: 理由}}。名所カタログの retired と、見直しの rejected から作る(データを参照する)。"""
+    g = policy.get("retired_guard") or {}
+    names, urls = {}, {}
+    for p in sorted(Path(catalog_dir or catalog_mod.CATALOG_DIR).glob("*.yaml")):
+        doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        for e in doc.get("entries") or []:
+            if e.get("status") in (g.get("catalog_status") or []):
+                why = e.get("retired_reason") or "退役"
+                names[_base_name(e["name"])] = why
+                for src in e.get("sources") or []:
+                    urls[src["url"]] = why
+    for u in g.get("urls") or []:
+        urls[u["url"]] = u["reason"]
+    for rv in (reviews or {}).values():
+        if rv.get("state") in (g.get("review_states") or []) and rv.get("name"):
+            names[_base_name(rv["name"])] = rv.get("reason") or "却下"
+    return {"names": names, "urls": urls}
 
 
 # ---- まとめる ----
@@ -419,9 +524,11 @@ def load_reviews(env=None, include_runtime=True):
     return out
 
 
-def build_entries(records, places, policy, catalog_policy, reviews=None):
-    """候補の記録 → 名所ごとの 1 件(テーマ・都道府県・名前が同じものをまとめる)。段階・実在・範囲・承認をコードが決める。決まった並び。"""
+def build_entries(records, places, policy, catalog_policy, reviews=None, retired=None):
+    """候補の記録 → 名所ごとの 1 件(テーマ・都道府県・名前が同じものをまとめる)。段階・実在・範囲・承認をコードが決める。決まった並び。
+    retired(load_retired の結果。省略すると名所カタログ・見直しから読む): 却下・退役した名前の名所は定評にしない。退役した出どころの URL は定評の件数に数えない(段階24)。"""
     reviews = reviews or {}
+    retired = retired if retired is not None else load_retired(policy, reviews)
     # 区分・発行元は、読んだときではなく今の方針の表で決め直す(表に足したホストを、前に読んだ記録にも効かせる)
     records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
     by = {}
@@ -458,7 +565,13 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
                       "independent_sources": len(agree), "shown": len(agree) >= show_min, "from_url": s0["url"],
                       "other_texts": sorted({s["_season"]["text"] for s, _ in seasons[1:] if s["_season"]["text"] != s0["_season"]["text"]})}
         visits = [v for v in [reviews.get(eid)] if v and v.get("state") == "visited"]
-        tier = tier_of(srcs, groups, visits, policy)
+        rv_ = reviews.get(eid)
+        # ユーザーが見直しで承認した場所は、名前の退役・却下の保証を外す(人の判断が自動の保証より先。出どころの URL の保証は残る。段階25)
+        retired_name = None if (rv_ and rv_.get("state") == "approved") else retired["names"].get(_base_name(rows[0]["name"]))
+        live = [s for s in srcs if s["url"] not in retired["urls"]]
+        tier = tier_of(live, independent_groups(live), visits, policy, rows[0]["theme"])
+        if retired_name and tier == "curated":
+            tier = "reference"                           # 却下・退役した対象は自動で定評にしない
         exists = any(s["class"] in policy["existence_classes"] for s in srcs)
         muni = next((r.get("municipality") for r in sorted(rows, key=lambda x: (CLASS_RANK.index(x["class"]), x["read_at"])) if r.get("municipality")), None)
         scope = rows[0].get("scope", "place")
@@ -471,6 +584,8 @@ def build_entries(records, places, policy, catalog_policy, reviews=None):
                 reasons.append(f"独立した出どころが {len(groups)} 件")
         elif tier == "reference":
             reasons.append(f"独立した出どころが {len(groups)} 件" + ("(個人の発信だけ)" if not exists else ""))
+        if scope != "kind" and retired_name:
+            reasons.append(f"却下・退役済み({retired_name})")
         if not exists:
             reasons.append("実在を、自治体・公園・観光協会・メディアの出どころで確認できていない")
         if rng["status"] == "pending":
@@ -717,7 +832,7 @@ def seed_items(rows, mapping):
 
 # ---- 書き出し(見直して data/guide/ に写す) ----
 
-def export(entries, records, places, out_dir, policy=None):
+def export(entries, records, places, out_dir, policy=None, annotations=()):
     out_dir.mkdir(parents=True, exist_ok=True)
     policy = policy or load_policy()
     records = [{**r, **dict(zip(("class", "publisher"), classify(r["url"], policy)))} for r in records]
@@ -731,6 +846,9 @@ def export(entries, records, places, out_dir, policy=None):
     with (out_dir / "records.jsonl").open("w", encoding="utf-8", newline="\n") as f:
         for r in sorted(records, key=lambda r: (r.get("scope", "place"), r["theme"], r.get("prefecture") or "", norm_name(r["name"]), r["url"])):
             f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    with (out_dir / "annotations.jsonl").open("w", encoding="utf-8", newline="\n") as f:
+        for a in annotations:
+            f.write(json.dumps(a, ensure_ascii=False, sort_keys=True) + "\n")
     pl = sorted(places.values(), key=lambda p: (p["prefecture"], p["municipality"]))
     (out_dir / "places.yaml").write_text("# 市区町村の代表点(Wikidata の座標。CC0)。guide places-fetch の結果。推定で足さない\n" +
                                          yaml.safe_dump({"places": pl}, allow_unicode=True, sort_keys=False, width=200),
@@ -740,9 +858,10 @@ def export(entries, records, places, out_dir, policy=None):
 
 def build(env=None, include_runtime=True):
     policy = load_policy()
-    recs = all_records(env, include_runtime)
+    recs = all_records(env, include_runtime, annotated=False)                 # 書き出すのは元の記録(追記は annotations.jsonl に別に残す)
     places = load_places(env, include_runtime)
-    return build_entries(recs, places, policy, catalog_mod.load_policy(), load_reviews(env, include_runtime)), recs, places
+    return (build_entries(all_records(env, include_runtime), places, policy, catalog_mod.load_policy(), load_reviews(env, include_runtime)),
+            recs, places)
 
 
 def sources_mod_parse(s):
@@ -751,12 +870,142 @@ def sources_mod_parse(s):
     return parse_now(s)
 
 
-def committed_entries():
-    """data/guide/catalog.yaml + candidates.yaml(見直して置いたもの)。"""
+def committed_entries(catalog_only=False):
+    """data/guide/catalog.yaml + candidates.yaml(見直して置いたもの)。catalog_only なら catalog.yaml だけ。"""
     out = []
-    for p in (CATALOG_PATH, CANDIDATES_PATH):
+    for p in ((CATALOG_PATH,) if catalog_only else (CATALOG_PATH, CANDIDATES_PATH)):
         if p.is_file():
             out += (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("entries") or []
+    return out
+
+
+# ---- 参照数の表示(段階24) ----
+
+def reference_counts(entries=None, policy=None):
+    """ガイドのカタログの場所 → 参照数 {(テーマ, 基の名前): 独立した発行元の数}。承認(仮承認・承認)済みの場所だけ。"""
+    entries = committed_entries(catalog_only=True) if entries is None else entries
+    return {(e["theme"], _base_name(e["name"])): e["independent_sources"]
+            for e in entries if e.get("scope", "place") == "place" and approved(e)}
+
+
+def reference_count_for(counts, subject, name, policy):
+    """現況の対象と名所の名前 → 参照数。ガイドのカタログに同じ場所がなければ None(推測や 1 の仮置きをしない)。"""
+    theme = policy["reference_count"]["subject_theme"].get(subject)
+    return counts.get((theme, _base_name(name)))
+
+
+def load_status_alias(path=None):
+    p = Path(path or STATUS_ALIAS_PATH)
+    return (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("aliases") or [] if p.is_file() else []
+
+
+def check_status_alias(aliases, policy, guide_entries, status_catalogs):
+    """対応表の検査 → エラーのリスト(空 = 合格)。status_catalogs: {対象: 現況の名所カタログ}。
+    存在しない現況の id・ガイドの id、承認されていないガイドの名所、対象とテーマの食い違い、根拠の欠け、重複を落とす。"""
+    errs, seen = [], set()
+    by_id = {e["id"]: e for e in guide_entries}
+    themes = policy["reference_count"]["subject_theme"]
+    for i, a in enumerate(aliases):
+        tag = f"aliases[{i}]"
+        extra = sorted(set(a) - {"subject", "status_id", "guide_id", "basis"})
+        if extra:
+            errs.append(f"{tag}: 受け取れない項目 {extra}")
+        subj, sid, gid = a.get("subject"), a.get("status_id"), a.get("guide_id")
+        if subj not in themes:
+            errs.append(f"{tag}: subject={subj} は対象の表(reference_count.subject_theme)にない")
+            continue
+        names = {e["id"]: e["name"] for e in catalog_mod.approved_entries(status_catalogs.get(subj) or {})}
+        if sid not in names:
+            errs.append(f"{tag}: 現況の名所 id が {subj} のカタログ(承認済み)にない: {sid}")
+        g = by_id.get(gid)
+        if g is None:
+            errs.append(f"{tag}: ガイドの名所 id がない: {gid}")
+        else:
+            if g.get("scope", "place") != "place":
+                errs.append(f"{tag}: ガイドの id が名所ではない: {gid}")
+            if g["theme"] != themes[subj]:
+                errs.append(f"{tag}: テーマが違う({subj} は {themes[subj]}、ガイドの {gid} は {g['theme']})")
+            if not approved(g):
+                errs.append(f"{tag}: ガイドの名所が承認されていない: {gid}")
+        if not isinstance(a.get("basis"), str) or not a["basis"].strip():
+            errs.append(f"{tag}: 根拠(basis)を 1 行で書く")
+        if (subj, sid) in seen:
+            errs.append(f"{tag}: 同じ現況の名所が重複: {subj} {sid}")
+        seen.add((subj, sid))
+    return errs
+
+
+def reference_resolver(policy=None, aliases=None, entries=None, status_catalogs=None):
+    """現況型の答え・提案の参照数を引く関数 (対象, 名所の名前) → 参照数 or None を作る。
+    1. 名前が完全一致するガイドの名所(基の名前。段階24)  2. 対応表(status_alias.yaml)にある場所。どちらでもなければ None(推測しない)。"""
+    policy = policy or load_policy()
+    entries = committed_entries(catalog_only=True) if entries is None else entries
+    counts = reference_counts(entries)
+    aliases = load_status_alias() if aliases is None else aliases
+    by_id = {e["id"]: e for e in entries}
+    alias_by_name = {}
+    for a in aliases:
+        cat = (status_catalogs or {}).get(a["subject"]) if status_catalogs is not None else catalog_mod.load_catalog(a["subject"])
+        names = {e["id"]: e["name"] for e in catalog_mod.approved_entries(cat or {})}
+        g = by_id.get(a["guide_id"])
+        if a["status_id"] in names and g is not None and approved(g):
+            alias_by_name[(a["subject"], names[a["status_id"]])] = g["independent_sources"]
+
+    def resolve(subject, name):
+        n = reference_count_for(counts, subject, name, policy)
+        return n if n is not None else alias_by_name.get((subject, name))
+    return resolve
+
+
+def count_suffix(n, policy):
+    return policy["reference_count"]["suffix"].format(n=n) if n is not None else ""
+
+
+def render_answer(found, policy, origin_line=None, on=None):
+    """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
+    ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
+    a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
+    rc = policy["reference_count"]
+    shown = [False]
+
+    def row(e, i=None):
+        where = f"{e.get('prefecture') or ''}{e.get('municipality') or ''}"
+        bits = []
+        se = e.get("season")
+        if se and se["shown"]:
+            bits.append(a["bits"]["season"].format(text=se["text"]))
+        kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"])
+        if kinds:
+            bits.append(a["bits"]["kinds"].format(text=kinds))
+        bits.append(a["bits"]["tier"].format(label=labels[e["tier"]]))
+        bits.append(a["bits"]["classes"].format(text="・".join(classes[c] for c in e["classes"])))
+        d = e.get("distance")
+        if d:
+            bits.append(a["bits"]["distance"].format(origin=d["origin"], km=d["km"]) + ("、" + a["bits"]["edge"] if d["status"] == "edge" else ""))
+        head = a["place"].format(i=i, name=e["name"], where=where) if i else a["reference_item"].format(name=e["name"], where=where)
+        shown[0] = True
+        return head + " — " + "、".join(bits) + count_suffix(e["independent_sources"], policy)
+
+    lines = [origin_line, ""] if origin_line else []
+    lines.append(f"## {a['headings']['recommend']}")
+    rec = found.get("recommend") or []
+    lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
+    for key in ("upcoming", "no_season", "reference"):
+        es = found.get(key) or []
+        if es:
+            lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]
+    if shown[0]:
+        lines += ["", rc["legend"]]
+    return "\n".join(lines) + "\n"
+
+
+def forbidden_in_answer(text, policy):
+    """ガイド型の答えに出ている内部用語(空 = 合格)。英字の語は単語の区切りで探す。"""
+    out = []
+    for t in policy["answer"]["forbidden_terms"]:
+        pat = rf"(?<![A-Za-z0-9_]){re.escape(t)}(?![A-Za-z0-9_])" if t.isascii() else re.escape(t)
+        if re.search(pat, re.sub(r"https?://\S+", " ", text), flags=re.IGNORECASE):
+            out.append(t)
     return out
 
 
@@ -899,6 +1148,9 @@ def main(argv=None, http_get=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("theme", help="質問の言葉 → テーマ・種類(方針の words)")
     t.add_argument("word")
+    sub.add_parser("check-alias", help="現況の名所 → ガイドの名所の対応表(data/guide/status_alias.yaml)を検査する(通信しない)")
+    an = sub.add_parser("annotate", help="既存の記録(同じ名所・同じ URL)に、後から分かった所在の市区町村・種名・時期を追記する(追記の記録が残る。段階26)")
+    an.add_argument("--batch", required=True, help="追記の JSON(配列。各件は theme・name・prefecture・url と、municipality・kinds・season のどれか、summary)")
     rc = sub.add_parser("record-candidate", help="検索・取得で見つけた事実(名所・所在・種類・例年の時期・URL)を候補として記録する")
     rc.add_argument("--batch", required=True, help="JSON の配列: [{theme, name, prefecture, municipality?, kinds?, season?{text,from,to}|{text,year_round}, url, "
                                                    "title?, note?, copies_of?, status?{state,date}, access?, origin?(search/fetch/seed/user)}]")
@@ -923,6 +1175,7 @@ def main(argv=None, http_get=None):
     f.add_argument("--name", action="append", help="名所の名前(名指しの質問)")
     f.add_argument("--origin", help="出発地(data/catalog/policy.yaml の range_limit.origins。省略すると横浜)")
     f.add_argument("--committed-only", action="store_true")
+    f.add_argument("--text", action="store_true", help="JSON ではなく、コードが組み立てたガイド型の答えの文を出す(参照数と凡例つき。段階24)")
     for name in ("reject", "approve", "visited"):
         p = sub.add_parser(name, help={"reject": "仮承認・候補を外す(同じ候補は再び仮承認されない)", "approve": "承認する(ユーザーの見直し)",
                                        "visited": "ユーザーが行って確認した(確認済みになる)"}[name])
@@ -955,6 +1208,21 @@ def main(argv=None, http_get=None):
             return 1
         _dump({"written": n, "duplicates": dup, "rows": [{k: r[k] for k in ("name", "host", "class", "publisher", "read_at")} for r in new]})
         return 0
+    if a.cmd == "check-alias":
+        subjects = list(policy["reference_count"]["subject_theme"])
+        errs = check_status_alias(load_status_alias(), policy, committed_entries(catalog_only=True),
+                                  {s_: catalog_mod.load_catalog(s_) for s_ in subjects})
+        _dump({"aliases": len(load_status_alias()), "errors": errs})
+        return 1 if errs else 0
+    if a.cmd == "annotate":
+        items = json.loads(Path(a.batch).read_text(encoding="utf-8"))
+        try:
+            n, new = annotate(items, policy=policy)
+        except ValueError as ex:
+            print(f"追記しなかった: {ex}", file=sys.stderr)
+            return 1
+        _dump({"written": n, "rows": [{k: r.get(k) for k in ("name", "url", "municipality", "kinds", "season", "summary", "at")} for r in new]})
+        return 0
     if a.cmd == "import-seed":
         rows = parse_seed(Path(a.file).read_text(encoding="utf-8"))
         mapping = yaml.safe_load(Path(a.map).read_text(encoding="utf-8"))
@@ -973,7 +1241,7 @@ def main(argv=None, http_get=None):
         return _places_fetch(a, http_get)
     if a.cmd == "build":
         entries, recs, places = build(include_runtime=not a.committed_only)
-        _dump(export(entries, recs, places, guide_dir() / "export"))
+        _dump(export(entries, recs, places, guide_dir() / "export", annotations=all_annotations(include_runtime=not a.committed_only)))
         return 0
     if a.cmd == "review":
         print(review_markdown(build()[0], policy))
@@ -1006,6 +1274,14 @@ def main(argv=None, http_get=None):
         origin = catalog_mod.resolve_origin(cpol, a.origin)
         rl = cpol["range_limit"]
         line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
+        if a.text:
+            text = render_answer(got, policy, origin_line=line)
+            bad = forbidden_in_answer(text, policy)
+            if bad:
+                print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)
+                return 1
+            print(text, end="")
+            return 0
         _dump({"origin": origin, "origin_line": line, "themes": sorted(themes), "kinds": kinds, "date": a.date, **{k: v for k, v in got.items()},
                "counts": {k: len(v) for k, v in got.items()}})
         return 0

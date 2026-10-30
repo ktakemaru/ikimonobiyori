@@ -1,0 +1,9 @@
+# 現況の名所カタログ(data/catalog/<対象>.yaml)の場所 → ガイドの名所(data/guide/catalog.yaml)の対応表(段階26)。
+# 現況型の答えの参照数は、名前が完全一致する場所のほか、この表にある場所にも付く。あいまい一致(部分一致・類似度)はコードに入れない。
+# 入れるのは、都道府県・市区町村・名称から**同じ場所と確信できるもの**だけ。根拠を basis に 1 行で書く。迷うものは入れない(docs/stage26-report.md に一覧)。
+# テーマが違う場所は入れない(例: 紅葉の現況の名所に、野鳥のガイドの名所の参照数は付けない。参照数は「その対象の名所として」紹介している発行元の数)。
+# ガイド側に対応する場所がない現況の名所は、ガイド側に新しく作らない。
+# 書式: - {subject: <対象>, status_id: <現況の名所 id>, guide_id: <ガイドの名所 id>, basis: "<根拠 1 行>"}
+# 検査: python -X utf8 -m ikimonobiyori.guide check-alias(存在しない id・テーマの食い違いがあれば落ちる。tests/test_stage26.py も確かめる)
+schema: ikimono-status-alias/1
+aliases: []

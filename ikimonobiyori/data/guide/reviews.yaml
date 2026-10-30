@@ -1,2 +1,9 @@
 # ユーザーの見直し(段階23)。guide reject / approve / visited の結果を、ユーザーが確かめてここに写す(id・state・at・by・reason)
-reviews: []
+reviews:
+  # 古徳沼(冬鳥)。ユーザーの承認 D(段階25 指示書 2026-10-30)。那珂市のページは出どころに数えない(名所カタログ wintering_birds の retired の記録はそのまま)
+  - id: g-adae064599
+    state: approved
+    at: "2026-10-30"
+    by: user
+    reason: "却下したのは出典の那珂市のページ(更新が古く、指示文が埋め込まれていた)であり、場所そのものではない。るるぶ・旅行総合研究所タビリスの2件(参照数2)で成立する"
+

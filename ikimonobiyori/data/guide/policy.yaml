@@ -9,10 +9,22 @@ tiers:
   order: [verified, curated, reference]                  # 強い順。表示の並びにも使う
   curated:
     min_independent: {value: 3, source: "指示書 段階23 フェーズ2 の 4(ユーザー承認 2026-10-25)", provisional: true}
+    # テーマごとの上書き(段階24。ユーザーの決定 2026-10-30)。ここにないテーマは上の既定。「冬鳥」を野鳥と同じ扱いにするのは解釈(野鳥の一部と考えた。docs/stage24-decisions.md)
+    min_independent_by_theme:
+      野鳥: {value: 2, source: "ユーザー指示 2026-10-30(段階24)", provisional: false}
+      冬鳥: {value: 2, source: "ユーザー指示 2026-10-30(段階24。冬鳥は野鳥の一部と解釈)", provisional: false}
     needs_class_any: [A, B, C]
   verified:
     status_classes: [A]                                  # 現地の発信(A)で、日付つきの状態が読めたもの。または、ユーザーが「行って確認した」と記録したもの
   labels: {verified: 確認済み, curated: 定評, reference: 参考}
+# 却下・退役した対象と出どころは、件数が足りても自動で定評にしない(段階24。ユーザーの決定 2026-10-30)
+#   catalog_status: 名所カタログ(data/catalog/*.yaml)の status がこの値の件(名前と出どころの URL を使う)。review_states: reviews の state がこの値の件
+retired_guard:
+  catalog_status: [retired]
+  review_states: [rejected]
+  # 出どころの URL だけを退役する(名所カタログの retired にない出どころ。定評の件数に数えない)。指示文の中身は書かない(存在と URL だけ)
+  urls:
+    - {url: "https://www.city.funabashi.lg.jp/kids/facilities/p000586.html", reason: "ページ内に指示文(段階25、2026-10-30)"}
 # 実在の確認(フェーズ2 の 5): 自治体・公園・観光協会・メディア(A・B・C)の出どころで 1 件以上
 existence_classes: [A, B, C]
 # 取り出した種名・時期を、ガイドの答えに出してよい下限(独立した出どころの数。フェーズ3 の 2)
@@ -168,7 +180,7 @@ record:
 
 # 検索・取得の回数の上限(指示書の通信の承認。ユーザー承認 2026-10-25)。guide log-request が数え、上限で止める
 budget:
-  collect: {search: 80, fetch: 60}
+  collect: {search: 140, fetch: 60}                      # search は 80 → 140(段階25 承認B、ユーザー 2026-10-30)。fetch は 60 のまま
   trial: {search: 60, fetch: 40}
   answer: {search: 8, fetch: 8}                          # 1 質問あたり(試験の質問も、これと試験の合計の両方に入る)
   places_requests: 100                                   # 市区町村の代表点(www.wikidata.org)
@@ -184,3 +196,27 @@ region_municipalities:
   富士山周辺:
     source: "Claude Code が付けた(段階23)。山梨県の富士五湖の 6 市町村と、静岡県の富士山の麓の 5 市町(富士山を囲む市町村)"
     municipalities: [富士吉田市, 富士河口湖町, 山中湖村, 忍野村, 鳴沢村, 西桂町, 富士宮市, 御殿場市, 小山町, 裾野市, 富士市]
+
+# 参照数の表示(段階24。ユーザーの決定 2026-10-30)。ガイド型の場所の行・現況型のおすすめの行の文末に「（参照数 N）」。N = その場所の独立した発行元の数
+reference_count:
+  suffix: "（参照数 {n}）"
+  legend: "参照数は、その場所を紹介している独立した発行元の数です。"
+  # 現況の対象 → ガイドのテーマ(現況型の場所をガイドのカタログの同じ場所と照らす)
+  subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
+# ガイド型の答え(コードが組み立てる文。guide find --text)の文言。段階の表示は labels(確認済み / 定評 / 参考)。内部用語を出さない
+answer:
+  headings: {recommend: おすすめ, upcoming: これから, no_season: 例年の時期を確かめられていない名所, reference: 参考, notes: 注意}
+  none_found: "おすすめにできる名所は見つかりませんでした。"
+  place: "{i}. **{name}**({where})"
+  bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
+  reference_item: "- {name}({where})"
+  forbidden_terms: [tier, independent_sources, auto-rule, reference, curated, verified, provisional, candidate]
+
+# 既存の記録への追記(段階26。guide annotate)。同じ URL の記録は重複で足せないため、後から分かった事実(所在の市区町村・種名・時期)を「追記の記録」として別に残す。
+# 出どころの URL・区分・発行元は変えられない。追記は記録の上書きではない(いつ・何を・どのページの記載かが残る)。独立した発行元の数え方・種名を出す下限は変えない
+annotation:
+  schema: ikimono-guide-annotation/1
+  file: annotations.jsonl                                 # 書き込み先は IKIMONOBIYORI_DATA_DIR の下の guide/。見直して置いた写しは data/guide/annotations.jsonl
+  input_fields: [scope, theme, name, prefecture, url, municipality, kinds, season, summary]
+  fields: [municipality, kinds, season]                   # 追記できる項目
+  max_summary_chars: {value: 80, source: "仮置き(段階26)。ページの記載の短い要約(本文を写さない)", provisional: true}

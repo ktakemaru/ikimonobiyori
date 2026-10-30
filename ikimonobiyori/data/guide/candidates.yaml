@@ -1,45 +1,6 @@
 # build の結果(python -X utf8 -m ikimonobiyori.guide build)。手で直さない(records.jsonl・places.yaml・reviews.yaml から作り直す)
 schema: ikimono-guide-catalog/1
 entries:
-- id: g-03191977ee
-  scope: place
-  theme: 冬鳥
-  name: 越辺川(川島町)
-  prefecture: 埼玉県
-  municipality: 川島町
-  kinds:
-  - kind: コハクチョウ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 1
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 40
-    from: 東京
-    qid: Q1203970
-    by_origin:
-      東京:
-        km: 42
-        status: in_range
-      横浜:
-        km: 59
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
-    host: tabi-mag.jp
-    publisher: 旅行総合研究所タビリス
-    class: C
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
 - id: g-03292672de
   scope: place
   theme: 花
@@ -168,53 +129,6 @@ entries:
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
     note: ガイド付きの観賞会(2026年は7/10〜26)
-- id: g-1c29763a98
-  scope: place
-  theme: 冬鳥
-  name: 五行川白鳥飛来地
-  prefecture: 栃木県
-  municipality: 真岡市
-  kinds:
-  - kind: オオハクチョウ
-    independent_sources: 1
-    shown: false
-  season:
-    text: 10月下旬〜3月下旬
-    window:
-      start: 10-21
-      end: 03-31
-    independent_sources: 1
-    shown: false
-    from_url: https://tabi-mag.jp/kanto-Swanflyingarea/
-    other_texts: []
-  tier: reference
-  independent_sources: 1
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 90
-    from: 東京
-    qid: Q498060
-    by_origin:
-      東京:
-        km: 87
-        status: in_range
-      横浜:
-        km: 114
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
-    host: tabi-mag.jp
-    publisher: 旅行総合研究所タビリス
-    class: C
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
 - id: g-27f7fcd41b
   scope: place
   theme: 野鳥
@@ -257,60 +171,6 @@ entries:
     origin: seed
     seed_id: B09
     note: 森の小鳥。春・秋の渡りの時期
-- id: g-2aa88bae76
-  scope: place
-  theme: 野鳥
-  name: 自然教育園
-  prefecture: 東京都
-  municipality: 港区
-  kinds:
-  - kind: カワセミ
-    independent_sources: 2
-    shown: true
-  season: null
-  tier: reference
-  independent_sources: 2
-  classes:
-  - B
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 0
-    from: 東京
-    qid: Q190088
-    by_origin:
-      東京:
-        km: 3
-        status: in_range
-      横浜:
-        km: 24
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 2 件
-  sources:
-  - url: https://ins.kahaku.go.jp/event/2023/11kawasemi/imgs/kawasemi2023_leaflet.pdf
-    host: ins.kahaku.go.jp
-    publisher: kahaku.go.jp
-    class: B
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
-    note: カワセミの繁殖の観察記録
-  - url: https://www.city.minato.tokyo.jp/documents/40174/oshietekawasemi.pdf
-    host: city.minato.tokyo.jp
-    publisher: minato.tokyo.jp
-    class: B
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
-    note: カワセミが巣作りや餌取りに使う場所
-  - url: https://web.kahaku.go.jp/research/publication/meguro/download/33/ns-r-33_32.pdf
-    host: web.kahaku.go.jp
-    publisher: kahaku.go.jp
-    class: B
-    read_at: '2026-10-25T16:58:18+09:00'
-    origin: search
-    note: 園内での繁殖の記録
 - id: g-2b68ca0bb4
   scope: place
   theme: 花
@@ -1263,54 +1123,52 @@ entries:
     class: C
     read_at: '2026-10-25T16:32:40+09:00'
     origin: fetch
-- id: g-684890478d
+- id: g-6378109810
   scope: place
   theme: 冬鳥
-  name: 大塚池公園
+  name: 稲波干拓
   prefecture: 茨城県
-  municipality: 水戸市
+  municipality: 稲敷市
   kinds:
-  - kind: オオハクチョウ
+  - kind: オオヒシクイ
     independent_sources: 1
     shown: false
-  season:
-    text: 10月中旬〜3月下旬ごろ
-    window:
-      start: 10-11
-      end: 03-31
+  - kind: タゲリ
     independent_sources: 1
     shown: false
-    from_url: https://kids.rurubu.jp/article/83265/
-    other_texts: []
+  - kind: チュウヒ
+    independent_sources: 1
+    shown: false
+  season: null
   tier: reference
   independent_sources: 1
   classes:
-  - C
+  - B
   exists_confirmed: true
   range:
     status: in_range
-    km: 100
+    km: 60
     from: 東京
-    qid: Q204249
+    qid: Q838675
     by_origin:
       東京:
-        km: 99
+        km: 59
         status: in_range
       横浜:
-        km: 126
+        km: 84
         status: in_range
   approval:
     state: candidate
     reasons:
     - 独立した出どころが 1 件
   sources:
-  - url: https://kids.rurubu.jp/article/83265/
-    host: kids.rurubu.jp
-    publisher: るるぶ
-    class: C
-    read_at: '2026-10-25T16:37:52+09:00'
+  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2024_shizen8_kekka.pdf
+    host: pref.ibaraki.jp
+    publisher: pref.ibaraki.jp
+    class: B
+    read_at: '2026-10-30T07:39:38+09:00'
     origin: search
-    note: 最大300羽ほど
+    note: 県の自然観察会の報告(2024年度)にオオヒシクイなど(検索の要約)
 - id: g-6d6fe7c0df
   scope: place
   theme: 花
@@ -1484,6 +1342,58 @@ entries:
     class: B
     read_at: '2026-10-25T16:30:17+09:00'
     origin: search
+- id: g-78f80a6300
+  scope: place
+  theme: 野鳥
+  name: ふなばし三番瀬海浜公園
+  prefecture: 千葉県
+  municipality: 船橋市
+  kinds:
+  - kind: スズガモ
+    independent_sources: 1
+    shown: false
+  - kind: ハマシギ
+    independent_sources: 1
+    shown: false
+  - kind: ミヤコドリ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://iko-yo.net/facilities/569
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q271417
+    by_origin:
+      東京:
+        km: 19
+        status: in_range
+      横浜:
+        km: 41
+        status: in_range
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://iko-yo.net/facilities/569
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:04:26+09:00'
+    origin: fetch
+    note: 冬はハマシギ・スズガモ。日本一のミヤコドリ渡来地と紹介
 - id: g-7c57300703
   scope: place
   theme: 桜
@@ -1568,6 +1478,55 @@ entries:
     read_at: '2026-10-25T16:32:09+09:00'
     origin: search
     note: 同ランキング2位
+- id: g-800ce9fba0
+  scope: place
+  theme: 野鳥
+  name: 行徳鳥獣保護区
+  prefecture: 千葉県
+  municipality: 市川市
+  kinds:
+  - kind: オオタカ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  season:
+    text: 通年
+    window: year_round
+    independent_sources: 1
+    shown: false
+    from_url: https://iko-yo.net/facilities/26028
+    other_texts: []
+  tier: reference
+  independent_sources: 1
+  classes:
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 20
+    from: 東京
+    qid: Q209785
+    by_origin:
+      東京:
+        km: 15
+        status: in_range
+      横浜:
+        km: 40
+        status: in_range
+  approval:
+    state: candidate
+    reasons:
+    - 独立した出どころが 1 件
+  sources:
+  - url: https://iko-yo.net/facilities/26028
+    host: iko-yo.net
+    publisher: いこーよ
+    class: C
+    read_at: '2026-10-30T07:42:09+09:00'
+    origin: fetch
+    note: 秋〜冬にカワセミやオオタカ。野鳥病院が併設
 - id: g-87225ca5d5
   scope: place
   theme: ホタル
@@ -1701,59 +1660,6 @@ entries:
     publisher: abiko.chiba.jp
     class: B
     read_at: '2026-10-25T16:29:11+09:00'
-    origin: search
-- id: g-8fd53c31c1
-  scope: place
-  theme: 冬鳥
-  name: 白鳥の里(北浦)
-  prefecture: 茨城県
-  municipality: 潮来市
-  kinds:
-  - kind: オオハクチョウ
-    independent_sources: 2
-    shown: true
-  season:
-    text: ピークは例年1月中旬〜下旬頃
-    window:
-      start: 01-11
-      end: 01-31
-    independent_sources: 1
-    shown: false
-    from_url: https://kids.rurubu.jp/article/83265/
-    other_texts: []
-  tier: reference
-  independent_sources: 2
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 80
-    from: 東京
-    qid: Q840598
-    by_origin:
-      東京:
-        km: 78
-        status: in_range
-      横浜:
-        km: 100
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 2 件
-  sources:
-  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
-    host: tabi-mag.jp
-    publisher: 旅行総合研究所タビリス
-    class: C
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
-  - url: https://kids.rurubu.jp/article/83265/
-    host: kids.rurubu.jp
-    publisher: るるぶ
-    class: C
-    read_at: '2026-10-25T16:37:52+09:00'
     origin: search
 - id: g-91b0201d5b
   scope: place
@@ -2132,62 +2038,6 @@ entries:
     read_at: '2026-10-25T16:30:17+09:00'
     origin: search
     note: 日本庭園の池に毎年オシドリ
-- id: g-adae064599
-  scope: place
-  theme: 冬鳥
-  name: 古徳沼
-  prefecture: 茨城県
-  municipality: 那珂市
-  kinds:
-  - kind: オオハクチョウ
-    independent_sources: 2
-    shown: true
-  - kind: コハクチョウ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 2
-  classes:
-  - C
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 110
-    from: 東京
-    qid: Q633647
-    by_origin:
-      東京:
-        km: 108
-        status: in_range
-      横浜:
-        km: 135
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 2 件
-  sources:
-  - url: https://tabi-mag.jp/kanto-Swanflyingarea/
-    host: tabi-mag.jp
-    publisher: 旅行総合研究所タビリス
-    class: C
-    read_at: '2026-10-25T16:30:17+09:00'
-    origin: search
-  - url: https://kids.rurubu.jp/article/83265/
-    host: kids.rurubu.jp
-    publisher: るるぶ
-    class: C
-    read_at: '2026-10-25T16:37:52+09:00'
-    origin: search
-    note: 合わせて250羽を超える年も
-  - url: https://tabi-mag.jp/ib0274/
-    host: tabi-mag.jp
-    publisher: 旅行総合研究所タビリス
-    class: C
-    read_at: '2026-10-25T16:40:48+09:00'
-    origin: search
-    note: 1966年にオオハクチョウが初飛来。瓜連駅から徒歩30分
 - id: g-aea29f6084
   scope: place
   theme: ホタル
