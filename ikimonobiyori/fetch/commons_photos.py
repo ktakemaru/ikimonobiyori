@@ -40,6 +40,65 @@ def imageinfo_url(filename, cm):
     return cm["commons_api"] + "?" + urlencode(q)
 
 
+def search_files_url(query, cm):
+    """Commons のファイル(名前空間 6)の全文検索(段階31。季節の合う写真を探す)。"""
+    q = {"action": "query", "list": "search", "srsearch": query, "srnamespace": cm["file_namespace"], "srlimit": cm["season_search_limit"]["value"],
+         "format": "json", "formatversion": cm["formatversion"]}
+    return cm["commons_api"] + "?" + urlencode(q)
+
+
+def titles_imageinfo_url(titles, cm):
+    """ファイル名(File:…)の一覧を 1 回の imageinfo にまとめる。"""
+    q = {"action": "query", "titles": "|".join(titles), "prop": "imageinfo", "iiprop": "url|mime|size|extmetadata",
+         "iiurlwidth": cm["thumb_width"]["value"], "format": "json", "formatversion": cm["formatversion"]}
+    return cm["commons_api"] + "?" + urlencode(q)
+
+
+def parse_file_search(doc, cm):
+    """Commons のファイル検索の応答 → ファイル名(File:…)の一覧(検索順)。"""
+    rows = (doc.get("query") or {}).get("search") if isinstance(doc, dict) else None
+    if not isinstance(rows, list):
+        raise ParseError("query.search がない")
+    out = []
+    for r in rows:
+        t = r.get("title") if isinstance(r, dict) else None
+        if not isinstance(t, str) or not t.startswith(cm["file_prefix"]):
+            raise ParseError("ファイル名の形が想定と違う")
+        out.append(t)
+    return out
+
+
+def parse_imageinfo_pages(doc):
+    """imageinfo(複数のファイル)の応答 → [(ファイル名, parse_imageinfo と同じ形の辞書か None)]。"""
+    pages = (doc.get("query") or {}).get("pages") if isinstance(doc, dict) else None
+    if not isinstance(pages, list):
+        raise ParseError("query.pages がない")
+    return [(p.get("title"), parse_imageinfo({"query": {"pages": [p]}})) for p in pages if isinstance(p, dict)]
+
+
+def seasonal_pick(pages, row, cm, ordered_titles):
+    """検索順に見て、ライセンス等を満たし(usable)、かつ ファイル名・カテゴリ・説明に学名と季節の語(season_terms)の両方がある最初の 1 枚。
+    季節の合うことを書かれた語で確かめる(見た目からの推測だけで選ばない)。→ ({"usable", "title", "term"}, 判定の内訳) か (None, 内訳)。"""
+    by_title = {t: i for t, i in pages}
+    seen = []
+    for t in ordered_titles:
+        info = by_title.get(t)
+        ok, why = usable(info, cm)
+        if not ok:
+            seen.append(why)
+            continue
+        text = " ".join([t, info["categories"], info["description"]]).lower()
+        if row["scientific"].lower() not in text:
+            seen.append("学名の記載がない")
+            continue
+        term = next((x for x in cm["season_terms"] if x in text), None)
+        if not term:
+            seen.append("季節の語の記載がない")
+            continue
+        return {"usable": ok, "title": t, "term": term}, seen
+    return None, seen
+
+
 def parse_search(doc, cm):
     """Wikidata の検索の応答 → 項目の id の一覧。"""
     rows = (doc.get("query") or {}).get("search") if isinstance(doc, dict) else None
@@ -117,7 +176,8 @@ def parse_imageinfo(doc):
     return {"descriptionurl": i.get("descriptionurl") if isinstance(i.get("descriptionurl"), str) else None,
             "thumburl": i.get("thumburl") if isinstance(i.get("thumburl"), str) else None,
             "mime": i.get("mime") if isinstance(i.get("mime"), str) else None,
-            "license_short": meta("LicenseShortName"), "artist": _strip_tags(meta("Artist") or ""), "restrictions": (meta("Restrictions") or "").strip()}
+            "license_short": meta("LicenseShortName"), "artist": _strip_tags(meta("Artist") or ""), "restrictions": (meta("Restrictions") or "").strip(),
+            "categories": meta("Categories") or "", "description": _strip_tags(meta("ImageDescription") or "")}
 
 
 def usable(info, cm):
@@ -140,7 +200,9 @@ def usable(info, cm):
         thumb = urlsplit(f"https://{new_host}{thumb.path}")      # 承認済みのホストへ(パスは同じ・クエリは捨てる)
     if thumb.scheme != "https" or thumb.hostname not in cm["image_hosts"]:
         return None, f"サムネイルのホストが許可外({thumb.hostname})"
-    author = info["artist"][:cm["author_max_chars"]["value"]]
+    author = info["artist"]
+    if len(author) > cm["author_max_chars"]["value"]:           # 切ると作者の指定する表記と違ってしまうので、切らずに使わない
+        return None, "作者の表記が長すぎる(切らずに使わない)"
     if not author:
         if not any(re.fullmatch(p, lic) for p in cm["no_author_ok_patterns"]):
             return None, "作者の表記がない"
@@ -233,4 +295,72 @@ def fetch_commons(rows, *, http_get, http_bytes, ph, max_requests, has_cache, to
         got.append(item)
         if on_got:
             on_got(item)                                         # 取れたらすぐ保存する(あとの通信で中止されても失わない)
+    return got, unused, rep
+
+
+def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=None, sleep=time.sleep, on_got=None, wait_first=False):
+    """1 種について、Commons のファイル検索「学名 + 冬羽(season_query)」→ 候補をまとめて imageinfo → 季節の語のある最初の 1 枚を取る(3 リクエスト)。
+    → (取れた [{row, meta, data, ext}], 使わなかった理由 {和名: 理由}, 報告)。HTTP の非 200・通信エラーはそこで止める(再試行しない)。"""
+    cm = ph["commons"]
+    today = (today or date.today()).isoformat()
+    gap = cm["min_interval_s"]["value"]
+    rep = {"requests": 0, "status": "ok", "stopped": None, "candidates": 0, "decisions": []}
+    got, unused = [], {}
+    name = row["name"]
+
+    def call(fetch, *args):
+        if rep["requests"] >= max_requests:
+            rep["stopped"] = f"--max-requests {max_requests} に達したため止めた"
+            raise _Stop
+        if wait_first and not rep["requests"]:                   # 前の種の最後のリクエストから間隔を空ける
+            sleep(gap)
+        _wait(rep, gap, sleep)
+        rep["requests"] += 1
+        try:
+            status, body, _ = fetch(*args)
+        except OSError as ex:
+            rep["status"], rep["stopped"] = "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で"
+            raise _Stop
+        if status != HTTPStatus.OK:
+            rep["status"], rep["stopped"] = f"HTTP {status}", f"HTTP {status} のため止めた"
+            raise _Stop
+        return body
+
+    def js(body):
+        try:
+            return json.loads(body)
+        except ValueError as ex:
+            rep["status"], rep["stopped"] = "parse_error", f"応答の形が想定と違う: {ex}"
+            raise _Stop
+
+    try:
+        try:
+            titles = parse_file_search(js(call(http_get, search_files_url(cm["season_query"].format(scientific=row["scientific"]), cm))), cm)
+            rep["candidates"] = len(titles)
+            if not titles:
+                unused[name] = "Commons の検索で候補がない"
+                return got, unused, rep
+            pages = parse_imageinfo_pages(js(call(http_get, titles_imageinfo_url(titles, cm))))
+            pick, rep["decisions"] = seasonal_pick(pages, row, cm, titles)
+            if not pick:
+                unused[name] = "季節の語・学名・ライセンスを満たす候補がない"
+                return got, unused, rep
+            body = call(lambda u: http_bytes(u, ph["max_image_bytes"]["value"]), pick["usable"]["image_url"])
+        except ParseError as ex:
+            rep["status"], rep["stopped"] = "parse_error", f"応答の形が想定と違う: {ex}"
+            raise _Stop
+    except _Stop:
+        return got, unused, rep
+    kind, why = check_image(body, ph)
+    if not kind:
+        unused[name] = f"写真を捨てた({why})"
+        return got, unused, rep
+    ok = pick["usable"]
+    meta = {"name": name, "scientific": row["scientific"], "taxon_id": row["taxon_id"], "photo_id": None, "source": cm["source_id"],
+            "license": ok["license"], "license_code": None, "attribution": ok["author"], "photo_page": ok["page"], "fetched_on": today,
+            "image_type": kind, "season_term": pick["term"]}
+    item = {"row": row, "meta": meta, "data": body, "ext": kind}
+    got.append(item)
+    if on_got:
+        on_got(item)
     return got, unused, rep

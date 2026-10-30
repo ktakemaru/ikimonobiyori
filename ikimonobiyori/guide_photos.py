@@ -328,6 +328,37 @@ def commons_cmd(a, http_get=None, http_bytes=None):
     return 0 if rep["status"] == "ok" else 1
 
 
+def commons_season_cmd(a, http_get=None, http_bytes=None):
+    """photos-commons-season: 指定の種(--only)について、Commons で冬羽(季節の語のある)の写真を探して取る。成功したときだけキャッシュを置き換える(段階31)。"""
+    policy = guide.load_policy()
+    ph = policy["photos"]
+    err, left = _gate(a, http_get or http_bytes, "photos-commons-season", ph["commons"]["max_requests_per_run"])
+    if err:
+        return err
+    only = _only(a)
+    if not only:
+        print("photos-commons-season は --only で種を指定してください", file=sys.stderr)
+        return 2
+    rows = [r for n, r in sorted(load_table().items()) if n in only]
+    getter, hg, hb = _getters(http_get, http_bytes)
+    saved, unused, reps, used = [], {}, [], 0
+    try:
+        for row in rows:
+            got, un, rep = commons_photos.fetch_commons_season(row, http_get=hg, http_bytes=hb, ph=ph, max_requests=left - used, on_got=save_photo, wait_first=bool(reps))
+            used += rep["requests"]
+            saved += [i["row"]["name"] for i in got]
+            unused.update(un)
+            reps.append({row["name"]: rep})
+            if rep["status"] != "ok" or rep["stopped"]:
+                break
+    finally:
+        if getter is not None:
+            getter.close()
+    _log_requests(used, "commons-season")
+    guide._dump({"saved": saved, "not_used": unused, "reports": reps, "requests": used, "cache": str(cache_dir())})
+    return 0 if all(next(iter(r.values()))["status"] == "ok" for r in reps) else 1
+
+
 def clear_cmd(a):
     n = clear_cache()
     guide._dump({"removed": n, "cache": str(cache_dir())})

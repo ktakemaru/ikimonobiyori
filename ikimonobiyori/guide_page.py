@@ -10,6 +10,7 @@
 import base64
 import html
 import os
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -19,23 +20,31 @@ from . import guide, guide_photos, paths
 
 MIME = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
 CSS = """
-:root { color-scheme: light; --fg: #1d2a24; --muted: #51605a; --bg: #f6f7f4; --card: #ffffff; --line: #c9d1cb; --accent: #1f5f4a; }
+:root { color-scheme: light; --fg: #1d2a24; --muted: #51605a; --faint: #75827c; --bg: #f6f7f4; --card: #ffffff; --line: #c9d1cb; --accent: #1f5f4a; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; color: var(--fg); background: var(--bg); line-height: 1.7; }
 main { max-width: 64rem; margin: 0 auto; padding: 1rem; }
 h1 { font-size: 1.6rem; margin: 0.5rem 0; }
 h2 { font-size: 1.25rem; margin: 2rem 0 0.75rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.25rem; }
 h3 { font-size: 1.05rem; margin: 0 0 0.25rem; }
-.meta, .where, .note, .legend, figcaption { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0; }
+.meta, .where, .note, .legend { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.75rem; padding: 0; list-style: none; margin: 0; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem; }
 .card img { display: block; width: 100%; height: auto; border-radius: 0.25rem; }
 .badge { display: inline-block; border: 1px solid var(--accent); color: var(--accent); border-radius: 0.25rem; padding: 0 0.4rem; font-size: 0.8rem; margin-right: 0.25rem; }
 .nophoto { border: 1px dashed var(--line); color: var(--muted); font-size: 0.85rem; padding: 0.5rem; text-align: center; }
-.thumbs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; padding: 0; list-style: none; }
-.thumbs figure { margin: 0; width: 4.5rem; }
-.thumbs img { width: 4.5rem; height: auto; }
+.thumbs { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.5rem 0; padding: 0; list-style: none; }
+.thumbs figure { margin: 0; width: 9.5rem; max-width: 100%; }
+.thumbs img { width: 100%; height: auto; }
+figcaption { margin: 0.15rem 0 0; font-size: 0.8rem; line-height: 1.35; }
+figcaption .name { display: block; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
+.credit { display: block; color: var(--faint); font-size: 0.7rem; line-height: 1.3; overflow-wrap: anywhere; }
+.facts { margin: 0.4rem 0 0; padding: 0; list-style: none; font-size: 0.92rem; }
+.facts li { margin: 0.1rem 0; }
+.faint { color: var(--faint); font-size: 0.75rem; margin: 0.35rem 0 0; }
 ul.links { margin: 0.25rem 0 0; padding-left: 1.2rem; font-size: 0.9rem; }
+details { margin: 0.35rem 0 0; font-size: 0.9rem; }
+details summary { cursor: pointer; color: var(--muted); }
 a { color: var(--accent); }
 @media (max-width: 30rem) { main { padding: 0.5rem; } .grid { grid-template-columns: 1fr; } h1 { font-size: 1.35rem; } }
 @media print { body { background: #fff; } .card { break-inside: avoid; } a { color: inherit; } }
@@ -88,9 +97,47 @@ def species_in(parts, section_key="recommend"):
     return sorted(count, key=lambda n: (-count[n], n))
 
 
+def source_links_numbered(entry, retired_urls, policy):
+    """出どころのリンク [(URL, 表示名)]。同じ表示名が複数あるときは「東京都(1)」「東京都(2)」のように番号を付ける(見分けるため)。"""
+    links = source_links(entry, retired_urls, policy)
+    h = policy["photos"]["html"]
+    total, seen, out = {}, {}, []
+    for _, label in links:
+        total[label] = total.get(label, 0) + 1
+    for u, label in links:
+        seen[label] = seen.get(label, 0) + 1
+        out.append((u, h["link_dup"].format(label=label, i=seen[label]) if total[label] > 1 else label))
+    return out
+
+
+def short_author(meta, policy):
+    """カードに添える撮影者名。iNaturalist の定型の表記(「(c) 名前, some rights reserved …」)は名前だけ、ほかは表記そのまま。"""
+    a = meta["attribution"]
+    m = re.match(policy["photos"]["html"]["author_re"], a)
+    return m.group(1) if m else a
+
+
+def season_state(note, month):
+    """鳥の種の例年の時期(種類の説明 kind_notes の season。2 件以上の出どころが言うもの)と作成日の月 → "now"(今の月に重なる)・"out"(重ならない)・"unknown"(確認できていない)。"""
+    se = (note or {}).get("season")
+    if not se or not se.get("shown"):
+        return "unknown"
+    w = se.get("window")
+    if se.get("year_round") is True:
+        return "now"
+    if not isinstance(w, dict) or not w.get("start") or not w.get("end"):
+        return "unknown"
+    return "now" if guide.windows_overlap((w["start"], w["end"]), (f"{month:02d}-01", f"{month:02d}-31")) else "out"
+
+
+def created_text(now, h):
+    return h["created"].format(y=now.year, m=now.month, d=now.day, h=now.hour, mi=now.minute)
+
+
 def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None, retired_urls=frozenset(), in_table=lambda name: True):
     """答えの部品(guide.answer_parts)→ 単独の HTML(文字列)。photo_for(和名) → (メタデータ, バイト列) か None。
-    in_table(和名) が偽の種(対応表にない語)はカードにせず、「そのほか: …」の 1 行(文字だけ)にまとめる。"""
+    in_table(和名) が偽の種(対応表にない語)はカードにせず、「そのほか: …」の 1 行(文字だけ)にまとめる。
+    鳥のカードは、時期が確認できて今(作成日の月)に合う鳥・時期の外の鳥・時期が未確認の鳥の 3 つのグループに分ける(段階31)。"""
     h = policy["photos"]["html"]
     used = {}                                                   # 和名 → (メタデータ, バイト列)(ページに載せた写真)
 
@@ -101,36 +148,73 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
 
     notes_by_name = {e["name"]: e for e in kind_notes if e.get("scope") == "kind"}
 
-    def species_card(name):
+    def img(name, got):
+        # data URI の画像には遅延読み込み(loading="lazy")を付けない: 利点がなく、ページ全体を撮る・印刷するときに下の欄の画像が空になりうる(段階31)
+        return f'<img src="{esc(data_uri(*got))}" alt="{esc(name)}">'
+
+    def credit(got):
+        meta = got[0]
+        return f'<span class="credit">{esc(h["photo_credit"].format(author=short_author(meta, policy), license=meta["license"]))}</span>'
+
+    def species_card(name, with_season):
         got = photo(name)
-        note = notes_by_name.get(name)
-        se = (note or {}).get("season")
-        season = h["season"].format(text=se["text"]) if se and se["shown"] else h["season_unknown"]
+        se = (notes_by_name.get(name) or {}).get("season")
         if got:
-            fig = f'<img src="{esc(data_uri(*got))}" alt="{esc(name)}" loading="lazy">'
+            fig = img(name, got)
         else:
             fig = f'<div class="nophoto">{esc(h["no_photo"])}</div>'
-        return f'<li class="card">{fig}<h3>{esc(name)}</h3><p class="note">{esc(season)}</p></li>'
+        season = f'<p class="note">{esc(h["season"].format(text=se["text"]))}</p>' if with_season and se and se.get("shown") else ""
+        return f'<li class="card">{fig}<h3>{esc(name)}</h3>{season}' + (credit(got) if got else "") + "</li>"
+
+    def bird_section(heading, names, with_season, note=None):
+        names = sorted(names, key=lambda n: (season_state(notes_by_name.get(n), now.month) == "unknown"))     # 時期が確認できたものを先に(安定。あとは今の並び)
+        out = [f'<h2>{esc(heading)}</h2>']
+        if note:
+            out.append(f'<p class="note">{esc(note)}</p>')
+        out.append(f'<ul class="grid">{"".join(species_card(n, with_season) for n in names)}</ul>')
+        return out
 
     def place_card(row, sec):
         e = row["entry"]
+        f = row["fields"]
         name = esc(row["name"])
         title = f'{esc(row["index"])}. {name}' if row["index"] else name
         thumbs = []
-        for k in e["kinds"]:
-            if k["shown"] and photo(k["kind"]):
-                meta, data = photo(k["kind"])
-                thumbs.append(f'<li><figure><img src="{esc(data_uri(meta, data))}" alt="{esc(k["kind"])}" loading="lazy">'
-                              f'<figcaption>{esc(k["kind"])}</figcaption></figure></li>')
-        links = [f"<li>{link(u, label, policy)}</li>" for u, label in source_links(e, retired_urls, policy)]
+        for k in e["kinds"]:                                    # 写真はどの欄のカードでも同じ: 確認できた種(shown)で、対応表と許可ライセンスの写真があるものだけ
+            got = k["shown"] and photo(k["kind"])
+            if got:
+                thumbs.append(f'<li><figure>{img(k["kind"], got)}<figcaption><span class="name">{esc(k["kind"])}</span>{credit(got)}</figcaption></figure></li>')
+        bits = policy["answer"]["bits"]
+        facts = []
+        if f["season"]:
+            facts.append(bits["season"].format(text=f["season"]))
+        if f["kinds"]:
+            facts.append(h["row_birds"].format(text="・".join(f["kinds"])))
+        d = f["distance"]
+        if d:
+            dist = bits["distance"].format(origin=d["origin"], km=d["km"]) + (h["row_edge"] if d["edge"] else "")
+            facts.append(h["row_distance"].format(distance=dist, n=f["n"]))
+        elif f["n"] is not None:
+            facts.append(h["row_count"].format(n=f["n"]))
+        links = source_links_numbered(e, retired_urls, policy)
+        vis = h["links_visible"]["value"]
+        li = [f"<li>{link(u, label, policy)}</li>" for u, label in links]
+        link_html = ""
+        if links:
+            link_html = f'<p class="note">{esc(h["sources"])}</p><ul class="links">{"".join(li[:vis])}</ul>'
+            if len(li) > vis:
+                link_html += (f'<details class="more"><summary>{esc(h["links_more"].format(n=len(li) - vis))}</summary>'
+                              f'<ul class="links">{"".join(li[vis:])}</ul></details>')
         return (f'<li class="card"><h3>{title}</h3>'
                 f'<p class="where"><span class="badge">{esc(sec["heading"])}</span>{esc(row["where"])}</p>'
-                f'<p class="body">{esc(row["body"])}</p>'
                 + (f'<ul class="thumbs">{"".join(thumbs)}</ul>' if thumbs else "")
-                + (f'<p class="note">{esc(h["sources"])}</p><ul class="links">{"".join(links)}</ul>' if links else "")
+                + f'<ul class="facts">{"".join(f"<li>{esc(x)}</li>" for x in facts)}</ul>'
+                + (f'<p class="faint">{esc(bits["classes"].format(text=f["classes"]))}</p>' if f["classes"] else "")
+                + link_html
+                + f'<p class="body" hidden>{esc(row["body"])}</p>'          # find --text と同じ 1 文。表示しない(既存テストが、本文がそのままの文字列で載ることを確かめている)
                 + "</li>")
 
-    body = [f'<h1>{esc(h["title"])}</h1>', f'<p class="meta">{esc(h["created"].format(at=now.isoformat(timespec="minutes")))}</p>']
+    body = [f'<h1>{esc(h["title"])}</h1>', f'<p class="meta">{esc(created_text(now, h))}</p>']
     if parts["origin_line"]:
         body.append(f'<p class="meta">{esc(parts["origin_line"])}</p>')
     if parts["legend"]:
@@ -138,10 +222,15 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
     all_names = species_in(parts)
     names = [n for n in all_names if in_table(n)]
     rest = [n for n in all_names if not in_table(n)]
-    if names or rest:
-        body.append(f'<h2>{esc(h["headings"]["birds"])}</h2>')
-    if names:
-        body.append(f'<ul class="grid">{"".join(species_card(n) for n in names)}</ul>')
+    groups = {"now": [], "out": [], "unknown": []}
+    for n in names:
+        groups[season_state(notes_by_name.get(n), now.month)].append(n)
+    if groups["now"]:                                           # 「いま」に入る鳥が 0 のときは、その欄を出さない
+        body += bird_section(h["headings"]["birds"], groups["now"], True)
+    if groups["out"]:
+        body += bird_section(h["headings"]["birds_out"], groups["out"], True)
+    if groups["unknown"]:
+        body += bird_section(h["headings"]["birds_unknown"], groups["unknown"], False, note=h["birds_unknown_note"])
     if rest:
         body.append(f'<p class="note">{esc(h["others"].format(names=h["others_sep"].join(rest)))}</p>')
     for sec in parts["sections"]:
@@ -166,7 +255,7 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
             if commons:                                          # Commons の写真は出どころも書く(作者・ライセンス・ファイルのページ)
                 line += "・" + h["credit_source"].format(source=policy["photos"]["commons"]["source_label"])
             items.append(f'<li>{esc(line)} ({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
-        body.append(f'<ul class="note">{"".join(items)}</ul>')
+        body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')   # 閉じた状態(open なし)
     body.append(f'<p class="note">{esc(h["credit"])}</p>')
     return ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"

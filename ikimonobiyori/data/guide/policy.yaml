@@ -277,7 +277,7 @@ photos:
     min_interval_s: {value: 6, source: "仮置き(段階30)。Wikimedia へのリクエスト間隔(秒)。ユーザー指示は 1 秒以上。Wikidata の 429 を 2 回受けて 2→3→6 に広げた", provisional: true}
     thumb_width: {value: 500, source: "ユーザー指示(段階30)。サムネイルの幅(px)の目安", provisional: false}
     wikidata_limit: {value: 5, source: "仮置き(段階30)。学名の検索で見る項目の数の上限", provisional: true}
-    author_max_chars: {value: 200, source: "仮置き(段階30)。作者の表記の長さの上限(長いものは切る)", provisional: true}
+    author_max_chars: {value: 200, source: "仮置き(段階30)。作者の表記の長さの上限。段階31から、超えるものは切らずに使わない", provisional: true}
     wikidata_api: "https://www.wikidata.org/w/api.php"
     commons_api: "https://commons.wikimedia.org/w/api.php"
     wikidata_search: '{scientific} haswbstatement:P225'    # 学名の語を含み、学名(P225)の記述がある項目の検索(P225=値 の形は 0 件になる。完全一致は応答の P225 で確かめる)
@@ -295,6 +295,10 @@ photos:
     image_hosts: [upload.wikimedia.org]                     # サムネイルの実体のホスト(承認)
     thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト(承認外)→ 承認済みのホストに置き換える。パスは同じ・クエリは捨てる(段階30。報告に明記)
     thumb_path_prefix: /wikipedia/commons/thumb/            # 置き換えてよいパスの先頭
+    file_namespace: "6"                                     # Commons のファイルの名前空間
+    season_search_limit: {value: 10, source: "仮置き(段階31)。季節の合う写真を探す検索で見る候補の数の上限", provisional: true}
+    season_query: "{scientific} winter plumage"             # 冬羽を探す検索語(段階31。ユリカモメなど、関東で冬に見る姿の写真に差し替える)
+    season_terms: [winter, non-breeding, nonbreeding]       # ファイル名・カテゴリ・説明のどれかに、学名とこの語のどれかがあるものだけ(見た目の推測だけで選ばない)
     source_id: wikimedia_commons
     source_label: Wikimedia Commons
   rank: species
@@ -304,8 +308,8 @@ photos:
     csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
     photo_note: "写真は種の代表写真で、この場所で撮られたものではありません。"
     credit: "写真提供: iNaturalist / Wikimedia Commons"
-    headings: {birds: いま狙いたい鳥, places: おすすめの名所, credits: 写真の出どころ}
-    created: "作成: {at}"
+    headings: {birds: いま狙いたい鳥, birds_out: 例年の時期の外の鳥, birds_unknown: ほかに見られる鳥(時期は未確認), places: おすすめの名所, credits: 写真の出どころ}
+    created: "作成: {y}年{m}月{d}日 {h}:{mi:02d}"
     origin: "出発地: {origin}"
     no_photo: "写真なし"
     others: "そのほか: {names}"
@@ -317,6 +321,17 @@ photos:
     photo_link: "写真のページ(iNaturalist)"
     photo_link_commons: "ファイルのページ(Wikimedia Commons)"
     credit_source: "出どころ: {source}"
+    birds_unknown_note: "例年の時期は、まだ確かめられていません。"
+    row_birds: "見られる鳥: {text}"                       # 名所のカードの行(段階31)。時期・出どころの区分は answer.bits と同じ文
+    row_distance: "{distance}・参照数 {n}"
+    row_count: "参照数 {n}"
+    row_edge: "（範囲の端）"
+    links_visible: {value: 3, source: "ユーザー指示(段階31)。出どころのリンクを最初に出す件数", provisional: false}
+    links_more: "出どころ {n}件を見る"
+    link_dup: "{label}({i})"
+    credits_summary: "写真ごとの撮影者・ライセンスを見る"
+    photo_credit: "写真: {author}・{license}"
+    author_re: '^(?:\(c\) |no rights reserved, uploaded by )(.+?)(?:, (?:some|no) rights reserved|$)'   # iNaturalist の定型の表記から撮影者名だけを取る。合わなければ表記そのまま
     unit_places: 名所
     link_schemes: [http, https]
 

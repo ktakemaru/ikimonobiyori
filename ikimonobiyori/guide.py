@@ -1029,7 +1029,12 @@ def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range
             bits.append(a["bits"]["distance"].format(origin=d["origin"], km=d["km"]) + ("、" + a["bits"]["edge"] if d["status"] == "edge" else ""))
         head = a["place"].format(i=i, name=e["name"], where=where) if i else a["reference_item"].format(name=e["name"], where=where)
         body = "、".join(bits) + count_suffix(e["independent_sources"], policy)
-        return {"entry": e, "index": i, "name": e["name"], "where": where, "body": body, "line": head + " — " + body}
+        season_text = e["season_default"] if e.get("season_default") else (se["text"] if se and se["shown"] else None)
+        fields = {"season": season_text, "kinds": [k["kind"] for k in e["kinds"] if k["shown"]],      # 段階31: ページが項目ごとの行にするための部品(文は bits と同じ値)
+                  "classes": "・".join(classes[c] for c in e["classes"]),
+                  "distance": ({"origin": d["origin"], "km": d["km"], "edge": d["status"] == "edge"} if d else None),
+                  "n": e["independent_sources"]}
+        return {"entry": e, "index": i, "name": e["name"], "where": where, "body": body, "line": head + " — " + body, "fields": fields}
 
     sections = []
     rec = found.get("recommend") or []
@@ -1264,6 +1269,10 @@ def main(argv=None, http_get=None, http_bytes=None):
     ph_.add_argument("--live", action="store_true")
     ph_.add_argument("--max-requests", type=int)
     ph_.add_argument("--only", nargs="*", help="この和名の種だけ取る(省略すると表の全部)")
+    pcs = sub.add_parser("photos-commons-season", help="指定の種の、冬羽(季節の語のある)の写真を Commons で探して取る(--live・--max-requests・計測フックが要る。段階31)")
+    pcs.add_argument("--live", action="store_true")
+    pcs.add_argument("--max-requests", type=int)
+    pcs.add_argument("--only", nargs="*", help="この和名の種(必須)")
     pc = sub.add_parser("photos-commons", help="写真のない種だけ、Wikimedia Commons から代表写真を取る(--live・--max-requests・計測フックが要る。段階30)")
     pc.add_argument("--live", action="store_true")
     pc.add_argument("--max-requests", type=int)
@@ -1360,12 +1369,14 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "page":
         from . import guide_page
         return guide_page.page_cmd(a)
-    if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear", "photos-commons"):
+    if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear", "photos-commons", "photos-commons-season"):
         from . import guide_photos
         if a.cmd == "photos-clear":
             return guide_photos.clear_cmd(a)
         if a.cmd == "photos-build-table":
             return guide_photos.build_table_cmd(a, http_get)
+        if a.cmd == "photos-commons-season":
+            return guide_photos.commons_season_cmd(a, http_get, http_bytes)
         if a.cmd == "photos-commons":
             return guide_photos.commons_cmd(a, http_get, http_bytes)
         return guide_photos.fetch_cmd(a, http_get, http_bytes)
