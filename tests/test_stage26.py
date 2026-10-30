@@ -191,10 +191,11 @@ class Phase4Data(unittest.TestCase):
         s = self._e("泉の森")["season"]
         self.assertEqual((s["independent_sources"], s["shown"]), (2, True))
 
-    def test_inanami_stays_a_candidate_with_one_source(self):
+    def test_inanami_was_a_candidate_with_one_source_until_stage27(self):
+        # 段階27 フェーズE: 稲敷市観光協会が 2 件目の出どころになり、定評・仮承認・種名オオヒシクイが答えに出る(旧: 参考・候補のまま。理由は docs/stage27-decisions.md)
         e = self._e("稲波干拓", "冬鳥")
-        self.assertEqual((e["independent_sources"], e["tier"], e["approval"]["state"]), (1, "reference", "candidate"))
-        self.assertFalse(any(k["shown"] for k in e["kinds"]))                    # 1 件だけの記載は答えに出ない
+        self.assertEqual((e["independent_sources"], e["tier"], e["approval"]["state"]), (2, "curated", "provisional"))
+        self.assertEqual([k["kind"] for k in e["kinds"] if k["shown"]], ["オオヒシクイ"])
 
     def test_single_source_facts_are_not_shown(self):
         e = self._e("渡良瀬遊水地")

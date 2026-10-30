@@ -1570,6 +1570,60 @@ entries:
     read_at: '2026-10-25T16:37:52+09:00'
     origin: search
     note: 千代地区。NPOによる保護活動
+- id: g-6378109810
+  scope: place
+  theme: 冬鳥
+  name: 稲波干拓
+  prefecture: 茨城県
+  municipality: 稲敷市
+  kinds:
+  - kind: オオヒシクイ
+    independent_sources: 2
+    shown: true
+  - kind: タゲリ
+    independent_sources: 1
+    shown: false
+  - kind: チュウヒ
+    independent_sources: 1
+    shown: false
+  season: null
+  tier: curated
+  independent_sources: 2
+  classes:
+  - B
+  - C
+  exists_confirmed: true
+  range:
+    status: in_range
+    km: 60
+    from: 東京
+    qid: Q838675
+    by_origin:
+      東京:
+        km: 59
+        status: in_range
+      横浜:
+        km: 84
+        status: in_range
+  approval:
+    state: provisional
+    at: '2026-10-30'
+    by: auto-rule
+  sources:
+  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2024_shizen8_kekka.pdf
+    host: pref.ibaraki.jp
+    publisher: pref.ibaraki.jp
+    class: B
+    read_at: '2026-10-30T07:39:38+09:00'
+    origin: search
+    note: 県の自然観察会の報告(2024年度)にオオヒシクイなど(検索の要約)
+  - url: http://inashiki.com/look.html
+    host: inashiki.com
+    publisher: inashiki.com
+    class: C
+    read_at: '2026-10-30T23:01:53+09:00'
+    origin: search
+    note: 稲波干拓地(江戸崎地区)に毎年11月ごろオオヒシクイの群れが飛来。国の天然記念物
 - id: g-64d2858e99
   scope: place
   theme: 花

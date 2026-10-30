@@ -1123,52 +1123,6 @@ entries:
     class: C
     read_at: '2026-10-25T16:32:40+09:00'
     origin: fetch
-- id: g-6378109810
-  scope: place
-  theme: 冬鳥
-  name: 稲波干拓
-  prefecture: 茨城県
-  municipality: 稲敷市
-  kinds:
-  - kind: オオヒシクイ
-    independent_sources: 1
-    shown: false
-  - kind: タゲリ
-    independent_sources: 1
-    shown: false
-  - kind: チュウヒ
-    independent_sources: 1
-    shown: false
-  season: null
-  tier: reference
-  independent_sources: 1
-  classes:
-  - B
-  exists_confirmed: true
-  range:
-    status: in_range
-    km: 60
-    from: 東京
-    qid: Q838675
-    by_origin:
-      東京:
-        km: 59
-        status: in_range
-      横浜:
-        km: 84
-        status: in_range
-  approval:
-    state: candidate
-    reasons:
-    - 独立した出どころが 1 件
-  sources:
-  - url: https://www.pref.ibaraki.jp/soshiki/seikatsukankyo/kasumigauraesc/05_gakushu/shizen/documents/2024_shizen8_kekka.pdf
-    host: pref.ibaraki.jp
-    publisher: pref.ibaraki.jp
-    class: B
-    read_at: '2026-10-30T07:39:38+09:00'
-    origin: search
-    note: 県の自然観察会の報告(2024年度)にオオヒシクイなど(検索の要約)
 - id: g-6d6fe7c0df
   scope: place
   theme: 花
