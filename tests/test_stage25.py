@@ -109,7 +109,7 @@ class Phase3(unittest.TestCase):
             self.assertEqual((e["tier"], e["independent_sources"], e["range"]["status"], e["approval"]["state"]), ("curated", n, "in_range", "provisional"), name)
 
     def test_one_source_places_stay_candidates(self):
-        for name, theme in (("稲波干拓", "冬鳥"), ("行徳鳥獣保護区", "野鳥")):
+        for name, theme in (("行徳鳥獣保護区", "野鳥"),):                # 稲波干拓は段階27 で 2 件目の出どころが付き、定評・仮承認になった(test_stage27)
             e = entry(name, theme)
             self.assertEqual((e["tier"], e["approval"]["state"]), ("reference", "candidate"), name)
 

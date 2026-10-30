@@ -34,6 +34,7 @@ from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
 from .paths import DATA_FILES_DIR, data_path
+from .profiles import load_profiles
 
 GUIDE_DIR = DATA_FILES_DIR / "guide"
 POLICY_PATH = GUIDE_DIR / "policy.yaml"
@@ -682,7 +683,13 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
         if on is None:
             out["recommend"].append(e)
         elif w is None or not (e["season"] or {}).get("shown"):
-            out["no_season"].append(e)                   # 例年の時期が分からない・1 件だけ(対象の日に合うかを言わない)
+            default = (policy.get("season_default_by_theme") or {}).get(e["theme"])
+            if default:                                  # 野鳥: 表示してよい時期の窓が無いときは通年が目安(段階27。ほかのテーマは時期不明のまま)
+                one = (e["season"] or {}).get("text")
+                a = policy["answer"]["season_default"]
+                out["recommend"].append({**e, "season_default": a["with_text"].format(text=one) if one else a["plain"]})
+            else:
+                out["no_season"].append(e)               # 例年の時期が分からない・1 件だけ(対象の日に合うかを言わない)
         elif in_window(f"{on.month:02d}-{on.day:02d}", w):
             out["recommend"].append(e)
         elif (days_until_start(on, w) or 0) <= up_days:
@@ -961,8 +968,23 @@ def count_suffix(n, policy):
     return policy["reference_count"]["suffix"].format(n=n) if n is not None else ""
 
 
-def render_answer(found, policy, origin_line=None, on=None):
+def care_notes(themes, policy, profiles=None):
+    """テーマ → 注意の行(プロファイルの care.manners の先頭から。括弧の出どころ注記は除く)。対応するプロファイルがないテーマは出さない。"""
+    cfg = policy["answer"]["notes"]
+    profiles = profiles if profiles is not None else load_profiles()
+    lines = []
+    for theme in sorted(themes):
+        pid = cfg["profiles"].get(theme)
+        manners = ((profiles.get(pid) or {}).get("care") or {}).get("manners") or []
+        texts = [re.sub(r"[(（][^)）]*[)）]\s*$", "", m).strip() for m in manners[:cfg["max_manners"]]]
+        if texts:
+            lines.append(cfg["line"].format(theme=theme, text="。".join(texts) + "。"))
+    return lines
+
+
+def render_answer(found, policy, origin_line=None, on=None, themes=None, show_out_of_range=False):
     """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
+    themes を渡すと「注意」(プロファイルのマナー)を凡例の前に付ける。show_out_of_range は名指しの質問のとき(範囲の外の名所を出す)。
     ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
     a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
     rc = policy["reference_count"]
@@ -972,7 +994,9 @@ def render_answer(found, policy, origin_line=None, on=None):
         where = f"{e.get('prefecture') or ''}{e.get('municipality') or ''}"
         bits = []
         se = e.get("season")
-        if se and se["shown"]:
+        if e.get("season_default"):
+            bits.append(a["bits"]["season"].format(text=e["season_default"]))
+        elif se and se["shown"]:
             bits.append(a["bits"]["season"].format(text=se["text"]))
         kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"])
         if kinds:
@@ -990,13 +1014,44 @@ def render_answer(found, policy, origin_line=None, on=None):
     lines.append(f"## {a['headings']['recommend']}")
     rec = found.get("recommend") or []
     lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
-    for key in ("upcoming", "no_season", "reference"):
+    for key in ("upcoming", "other_season", "no_season", "reference", "out_of_range"):
         es = found.get(key) or []
+        if key == "out_of_range" and not show_out_of_range:
+            continue
         if es:
             lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]
+    notes = care_notes(themes, policy) if themes else []
+    if notes:
+        lines += ["", f"## {a['headings']['notes']}"] + [f"- {n}" for n in notes]
     if shown[0]:
         lines += ["", rc["legend"]]
     return "\n".join(lines) + "\n"
+
+
+def bird_status_line(title, today, *, count=None, species=None, unread=False, policy=None):
+    """野鳥の現況(東京港野鳥公園のレンジャーブログ。要約の道具で読んだ結果)→ 答えの前に付ける 1 行(段階27 フェーズC)。
+    title は最新の記事の題名「YYYY年M月D日の野鳥公園」。日付は題名からだけ取る。題名に日付がない・取得日(today)より未来なら使わない(確かめられなかった)。
+    today からの日数が max_age_days より多ければ「最新の記事は○月○日です」。count は「30種」など書かれたとおり、species は種名の並び(書かれたとおり)。段階の語・多い少ないは推測しない。"""
+    policy = policy or load_policy()
+    cfg = policy["bird_status"]
+    lines, parts = cfg["lines"], cfg["parts"]
+    if unread:
+        return {"state": "unread", "line": lines["unread"], "observed": None}
+    m = re.search(cfg["title_re"], title or "")
+    fm = {"fm": today.month, "fd": today.day}
+    if not m:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    try:
+        d = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    if d > today:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    state = "old" if (today - d).days > val(cfg["max_age_days"]) else "fresh"
+    names = [str(x).strip() for x in (species or []) if str(x).strip()]
+    line = lines[state].format(m=d.month, d=d.day, count=parts["count"].format(text=count.strip()) if count and count.strip() else "",
+                              species=parts["species"].format(text="・".join(names)) if names else "", **fm)
+    return {"state": state, "line": line, "observed": d.isoformat()}
 
 
 def forbidden_in_answer(text, policy):
@@ -1189,6 +1244,11 @@ def main(argv=None, http_get=None):
     sub.add_parser("usage", help="検索・取得・代表点の通信の回数")
     un = sub.add_parser("unanswered", help="答えられなかった質問の文を記録する(時刻はコードの時計)")
     un.add_argument("--question", required=True)
+    bs = sub.add_parser("bird-status", help="野鳥の現況(東京港野鳥公園のレンジャーブログ。要約の道具で読んだ結果)を答えの前に付ける 1 行にする(通信しない。段階27)")
+    bs.add_argument("--title", help="最新の記事の題名(例: 2026年10月22日の野鳥公園)")
+    bs.add_argument("--count", help="確認種数(書かれたとおり。例: 30種)")
+    bs.add_argument("--species", nargs="*", help="種名(書かれたとおり)")
+    bs.add_argument("--unread", action="store_true", help="読めなかったとき")
     sub.add_parser("future-records", help="現況の記録(status_log)のうち、読んだ時刻が未来のもの(書き換えない)")
     a = ap.parse_args(argv)
     policy = load_policy()
@@ -1275,7 +1335,7 @@ def main(argv=None, http_get=None):
         rl = cpol["range_limit"]
         line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
         if a.text:
-            text = render_answer(got, policy, origin_line=line)
+            text = render_answer(got, policy, origin_line=line, themes=themes, show_out_of_range=bool(a.name))
             bad = forbidden_in_answer(text, policy)
             if bad:
                 print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)
@@ -1310,6 +1370,10 @@ def main(argv=None, http_get=None):
         except ValueError as ex:
             print(ex, file=sys.stderr)
             return 1
+        return 0
+    if a.cmd == "bird-status":
+        got = bird_status_line(a.title, clock_now().date(), count=a.count, species=a.species, unread=a.unread, policy=policy)
+        print(got["line"])
         return 0
     if a.cmd == "future-records":
         _dump(future_status_records())

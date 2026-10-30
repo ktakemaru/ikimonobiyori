@@ -203,9 +203,31 @@ reference_count:
   legend: "参照数は、その場所を紹介している独立した発行元の数です。"
   # 現況の対象 → ガイドのテーマ(現況型の場所をガイドのカタログの同じ場所と照らす)
   subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
+# 野鳥の現況の 1 行(段階27 フェーズC。ユーザー承認A 2026-10-30)。台帳 data/sources/birds.yaml の tokyo-port-birdpark-today を要約の道具(WebFetch)で読み、
+# 最新の記事の題名の日付・確認種数・種名を書かれたとおりに渡すと、コードが 1 行にする(guide bird-status)。確認種数から「多い・少ない」を推測しない
+bird_status:
+  source_id: tokyo-port-birdpark-today
+  site: yacho-0001
+  label: 今日の野鳥公園
+  title_re: '(\d{4})年(\d{1,2})月(\d{1,2})日の野鳥公園'      # 記事の題名の形(台帳 notation.note)。日付の形でなければ使わない
+  max_age_days: {value: 7, source: "指示書 段階27 フェーズC(ユーザー承認 2026-10-30)。これより古い記事は「最新の記事は○月○日です」と書く", provisional: false}
+  lines:
+    fresh: "東京港野鳥公園の最新の観察記録: {m}月{d}日{count}{species}。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    old: "東京港野鳥公園の最新の記事は{m}月{d}日です{count}{species}。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    unconfirmed: "東京港野鳥公園の最新の観察記録は確かめられませんでした。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    unread: "東京港野鳥公園の最新の観察記録は読めませんでした。"
+  parts: {count: "（{text}）", species: "。種名: {text}"}
+
+# テーマごとの既定の時期(段階27 フェーズB。ユーザー承認 2026-10-30)。表示してよい例年の時期(独立した出どころ 2 件以上の窓)が無い名所に使う。ここにないテーマ(冬鳥・桜・花・ホタル・紅葉)には使わない
+season_default_by_theme:
+  野鳥: {window: year_round, source: "ユーザー承認 2026-10-30。野鳥プロファイル profiles/birds.yaml の season.months が 1〜12", provisional: false}
 # ガイド型の答え(コードが組み立てる文。guide find --text)の文言。段階の表示は labels(確認済み / 定評 / 参考)。内部用語を出さない
 answer:
-  headings: {recommend: おすすめ, upcoming: これから, no_season: 例年の時期を確かめられていない名所, reference: 参考, notes: 注意}
+  headings: {recommend: おすすめ, upcoming: これから, other_season: 例年の時期の外の名所, no_season: 例年の時期を確かめられていない名所, reference: 参考, out_of_range: 範囲の外, notes: 注意}
+  # 注意の行(段階27 フェーズA)。プロファイルの care.manners を、テーマごとに先頭から max_manners 件、1 行にする(文はプロファイルの原文。括弧の出どころ注記は除く)。コードに文言を持たない
+  # 既定の時期を使った名所の表示(段階27 フェーズB)。出どころが 1 件だけ時期を書いているときは、その文を括弧で併記する
+  season_default: {plain: "通年が目安（出どころに時期の特記なし）", with_text: "通年が目安（出どころ1件の記載: {text}）"}
+  notes: {profiles: {野鳥: birds, 冬鳥: wintering_birds}, max_manners: 2, line: "{theme}の観察では、{text}"}
   none_found: "おすすめにできる名所は見つかりませんでした。"
   place: "{i}. **{name}**({where})"
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
