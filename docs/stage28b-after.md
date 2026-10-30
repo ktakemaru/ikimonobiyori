@@ -1,4 +1,4 @@
-# 段階28b 変更後の一覧(提案の実装を試した結果。実装は戻したので、いまのコードの出力ではない。docs/stage28b-proposed.patch を当てたとき)
+# 段階28b 変更後の一覧(実装を当てたあとのコードの出力)
 
 `guide.build(include_runtime=False)` の野鳥・冬鳥の全件(名所と種類の説明)。参照数 = `independent_sources`。種名・時期は「表示してよい」と判定されたものだけ。
 

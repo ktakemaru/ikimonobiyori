@@ -19,7 +19,7 @@ class RetiredUrl(unittest.TestCase):
     def test_it_is_not_counted_but_other_urls_are(self):
         build = lambda rows: {e["name"]: e for e in guide.build_entries(rows, PLACES, P, CP)}["試験の池"]
         a = build(recs(item(FUNA, name="試験の池", theme="野鳥"), item(C1, name="試験の池", theme="野鳥")))
-        self.assertEqual((a["independent_sources"], a["tier"]), (2, "reference"))             # 記録はされるが、定評にはならない
+        self.assertEqual((a["independent_sources"], a["tier"]), (1, "reference"))             # 記録はされるが、定評にはならない。退役した出どころは参照数に数えない(段階28b。旧: 2)
         b = build(recs(item(C2, name="試験の池", theme="野鳥"), item(C1, name="試験の池", theme="野鳥")))
         self.assertEqual(b["tier"], "curated")                                                # 他の URL は今までどおり
 
