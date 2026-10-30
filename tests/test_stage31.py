@@ -150,9 +150,10 @@ class PlaceCard(unittest.TestCase):
         self.assertNotIn("参考、", visible(page))
         self.assertIn("一件の池", visible(page))
 
-    def test_the_sentence_of_find_text_stays_only_as_a_hidden_paragraph(self):
+    def test_there_is_no_hidden_paragraph_with_the_whole_sentence(self):
         row = self.parts["sections"][0]["rows"][0]
-        self.assertIn(f'<p class="body" hidden>{row["body"]}</p>', self.page)
+        self.assertNotIn("hidden", self.page)
+        self.assertNotIn(row["body"], self.page)                                   # 1 文のまま載せない(項目ごとの行だけ)
 
     def test_photos_are_at_the_top_under_the_heading_and_larger_than_before(self):
         self.assertLess(self.card.index("<h3>"), self.card.index('class="thumbs"'))
@@ -306,6 +307,106 @@ class WholePage(unittest.TestCase):
             for r in sec["rows"]:
                 self.assertIn(r["line"] + "\n", self.text)
                 self.assertEqual(r["line"].split(" — ", 1)[1], r["body"])
+
+
+class FactCheckCatchesMistakes(unittest.TestCase):
+    """test_stage29_page の「項目ごとの事実が find --text の 1 行と食い違わない」確認が、事実の欠け・数や名前の違いで落ちること(反例)。"""
+
+    def setUp(self):
+        self.found = guide.find(guide.build()[0], themes={"野鳥", "冬鳥"}, on=date(2026, 10, 30), policy=P)
+        self.parts = guide.answer_parts(self.found, P, origin_line="出発地: 横浜", themes={"野鳥", "冬鳥"})
+        self.page = guide_page.build_page(self.parts, policy=P, now=TP.NOW, kind_notes=self.found.get("kind_notes") or [], photo_for=lambda n: None)
+
+    def mismatches(self, page):
+        return TP.fact_mismatches(page, self.parts, P)
+
+    def mutate(self, pattern, repl, count=1):
+        """ページの HTML を 1 か所だけ書き換える(その書き換えが実際に起きたことも確かめる)。"""
+        new, n = re.subn(pattern, repl, self.page, count=count)
+        self.assertEqual(n, count, pattern)
+        self.assertNotEqual(new, self.page)
+        return new
+
+    def test_the_real_page_passes(self):
+        self.assertEqual(self.mismatches(self.page), [])
+
+    def test_the_real_page_has_every_kind_of_fact_so_the_check_is_not_vacuous(self):
+        kinds = {k: 0 for k in ("season", "kinds", "classes", "origin", "km", "n")}                # 範囲の端は、この日の実データにはない(下の別のテストで作る)
+        for _, row, card in TP.page_cards(self.page, self.parts):
+            for k, v in TP.card_facts(card, P).items():
+                if k in kinds:
+                    kinds[k] += bool(v)
+        self.assertTrue(all(kinds.values()), kinds)                                  # どの項目も実データに出てくる
+
+    def test_a_missing_fact_fails_for_each_kind_of_fact(self):
+        cases = {
+            "時期": r'<li>例年の時期: [^<]*</li>',
+            "種類": r'<li>見られる鳥: [^<]*</li>',
+            "距離と参照数": r'<li>[^<]*から約\d+ km[^<]*・参照数 \d+</li>',
+            "出どころの区分": r'<p class="faint">[^<]*</p>',
+        }
+        for name, pat in cases.items():
+            bad = self.mismatches(self.mutate(pat, ""))
+            self.assertEqual(len({b[0] for b in bad}), 1, name)                      # 1 枚のカードの項目が欠けると、そのカードが食い違いになる
+            self.assertTrue(all(len(b) == 4 for b in bad), name)
+
+    def test_a_changed_number_or_name_fails(self):
+        cases = {
+            "距離": (r"から約(\d+) km", lambda m: f"から約{int(m.group(1)) + 1} km"),
+            "参照数": (r"参照数 (\d+)</li>", lambda m: f"参照数 {int(m.group(1)) + 1}</li>"),
+            "出発地": (r"<li>横浜から約", lambda m: "<li>東京から約"),
+            "時期": (r"<li>例年の時期: ", lambda m: "<li>例年の時期: 偽の"),
+            "種類の名前": (r"<li>見られる鳥: ", lambda m: "<li>見られる鳥: 偽の鳥・"),
+            "区分": (r'<p class="faint">出どころの区分: ', lambda m: '<p class="faint">出どころの区分: 偽の'),
+        }
+        for name, (pat, repl) in cases.items():
+            bad = self.mismatches(self.mutate(pat, repl))
+            self.assertEqual(len({b[0] for b in bad}), 1, name)
+
+    def test_an_extra_fact_fails_too(self):
+        # 種類の行が 1 つも出ていない名所に、見られる鳥の行を足す
+        row = next(r for sec in self.parts["sections"] for r in sec["rows"] if not r["fields"]["kinds"])
+        title = f'{row["index"]}. {row["name"]}' if row["index"] else row["name"]
+        page = self.page.replace(f"<h3>{title}</h3>", f"<h3>{title}</h3>", 1)
+        i = page.index(f"<h3>{title}</h3>")
+        j = page.index('<ul class="facts">', i) + len('<ul class="facts">')
+        page = page[:j] + "<li>見られる鳥: 余分な鳥</li>" + page[j:]
+        bad = self.mismatches(page)
+        self.assertEqual([b[1] for b in bad], ["kinds"])
+
+    def edge_page(self):
+        """範囲の端(240〜250 km)の名所がある答えとページを作る。→ (parts, page)。"""
+        es = TP.entries(("試験の沼", [TP.U1, TP.U2], TP.KINDS))
+        found, _ = TP.parts_for(es)
+        found["recommend"][0] = {**found["recommend"][0], "distance": {"origin": "横浜", "km": 245, "status": "edge"}}
+        parts = guide.answer_parts(found, P, origin_line="出発地: 横浜", themes={"野鳥"})
+        page = guide_page.build_page(parts, policy=P, now=TP.NOW, kind_notes=[], photo_for=lambda n: None)
+        return parts, page
+
+    def test_a_range_edge_mark_that_is_missing_or_extra_fails(self):
+        parts, page = self.edge_page()
+        self.assertIn("範囲の端", parts["sections"][0]["rows"][0]["line"])
+        self.assertEqual(TP.fact_mismatches(page, parts, P), [])
+        self.assertTrue(TP.line_facts(parts["sections"][0]["rows"][0]["line"], P)["edge"])
+        missing = page.replace(P["photos"]["html"]["row_edge"], "", 1)
+        self.assertEqual([b[2:] for b in TP.fact_mismatches(missing, parts, P)], [(True, False)])      # 欠けた
+        row = parts["sections"][0]["rows"][0]
+        plain = {**parts, "sections": [{**parts["sections"][0], "rows": [{**row, "line": row["line"].replace("、範囲の端", "")}]}]}
+        self.assertEqual([b[2:] for b in TP.fact_mismatches(page, plain, P)], [(False, True)])         # 余分
+
+    def test_a_card_that_does_not_match_its_row_in_title_or_count_fails(self):
+        with self.assertRaises(AssertionError):
+            TP.page_cards(self.page.replace("<h3>1. ", "<h3>9. ", 1), self.parts)
+        head = f"<h2>{P['photos']['html']['headings']['places']}</h2>"
+        i = self.page.index('<li class="card">', self.page.index(head))
+        with self.assertRaises(AssertionError):                                      # 名所のカードが 1 枚足りない
+            TP.page_cards(self.page[:i] + self.page[i:].replace('<li class="card">', "<li>", 1), self.parts)
+
+    def test_a_line_of_find_text_that_cannot_be_read_is_not_overlooked(self):
+        self.assertIsNone(TP.line_facts("名前(所在) — 読めない文", P))
+        bad = TP.fact_mismatches(self.page, {**self.parts, "sections": [{**self.parts["sections"][0], "rows": [
+            {**self.parts["sections"][0]["rows"][0], "line": "名前(所在) — 読めない文"}] + self.parts["sections"][0]["rows"][1:]}]}, P)
+        self.assertTrue(bad)
 
 
 class SeasonSearch(unittest.TestCase):

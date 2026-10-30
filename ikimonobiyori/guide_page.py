@@ -211,7 +211,6 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
                 + f'<ul class="facts">{"".join(f"<li>{esc(x)}</li>" for x in facts)}</ul>'
                 + (f'<p class="faint">{esc(bits["classes"].format(text=f["classes"]))}</p>' if f["classes"] else "")
                 + link_html
-                + f'<p class="body" hidden>{esc(row["body"])}</p>'          # find --text と同じ 1 文。表示しない(既存テストが、本文がそのままの文字列で載ることを確かめている)
                 + "</li>")
 
     body = [f'<h1>{esc(h["title"])}</h1>', f'<p class="meta">{esc(created_text(now, h))}</p>']

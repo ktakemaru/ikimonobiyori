@@ -46,6 +46,83 @@ def parse(page):
     return p
 
 
+def line_facts(line, policy):
+    """find --text の 1 行(「名前(所在) — 本文」)から、項目ごとの事実を取り出す: 時期・種類・出どころの区分・出発地・距離・範囲の端・参照数。
+    本文の形は answer_parts の bits(例年の時期 → 種類 → 定評などの段階 → 出どころの区分 → 距離)+ 文末の参照数。"""
+    body = line.split(" — ", 1)[1] if " — " in line else line.split("(", 1)[-1]
+    a = policy["answer"]["bits"]
+    labels = "|".join(re.escape(x) for x in policy["tiers"]["labels"].values())
+    suffix = re.escape(policy["reference_count"]["suffix"]).replace(r"\{n\}", r"(?P<n>\d+)")
+    pat = (rf"^(?:{re.escape(a['season'].split('{')[0])}(?P<season>.+?)、(?=種類: |(?:{labels})、{re.escape(a['classes'].split('{')[0])}))?"
+           rf"(?:{re.escape(a['kinds'].split('{')[0])}(?P<kinds>.+?)、(?=(?:{labels})、))?"
+           rf"(?:{labels})、{re.escape(a['classes'].split('{')[0])}(?P<classes>.+?)"
+           rf"(?:、(?P<origin>[^、]+?)から約(?P<km>\d+) km(?P<edge>、{re.escape(a['edge'])})?)?{suffix}$")
+    m = re.match(pat, body)
+    if not m:
+        return None
+    g = m.groupdict()
+    return {"season": g["season"], "kinds": g["kinds"].split("・") if g["kinds"] else [], "classes": g["classes"], "origin": g["origin"],
+            "km": g["km"], "edge": bool(g["edge"]), "n": g["n"]}
+
+
+def page_cards(page, parts):
+    """ページのカード(欄ごと・出てくる順)を、answer_parts の行と同じ並びで返す → [(欄の見出し, 行, カードの HTML)]。見出し・題名・数が合わなければ AssertionError。"""
+    hp = P["photos"]["html"]["headings"]["places"]
+    out = []
+    for sec in parts["sections"]:
+        heading = hp if sec["key"] == "recommend" else sec["heading"]
+        m = re.search(rf"<h2>{re.escape(html.escape(heading))}</h2>(.*?)(?=<h2>|$)", page, flags=re.S)
+        if not sec["rows"]:
+            continue
+        assert m, f"欄がない: {heading}"
+        cards = [c for c in re.split(r'<li class="card">', m.group(1))[1:]]
+        assert len(cards) == len(sec["rows"]), (heading, len(cards), len(sec["rows"]))
+        for row, card in zip(sec["rows"], cards):
+            title = f'{row["index"]}. {row["name"]}' if row["index"] else row["name"]
+            assert card.startswith(f"<h3>{html.escape(title)}</h3>"), (title, card[:80])
+            out.append((heading, row, card))
+    return out
+
+
+def card_facts(card, policy):
+    """カードの HTML から、画面に出る項目ごとの事実を取り出す(line_facts と同じ形)。"""
+    h, a = policy["photos"]["html"], policy["answer"]["bits"]
+    facts = re.search(r'<ul class="facts">(.*?)</ul>', card, flags=re.S)
+    items = [html.unescape(x) for x in re.findall(r"<li>(.*?)</li>", facts.group(1))] if facts else []
+    out = {"season": None, "kinds": [], "classes": None, "origin": None, "km": None, "edge": False, "n": None}
+    pre_season, pre_kinds = a["season"].split("{")[0], h["row_birds"].split("{")[0]
+    for it in items:
+        if it.startswith(pre_season):
+            out["season"] = it[len(pre_season):]
+        elif it.startswith(pre_kinds):
+            out["kinds"] = it[len(pre_kinds):].split("・")
+        else:
+            m = re.match(r"^(?:(?P<origin>.+?)から約(?P<km>\d+) km(?P<edge>" + re.escape(h["row_edge"]) + r")?・)?参照数 (?P<n>\d+)$", it)
+            if m:
+                out.update(origin=m.group("origin"), km=m.group("km"), edge=bool(m.group("edge")), n=m.group("n"))
+    pre_classes = a["classes"].split("{")[0]
+    m = re.search(r'<p class="faint">(.*?)</p>', card, flags=re.S)
+    if m and html.unescape(m.group(1)).startswith(pre_classes):
+        out["classes"] = html.unescape(m.group(1))[len(pre_classes):]
+    return out
+
+
+def fact_mismatches(page, parts, policy):
+    """ページの各カードの項目(時期・種類・出どころの区分・距離・参照数)が、find --text の同じ場所の 1 行の内容と食い違うところの一覧(空 = 合格)。
+    欠けている項目・余分な項目・数や名前の違いのどれも食い違いとして数える。"""
+    bad = []
+    for heading, row, card in page_cards(page, parts):
+        want = line_facts(row["line"], policy)
+        if want is None:
+            bad.append((row["name"], "find --text の行を読めない"))
+            continue
+        got = card_facts(card, policy)
+        for k in want:
+            if want[k] != got[k]:
+                bad.append((row["name"], k, want[k], got[k]))
+    return bad
+
+
 def entries(*specs, theme="野鳥"):
     """specs: (名前, [url...], {url: 追加の項目})"""
     rows = []
@@ -72,9 +149,13 @@ class SameSentences(unittest.TestCase):
         nodes = parse(page_for(parts, found)).text
         rows = [r for sec in parts["sections"] for r in sec["rows"]]
         self.assertGreater(len(rows), 20)
+        # 項目ごとの事実(時期・種類・距離・参照数・出どころの区分)が、find --text の同じ場所の 1 行の内容と食い違わない(段階31 の続き。ユーザー承認 2026-10-31)。
+        # 欠けた項目・余分な項目・数や名前の違いは食い違いになる(反例は test_stage31.FactCheckCatchesMistakes)
+        self.assertEqual(fact_mismatches(page_for(parts, found), parts, P), [])
+        self.assertEqual(len(page_cards(page_for(parts, found), parts)), len(rows))        # 全部の行がカードになっている
         for r in rows:
             self.assertIn(r["line"] + "\n", text)                                    # 文字の答えの 1 行そのもの
-            self.assertIn(r["body"], nodes)                                          # 本文は、そのままの文字列で出る
+            self.assertIsNotNone(line_facts(r["line"], P), r["line"])                # どの行も項目に分けて読める(読めない行を見逃さない)
             self.assertIn(r["where"], nodes)
             head = f"{r['index']}. {r['name']}" if r["index"] else r["name"]
             self.assertIn(head, nodes)
