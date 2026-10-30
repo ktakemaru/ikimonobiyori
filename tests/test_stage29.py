@@ -123,6 +123,20 @@ class BuildTable(unittest.TestCase):
                                 today=TODAY, sleep=waits.append)
         self.assertEqual(waits, [PH["min_interval_s"]["value"]] * 2)
 
+    def test_network_error_stops_but_keeps_what_was_decided(self):
+        calls = []
+
+        def get(url, *_):
+            calls.append(url)
+            if len(calls) == 2:
+                raise ConnectionError("SSL EOF")
+            return 200, search_doc(cand()), {}
+
+        entered, rejected, rep = inat_photos.build_table(["カワセミ", "ヤマセミ", "ヒヨドリ"], http_get=get, ph=PH, max_requests=80, today=TODAY, sleep=NOSLEEP)
+        self.assertEqual([r["name"] for r in entered], ["カワセミ"])
+        self.assertEqual((rep["status"], rep["not_started"], rep["requests"]), ("network_error", ["ヤマセミ", "ヒヨドリ"], 2))
+        self.assertEqual(len(calls), 2)                                          # 再試行しない
+
     def test_only_the_api_host_is_asked(self):
         _, g = self.run_build(["カワセミ"], {"q=": (200, search_doc(cand()))})
         self.assertTrue(all(u.startswith("https://api.inaturalist.org/v1/taxa?") for u in g.calls))
@@ -221,6 +235,22 @@ class FetchPhotos(unittest.TestCase):
         self.assertIn("HTTP 302", unused["カワセミ"])
         (got, unused, rep), *_ = self.run_fetch([ROW, {**ROW, "name": "ヤマセミ", "taxon_id": 2}], {"/taxa/1": (200, taxon_doc())}, (429, b"", {}))
         self.assertEqual((rep["status"], rep["not_started"]), ("HTTP 429", ["ヤマセミ"]))
+
+    def test_network_error_on_the_image_stops_and_keeps_saved_ones(self):
+        rows = [ROW, {**ROW, "name": "ヤマセミ", "scientific": "Megaceryle lugubris", "taxon_id": 2}]
+        n = []
+
+        def http_bytes(url, max_bytes):
+            n.append(url)
+            if len(n) == 2:
+                raise ConnectionError("timeout")
+            return 200, JPEG, {}
+
+        info = getter({"/taxa/1": (200, taxon_doc()), "/taxa/2": (200, taxon_doc(2, "Megaceryle lugubris", photo_id=222, url=IMG_URL.replace("111", "222")))})
+        got, unused, rep = inat_photos.fetch_photos(rows + [{**ROW, "name": "ヒヨドリ", "taxon_id": 3}], http_get=info, http_bytes=http_bytes, ph=PH, max_requests=80,
+                                                     has_cache=lambda t: False, today=TODAY, sleep=NOSLEEP)
+        self.assertEqual([g["row"]["name"] for g in got], ["カワセミ"])
+        self.assertEqual((rep["status"], rep["not_started"]), ("network_error", ["ヤマセミ", "ヒヨドリ"]))
 
     def test_cached_species_are_not_fetched_again(self):
         (got, unused, rep), gi, gb = self.run_fetch([ROW], {}, (200, JPEG, {}), cached={1})
@@ -327,7 +357,7 @@ class ConfigAndPolicy(unittest.TestCase):
         p = guide_photos.table_path()
         if not p.is_file():
             self.skipTest("表はまだない")
-        text = p.read_text(encoding="utf-8")
+        text = "\n".join(l for l in p.read_text(encoding="utf-8").splitlines() if not l.startswith("#"))      # コメントの説明は除く
         for bad in ("http", "data:", "attribution", "license", "photo", "jpg", "base64"):
             self.assertNotIn(bad, text)
         for r in guide_photos.load_table(include_runtime=False).values():

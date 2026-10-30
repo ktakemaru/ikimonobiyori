@@ -105,8 +105,13 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
             rep["not_started"] = todo[i:]
             break
         _wait(rep, gap, sleep)
-        status, body, _ = http_get(search_url(n, ph))
         rep["requests"] += 1
+        try:
+            status, body, _ = http_get(search_url(n, ph))
+        except OSError as ex:                                    # 接続・TLS・タイムアウト。再試行せず、ここまでの結果を残して止める(続きは再実行で)
+            rep["status"], rep["stopped"] = "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で"
+            rep["not_started"] = todo[i:]
+            break
         if status != HTTPStatus.OK:
             rep["status"], rep["stopped"] = f"HTTP {status}", f"HTTP {status} のため止めた(残りは読まない)"
             rep["not_started"] = todo[i + 1:]
@@ -203,8 +208,13 @@ def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, tod
             rep["not_started"] = [r["name"] for r in todo[i:]]
             break
         _wait(rep, gap, sleep)
-        status, body, _ = http_get(taxon_url(row["taxon_id"], ph))
         rep["requests"] += 1
+        try:
+            status, body, _ = http_get(taxon_url(row["taxon_id"], ph))
+        except OSError as ex:
+            rep["status"], rep["stopped"] = "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で"
+            rep["not_started"] = [r["name"] for r in todo[i:]]
+            break
         if status != HTTPStatus.OK:
             rep["status"], rep["stopped"] = f"HTTP {status}", f"HTTP {status} のため止めた(残りは読まない)"
             rep["not_started"] = [r["name"] for r in todo[i + 1:]]
@@ -219,8 +229,13 @@ def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, tod
             unused[row["name"]] = why
             continue
         sleep(gap)
-        status, data, _ = http_bytes(ok["image_url"], ph["max_image_bytes"]["value"])
         rep["requests"] += 1
+        try:
+            status, data, _ = http_bytes(ok["image_url"], ph["max_image_bytes"]["value"])
+        except OSError as ex:
+            rep["status"], rep["stopped"] = "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で"
+            rep["not_started"] = [r["name"] for r in todo[i:]]
+            break
         if status != HTTPStatus.OK:
             if status in (HTTPStatus.TOO_MANY_REQUESTS,) or status >= HTTPStatus.INTERNAL_SERVER_ERROR:
                 rep["status"], rep["stopped"] = f"HTTP {status}", f"HTTP {status} のため止めた(残りは読まない)"

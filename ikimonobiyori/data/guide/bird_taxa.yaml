@@ -1,0 +1,64 @@
+# 野鳥の種の対応表(段階29)。和名 → 学名 / iNaturalist の taxon id / 確認日。事実だけで、画像・写真の URL・撮影者名は含まない。
+# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のものだけ。
+schema: ikimono-bird-taxa/1
+taxa:
+- name: オオハクチョウ
+  scientific: Cygnus cygnus
+  taxon_id: 6916
+  checked_on: '2026-10-31'
+- name: オオバン
+  scientific: Fulica atra
+  taxon_id: 482
+  checked_on: '2026-10-31'
+- name: オナガガモ
+  scientific: Anas acuta
+  taxon_id: 6933
+  checked_on: '2026-10-31'
+- name: カワセミ
+  scientific: Alcedo atthis
+  taxon_id: 2599
+  checked_on: '2026-10-31'
+- name: キビタキ
+  scientific: Ficedula narcissina
+  taxon_id: 13128
+  checked_on: '2026-10-31'
+- name: キンクロハジロ
+  scientific: Aythya fuligula
+  taxon_id: 7046
+  checked_on: '2026-10-31'
+- name: スズガモ
+  scientific: Aythya marila
+  taxon_id: 7047
+  checked_on: '2026-10-31'
+- name: ダイサギ
+  scientific: Ardea alba
+  taxon_id: 144455
+  checked_on: '2026-10-31'
+- name: チュウヒ
+  scientific: Circus spilonotus
+  taxon_id: 979659
+  checked_on: '2026-10-31'
+- name: ツグミ
+  scientific: Turdus eunomus
+  taxon_id: 145087
+  checked_on: '2026-10-31'
+- name: ハシビロガモ
+  scientific: Spatula clypeata
+  taxon_id: 558438
+  checked_on: '2026-10-31'
+- name: ハマシギ
+  scientific: Calidris alpina
+  taxon_id: 3857
+  checked_on: '2026-10-31'
+- name: ホシハジロ
+  scientific: Aythya ferina
+  taxon_id: 7045
+  checked_on: '2026-10-31'
+- name: ミコアイサ
+  scientific: Mergellus albellus
+  taxon_id: 7192
+  checked_on: '2026-10-31'
+- name: ユリカモメ
+  scientific: Chroicocephalus ridibundus
+  taxon_id: 144510
+  checked_on: '2026-10-31'

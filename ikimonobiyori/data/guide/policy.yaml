@@ -265,7 +265,7 @@ photos:
   image_types: {jpeg: '\xff\xd8\xff', png: '\x89PNG\r\n\x1a\n', webp: 'RIFF.{4}WEBP'}   # 先頭のバイト列(バイト列の正規表現)。これ以外の形式は捨てる
   photo_page_url: "https://www.inaturalist.org/photos/{id}"   # リンクだけ(読まない)
   skip_name_suffixes: ["類"]                              # 「カモ類」など種を特定しない語は対象外(写真を付けない)
-  skip_name_chars: ["・"]                                 # 「シギ・チドリ」など複数をまとめた語は対象外
+  skip_name_chars: ["・", "(", "（"]                        # 「シギ・チドリ」など複数をまとめた語、「ハクチョウ類(関東)」など注記つきの語は対象外
   rank: species
   class_name: Aves
   html:
