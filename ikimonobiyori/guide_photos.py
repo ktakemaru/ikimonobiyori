@@ -72,6 +72,30 @@ def load_rejected(env=None, policy=None):
     return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
 
 
+def review_path(env=None, policy=None):
+    return export_dir(env) / photos_policy(policy)["review_file"]
+
+
+def load_review(env=None, policy=None):
+    """目で見て写真を使わないと決めた種 {taxon_id(文字列): 理由}。手元の書き出しで、コミットしない。"""
+    p = review_path(env, policy)
+    return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+
+
+def exclude_photo(taxon_id, reason, env=None, policy=None):
+    """写真を目で見て使わないと決めた種: 理由を残し、キャッシュの写真を消す(photos-fetch も取り直さない)。"""
+    rv = load_review(env, policy)
+    rv[str(int(taxon_id))] = reason
+    review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+    review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+    d = cache_dir(env, policy)
+    n = 0
+    for f in d.glob(f"{int(taxon_id)}.*") if d.is_dir() else []:
+        f.unlink()
+        n += 1
+    return n
+
+
 def species_names(entries, themes, policy=None):
     """答えに出る種名(独立した発行元 2 件以上が言う種名)の和名の一覧。承認済みの名所の shown な種名と、承認済みの種類の説明の名前。範囲の外の名所は含めない。"""
     out = set()
@@ -173,6 +197,8 @@ def build_table_cmd(a, http_get=None):
         print(f"言い換えの表にない言葉: {kinds}", file=sys.stderr)
         return 1
     table, rejected = load_table(), load_rejected()
+    if getattr(a, "recheck", False):                             # 条件を変えたとき: 前に入らなかった和名も調べ直す(種を特定しない語は inat_photos.skipped が除く)
+        rejected = {}
     names = [n for n in species_names(guide.build()[0], themes, policy) if n not in table and n not in rejected]
     getter, hg, _ = _getters(http_get, None)
     try:
@@ -188,6 +214,8 @@ def build_table_cmd(a, http_get=None):
     (out / ph["table_file"]).write_text(table_text(table, policy), encoding="utf-8", newline="\n")
     (out / ph["rejected_file"]).write_text(json.dumps(rejected, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
     _log_requests(rep["requests"], "build-table")
+    multi = {**(json.loads((out / ph["multi_file"]).read_text(encoding="utf-8")) if (out / ph["multi_file"]).is_file() else {}), **rep["multi_candidate"]}
+    (out / ph["multi_file"]).write_text(json.dumps(multi, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
     guide._dump({"asked": len(names), "entered": [r["name"] for r in entered], "not_entered": no, "table_size": len(table), "report": rep,
                  "export": str(out / ph["table_file"])})
     return 0 if rep["status"] == "ok" else 1
@@ -199,7 +227,8 @@ def fetch_cmd(a, http_get=None, http_bytes=None):
         return err
     policy = guide.load_policy()
     ph = policy["photos"]
-    rows = sorted(load_table().values(), key=lambda r: r["name"])
+    review = load_review()
+    rows = sorted((r for r in load_table().values() if str(r["taxon_id"]) not in review), key=lambda r: r["name"])
     getter, hg, hb = _getters(http_get, http_bytes)
     try:
         got, unused, rep = inat_photos.fetch_photos(rows, http_get=hg, http_bytes=hb, ph=ph, max_requests=left, has_cache=lambda t: has_cache(t))

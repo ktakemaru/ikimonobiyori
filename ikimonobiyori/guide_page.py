@@ -88,8 +88,9 @@ def species_in(parts, section_key="recommend"):
     return sorted(count, key=lambda n: (-count[n], n))
 
 
-def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None, retired_urls=frozenset()):
-    """答えの部品(guide.answer_parts)→ 単独の HTML(文字列)。photo_for(和名) → (メタデータ, バイト列) か None。"""
+def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None, retired_urls=frozenset(), in_table=lambda name: True):
+    """答えの部品(guide.answer_parts)→ 単独の HTML(文字列)。photo_for(和名) → (メタデータ, バイト列) か None。
+    in_table(和名) が偽の種(対応表にない語)はカードにせず、「そのほか: …」の 1 行(文字だけ)にまとめる。"""
     h = policy["photos"]["html"]
     used = {}                                                   # 和名 → (メタデータ, バイト列)(ページに載せた写真)
 
@@ -134,9 +135,15 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
         body.append(f'<p class="meta">{esc(parts["origin_line"])}</p>')
     if parts["legend"]:
         body.append(f'<p class="legend">{esc(parts["legend"])}</p>')
-    names = species_in(parts)
+    all_names = species_in(parts)
+    names = [n for n in all_names if in_table(n)]
+    rest = [n for n in all_names if not in_table(n)]
+    if names or rest:
+        body.append(f'<h2>{esc(h["headings"]["birds"])}</h2>')
     if names:
-        body.append(f'<h2>{esc(h["headings"]["birds"])}</h2><ul class="grid">{"".join(species_card(n) for n in names)}</ul>')
+        body.append(f'<ul class="grid">{"".join(species_card(n) for n in names)}</ul>')
+    if rest:
+        body.append(f'<p class="note">{esc(h["others"].format(names=h["others_sep"].join(rest)))}</p>')
     for sec in parts["sections"]:
         if sec["key"] == "recommend":
             body.append(f'<h2>{esc(h["headings"]["places"])}</h2>')
@@ -203,7 +210,7 @@ def page_cmd(a, now=None):
         print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです(リポジトリの追跡ファイルを実行で変えません)", file=sys.stderr)
         return 2
     page = build_page(parts, policy=policy, now=now, kind_notes=found.get("kind_notes") or [], photo_for=photo_for,
-                      retired_urls=set(guide.load_retired(policy)["urls"]))
+                      retired_urls=set(guide.load_retired(policy)["urls"]), in_table=lambda n: n in table)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding="utf-8", newline="\n")
     print(str(out.resolve()))

@@ -2,6 +2,10 @@
 # guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のものだけ。
 schema: ikimono-bird-taxa/1
 taxa:
+- name: オオタカ
+  scientific: Astur gentilis
+  taxon_id: 1579015
+  checked_on: '2026-10-31'
 - name: オオハクチョウ
   scientific: Cygnus cygnus
   taxon_id: 6916
@@ -10,13 +14,29 @@ taxa:
   scientific: Fulica atra
   taxon_id: 482
   checked_on: '2026-10-31'
+- name: オオヒシクイ
+  scientific: Anser fabalis
+  taxon_id: 7009
+  checked_on: '2026-10-31'
+- name: オカヨシガモ
+  scientific: Mareca strepera
+  taxon_id: 558439
+  checked_on: '2026-10-31'
 - name: オナガガモ
   scientific: Anas acuta
   taxon_id: 6933
   checked_on: '2026-10-31'
+- name: カイツブリ
+  scientific: Tachybaptus ruficollis
+  taxon_id: 4237
+  checked_on: '2026-10-31'
 - name: カワセミ
   scientific: Alcedo atthis
   taxon_id: 2599
+  checked_on: '2026-10-31'
+- name: カンムリカイツブリ
+  scientific: Podiceps cristatus
+  taxon_id: 4208
   checked_on: '2026-10-31'
 - name: キビタキ
   scientific: Ficedula narcissina
@@ -25,6 +45,14 @@ taxa:
 - name: キンクロハジロ
   scientific: Aythya fuligula
   taxon_id: 7046
+  checked_on: '2026-10-31'
+- name: コハクチョウ
+  scientific: Cygnus columbianus
+  taxon_id: 6917
+  checked_on: '2026-10-31'
+- name: ジョウビタキ
+  scientific: Phoenicurus auroreus
+  taxon_id: 12993
   checked_on: '2026-10-31'
 - name: スズガモ
   scientific: Aythya marila
@@ -49,6 +77,10 @@ taxa:
 - name: ハマシギ
   scientific: Calidris alpina
   taxon_id: 3857
+  checked_on: '2026-10-31'
+- name: ヘラサギ
+  scientific: Platalea leucorodia
+  taxon_id: 3731
   checked_on: '2026-10-31'
 - name: ホシハジロ
   scientific: Aythya ferina

@@ -21,7 +21,7 @@ from . import ParseError
 
 
 def search_url(name, ph):
-    q = {"q": name, "locale": ph["locale"], "per_page": ph["search_per_page"]["value"]}
+    q = {"q": name, "locale": ph["locale"], "per_page": ph["search_per_page"]["value"], "all_names": "true"}
     return ph["api_base"] + "/taxa?" + urlencode(q)
 
 
@@ -48,31 +48,57 @@ def parse_search(doc):
         out.append({"taxon_id": tid, "scientific": r.get("name") if isinstance(r.get("name"), str) else None,
                     "rank": r.get("rank") if isinstance(r.get("rank"), str) else None,
                     "common": r.get("preferred_common_name") if isinstance(r.get("preferred_common_name"), str) else None,
-                    "class_name": r.get("iconic_taxon_name") if isinstance(r.get("iconic_taxon_name"), str) else None})
+                    "class_name": r.get("iconic_taxon_name") if isinstance(r.get("iconic_taxon_name"), str) else None,
+                    "ja_names": [n["name"] for n in r.get("names") or [] if isinstance(n, dict) and n.get("locale") == "ja" and isinstance(n.get("name"), str)],
+                    "ancestor_ids": [a for a in r.get("ancestor_ids") or [] if isinstance(a, int)]})
     return out
 
 
+def _matches(name, c):
+    """和名が候補の優先名か、応答の日本語の名前(names の locale が ja)のどれかと完全に一致するか。あいまい一致は使わない。"""
+    return c["common"] == name or name in c["ja_names"]
+
+
+def _under(c, species):
+    """候補 c が種 species の下位(亜種など)か: 応答の ancestor_ids に種の id がある。"""
+    return species["taxon_id"] in c["ancestor_ids"]
+
+
 def decide(name, cands, ph):
-    """和名と候補 → ({"name", "scientific", "taxon_id"}, None) か (None, 理由)。条件のどれかを満たさなければ表に入れない。"""
+    """和名と候補 → ({"name", "scientific", "taxon_id", "candidates"?}, None) か (None, 理由)。条件のどれかを満たさなければ表に入れない。
+    和名に完全一致する候補が 2 件以上のときは、種(species)のランクの候補がちょうど 1 件で、ほかがその種の下位のときだけ、その種を採る
+    (採ったときは一致した候補の一覧を candidates に付ける。報告用で、表には書かない)。"""
     if not cands:
         return None, "候補が 0 件"
-    exact = [c for c in cands if c["common"] == name]
+    exact = [c for c in cands if _matches(name, c)]
     if not exact:
         return None, "日本語の一般名が和名と完全に一致する候補がない"
     if len(exact) > 1:
-        return None, f"一致する候補が {len(exact)} 件(ちょうど 1 件でない)"
-    c = exact[0]
+        species = [c for c in exact if c["rank"] == ph["rank"]]
+        if len(species) != 1:
+            return None, f"一致する候補が {len(exact)} 件(ちょうど 1 件でない。{ph['rank']} のランクの候補が {len(species)} 件)"
+        others = [c for c in exact if c is not species[0]]
+        if not all(_under(c, species[0]) for c in others):
+            return None, f"一致する候補が {len(exact)} 件(ちょうど 1 件でない。ほかの候補が {ph['rank']} の下位と確かめられない)"
+        c = species[0]
+    else:
+        c = exact[0]
     if c["rank"] != ph["rank"]:
         return None, f"ランクが {ph['rank']} でない({c['rank']})"
     if c["class_name"] != ph["class_name"]:
         return None, f"鳥類({ph['class_name']})でない({c['class_name']})"
     if not c["scientific"]:
         return None, "学名がない"
-    return {"name": name, "scientific": c["scientific"], "taxon_id": c["taxon_id"]}, None
+    row = {"name": name, "scientific": c["scientific"], "taxon_id": c["taxon_id"]}
+    if len(exact) > 1:
+        row["candidates"] = [{"common": x["common"], "scientific": x["scientific"], "rank": x["rank"], "taxon_id": x["taxon_id"]} for x in exact]
+    return row, None
 
 
 def skipped(name, ph):
     """種を特定しない語(「カモ類」・「シギ・チドリ」など)は対象外 → 理由。対象なら None。"""
+    if name in ph["skip_names"]:
+        return "種を特定しない語"
     if any(name.endswith(s) for s in ph["skip_name_suffixes"]):
         return "種を特定しない語(類)"
     if any(c in name for c in ph["skip_name_chars"]):
@@ -90,7 +116,7 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
     max_requests に達したら残りは読まない(未着手として報告に残す)。HTTP の非 200 ならそこで止める。"""
     today = (today or date.today()).isoformat()
     gap = ph["min_interval_s"]["value"]
-    rep = {"requests": 0, "status": "ok", "stopped": None, "not_started": []}
+    rep = {"requests": 0, "status": "ok", "stopped": None, "not_started": [], "multi_candidate": {}}
     entered, rejected = [], {}
     todo = []
     for n in names:
@@ -123,6 +149,8 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
             rep["not_started"] = todo[i + 1:]
             break
         if row:
+            if "candidates" in row:
+                rep["multi_candidate"][n] = row.pop("candidates")
             entered.append({**row, "checked_on": today})
         else:
             rejected[n] = why
@@ -138,27 +166,24 @@ def parse_taxon(doc):
     tid = r.get("id")
     if not isinstance(tid, int) or isinstance(tid, bool) or not isinstance(r.get("name"), str):
         raise ParseError("id・name がない")
-    p = r.get("default_photo")
-    photo = None
-    if isinstance(p, dict):
+    photos, seen = [], set()
+    cands = [r.get("default_photo")] + [tp.get("photo") for tp in r.get("taxon_photos") or [] if isinstance(tp, dict)]
+    for p in cands:                                              # 先頭から: 既定の写真 → taxon_photos の順
+        if not isinstance(p, dict):
+            continue
         pid = p.get("id")
         if not isinstance(pid, int) or isinstance(pid, bool):
-            raise ParseError("default_photo の id が整数でない")
-        photo = {"photo_id": pid, "license_code": p.get("license_code") if isinstance(p.get("license_code"), str) else None,
-                 "attribution": p.get("attribution") if isinstance(p.get("attribution"), str) else None,
-                 "urls": {k: v for k, v in p.items() if k.endswith("_url") and isinstance(v, str)}}
-    return {"taxon_id": tid, "scientific": r["name"], "photo": photo}
+            raise ParseError("写真の id が整数でない")
+        if pid in seen:
+            continue
+        seen.add(pid)
+        photos.append({"photo_id": pid, "license_code": p.get("license_code") if isinstance(p.get("license_code"), str) else None,
+                       "attribution": p.get("attribution") if isinstance(p.get("attribution"), str) else None,
+                       "urls": {k: v for k, v in p.items() if k.endswith("_url") and isinstance(v, str)}})
+    return {"taxon_id": tid, "scientific": r["name"], "photos": photos}
 
 
-def usable_photo(row, taxon, ph):
-    """表の 1 行と taxon の応答 → ({"image_url", ...}, None) か (None, 使わない理由)。"""
-    if taxon["taxon_id"] != row["taxon_id"]:
-        return None, "taxon の id が表と一致しない"
-    if taxon["scientific"] != row["scientific"]:
-        return None, f"学名が表と一致しない({taxon['scientific']})"
-    p = taxon["photo"]
-    if not p:
-        return None, "既定の写真がない"
+def _usable_one(p, ph):
     label = ph["licenses"].get((p["license_code"] or "").lower())
     if not label:
         return None, f"ライセンスが許可外・不明({p['license_code']})"
@@ -172,6 +197,24 @@ def usable_photo(row, taxon, ph):
         return None, f"許可外のホストの写真({parts.hostname})"
     return {"image_url": url, "photo_id": p["photo_id"], "license": label, "license_code": p["license_code"].lower(),
             "attribution": p["attribution"]}, None
+
+
+def usable_photo(row, taxon, ph):
+    """表の 1 行と taxon の応答 → ({"image_url", ...}, None) か (None, 使わない理由)。
+    既定の写真と taxon_photos を先頭から見て、使ってよいライセンス・ホストなどを満たす最初の 1 枚を選ぶ。"""
+    if taxon["taxon_id"] != row["taxon_id"]:
+        return None, "taxon の id が表と一致しない"
+    if taxon["scientific"] != row["scientific"]:
+        return None, f"学名が表と一致しない({taxon['scientific']})"
+    if not taxon["photos"]:
+        return None, "既定の写真がない"
+    first = None
+    for p in taxon["photos"]:
+        ok, why = _usable_one(p, ph)
+        if ok:
+            return ok, None
+        first = first or why
+    return None, f"{first}(写真 {len(taxon['photos'])} 枚のどれも使えない)" if len(taxon["photos"]) > 1 else first
 
 
 def sniff_image(data, ph):

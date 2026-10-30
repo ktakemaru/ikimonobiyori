@@ -249,6 +249,8 @@ annotation:
 photos:
   table_file: bird_taxa.yaml                              # 和名 → 学名 / iNaturalist の taxon id / 確認日(事実だけ。画像・写真の URL は含まない)。data/guide/ に置く
   table_schema: ikimono-bird-taxa/1
+  review_file: photo_review.json                          # 目で見て写真を使わないと決めた種(手元の書き出し。コミットしない)
+  multi_file: bird_taxa_multi.json                        # 「候補が 2 件以上」から種を採った和名の候補の一覧(報告用。手元の書き出し)
   rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
   cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
   page_dir: pages                                         # 同じく、出力した HTML の置き場所
@@ -265,6 +267,7 @@ photos:
   image_types: {jpeg: '\xff\xd8\xff', png: '\x89PNG\r\n\x1a\n', webp: 'RIFF.{4}WEBP'}   # 先頭のバイト列(バイト列の正規表現)。これ以外の形式は捨てる
   photo_page_url: "https://www.inaturalist.org/photos/{id}"   # リンクだけ(読まない)
   skip_name_suffixes: ["類"]                              # 「カモ類」など種を特定しない語は対象外(写真を付けない)
+  skip_names: [カモ, シギ, チドリ]                          # 単独でも種を特定しない語(段階29b。ユーザー指示 2026-10-31)。優先名以外の名前の照合の対象にもしない
   skip_name_chars: ["・", "(", "（"]                        # 「シギ・チドリ」など複数をまとめた語、「ハクチョウ類(関東)」など注記つきの語は対象外
   rank: species
   class_name: Aves
@@ -277,6 +280,8 @@ photos:
     created: "作成: {at}"
     origin: "出発地: {origin}"
     no_photo: "写真なし"
+    others: "そのほか: {names}"
+    others_sep: "、"
     season_unknown: "時期: 例年の時期を確かめられていない"
     season: "時期: {text}"
     sources: "出どころ"

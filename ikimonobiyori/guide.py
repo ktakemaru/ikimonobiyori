@@ -1257,6 +1257,7 @@ def main(argv=None, http_get=None, http_bytes=None):
     pb = sub.add_parser("photos-build-table", help="野鳥の種の対応表(和名→学名・taxon id)を iNaturalist で作る(--live・--max-requests・計測フックが要る。段階29)")
     pb.add_argument("--live", action="store_true")
     pb.add_argument("--max-requests", type=int)
+    pb.add_argument("--recheck", action="store_true", help="前に表に入らなかった和名(種を特定しない語を除く)ももう一度調べる(条件を変えたとき。段階29b)")
     pb.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
     ph_ = sub.add_parser("photos-fetch", help="表の種の代表写真を取ってキャッシュに置く(--live・--max-requests・計測フックが要る。段階29)")
     ph_.add_argument("--live", action="store_true")
