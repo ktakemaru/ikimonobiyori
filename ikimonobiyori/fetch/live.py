@@ -58,6 +58,26 @@ class SessionGetter:
         r = self.session.get(url, headers=self.headers, timeout=self.timeout)
         return r.status_code, r.content.decode("utf-8", errors="replace"), dict(r.headers.items())
 
+    def get_bytes(self, url, max_bytes):
+        """画像など、本文をバイト列のまま取る(段階29。fetch/inat_photos.py)。リダイレクトは追わない(行き先が許可外になりうる)。
+        max_bytes を超えたら読むのをやめ、超えた分まで含むバイト列を返す(呼び出し側が大きすぎるとして捨てる)。→ (status, バイト列, ヘッダー)。"""
+        if self.session is None:
+            if self._factory is not None:
+                self.session = self._factory()
+            else:
+                import requests
+                self.session = requests.Session()
+        r = self.session.get(url, headers=self.headers, timeout=self.timeout, stream=True, allow_redirects=False)
+        try:
+            data = b""
+            for chunk in r.iter_content(chunk_size=None):
+                data += chunk
+                if len(data) > max_bytes:
+                    break
+        finally:
+            r.close()
+        return r.status_code, data, dict(r.headers.items())
+
     def close(self):
         s, self.session = self.session, None
         if s is not None:

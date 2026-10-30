@@ -985,13 +985,31 @@ def care_notes(themes, policy, profiles=None):
     return lines
 
 
-def render_answer(found, policy, origin_line=None, on=None, themes=None, show_out_of_range=False):
-    """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
-    themes を渡すと「注意」(プロファイルのマナー)を凡例の前に付ける。show_out_of_range は名指しの質問のとき(範囲の外の名所を出す)。
-    ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
+def origin_line_for(origin_arg=None):
+    """出発地の指定(省略すると横浜)→ (出発地, 答えの冒頭の 1 行)。guide find と guide page が同じ行を使う。"""
+    cpol = catalog_mod.load_policy()
+    origin = catalog_mod.resolve_origin(cpol, origin_arg)
+    rl = cpol["range_limit"]
+    return origin, load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
+
+
+def themes_for_words(words, policy):
+    """質問の言葉の並び → (テーマの集合, 種類の並び)。表にない言葉があれば (None, その言葉)。"""
+    themes, kinds = set(), []
+    for w in words:
+        got = theme_of(w, policy)
+        if got is None:
+            return None, w
+        themes |= set(got["themes"])
+        kinds += got.get("kinds") or []
+    return themes, kinds
+
+
+def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range=False):
+    """find の結果 → ガイド型の答えの部品(欄ごとの行)。文字(render_answer)と HTML(guide_page)が、同じ部品から同じ文を作る(段階29)。
+    各行は {"entry", "index"(おすすめだけ 1 から), "name", "where", "body"(「 — 」の後ろ。参照数の文末つき), "line"(文字の答えの 1 行そのもの)}。"""
     a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
     rc = policy["reference_count"]
-    shown = [False]
 
     def row(e, i=None):
         where = f"{e.get('prefecture') or ''}{e.get('municipality') or ''}"
@@ -1010,24 +1028,40 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
         if d:
             bits.append(a["bits"]["distance"].format(origin=d["origin"], km=d["km"]) + ("、" + a["bits"]["edge"] if d["status"] == "edge" else ""))
         head = a["place"].format(i=i, name=e["name"], where=where) if i else a["reference_item"].format(name=e["name"], where=where)
-        shown[0] = True
-        return head + " — " + "、".join(bits) + count_suffix(e["independent_sources"], policy)
+        body = "、".join(bits) + count_suffix(e["independent_sources"], policy)
+        return {"entry": e, "index": i, "name": e["name"], "where": where, "body": body, "line": head + " — " + body}
 
-    lines = [origin_line, ""] if origin_line else []
-    lines.append(f"## {a['headings']['recommend']}")
+    sections = []
     rec = found.get("recommend") or []
-    lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
+    sections.append({"key": "recommend", "heading": a["headings"]["recommend"], "numbered": True, "none": a["none_found"],
+                     "rows": [row(e, i) for i, e in enumerate(rec, 1)]})
     for key in ("upcoming", "other_season", "no_season", "reference", "out_of_range"):
         es = found.get(key) or []
         if key == "out_of_range" and not show_out_of_range:
             continue
         if es:
-            lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]
+            sections.append({"key": key, "heading": a["headings"][key], "numbered": False, "none": None, "rows": [row(e) for e in es]})
     notes = care_notes(themes, policy) if themes else []
-    if notes:
-        lines += ["", f"## {a['headings']['notes']}"] + [f"- {n}" for n in notes]
-    if shown[0]:
-        lines += ["", rc["legend"]]
+    anyrow = any(sec["rows"] for sec in sections)
+    return {"origin_line": origin_line, "sections": sections, "notes_heading": a["headings"]["notes"], "notes": notes,
+            "legend": rc["legend"] if anyrow else None}
+
+
+def render_answer(found, policy, origin_line=None, on=None, themes=None, show_out_of_range=False):
+    """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
+    themes を渡すと「注意」(プロファイルのマナー)を凡例の前に付ける。show_out_of_range は名指しの質問のとき(範囲の外の名所を出す)。
+    ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
+    parts = answer_parts(found, policy, origin_line, themes, show_out_of_range)
+    lines = [origin_line, ""] if origin_line else []
+    for sec in parts["sections"]:
+        if sec["key"] != "recommend":
+            lines.append("")
+        lines.append(f"## {sec['heading']}")
+        lines += [r["line"] for r in sec["rows"]] if sec["rows"] else [sec["none"]]
+    if parts["notes"]:
+        lines += ["", f"## {parts['notes_heading']}"] + [f"- {n}" for n in parts["notes"]]
+    if parts["legend"]:
+        lines += ["", parts["legend"]]
     return "\n".join(lines) + "\n"
 
 
@@ -1201,7 +1235,7 @@ def _places_fetch(a, http_get):
     return 0 if all(r["status"] == "ok" for r in reps) else 1
 
 
-def main(argv=None, http_get=None):
+def main(argv=None, http_get=None, http_bytes=None):
     ap = argparse.ArgumentParser(prog="python -m ikimonobiyori.guide")
     sub = ap.add_subparsers(dest="cmd", required=True)
     t = sub.add_parser("theme", help="質問の言葉 → テーマ・種類(方針の words)")
@@ -1220,6 +1254,14 @@ def main(argv=None, http_get=None):
     pf = sub.add_parser("places-fetch", help="市区町村の代表点を Wikidata から読む(--live・--max-requests・計測フックが要る)")
     pf.add_argument("--live", action="store_true")
     pf.add_argument("--max-requests", type=int)
+    pb = sub.add_parser("photos-build-table", help="野鳥の種の対応表(和名→学名・taxon id)を iNaturalist で作る(--live・--max-requests・計測フックが要る。段階29)")
+    pb.add_argument("--live", action="store_true")
+    pb.add_argument("--max-requests", type=int)
+    pb.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
+    ph_ = sub.add_parser("photos-fetch", help="表の種の代表写真を取ってキャッシュに置く(--live・--max-requests・計測フックが要る。段階29)")
+    ph_.add_argument("--live", action="store_true")
+    ph_.add_argument("--max-requests", type=int)
+    sub.add_parser("photos-clear", help="写真のキャッシュだけを消す(ほかは消さない。段階29)")
     b = sub.add_parser("build", help="候補をまとめ、段階・承認を決めて書き出す(IKIMONOBIYORI_DATA_DIR の下の guide/export/)")
     b.add_argument("--committed-only", action="store_true", help="手元の記録を使わない(data/guide/ だけ)")
     sub.add_parser("review", help="見直しの一覧(Markdown)を標準出力に出す")
@@ -1302,6 +1344,13 @@ def main(argv=None, http_get=None):
         return 0
     if a.cmd == "places-fetch":
         return _places_fetch(a, http_get)
+    if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear"):
+        from . import guide_photos
+        if a.cmd == "photos-clear":
+            return guide_photos.clear_cmd(a)
+        if a.cmd == "photos-build-table":
+            return guide_photos.build_table_cmd(a, http_get)
+        return guide_photos.fetch_cmd(a, http_get, http_bytes)
     if a.cmd == "build":
         entries, recs, places = build(include_runtime=not a.committed_only)
         _dump(export(entries, recs, places, guide_dir() / "export", annotations=all_annotations(include_runtime=not a.committed_only)))
@@ -1333,10 +1382,7 @@ def main(argv=None, http_get=None):
         entries = committed_entries() if a.committed_only else build()[0]
         got = find(entries, themes=themes, kinds=kinds, on=date.fromisoformat(a.date) if a.date else None, prefectures=prefs,
                    municipalities=munis, names=a.name, policy=policy, origin=a.origin)
-        cpol = catalog_mod.load_policy()
-        origin = catalog_mod.resolve_origin(cpol, a.origin)
-        rl = cpol["range_limit"]
-        line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
+        origin, line = origin_line_for(a.origin)
         if a.text:
             text = render_answer(got, policy, origin_line=line, themes=themes, show_out_of_range=bool(a.name))
             bad = forbidden_in_answer(text, policy)
