@@ -9,7 +9,7 @@ entries:
   municipality: 栃木市
   kinds:
   - kind: チュウヒ
-    independent_sources: 3
+    independent_sources: 4
     shown: true
   - kind: カンムリカイツブリ
     independent_sources: 1
@@ -18,6 +18,9 @@ entries:
     independent_sources: 1
     shown: false
   - kind: コチョウゲンボウ
+    independent_sources: 1
+    shown: false
+  - kind: コミミズク
     independent_sources: 1
     shown: false
   - kind: シメ
@@ -30,6 +33,9 @@ entries:
     independent_sources: 1
     shown: false
   - kind: ノスリ
+    independent_sources: 1
+    shown: false
+  - kind: ハイイロチュウヒ
     independent_sources: 1
     shown: false
   - kind: ハヤブサ
@@ -56,6 +62,7 @@ entries:
   tier: curated
   independent_sources: 4
   classes:
+  - A
   - B
   - C
   exists_confirmed: true
@@ -104,6 +111,13 @@ entries:
     read_at: '2026-10-30T08:13:41+09:00'
     origin: fetch
     note: 11〜2月はチュウヒなど猛禽(撮影スポットの紹介)
+  - url: https://www.city.tochigi.lg.jp/site/watarase-heartland/2875.html
+    host: city.tochigi.lg.jp
+    publisher: tochigi.lg.jp
+    class: A
+    read_at: '2026-10-30T23:42:41+09:00'
+    origin: search
+    note: 栃木市渡良瀬遊水地課のページ。冬にチュウヒ・ハイイロチュウヒ・コミミズクが確認できる(267種)
 - id: g-01fcdf72d4
   scope: place
   theme: 花
