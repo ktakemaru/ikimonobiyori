@@ -165,5 +165,66 @@ class BirdSeasonDefault(unittest.TestCase):
         self.assertEqual(len(found["reference"]), 1)
 
 
+TODAY = date(2026, 10, 30)
+
+
+class BirdStatusLine(unittest.TestCase):
+    """フェーズC: 野鳥の現況の 1 行。日付は題名からだけ。古い・未来・日付なし・読めなかったを隠さない。"""
+
+    def line(self, title, **kw):
+        return guide.bird_status_line(title, TODAY, policy=P, **kw)
+
+    def test_fresh_article_has_date_count_and_species_as_written(self):
+        got = self.line("2026年10月29日の野鳥公園", count="30種", species=["カワセミ", "ハシビロガモ"])
+        self.assertEqual(got["state"], "fresh")
+        self.assertEqual(got["observed"], "2026-10-29")
+        for w in ("10月29日", "（30種）", "カワセミ・ハシビロガモ", "簡易な読み取り", "取得日 10月30日"):
+            self.assertIn(w, got["line"])
+
+    def test_article_older_than_seven_days_says_the_latest_article_is_old(self):
+        self.assertEqual(self.line("2026年10月23日の野鳥公園")["state"], "fresh")          # ちょうど 7 日
+        got = self.line("2026年10月22日の野鳥公園", count="30種")
+        self.assertEqual(got["state"], "old")
+        self.assertIn("最新の記事は10月22日です", got["line"])
+
+    def test_future_or_missing_date_is_not_used(self):
+        for title in ("2026年10月31日の野鳥公園", "野鳥公園だより", None, "2026年2月30日の野鳥公園"):
+            got = self.line(title, count="30種", species=["カワセミ"])
+            self.assertEqual((got["state"], got["observed"]), ("unconfirmed", None), title)
+            self.assertIn("確かめられませんでした", got["line"])
+            self.assertNotIn("カワセミ", got["line"])
+            self.assertNotIn("30種", got["line"])
+
+    def test_unread_says_so_without_guessing(self):
+        got = self.line("2026年10月29日の野鳥公園", count="30種", unread=True)
+        self.assertEqual(got["state"], "unread")
+        self.assertIn("読めませんでした", got["line"])
+        self.assertNotIn("30種", got["line"])
+
+    def test_nothing_is_added_when_count_and_species_are_missing(self):
+        got = self.line("2026年10月29日の野鳥公園")
+        self.assertNotIn("種名", got["line"])
+        self.assertNotIn("（", got["line"].split("。（簡易")[0])
+
+    def test_the_line_has_no_internal_terms_and_the_threshold_is_in_the_policy(self):
+        self.assertEqual(guide.forbidden_in_answer(self.line("2026年10月29日の野鳥公園", count="30種")["line"], P), [])
+        self.assertEqual(guide.val(P["bird_status"]["max_age_days"]), 7)
+
+    def test_the_record_for_the_ledger_source_is_valid(self):
+        from ikimonobiyori import sources
+        reg = sources.load_registry("birds")
+        cfg = P["bird_status"]
+        r = sources.make_record(registry=reg, policy=sources.load_policy(), source_id=cfg["source_id"], site=cfg["site"], label=cfg["label"],
+                                read_at="2026-10-30T10:00:00+09:00", state="30種", observed="2026-10-29")
+        self.assertEqual(sources.validate_record(r, registry=reg, policy=sources.load_policy()), [])
+        self.assertEqual((r["stage"], r["freshness_basis"]), (None, "observed_date"))      # 種数から段階を推測しない
+
+    def test_the_steps_are_in_the_skill_and_both_agent_files(self):
+        for p in (".claude/skills/ikimono-weekend/SKILL.md", "AGENTS.md", "CLAUDE.md"):
+            s = (ROOT / p).read_text(encoding="utf-8")
+            for w in ("tokyo-port-birdpark-today", "guide bird-status", "WebFetch", "7 日より前"):
+                self.assertIn(w, s, f"{p} {w}")
+
+
 if __name__ == "__main__":
     unittest.main()

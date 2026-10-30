@@ -1028,6 +1028,32 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
     return "\n".join(lines) + "\n"
 
 
+def bird_status_line(title, today, *, count=None, species=None, unread=False, policy=None):
+    """野鳥の現況(東京港野鳥公園のレンジャーブログ。要約の道具で読んだ結果)→ 答えの前に付ける 1 行(段階27 フェーズC)。
+    title は最新の記事の題名「YYYY年M月D日の野鳥公園」。日付は題名からだけ取る。題名に日付がない・取得日(today)より未来なら使わない(確かめられなかった)。
+    today からの日数が max_age_days より多ければ「最新の記事は○月○日です」。count は「30種」など書かれたとおり、species は種名の並び(書かれたとおり)。段階の語・多い少ないは推測しない。"""
+    policy = policy or load_policy()
+    cfg = policy["bird_status"]
+    lines, parts = cfg["lines"], cfg["parts"]
+    if unread:
+        return {"state": "unread", "line": lines["unread"], "observed": None}
+    m = re.search(cfg["title_re"], title or "")
+    fm = {"fm": today.month, "fd": today.day}
+    if not m:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    try:
+        d = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    if d > today:
+        return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
+    state = "old" if (today - d).days > val(cfg["max_age_days"]) else "fresh"
+    names = [str(x).strip() for x in (species or []) if str(x).strip()]
+    line = lines[state].format(m=d.month, d=d.day, count=parts["count"].format(text=count.strip()) if count and count.strip() else "",
+                              species=parts["species"].format(text="・".join(names)) if names else "", **fm)
+    return {"state": state, "line": line, "observed": d.isoformat()}
+
+
 def forbidden_in_answer(text, policy):
     """ガイド型の答えに出ている内部用語(空 = 合格)。英字の語は単語の区切りで探す。"""
     out = []
@@ -1218,6 +1244,11 @@ def main(argv=None, http_get=None):
     sub.add_parser("usage", help="検索・取得・代表点の通信の回数")
     un = sub.add_parser("unanswered", help="答えられなかった質問の文を記録する(時刻はコードの時計)")
     un.add_argument("--question", required=True)
+    bs = sub.add_parser("bird-status", help="野鳥の現況(東京港野鳥公園のレンジャーブログ。要約の道具で読んだ結果)を答えの前に付ける 1 行にする(通信しない。段階27)")
+    bs.add_argument("--title", help="最新の記事の題名(例: 2026年10月22日の野鳥公園)")
+    bs.add_argument("--count", help="確認種数(書かれたとおり。例: 30種)")
+    bs.add_argument("--species", nargs="*", help="種名(書かれたとおり)")
+    bs.add_argument("--unread", action="store_true", help="読めなかったとき")
     sub.add_parser("future-records", help="現況の記録(status_log)のうち、読んだ時刻が未来のもの(書き換えない)")
     a = ap.parse_args(argv)
     policy = load_policy()
@@ -1339,6 +1370,10 @@ def main(argv=None, http_get=None):
         except ValueError as ex:
             print(ex, file=sys.stderr)
             return 1
+        return 0
+    if a.cmd == "bird-status":
+        got = bird_status_line(a.title, clock_now().date(), count=a.count, species=a.species, unread=a.unread, policy=policy)
+        print(got["line"])
         return 0
     if a.cmd == "future-records":
         _dump(future_status_records())

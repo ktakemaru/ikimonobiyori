@@ -203,6 +203,21 @@ reference_count:
   legend: "参照数は、その場所を紹介している独立した発行元の数です。"
   # 現況の対象 → ガイドのテーマ(現況型の場所をガイドのカタログの同じ場所と照らす)
   subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
+# 野鳥の現況の 1 行(段階27 フェーズC。ユーザー承認A 2026-10-30)。台帳 data/sources/birds.yaml の tokyo-port-birdpark-today を要約の道具(WebFetch)で読み、
+# 最新の記事の題名の日付・確認種数・種名を書かれたとおりに渡すと、コードが 1 行にする(guide bird-status)。確認種数から「多い・少ない」を推測しない
+bird_status:
+  source_id: tokyo-port-birdpark-today
+  site: yacho-0001
+  label: 今日の野鳥公園
+  title_re: '(\d{4})年(\d{1,2})月(\d{1,2})日の野鳥公園'      # 記事の題名の形(台帳 notation.note)。日付の形でなければ使わない
+  max_age_days: {value: 7, source: "指示書 段階27 フェーズC(ユーザー承認 2026-10-30)。これより古い記事は「最新の記事は○月○日です」と書く", provisional: false}
+  lines:
+    fresh: "東京港野鳥公園の最新の観察記録: {m}月{d}日{count}{species}。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    old: "東京港野鳥公園の最新の記事は{m}月{d}日です{count}{species}。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    unconfirmed: "東京港野鳥公園の最新の観察記録は確かめられませんでした。（簡易な読み取り。取得日 {fm}月{fd}日）"
+    unread: "東京港野鳥公園の最新の観察記録は読めませんでした。"
+  parts: {count: "（{text}）", species: "。種名: {text}"}
+
 # テーマごとの既定の時期(段階27 フェーズB。ユーザー承認 2026-10-30)。表示してよい例年の時期(独立した出どころ 2 件以上の窓)が無い名所に使う。ここにないテーマ(冬鳥・桜・花・ホタル・紅葉)には使わない
 season_default_by_theme:
   野鳥: {window: year_round, source: "ユーザー承認 2026-10-30。野鳥プロファイル profiles/birds.yaml の season.months が 1〜12", provisional: false}
