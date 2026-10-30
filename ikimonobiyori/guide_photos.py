@@ -17,7 +17,7 @@ import yaml
 
 from . import guide, livegate
 from .config import load_config
-from .fetch import inat_photos
+from .fetch import commons_photos, inat_photos
 
 
 def photos_policy(policy=None):
@@ -49,6 +49,18 @@ def _read_table(path):
     return list(doc.get("taxa") or [])
 
 
+def load_sources(env=None, include_runtime=True, policy=None):
+    """{和名: 出どころ}(表の sources の欄。ユーザー指定の学名など)。"""
+    ph = photos_policy(policy)
+    out = {}
+    paths_ = [table_path(policy)] + ([export_dir(env) / ph["table_file"]] if include_runtime else [])
+    for p in paths_:
+        if p.is_file():
+            for k, v in ((yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("sources") or {}).items():
+                out.setdefault(k, v)
+    return out
+
+
 def load_table(env=None, include_runtime=True, policy=None):
     """{和名: {name, scientific, taxon_id, checked_on}}。data/guide/ の表が先(同じ和名は上書きしない)。手元の書き出し(export/)も読む。"""
     ph = photos_policy(policy)
@@ -62,9 +74,15 @@ def load_table(env=None, include_runtime=True, policy=None):
 def table_text(rows, policy=None):
     ph = photos_policy(policy)
     head = ("# 野鳥の種の対応表(段階29)。和名 → 学名 / iNaturalist の taxon id / 確認日。事実だけで、画像・写真の URL・撮影者名は含まない。\n"
-            "# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のものだけ。\n")
-    taxa = [{k: r[k] for k in ("name", "scientific", "taxon_id", "checked_on")} for r in sorted(rows.values(), key=lambda r: r["name"])]
-    return head + yaml.safe_dump({"schema": ph["table_schema"], "taxa": taxa}, allow_unicode=True, sort_keys=False, width=200)
+            "# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のもの(候補が複数のときは、種が 1 件でほかがその下位のもの)。\n"
+            "# sources の欄にある和名は、ユーザー指定の学名(iNaturalist で学名・ランク・鳥類が一致したもの)。\n")
+    ordered = sorted(rows.values(), key=lambda r: r["name"])
+    taxa = [{k: r[k] for k in ("name", "scientific", "taxon_id", "checked_on")} for r in ordered]
+    doc = {"schema": ph["table_schema"], "taxa": taxa}
+    srcs = {r["name"]: r["source"] for r in ordered if r.get("source")}
+    if srcs:                                                     # 出どころの欄(行の項目ではなく別の欄。行は事実の 4 項目のまま)
+        doc["sources"] = srcs
+    return head + yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=200)
 
 
 def load_rejected(env=None, policy=None):
@@ -82,18 +100,48 @@ def load_review(env=None, policy=None):
     return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
 
 
-def exclude_photo(taxon_id, reason, env=None, policy=None):
-    """写真を目で見て使わないと決めた種: 理由を残し、キャッシュの写真を消す(photos-fetch も取り直さない)。"""
+def exclude_photo(taxon_id, reason, env=None, policy=None, source=None):
+    """写真を目で見て使わないと決めた種: 理由を残し、キャッシュの写真を消す(取り直さない)。
+    source="commons" のときは Commons の写真だけを使わない(iNaturalist の写真は別。キーは commons:<id>)。"""
+    key = (f"{source}:" if source else "") + str(int(taxon_id))
     rv = load_review(env, policy)
-    rv[str(int(taxon_id))] = reason
+    rv[key] = reason
     review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
     review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+    return _remove_cache(taxon_id, env, policy)
+
+
+def _remove_cache(taxon_id, env=None, policy=None):
     d = cache_dir(env, policy)
     n = 0
     for f in d.glob(f"{int(taxon_id)}.*") if d.is_dir() else []:
         f.unlink()
         n += 1
     return n
+
+
+def skip_photo_path(env=None, policy=None):
+    return export_dir(env) / photos_policy(policy)["skip_photo_file"]
+
+
+def load_skip_photos(env=None, policy=None):
+    """目で見て使わないと決めた iNaturalist の写真 {taxon_id: {photo_id, ...}}(種は残し、別の写真を選び直す)。"""
+    p = skip_photo_path(env, policy)
+    raw = json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    return {int(k): {int(x) for x in v} for k, v in raw.items()}
+
+
+def exclude_inat_photo(taxon_id, env=None, policy=None):
+    """キャッシュにある iNaturalist の写真だけを使わないと決める(種は残す。次の photos-fetch が別の候補を選ぶ)。→ 除いた写真の id。"""
+    meta = json.loads(_meta_path(taxon_id, env, policy).read_text(encoding="utf-8"))
+    if meta.get("source") or meta.get("photo_id") is None:
+        raise ValueError("iNaturalist の写真ではない")
+    skip = load_skip_photos(env, policy)
+    skip.setdefault(int(taxon_id), set()).add(int(meta["photo_id"]))
+    skip_photo_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+    skip_photo_path(env, policy).write_text(json.dumps({str(k): sorted(v) for k, v in skip.items()}, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+    _remove_cache(taxon_id, env, policy)
+    return meta["photo_id"]
 
 
 def species_names(entries, themes, policy=None):
@@ -155,7 +203,7 @@ def clear_cache(env=None, policy=None):
 
 # ---- コマンド ----
 
-def _gate(a, http_get, name):
+def _gate(a, http_get, name, cap=None):
     """--live の条件(places-fetch と同じ)。満たさなければ (終了コード, None)、満たせば (None, 1 回の実行で使える上限)。"""
     if not a.live:
         print(f"{name} は --live が必要です", file=sys.stderr)
@@ -169,7 +217,13 @@ def _gate(a, http_get, name):
     if http_get is None and not os.environ.get("BIYORI_REQ_LOG"):
         print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します", file=sys.stderr)
         return 2, None
-    return None, min(a.max_requests, photos_policy()["max_requests_per_run"]["value"])
+    return None, min(a.max_requests, (cap or photos_policy()["max_requests_per_run"])["value"])
+
+
+def _only(a):
+    """--only の和名(なければ空 = 全部)。"""
+    v = getattr(a, "only", None)
+    return set(v) if isinstance(v, (list, tuple)) else set()
 
 
 def _getters(http_get, http_bytes):
@@ -197,17 +251,24 @@ def build_table_cmd(a, http_get=None):
         print(f"言い換えの表にない言葉: {kinds}", file=sys.stderr)
         return 1
     table, rejected = load_table(), load_rejected()
-    if getattr(a, "recheck", False):                             # 条件を変えたとき: 前に入らなかった和名も調べ直す(種を特定しない語は inat_photos.skipped が除く)
+    if getattr(a, "recheck", False) is True:                             # 条件を変えたとき: 前に入らなかった和名も調べ直す(種を特定しない語は inat_photos.skipped が除く)
         rejected = {}
     names = [n for n in species_names(guide.build()[0], themes, policy) if n not in table and n not in rejected]
+    named = None
+    if getattr(a, "named", False) is True:                               # ユーザー指定の学名の種だけ(学名で検索)
+        named = {n: sci for n, sci in ph["named_scientific"].items() if n not in table}
+        names = list(named)
     getter, hg, _ = _getters(http_get, None)
     try:
-        entered, no, rep = inat_photos.build_table(names, http_get=hg, ph=ph, max_requests=left)
+        entered, no, rep = inat_photos.build_table(names, http_get=hg, ph=ph, max_requests=left, named=named)
     finally:
         if getter is not None:
             getter.close()
     for r in entered:
         table[r["name"]] = r
+    for n, src in load_sources().items():                        # 出どころの欄は、書き出すときに行へ戻して sources の欄に書く
+        if n in table and "source" not in table[n]:
+            table[n] = {**table[n], "source": src}
     rejected.update(no)
     out = export_dir()
     out.mkdir(parents=True, exist_ok=True)
@@ -228,16 +289,41 @@ def fetch_cmd(a, http_get=None, http_bytes=None):
     policy = guide.load_policy()
     ph = policy["photos"]
     review = load_review()
-    rows = sorted((r for r in load_table().values() if str(r["taxon_id"]) not in review), key=lambda r: r["name"])
+    only = _only(a)
+    rows = sorted((r for r in load_table().values() if str(r["taxon_id"]) not in review and (not only or r["name"] in only)), key=lambda r: r["name"])
     getter, hg, hb = _getters(http_get, http_bytes)
     try:
-        got, unused, rep = inat_photos.fetch_photos(rows, http_get=hg, http_bytes=hb, ph=ph, max_requests=left, has_cache=lambda t: has_cache(t))
+        got, unused, rep = inat_photos.fetch_photos(rows, http_get=hg, http_bytes=hb, ph=ph, max_requests=left, has_cache=lambda t: has_cache(t),
+                                                    skip_photos=load_skip_photos())
     finally:
         if getter is not None:
             getter.close()
     for item in got:
         save_photo(item)
     _log_requests(rep["requests"], "fetch")
+    guide._dump({"table_size": len(rows), "saved": [i["row"]["name"] for i in got], "not_used": unused, "report": rep, "cache": str(cache_dir())})
+    return 0 if rep["status"] == "ok" else 1
+
+
+def commons_cmd(a, http_get=None, http_bytes=None):
+    """photos-commons: 写真のない種(キャッシュにない種)だけ、Wikimedia Commons から取る。1 種ずつ順番に。"""
+    policy = guide.load_policy()
+    ph = policy["photos"]
+    err, left = _gate(a, http_get or http_bytes, "photos-commons", ph["commons"]["max_requests_per_run"])
+    if err:
+        return err
+    review = load_review()
+    only = _only(a)
+    rows = sorted((r for r in load_table().values() if (not only or r["name"] in only)), key=lambda r: r["name"])
+    skip = {r["taxon_id"] for r in rows if f"commons:{r['taxon_id']}" in review}
+    getter, hg, hb = _getters(http_get, http_bytes)
+    try:
+        got, unused, rep = commons_photos.fetch_commons(rows, http_get=hg, http_bytes=hb, ph=ph, max_requests=left,
+                                                        has_cache=lambda t: has_cache(t), skip=skip, on_got=save_photo)
+    finally:
+        if getter is not None:
+            getter.close()
+    _log_requests(rep["requests"], "commons")
     guide._dump({"table_size": len(rows), "saved": [i["row"]["name"] for i in got], "not_used": unused, "report": rep, "cache": str(cache_dir())})
     return 0 if rep["status"] == "ok" else 1
 

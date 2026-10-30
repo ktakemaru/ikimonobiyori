@@ -95,6 +95,18 @@ def decide(name, cands, ph):
     return row, None
 
 
+def decide_named(name, scientific, cands, ph):
+    """ユーザー指定の学名(段階30)→ ({"name", "scientific", "taxon_id", "source"}, None) か (None, 理由)。
+    学名が完全一致し、ランクが species・鳥類の候補がちょうど 1 件のときだけ。"""
+    same = [c for c in cands if c["scientific"] == scientific]
+    if not same:
+        return None, "学名が完全に一致する候補がない"
+    ok = [c for c in same if c["rank"] == ph["rank"] and c["class_name"] == ph["class_name"]]
+    if len(ok) != 1:
+        return None, f"学名が一致し、ランクが {ph['rank']}・鳥類の候補がちょうど 1 件でない({len(ok)} 件)"
+    return {"name": name, "scientific": scientific, "taxon_id": ok[0]["taxon_id"], "source": ph["named_source"]}, None
+
+
 def skipped(name, ph):
     """種を特定しない語(「カモ類」・「シギ・チドリ」など)は対象外 → 理由。対象なら None。"""
     if name in ph["skip_names"]:
@@ -111,7 +123,7 @@ def _wait(rep, gap, sleep):
         sleep(gap)
 
 
-def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sleep):
+def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sleep, named=None):
     """和名の一覧を 1 件ずつ検索して表に入れるか決める。→ (入った [{name, scientific, taxon_id, checked_on}], 入らなかった {和名: 理由}, 報告)。
     max_requests に達したら残りは読まない(未着手として報告に残す)。HTTP の非 200 ならそこで止める。"""
     today = (today or date.today()).isoformat()
@@ -120,7 +132,7 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
     entered, rejected = [], {}
     todo = []
     for n in names:
-        why = skipped(n, ph)
+        why = None if named else skipped(n, ph)
         if why:
             rejected[n] = why
         else:
@@ -133,7 +145,7 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
         _wait(rep, gap, sleep)
         rep["requests"] += 1
         try:
-            status, body, _ = http_get(search_url(n, ph))
+            status, body, _ = http_get(search_url(named[n] if named else n, ph))
         except OSError as ex:                                    # 接続・TLS・タイムアウト。再試行せず、ここまでの結果を残して止める(続きは再実行で)
             rep["status"], rep["stopped"] = "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で"
             rep["not_started"] = todo[i:]
@@ -143,7 +155,8 @@ def build_table(names, *, http_get, ph, max_requests, today=None, sleep=time.sle
             rep["not_started"] = todo[i + 1:]
             break
         try:
-            row, why = decide(n, parse_search(json.loads(body)), ph)
+            cands = parse_search(json.loads(body))
+            row, why = decide_named(n, named[n], cands, ph) if named else decide(n, cands, ph)
         except (ValueError, ParseError) as ex:
             rep["status"], rep["stopped"] = "parse_error", f"応答の形が想定と違う: {ex}"
             rep["not_started"] = todo[i + 1:]
@@ -199,9 +212,10 @@ def _usable_one(p, ph):
             "attribution": p["attribution"]}, None
 
 
-def usable_photo(row, taxon, ph):
+def usable_photo(row, taxon, ph, skip=frozenset()):
     """表の 1 行と taxon の応答 → ({"image_url", ...}, None) か (None, 使わない理由)。
-    既定の写真と taxon_photos を先頭から見て、使ってよいライセンス・ホストなどを満たす最初の 1 枚を選ぶ。"""
+    既定の写真と taxon_photos を先頭から見て、使ってよいライセンス・ホストなどを満たす最初の 1 枚を選ぶ。
+    skip は、目で見て使わないと決めた写真の id(段階30)。"""
     if taxon["taxon_id"] != row["taxon_id"]:
         return None, "taxon の id が表と一致しない"
     if taxon["scientific"] != row["scientific"]:
@@ -210,6 +224,9 @@ def usable_photo(row, taxon, ph):
         return None, "既定の写真がない"
     first = None
     for p in taxon["photos"]:
+        if p["photo_id"] in skip:
+            first = first or "目で見て使わないと決めた写真"
+            continue
         ok, why = _usable_one(p, ph)
         if ok:
             return ok, None
@@ -235,7 +252,7 @@ def check_image(data, ph):
     return kind, None
 
 
-def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, today=None, sleep=time.sleep):
+def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, today=None, sleep=time.sleep, skip_photos=None):
     """表の種ごとに、写真情報(1 回)と写真の実体(1 回)を取る。has_cache(taxon_id) が真の種は取り直さない。
     → (取れた [{row, meta, data, ext}], 使わなかった {和名: 理由}, 報告)。HTTP の非 200 ならそこで止める。"""
     today = (today or date.today()).isoformat()
@@ -263,7 +280,7 @@ def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, tod
             rep["not_started"] = [r["name"] for r in todo[i + 1:]]
             break
         try:
-            ok, why = usable_photo(row, parse_taxon(json.loads(body)), ph)
+            ok, why = usable_photo(row, parse_taxon(json.loads(body)), ph, (skip_photos or {}).get(row["taxon_id"], frozenset()))
         except (ValueError, ParseError) as ex:
             rep["status"], rep["stopped"] = "parse_error", f"応答の形が想定と違う: {ex}"
             rep["not_started"] = [r["name"] for r in todo[i + 1:]]

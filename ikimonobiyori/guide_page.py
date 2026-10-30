@@ -161,8 +161,11 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
         items = []
         for n in sorted(shown):
             meta = shown[n][0]
-            items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))}'
-                         f' ({link(meta["photo_page"], h["photo_link"], policy)})</li>')
+            commons = meta.get("source") == policy["photos"]["commons"]["source_id"]
+            line = h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"])
+            if commons:                                          # Commons の写真は出どころも書く(作者・ライセンス・ファイルのページ)
+                line += "・" + h["credit_source"].format(source=policy["photos"]["commons"]["source_label"])
+            items.append(f'<li>{esc(line)} ({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<ul class="note">{"".join(items)}</ul>')
     body.append(f'<p class="note">{esc(h["credit"])}</p>')
     return ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"

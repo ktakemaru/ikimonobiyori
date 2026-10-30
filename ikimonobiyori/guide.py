@@ -1257,11 +1257,17 @@ def main(argv=None, http_get=None, http_bytes=None):
     pb = sub.add_parser("photos-build-table", help="野鳥の種の対応表(和名→学名・taxon id)を iNaturalist で作る(--live・--max-requests・計測フックが要る。段階29)")
     pb.add_argument("--live", action="store_true")
     pb.add_argument("--max-requests", type=int)
+    pb.add_argument("--named", action="store_true", help="ユーザー指定の学名(policy photos.named_scientific)の種だけ、学名で検索して表に入れる(段階30)")
     pb.add_argument("--recheck", action="store_true", help="前に表に入らなかった和名(種を特定しない語を除く)ももう一度調べる(条件を変えたとき。段階29b)")
     pb.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
     ph_ = sub.add_parser("photos-fetch", help="表の種の代表写真を取ってキャッシュに置く(--live・--max-requests・計測フックが要る。段階29)")
     ph_.add_argument("--live", action="store_true")
     ph_.add_argument("--max-requests", type=int)
+    ph_.add_argument("--only", nargs="*", help="この和名の種だけ取る(省略すると表の全部)")
+    pc = sub.add_parser("photos-commons", help="写真のない種だけ、Wikimedia Commons から代表写真を取る(--live・--max-requests・計測フックが要る。段階30)")
+    pc.add_argument("--live", action="store_true")
+    pc.add_argument("--max-requests", type=int)
+    pc.add_argument("--only", nargs="*", help="この和名の種だけ(省略すると、写真のない表の全部)")
     pg = sub.add_parser("page", help="野鳥の案内を写真つきの単独の HTML ページにする(guide find --text と同じ選び方・同じ文。通信しない。段階29)")
     pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
     pg.add_argument("--from", dest="origin", help="出発地(横浜・東京。省略すると横浜)")
@@ -1354,12 +1360,14 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "page":
         from . import guide_page
         return guide_page.page_cmd(a)
-    if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear"):
+    if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear", "photos-commons"):
         from . import guide_photos
         if a.cmd == "photos-clear":
             return guide_photos.clear_cmd(a)
         if a.cmd == "photos-build-table":
             return guide_photos.build_table_cmd(a, http_get)
+        if a.cmd == "photos-commons":
+            return guide_photos.commons_cmd(a, http_get, http_bytes)
         return guide_photos.fetch_cmd(a, http_get, http_bytes)
     if a.cmd == "build":
         entries, recs, places = build(include_runtime=not a.committed_only)

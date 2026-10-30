@@ -1,5 +1,6 @@
 # 野鳥の種の対応表(段階29)。和名 → 学名 / iNaturalist の taxon id / 確認日。事実だけで、画像・写真の URL・撮影者名は含まない。
-# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のものだけ。
+# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のもの(候補が複数のときは、種が 1 件でほかがその下位のもの)。
+# sources の欄にある和名は、ユーザー指定の学名(iNaturalist で学名・ランク・鳥類が一致したもの)。
 schema: ikimono-bird-taxa/1
 taxa:
 - name: オオタカ
@@ -50,6 +51,10 @@ taxa:
   scientific: Cygnus columbianus
   taxon_id: 6917
   checked_on: '2026-10-31'
+- name: シロハラ
+  scientific: Turdus pallidus
+  taxon_id: 12779
+  checked_on: '2026-10-31'
 - name: ジョウビタキ
   scientific: Phoenicurus auroreus
   taxon_id: 12993
@@ -94,3 +99,10 @@ taxa:
   scientific: Chroicocephalus ridibundus
   taxon_id: 144510
   checked_on: '2026-10-31'
+- name: ヨシガモ
+  scientific: Mareca falcata
+  taxon_id: 558440
+  checked_on: '2026-10-31'
+sources:
+  シロハラ: ユーザー指定の学名
+  ヨシガモ: ユーザー指定の学名

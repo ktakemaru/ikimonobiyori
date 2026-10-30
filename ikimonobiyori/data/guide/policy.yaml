@@ -251,6 +251,7 @@ photos:
   table_schema: ikimono-bird-taxa/1
   review_file: photo_review.json                          # 目で見て写真を使わないと決めた種(手元の書き出し。コミットしない)
   multi_file: bird_taxa_multi.json                        # 「候補が 2 件以上」から種を採った和名の候補の一覧(報告用。手元の書き出し)
+  skip_photo_file: photo_skip.json                        # 目で見て使わないと決めた iNaturalist の写真の id(種は残す。手元の書き出し。コミットしない)
   rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
   cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
   page_dir: pages                                         # 同じく、出力した HTML の置き場所
@@ -269,13 +270,40 @@ photos:
   skip_name_suffixes: ["類"]                              # 「カモ類」など種を特定しない語は対象外(写真を付けない)
   skip_names: [カモ, シギ, チドリ]                          # 単独でも種を特定しない語(段階29b。ユーザー指示 2026-10-31)。優先名以外の名前の照合の対象にもしない
   skip_name_chars: ["・", "(", "（"]                        # 「シギ・チドリ」など複数をまとめた語、「ハクチョウ類(関東)」など注記つきの語は対象外
+  named_source: ユーザー指定の学名                        # 表の出どころの欄(段階30。ユーザー指示 2026-10-31)
+  named_scientific: {シロハラ: Turdus pallidus, ヨシガモ: Mareca falcata}   # 日本語名では決まらない種。学名はユーザー指定(iNaturalist で学名・ランク・鳥類が一致したときだけ表に入れる)
+  commons:                                                # iNaturalist に許可ライセンスの写真がない種だけ、Wikimedia Commons から(段階30。ユーザー承認 2026-10-31。新しい通信先は commons.wikimedia.org と upload.wikimedia.org の 2 つ。Wikidata は承認済みの www.wikidata.org を画像の名前を調べるためだけに使う)
+    max_requests_per_run: {value: 60, source: "ユーザー指示(段階30)。1 回の実行の上限", provisional: false}
+    min_interval_s: {value: 6, source: "仮置き(段階30)。Wikimedia へのリクエスト間隔(秒)。ユーザー指示は 1 秒以上。Wikidata の 429 を 2 回受けて 2→3→6 に広げた", provisional: true}
+    thumb_width: {value: 500, source: "ユーザー指示(段階30)。サムネイルの幅(px)の目安", provisional: false}
+    wikidata_limit: {value: 5, source: "仮置き(段階30)。学名の検索で見る項目の数の上限", provisional: true}
+    author_max_chars: {value: 200, source: "仮置き(段階30)。作者の表記の長さの上限(長いものは切る)", provisional: true}
+    wikidata_api: "https://www.wikidata.org/w/api.php"
+    commons_api: "https://commons.wikimedia.org/w/api.php"
+    wikidata_search: '{scientific} haswbstatement:P225'    # 学名の語を含み、学名(P225)の記述がある項目の検索(P225=値 の形は 0 件になる。完全一致は応答の P225 で確かめる)
+    wikidata_namespace: "0"
+    formatversion: "2"
+    file_prefix: "File:"
+    qid_pattern: 'Q[0-9]+'
+    prop_scientific: P225
+    prop_image: P18
+    license_patterns: ['CC0( 1\.0)?', 'Public domain', 'CC BY(-SA)? [0-9.]+( [a-z]{2,3})?']   # LicenseShortName が完全に合うものだけ(NC・ND・不明は使わない)
+    no_author_ok_patterns: ['CC0( 1\.0)?', 'Public domain']   # 作者の表記がなくてよいもの(それ以外は作者の表記が要る)
+    author_unknown: "作者の記載なし"
+    mime_types: [image/jpeg, image/png, image/webp]
+    page_hosts: [commons.wikimedia.org]                     # ファイルのページ(リンク)のホスト
+    image_hosts: [upload.wikimedia.org]                     # サムネイルの実体のホスト(承認)
+    thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト(承認外)→ 承認済みのホストに置き換える。パスは同じ・クエリは捨てる(段階30。報告に明記)
+    thumb_path_prefix: /wikipedia/commons/thumb/            # 置き換えてよいパスの先頭
+    source_id: wikimedia_commons
+    source_label: Wikimedia Commons
   rank: species
   class_name: Aves
   html:
     title: 野鳥の案内
     csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
     photo_note: "写真は種の代表写真で、この場所で撮られたものではありません。"
-    credit: "写真提供: iNaturalist"
+    credit: "写真提供: iNaturalist / Wikimedia Commons"
     headings: {birds: いま狙いたい鳥, places: おすすめの名所, credits: 写真の出どころ}
     created: "作成: {at}"
     origin: "出発地: {origin}"
@@ -287,6 +315,8 @@ photos:
     sources: "出どころ"
     credit_line: "{name}: 撮影者 {attribution}・ライセンス {license}"
     photo_link: "写真のページ(iNaturalist)"
+    photo_link_commons: "ファイルのページ(Wikimedia Commons)"
+    credit_source: "出どころ: {source}"
     unit_places: 名所
     link_schemes: [http, https]
 
