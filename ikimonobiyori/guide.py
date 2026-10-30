@@ -34,6 +34,7 @@ from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
 from .paths import DATA_FILES_DIR, data_path
+from .profiles import load_profiles
 
 GUIDE_DIR = DATA_FILES_DIR / "guide"
 POLICY_PATH = GUIDE_DIR / "policy.yaml"
@@ -961,8 +962,23 @@ def count_suffix(n, policy):
     return policy["reference_count"]["suffix"].format(n=n) if n is not None else ""
 
 
-def render_answer(found, policy, origin_line=None, on=None):
+def care_notes(themes, policy, profiles=None):
+    """テーマ → 注意の行(プロファイルの care.manners の先頭から。括弧の出どころ注記は除く)。対応するプロファイルがないテーマは出さない。"""
+    cfg = policy["answer"]["notes"]
+    profiles = profiles if profiles is not None else load_profiles()
+    lines = []
+    for theme in sorted(themes):
+        pid = cfg["profiles"].get(theme)
+        manners = ((profiles.get(pid) or {}).get("care") or {}).get("manners") or []
+        texts = [re.sub(r"[(（][^)）]*[)）]\s*$", "", m).strip() for m in manners[:cfg["max_manners"]]]
+        if texts:
+            lines.append(cfg["line"].format(theme=theme, text="。".join(texts) + "。"))
+    return lines
+
+
+def render_answer(found, policy, origin_line=None, on=None, themes=None, show_out_of_range=False):
     """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
+    themes を渡すと「注意」(プロファイルのマナー)を凡例の前に付ける。show_out_of_range は名指しの質問のとき(範囲の外の名所を出す)。
     ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
     a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
     rc = policy["reference_count"]
@@ -990,10 +1006,15 @@ def render_answer(found, policy, origin_line=None, on=None):
     lines.append(f"## {a['headings']['recommend']}")
     rec = found.get("recommend") or []
     lines += [row(e, i) for i, e in enumerate(rec, 1)] if rec else [a["none_found"]]
-    for key in ("upcoming", "no_season", "reference"):
+    for key in ("upcoming", "other_season", "no_season", "reference", "out_of_range"):
         es = found.get(key) or []
+        if key == "out_of_range" and not show_out_of_range:
+            continue
         if es:
             lines += ["", f"## {a['headings'][key]}"] + [row(e) for e in es]
+    notes = care_notes(themes, policy) if themes else []
+    if notes:
+        lines += ["", f"## {a['headings']['notes']}"] + [f"- {n}" for n in notes]
     if shown[0]:
         lines += ["", rc["legend"]]
     return "\n".join(lines) + "\n"
@@ -1275,7 +1296,7 @@ def main(argv=None, http_get=None):
         rl = cpol["range_limit"]
         line = load_sources_answer()["origin_line"].format(origin=origin, max_km=rl["max_km"], edge_km=val(rl["edge_min_km"]))
         if a.text:
-            text = render_answer(got, policy, origin_line=line)
+            text = render_answer(got, policy, origin_line=line, themes=themes, show_out_of_range=bool(a.name))
             bad = forbidden_in_answer(text, policy)
             if bad:
                 print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)

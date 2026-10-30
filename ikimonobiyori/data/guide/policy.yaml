@@ -205,7 +205,9 @@ reference_count:
   subject_theme: {autumn_leaves: 紅葉, birds: 野鳥, wintering_birds: 冬鳥, flowers: 花}
 # ガイド型の答え(コードが組み立てる文。guide find --text)の文言。段階の表示は labels(確認済み / 定評 / 参考)。内部用語を出さない
 answer:
-  headings: {recommend: おすすめ, upcoming: これから, no_season: 例年の時期を確かめられていない名所, reference: 参考, notes: 注意}
+  headings: {recommend: おすすめ, upcoming: これから, other_season: 例年の時期の外の名所, no_season: 例年の時期を確かめられていない名所, reference: 参考, out_of_range: 範囲の外, notes: 注意}
+  # 注意の行(段階27 フェーズA)。プロファイルの care.manners を、テーマごとに先頭から max_manners 件、1 行にする(文はプロファイルの原文。括弧の出どころ注記は除く)。コードに文言を持たない
+  notes: {profiles: {野鳥: birds, 冬鳥: wintering_birds}, max_manners: 2, line: "{theme}の観察では、{text}"}
   none_found: "おすすめにできる名所は見つかりませんでした。"
   place: "{i}. **{name}**({where})"
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
