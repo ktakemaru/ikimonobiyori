@@ -199,7 +199,9 @@ class Phase4Data(unittest.TestCase):
 
     def test_single_source_facts_are_not_shown(self):
         e = self._e("渡良瀬遊水地")
-        self.assertFalse(any(k["shown"] for k in e["kinds"]))
+        # 段階27 フェーズF: チュウヒは 3 件の出どころが言うので出る(旧: 何も出ない)。1 件だけの種名・時期は今までどおり出ない
+        self.assertEqual([k["kind"] for k in e["kinds"] if k["shown"]], ["チュウヒ"])
+        self.assertTrue(all(k["independent_sources"] == 1 for k in e["kinds"] if not k["shown"]))
         self.assertFalse(e["season"]["shown"])
 
     def test_every_annotation_points_to_an_existing_record(self):

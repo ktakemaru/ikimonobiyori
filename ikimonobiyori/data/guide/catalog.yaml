@@ -9,6 +9,39 @@ entries:
   municipality: 栃木市
   kinds:
   - kind: チュウヒ
+    independent_sources: 3
+    shown: true
+  - kind: カンムリカイツブリ
+    independent_sources: 1
+    shown: false
+  - kind: コガモ
+    independent_sources: 1
+    shown: false
+  - kind: コチョウゲンボウ
+    independent_sources: 1
+    shown: false
+  - kind: シメ
+    independent_sources: 1
+    shown: false
+  - kind: ジョウビタキ
+    independent_sources: 1
+    shown: false
+  - kind: ツグミ
+    independent_sources: 1
+    shown: false
+  - kind: ノスリ
+    independent_sources: 1
+    shown: false
+  - kind: ハヤブサ
+    independent_sources: 1
+    shown: false
+  - kind: ベニマシコ
+    independent_sources: 1
+    shown: false
+  - kind: マガモ
+    independent_sources: 1
+    shown: false
+  - kind: ミサゴ
     independent_sources: 1
     shown: false
   season:
@@ -5046,10 +5079,22 @@ entries:
   prefecture: 埼玉県
   municipality: 戸田市
   kinds:
+  - kind: アオジ
+    independent_sources: 1
+    shown: false
   - kind: ウミネコ
     independent_sources: 1
     shown: false
+  - kind: オオバン
+    independent_sources: 1
+    shown: false
   - kind: カモ
+    independent_sources: 1
+    shown: false
+  - kind: カワセミ
+    independent_sources: 1
+    shown: false
+  - kind: カンムリカイツブリ
     independent_sources: 1
     shown: false
   - kind: キンクロハジロ
@@ -5058,10 +5103,22 @@ entries:
   - kind: コガモ
     independent_sources: 1
     shown: false
+  - kind: シロハラ
+    independent_sources: 1
+    shown: false
+  - kind: ジョウビタキ
+    independent_sources: 1
+    shown: false
+  - kind: ツグミ
+    independent_sources: 1
+    shown: false
   - kind: ホシハジロ
     independent_sources: 1
     shown: false
   - kind: マガモ
+    independent_sources: 1
+    shown: false
+  - kind: ミコアイサ
     independent_sources: 1
     shown: false
   season:
