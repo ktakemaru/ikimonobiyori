@@ -252,6 +252,7 @@ photos:
   rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
   cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
   page_dir: pages                                         # 同じく、出力した HTML の置き場所
+  page_file: bird-guide.html                              # 出力する HTML のファイル名の既定(--out を渡さないとき)
   api_base: "https://api.inaturalist.org/v1"
   locale: ja
   search_per_page: {value: 30, source: "仮置き(段階29)。和名の完全一致を探すための 1 回の候補の数", provisional: true}

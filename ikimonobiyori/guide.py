@@ -1261,6 +1261,12 @@ def main(argv=None, http_get=None, http_bytes=None):
     ph_ = sub.add_parser("photos-fetch", help="表の種の代表写真を取ってキャッシュに置く(--live・--max-requests・計測フックが要る。段階29)")
     ph_.add_argument("--live", action="store_true")
     ph_.add_argument("--max-requests", type=int)
+    pg = sub.add_parser("page", help="野鳥の案内を写真つきの単独の HTML ページにする(guide find --text と同じ選び方・同じ文。通信しない。段階29)")
+    pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
+    pg.add_argument("--from", dest="origin", help="出発地(横浜・東京。省略すると横浜)")
+    pg.add_argument("--date", help="対象の日(YYYY-MM-DD。省略すると今日)")
+    pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/)")
+    pg.add_argument("--open", action="store_true", help="ローカルのブラウザでそのファイルを開く(新しい通信はしない)")
     sub.add_parser("photos-clear", help="写真のキャッシュだけを消す(ほかは消さない。段階29)")
     b = sub.add_parser("build", help="候補をまとめ、段階・承認を決めて書き出す(IKIMONOBIYORI_DATA_DIR の下の guide/export/)")
     b.add_argument("--committed-only", action="store_true", help="手元の記録を使わない(data/guide/ だけ)")
@@ -1344,6 +1350,9 @@ def main(argv=None, http_get=None, http_bytes=None):
         return 0
     if a.cmd == "places-fetch":
         return _places_fetch(a, http_get)
+    if a.cmd == "page":
+        from . import guide_page
+        return guide_page.page_cmd(a)
     if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear"):
         from . import guide_photos
         if a.cmd == "photos-clear":
