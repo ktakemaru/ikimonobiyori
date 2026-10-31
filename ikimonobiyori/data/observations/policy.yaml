@@ -119,6 +119,7 @@ reason_labels:
   event: 行事がある
   near: 近い
   typical_overlaps: 例年の見頃にかかる
+  inat_season: この時期の記録が多い
 avoid_reasons:
   too_early: まだ早い(対象の日は例年の見頃の前)
   past: 見頃を過ぎた
@@ -129,3 +130,24 @@ origin_home: {横浜: 神奈川県, 東京: 東京都}
 
 # 答えに出さない内部用語(facts の文の自己検査)
 forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary, official]
+
+# 段階35(指示書 biyori-hub/docs/stageH9-instructions.md 穴3): 例年の時期と今年の行事の期間を分ける
+typical:
+  # 名所カタログの flower_windows の注記にこの語があれば、行事の期間を写したもの(例年の時期として使わない)
+  event_note_words: [期間, フェスタ, フェスティバル, まつり, 祭, 開放]
+  # 記録の「例年の見頃」の原文にこの語があれば、例年の時期ではなく行事・今年の予定(例年の時期として使わない)
+  record_not_typical_words: [開催, 予定, 期間]
+typical_labels:
+  known: "例年の見頃: {text}"
+  unknown_with_event: "例年の時期は分かりません(今年の行事「{name}」は{start}〜{end})"
+  unknown: "例年の時期は分かりません"
+
+# 段階35(穴2): 野鳥は「例年の見頃」ではなく「この時期に見られる鳥」で書く
+birds:
+  # 前の年の観察の記録を「この時期」とみなす幅(対象の日の前後の日数)
+  season_window_days: {value: 30, source: "仮置き(前後ひと月。根拠のある値ではない)", provisional: true}
+  season_labels:
+    inat: "この時期に見られる鳥: iNaturalist の過去{years}年の記録(前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
+    past_record: "この時期に見られる鳥: {year}年{md}の記録({publisher})では「{text}」"
+    page: "この時期に見られる鳥: {publisher}の紹介では「{text}」"
+    unknown: "この時期に見られる鳥の記録は見つかっていません"

@@ -66,7 +66,10 @@ def main(argv=None, http_get=None):
         cat = catalog.catalog_sites(catalog.load_catalog("autumn_leaves"))
         sites = cat if a.site_set == "catalog" else {**sites, **cat}
     all_approved = [x for x in (sites_doc.get("bird_areas") or []) if x.get("status") == "approved"]      # 候補(candidate)は問い合わせの対象にしない
-    approved_areas = [x for x in all_approved if x.get("active") is not False]                          # 既定の問い合わせ(--area 省略・all)は active だけ。active: false は --area ID で明示したときだけ
+    approved_areas = [x for x in all_approved if x.get("active") is not False]
+    if a.area and a.area != "all":                                  # 段階35: 観察の記録用の区域(data/observations/bird_areas.yaml)は --area ID で明示したときだけ
+        from ikimonobiyori import observations as _obs
+        all_approved += [x for x in _obs.load_obs_bird_areas() if x.get("status") == "approved" and x["id"] not in {y["id"] for y in all_approved}]                          # 既定の問い合わせ(--area 省略・all)は active だけ。active: false は --area ID で明示したときだけ
     report = None
     if a.density_survey:
         from ikimonobiyori import survey

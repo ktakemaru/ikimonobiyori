@@ -25,12 +25,14 @@ from urllib.parse import urlparse
 import yaml
 
 from . import catalog as catalog_mod
+from . import closures
 from . import sources as S
 from .paths import DATA_FILES_DIR, data_path
 
 OBS_DIR = DATA_FILES_DIR / "observations"
 POLICY_PATH = OBS_DIR / "policy.yaml"
 SPOTS_PATH = OBS_DIR / "spots.yaml"
+BIRD_AREAS_PATH = OBS_DIR / "bird_areas.yaml"                  # 段階35: 観察の記録用の野鳥の区域(sites.yaml の bird_areas とは別)
 CATALOG_SUBJECTS = {"autumn_leaves": "autumn_leaves", "flowers": "flowers", "birds": "birds"}
 KANJI_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
 
@@ -45,6 +47,11 @@ def load_policy(path=None):
 
 def load_spots(path=None):
     return yaml.safe_load(Path(path or SPOTS_PATH).read_text(encoding="utf-8"))
+
+
+def load_obs_bird_areas(path=None):
+    p = Path(path or BIRD_AREAS_PATH)
+    return (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("bird_areas") or [] if p.exists() else []
 
 
 def log_path(subject, env=None, policy=None):
@@ -179,6 +186,26 @@ def validate(rec, policy):
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "typical", "event", "url", "publisher", "source_class")
 
 
+STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
+
+
+def state_date_from_text(text, read_at):
+    """状態の原文に書かれた「10/25現在」「10月8日現在」→ YYYY-MM-DD(年は読んだ日から。読んだ日より後なら前の年)。なければ None。"""
+    t = unicodedata.normalize("NFKC", text or "")
+    ra = date.fromisoformat(str(read_at)[:10])
+    for rx in STATE_DATE_RES:
+        m = rx.search(t)
+        if m:
+            try:
+                d = date(ra.year, int(m.group(1)), int(m.group(2)))
+            except ValueError:
+                return None
+            if d > ra:
+                d = date(ra.year - 1, d.month, d.day)
+            return d.isoformat()
+    return None
+
+
 def make_record(rec, policy, read_at):
     """検査に通った読んだ事実 → 記録の 1 行(原文は 80 字まで。正規化した語・読んだ時刻はコードが入れる)。"""
     mx = _v(policy["record"]["max_raw_chars"])
@@ -201,6 +228,8 @@ def read_records(subject, env=None, policy=None):
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
+        if not r.get("state_date"):             # 段階35: 状態の日付が欄になくても、原文の「10/25現在」を状態の日付として使う(記録のファイルは書き換えない)
+            r["state_date_from_text"] = state_date_from_text(r.get("state"), r["read_at"])
     return rows
 
 
@@ -214,6 +243,7 @@ def record(batch, *, env=None, policy=None, now=None):
     read_at = now or clock_now()
     written, dup, rejected = [], 0, []
     by_subject = {}
+    by_url = {}                                  # 段階35: ページごとの新しい記録・重複の数(窓口の「読み直しました」の根拠)
     for i, rec in enumerate(batch):
         errs = validate(rec, policy) if isinstance(rec, dict) else ["記録は JSON のオブジェクト"]
         if errs:
@@ -227,18 +257,32 @@ def record(batch, *, env=None, policy=None, now=None):
         with p.open("a", encoding="utf-8", newline="") as f:
             for r in rows:
                 k = _dup_key(r)
+                u = by_url.setdefault(r["url"], {"url": r["url"], "publisher": r.get("publisher"), "source_class": r["source_class"],
+                                                  "written": 0, "duplicates": 0})
                 if k in have:
                     dup += 1
+                    u["duplicates"] += 1
                     continue
                 have.add(k)
+                u["written"] += 1
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
                 written.append(r)
-    return {"written": len(written), "duplicates": dup, "rejected": rejected, "records": written}
+    return {"written": len(written), "duplicates": dup, "rejected": rejected, "by_url": list(by_url.values()), "records": written}
 
 
 # ---- 候補(名所の一覧 + 既存の名所カタログ) ----
 
-def _typical_from_catalog(e):
+def event_derived(w, events, policy=None):
+    """例年の時期として置かれた期間が、行事の期間を写したものか(段階35)。
+    同じ月日の行事がある、または注記に「行事の期間」を表す語(policy の typical.event_note_words)がある → True。"""
+    words = ((policy or {}).get("typical") or {}).get("event_note_words") or ["期間", "フェスタ", "フェスティバル", "まつり", "祭", "開放"]
+    for ev in events or []:
+        if ev.get("start") and ev.get("end") and str(ev["start"])[5:] == w.get("start") and str(ev["end"])[5:] == w.get("end"):
+            return True
+    return any(x in (w.get("note") or "") for x in words)
+
+
+def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
     if tw:
@@ -248,7 +292,8 @@ def _typical_from_catalog(e):
     for w in e.get("flower_windows") or []:
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
                     "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": urlparse(w["source_url"]).hostname,
-                    "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official"})
+                    "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
+                    "event_derived": event_derived(w, e.get("events"), policy)})
     return out
 
 
@@ -259,11 +304,11 @@ def _events_from_catalog(e):
             for v in e.get("events") or []]
 
 
-def _from_catalog(e, subject):
+def _from_catalog(e, subject, policy=None):
     t = e.get("tags") or {}
     return {"id": e["id"], "subject": subject, "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"),
             "area": t.get("area"), "point": e.get("point"), "elevation_m": (e.get("point") or {}).get("elevation_m"),
-            "typical": _typical_from_catalog(e), "events": _events_from_catalog(e),
+            "typical": _typical_from_catalog(e, policy), "events": _events_from_catalog(e),
             "pages": [{"url": s["url"], "publisher": s.get("title") or urlparse(s["url"]).hostname, "source_class": "official"} for s in e.get("sources") or []],
             "flower_kinds": t.get("flower_kinds") or [], "from_catalog": True}
 
@@ -272,14 +317,17 @@ def _from_spot(s, policy, catalog_by_id):
     typ = []
     for t in s.get("typical") or []:
         w = parse_typical(t["text"], policy)
-        typ.append({**t, "start": w[0] if w else None, "end": w[1] if w else None})
+        x = {**t, "start": w[0] if w else None, "end": w[1] if w else None}
+        x["event_derived"] = bool(t.get("event_derived")) or (bool(w) and event_derived(x, s.get("events"), {"typical": {"event_note_words": []}}))
+        typ.append(x)
     c = {"id": s["id"], "subject": s["subject"], "name": s["name"], "aliases": s.get("aliases") or [], "prefecture": s.get("prefecture"),
          "city": s.get("city"), "area": s.get("area"), "point": None, "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
-         "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or []}
+         "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
+         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area")}
     ref = catalog_by_id.get(s.get("catalog_ref"))
     if ref:
-        cat = _from_catalog(ref, s["subject"])
+        cat = _from_catalog(ref, s["subject"], policy)
         c["catalog_ref"] = ref["id"]
         c["aliases"] = c["aliases"] + [ref["name"]]
         c["point"] = cat["point"]
@@ -308,7 +356,7 @@ def all_candidates(subject, policy=None, spots_doc=None, catalogs=None):
     by_id = {e["id"]: e for e in cat_entries}
     out = [_from_spot(s, policy, by_id) for s in spots_doc.get("spots") or [] if s["subject"] == subject]
     used = {c.get("catalog_ref") for c in out}
-    out += [_from_catalog(e, subject) for e in cat_entries if e["id"] not in used]
+    out += [_from_catalog(e, subject, policy) for e in cat_entries if e["id"] not in used]
     return out
 
 
@@ -326,8 +374,15 @@ def match_record(rec, cands):
 
 # ---- 新しさ ----
 
+def state_date_of(rec):
+    """状態の日付(欄の値。なければ原文に書かれた日付)。どちらもなければ None。"""
+    return rec.get("state_date") or rec.get("state_date_from_text")
+
+
 def basis_date(rec):
-    return date.fromisoformat(rec["state_date"]) if rec.get("state_date") else date.fromisoformat(rec["read_at"][:10])
+    """新しさの基準の日(段階35): 状態の日付。状態の日付がない記録だけ、読んだ日。"""
+    sd = state_date_of(rec)
+    return date.fromisoformat(sd) if sd else date.fromisoformat(rec["read_at"][:10])
 
 
 def freshness(rec, today, subject, policy):
@@ -336,7 +391,8 @@ def freshness(rec, today, subject, policy):
     f = policy["freshness"]
     age = (today - basis_date(rec)).days
     cls = "fresh" if age <= f["fresh_days"][subject] else "stale" if age <= f["stale_days"] else "very_stale"
-    return {"class": cls, "label": f["labels"][cls], "age_days": age, "basis": "state_date" if rec.get("state_date") else "read_at"}
+    return {"class": cls, "label": f["labels"][cls], "age_days": age, "basis": "state_date" if state_date_of(rec) else "read_at",
+            "basis_date": basis_date(rec).isoformat()}
 
 
 def best_record(rows):
@@ -446,12 +502,133 @@ def _publishers(c, rows):
     return sorted(x for x in pubs if x)
 
 
+def _md(iso):
+    d = date.fromisoformat(str(iso)[:10])
+    return f"{d.month}/{d.day}"
+
+
+# ---- 野鳥: この時期に見られる鳥(段階35) ----
+
+def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=None):
+    """iNaturalist の過去の記録(キャッシュにあるものだけ。通信しない。古くても使い、取得時刻を添える)から、
+    対象の日の前後の相対頻度の上位の種。→ {area, radius_km, years, window_weeks, total, species, fetched_at, url} か None。"""
+    from . import profiles as P
+    from .config import load_config
+    from .engine import round_coord
+    from .fetch import birds_live
+    from .fetch.cache import Cache
+    from .methods import observation_frequency as obsfreq
+    from .paths import data_path as dp
+    from .profiles import param
+    if not area_id:
+        return None
+    sites_doc = sites_doc or P.load_sites()[1]
+    area = next((a for a in (sites_doc.get("bird_areas") or []) + load_obs_bird_areas() if a["id"] == area_id), None)
+    if not area or area.get("lat") is None:
+        return None
+    profile = profile or P.load_profiles()["birds"]
+    cfg = cfg or load_config()
+    prec = area.get("location_precision") or profile["care"]["location_precision"]
+    area = dict(area, lat=round_coord(area["lat"], prec), lon=round_coord(area["lon"], prec))
+    cache = Cache(dp(cfg["cache"]["dir"], env))
+    rows, fetched, url = [], [], None
+    for _d, _k, q in birds_live.bird_queries(area, [d], profile, cfg["live"]["inaturalist"]["per_page"]):
+        entry, _st = cache.get(q["url"], q["params"], now=now, ttl_s=0, allow_expired=True)
+        if entry is None:
+            return None
+        from .fetch import inaturalist
+        rows.append(inaturalist.parse_species_counts(json.loads(entry["body"]))[0])
+        fetched.append(entry["fetched_at"])
+        url = url or q["url"]
+    res = obsfreq.relative_frequencies(rows, min_total=param(profile, "min_total_observations"), top_n=param(profile, "top_species"))
+    if not res["enough"]:
+        return {"area": area["name"], "enough": False, "total": res["total"], "fetched_at": min(fetched), "url": url}
+    years = param(profile, "history_years")
+    return {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
+            "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
+            "species": [{"name": sp["common_name"] or sp["name"], "scientific_name": sp["name"], "count": sp["count"],
+                         "relative_frequency": round(sp["relative_frequency"], 3)} for sp in res["species"]]}
+
+
+def season_birds(c, rows, dates, policy):
+    """この時期に見られる鳥の材料(出典と年つき): 名所の一覧に書き写した紹介(season_birds)と、前の年の同じ時期の観察の記録。"""
+    d = dates[0]
+    w = _v(policy["birds"]["season_window_days"])
+    out = [dict(x, kind="page") for x in c.get("season_birds") or []]
+    for r in rows:
+        sd = state_date_of(r)
+        if not sd:
+            continue
+        x = date.fromisoformat(sd)
+        if x.year >= d.year:
+            continue
+        try:
+            same = date(d.year, x.month, x.day)
+        except ValueError:
+            continue
+        if abs((same - d).days) <= w:
+            out.append({"kind": "past_record", "text": r["state"], "date": sd, "year": x.year, "url": r["url"],
+                        "publisher": r.get("publisher"), "source_class": r["source_class"]})
+    return out
+
+
+def season_line(f, policy):
+    """この時期に見られる鳥の 1 文(決定論)。材料がなければ、そう書く。"""
+    lab = policy["birds"]["season_labels"]
+    inat = f.get("inat")
+    if inat and inat.get("enough"):
+        names = "・".join(sp["name"] for sp in inat["species"])
+        return lab["inat"].format(years=inat["years"], weeks=inat["window_weeks"], radius=inat["radius_km"], area=inat["area"],
+                                  names=names, fetched=_md(inat["fetched_at"]))
+    pr = [x for x in f.get("season_birds") or [] if x["kind"] == "past_record"]
+    if pr:
+        x = sorted(pr, key=lambda x: x["date"], reverse=True)[0]
+        return lab["past_record"].format(year=x["year"], md=_md(x["date"]), publisher=x.get("publisher") or "", text=x["text"])
+    pg = [x for x in f.get("season_birds") or [] if x["kind"] == "page"]
+    if pg:
+        x = pg[0]
+        return lab["page"].format(publisher=x.get("publisher") or "", text=x["text"])
+    return lab["unknown"]
+
+
+def closed_on(c, dates):
+    """休園日の原文を対象の日と照らす(段階35。closures)。→ [{date, closed, facility, text, line, url}]。原文がなければ []。"""
+    cl = c.get("closed")
+    if not cl or not cl.get("text"):
+        return []
+    out = []
+    for d in dates:
+        ev = closures.evaluate(cl["text"], d)
+        if not ev.get("facility"):
+            ev["facility"] = cl.get("facility") or c.get("name")
+        ev["line"] = closures.line(ev, cl.get("open_note"))
+        ev["url"] = cl.get("url")
+        out.append(ev)
+    return out
+
+
+def typical_line(typ, c, dates, policy):
+    """例年の時期の 1 文の材料(段階35)。例年の時期が分からないときは、今年の行事の期間と分けて書く。"""
+    lab = policy["typical_labels"]
+    if typ:
+        return lab["known"].format(text=typ["text"])
+    evs = [e for e in c.get("events") or [] if e.get("start") and e.get("end")]
+    evs = sorted(evs, key=lambda e: (not any(date.fromisoformat(e["start"]) <= d <= date.fromisoformat(e["end"]) for d in dates), e["start"]))
+    if evs:
+        e = evs[0]
+        return lab["unknown_with_event"].format(name=e["name"], start=_md(e["start"]), end=_md(e["end"]))
+    return lab["unknown"]
+
+
 def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     d = dates[0]
     cur = best_record(rows)
     fr = freshness(cur, today, subject, policy)
-    typ = next((t for t in c.get("typical") or [] if t.get("start")), None)
-    typ_rec = next((r.get("typical") for r in sorted(rows, key=lambda r: r["read_at"], reverse=True) if r.get("typical")), None)
+    real_typ = [t for t in c.get("typical") or [] if not t.get("event_derived")]
+    typ = next((t for t in real_typ if t.get("start")), None)
+    not_typ = (policy.get("typical") or {}).get("record_not_typical_words") or []
+    typ_rec = next((r.get("typical") for r in sorted(rows, key=lambda r: r["read_at"], reverse=True)
+                    if r.get("typical") and not any(w in r["typical"] for w in not_typ)), None)
     if typ is None and typ_rec:
         w = parse_typical(typ_rec, policy)
         if w:
@@ -472,6 +649,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         tier = 1
     elif st in start_states and covers_near:
         tier = 2
+    elif evs and subject == "flowers" and st in (None, policy["unknown_state"], *start_states):
+        tier = 2                                 # 段階35: 例年の時期が分からなくても、対象の日に行事がある花の名所
     else:
         tier = 3
     if fr["class"] == "fresh":
@@ -504,19 +683,27 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                    "publisher": cur.get("publisher") or cur.get("host"), "url": cur["url"], "source_class": cur["source_class"],
                    "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"]}
     pubs = _publishers(c, rows)
-    return {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
+    out = {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
-            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class")} for t in c.get("typical") or []]
-                       + ([] if not typ or typ in (c.get("typical") or []) else [typ]),
+            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class")} for t in real_typ]
+                       + ([] if not typ or typ in real_typ else [typ]),
+            "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
+                                          for t in c.get("typical") or [] if t.get("event_derived")],
+            "typical_line": typical_line(typ, c, dates, policy) if subject != "birds" else None,
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],
             "distance_km": dist, "reasons": reasons, "tier": tier, "evidence": ev_rank, "reference_count": len(pubs), "publishers": pubs,
             "avoid": avoid, "hours": c.get("hours"), "closed": c.get("closed"), "birds_note": c.get("birds_note"),
+            "closed_on": closed_on(c, dates),
             "flower_kinds": c.get("flower_kinds") or [], "pages": c.get("pages") or [], "_order": order_map.get(st, -1) if st else -1}
+    if subject == "birds":
+        out["season_birds"] = season_birds(c, rows, dates, policy)
+        out["bird_area"] = c.get("bird_area")
+    return out
 
 
 def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=None, spots_doc=None, catalogs=None, with_alternatives=True):
@@ -572,6 +759,18 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     dk = [f for f in rec_f if f["distance_km"] is not None]
     for f in sorted(dk, key=lambda f: f["distance_km"])[:_v(policy["min_candidates"])]:
         f["reasons"].append("near")
+    if subject == "birds":
+        inat_cache = {}
+        for f in all_f:
+            a = f.get("bird_area")
+            if a and a not in inat_cache:
+                inat_cache[a] = inat_season(a, dates[0], now, env)
+            f["inat"] = inat_cache.get(a) if a else None
+            f["season_line"] = season_line(f, policy)
+            if f["inat"] and f["inat"].get("enough"):
+                f["reasons"].append("inat_season")
+            for k in ("relation", "relation_label"):          # 野鳥には「例年の見頃」の関係を出さない(この時期に見られる鳥で書く)
+                f[k] = None
     for f in all_f:
         f["reason_labels"] = [policy["reason_labels"][r] for r in f["reasons"]]
         if f["avoid"]:

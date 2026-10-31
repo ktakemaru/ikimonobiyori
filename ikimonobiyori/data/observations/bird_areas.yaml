@@ -1,0 +1,17 @@
+# 段階35(指示書 biyori-hub/docs/stageH9-instructions.md 穴2): 神奈川の探鳥地の「この時期に見られる鳥」用の区域。
+# 観察の記録の材料(observations facts の inat)にだけ使う。data/sites.yaml の bird_areas(既定の問い合わせ・定期実行・合成の表示)には入れない。
+# 取得は `python -X utf8 -m ikimonobiyori.main --request <req> --now <ISO> --live --max-requests 2 --area <ID>`(--area で明示したときだけ。計測フックの下で)。
+# 座標は区域の代表点(小数1桁 = area_10km に丸めた値)。探鳥地の正確な位置ではない。
+# 件数(2026-11-01 の実測。対象日 11/2 の窓・前後1週・過去5年・鳥類・research): docs/stage35-report.md
+schema: ikimono-observation-bird-areas/1
+bird_areas:
+  - {id: kanagawa_sakaigawa, name: 境川遊水地・舞岡周辺, lat: 35.4, lon: 139.5, radius_km: 10, location_precision: area_10km, status: approved, active: false,
+     provisional: true, note: "県立境川遊水地公園・舞岡公園を含む。2026-11-01 の実測 50 件"}
+  - {id: kanagawa_kanazawa, name: 横浜自然観察の森周辺, lat: 35.3, lon: 139.6, radius_km: 10, location_precision: area_10km, status: approved, active: false,
+     provisional: true, note: "横浜自然観察の森を含む。半径に海岸を含むため海辺の鳥も入る。2026-11-01 の実測 53 件"}
+  - {id: kanagawa_tsurumi, name: 鶴見川遊水地周辺, lat: 35.5, lon: 139.6, radius_km: 10, location_precision: area_10km, status: approved, active: false,
+     provisional: true, note: "鶴見川多目的遊水地を含む。2026-11-01 の実測 127 件"}
+  - {id: kanagawa_ikuta, name: 生田緑地周辺, lat: 35.6, lon: 139.6, radius_km: 10, location_precision: area_10km, status: approved, active: false,
+     provisional: true, note: "生田緑地を含む。2026-11-01 の実測 398 件"}
+  - {id: kanagawa_sagami, name: 座間谷戸山・相模原公園周辺, lat: 35.5, lon: 139.4, radius_km: 10, location_precision: area_10km, status: approved, active: false,
+     provisional: true, note: "県立座間谷戸山公園・県立相模原公園を含む。2026-11-01 の実測 106 件"}

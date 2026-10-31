@@ -23,6 +23,12 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
 - **取りに行く対象**: `python -X utf8 -m ikimonobiyori.observations plan --subject <autumn_leaves|flowers|birds> --region <地域> --date <対象の日> --now <今の時刻>`。先頭に地域のまとめページ(1 ページで多くの名所の今の状態が分かる)、続いて記録が無い・古い・かなり古い名所と、読むとよいページ(なければ検索語の例)。新しい記録の名所は出ない。
 - **記録**: 読んだ事実を JSON の配列にして `python -X utf8 -m ikimonobiyori.observations record --batch <reads.json>`(1 件: `spot` か `name`+`city`・`subject`・`state`(原文の短い一文。80 字まで)・`state_date`(ページの「○日現在」。無ければ null)・`typical`(例年の見頃。あれば)・`event`(名前・期間。あれば)・`url`・`publisher`・`source_class`(`official`/`secondary`))。URL・状態・出所の区分が無い記録は拒否する。ホストでは拒否しない。読んだ時刻はコードが時計から入れる。書き込み先は `IKIMONOBIYORI_DATA_DIR` の下の `observations/`。
 - **答えの材料**: `python -X utf8 -m ikimonobiyori.observations facts --subject ... --region ... --date ... --now ... [--origin 横浜]`。名所ごとに今の状態(日付・出所・区分・新しさ)・例年の見頃・今年の行事・対象日との関係・直線距離・おすすめの理由の材料と並び順、避けたほうがよい場所、代わりの目的。記録がすべて古くても、記録が空でも、例年の時期で候補が出る。
+- **段階35の修正**(指示書 `biyori-hub/docs/stageH9-instructions.md`。試用で見つかった穴):
+  - 新しい・古いは**状態の日付**で判定する(欄が空でも、原文の「10/25現在」「10月8日現在」は状態の日付として読む。`state_date_from_text`。記録のファイルは書き換えない)。状態の日付がない記録だけ、読んだ日で判定する。
+  - 「例年の見頃」に今年の行事の期間をそのまま入れない。名所カタログの `flower_windows` で注記が行事の期間を表すもの・行事と同じ月日のもの、記録の `typical` で「開催」「予定」を含むものは例年の時期に使わない(`event_periods_not_typical` に残す)。例年の時期が分からないときは `typical_line`「例年の時期は分かりません(今年の行事「○○」は○/○〜○/○)」で分けて書く。
+  - **野鳥は「例年の見頃」ではなく「この時期に見られる鳥」で書く**(`relation_label` は出さない)。材料は `season_line`(決定論の一文): ①iNaturalist の過去の記録の相対頻度(探鳥地の `bird_area` → `data/observations/bird_areas.yaml` の神奈川の 5 区域。`data/sites.yaml` の bird_areas とは別で、既定の問い合わせ・定期実行・合成の表示には入れない。キャッシュにあるものだけを読み、取得の日を添える。取るのは `main --live --area <ID>` を計測フックの下で)、②前の年の同じ時期(前後 30 日。仮置き)の観察の記録、③名所の一覧に書き写した紹介(`season_birds`)。
+  - **休園日**: 名所の `closed.text` を `ikimonobiyori/closures.py` が対象の日と照らす(毎月第N X曜・毎週 X曜・祝日の場合は翌日/開園・M月D日～M月D日。祝日は内閣府の規則で計算)。結果は `closed_on[].line`(「11/2(月)は小谷戸の里が休みです(公園には入れます)。」)。読めない規則は原文を添える。
+  - 運営者か分からないブログは「公式」としない。境川遊水地のブログは、ページに「指定管理者である(公財)神奈川県公園協会が運用」とあることを確かめた(`operator_evidence`)。
 - 下の各手順のうち「承認済みの情報源だけを読む」「同じ日の記録だけを使う」「古い記録は参考程度」の部分は、段階34 で次のとおり読み替える: 台帳の承認(`approval.status`)は出所の区分(公式／紹介サイト)の判定にだけ使い、ほかのページも読む。日をまたいだ記録・古い記録も日付つきで使い、新しさは確かさとして示す。
 
 ### 現況型とガイド型(段階23)
