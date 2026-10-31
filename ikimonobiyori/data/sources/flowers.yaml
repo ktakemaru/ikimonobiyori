@@ -96,3 +96,515 @@ sources:
     readable: {status: ok, checked_on: "2026-10-24", robots: unknown, observed_latest_update: "2026-10-23"}
     terms: {status: not_checked, note: "利用規約・サイトポリシーのページが見つからなかった(個人情報保護方針・クッキーポリシーだけ)"}
     approval: {status: pending, reason: "利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う"}
+
+  - id: kana-garden-news
+    publisher: 神奈川県立花と緑のふれあいセンター 花菜ガーデン
+    publisher_kind: park_manager
+    url: https://kana-garden.com/
+    kind: status_page
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0006
+      label: 秋のバラ
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+  - id: kanagawa-kankou-kana-rose
+    publisher: 公益社団法人神奈川県観光協会(観光かながわNOW)
+    publisher_kind: prefecture_tourism
+    url: https://www.kanagawa-kankou.or.jp/event/7882
+    kind: event_page
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0006
+      label: ローズフェスティバル2026〜秋〜
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: ok
+      checked_on: '2026-10-31'
+      robots: allows
+      note: robots.txt を2026-10-31 に確認した
+    terms:
+      status: no_prohibition_found
+      url: https://www.kanagawa-kankou.or.jp/features/about-site
+      note: 『このサイトについて』は私的使用・引用の範囲を超える複製・転用を不可とし、転載は事前連絡を求める。要約・自動取得の禁止の記載はない。robots.txt は全面許可(2026-10-31)。事実(期間)を出典つきで短く示す
+    approval:
+      status: approved
+      approved_by: claude_code_provisional
+      approved_on: '2026-10-31'
+      reason: '通信先はユーザーが承認(指示書 2026-10-31)。robots.txt は拒否なし、利用条件に禁止の記載なし。迷った点: 開花状況の語や日付が書かれていないことが多い(書かれていなければ記録しない)'
+  - id: gardennecklace-yamate
+    publisher: 横浜市(ガーデンネックレス横浜)
+    publisher_kind: municipality
+    url: https://gardennecklace.city.yokohama.lg.jp/
+    kind: reference_link
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0010
+      label: 山手イタリア山庭園
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: yokohama-nishi-hana
+    publisher: 横浜市西区役所
+    publisher_kind: municipality
+    url: https://www.city.yokohama.lg.jp/nishi/shokai/kanko/spot/hana.html
+    kind: reference_link
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0012
+      label: 野毛山公園のバラ
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: gardennecklace-kodomo
+    publisher: 横浜市(ガーデンネックレス横浜)
+    publisher_kind: municipality
+    url: https://gardennecklace.city.yokohama.lg.jp/
+    kind: reference_link
+    flower_kinds:
+    - 秋バラ
+    - 菊
+    covers:
+    - site: hana-0013
+      label: 横浜市こども植物園 秋のバラ
+      flower_kind: 秋バラ
+    - site: hana-0013
+      label: 横浜市こども植物園 菊花展
+      flower_kind: 菊
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: kanagawaparks-odawarafg
+    publisher: 小田原フラワーガーデンパートナーズ(代表企業 横浜緑地株式会社)
+    publisher_kind: park_manager
+    url: https://www.kanagawaparks.com/odawarafg/
+    kind: status_page
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0015
+      label: 2026 秋のローズフェスタ
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: ok
+      checked_on: '2026-10-31'
+      robots: allows
+      note: robots.txt を2026-10-31 に確認した
+    terms:
+      status: no_prohibition_found
+      note: robots.txt は /wp-admin/ のみ Disallow。サイトポリシー・利用規約のページが見つからず、禁止の記載を確認できなかった(2026-10-31)。事実を出典つきで短く示す(段階15 のユーザーの判断に合わせた)
+    approval:
+      status: approved
+      approved_by: claude_code_provisional
+      approved_on: '2026-10-31'
+      reason: '通信先はユーザーが承認(指示書 2026-10-31)。robots.txt は拒否なし、利用条件に禁止の記載なし。迷った点: 開花状況の語や日付が書かれていないことが多い(書かれていなければ記録しない)'
+  - id: hakonenavi-gorapark
+    publisher: 株式会社小田急箱根(箱根強羅公園)
+    publisher_kind: facility_operator
+    url: https://www.hakonenavi.jp/gorapark/info/
+    kind: status_page
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0016
+      label: ローズガーデンの開花状況
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+  - id: ayase-rose-garden
+    publisher: 綾瀬市(都市部 みどり公園課)
+    publisher_kind: municipality
+    url: https://www.city.ayase.kanagawa.jp/soshiki/midorikoenka/koen/4/15170.html
+    kind: reference_link
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0017
+      label: あやせローズガーデン
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: kanagawaparks-verny
+    publisher: よこすかseasideパートナーズ(ヴェルニー公園)
+    publisher_kind: park_manager
+    url: https://www.kanagawaparks.com/verny/blog/
+    kind: status_page
+    flower_kinds:
+    - 秋バラ
+    covers:
+    - site: hana-0019
+      label: 園内バラ状況
+      flower_kind: 秋バラ
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: ok
+      checked_on: '2026-10-31'
+      robots: allows
+      note: robots.txt を2026-10-31 に確認した
+    terms:
+      status: no_prohibition_found
+      note: robots.txt は /wp-admin/ のみ Disallow。サイトポリシー・利用規約のページが見つからず、禁止の記載を確認できなかった(2026-10-31)。事実を出典つきで短く示す(段階15 のユーザーの判断に合わせた)
+    approval:
+      status: approved
+      approved_by: claude_code_provisional
+      approved_on: '2026-10-31'
+      reason: '通信先はユーザーが承認(指示書 2026-10-31)。robots.txt は拒否なし、利用条件に禁止の記載なし。迷った点: 開花状況の語や日付が書かれていないことが多い(書かれていなければ記録しない)'
+  - id: sankeien-kikka
+    publisher: 公益財団法人三溪園保勝会
+    publisher_kind: facility_operator
+    url: https://www.sankeien.or.jp/
+    kind: event_page
+    flower_kinds:
+    - 菊
+    covers:
+    - site: hana-0021
+      label: 菊花展
+      flower_kind: 菊
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: ok
+      checked_on: '2026-10-31'
+      robots: allows
+      note: robots.txt を2026-10-31 に確認した
+    terms:
+      status: no_prohibition_found
+      url: https://www.sankeien.or.jp/instagram/
+      note: サイトポリシー『著作権について』は私的利用を超える複製等を禁じるが、要約・自動取得の禁止の記載はない。robots.txt は /wp-content/uploads/ のみ Disallow(2026-10-31)。事実(期間)を出典つきで短く示す(段階15 のユーザーの判断に合わせた)
+    approval:
+      status: approved
+      approved_by: claude_code_provisional
+      approved_on: '2026-10-31'
+      reason: '通信先はユーザーが承認(指示書 2026-10-31)。robots.txt は拒否なし、利用条件に禁止の記載なし。迷った点: 開花状況の語や日付が書かれていないことが多い(書かれていなければ記録しない)'
+  - id: odawaracastle-kikka
+    publisher: 小田原城総合管理事務所(小田原市観光協会)
+    publisher_kind: facility_operator
+    url: https://odawaracastle.com/
+    kind: status_page
+    flower_kinds:
+    - 菊
+    covers:
+    - site: hana-0022
+      label: 菊花展
+      flower_kind: 菊
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+  - id: pref-kanagawa-zarugiku
+    publisher: 神奈川県(掲載ページ)
+    publisher_kind: prefecture_tourism
+    url: https://www.pref.kanagawa.jp/docs/n8f/cnt/f300562/p327323.html
+    kind: reference_link
+    flower_kinds:
+    - 菊
+    covers:
+    - site: hana-0023
+      label: ざる菊まつり
+      flower_kind: 菊
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: kawasakidaishi-kikka
+    publisher: 川崎大師平間寺
+    publisher_kind: temple_shrine
+    url: https://www.kawasakidaishi.com/
+    kind: status_page
+    flower_kinds:
+    - 菊
+    covers:
+    - site: hana-0024
+      label: 菊花展
+      flower_kind: 菊
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+  - id: kanagawaparks-kurihama
+    publisher: くりはまフラワーパートナーズ(くりはま花の国)
+    publisher_kind: park_manager
+    url: https://www.kanagawaparks.com/kurihama/
+    kind: status_page
+    flower_kinds:
+    - コスモス
+    covers:
+    - site: hana-0027
+      label: コスモスまつり
+      flower_kind: コスモス
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: ok
+      checked_on: '2026-10-31'
+      robots: allows
+      note: robots.txt を2026-10-31 に確認した
+    terms:
+      status: no_prohibition_found
+      note: robots.txt は /wp-admin/ のみ Disallow。サイトポリシー・利用規約のページが見つからず、禁止の記載を確認できなかった(2026-10-31)。事実を出典つきで短く示す(段階15 のユーザーの判断に合わせた)
+    approval:
+      status: approved
+      approved_by: claude_code_provisional
+      approved_on: '2026-10-31'
+      reason: '通信先はユーザーが承認(指示書 2026-10-31)。robots.txt は拒否なし、利用条件に禁止の記載なし。迷った点: 開花状況の語や日付が書かれていないことが多い(書かれていなければ記録しない)'
+  - id: soleil-blooming-info
+    publisher: エリアマネジメント横須賀共同事業体(ソレイユの丘)
+    publisher_kind: park_manager
+    url: https://www.soleil-park.jp/blooming-info
+    kind: status_page
+    flower_kinds:
+    - コスモス
+    covers:
+    - site: hana-0028
+      label: キバナコスモス
+      flower_kind: コスモス
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+  - id: satoyama-garden-welcome
+    publisher: 横浜市(里山ガーデン実行委員会)
+    publisher_kind: municipality
+    url: https://www.satoyama-garden.jp/welcome/
+    kind: reference_link
+    flower_kinds:
+    - コスモス
+    covers:
+    - site: hana-0030
+      label: 里山ガーデン
+      flower_kind: コスモス
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: kanagawa-park-sakaigawa
+    publisher: 神奈川県公園協会・サカタのタネグリーンサービスグループ
+    publisher_kind: park_manager
+    url: https://kanagawa-park.or.jp/sakaigawa/
+    kind: reference_link
+    flower_kinds:
+    - コスモス
+    covers:
+    - site: hana-0031
+      label: 県立境川遊水地公園
+      flower_kind: コスモス
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: 現況の記載がほとんどない参考リンク
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない
+  - id: kanagawa-park-hadanotokawa
+    publisher: 神奈川県公園協会・小田急電鉄共同事業体(秦野戸川公園)
+    publisher_kind: park_manager
+    url: https://www.kanagawa-park.or.jp/hadanotokawa/kaika.html
+    kind: status_page
+    flower_kinds:
+    - コスモス
+    covers:
+    - site: hana-0032
+      label: 見ごろの花
+      flower_kind: コスモス
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
+    readable:
+      status: unconfirmed
+      checked_on: '2026-10-31'
+      robots: unknown
+      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+    terms:
+      status: not_checked
+    approval:
+      status: pending
+      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)

@@ -34,6 +34,8 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/sources.py` 現況の情報源の台帳(`data/sources/<対象>.yaml`)の検査・状態の書き方の対応・候補の絞り込み(地域 `data/regions.yaml`・名所の `tags`)・読んだ結果の記録(`IKIMONOBIYORI_DATA_DIR` の下の `status_log/`)・答えの材料(`summary`)。段階の並びはプロファイルの `stages`。段階15・16。
 - `ikimonobiyori/fetch/spot_coords.py` 公式のスポットのページ(日光市観光協会・箱根町観光協会だけ)の、地図の埋め込み(iframe の src)の座標の数字の組だけを読む小さなコード(`sources spot-coords`。段階19 の続き。HTML・本文は保存しない。数字がなければ「座標なし」で推測しない。計測フックの下・robots.txt を先に・2 秒以上空ける・429 で止める)。名所カタログの座標は、これで確認できたものだけを承認する(推定の座標は使わない)。
 - `ikimonobiyori/proposals.py` 同じ日に読んだ記録・名所カタログ・情報源の一覧から `biyori-proposal/1` の提案を組み立てる(`sources proposals`。段階18。通信しない・LLM なし・`go` を出さない。対応と規則は `docs/proposal-mapping.md`、値は `policy.yaml` の `proposals`)。`answer` と同じ記録・同じ使える行の判定(`sources.usable_status_row`)を使う。
+- `ikimonobiyori/regional.py` 地域(都道府県)を必須の絞り込みにした花の答え(`sources regional`。段階32。通信しない・書き込まない)。確度の 3 段階(公式の現況・今年のイベント期間つき・例年の時期のみ)・見頃を過ぎたものと状態を読み取れなかったものの除外・近隣(県外)の分離・内部用語の自己検査。値と文は `ikimonobiyori/data/regional/policy.yaml`。既存の `answer`(`answer.py`)は変えない。花の名所は `flower_windows`(種類ごとの例年の時期。取得元の年つき)・`events`(今年のイベント期間。`verified` は承認した通信先の年つきの記載だけ)・`tags.city` を持てる。
+- `ikimonobiyori/catalog_audit.py` 花の名所の承認外ホスト由来の値(印 `unapproved_host`)を一覧にする監査(`python -X utf8 -m ikimonobiyori.catalog_audit`。通信しない・書き込まない)。印の漏れ(承認した通信先の外なのに印がない値)は終了コード 1。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
 
@@ -79,6 +81,18 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - コマンドは出力した**絶対パスを 1 行**で表示する。そのパスを伝える(`--open` を付けると、手元のブラウザで開く)。出力先は IKIMONOBIYORI_DATA_DIR の下(既定)で、リポジトリの追跡ファイルは変えない。
 - 写真は「種の代表写真」で、その場所で撮られたものではない(ページに 1 文が入る)。写真がない種は「写真なし」と出る。**写真・画像・撮影者名・写真の URL はコミットしない**(キャッシュはリポジトリの外または `runtime/`)。
 - 写真を取るのは `guide photos-build-table --live`(種の対応表)と `guide photos-fetch --live`(写真)だけ。通信先は api.inaturalist.org と、写真の配信元 static.inaturalist.org・inaturalist-open-data.s3.amazonaws.com の 2 つだけ(承認A)。`--live` には `BIYORI_ALLOW_LIVE=1`・`--max-requests`(1 回の実行は最大 80)・計測フック(`BIYORI_REQ_LOG`)が要る。ユーザーがその場で頼んだときだけ実行する。写真のキャッシュを消すのは `guide photos-clear`。
+
+### 地域を指定した花の質問(段階32。ユーザーの指示 2026-10-31)
+「神奈川で、今週末見頃の秋バラ・菊・コスモスを教えて」のように、**都道府県(地域)と花の種類**を指定された花の質問は、これで答える(通信しない。同じ日の記録を使う):
+```
+python -X utf8 -m ikimonobiyori.sources regional --now <今の時刻 ISO 8601 +09:00> [--date YYYY-MM-DD ...] --region <地域の呼び名> --flower-kind <花の種類> [--flower-kind ...]
+```
+- **地域は必須の絞り込み**: 名所の `tags.prefecture` で判定する(座標からの推測はしない)。距離(出発地・250 km)は地域の指定がないときだけ使う。指定地域内の推薦が少ないときだけ「近隣(県外です)」を別の見出しで出す。指定地域内に該当が 0 件なら、そう答えの先頭に出し、追加すべき名所を示す。
+- **確度は 3 段階**(答えには日本語で書く。A/B/C の記号は出さない): 「公式の現況」(公式の状態の語と日付を原文のまま)/「今年のイベント期間つき」(今年の年つきの期間が対象の日にかかり、例年の時期とも重なる。名所の `events` の `verified: true`、または今日読んだイベントのページの記録)/「例年の時期のみ」(今年の公式の情報なし。前年以前の期間は `flower_windows` の `source_year` つきで、ここにだけ使う)。
+- **見頃を過ぎたもの・状態を読み取れなかったものは推薦に入れない**: 状態の語は台帳の `notation.map` が先、なければ `ikimonobiyori/data/regional/policy.yaml` の語彙表(完全一致)。表にない語(「ブラウンがメイン」「咲いています」「2〜3分咲き」など)は推測で段階にせず「状態を読み取れなかったもの」に原文のまま出す。終盤・見頃過ぎ・終了は「見頃を過ぎたとみられるもの」に最大 2 行。
+- **出力はそのまま出す**: コマンドが組み立てた文(結論が先)を一字一句そのまま出す。答えに内部の言葉(簡易な読み取り・承認待ち・作業メモ・records など)を出さない(コードが自己検査する。内部の事情は `docs/stage32-report.md` へ)。
+- 読むのは**ユーザーが承認した通信先**(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)の台帳で `approved` の情報源だけ(要約の道具で 1 回ずつ。読んだ事実は答える前に `record` で記録する)。ほかのホストは読まず「公式の現況は未確認(公式ページ: URL)」として出る(`docs/pending-hosts.md`)。
+- **調査役・要約の道具に頼むときも、承認した通信先のホスト名だけを書く**(`data/regional/policy.yaml` の `approved_hosts`)。「優先して」「ほかも探して」のような言い方をしない。承認外のホストは読まない。名所の `flower_windows`・`events` に承認外のホストの値を入れるときは、`source_host` と `unapproved_host: true` の印を付ける。印のある値は確度の判定(公式の現況・今年のイベント期間)に使えず、『例年の時期のみ』にだけ使う。印のある値の一覧は `python -X utf8 -m ikimonobiyori.catalog_audit`(『承認または別の公式情報源での確認が必要』。通信しない)。
 
 ### 守ること
 - 読むのは、対象の台帳 `ikimonobiyori/data/sources/<対象>.yaml` で **`approval.status: approved` の情報源だけ**。pending・revoked は読まず、「人が開く URL」として示す。
