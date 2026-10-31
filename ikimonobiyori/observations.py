@@ -633,12 +633,13 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     real_typ = [t for t in c.get("typical") or [] if not t.get("event_derived")]
     typ = next((t for t in real_typ if t.get("start")), None)
     not_typ = (policy.get("typical") or {}).get("record_not_typical_words") or []
-    typ_rec = next((r.get("typical") for r in sorted(rows, key=lambda r: r["read_at"], reverse=True)
+    typ_row = next((r for r in sorted(rows, key=lambda r: r["read_at"], reverse=True)
                     if r.get("typical") and not any(w in r["typical"] for w in not_typ)), None)
-    if typ is None and typ_rec:
-        w = parse_typical(typ_rec, policy)
-        if w:
-            typ = {"text": typ_rec, "start": w[0], "end": w[1], "publisher": cur.get("publisher") if cur else None, "source_class": "secondary"}
+    if typ is None and typ_row:
+        w = parse_typical(typ_row["typical"], policy)
+        if w:                                    # 段階35: 出所は、その「例年の見頃」を書いた記録の発行元(名所の最新の記録の発行元ではない)
+            typ = {"text": typ_row["typical"], "start": w[0], "end": w[1], "publisher": typ_row.get("publisher") or typ_row.get("host"),
+                   "url": typ_row["url"], "source_class": typ_row["source_class"]}
     rel = _relation(cur, typ, d, policy)
     evs = _event_hits(c, dates)
     evs += [e for e in rec_events if e.get("start") and e.get("end") and any(date.fromisoformat(e["start"]) <= x <= date.fromisoformat(e["end"]) for x in dates)

@@ -238,3 +238,14 @@ class EventFromRecords(Base):
         k = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-3")
         self.assertEqual(k["typical"], [])
         self.assertEqual(k["typical_line"], "例年の時期は分かりません(今年の行事「試験の菊花展」は10/29〜11/19)")
+
+    def test_typical_from_record_keeps_its_own_publisher(self):
+        O.record([rec("t-cat-2", "開花状況の記載なし", None, subject="flowers", url="https://kankou.example.jp/", typical="秋は例年10月中旬～11月上旬",
+                      source_class="secondary", publisher="試験の観光協会")], env=self.env, now=NOW)
+        O.record([rec("t-cat-2", "コスモスが見ごろ", "2026-10-31", subject="flowers", url="https://cos.example.org/", publisher="試験のコスモス畑")],
+                 env=self.env, now=NOW + timedelta(hours=1))
+        cat = {"entries": [dict(CAT_FLOWERS["entries"][1], flower_windows=[])]}
+        f = O.facts("flowers", region="神奈川", dates=D, now=NOW, env=self.env, spots_doc={"spots": []}, catalogs={"flowers": cat})
+        k = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-2")
+        self.assertEqual((k["typical"][0]["publisher"], k["typical"][0]["url"], k["typical"][0]["source_class"]),
+                         ("試験の観光協会", "https://kankou.example.jp/", "secondary"))
