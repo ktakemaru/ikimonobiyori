@@ -1,0 +1,42 @@
+diff --git a/ikimonobiyori/guide.py b/ikimonobiyori/guide.py
+index 42bab0e..34a4712 100644
+--- a/ikimonobiyori/guide.py
++++ b/ikimonobiyori/guide.py
+@@ -548,12 +548,16 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
+                 s["copies_of_publisher"] = classify(r["copies_of"], policy)[1]
+             s["_kinds"], s["_season"], s["_access"] = r.get("kinds") or [], r.get("season"), r.get("access") or []
+             srcs.append(s)
+-        groups = independent_groups(srcs)
++        # 退役した出どころ(retired の URL)は、段階だけでなく、参照数・種名・時期の「表示してよい」の件数にも数えない(段階28b。記録と出どころの一覧には残す)
++        live = [s for s in srcs if s["url"] not in retired["urls"]]
++        groups = independent_groups(live)
+         gid = {id(s): n for n, g in enumerate(groups) for s in g}
+         kind_groups = {}
+         for s in srcs:
+             for k in s["_kinds"]:
+-                kind_groups.setdefault(k, set()).add(gid[id(s)])
++                kind_groups.setdefault(k, set())
++                if id(s) in gid:
++                    kind_groups[k].add(gid[id(s)])
+         kinds = [{"kind": k, "independent_sources": len(g), "shown": len(g) >= show_min}
+                  for k, g in sorted(kind_groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
+         seasons = [(s, season_window(s["_season"], policy)) for s in _best(srcs) if s["_season"]]
+@@ -561,7 +565,7 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
+         season = None
+         if seasons:
+             s0, w0 = seasons[0]
+-            agree = {gid[id(s)] for s, w in seasons if windows_overlap(w, w0)}
++            agree = {gid[id(s)] for s, w in seasons if id(s) in gid and windows_overlap(w, w0)}
+             season = {"text": s0["_season"]["text"], "window": w0 if w0 == "year_round" else {"start": w0[0], "end": w0[1]},
+                       "independent_sources": len(agree), "shown": len(agree) >= show_min, "from_url": s0["url"],
+                       "other_texts": sorted({s["_season"]["text"] for s, _ in seasons[1:] if s["_season"]["text"] != s0["_season"]["text"]})}
+@@ -569,8 +573,7 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
+         rv_ = reviews.get(eid)
+         # ユーザーが見直しで承認した場所は、名前の退役・却下の保証を外す(人の判断が自動の保証より先。出どころの URL の保証は残る。段階25)
+         retired_name = None if (rv_ and rv_.get("state") == "approved") else retired["names"].get(_base_name(rows[0]["name"]))
+-        live = [s for s in srcs if s["url"] not in retired["urls"]]
+-        tier = tier_of(live, independent_groups(live), visits, policy, rows[0]["theme"])
++        tier = tier_of(live, groups, visits, policy, rows[0]["theme"])
+         if retired_name and tier == "curated":
+             tier = "reference"                           # 却下・退役した対象は自動で定評にしない
+         exists = any(s["class"] in policy["existence_classes"] for s in srcs)

@@ -73,6 +73,13 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 4. **読めたら、必ず `status_log` に記録する**(手順 5。答える前に): `{"source": "tokyo-port-birdpark-today", "site": "yacho-0001", "label": "今日の野鳥公園", "state": "<N種>", "observed": "YYYY-MM-DD"}` を JSON の配列にして `python -X utf8 -m ikimonobiyori.sources --subject birds record --batch <reads.json>`。題名の日付が今日より未来のものは記録しない。
 5. 通信は WebFetch の 1 回だけ。**このリポジトリのコードで実通信しない**(規則 6)。
 
+### 写真つきの野鳥案内ページ(段階29。ユーザー承認 2026-10-30)
+「写真つきで見たい」「ページにして」と頼まれたら、`python -X utf8 -m ikimonobiyori.guide page --theme 野鳥 [--from 横浜|東京] [--date YYYY-MM-DD] [--open]` で、手元のブラウザで開く単独の HTML ページを作る(通信しない)。
+- **文は変えない**: ページの文は `guide find --text` と同じ部品(同じ選び方・同じ文)から作られる。答えの文は、これまでどおり `find --text` の出力を一字一句そのまま出す。ページは、その見た目を整えた**もう 1 つの形**で、答えを置き換えない。ページに足されるのは、写真・カード・出どころのリンクだけ。
+- コマンドは出力した**絶対パスを 1 行**で表示する。そのパスを伝える(`--open` を付けると、手元のブラウザで開く)。出力先は IKIMONOBIYORI_DATA_DIR の下(既定)で、リポジトリの追跡ファイルは変えない。
+- 写真は「種の代表写真」で、その場所で撮られたものではない(ページに 1 文が入る)。写真がない種は「写真なし」と出る。**写真・画像・撮影者名・写真の URL はコミットしない**(キャッシュはリポジトリの外または `runtime/`)。
+- 写真を取るのは `guide photos-build-table --live`(種の対応表)と `guide photos-fetch --live`(写真)だけ。通信先は api.inaturalist.org と、写真の配信元 static.inaturalist.org・inaturalist-open-data.s3.amazonaws.com の 2 つだけ(承認A)。`--live` には `BIYORI_ALLOW_LIVE=1`・`--max-requests`(1 回の実行は最大 80)・計測フック(`BIYORI_REQ_LOG`)が要る。ユーザーがその場で頼んだときだけ実行する。写真のキャッシュを消すのは `guide photos-clear`。
+
 ### 守ること
 - 読むのは、対象の台帳 `ikimonobiyori/data/sources/<対象>.yaml` で **`approval.status: approved` の情報源だけ**。pending・revoked は読まず、「人が開く URL」として示す。
 - 読むのは**答えるときに 1 回だけ**。定期的に巡回しない。同じページは 1 回の答えで 1 回だけ読む。

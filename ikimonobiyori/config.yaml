@@ -17,6 +17,8 @@ live:
     autumn_leaves_backtest: [archive-api.open-meteo.com]   # 紅葉の答え合わせ(段階14)の過去の気温(Historical API)だけ。ユーザー承認 2026-10-22(docs/validation-plan.md §0)。GET のみ・認証なし。allowed_hosts(上の紅葉の実行)には足さない
     autumn_leaves_status: [www.nikko-kankou.org, www.hakone.or.jp]   # 紅葉の公式の現況ページをコードで読む(段階16 A-4。fetch/status_pages.py)。この 2 つだけ。ユーザー承認 2026-10-23。GET のみ(robots.txt とページ)。本文は保存しない
     guide_places: [www.wikidata.org]          # ガイドの名所の範囲の判定に使う市区町村の代表点(段階23。fetch/wikidata.py)。ユーザー承認 2026-10-25(100 回まで)。GET のみ。座標と項目の id だけ(CC0)
+    guide_photos: [api.inaturalist.org, static.inaturalist.org, inaturalist-open-data.s3.amazonaws.com]   # 野鳥の案内ページの代表写真(段階29。fetch/inat_photos.py)。ユーザー承認 2026-10-30(承認A)。api は種の検索と写真情報の読み取りだけ。写真の実体の配信元は後ろの 2 つだけ(応答に出てくるほかのホストの写真は取得しない)。GET のみ・認証なし
+    guide_photos_commons: [commons.wikimedia.org, upload.wikimedia.org]   # iNaturalist に許可ライセンスの写真がない種だけ、Commons から取る(段階30。fetch/commons_photos.py)。ユーザー承認 2026-10-31。api は読み取りだけ・実体は upload だけ。Wikidata(画像の名前を調べる)は承認済みの guide_places の www.wikidata.org を使う。GET のみ・認証なし
   min_interval_s: 2                           # リクエスト間隔の下限(30リクエスト/分以下)
   wikidata:                                   # 市区町村の代表点(段階23。fetch/wikidata.py)
     titles_per_request: 10                    # 1 回の問い合わせの記事名の数(API の上限 50 より小さく。応答を大きくしないための仮置き)

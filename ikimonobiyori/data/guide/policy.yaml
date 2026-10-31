@@ -243,3 +243,95 @@ annotation:
   input_fields: [scope, theme, name, prefecture, url, municipality, kinds, season, summary]
   fields: [municipality, kinds, season]                   # 追記できる項目
   max_summary_chars: {value: 80, source: "仮置き(段階26)。ページの記載の短い要約(本文を写さない)", provisional: true}
+
+# 野鳥の案内ページの代表写真(段階29。ユーザー承認 2026-10-30 承認A・B・C。docs/stage29-decisions.md)。コードに値を持たない。
+# 写真は「種の代表写真」で、その場所で撮られたものではない。写真・画像の URL・撮影者名はコミットしない(キャッシュは IKIMONOBIYORI_DATA_DIR の下)
+photos:
+  table_file: bird_taxa.yaml                              # 和名 → 学名 / iNaturalist の taxon id / 確認日(事実だけ。画像・写真の URL は含まない)。data/guide/ に置く
+  table_schema: ikimono-bird-taxa/1
+  review_file: photo_review.json                          # 目で見て写真を使わないと決めた種(手元の書き出し。コミットしない)
+  multi_file: bird_taxa_multi.json                        # 「候補が 2 件以上」から種を採った和名の候補の一覧(報告用。手元の書き出し)
+  skip_photo_file: photo_skip.json                        # 目で見て使わないと決めた iNaturalist の写真の id(種は残す。手元の書き出し。コミットしない)
+  rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
+  cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
+  page_dir: pages                                         # 同じく、出力した HTML の置き場所
+  page_file: bird-guide.html                              # 出力する HTML のファイル名の既定(--out を渡さないとき)
+  api_base: "https://api.inaturalist.org/v1"
+  locale: ja
+  search_per_page: {value: 30, source: "仮置き(段階29)。和名の完全一致を探すための 1 回の候補の数", provisional: true}
+  max_requests_per_run: {value: 80, source: "ユーザー承認 2026-10-30(承認A。指示書 段階29 §2。1 回の実行の上限)", provisional: false}
+  min_interval_s: {value: 1, source: "ユーザー承認 2026-10-30(指示書 段階29 §2。リクエストの間隔は 1 秒以上)", provisional: false}
+  max_image_bytes: {value: 2000000, source: "ユーザー指示 2026-10-30(指示書 段階29 §3。1 枚 2MB を超えたら捨てる)", provisional: false}
+  photo_size: medium_url                                  # 中くらいのサイズ(iNaturalist の medium は 500px 前後)
+  licenses: {cc0: CC0, cc-by: CC BY, cc-by-sa: CC BY-SA}  # 使ってよいライセンス(iNaturalist の license_code → 表示)。ここにないもの・不明は使わない
+  image_hosts: [static.inaturalist.org, inaturalist-open-data.s3.amazonaws.com]   # 写真の実体を取ってよいホスト(承認A)
+  image_types: {jpeg: '\xff\xd8\xff', png: '\x89PNG\r\n\x1a\n', webp: 'RIFF.{4}WEBP'}   # 先頭のバイト列(バイト列の正規表現)。これ以外の形式は捨てる
+  photo_page_url: "https://www.inaturalist.org/photos/{id}"   # リンクだけ(読まない)
+  skip_name_suffixes: ["類"]                              # 「カモ類」など種を特定しない語は対象外(写真を付けない)
+  skip_names: [カモ, シギ, チドリ]                          # 単独でも種を特定しない語(段階29b。ユーザー指示 2026-10-31)。優先名以外の名前の照合の対象にもしない
+  skip_name_chars: ["・", "(", "（"]                        # 「シギ・チドリ」など複数をまとめた語、「ハクチョウ類(関東)」など注記つきの語は対象外
+  named_source: ユーザー指定の学名                        # 表の出どころの欄(段階30。ユーザー指示 2026-10-31)
+  named_scientific: {シロハラ: Turdus pallidus, ヨシガモ: Mareca falcata}   # 日本語名では決まらない種。学名はユーザー指定(iNaturalist で学名・ランク・鳥類が一致したときだけ表に入れる)
+  commons:                                                # iNaturalist に許可ライセンスの写真がない種だけ、Wikimedia Commons から(段階30。ユーザー承認 2026-10-31。新しい通信先は commons.wikimedia.org と upload.wikimedia.org の 2 つ。Wikidata は承認済みの www.wikidata.org を画像の名前を調べるためだけに使う)
+    max_requests_per_run: {value: 60, source: "ユーザー指示(段階30)。1 回の実行の上限", provisional: false}
+    min_interval_s: {value: 6, source: "仮置き(段階30)。Wikimedia へのリクエスト間隔(秒)。ユーザー指示は 1 秒以上。Wikidata の 429 を 2 回受けて 2→3→6 に広げた", provisional: true}
+    thumb_width: {value: 500, source: "ユーザー指示(段階30)。サムネイルの幅(px)の目安", provisional: false}
+    wikidata_limit: {value: 5, source: "仮置き(段階30)。学名の検索で見る項目の数の上限", provisional: true}
+    author_max_chars: {value: 200, source: "仮置き(段階30)。作者の表記の長さの上限。段階31から、超えるものは切らずに使わない", provisional: true}
+    wikidata_api: "https://www.wikidata.org/w/api.php"
+    commons_api: "https://commons.wikimedia.org/w/api.php"
+    wikidata_search: '{scientific} haswbstatement:P225'    # 学名の語を含み、学名(P225)の記述がある項目の検索(P225=値 の形は 0 件になる。完全一致は応答の P225 で確かめる)
+    wikidata_namespace: "0"
+    formatversion: "2"
+    file_prefix: "File:"
+    qid_pattern: 'Q[0-9]+'
+    prop_scientific: P225
+    prop_image: P18
+    license_patterns: ['CC0( 1\.0)?', 'Public domain', 'CC BY(-SA)? [0-9.]+( [a-z]{2,3})?']   # LicenseShortName が完全に合うものだけ(NC・ND・不明は使わない)
+    no_author_ok_patterns: ['CC0( 1\.0)?', 'Public domain']   # 作者の表記がなくてよいもの(それ以外は作者の表記が要る)
+    author_unknown: "作者の記載なし"
+    mime_types: [image/jpeg, image/png, image/webp]
+    page_hosts: [commons.wikimedia.org]                     # ファイルのページ(リンク)のホスト
+    image_hosts: [upload.wikimedia.org]                     # サムネイルの実体のホスト(承認)
+    thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト(承認外)→ 承認済みのホストに置き換える。パスは同じ・クエリは捨てる(段階30。報告に明記)
+    thumb_path_prefix: /wikipedia/commons/thumb/            # 置き換えてよいパスの先頭
+    file_namespace: "6"                                     # Commons のファイルの名前空間
+    season_search_limit: {value: 10, source: "仮置き(段階31)。季節の合う写真を探す検索で見る候補の数の上限", provisional: true}
+    season_query: "{scientific} winter plumage"             # 冬羽を探す検索語(段階31。ユリカモメなど、関東で冬に見る姿の写真に差し替える)
+    season_terms: [winter, non-breeding, nonbreeding]       # ファイル名・カテゴリ・説明のどれかに、学名とこの語のどれかがあるものだけ(見た目の推測だけで選ばない)
+    source_id: wikimedia_commons
+    source_label: Wikimedia Commons
+  rank: species
+  class_name: Aves
+  html:
+    title: 野鳥の案内
+    csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
+    photo_note: "写真は種の代表写真で、この場所で撮られたものではありません。"
+    credit: "写真提供: iNaturalist / Wikimedia Commons"
+    headings: {birds: いま狙いたい鳥, birds_out: 例年の時期の外の鳥, birds_unknown: ほかに見られる鳥(時期は未確認), places: おすすめの名所, credits: 写真の出どころ}
+    created: "作成: {y}年{m}月{d}日 {h}:{mi:02d}"
+    origin: "出発地: {origin}"
+    no_photo: "写真なし"
+    others: "そのほか: {names}"
+    others_sep: "、"
+    season_unknown: "時期: 例年の時期を確かめられていない"
+    season: "時期: {text}"
+    sources: "出どころ"
+    credit_line: "{name}: 撮影者 {attribution}・ライセンス {license}"
+    photo_link: "写真のページ(iNaturalist)"
+    photo_link_commons: "ファイルのページ(Wikimedia Commons)"
+    credit_source: "出どころ: {source}"
+    birds_unknown_note: "例年の時期は、まだ確かめられていません。"
+    row_birds: "見られる鳥: {text}"                       # 名所のカードの行(段階31)。時期・出どころの区分は answer.bits と同じ文
+    row_distance: "{distance}・参照数 {n}"
+    row_count: "参照数 {n}"
+    row_edge: "（範囲の端）"
+    links_visible: {value: 3, source: "ユーザー指示(段階31)。出どころのリンクを最初に出す件数", provisional: false}
+    links_more: "出どころ {n}件を見る"
+    link_dup: "{label}({i})"
+    credits_summary: "写真ごとの撮影者・ライセンスを見る"
+    photo_credit: "写真: {author}・{license}"
+    author_re: '^(?:\(c\) |no rights reserved, uploaded by )(.+?)(?:, (?:some|no) rights reserved|$)'   # iNaturalist の定型の表記から撮影者名だけを取る。合わなければ表記そのまま
+    unit_places: 名所
+    link_schemes: [http, https]
+
