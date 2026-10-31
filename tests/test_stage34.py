@@ -213,6 +213,11 @@ class Facts(Base):
         self.assertIn("試験の宿場", names)
         self.assertNotIn("別の地域の山", names)
 
+    def test_4_typical_read_from_pages_is_kept(self):
+        self.write([rec("t-k-2", "色づき始め", "2026-10-31", typical="例年10月中旬から11月中旬に見ごろ")])
+        c = next(x for x in self.facts()["candidates"] + self.facts()["avoid"] if x["id"] == "t-k-2")
+        self.assertEqual(c["typical_from_records"][0]["text"], "例年10月中旬から11月中旬に見ごろ")
+
     def test_4_no_internal_terms_in_labels(self):
         self.write([rec("t-k-1", "色づき始め", "2026-10-31")])
         f = self.facts()
