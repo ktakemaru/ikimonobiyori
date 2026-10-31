@@ -197,7 +197,11 @@ def read_records(subject, env=None, policy=None):
     p = log_path(subject, env, policy)
     if not p.exists():
         return []
-    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    policy = policy or load_policy()
+    rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
+        r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
+    return rows
 
 
 def _dup_key(r):

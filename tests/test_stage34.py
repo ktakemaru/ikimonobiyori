@@ -101,7 +101,8 @@ class Normalize(unittest.TestCase):
 
     def test_2_flowers_bloom_ratio(self):
         for raw, want in (("8分咲き", "見頃"), ("5〜8分咲き", "見頃前"), ("３分咲き", "見頃前"), ("満開", "見頃"), ("見頃", "見頃"),
-                          ("咲き始め", "見頃前"), ("見頃過ぎ", "見頃過ぎ"), ("終了", "見頃過ぎ"), ("五分咲き", "見頃前")):
+                          ("咲き始め", "見頃前"), ("見頃過ぎ", "見頃過ぎ"), ("終了", "見頃過ぎ"), ("五分咲き", "見頃前"),
+                          ("開花状況は約3割。これから見頃を迎えます", "見頃前"), ("11月中旬頃に見頃を迎える予定", "見頃前"), ("見頃を迎えました", "見頃")):
             self.assertEqual(O.normalize("flowers", raw, P), want, raw)
 
     def test_2_variety_only_peak_is_not_garden_peak(self):
