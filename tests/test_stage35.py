@@ -184,6 +184,15 @@ class Closures(unittest.TestCase):
         self.assertFalse(C.evaluate(r3, date(2026, 9, 23))["closed"])           # 秋分の日
         self.assertTrue(C.evaluate(r3, date(2026, 9, 24))["closed"])            # 祝日でない最初の日
 
+    def test_weekly_with_sono_yokujitsu(self):
+        r = "自然観察センターは毎週月曜日（祝日の場合はその翌日）、年末年始（12月28日～１月４日）休館"
+        self.assertTrue(C.evaluate(r, date(2026, 11, 2))["closed"])
+        self.assertFalse(C.evaluate(r, date(2026, 11, 3))["closed"])                  # 文化の日(火)
+        self.assertFalse(C.evaluate(r, date(2026, 11, 23))["closed"])                 # 勤労感謝の日(月)
+        self.assertTrue(C.evaluate(r, date(2026, 11, 24))["closed"])                  # その翌日
+        self.assertTrue(C.evaluate(r, date(2027, 1, 4))["closed"])
+        self.assertEqual(C.parse(r)["facility"], "自然観察センター")
+
     def test_weekly_and_unreadable(self):
         self.assertTrue(C.evaluate("毎週月曜日(祝日の場合は翌日)", date(2026, 11, 9))["closed"])
         self.assertFalse(C.evaluate("毎週月曜日(祝日の場合は翌日)", date(2026, 11, 10))["closed"])

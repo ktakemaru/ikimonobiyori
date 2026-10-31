@@ -83,7 +83,7 @@ def parse(text):
     m = re.match(r"^\s*([^、。:()]+?)は(?=.*(曜|月\d|/))", t)
     facility = m.group(1).strip() if m else None
     rules = []
-    shift = "next_day" if re.search(r"祝(日|休日)[^)]*の場合は翌(日|平日)", t) else \
+    shift = "next_day" if re.search(r"祝(日|休日)[^)]*の場合は(その)?翌(日|平日)", t) else \
             "open" if re.search(r"祝(日|休日)[^)]*の場合は(開園|開館|営業)", t) else None
     for mm in re.finditer(r"(毎月)?第((?:\d|[一二三四五])(?:\s*[・,、]\s*第?(?:\d|[一二三四五]))*)\s*([月火水木金土日])曜", t):
         rules.append({"kind": "nth_weekday", "nth": _nums(mm.group(2)), "weekday": WEEKDAYS.index(mm.group(3)), "holiday": shift})
