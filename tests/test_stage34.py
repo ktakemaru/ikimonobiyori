@@ -200,6 +200,19 @@ class Facts(Base):
         f = self.facts()
         self.assertIn("一覧にない谷", self.names(f))
 
+    def test_4_outside_list_record_follows_its_area(self):
+        self.write([{"subject": "autumn_leaves", "name": "別の地域の山", "state": "見ごろ", "state_date": "2026-10-31", "prefecture": "神奈川県",
+                     "url": "https://pref.example.jp/a", "publisher": "試験県", "source_class": "official"},
+                    {"subject": "autumn_leaves", "name": "試験の宿場", "state": "色づきはじめ", "state_date": "2026-10-31", "area": "試験",
+                     "url": "https://kankou.example.jp/a", "publisher": "試験町観光協会", "source_class": "official"}])
+        regions = {"regions": [{"name": "試験", "aliases": [], "match": {"areas": ["試験"]}}]}
+        import unittest.mock as M
+        with M.patch.object(O.S, "load_regions", return_value=regions):
+            f = O.facts("autumn_leaves", region="試験", dates=D, now=NOW, env=self.env, spots_doc=SPOTS, catalogs=CATALOGS)
+        names = self.names(f)
+        self.assertIn("試験の宿場", names)
+        self.assertNotIn("別の地域の山", names)
+
     def test_4_no_internal_terms_in_labels(self):
         self.write([rec("t-k-1", "色づき始め", "2026-10-31")])
         f = self.facts()

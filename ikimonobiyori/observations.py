@@ -176,7 +176,7 @@ def validate(rec, policy):
     return errs
 
 
-FIELDS = ("subject", "spot", "name", "city", "prefecture", "kind", "state", "state_date", "typical", "event", "url", "publisher", "source_class")
+FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "typical", "event", "url", "publisher", "source_class")
 
 
 def make_record(rec, policy, read_at):
@@ -205,7 +205,7 @@ def read_records(subject, env=None, policy=None):
 
 
 def _dup_key(r):
-    return (r.get("spot") or _key(r.get("name")), r.get("url"), r.get("state"), r.get("state_date"), r["read_at"][:10])
+    return (r.get("spot") or _key(r.get("name")), r.get("url"), r.get("state"), r.get("state_date"), r["read_at"][:10], r.get("area"), r.get("prefecture"))
 
 
 def record(batch, *, env=None, policy=None, now=None):
@@ -535,10 +535,15 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
         else:                                   # 一覧にない名所の記録もカタログ外として残す
             k = _key(r.get("name"))
             extra.setdefault(k, {"id": "extra-" + k, "subject": subject, "name": r.get("name"), "city": r.get("city"),
-                                 "prefecture": r.get("prefecture") or (reg["prefectures"][0] if reg["prefectures"] else None),
+                                 "prefecture": None, "area": None,
                                  "typical": [], "events": [], "pages": [], "outside_list": True, "rows": []})["rows"].append(r)
+            x = extra[k]
+            x["prefecture"] = x["prefecture"] or r.get("prefecture")
+            x["area"] = x["area"] or r.get("area")
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
     for x in extra.values():
+        if x["prefecture"] is None and x["area"] is None and reg["prefectures"] and not reg["areas"]:
+            x["prefecture"] = reg["prefectures"][0]         # 都道府県だけの地域で、記録に場所の手がかりがないとき(従来どおり)
         f = fact_for(x, x["rows"], dates, today, subject, policy, origin, cat_pol)
         f["outside_list"] = True
         all_f.append(f)
@@ -547,7 +552,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     def sort_key(f):
         return (f["tier"], ev_rank[f["evidence"]], -f["_order"] if f["tier"] == 3 else 0, -f["reference_count"],
                 f["distance_km"] if f["distance_km"] is not None else float("inf"), f["id"])
-    inreg = [f for f in all_f if in_region({"prefecture": f["prefecture"], "area": f["area"]}, reg) or f.get("outside_list")]
+    inreg = [f for f in all_f if in_region({"prefecture": f["prefecture"], "area": f["area"]}, reg)]
     rec_f = sorted([f for f in inreg if not f["avoid"]], key=sort_key)
     avoid = sorted([f for f in inreg if f["avoid"]], key=lambda f: (f["avoid"], f["id"]))
     nearby = []
