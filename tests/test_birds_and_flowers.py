@@ -76,7 +76,15 @@ class Flowers(unittest.TestCase):
 
     def test_kind_filter_and_topic(self):
         self.assertEqual(sources.topic_subjects("花", POLICY), ["flowers"])
-        c = catalog.load_catalog("flowers")
+        # 種類での絞り込みは、実データの件数に依存しないよう合成のカタログで確かめる(段階32。ユーザー承認 2026-10-31)
+        def _e(sid, kinds, status="approved"):
+            e = {"id": sid, "name": sid, "subjects": ["flowers"], "timing_type": "managed", "kind": "area", "status": status,
+                 "sources": [{"url": "https://example.org/a"}], "status_sources": [], "tags": {"flower_kinds": kinds}}
+            if status == "approved":
+                e["approved_at"] = "2026-10-31"
+            return e
+        c = {"entries": [_e("hana-0002", ["秋バラ"]), _e("hana-0003", ["秋バラ", "コスモス"]), _e("hana-0005", ["秋バラ"]),
+                         _e("hana-9001", ["菊"]), _e("hana-9002", ["秋バラ"], status="candidate")]}
         got = sources.candidates(c, sources.load_registry("flowers"), [TA.DATES[0]], POLICY, flower_kind=["秋バラ"])
         self.assertEqual(sorted(r["site"] for r in got["sites"]), ["hana-0002", "hana-0003", "hana-0005"])
         reg = sources.load_registry("flowers")
