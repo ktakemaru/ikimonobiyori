@@ -48,6 +48,17 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
 - 写真は「種の代表写真」で、その場所で撮られたものではない(ページに 1 文が入る)。写真がない種は「写真なし」と出る。**写真・画像・撮影者名・写真の URL はコミットしない**(キャッシュはリポジトリの外または `runtime/`)。
 - 写真を取るのは `guide photos-build-table --live`(種の対応表)と `guide photos-fetch --live`(写真)だけ。通信先は api.inaturalist.org と、写真の配信元 static.inaturalist.org・inaturalist-open-data.s3.amazonaws.com の 2 つだけ(承認A)。`--live` には `BIYORI_ALLOW_LIVE=1`・`--max-requests`(1 回の実行は最大 80)・計測フック(`BIYORI_REQ_LOG`)が要る。ユーザーがその場で頼んだときだけ実行する。写真のキャッシュを消すのは `guide photos-clear`。
 
+### 地域を指定した花の質問(段階32。ユーザーの指示 2026-10-31)
+「神奈川で、今週末見頃の秋バラ・菊・コスモスを教えて」のように、**都道府県(地域)と花の種類**を指定された花の質問は、これで答える(通信しない。同じ日の記録を使う):
+```
+python -X utf8 -m ikimonobiyori.sources regional --now <今の時刻 ISO 8601 +09:00> [--date YYYY-MM-DD ...] --region <地域の呼び名> --flower-kind <花の種類> [--flower-kind ...]
+```
+- **地域は必須の絞り込み**: 名所の `tags.prefecture` で判定する(座標からの推測はしない)。距離(出発地・250 km)は地域の指定がないときだけ使う。指定地域内の推薦が少ないときだけ「近隣(県外です)」を別の見出しで出す。指定地域内に該当が 0 件なら、そう答えの先頭に出し、追加すべき名所を示す。
+- **確度は 3 段階**(答えには日本語で書く。A/B/C の記号は出さない): 「公式の現況」(公式の状態の語と日付を原文のまま)/「今年のイベント期間つき」(今年の年つきの期間が対象の日にかかり、例年の時期とも重なる。名所の `events` の `verified: true`、または今日読んだイベントのページの記録)/「例年の時期のみ」(今年の公式の情報なし。前年以前の期間は `flower_windows` の `source_year` つきで、ここにだけ使う)。
+- **見頃を過ぎたもの・状態を読み取れなかったものは推薦に入れない**: 状態の語は台帳の `notation.map` が先、なければ `ikimonobiyori/data/regional/policy.yaml` の語彙表(完全一致)。表にない語(「ブラウンがメイン」「咲いています」「2〜3分咲き」など)は推測で段階にせず「状態を読み取れなかったもの」に原文のまま出す。終盤・見頃過ぎ・終了は「見頃を過ぎたとみられるもの」に最大 2 行。
+- **出力はそのまま出す**: コマンドが組み立てた文(結論が先)を一字一句そのまま出す。答えに内部の言葉(簡易な読み取り・承認待ち・作業メモ・records など)を出さない(コードが自己検査する。内部の事情は `docs/stage32-report.md` へ)。
+- 読むのは**ユーザーが承認した通信先**(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)の台帳で `approved` の情報源だけ(要約の道具で 1 回ずつ。読んだ事実は答える前に `record` で記録する)。ほかのホストは読まず「公式の現況は未確認(公式ページ: URL)」として出る(`docs/pending-hosts.md`)。
+
 ### 守ること
 - 読むのは、対象の台帳 `ikimonobiyori/data/sources/<対象>.yaml` で **`approval.status: approved` の情報源だけ**。pending・revoked は読まず、「人が開く URL」として示す。
 - 読むのは**答えるときに 1 回だけ**。定期的に巡回しない。同じページは 1 回の答えで 1 回だけ読む。

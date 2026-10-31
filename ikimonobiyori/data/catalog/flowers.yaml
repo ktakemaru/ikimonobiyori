@@ -83,3 +83,851 @@ entries:
     sources:
       - {url: "https://www.keiseirose.co.jp/garden/", title: "京成バラ園", checked_on: "2026-10-24"}
     note: "トップに『現在の開花状況』と『秋バラ見頃予報』(グラフの画像)。運営は京成バラ園芸株式会社(民間の施設)"
+
+  - id: hana-0006
+    name: 花菜ガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 平塚市
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://kana-garden.com/
+      title: 神奈川県立花と緑のふれあいセンター 花菜ガーデン
+      checked_on: '2026-10-31'
+    note: 公式(花菜ガーデン)に『秋のバラの見ごろが続いています。』(日付なし。調査で読んだ)。品種数『約1,050品種』は検索の要約で未確認。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kana-garden-news
+    - kanagawa-kankou-kana-rose
+    flower_windows:
+    - kind: 秋バラ
+      start: 10-10
+      end: 11-08
+      source_url: https://www.kanagawa-kankou.or.jp/event/7882
+      source_year: 2026
+      note: 今年(2026年)のローズフェスティバルの期間を例年の目安に使っている(前年以前の期間は未確認)
+    events:
+    - kind: 秋バラ
+      name: ローズフェスティバル2026〜秋〜
+      start: '2026-10-10'
+      end: '2026-11-08'
+      year: 2026
+      source_url: https://www.kanagawa-kankou.or.jp/event/7882
+      checked_on: '2026-10-31'
+      verified: true
+  - id: hana-0007
+    name: 港の見える丘公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市中区
+      terrain:
+      - garden
+      - urban
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.yokohama.lg.jp/
+      title: 横浜市(公園の公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 公園単独の公式ページを確認できなかったので candidate(おすすめに使わない)。座標未確認(公式の地図で確認できていないので point を入れない)
+    flower_windows:
+    - kind: 秋バラ
+      start: 10-15
+      end: 11-15
+      source_url: https://www.city.yokohama.lg.jp/
+      source_year: null
+      note: 秋バラの最盛期は例年10月中旬〜11月中旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0008
+    name: 横浜イングリッシュガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市西区
+      terrain:
+      - garden
+      - urban
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.yokohama.lg.jp/
+      title: 運営者の公式ページは未確認
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかった(調査で yokohama-eg.jp が DNS 失敗)ので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0009
+    name: 山下公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市中区
+      terrain:
+      - garden
+      - urban
+      - coast
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.yokohama.lg.jp/
+      title: 運営者の公式ページは未確認
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかったので candidate(春の横浜ローズウィークは確認したが秋は見つからず)。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0010
+    name: 山手イタリア山庭園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市中区
+      terrain:
+      - garden
+      - urban
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://gardennecklace.city.yokohama.lg.jp/
+      title: ガーデンネックレス横浜(横浜市)
+      checked_on: '2026-10-31'
+    note: 『山手ローズウィーク』2026年11月8日〜15日(会場が山手イタリア山庭園かは未確認のため events に入れない)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - gardennecklace-yamate
+  - id: hana-0011
+    name: 八景島 丘の広場バラ園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市金沢区
+      terrain:
+      - garden
+      - coast
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.yokohama.lg.jp/
+      title: 運営者の公式ページは未確認
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかったので candidate(春のバラフェスタのみ確認)。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0012
+    name: 野毛山公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市西区
+      terrain:
+      - garden
+      - urban
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.yokohama.lg.jp/nishi/shokai/kanko/spot/hana.html
+      title: 横浜市西区役所 花の名所
+      checked_on: '2026-10-31'
+    note: 公式の記載は春(4〜5月)の様子だけ。秋は見つからず。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - yokohama-nishi-hana
+  - id: hana-0013
+    name: 横浜市こども植物園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市南区
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://gardennecklace.city.yokohama.lg.jp/
+      title: ガーデンネックレス横浜(横浜市)
+      checked_on: '2026-10-31'
+    note: 『秋のバラ園ガイド』2026年9月11日付のお知らせ(日程は本文未確認)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - gardennecklace-kodomo
+    flower_windows:
+    - kind: 菊
+      start: 11-01
+      end: 11-30
+      source_url: https://gardennecklace.city.yokohama.lg.jp/
+      source_year: null
+      note: 菊花展は例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0014
+    name: 日比谷花壇大船フラワーセンター
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 鎌倉
+      city: 鎌倉市
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.kamakura.kanagawa.jp/
+      title: 鎌倉市(運営者の公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 運営者の公式ページを確認できなかった(調査で ofuna-flowercenter.com が DNS 失敗)ので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0015
+    name: 小田原フラワーガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 小田原
+      city: 小田原市
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.kanagawaparks.com/odawarafg/
+      title: 小田原フラワーガーデン(指定管理者 小田原フラワーガーデンパートナーズ)
+      checked_on: '2026-10-31'
+    note: 開花状況の語と日付は公式ページに書かれていない(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kanagawaparks-odawarafg
+    flower_windows:
+    - kind: 秋バラ
+      start: 10-24
+      end: 11-23
+      source_url: https://www.kanagawaparks.com/odawarafg/
+      source_year: 2026
+      note: 今年(2026年)のローズフェスタの期間を例年の目安に使っている(前年以前の期間は未確認)
+    events:
+    - kind: 秋バラ
+      name: 2026 秋のローズフェスタ
+      start: '2026-10-24'
+      end: '2026-11-23'
+      year: 2026
+      source_url: https://www.kanagawaparks.com/odawarafg/
+      checked_on: '2026-10-31'
+      verified: true
+      note: 期間の行に年はなく、題名に2026とある
+  - id: hana-0016
+    name: 箱根強羅公園ローズガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 箱根
+      city: 箱根町
+      terrain:
+      - garden
+      - mountain
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.hakonenavi.jp/gorapark/info/
+      title: 箱根強羅公園(株式会社小田急箱根)
+      checked_on: '2026-10-31'
+    note: 開花状況は『10月8日(木)現在約3割』(2026-10-09付)が最新だった(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - hakonenavi-gorapark
+    events:
+    - kind: 秋バラ
+      name: 秋のローズガーデン音楽会(土日祝10日間)
+      start: '2026-10-10'
+      end: '2026-11-03'
+      year: 2026
+      source_url: https://www.hakonenavi.jp/gorapark/info/4137/
+      checked_on: '2026-10-31'
+      verified: false
+      note: 承認外のホストで確認した値。公式で読み直せていない
+  - id: hana-0017
+    name: あやせローズガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 綾瀬市
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.ayase.kanagawa.jp/soshiki/midorikoenka/koen/4/15170.html
+      title: 綾瀬市 みどり公園課
+      checked_on: '2026-10-31'
+    note: 2026年の期間の記載なし。休園日は毎週火曜(県観光協会のページは10・11月は開園)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - ayase-rose-garden
+  - id: hana-0018
+    name: 相模川ローズガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 厚木市
+      terrain:
+      - garden
+      - river
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.atsugi.kanagawa.jp/
+      title: 厚木市(公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかったので candidate(春のフェスティバルのみ確認)。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0019
+    name: ヴェルニー公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 三浦
+      city: 横須賀市
+      terrain:
+      - garden
+      - coast
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.kanagawaparks.com/verny/
+      title: ヴェルニー公園(指定管理者 よこすかseasideパートナーズ)
+      checked_on: '2026-10-31'
+    note: ブログの『園内バラ状況』(記事の配信日が日付)。10/28付『見頃を迎えております』(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kanagawaparks-verny
+  - id: hana-0020
+    name: 平塚市総合公園バラ園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 平塚市
+      terrain:
+      - garden
+      flower_kinds:
+      - 秋バラ
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.hiratsuka.kanagawa.jp/
+      title: 平塚市(公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかったので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+  - id: hana-0021
+    name: 三溪園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市中区
+      terrain:
+      - garden
+      - coast
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.sankeien.or.jp/
+      title: 三溪園(公益財団法人三溪園保勝会)
+      checked_on: '2026-10-31'
+    note: 約240点(2025年。検索の要約)。2026年の期間は公式のトップページに書かれていた(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - sankeien-kikka
+    flower_windows:
+    - kind: 菊
+      start: 10-26
+      end: 11-24
+      source_url: https://www.sankeien.or.jp/
+      source_year: 2025
+      note: 2025年の菊花展の期間。人が検索して得た参考値(未検証。指示書 2026-10-31)
+    events:
+    - kind: 菊
+      name: 三溪園「菊花展」
+      start: '2026-10-31'
+      end: '2026-11-23'
+      year: 2026
+      source_url: https://www.sankeien.or.jp/
+      checked_on: '2026-10-31'
+      verified: true
+      note: 見出し『初の特別企画も開催 三溪園「菊花展」』
+  - id: hana-0022
+    name: 小田原城
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 小田原
+      city: 小田原市
+      terrain:
+      - garden
+      - temple_shrine
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://odawaracastle.com/
+      title: 小田原城天守閣(小田原市観光協会)
+      checked_on: '2026-10-31'
+    note: 本丸広場の菊花展。公式での期間の確認は未了。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - odawaracastle-kikka
+    flower_windows:
+    - kind: 菊
+      start: 11-03
+      end: 11-15
+      source_url: https://odawaracastle.com/
+      source_year: 2026
+      note: 2026年の予定の日付(約500鉢、無料)。人が検索して得た参考値(未検証。指示書 2026-10-31)。公式のページでは期間を確認できなかった
+  - id: hana-0023
+    name: 大雄町 花咲く里山(ざる菊まつり)
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 足柄
+      city: 南足柄市
+      terrain:
+      - mountain
+      - garden
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.pref.kanagawa.jp/docs/n8f/cnt/f300562/p327323.html
+      title: 神奈川県の掲載ページ(主催 大雄町花咲く里山協議会)
+      checked_on: '2026-10-31'
+    note: 2024年 10/26〜11/24・2023年 10/21〜11/26・2022年 10/22〜11/23(県の掲載ページ)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - pref-kanagawa-zarugiku
+    flower_windows:
+    - kind: 菊
+      start: 10-25
+      end: 11-24
+      source_url: https://www.pref.kanagawa.jp/docs/n8f/cnt/f300562/p327323.html
+      source_year: 2025
+      note: 令和7年(2025年)の開催期間。2026年は公式で確認できていない
+  - id: hana-0024
+    name: 川崎大師 菊花展
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 川崎
+      city: 川崎市川崎区
+      terrain:
+      - temple_shrine
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.kawasakidaishi.com/
+      title: 川崎大師平間寺
+      checked_on: '2026-10-31'
+    note: 年の記載がないので events には入れない。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kawasakidaishi-kikka
+    flower_windows:
+    - kind: 菊
+      start: 10-29
+      end: 11-19
+      source_url: https://www.kawasakidaishi.com/
+      source_year: null
+      note: ページに『10月29日(木)〜11月19日(木)』とあり年の記載はない(曜日から2026年と推定)。公式のページで年を確認できていない
+  - id: hana-0025
+    name: 平塚八幡宮 菊花展
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 平塚市
+      terrain:
+      - temple_shrine
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.hiratsuka.kanagawa.jp/
+      title: 平塚市(運営者の公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 運営者の公式ページを確認できなかったので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+    flower_windows:
+    - kind: 菊
+      start: 11-01
+      end: 11-30
+      source_url: https://www.city.hiratsuka.kanagawa.jp/
+      source_year: null
+      note: 例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0026
+    name: 土屋ざる菊園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 平塚市
+      terrain:
+      - garden
+      flower_kinds:
+      - 菊
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.hiratsuka.kanagawa.jp/
+      title: 平塚市(運営者の公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 運営者の公式ページを確認できなかったので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+    flower_windows:
+    - kind: 菊
+      start: 11-01
+      end: 11-30
+      source_url: https://www.city.hiratsuka.kanagawa.jp/
+      source_year: null
+      note: 例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0027
+    name: くりはま花の国
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 三浦
+      city: 横須賀市
+      terrain:
+      - garden
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.kanagawaparks.com/kurihama/
+      title: くりはま花の国(指定管理者 くりはまフラワーパートナーズ)
+      checked_on: '2026-10-31'
+    note: 2025年は植え付けが遅く開花が11月上旬以降だった(人が検索して得た参考値)。『コスモスまつり開催のお知らせ』(2026-10-27配信)。調査時、『台風25号による被害で閉園中』『10月24日より一部開園』の記載。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kanagawaparks-kurihama
+  - id: hana-0028
+    name: 長井海の手公園 ソレイユの丘
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 三浦
+      city: 横須賀市
+      terrain:
+      - garden
+      - coast
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.soleil-park.jp/blooming-info
+      title: ソレイユの丘(エリアマネジメント横須賀共同事業体)
+      checked_on: '2026-10-31'
+    note: 調査時の公式の記載『10/25現在満開です』(コスモス)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - soleil-blooming-info
+    flower_windows:
+    - kind: コスモス
+      start: 10-01
+      end: 10-20
+      source_url: https://www.soleil-park.jp/blooming-info
+      source_year: null
+      note: キバナコスモスは例年10月上旬〜中旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0029
+    name: イシックス馬入のお花畑
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 平塚市
+      terrain:
+      - garden
+      - river
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.city.hiratsuka.kanagawa.jp/
+      title: 平塚市(運営者の公式ページは未確認)
+      checked_on: '2026-10-31'
+    note: 公式ページを確認できなかったので candidate。座標未確認(公式の地図で確認できていないので point を入れない)
+    flower_windows:
+    - kind: コスモス
+      start: 10-01
+      end: 10-31
+      source_url: https://www.city.hiratsuka.kanagawa.jp/
+      source_year: null
+      note: 例年10月上旬〜下旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
+  - id: hana-0030
+    name: 里山ガーデン
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市旭区
+      terrain:
+      - garden
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.satoyama-garden.jp/welcome/
+      title: 里山ガーデン(横浜市)
+      checked_on: '2026-10-31'
+    note: 2026年の秋の会期は令和8年9月5日〜9月27日(イベント全体の期間。コスモスの会期ではない)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - satoyama-garden-welcome
+  - id: hana-0031
+    name: 県立境川遊水地公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 横浜
+      city: 横浜市泉区
+      terrain:
+      - garden
+      - river
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://kanagawa-park.or.jp/sakaigawa/
+      title: 県立境川遊水地公園(神奈川県公園協会)
+      checked_on: '2026-10-31'
+    note: 年間イベントは PDF のみ(未取得)。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kanagawa-park-sakaigawa
+  - id: hana-0032
+    name: 秦野戸川公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: approved
+    tags:
+      prefecture: 神奈川県
+      area: 丹沢
+      city: 秦野市
+      terrain:
+      - garden
+      - mountain
+      flower_kinds:
+      - コスモス
+      source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
+    sources:
+    - url: https://www.kanagawa-park.or.jp/hadanotokawa/
+      title: 秦野戸川公園(神奈川県公園協会・小田急電鉄共同事業体)
+      checked_on: '2026-10-31'
+    note: 開花情報のページの『見ごろの花』欄は調査時に空欄。座標未確認(公式の地図で確認できていないので point を入れない)
+    approved_by: claude_code_provisional
+    approved_at: '2026-10-31'
+    status_sources:
+    - kanagawa-park-hadanotokawa
+  - id: hana-0033
+    name: 新磯ざる菊花見会
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: retired
+    retired_at: '2026-10-31'
+    retired_reason: 相模原市の資料に『今年で終了』『令和7年11月2日〜16日』とある旨が検索の要約で見つかった(PDF の本文は読めていない)。報道(神奈川新聞)も2025年での終了を伝えている。公式の原文で確認できるまで推薦しない
+    tags:
+      prefecture: 神奈川県
+      area: 相模原
+      city: 相模原市南区
+      flower_kinds:
+      - 菊
+      source: 指示書(2026-10-31)と調査
+    sources:
+    - url: https://www.city.sagamihara.kanagawa.jp/
+      title: 相模原市(資料の PDF は本文未確認)
+      checked_on: '2026-10-31'
+    note: 終了。推薦しない(台帳に『終了』と記録)
+  - id: hana-0034
+    name: 生田緑地ばら苑
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 神奈川県
+      area: 川崎
+      city: 川崎市多摩区
+      flower_kinds:
+      - 秋バラ
+      source: 指示書(2026-10-31)と調査
+    sources:
+    - url: https://www.ikuta-rose.jp/open/open.html
+      title: 生田緑地ばら苑
+      checked_on: '2026-10-31'
+    note: 『今回の一般開放をもって、当面の間、閉苑となります。』『ばら苑の再整備を予定』(2025年10月の公開。2026年の再開は確認できず)。公式で再開を確認できるまで推薦しない

@@ -1386,6 +1386,12 @@ def main(argv=None, http_get=None):
     pr.add_argument("--flower-kind", action="append")
     pr.add_argument("--request-id", help="文書の request_id(省略すると対象と日から決まった形)")
     pr.add_argument("--out", help="出力先のファイル(省略すると標準出力)")
+    rgl = sub.add_parser("regional", help="地域を指定した花の答え(確度の3段階つき。段階32。通信しない・書き込まない)")
+    rgl.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
+    rgl.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
+    rgl.add_argument("--region", help="地域の呼び名(data/regions.yaml)。指定すると必須の絞り込みになる(距離は使わない)")
+    rgl.add_argument("--flower-kind", action="append", required=True, help="花の種類(複数可。名所の tags.flower_kinds)")
+    rgl.add_argument("--origin", help="地域を指定しないときの出発地(省略すると横浜)")
     a = ap.parse_args(argv)
 
     if a.cmd == "check":
@@ -1415,6 +1421,9 @@ def main(argv=None, http_get=None):
         cats = {s["subject"]: catalog_mod.load_catalog(s["subject"]) for s in subjects_status() if s["implemented"]}
         _dump(region_report(region, catalogs=cats, catalog_policy=catalog_mod.load_policy()))
         return 0
+    if a.cmd == "regional":
+        from . import regional
+        return regional.cli(a)
     if a.cmd == "answer":
         return _answer_cli(a)
     if a.cmd == "proposals":

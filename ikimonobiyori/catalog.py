@@ -142,6 +142,21 @@ def check_entry(entry, *, subject, profile_ids, policy):
         for k in ("start", "end"):
             if not valid_month_day(tw[k]):
                 errs.append(f"{eid}: typical_window.{k}={tw[k]} は存在しない日付")
+    for w in entry.get("flower_windows") or []:                       # 花の種類ごとの例年の時期(段階32)
+        for k in ("start", "end"):
+            if not valid_month_day(w[k]):
+                errs.append(f"{eid}: flower_windows[{w['kind']}].{k}={w[k]} は存在しない日付")
+    for ev in entry.get("events") or []:                              # 今年のイベント期間(段階32)
+        for k in ("start", "end", "checked_on"):
+            if not valid_date(ev[k]):
+                errs.append(f"{eid}: events[{ev['name']}].{k}={ev[k]} は日付でない")
+        if valid_date(ev["start"]) and valid_date(ev["end"]):
+            if ev["start"] > ev["end"]:
+                errs.append(f"{eid}: events[{ev['name']}] の start が end より後")
+            if int(ev["start"][:4]) != ev["year"]:
+                errs.append(f"{eid}: events[{ev['name']}] の year={ev['year']} が start の年と違う(前年の日付を今年として扱わない)")
+        if ev["verified"] and ev["source_url"] not in [s["url"] for s in entry["sources"]] + [entry.get("official_status_url")] + [w["source_url"] for w in entry.get("flower_windows") or []]:
+            errs.append(f"{eid}: events[{ev['name']}] は verified だが、出典 {ev['source_url']} がカタログの sources・flower_windows にない")
     for k in ("approved_at", "retired_at"):
         if k in entry and not valid_date(entry[k]):
             errs.append(f"{eid}: {k}={entry[k]} は日付でない")
