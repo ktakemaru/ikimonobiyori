@@ -546,6 +546,7 @@ def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=Non
     years = param(profile, "history_years")
     return {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
             "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
+            "site_url": "https://www.inaturalist.org/",       # 段階35: 答えの出典に並べる、人が開くページ(問い合わせの URL は長く、API のため)
             "species": [{"name": sp["common_name"] or sp["name"], "scientific_name": sp["name"], "count": sp["count"],
                          "relative_frequency": round(sp["relative_frequency"], 3)} for sp in res["species"]]}
 

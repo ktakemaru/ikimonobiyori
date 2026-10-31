@@ -141,7 +141,8 @@ class Hole2Birds(Base):
             self.assertIn("この時期に見られる鳥", c["season_line"])
         a = next(c for c in f["candidates"] if c["id"] == "t-b-1")
         self.assertEqual([s["name"] for s in a["inat"]["species"]], ["コガモ", "オナガガモ", "ジョウビタキ"])
-        self.assertEqual(a["inat"]["total"], 80)                         # 窓が 10 月と 11 月にまたがる 2 応答の合計
+        self.assertEqual(a["inat"]["total"], 80)
+        self.assertEqual(a["inat"]["site_url"], "https://www.inaturalist.org/")                         # 窓が 10 月と 11 月にまたがる 2 応答の合計
         self.assertIn("コガモ・オナガガモ・ジョウビタキが多く記録されています", a["season_line"])
         self.assertIn("この時期の記録が多い", a["reason_labels"])
 
