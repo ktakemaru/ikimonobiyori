@@ -47,3 +47,10 @@
 3. CI が緑になってからマージする。
 4. 端末で `git checkout main` と `git pull`、`git log --oneline -3` の先頭にマージの commit を確認する。
 5. `git rev-parse HEAD` の 40 桁の SHA を控える(第2部で使う)。
+
+## 追補: 「来週以降」の 14 日が紅葉・冬鳥・野鳥に及んでいるかの調査
+- 結論: **及んでいない。値は戻していない(戻す変更なし)。**
+- 14 日は `ikimonobiyori/data/regional/policy.yaml` の `later.within_days` で、使うのは `regional.py`(`SUBJECT = "flowers"`。花の地域指定の答え)だけ。
+- 紅葉・冬鳥・野鳥の「これから」: 現況型は `answer.py` が `data/sources/policy.yaml` の `answer.upcoming_within_days`(30 日)、ガイド型は `guide.py` が `data/guide/policy.yaml` の `upcoming_days`(60 日)を使う。段階33 の commit(b0f126d)はこの 2 つのファイルも `answer.py`・`guide.py` も変えていない(`git diff` で確認)。
+- 旧 `regional` の `upcoming_within_days`(30 日)は参考に残っているが、花のコードは使わない。
+- 範囲を固定するテスト `LaterWindowScope`(tests/test_stage33.py)を追加: 花 14 日・紅葉/冬鳥/野鳥の現況型 30 日・ガイド型 60 日。

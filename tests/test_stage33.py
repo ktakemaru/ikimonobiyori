@@ -211,5 +211,19 @@ class Calendar(unittest.TestCase):
         self.assertNotIn("登録している名所がまだ少なめです", t2)
 
 
+class LaterWindowScope(unittest.TestCase):
+    """「来週以降」の欄の 14 日は花(regional)だけ。紅葉・冬鳥・野鳥(answer / guide)は従来の値のまま。"""
+
+    def test_14_days_is_flowers_only(self):
+        import yaml
+        from ikimonobiyori import paths
+        self.assertEqual(regional.SUBJECT, "flowers")
+        self.assertEqual(RP["later"]["within_days"]["value"], 14)
+        sp = yaml.safe_load((Path(__file__).resolve().parent.parent / "ikimonobiyori/data/sources/policy.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(sp["answer"]["upcoming_within_days"]["value"], 30)
+        gp = yaml.safe_load((Path(__file__).resolve().parent.parent / "ikimonobiyori/data/guide/policy.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(gp["upcoming_days"]["value"], 60)
+
+
 if __name__ == "__main__":
     unittest.main()
