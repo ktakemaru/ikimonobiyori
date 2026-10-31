@@ -38,11 +38,11 @@ partial_variety:
   quoted_pattern: "[「『][^」』]+[」』]"
   partial_words: [品種, 一部, 区画, エリア, ゾーン, 一画]
 
-# 地域を指定した花の答えで読んでよい通信先(ユーザーが承認したもの。段階32・指示書 3-5)。これ以外のホストは読まない(docs/pending-hosts.md)。
-# 名所の flower_windows・events の source_url がこの外のホストなら、source_host と unapproved_host: true の印が要る(catalog_audit が確かめる)。
-# 印のある値は確度の判定(公式の現況・今年のイベント期間)に使えず、「例年の時期のみ」にだけ使う。
+# 公式として扱う通信先(段階32・指示書 3-5。段階34 で「読んでよい通信先の限定」をやめた。これ以外のホストも読み、出所の区分を secondary として使う)。
+# 名所の flower_windows・events の source_url がこの外のホストなら、source_host と source_class: secondary(出所の区分。段階34。旧い印 unapproved_host)を付ける(catalog_audit が確かめる)。値は捨てず候補の根拠に使う。
+# 区分 secondary の値も確度の判定(今年のイベント期間)に使う。答えでは「公式ではない(出所・日付)」と添える(段階34。利用者の決定)。
 approved_hosts:
-  source: "ユーザーの承認(指示書 3-5、2026-10-31)。増やすのはユーザーだけ"
+  source: "ユーザーの承認(指示書 3-5、2026-10-31)。段階34: この一覧は「公式」の区分の判定にだけ使う(読む先の限定ではない)"
   hosts: [kanagawaparks.com, sankeien.or.jp, kanagawa-kankou.or.jp, www.welcome.city.yokohama.jp]
 
 # 段階 → 答えの区分
@@ -91,6 +91,7 @@ text:
   item_official: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」、{when}。出典: {url}"
   item_official_mapped: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」({stage})、{when}。出典: {url}"
   item_event: "{name}({city_kind}) — 確度: 今年のイベント期間つき。「{event}」{start}〜{end}。出典: {url}"
+  secondary_note: "(公式ではない情報: {host})"
   item_typical: "{name}({city_kind}) — 確度: 例年の時期のみ。例年 {start}〜{end}(今年の公式の情報は確認できていません)。出典: {url}"
   early_official: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」、{when}。見頃はこれからです。来週以降です"
   early_window: "{name}({city_kind}) — 確度: 例年の時期のみ。例年の時期は {start} ごろからです(今年の公式の情報は確認できていません)。来週以降です"
@@ -114,7 +115,7 @@ text:
 # 答えの本文に出してはいけない語(指示書 3-6)。URL の中は数えない。コードの自己検査(forbidden_found)と文字列検査のテストが使う
 forbidden_terms: [簡易な読み取り, 承認待ち, 承認待ちの情報源, 作業メモ, reader, 規則, record, status_log, v0, 参照数は付けられませんでした, カタログにない]
 
-# 花の名所の座標(段階33 1-1。指示書 2026-10-31)。取得元は 2 つだけ: 承認した通信先の公式の地図(official_map)/ 承認済みの places-fetch と同じ Wikidata(wikidata)。
+# 花の名所の座標(段階33 1-1。指示書 2026-10-31)。取得元は 2 つだけ: 公式の通信先の地図(official_map)/ 承認済みの places-fetch と同じ Wikidata(wikidata)。
 # 名称と所在(都道府県・市区町村)で照合し、絞れない・一致しない・範囲の外のときは座標を入れない(安全側)。
 coordinates:
   source: "ユーザーの指示(段階33 1-1、2026-10-31)。範囲の目安は指示書の値(暫定)"

@@ -93,7 +93,7 @@
 
 ## 3. iNaturalist
 
-**状態: ユーザー確認済み(2026-10-21)**。ユーザーが利用規約と API の推奨手順を確認し、ikimono の使い方(集計値だけ・学習に使わない・個人の非商用の下調べ)は適合と判断した。答えを組み立てるときは方針 `ikimonobiyori/data/sources/policy.yaml` の `data_terms.inaturalist`(`status: user_confirmed`)を読み、「人の目でまだ確認していない」と答えない(段階17 修正⑦)。Claude Code 自身は規約の原文を読めていない(HTTP 403)。実通信はこれまでどおり biyori-hub の計測フックの下で、その場の承認があるときだけ。
+**状態: ユーザー確認済み(2026-10-21)**。ユーザーが利用規約と API の推奨手順を確認し、ikimono の使い方(集計値だけ・学習に使わない・個人の非商用の下調べ)は適合と判断した。答えを組み立てるときは方針 `ikimonobiyori/data/sources/policy.yaml` の `data_terms.inaturalist`(`status: user_confirmed`)を読み、「人の目でまだ確認していない」とは書かない(段階17 修正⑦)。Claude Code 自身は規約の原文を読めていない(HTTP 403)。実通信はこれまでどおり biyori-hub の計測フックの下で、その場の承認があるときだけ。
 
 | URL | 結果 |
 |---|---|

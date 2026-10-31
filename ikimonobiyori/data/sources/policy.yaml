@@ -215,7 +215,7 @@ unimplemented:
   related_text: "近い対象の「{related}」ならお答えできます。"
   related: {cherry_blossom: flowers, higanbana: flowers, sunflower: flowers}
 
-# データ源の利用条件の確認の状態(段階17 修正⑦の 4)。答えを組み立てるときはここを読む(未確認と答えない)。正本の記録は docs/data-sources.md
+# データ源の利用条件の確認の状態(段階17 修正⑦の 4)。答えを組み立てるときはここを読む(「未確認」とは書かない)。正本の記録は docs/data-sources.md
 data_terms:
   inaturalist: {status: user_confirmed, checked_on: "2026-10-21", ref: "docs/data-sources.md §3", note: "ユーザーが規約と API の推奨手順を確認し、集計値だけを使う使い方は適合と判断。Claude Code は原文を読めていない(HTTP 403)。実通信は計測フックの下で、その場の承認があるときだけ(CLAUDE.md 規則 6)"}
 

@@ -166,8 +166,11 @@ class Later(unittest.TestCase):
                 T.site("hana-0004", "試験の遠い園", ["秋バラ"], windows=[T.win("秋バラ", "12-20", "12-30")])]
         t = T.answer_text(ents, [T.mkrec("hana-0001", "バラ", "終了")], nearby=False)
         later = "\n".join(T.section(t, H_LATER))
-        for n in ("試験の終盤園", "試験の印つき時期園", "試験の印つきイベント園", "試験の遠い園"):
+        # 段階34で書き換え(旧: 印つき(承認外ホスト)の時期・イベントの園も「来週以降」に出ない。新: 紹介サイトの値も使うので出る)
+        for n in ("試験の終盤園", "試験の遠い園"):
             self.assertNotIn(n, later)
+        for n in ("試験の印つき時期園", "試験の印つきイベント園"):
+            self.assertIn(n, later)
 
     def test_6_no_match_means_no_heading_and_max_three(self):
         t = T.answer_text(T.IN_KANAGAWA, [], nearby=False)

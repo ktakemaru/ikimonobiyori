@@ -6,6 +6,7 @@
 値・語・文は方針に置き、ここには持たない(CLAUDE.md 規則 1)。既存の答え(answer.py)は変えない。"""
 import re
 import unicodedata
+from urllib.parse import urlparse
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -156,11 +157,16 @@ def kind_windows(entry, kind):
     return []
 
 
+def is_secondary(v):
+    """出所の区分が紹介サイトなど(secondary)か(段階34。旧い印 unapproved_host も同じに扱う)。値は捨てずに使い、出所を添える。"""
+    return v.get("source_class") == "secondary" or bool(v.get("unapproved_host"))
+
+
 def event_hits(entry, kind, dates):
     """今年の(確認できた)イベント期間が対象の日を含むもの。前年以前・未確認の期間は使わない(例年の時期の根拠にだけなる)。"""
     out = []
     for ev in entry.get("events") or []:
-        if ev["kind"] != kind or not ev.get("verified") or ev.get("unapproved_host"):    # 承認外のホスト由来の値は確度の判定に使わない
+        if ev["kind"] != kind or not (ev.get("verified") or is_secondary(ev)):    # 紹介サイトなど(secondary)の値も使う(段階34。出所の区分は item に残る)
             continue
         s, e = date.fromisoformat(ev["start"]), date.fromisoformat(ev["end"])
         if ev["year"] != s.year or not any(d.year == ev["year"] and s <= d <= e for d in dates):
@@ -224,7 +230,7 @@ def evaluate_kind(entry, kind, rows, dates, rp, policy, on):
     hits = record_events(rows, dates) or event_hits(entry, kind, dates)
     wins = kind_windows(entry, kind)
     in_win = [w for w in wins if window_hits(w, dates)]
-    in_win_ok = [w for w in in_win if not w.get("unapproved_host")]              # 承認外のホスト由来の時期は「今年のイベント期間つき」の重なりに使わない
+    in_win_ok = in_win                                                            # 紹介サイトなど(secondary)の時期も使う(段階34)
     if hits and in_win_ok:
         ev = hits[0]
         return {"kind": kind, "tier": "event_period", "group": "recommend", "event": ev, "window": in_win_ok[0]}
@@ -232,11 +238,11 @@ def evaluate_kind(entry, kind, rows, dates, rp, policy, on):
         return {"kind": kind, "tier": "typical_only", "group": "recommend", "window": in_win[0]}
     within = _val(rp["later"]["within_days"])
     # 来週以降(段階33): 今年のイベント期間(確認できたもの)が対象の最初の日から within 日以内に始まる → 例年の時期が within 日以内に始まる
-    evs = [ev for ev in entry.get("events") or [] if ev["kind"] == kind and ev.get("verified") and not ev.get("unapproved_host")
+    evs = [ev for ev in entry.get("events") or [] if ev["kind"] == kind and (ev.get("verified") or is_secondary(ev))
            and ev["year"] == date.fromisoformat(ev["start"]).year and 0 < (date.fromisoformat(ev["start"]) - min(dates)).days <= within]
     if evs:
         return {"kind": kind, "tier": "event_period", "group": "upcoming", "event": sorted(evs, key=lambda x: x["start"])[0]}
-    near = [w for w in wins if not w.get("unapproved_host") and 0 < (window_start_after(w, min(dates)) - min(dates)).days <= within]
+    near = [w for w in wins if 0 < (window_start_after(w, min(dates)) - min(dates)).days <= within]
     if near:
         return {"kind": kind, "tier": "typical_only", "group": "upcoming", "window": near[0]}
     return None
@@ -306,6 +312,14 @@ def source_url(entry, item=None):
     return (entry.get("official_status_url") or (entry.get("sources") or [{}])[0].get("url"))
 
 
+def secondary_note(v, rp):
+    """紹介サイトなど(secondary)の値に添える出所の一言(段階34)。公式の値には何も付けない。"""
+    if not is_secondary(v):
+        return ""
+    host = v.get("source_host") or urlparse(v.get("source_url") or "").hostname or ""
+    return rp["text"]["secondary_note"].format(host=host)
+
+
 def item_lines(ev, rp, policy, on):
     """おすすめ 1 名所の行(種類ごとに確度が違えば、同じ行に『/』でつなぐ)。"""
     t = rp["text"]
@@ -319,10 +333,11 @@ def item_lines(ev, rp, policy, on):
         elif it["tier"] == "event_period":
             ev_ = it["event"]
             parts.append(t["item_event"].format(name="{name}", city_kind="{ck}", event=ev_["name"], start=_mmdd(date.fromisoformat(ev_["start"])),
-                                                end=_mmdd(date.fromisoformat(ev_["end"])), url=source_url(e, it)))
+                                                end=_mmdd(date.fromisoformat(ev_["end"])), url=source_url(e, it)) + secondary_note(ev_, rp))
         else:
             w = it["window"]
-            parts.append(t["item_typical"].format(name="{name}", city_kind="{ck}", start=_mmdd_str(w["start"]), end=_mmdd_str(w["end"]), url=source_url(e, it)))
+            parts.append(t["item_typical"].format(name="{name}", city_kind="{ck}", start=_mmdd_str(w["start"]), end=_mmdd_str(w["end"]), url=source_url(e, it))
+                         + secondary_note(w, rp))
     ck = city_kind(e, ev["items"])
     first = parts[0].replace("{name}", f"**{e['name']}**").replace("{ck}", ck)
     rest = [p.split(" — ", 1)[1] for p in parts[1:]]
