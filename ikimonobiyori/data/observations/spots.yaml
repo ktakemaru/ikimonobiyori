@@ -1,0 +1,496 @@
+# 観察の記録(段階34)で使う名所の一覧。ikimonobiyori/observations.py が読む(通信しない)。
+# - typical: 例年の見頃の原文(取得元・年・出所の区分つき)。start/end はコードが原文の旬(上旬・中旬・下旬)から作る(方針 policy.yaml の month_thirds)。
+# - 紅葉(神奈川): 2026-11-01 に Claude Code が tenki.jp(神奈川県の紅葉見頃時期 2026。https://tenki.jp/kouyou/3/17/)と
+#   ウォーカープラス(神奈川の紅葉名所ランキング・一覧。https://koyo.walkerplus.com/ranking/ar0314/)を読んで、名前・市区町村・例年の見頃を書き写した。
+# - 座標(point)は持たない。既存の名所カタログに同じ名所があれば catalog_ref で座標・標高を借りる(座標は Wikidata か公式の地図で確かめたものだけ入れる。指示書 4-3)。
+# - 公式の運営者のページが見つからない名所も外さない(紹介サイトの情報で載せる)。
+schema: ikimono-spots/1
+spots:
+  - id: obs-kouyou-0001
+    subject: autumn_leaves
+    name: "箱根美術館"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    catalog_ref: kouyou-0018
+    typical:
+      - {text: "11月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30787.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154535/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30787.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e154535/", publisher: ウォーカープラス, source_class: secondary}
+    search: "箱根美術館 紅葉 色づき"
+  - id: obs-kouyou-0002
+    subject: autumn_leaves
+    name: "三溪園"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    typical:
+      - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34666.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e123975/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/34666.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e123975/", publisher: ウォーカープラス, source_class: secondary}
+    search: "三溪園 紅葉 色づき"
+  - id: obs-kouyou-0003
+    subject: autumn_leaves
+    name: "生田緑地"
+    prefecture: 神奈川県
+    city: 川崎市多摩区
+    area: 川崎
+    typical:
+      - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30830.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30830.html", publisher: tenki.jp, source_class: secondary}
+    search: "生田緑地 紅葉 色づき"
+  - id: obs-kouyou-0004
+    subject: autumn_leaves
+    name: "奥湯河原"
+    prefecture: 神奈川県
+    city: 湯河原町
+    area: 湯河原
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30103.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30103.html", publisher: tenki.jp, source_class: secondary}
+    search: "奥湯河原 紅葉 色づき"
+  - id: obs-kouyou-0005
+    subject: autumn_leaves
+    name: "鶴岡八幡宮"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30106.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30106.html", publisher: tenki.jp, source_class: secondary}
+    search: "鶴岡八幡宮 紅葉 色づき"
+  - id: obs-kouyou-0006
+    subject: autumn_leaves
+    name: "万葉公園(湯河原)"
+    prefecture: 神奈川県
+    city: 湯河原町
+    area: 湯河原
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30714.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30714.html", publisher: tenki.jp, source_class: secondary}
+    search: "万葉公園 紅葉 色づき"
+  - id: obs-kouyou-0007
+    subject: autumn_leaves
+    name: "大雄山最乗寺"
+    prefecture: 神奈川県
+    city: 南足柄市
+    area: 足柄
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30107.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154527/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30107.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e154527/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大雄山最乗寺 紅葉 色づき"
+  - id: obs-kouyou-0008
+    subject: autumn_leaves
+    name: "アネスト岩田 ターンパイク箱根"
+    prefecture: 神奈川県
+    city: 小田原市
+    area: 箱根
+    typical:
+      - {text: "10月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30281.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30281.html", publisher: tenki.jp, source_class: secondary}
+    search: "ターンパイク箱根 紅葉 色づき"
+  - id: obs-kouyou-0009
+    subject: autumn_leaves
+    name: "震生湖"
+    prefecture: 神奈川県
+    city: 秦野市
+    area: 丹沢・大山
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30689.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30689.html", publisher: tenki.jp, source_class: secondary}
+    search: "震生湖 紅葉 色づき"
+  - id: obs-kouyou-0010
+    subject: autumn_leaves
+    name: "箱根強羅公園"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30786.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13129/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30786.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e13129/", publisher: ウォーカープラス, source_class: secondary}
+    search: "箱根強羅公園 紅葉 色づき"
+  - id: obs-kouyou-0011
+    subject: autumn_leaves
+    name: "BIOTOPIA"
+    prefecture: 神奈川県
+    city: 大井町
+    area: 足柄
+    typical:
+      - {text: "11月20日頃", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30858.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30858.html", publisher: tenki.jp, source_class: secondary}
+    search: "BIOTOPIA 紅葉 色づき"
+  - id: obs-kouyou-0012
+    subject: autumn_leaves
+    name: "横浜市立金沢動物園"
+    prefecture: 神奈川県
+    city: 横浜市金沢区
+    area: 横浜
+    typical:
+      - {text: "11月上旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30806.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154538/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30806.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e154538/", publisher: ウォーカープラス, source_class: secondary}
+    search: "横浜市立金沢動物園 紅葉 色づき"
+  - id: obs-kouyou-0013
+    subject: autumn_leaves
+    name: "相模湖「嵐山」"
+    prefecture: 神奈川県
+    city: 相模原市緑区
+    area: 相模原
+    typical:
+      - {text: "10月下旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34653.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/34653.html", publisher: tenki.jp, source_class: secondary}
+    search: "相模湖「嵐山」 紅葉 色づき"
+  - id: obs-kouyou-0014
+    subject: autumn_leaves
+    name: "丹沢湖"
+    prefecture: 神奈川県
+    city: 山北町
+    area: 丹沢・大山
+    typical:
+      - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30108.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+      - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13171/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30108.html", publisher: tenki.jp, source_class: secondary}
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e13171/", publisher: ウォーカープラス, source_class: secondary}
+    search: "丹沢湖 紅葉 色づき"
+  - id: obs-kouyou-0015
+    subject: autumn_leaves
+    name: "弘法山"
+    prefecture: 神奈川県
+    city: 秦野市
+    area: 丹沢・大山
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30690.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30690.html", publisher: tenki.jp, source_class: secondary}
+    search: "弘法山 紅葉 色づき"
+  - id: obs-kouyou-0016
+    subject: autumn_leaves
+    name: "小田急 山のホテル"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "10月下旬～11月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30790.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30790.html", publisher: tenki.jp, source_class: secondary}
+    search: "小田急 山のホテル 紅葉 色づき"
+  - id: obs-kouyou-0017
+    subject: autumn_leaves
+    name: "源氏山公園"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30755.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30755.html", publisher: tenki.jp, source_class: secondary}
+    search: "源氏山公園 紅葉 色づき"
+  - id: obs-kouyou-0018
+    subject: autumn_leaves
+    name: "中川温泉"
+    prefecture: 神奈川県
+    city: 山北町
+    area: 丹沢・大山
+    typical:
+      - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30772.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://tenki.jp/kouyou/3/17/30772.html", publisher: tenki.jp, source_class: secondary}
+    search: "中川温泉 紅葉 色づき"
+  - id: obs-kouyou-0019
+    subject: autumn_leaves
+    name: "大山寺・大山阿夫利神社下社"
+    prefecture: 神奈川県
+    city: 伊勢原市
+    area: 丹沢・大山
+    catalog_ref: kouyou-0020
+    typical:
+      - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e12675/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e12675/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大山寺・大山阿夫利神社下社 紅葉 色づき"
+  - id: obs-kouyou-0020
+    subject: autumn_leaves
+    name: "県立相模原公園 メタセコイア並木"
+    prefecture: 神奈川県
+    city: 相模原市南区
+    area: 相模原
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e373272/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e373272/", publisher: ウォーカープラス, source_class: secondary}
+    search: "県立相模原公園 紅葉 色づき"
+  - id: obs-kouyou-0021
+    subject: autumn_leaves
+    name: "箱根(芦ノ湖)"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "10月下旬～11月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13109/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e13109/", publisher: ウォーカープラス, source_class: secondary}
+    search: "箱根 紅葉 色づき"
+  - id: obs-kouyou-0022
+    subject: autumn_leaves
+    name: "大涌谷"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "10月下旬～11月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322099/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322099/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大涌谷 紅葉 色づき"
+  - id: obs-kouyou-0023
+    subject: autumn_leaves
+    name: "箱根(湯本)"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13013/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e13013/", publisher: ウォーカープラス, source_class: secondary}
+    search: "箱根 紅葉 色づき"
+  - id: obs-kouyou-0024
+    subject: autumn_leaves
+    name: "県立三ツ池公園"
+    prefecture: 神奈川県
+    city: 横浜市鶴見区
+    area: 横浜
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e392382/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e392382/", publisher: ウォーカープラス, source_class: secondary}
+    search: "県立三ツ池公園 紅葉 色づき"
+  - id: obs-kouyou-0025
+    subject: autumn_leaves
+    name: "根岸森林公園"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    typical:
+      - {text: "11月上旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e393173/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e393173/", publisher: ウォーカープラス, source_class: secondary}
+    search: "根岸森林公園 紅葉 色づき"
+  - id: obs-kouyou-0026
+    subject: autumn_leaves
+    name: "保土ケ谷公園"
+    prefecture: 神奈川県
+    city: 横浜市保土ケ谷区
+    area: 横浜
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e393062/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e393062/", publisher: ウォーカープラス, source_class: secondary}
+    search: "保土ケ谷公園 紅葉 色づき"
+  - id: obs-kouyou-0027
+    subject: autumn_leaves
+    name: "久良岐公園"
+    prefecture: 神奈川県
+    city: 横浜市港南区
+    area: 横浜
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e392572/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e392572/", publisher: ウォーカープラス, source_class: secondary}
+    search: "久良岐公園 紅葉 色づき"
+  - id: obs-kouyou-0028
+    subject: autumn_leaves
+    name: "日本大通り"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e373603/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e373603/", publisher: ウォーカープラス, source_class: secondary}
+    search: "日本大通り 紅葉 色づき"
+  # ---- 丹沢の山(神奈川県 自然公園指導員の紅葉記録。県の公式。例年の見頃の記載はない。2026-11-01 の確認では最新の記録は令和7年=2025年) ----
+  - id: obs-kouyou-0029
+    subject: autumn_leaves
+    name: "丹沢 大山(山頂付近)"
+    prefecture: 神奈川県
+    city: 伊勢原市
+    area: 丹沢・大山
+    elevation_note: "県の記録(2025-10-28): 標高約850メートルで色づき始め、約1000メートル以上でそろそろ見ごろ"
+    typical: []
+    pages:
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県, source_class: official}
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/r710kouyou.html", publisher: 神奈川県, source_class: official}
+    search: "大山 紅葉 色づき 丹沢"
+  - id: obs-kouyou-0030
+    subject: autumn_leaves
+    name: "丹沢 塔ノ岳"
+    prefecture: 神奈川県
+    city: 秦野市
+    area: 丹沢・大山
+    elevation_note: "県の記録(2025-10-17・10-18): 山頂周辺の写真に「そろそろ見ごろ」"
+    typical: []
+    pages:
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県, source_class: official}
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/r710kouyou.html", publisher: 神奈川県, source_class: official}
+    search: "塔ノ岳 紅葉"
+
+  # ---- 花(神奈川)。既存の名所カタログ(data/catalog/flowers.yaml)の名所はそのまま候補に入る(observations.py が都道府県のタグで読む)。
+  #      ここには、カタログにない名所と、カタログの名所に足す例年の時期・行事だけを書く(2026-11-01 に Claude Code が読んだもの) ----
+  - id: obs-hana-0001
+    subject: flowers
+    name: 三溪園
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    catalog_ref: hana-0021
+    flower_kinds: [菊]
+    events:
+      - {name: "菊花展", kind: 菊, start: "2026-10-31", end: "2026-11-23", publisher: 三溪園, url: "https://www.sankeien.or.jp/", source_class: official, checked_on: "2026-11-01"}
+    hours: {text: "9:00～17:00(最終入園 16:30)", url: "https://www.sankeien.or.jp/", checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://www.sankeien.or.jp/", publisher: 三溪園, source_class: official}
+    search: "三溪園 菊花展"
+  - id: obs-hana-0002
+    subject: flowers
+    name: 横浜イングリッシュガーデン
+    prefecture: 神奈川県
+    city: 横浜市西区
+    area: 横浜
+    catalog_ref: hana-0008
+    flower_kinds: [秋バラ]
+    typical:
+      - {text: "10月中旬～11月中旬", kind: 秋バラ, publisher: 横浜市観光情報, url: "https://www.welcome.city.yokohama.jp/hottopics/rose", year: null, source_class: secondary, checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://www.welcome.city.yokohama.jp/hottopics/rose", publisher: 横浜市観光情報, source_class: secondary}
+    search: "横浜イングリッシュガーデン 秋バラ 見頃"
+  - id: obs-hana-0003
+    subject: flowers
+    name: 花菜ガーデン
+    prefecture: 神奈川県
+    city: 平塚市
+    area: 湘南
+    catalog_ref: hana-0006
+    flower_kinds: [秋バラ]
+    events:
+      - {name: "ローズフェスティバル2026～秋～", kind: 秋バラ, start: "2026-10-10", end: "2026-11-08", publisher: 神奈川県観光協会, url: "https://www.kanagawa-kankou.or.jp/event/7882", source_class: secondary, checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://kana-garden.com/", publisher: 花菜ガーデン, source_class: official}
+    search: "花菜ガーデン 秋バラ 開花"
+  - id: obs-hana-0004
+    subject: flowers
+    name: くりはま花の国
+    prefecture: 神奈川県
+    city: 横須賀市
+    area: 三浦半島
+    catalog_ref: hana-0027
+    flower_kinds: [コスモス]
+    typical:
+      - {text: "11月上旬～11月下旬", kind: コスモス, publisher: 神奈川県観光協会, url: "https://kanagawa-kankou.or.jp/event/6763", year: 2025, source_class: secondary, checked_on: "2026-11-01", note: "2025年はコスモス園の開放を11/1～11/24に変更(生育が遅いため)。例年の見頃は9月～10月とする紹介サイトもある"}
+    pages:
+      - {url: "https://www.kanagawaparks.com/kurihama/", publisher: くりはま花の国, source_class: official}
+    search: "くりはま花の国 コスモス 開花状況"
+  - id: obs-hana-0005
+    subject: flowers
+    name: 山手西洋館(山手ローズウィーク)
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    flower_kinds: [秋バラ]
+    events:
+      - {name: "秋の山手ローズウィーク", kind: 秋バラ, start: "2026-11-08", end: "2026-11-15", publisher: ガーデンネックレス横浜, url: "https://gardennecklace.city.yokohama.lg.jp/", source_class: official, checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://gardennecklace.city.yokohama.lg.jp/", publisher: ガーデンネックレス横浜, source_class: official}
+    search: "山手 ローズウィーク 秋"
+
+  # ---- 野鳥(神奈川)。見られる鳥は公式の紹介の原文(季節の記載がなければ、そう書く)。2026-11-01 に Claude Code が読んだもの ----
+  - id: obs-yacho-0001
+    subject: birds
+    name: 県立境川遊水地公園
+    prefecture: 神奈川県
+    city: 横浜市泉区
+    area: 横浜
+    birds_note: {text: "コサギ・アオサギ・カワウ・カモ類・カワセミなどの水辺の鳥。遊水地周辺では約100種類の鳥が確認されています", season: null, url: "https://www.kanagawa-park.or.jp/sakaigawa/nature.html", publisher: 県立境川遊水地公園, checked_on: "2026-11-01"}
+    hours: {text: "10～2月 8:30～17:00(下飯田・今田遊水地は15分早く閉園)", url: "https://www.kanagawa-park.or.jp/sakaigawa/guide.html", checked_on: "2026-11-01"}
+    closed: {text: "12月29日～1月3日", url: "https://www.kanagawa-park.or.jp/sakaigawa/guide.html", checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://sakaigawanature.blogspot.com/", publisher: 県立境川遊水地公園(自然情報), source_class: official}
+      - {url: "https://www.kanagawa-park.or.jp/sakaigawa/nature.html", publisher: 県立境川遊水地公園, source_class: official}
+    search: "境川遊水地 野鳥 観察"
+  - id: obs-yacho-0002
+    subject: birds
+    name: 舞岡公園
+    prefecture: 神奈川県
+    city: 横浜市戸塚区
+    area: 横浜
+    hours: {text: "小谷戸の里 午前9時～午後5時(公園は通年開園)", url: "https://www.city.yokohama.lg.jp/business/kyoso/public-facility/kaku-katsuyou/kankyo/park/keikakuhoukoku/jigyokeikakuhoukoku.files/1013_20260710.pdf", checked_on: "2026-11-01"}
+    closed: {text: "小谷戸の里は毎月第1・3月曜(祝日の場合は翌日)と12月29日～1月3日", url: "https://www.city.yokohama.lg.jp/business/kyoso/public-facility/kaku-katsuyou/kankyo/park/keikakuhoukoku/jigyokeikakuhoukoku.files/1013_20260710.pdf", checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/koen/koen/daihyoteki/maioka.html", publisher: 横浜市, source_class: official}
+    search: "舞岡公園 野鳥"
+  - id: obs-yacho-0003
+    subject: birds
+    name: 横浜自然観察の森
+    prefecture: 神奈川県
+    city: 横浜市栄区
+    area: 横浜
+    catalog_ref: yacho-0004
+    events:
+      - {name: "みんなでバードウォッチング(毎月第二日曜日)", kind: 野鳥, start: null, end: null, publisher: 横浜自然観察の森, url: "https://sancyokohama.sakura.ne.jp/", source_class: official, checked_on: "2026-11-01"}
+      - {name: "秋の森クイズラリー", kind: 自然観察, start: "2026-11-21", end: "2026-11-23", publisher: 横浜自然観察の森, url: "https://sancyokohama.sakura.ne.jp/", source_class: official, checked_on: "2026-11-01"}
+    pages:
+      - {url: "https://sancyokohama.sakura.ne.jp/", publisher: 横浜自然観察の森(日本野鳥の会), source_class: official}
+    search: "横浜自然観察の森 野鳥 観察"
+  - id: obs-yacho-0004
+    subject: birds
+    name: 県立座間谷戸山公園
+    prefecture: 神奈川県
+    city: 座間市
+    area: 相模原
+    pages:
+      - {url: "http://www.zamayatoyama.kanagawa-park.or.jp/birdsalbum/webdir/index.html", publisher: 県立座間谷戸山公園(鳥ごよみ), source_class: official}
+      - {url: "https://www.kanagawa-park.or.jp/zamayatoyama/", publisher: 県立座間谷戸山公園, source_class: official}
+    search: "座間谷戸山公園 野鳥"
+  - id: obs-yacho-0005
+    subject: birds
+    name: 鶴見川多目的遊水地
+    prefecture: 神奈川県
+    city: 横浜市港北区
+    area: 横浜
+    pages: []
+    search: "鶴見川多目的遊水地 野鳥 冬"
+  - id: obs-yacho-0006
+    subject: birds
+    name: 生田緑地
+    prefecture: 神奈川県
+    city: 川崎市多摩区
+    area: 川崎
+    pages: []
+    search: "生田緑地 野鳥"
+  - id: obs-yacho-0007
+    subject: birds
+    name: 県立相模原公園
+    prefecture: 神奈川県
+    city: 相模原市南区
+    area: 相模原
+    pages: []
+    search: "相模原公園 野鳥"
