@@ -133,6 +133,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.44
+      lon: 139.655
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11563016
+      title: 港の見える丘公園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: candidate
     tags:
@@ -149,7 +158,7 @@ entries:
     - url: https://www.city.yokohama.lg.jp/
       title: 横浜市(公園の公式ページは未確認)
       checked_on: '2026-10-31'
-    note: 公園単独の公式ページを確認できなかったので candidate(おすすめに使わない)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 公園単独の公式ページを確認できなかったので candidate(おすすめに使わない)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     flower_windows:
     - kind: 秋バラ
       start: 10-15
@@ -188,6 +197,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.446
+      lon: 139.65
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q5372158
+      title: 山下公園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: candidate
     tags:
@@ -205,13 +223,22 @@ entries:
     - url: https://www.city.yokohama.lg.jp/
       title: 運営者の公式ページは未確認
       checked_on: '2026-10-31'
-    note: 公式ページを確認できなかったので candidate(春の横浜ローズウィークは確認したが秋は見つからず)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 公式ページを確認できなかったので candidate(春の横浜ローズウィークは確認したが秋は見つからず)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
   - id: hana-0010
     name: 山手イタリア山庭園
     subjects:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.437
+      lon: 139.644
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11468699
+      title: 山手イタリア山庭園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -228,7 +255,7 @@ entries:
     - url: https://gardennecklace.city.yokohama.lg.jp/
       title: ガーデンネックレス横浜(横浜市)
       checked_on: '2026-10-31'
-    note: 『山手ローズウィーク』2026年11月8日〜15日(会場が山手イタリア山庭園かは未確認のため events に入れない)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 『山手ローズウィーク』2026年11月8日〜15日(会場が山手イタリア山庭園かは未確認のため events に入れない)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -262,6 +289,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.446
+      lon: 139.624
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11645748
+      title: 野毛山公園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -278,7 +314,7 @@ entries:
     - url: https://www.city.yokohama.lg.jp/nishi/shokai/kanko/spot/hana.html
       title: 横浜市西区役所 花の名所
       checked_on: '2026-10-31'
-    note: 公式の記載は春(4〜5月)の様子だけ。秋は見つからず。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 公式の記載は春(4〜5月)の様子だけ。秋は見つからず。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -289,6 +325,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.433
+      lon: 139.577
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q8054635
+      title: 横浜市こども植物園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -305,7 +350,7 @@ entries:
     - url: https://gardennecklace.city.yokohama.lg.jp/
       title: ガーデンネックレス横浜(横浜市)
       checked_on: '2026-10-31'
-    note: 『秋のバラ園ガイド』2026年9月11日付のお知らせ(日程は本文未確認)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 『秋のバラ園ガイド』2026年9月11日付のお知らせ(日程は本文未確認)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -348,6 +393,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.281
+      lon: 139.129
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q97311103
+      title: 小田原フラワーガーデン
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -363,7 +417,7 @@ entries:
     - url: https://www.kanagawaparks.com/odawarafg/
       title: 小田原フラワーガーデン(指定管理者 小田原フラワーガーデンパートナーズ)
       checked_on: '2026-10-31'
-    note: 開花状況の語と日付は公式ページに書かれていない(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 開花状況の語と日付は公式ページに書かれていない(調査時)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -479,6 +533,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.284
+      lon: 139.659
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11352164
+      title: ヴェルニー公園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -495,7 +558,7 @@ entries:
     - url: https://www.kanagawaparks.com/verny/
       title: ヴェルニー公園(指定管理者 よこすかseasideパートナーズ)
       checked_on: '2026-10-31'
-    note: ブログの『園内バラ状況』(記事の配信日が日付)。10/28付『見頃を迎えております』(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: ブログの『園内バラ状況』(記事の配信日が日付)。10/28付『見頃を迎えております』(調査時)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -528,6 +591,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.417
+      lon: 139.66
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q4249885
+      title: 三溪園
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -544,7 +616,7 @@ entries:
     - url: https://www.sankeien.or.jp/
       title: 三溪園(公益財団法人三溪園保勝会)
       checked_on: '2026-10-31'
-    note: 約240点(2025年。検索の要約)。2026年の期間は公式のトップページに書かれていた(調査時)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 約240点(2025年。検索の要約)。2026年の期間は公式のトップページに書かれていた(調査時)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -572,6 +644,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.251
+      lon: 139.154
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q1013437
+      title: 小田原城
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -588,7 +669,7 @@ entries:
     - url: https://odawaracastle.com/
       title: 小田原城天守閣(小田原市観光協会)
       checked_on: '2026-10-31'
-    note: 本丸広場の菊花展。公式での期間の確認は未了。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 本丸広場の菊花展。公式での期間の確認は未了。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -741,6 +822,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.221
+      lon: 139.704
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11265644
+      title: くりはま花の国
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -756,7 +846,7 @@ entries:
     - url: https://www.kanagawaparks.com/kurihama/
       title: くりはま花の国(指定管理者 くりはまフラワーパートナーズ)
       checked_on: '2026-10-31'
-    note: 2025年は植え付けが遅く開花が11月上旬以降だった(人が検索して得た参考値)。『コスモスまつり開催のお知らせ』(2026-10-27配信)。調査時、『台風25号による被害で閉園中』『10月24日より一部開園』の記載。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 2025年は植え付けが遅く開花が11月上旬以降だった(人が検索して得た参考値)。『コスモスまつり開催のお知らせ』(2026-10-27配信)。調査時、『台風25号による被害で閉園中』『10月24日より一部開園』の記載。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:
@@ -767,6 +857,15 @@ entries:
     - flowers
     timing_type: managed
     kind: area
+    point:
+      lat: 35.194
+      lon: 139.611
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11651467
+      title: 長井海の手公園 ソレイユの丘
+      checked_on: '2026-10-31'
     location_precision: exact
     status: approved
     tags:
@@ -783,7 +882,7 @@ entries:
     - url: https://www.soleil-park.jp/blooming-info
       title: ソレイユの丘(エリアマネジメント横須賀共同事業体)
       checked_on: '2026-10-31'
-    note: 調査時の公式の記載『10/25現在満開です』(コスモス)。座標未確認(公式の地図で確認できていないので point を入れない)
+    note: 調査時の公式の記載『10/25現在満開です』(コスモス)。座標は Wikidata の項目(coordinate_source。段階33。公式の地図では未確認)
     approved_by: claude_code_provisional
     approved_at: '2026-10-31'
     status_sources:

@@ -47,6 +47,7 @@
             "elevation_m": {"type": ["number", "null"], "description": "見る場所の標高(山頂ではない)。不明は null"}
           }
         },
+        "coordinate_source": {"type": "object", "required": ["kind", "checked_on"], "additionalProperties": false, "description": "花の名所の座標の出どころ(段階33)。official_map=承認した通信先の公式の地図 / wikidata=名称と所在で照合した Wikidata の項目(qid)。既存の座標(紅葉・冬鳥・野鳥)には付けない", "properties": {"kind": {"enum": ["official_map", "wikidata"]}, "checked_on": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}, "qid": {"type": "string", "pattern": "^Q\\d+$"}, "title": {"type": "string", "minLength": 1}, "source_url": {"$ref": "#/$defs/url"}}},
         "location_precision": {"enum": ["exact", "area_1km", "area_10km"], "description": "対象ごとの下限より細かい値は検査器が拒否する(data/catalog/policy.yaml)"},
         "sensitive": {"type": "boolean", "description": "希少種・生息地など、位置を粗くすべき件。true なら policy の sensitive_min_location_precision 以上(公開会場の例外なし)"},
         "public_venue": {

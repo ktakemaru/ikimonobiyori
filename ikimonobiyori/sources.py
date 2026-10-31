@@ -1390,7 +1390,7 @@ def main(argv=None, http_get=None):
     rgl.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     rgl.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
     rgl.add_argument("--region", help="地域の呼び名(data/regions.yaml)。指定すると必須の絞り込みになる(距離は使わない)")
-    rgl.add_argument("--flower-kind", action="append", required=True, help="花の種類(複数可。名所の tags.flower_kinds)")
+    rgl.add_argument("--flower-kind", action="append", help="花の種類(複数可。名所の tags.flower_kinds)。省くと対象の日から旬の種類を選ぶ(段階33)")
     rgl.add_argument("--origin", help="地域を指定しないときの出発地(省略すると横浜)")
     a = ap.parse_args(argv)
 
