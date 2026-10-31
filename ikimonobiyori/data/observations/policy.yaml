@@ -1,0 +1,131 @@
+# 観察の記録(段階34。ikimonobiyori/observations.py)の方針。値・語・文はここに置き、コードに持たない(CLAUDE.md 規則 1)。
+# 利用者の決定(2026-11-01、指示書「イキモノビヨリの生まれ変わり」): 古いデータ・公式でない情報で答えを止めない。
+# どの区分の記録も捨てない。新しさの区分は「取りに行く合図」と「確かさの書き方」にだけ使う。
+schema: ikimono-observations-policy/1
+
+subjects: [autumn_leaves, flowers, birds]
+subject_labels: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+
+# 記録の検査
+record:
+  dir: observations                       # IKIMONOBIYORI_DATA_DIR の下
+  max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
+  source_classes: [official, secondary]
+  required: [url, state, source_class]
+
+# 新しさの区分(状態の日付、なければ読んだ日 から 今日まで の日数)。どれも捨てない
+freshness:
+  source: "指示書 4-4(紅葉・花は2日以内、野鳥は7日以内が新しい。14日以内が古い。それより前がかなり古い)"
+  provisional: true
+  fresh_days: {autumn_leaves: 2, flowers: 2, birds: 7}
+  stale_days: 14
+  labels: {fresh: 新しい, stale: 古い, very_stale: かなり古い, none: 記録なし}
+
+# 旬(ハブのコンシェルと同じ。上旬 1〜10 日・中旬 11〜20 日・下旬 21 日〜月末)
+month_thirds: {上旬: [1, 10], 中旬: [11, 20], 下旬: [21, 31]}
+# 「11月20日頃」のような 1 日だけの書き方の前後の幅(日)
+around_days: {value: 5, source: "仮置き(『頃』の幅。根拠のある値ではない)", provisional: true}
+
+# 状態の語の正規化。並びは共通の順番(0 前・1 始まり・2 見頃・3 過ぎ)
+states:
+  autumn_leaves:
+    order: {青葉: 0, 色づき始め: 1, 見頃: 2, 見頃過ぎ: 3}
+    # 原文に含まれる語 → 正規化した語(上から順に照合。最初に当たったもの)
+    words:
+      - [見頃過ぎ, 見頃過ぎ]
+      - [見ごろ過ぎ, 見頃過ぎ]
+      - [落葉, 見頃過ぎ]
+      - [終盤, 見頃過ぎ]
+      - [散り始め, 見頃過ぎ]
+      - [色づき始め, 色づき始め]
+      - [色付き始め, 色づき始め]
+      - [色づきはじめ, 色づき始め]
+      - [そろそろ見ごろ, 色づき始め]
+      - [そろそろ見頃, 色づき始め]
+      - [見頃近し, 色づき始め]
+      - [見頃, 見頃]
+      - [見ごろ, 見頃]
+      - [真っ盛り, 見頃]
+      - [青葉, 青葉]
+      - [まだ, 青葉]
+  flowers:
+    order: {見頃前: 0, 見頃: 2, 見頃過ぎ: 3}
+    # 「N分咲き」(範囲は小さい方)。peak_min 分以上は見頃、それ未満は見頃前
+    bloom_pattern: "([0-9０-９一二三四五六七八九十]+)(?:\\s*[~〜～\\-]\\s*[0-9０-９一二三四五六七八九十]+)?\\s*分咲"
+    peak_min_bu: {value: 8, source: "指示書 4-2(8分以上・満開・見頃→見頃)", provisional: false}
+    words:
+      - [見頃前, 見頃前]
+      - [見ごろ前, 見頃前]
+      - [これから見頃, 見頃前]
+      - [これから見ごろ, 見頃前]
+      - [見頃を迎えます, 見頃前]
+      - [見ごろを迎えます, 見頃前]
+      - [見頃を迎える予定, 見頃前]
+      - [見頃過ぎ, 見頃過ぎ]
+      - [見ごろ過ぎ, 見頃過ぎ]
+      - [終了, 見頃過ぎ]
+      - [終わり, 見頃過ぎ]
+      - [満開, 見頃]
+      - [見頃, 見頃]
+      - [見ごろ, 見頃]
+      - [咲き始め, 見頃前]
+      - [つぼみ, 見頃前]
+    # 品種名・区画だけの「見頃」は園全体の見頃にしない(data/regional/policy.yaml の partial_variety と同じ考え)
+    partial_quoted: "[「『][^」』]+[」』]"
+    partial_words: [品種, 一部, 区画, エリア, ゾーン]
+  birds:
+    order: {}
+    words: []
+unknown_state: 状態不明
+
+# 地域のまとめページ(1 ページで多くの名所の今の状態が分かる。plan の先頭)
+summary_pages:
+  autumn_leaves:
+    神奈川県:
+      - {url: "https://tenki.jp/kouyou/3/17/", publisher: tenki.jp, source_class: secondary, note: "神奈川県の紅葉見頃時期(名所ごとの色づき・例年の見頃)"}
+      - {url: "https://koyo.walkerplus.com/ranking/ar0314/", publisher: ウォーカープラス, source_class: secondary, note: "神奈川の紅葉名所ランキング(例年の見頃)"}
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県, source_class: official, note: "丹沢の紅葉記録の一覧(山の色づき)"}
+  flowers:
+    神奈川県:
+      - {url: "https://gardennecklace.city.yokohama.lg.jp/", publisher: ガーデンネックレス横浜, source_class: official, note: "横浜の花の行事"}
+      - {url: "https://www.kanagawa-kankou.or.jp/", publisher: 神奈川県観光協会, source_class: secondary, note: "県内の花の行事"}
+  birds:
+    神奈川県: []
+search_templates:
+  autumn_leaves: "{name} 紅葉 色づき"
+  flowers: "{name} {kind} 見頃"
+  birds: "{name} 野鳥"
+
+# 1 回の質問で取りに行く上限(指示書 2-通信の作法。答えに必要なら、理由を記録して超えてよい)
+fetch_limits: {searches: 10, pages: 30, minutes: 5, same_host_interval_s: 1, source: "指示書 2-通信の作法", provisional: false}
+
+# facts の並び(指示書 4-5)
+order:
+  # 同じ段の中の確かさの順(小さいほど先)
+  evidence_rank: {fresh_official: 0, fresh_secondary: 1, stale: 2, typical_only: 3}
+  # 対象の日の近く(例年の見頃の前後この日数)を「例年の見頃にかかる」とみなす幅
+  near_days: {value: 7, source: "既存の weekend の near(前後7日)と同じ", provisional: true}
+
+# 関係の語(答えの材料。答えにそのまま使える日本語)
+relation_labels:
+  in_peak: 見頃中の見込み
+  before_peak: 見頃前の見込み
+  after_peak: 見頃過ぎの見込み
+  unknown: 分からない
+reason_labels:
+  most_advanced: 今いちばん進んでいる
+  coming: これから進む
+  peak_now: いま見頃
+  event: 行事がある
+  near: 近い
+  typical_overlaps: 例年の見頃にかかる
+avoid_reasons:
+  too_early: まだ早い(対象の日は例年の見頃の前)
+  past: 見頃を過ぎた
+# 地域の候補が少ないとき、県外を足す下限
+min_candidates: {value: 3, source: "指示書 R2(地域の候補を3件以上)", provisional: false}
+# 地域を指定しない質問の出発地 → 主に見る都道府県
+origin_home: {横浜: 神奈川県, 東京: 東京都}
+
+# 答えに出さない内部用語(facts の文の自己検査)
+forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary, official]

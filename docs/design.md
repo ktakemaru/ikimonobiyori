@@ -115,7 +115,7 @@
   location_precision: exact       # exact / area_1km / area_10km
   typical_window: {start: "11-01", end: "11-15", source_url: "..."}
   official_status_url: "..."      # 今年の状況の公式ページ(人が見る)
-  description: "..."              # 人が承認した短い解説(出典つき)
+  description: "..."              # 人が確かめた短い解説(出典つき)
   access_notes: "..."
   manners: [...]
   site_ref: yamabiyori:m012
