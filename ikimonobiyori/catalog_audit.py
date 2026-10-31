@@ -1,6 +1,7 @@
 """名所カタログ(花)の監査(段階32の続き。通信しない・書き込まない)。
-承認外のホストで読んだ値(flower_windows・events)を一覧にする。印(unapproved_host: true と source_host)のある値は
-『承認または別の公式情報源での確認が必要』。承認した通信先の外なのに印がない値は『印の漏れ』として別に出す(あってはならない)。
+紹介サイトなど(公式ではない)で読んだ値(flower_windows・events)を一覧にする。出所の区分(source_class: secondary と source_host。
+旧い印 unapproved_host も同じ)のある値は、候補の根拠に使い、答えでは出所と日付を添える(段階34)。公式の通信先の外なのに区分がない値は
+『区分の漏れ』として別に出す(出所の記録のため)。
 
   python -X utf8 -m ikimonobiyori.catalog_audit [--subject flowers] [--out <ファイル名>]
 --out を付けると、結果をそのファイルにも書く(既定は画面のみ。--out は書き込み先を指定するので、リポジトリの docs/ などを自分で選ぶ)。
@@ -13,7 +14,7 @@ from urllib.parse import urlparse
 from . import catalog as catalog_mod
 from . import regional
 
-NEEDS = "承認または別の公式情報源での確認が必要"
+NEEDS = "公式ではない出所(答えでは出所と日付を添える)"
 
 
 def audit(doc, hosts):
@@ -24,7 +25,7 @@ def audit(doc, hosts):
             for v in e.get(field) or []:
                 host = urlparse(v["source_url"]).hostname or ""
                 outside = not regional.host_allowed(v["source_url"], hosts)
-                marked = bool(v.get("unapproved_host"))
+                marked = regional.is_secondary(v)
                 row = {"id": e["id"], "name": e["name"], "status": e.get("status"), "field": field, "kind": v["kind"],
                        "start": v["start"], "end": v["end"], "host": host, "source_url": v["source_url"]}
                 if outside and not marked:
@@ -32,7 +33,7 @@ def audit(doc, hosts):
                 elif marked and (not outside or v.get("source_host") != host):
                     bad.append(row)
                 elif marked:
-                    needs.append({**row, "action": NEEDS, "usable_only_for": "例年の時期のみ"})
+                    needs.append({**row, "action": NEEDS, "source_class": "secondary"})
     return {"needs_confirmation": needs, "missing_mark": missing, "bad_mark": bad}
 
 

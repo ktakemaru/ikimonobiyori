@@ -261,11 +261,11 @@ photos:
   search_per_page: {value: 30, source: "仮置き(段階29)。和名の完全一致を探すための 1 回の候補の数", provisional: true}
   max_requests_per_run: {value: 80, source: "ユーザー承認 2026-10-30(承認A。指示書 段階29 §2。1 回の実行の上限)", provisional: false}
   min_interval_s: {value: 1, source: "ユーザー承認 2026-10-30(指示書 段階29 §2。リクエストの間隔は 1 秒以上)", provisional: false}
-  max_image_bytes: {value: 2000000, source: "ユーザー指示 2026-10-30(指示書 段階29 §3。1 枚 2MB を超えたら捨てる)", provisional: false}
+  max_image_bytes: {value: 2000000, source: "ユーザー指示 2026-10-30(指示書 段階29 §3。1 枚 2MB を超えたら使わない)", provisional: false}
   photo_size: medium_url                                  # 中くらいのサイズ(iNaturalist の medium は 500px 前後)
   licenses: {cc0: CC0, cc-by: CC BY, cc-by-sa: CC BY-SA}  # 使ってよいライセンス(iNaturalist の license_code → 表示)。ここにないもの・不明は使わない
   image_hosts: [static.inaturalist.org, inaturalist-open-data.s3.amazonaws.com]   # 写真の実体を取ってよいホスト(承認A)
-  image_types: {jpeg: '\xff\xd8\xff', png: '\x89PNG\r\n\x1a\n', webp: 'RIFF.{4}WEBP'}   # 先頭のバイト列(バイト列の正規表現)。これ以外の形式は捨てる
+  image_types: {jpeg: '\xff\xd8\xff', png: '\x89PNG\r\n\x1a\n', webp: 'RIFF.{4}WEBP'}   # 先頭のバイト列(バイト列の正規表現)。これ以外の形式は使わない
   photo_page_url: "https://www.inaturalist.org/photos/{id}"   # リンクだけ(読まない)
   skip_name_suffixes: ["類"]                              # 「カモ類」など種を特定しない語は対象外(写真を付けない)
   skip_names: [カモ, シギ, チドリ]                          # 単独でも種を特定しない語(段階29b。ユーザー指示 2026-10-31)。優先名以外の名前の照合の対象にもしない
@@ -293,7 +293,7 @@ photos:
     mime_types: [image/jpeg, image/png, image/webp]
     page_hosts: [commons.wikimedia.org]                     # ファイルのページ(リンク)のホスト
     image_hosts: [upload.wikimedia.org]                     # サムネイルの実体のホスト(承認)
-    thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト(承認外)→ 承認済みのホストに置き換える。パスは同じ・クエリは捨てる(段階30。報告に明記)
+    thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト → 配信元のホストに置き換える。パスは同じ・クエリは外す(段階30。報告に明記)
     thumb_path_prefix: /wikipedia/commons/thumb/            # 置き換えてよいパスの先頭
     file_namespace: "6"                                     # Commons のファイルの名前空間
     season_search_limit: {value: 10, source: "仮置き(段階31)。季節の合う写真を探す検索で見る候補の数の上限", provisional: true}

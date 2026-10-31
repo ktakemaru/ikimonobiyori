@@ -165,7 +165,7 @@ entries:
       end: 11-15
       source_url: https://www.city.yokohama.lg.jp/
       source_host: www.city.yokohama.lg.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: 秋バラの最盛期は例年10月中旬〜11月中旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0008
@@ -361,7 +361,7 @@ entries:
       end: 11-30
       source_url: https://gardennecklace.city.yokohama.lg.jp/
       source_host: gardennecklace.city.yokohama.lg.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: 菊花展は例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0014
@@ -474,7 +474,7 @@ entries:
       year: 2026
       source_url: https://www.hakonenavi.jp/gorapark/info/4137/
       source_host: www.hakonenavi.jp
-      unapproved_host: true
+      source_class: secondary
       checked_on: '2026-10-31'
       verified: false
       note: 承認外のホストで確認した値。公式で読み直せていない
@@ -680,7 +680,7 @@ entries:
       end: 11-15
       source_url: https://odawaracastle.com/
       source_host: odawaracastle.com
-      unapproved_host: true
+      source_class: secondary
       source_year: 2026
       note: 2026年の予定の日付(約500鉢、無料)。人が検索して得た参考値(未検証。指示書 2026-10-31)。公式のページでは期間を確認できなかった
   - id: hana-0023
@@ -716,7 +716,7 @@ entries:
       end: 11-24
       source_url: https://www.pref.kanagawa.jp/docs/n8f/cnt/f300562/p327323.html
       source_host: www.pref.kanagawa.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: 2025
       note: 令和7年(2025年)の開催期間。2026年は公式で確認できていない
   - id: hana-0024
@@ -751,7 +751,7 @@ entries:
       end: 11-19
       source_url: https://www.kawasakidaishi.com/
       source_host: www.kawasakidaishi.com
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: ページに『10月29日(木)〜11月19日(木)』とあり年の記載はない(曜日から2026年と推定)。公式のページで年を確認できていない
   - id: hana-0025
@@ -782,7 +782,7 @@ entries:
       end: 11-30
       source_url: https://www.city.hiratsuka.kanagawa.jp/
       source_host: www.city.hiratsuka.kanagawa.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: 例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0026
@@ -813,7 +813,7 @@ entries:
       end: 11-30
       source_url: https://www.city.hiratsuka.kanagawa.jp/
       source_host: www.city.hiratsuka.kanagawa.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: 例年11月。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0027
@@ -893,7 +893,7 @@ entries:
       end: 10-20
       source_url: https://www.soleil-park.jp/blooming-info
       source_host: www.soleil-park.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: キバナコスモスは例年10月上旬〜中旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0029
@@ -925,7 +925,7 @@ entries:
       end: 10-31
       source_url: https://www.city.hiratsuka.kanagawa.jp/
       source_host: www.city.hiratsuka.kanagawa.jp
-      unapproved_host: true
+      source_class: secondary
       source_year: null
       note: 例年10月上旬〜下旬。人が検索して得た参考値(未検証。指示書 2026-10-31)
   - id: hana-0030

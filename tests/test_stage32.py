@@ -395,15 +395,18 @@ class UnapprovedHostValues(unittest.TestCase):
         return regional.evaluate_kind(entry, "秋バラ", [], DATES, RP, POLICY, NOW.date())
 
     def test_marked_event_does_not_make_event_tier(self):
+        # 段階34で書き換え(旧: 印つきのイベントは確度に使わず typical_only。新: 紹介サイトの値も使い event_period。出所の区分が残る)
         e = site("t-1", "試験園", ["秋バラ"], windows=[win("秋バラ", "10-10", "11-08")], events=[marked(ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08"))])
         r = self.ev_kind(e)
-        self.assertEqual((r["tier"], r["group"]), ("typical_only", "recommend"))
+        self.assertEqual((r["tier"], r["group"]), ("event_period", "recommend"))
+        self.assertTrue(regional.is_secondary(r["event"]))
 
     def test_marked_window_does_not_satisfy_event_overlap(self):
         e = site("t-2", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))], events=[ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08")])
         r = self.ev_kind(e)
-        self.assertEqual((r["tier"], r["group"]), ("typical_only", "recommend"))      # 例年の時期のみにしか使えない
-        self.assertTrue(r["window"].get("unapproved_host"))
+        # 段階34で書き換え(旧: typical_only。新: 紹介サイトの時期も重なりに使い event_period。時期の出所の区分は残る)
+        self.assertEqual((r["tier"], r["group"]), ("event_period", "recommend"))
+        self.assertTrue(regional.is_secondary(r["window"]))
 
     def test_unmarked_values_still_reach_event_tier(self):
         e = site("t-3", "試験園", ["秋バラ"], windows=[win("秋バラ", "10-10", "11-08")], events=[ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08")])
@@ -412,9 +415,10 @@ class UnapprovedHostValues(unittest.TestCase):
     def test_marked_values_alone_never_give_a_higher_tier(self):
         e = site("t-4", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))], events=[marked(ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08"))])
         r = self.ev_kind(e)
-        self.assertEqual(r["tier"], "typical_only")
-        self.assertNotIn("event", r)
-        self.assertNotIn("row", r)                                                   # 公式の現況は記録からしか作られない
+        # 段階34で書き換え(旧: typical_only で event なし。新: 紹介サイトの値だけでも event_period。公式の現況(row)は記録からしか作られない)
+        self.assertEqual(r["tier"], "event_period")
+        self.assertTrue(regional.is_secondary(r["event"]))
+        self.assertNotIn("row", r)
 
     def test_schema_accepts_mark_and_check_passes(self):
         doc = {"entries": [site("t-5", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))])]}
@@ -430,7 +434,7 @@ class UnapprovedHostValues(unittest.TestCase):
         e3 = site("t-8", "承認済み園", ["秋バラ"], windows=[{**win("秋バラ", "10-10", "11-08"), "source_url": f"https://www.{hosts[0]}/a"}])
         out = catalog_audit.audit({"entries": [e1, e2, e3]}, hosts)
         self.assertEqual([r["id"] for r in out["needs_confirmation"]], ["t-6"])
-        self.assertEqual(out["needs_confirmation"][0]["action"], "承認または別の公式情報源での確認が必要")
+        self.assertEqual(out["needs_confirmation"][0]["action"], "公式ではない出所(答えでは出所と日付を添える)")   # 段階34で書き換え(旧: 承認または別の公式情報源での確認が必要)
         self.assertEqual([r["id"] for r in out["missing_mark"]], ["t-7"])
         self.assertEqual(out["bad_mark"], [])
         bad = {**win("秋バラ", "10-10", "11-08"), "source_url": f"https://{hosts[0]}/a", "unapproved_host": True, "source_host": hosts[0]}   # 承認済みなのに印
