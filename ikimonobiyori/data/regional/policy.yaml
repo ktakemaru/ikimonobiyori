@@ -14,9 +14,29 @@ state_vocabulary:
   words:
     bud: [つぼみ, 蕾, 蕾の状態, 見頃前, 見ごろ前, 見頃前です, 見ごろ前です]
     starting: [咲き始め, 咲きはじめ, 咲き始めです, 咲きはじめです, 一部咲き, 開花し始め]
-    good: [見頃, 見ごろ, 見頃です, 見ごろです, 見頃（前半）, 見頃（後半）, 見ごろ（前半）, 見ごろ（後半）, 見頃(前半), 見頃(後半)]
+    good: [見頃, 見ごろ, ほぼ満開, ほぼ満開です, 見頃です, 見ごろです, 見頃（前半）, 見頃（後半）, 見ごろ（前半）, 見ごろ（後半）, 見頃(前半), 見頃(後半)]
     full: [満開, 満開です, 最盛期]
     falling: [散り始め, 散り始めです, 終盤, 見頃終盤, 見ごろ終盤, 見頃過ぎ, 見ごろ過ぎ, 見頃を過ぎました, 終わり, 終了, 見頃終了, 花期終了, 見頃は終了しました]
+
+# 「N分咲き」の読み方(段階33 1-3。指示書 2026-10-31)。全角数字・範囲(「２～３分咲き」)を読む。範囲は小さい方の数で判定する
+# (見頃と言い切るのは下限が good_min 以上のときだけ)。good_min 未満は見頃前(bud)。数字が上限(max)を超えるときは読まない。
+bunzaki:
+  source: "指示書(段階33 1-3、2026-10-31)。8 分咲き以上 → 見頃、7 分咲き以下 → 見頃前"
+  provisional: true
+  pattern: '([0-9]+)(?:\s*[～〜~\-－ー]\s*([0-9]+))?\s*分咲き'
+  good_min: 8
+  max: 10
+  below_stage: bud
+  at_or_above_stage: good
+
+# 品種名・区画名だけについて「見頃」と言っている文(「一部の品種が見頃」)。園全体の見頃にしない。おすすめの上位に入れず、答えの末尾に 1 行だけ添える
+# 判定: 状態の文に peak_words のどれかがあり、かつ(かぎかっこで囲んだ名前 quoted_pattern がある、または partial_words のどれかがある)
+partial_variety:
+  source: "指示書(段階33 1-3、2026-10-31)"
+  provisional: true
+  peak_words: [見頃, 見ごろ, 満開]
+  quoted_pattern: "[「『][^」』]+[」』]"
+  partial_words: [品種, 一部, 区画, エリア, ゾーン, 一画]
 
 # 地域を指定した花の答えで読んでよい通信先(ユーザーが承認したもの。段階32・指示書 3-5)。これ以外のホストは読まない(docs/pending-hosts.md)。
 # 名所の flower_windows・events の source_url がこの外のホストなら、source_host と unapproved_host: true の印が要る(catalog_audit が確かめる)。
@@ -44,7 +64,15 @@ past_peak_max_items: {value: 2, source: "指示書 3-3:『見頃を過ぎたと�
 # 公式の現況の新しさ。この区分より古い記録は公式の現況として使わない(data/sources/policy.yaml の freshness の区分名)
 usable_freshness: [fresh, somewhat_old, year_unknown, unknown]
 # 例年の時期が始まる日が対象の最初の日からこの日数以内の名所は「これから」に書く
+later:
+  within_days: {value: 14, source: "指示書(段階33 1-3、2026-10-31): 今後 14 日以内に始まるイベント・例年の時期を「来週以降」の欄に出す", provisional: false}
+  max_items: {value: 3, source: "指示書(段階33 1-3、2026-10-31): 「来週以降に見頃を迎えそうなもの」は最大 3 件", provisional: false}
+# (旧)例年の時期が始まる日が対象の最初の日からこの日数以内の名所。段階33 から「来週以降」の欄は上の later を使う(この値は参考に残す)
 upcoming_within_days: {value: 30, source: "仮置き(段階32)。data/sources/policy.yaml の answer.upcoming_within_days と同じ", provisional: true}
+
+# 通年の花カレンダー(段階33 1-4)。--flower-kind を省くと、対象の日にかかる例年の時期(名所の flower_windows)を持つ花の種類を選ぶ
+calendar:
+  min_entries: {value: 3, source: "仮置き(段階33)。おすすめの下限(data/sources/policy.yaml の recommend.top_min)と同じ。指定地域内の登録がこれ未満の旬の種類は、答えの末尾に 1 行で書く", provisional: true}
 
 # 答えの文
 text:
@@ -57,15 +85,19 @@ text:
   origin_line: "出発地: {origin}(距離は{origin}からの直線距離。{max_km} km より先は範囲の外、{edge_km}〜{max_km} km は範囲の端)"
   no_sites_in_region: "{region}の{kinds}の名所は、名所の一覧にまだありません。"
   add_hint: "追加の候補: {region}の県立公園・植物園・市の観光協会など、運営者が花だよりや開花情報を出している公式ページ。"
-  headings: {recommend: おすすめ, early: これからのもの, past: 見頃を過ぎたとみられるもの, unreadable: 状態を読み取れなかったもの, nearby: 近隣(県外です), unread: 公式の現況を読めなかった名所, notes: 注意}
+  headings: {recommend: おすすめ, early: 来週以降に見頃を迎えそうなもの, past: 見頃を過ぎたとみられるもの, unreadable: 状態を読み取れなかったもの, nearby: 近隣(県外です), unread: 公式の現況を読めなかった名所, notes: 注意}
   tier_label: "確度: {label}"
   # おすすめの行。{city_kind} は「平塚市・秋バラ」
   item_official: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」、{when}。出典: {url}"
   item_official_mapped: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」({stage})、{when}。出典: {url}"
   item_event: "{name}({city_kind}) — 確度: 今年のイベント期間つき。「{event}」{start}〜{end}。出典: {url}"
   item_typical: "{name}({city_kind}) — 確度: 例年の時期のみ。例年 {start}〜{end}(今年の公式の情報は確認できていません)。出典: {url}"
-  early_official: "{name}({city_kind}) — 公式の状態「{state}」、{when}。見頃はこれからです"
-  early_window: "{name}({city_kind}) — 例年の時期は {start} ごろからです"
+  early_official: "{name}({city_kind}) — 確度: 公式の現況。公式の状態「{state}」、{when}。見頃はこれからです。来週以降です"
+  early_window: "{name}({city_kind}) — 確度: 例年の時期のみ。例年の時期は {start} ごろからです(今年の公式の情報は確認できていません)。来週以降です"
+  early_event: "{name}({city_kind}) — 確度: 今年のイベント期間つき。「{event}」は {start}〜{end} の予定です。来週以降です"
+  partial_item: "{name}(公式の記載「{state}」、{when})"
+  calendar_few: "{region}で今が旬の{kinds}は、登録している名所がまだ少なめです。ほかの名所は、公式の花だよりで確かめてください。"
+  partial_line: "一部の品種が見頃のところ: {items}。園全体が見頃かどうかは読み取れないため、おすすめには入れていません。"
   past_official: "{name}({city_kind}) — 公式の状態「{state}」、{when}。見頃を過ぎたとみられるため、おすすめには入れていません"
   unreadable_official: "{name}({city_kind}) — 公式の状態は「{state}」、{when}。この表現だけでは見頃かどうか判断できないため、おすすめには入れていません"
   unread_approved: "{name}({city_kind}) — 公式の現況を読めませんでした。公式ページ: {url}"
@@ -81,3 +113,14 @@ text:
 
 # 答えの本文に出してはいけない語(指示書 3-6)。URL の中は数えない。コードの自己検査(forbidden_found)と文字列検査のテストが使う
 forbidden_terms: [簡易な読み取り, 承認待ち, 承認待ちの情報源, 作業メモ, reader, 規則, record, status_log, v0, 参照数は付けられませんでした, カタログにない]
+
+# 花の名所の座標(段階33 1-1。指示書 2026-10-31)。取得元は 2 つだけ: 承認した通信先の公式の地図(official_map)/ 承認済みの places-fetch と同じ Wikidata(wikidata)。
+# 名称と所在(都道府県・市区町村)で照合し、絞れない・一致しない・範囲の外のときは座標を入れない(安全側)。
+coordinates:
+  source: "ユーザーの指示(段階33 1-1、2026-10-31)。範囲の目安は指示書の値(暫定)"
+  provisional: true
+  allowed_sources: [official_map, wikidata]
+  decimals: 3
+  bounds_by_prefecture:
+    神奈川県: {lat: [35.1, 35.7], lon: [138.9, 139.8]}
+  ambiguous_description_words: [曖昧さ回避]

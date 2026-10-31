@@ -4,7 +4,9 @@
 - 確度: 公式の現況 / 今年のイベント期間つき / 例年の時期のみ(答えでは日本語。記号は出さない)。
 - 見頃を過ぎたもの・状態を読み取れなかったものはおすすめに入れない(語彙は方針 data/regional/policy.yaml)。
 値・語・文は方針に置き、ここには持たない(CLAUDE.md 規則 1)。既存の答え(answer.py)は変えない。"""
-from datetime import date
+import re
+import unicodedata
+from datetime import date, timedelta
 from pathlib import Path
 
 import yaml
@@ -27,13 +29,36 @@ def _val(x):
 
 # ---- 状態の語 → 段階 ----
 
+def bunzaki_stage(raw, rp):
+    """「N分咲き」(全角数字・範囲も)→ 段階の id。範囲は小さい方の数で判定(見頃と言い切るのは下限が good_min 以上のときだけ)。読めなければ None。"""
+    cfg = rp["bunzaki"]
+    nums = []
+    for m in re.finditer(cfg["pattern"], unicodedata.normalize("NFKC", raw or "")):
+        nums += [int(g) for g in m.groups() if g]
+    if not nums or max(nums) > cfg["max"]:
+        return None
+    return cfg["at_or_above_stage"] if min(nums) >= cfg["good_min"] else cfg["below_stage"]
+
+
+def is_partial_variety(raw, rp):
+    """品種名・区画名だけについて「見頃」と言っている文か(園全体の見頃にしない)。"""
+    cfg = rp["partial_variety"]
+    s = unicodedata.normalize("NFKC", raw or "")
+    if not any(w in s for w in cfg["peak_words"]):
+        return False
+    return bool(re.search(unicodedata.normalize("NFKC", cfg["quoted_pattern"]), raw or "")) or any(w in s for w in cfg["partial_words"])
+
+
 def vocab_stage(raw, rp):
-    """公式の状態の語 → 段階の id。表にない語は None(推測しない)。完全一致(前後の空白だけ除く)。"""
+    """公式の状態の語 → 段階の id。表にない語は None(推測しない)。完全一致(前後の空白だけ除く)。
+    完全一致しなければ「N分咲き」を読む(品種名だけの「見頃」の文は読まない)。"""
     s = (raw or "").strip()
     for st, words in rp["state_vocabulary"]["words"].items():
         if s in words:
             return st
-    return None
+    if is_partial_variety(s, rp):
+        return None
+    return bunzaki_stage(s, rp)
 
 
 def row_stage(row, rp):
@@ -49,6 +74,32 @@ def group_of(stage, rp):
         if stage in ids:
             return g
     return None
+
+
+# ---- 通年の花カレンダー(段階33 1-4): 対象の日から旬の花の種類を選ぶ ----
+
+def seasonal_kinds(entries, dates, rp):
+    """承認した名所の flower_windows(種類ごとの例年の時期)のうち、対象の日にかかる種類 → {種類: {start, end, n}}。
+    start・end は、その種類の例年の時期の中で最も早い始まり・最も遅い終わり(名所のカタログの値。出典つき)。花の種類の表は持たない(カタログが正本)。"""
+    out = {}
+    for e in entries:
+        for w in e.get("flower_windows") or []:
+            if window_hits(w, dates):
+                o = out.setdefault(w["kind"], {"start": w["start"], "end": w["end"], "ids": set()})
+                o["start"], o["end"] = min(o["start"], w["start"]), max(o["end"], w["end"])
+                o["ids"].add(e["id"])
+    return {k: {"start": v["start"], "end": v["end"], "n": len(v["ids"])} for k, v in sorted(out.items())}
+
+
+def few_kinds(kinds, region, entries, rp):
+    """旬の種類のうち、指定地域内の登録(tags.flower_kinds に持つ承認した名所)が calendar.min_entries 未満の種類。"""
+    need = _val(rp["calendar"]["min_entries"])
+    res = []
+    for k in kinds:
+        n = sum(1 for e in entries if k in ((e.get("tags") or {}).get("flower_kinds") or []) and (region is None or S.in_region(e, region)))
+        if n < need:
+            res.append(k)
+    return res
 
 
 # ---- 行 → 花の種類 ----
@@ -165,6 +216,8 @@ def evaluate_kind(entry, kind, rows, dates, rp, policy, on):
         g = group_of(st, rp)
         item = {"kind": kind, "tier": "official_status", "row": r, "stage": st, "stage_label": r.get("stage_label"),
                 "state": r["official_state"], "when": when_text(r, on, rp, policy), "url": r.get("url")}
+        if g is None and is_partial_variety(r["official_state"], rp):      # 品種名だけの「見頃」: 園全体の見頃にしない
+            return {**item, "group": "partial"}
         if g is None:                                   # 「ブラウンがメイン」「咲いています」など、段階にできない語
             return {**item, "group": "unreadable"}
         return {**item, "group": g}
@@ -177,7 +230,13 @@ def evaluate_kind(entry, kind, rows, dates, rp, policy, on):
         return {"kind": kind, "tier": "event_period", "group": "recommend", "event": ev, "window": in_win_ok[0]}
     if in_win:
         return {"kind": kind, "tier": "typical_only", "group": "recommend", "window": in_win[0]}
-    near = [w for w in wins if 0 < (window_start_after(w, min(dates)) - min(dates)).days <= _val(rp["upcoming_within_days"])]
+    within = _val(rp["later"]["within_days"])
+    # 来週以降(段階33): 今年のイベント期間(確認できたもの)が対象の最初の日から within 日以内に始まる → 例年の時期が within 日以内に始まる
+    evs = [ev for ev in entry.get("events") or [] if ev["kind"] == kind and ev.get("verified") and not ev.get("unapproved_host")
+           and ev["year"] == date.fromisoformat(ev["start"]).year and 0 < (date.fromisoformat(ev["start"]) - min(dates)).days <= within]
+    if evs:
+        return {"kind": kind, "tier": "event_period", "group": "upcoming", "event": sorted(evs, key=lambda x: x["start"])[0]}
+    near = [w for w in wins if not w.get("unapproved_host") and 0 < (window_start_after(w, min(dates)) - min(dates)).days <= within]
     if near:
         return {"kind": kind, "tier": "typical_only", "group": "upcoming", "window": near[0]}
     return None
@@ -194,7 +253,7 @@ def evaluate_site(entry, kinds, rows, dates, rp, policy, on, registry):
             items.append(it)
     if not items:
         return None
-    for g in ("recommend", "early", "unreadable", "upcoming", "past"):
+    for g in ("recommend", "early", "partial", "unreadable", "upcoming", "past"):
         sel = [i for i in items if i["group"] == g]
         if sel:
             rank = min(rp["tiers"][i["tier"]]["rank"] for i in sel)
@@ -277,6 +336,10 @@ def _simple_line(ev, key, rp, policy, on):
     ck = city_kind(e, ev["items"])
     if "row" in it:
         return t[key].format(name=e["name"], city_kind=ck, state=it["state"], when=it["when"])
+    if "event" in it:
+        evn = it["event"]
+        return t["early_event"].format(name=e["name"], city_kind=ck, event=evn["name"], start=_mmdd(date.fromisoformat(evn["start"])),
+                                       end=_mmdd(date.fromisoformat(evn["end"])))
     w = it["window"]
     return t[key].format(name=e["name"], city_kind=ck, start=_mmdd_str(w["start"]))
 
@@ -298,7 +361,7 @@ def forbidden_found(text, rp):
     return [t for t in rp["forbidden_terms"] if t in body]
 
 
-def compose(*, region, kinds, dates, now, part, nearby_part=None, origin=None, resolve=None, policy=None):
+def compose(*, region, kinds, dates, now, part, nearby_part=None, origin=None, resolve=None, policy=None, seasonal=False):
     """→ 答えの文字列。region は regions.yaml の地域(None なら距離で絞る)。part は answer_parts の flowers の部品(地域・花の種類で絞ったもの)。
     nearby_part は地域を絞らない部品(指定地域内の候補が少ないときの近隣。範囲内だけ使う)。"""
     rp = load_policy()
@@ -363,16 +426,13 @@ def compose(*, region, kinds, dates, now, part, nearby_part=None, origin=None, r
         for i, x in enumerate(rec_shown, 1):
             lines.append(f"{i}. " + attach_ref(item_lines(x, rp, policy, on), x, resolve, stats))
         lines.append("")
-    for g, key, line_key in (("early", "early", "early_official"), ("upcoming", "early", "early_window")):
-        grp = by(g)
-        if grp:
-            if g == "early":
-                lines.append(f"## {h['early']}")
-            for x in grp:
-                lines.append("- " + _simple_line(x, line_key, rp, policy, on))
-            if g == "upcoming" and not by("early"):
-                pass
-    if by("early") or by("upcoming"):
+    # 来週以降に見頃を迎えそうなもの(段階33): 公式の現況が見頃前 → 今年のイベント期間が始まる → 例年の時期が始まる(例年の時期のみ)。最大 later.max_items 件
+    later = [("early_official", x) for x in by("early")]
+    later += [("early_event" if "event" in x["items"][0] else "early_window", x) for x in by("upcoming")]
+    later = later[:_val(rp["later"]["max_items"])]
+    if later:
+        lines.append(f"## {h['early']}")
+        lines += ["- " + _simple_line(x, k if k != "early_event" else "early_event", rp, policy, on) for k, x in later]
         lines.append("")
     unr = by("unreadable")
     if unr:
@@ -432,6 +492,13 @@ def compose(*, region, kinds, dates, now, part, nearby_part=None, origin=None, r
         lines += [f"## {h['notes']}"] + [f"- {n}" for n in dict.fromkeys(notes)] + [""]
     if stats.get("attached"):
         lines += [t["reference_legend"], ""]
+    few = few_kinds(kinds, region, entries_all, rp) if seasonal else []
+    partial = by("partial")
+    if partial:        # 品種名だけの「見頃」は、答えの末尾に 1 行だけ
+        names = "、".join(t["partial_item"].format(name=x["entry"]["name"], state=x["items"][0]["state"], when=x["items"][0]["when"]) for x in partial)
+        lines += [t["partial_line"].format(items=names), ""]
+    if few:        # 旬の種類に指定地域内の登録が少ないときの末尾 1 行
+        lines += [t["calendar_few"].format(region=region_name, kinds="・".join(few)), ""]
     text = "\n".join(lines).rstrip() + "\n"
     bad = forbidden_found(text, rp)
     if bad:
@@ -452,10 +519,16 @@ def cli(a):
         if region is None:
             print(f"地域の呼び名が data/regions.yaml にない: {a.region}", file=sys.stderr)
             return 2
-    kinds = list(a.flower_kind)
+    kinds = list(a.flower_kind or [])
+    seasonal = not kinds
+    if seasonal:        # 花の種類の指定がなければ、対象の日から旬の種類を選ぶ(名所のカタログの flower_windows)
+        kinds = list(seasonal_kinds(catalog_mod.approved_entries(catalog_mod.load_catalog(SUBJECT)), dates, load_policy()))
+        if not kinds:
+            print("対象の日が例年の時期にかかる花の種類が名所の一覧にありません。--flower-kind で種類を指定してください", file=sys.stderr)
+            return 2
     part = S.answer_parts([SUBJECT], policy=policy, now=now, dates=dates, region=region, flower_kind=kinds)[0]
     near = S.answer_parts([SUBJECT], policy=policy, now=now, dates=dates, region=None, flower_kind=kinds)[0] if region else None
     part["care_manners"] = (load_profiles()[SUBJECT].get("care") or {}).get("manners")
     resolve = guide.reference_resolver(guide.load_policy())
-    print(compose(region=region, kinds=kinds, dates=dates, now=now, part=part, nearby_part=near, origin=a.origin, resolve=resolve, policy=policy), end="")
+    print(compose(region=region, kinds=kinds, dates=dates, now=now, part=part, nearby_part=near, origin=a.origin, resolve=resolve, policy=policy, seasonal=seasonal), end="")
     return 0

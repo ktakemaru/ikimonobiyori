@@ -2,7 +2,8 @@
 承認外のホストで読んだ値(flower_windows・events)を一覧にする。印(unapproved_host: true と source_host)のある値は
 『承認または別の公式情報源での確認が必要』。承認した通信先の外なのに印がない値は『印の漏れ』として別に出す(あってはならない)。
 
-  python -X utf8 -m ikimonobiyori.catalog_audit [--subject flowers]
+  python -X utf8 -m ikimonobiyori.catalog_audit [--subject flowers] [--out <ファイル名>]
+--out を付けると、結果をそのファイルにも書く(既定は画面のみ。--out は書き込み先を指定するので、リポジトリの docs/ などを自分で選ぶ)。
 """
 import argparse
 import json
@@ -38,11 +39,16 @@ def audit(doc, hosts):
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="catalog_audit")
     ap.add_argument("--subject", default="flowers")
+    ap.add_argument("--out", help="結果をこのファイルにも書く(既定は画面のみ)")
     a = ap.parse_args(argv)
     doc = catalog_mod.load_catalog(a.subject)
     hosts = regional.load_policy()["approved_hosts"]["hosts"]
     out = audit(doc, hosts)
-    print(json.dumps(out, ensure_ascii=False, indent=1))
+    text = json.dumps(out, ensure_ascii=False, indent=1)
+    print(text)
+    if a.out:
+        with open(a.out, "w", encoding="utf-8", newline="") as f:
+            f.write(text + chr(10))
     return 1 if out["missing_mark"] or out["bad_mark"] else 0
 
 
