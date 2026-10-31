@@ -624,6 +624,12 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     d = dates[0]
     cur = best_record(rows)
     fr = freshness(cur, today, subject, policy)
+    rec_events = [{"name": r["event"]["name"], "start": r["event"].get("start"), "end": r["event"].get("end"), "url": r["url"],
+                   "publisher": r.get("publisher"), "source_class": r["source_class"]} for r in rows if r.get("event")]
+    rec_ev_md = {(str(e["start"])[5:], str(e["end"])[5:]) for e in rec_events if e.get("start") and e.get("end")}
+    for t in c.get("typical") or []:                 # 段階35: 記録から読んだ今年の行事と同じ月日の「例年の時期」も、行事の期間とみなす
+        if (t.get("start"), t.get("end")) in rec_ev_md:
+            t["event_derived"] = True
     real_typ = [t for t in c.get("typical") or [] if not t.get("event_derived")]
     typ = next((t for t in real_typ if t.get("start")), None)
     not_typ = (policy.get("typical") or {}).get("record_not_typical_words") or []
@@ -635,8 +641,6 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
             typ = {"text": typ_rec, "start": w[0], "end": w[1], "publisher": cur.get("publisher") if cur else None, "source_class": "secondary"}
     rel = _relation(cur, typ, d, policy)
     evs = _event_hits(c, dates)
-    rec_events = [{"name": r["event"]["name"], "start": r["event"].get("start"), "end": r["event"].get("end"), "url": r["url"],
-                   "publisher": r.get("publisher"), "source_class": r["source_class"]} for r in rows if r.get("event")]
     evs += [e for e in rec_events if e.get("start") and e.get("end") and any(date.fromisoformat(e["start"]) <= x <= date.fromisoformat(e["end"]) for x in dates)
             and e["name"] not in {v["name"] for v in evs}]
     near = _v(policy["order"]["near_days"])
@@ -692,7 +696,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                        + ([] if not typ or typ in real_typ else [typ]),
             "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
                                           for t in c.get("typical") or [] if t.get("event_derived")],
-            "typical_line": typical_line(typ, c, dates, policy) if subject != "birds" else None,
+            "typical_line": typical_line(typ, {"events": list(c.get("events") or []) + rec_events}, dates, policy) if subject != "birds" else None,
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],

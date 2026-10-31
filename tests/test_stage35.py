@@ -224,3 +224,17 @@ class RecordByUrl(Base):
                                          "written": 1, "duplicates": 0}])
         r2 = O.record([rec("t-b-1", "コガモが増えました", "2026-10-28")], env=self.env, now=NOW)     # 同じ日に同じ事実 → 新しい記録 0
         self.assertEqual((r2["written"], r2["by_url"][0]["written"], r2["by_url"][0]["duplicates"]), (0, 0, 1))
+
+
+class EventFromRecords(Base):
+    def test_typical_equal_to_recorded_event_is_not_typical(self):
+        """名所カタログに行事がなくても、記録から読んだ今年の行事と同じ月日の「例年の時期」は行事の期間とみなす。"""
+        cat = {"entries": [{"id": "t-cat-3", "name": "試験の菊花展", "tags": {"prefecture": "神奈川県", "city": "試験市"}, "sources": [{"url": "https://kiku.example.org/"}],
+                            "flower_windows": [{"kind": "菊", "start": "10-29", "end": "11-19", "source_url": "https://kiku.example.org/", "source_year": None,
+                                                "note": "ページに『10月29日(木)〜11月19日(木)』とあり年の記載はない"}]}]}
+        O.record([rec("t-cat-3", "開花状況の記載なし", None, subject="flowers", url="https://kiku.example.org/",
+                      event={"name": "試験の菊花展", "start": "2026-10-29", "end": "2026-11-19"})], env=self.env, now=NOW)
+        f = O.facts("flowers", region="神奈川", dates=D, now=NOW, env=self.env, spots_doc={"spots": []}, catalogs={"flowers": cat})
+        k = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-3")
+        self.assertEqual(k["typical"], [])
+        self.assertEqual(k["typical_line"], "例年の時期は分かりません(今年の行事「試験の菊花展」は10/29〜11/19)")
