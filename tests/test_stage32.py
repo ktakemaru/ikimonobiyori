@@ -382,3 +382,61 @@ class Cli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def marked(v, host="unapproved.example.com"):
+    return {**v, "source_url": f"https://{host}/x", "source_host": host, "unapproved_host": True}
+
+
+class UnapprovedHostValues(unittest.TestCase):
+    """承認外のホストで読んだ値(印つき)は、確度の判定(公式の現況・今年のイベント期間)に使えず、『例年の時期のみ』にだけ使える。合成データ。"""
+
+    def ev_kind(self, entry):
+        return regional.evaluate_kind(entry, "秋バラ", [], DATES, RP, POLICY, NOW.date())
+
+    def test_marked_event_does_not_make_event_tier(self):
+        e = site("t-1", "試験園", ["秋バラ"], windows=[win("秋バラ", "10-10", "11-08")], events=[marked(ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08"))])
+        r = self.ev_kind(e)
+        self.assertEqual((r["tier"], r["group"]), ("typical_only", "recommend"))
+
+    def test_marked_window_does_not_satisfy_event_overlap(self):
+        e = site("t-2", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))], events=[ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08")])
+        r = self.ev_kind(e)
+        self.assertEqual((r["tier"], r["group"]), ("typical_only", "recommend"))      # 例年の時期のみにしか使えない
+        self.assertTrue(r["window"].get("unapproved_host"))
+
+    def test_unmarked_values_still_reach_event_tier(self):
+        e = site("t-3", "試験園", ["秋バラ"], windows=[win("秋バラ", "10-10", "11-08")], events=[ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08")])
+        self.assertEqual(self.ev_kind(e)["tier"], "event_period")
+
+    def test_marked_values_alone_never_give_a_higher_tier(self):
+        e = site("t-4", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))], events=[marked(ev("秋バラ", "試験祭", "2026-10-10", "2026-11-08"))])
+        r = self.ev_kind(e)
+        self.assertEqual(r["tier"], "typical_only")
+        self.assertNotIn("event", r)
+        self.assertNotIn("row", r)                                                   # 公式の現況は記録からしか作られない
+
+    def test_schema_accepts_mark_and_check_passes(self):
+        doc = {"entries": [site("t-5", "試験園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))])]}
+        errs = [x for x in catalog.schema_errors(doc) if "unapproved" in x or "source_host" in x]
+        self.assertEqual(errs, [])
+
+    def test_audit_lists_marked_and_flags_missing_marks(self):
+        from ikimonobiyori import catalog_audit
+        hosts = RP["approved_hosts"]["hosts"]
+        plain_out = {**win("秋バラ", "10-10", "11-08"), "source_url": "https://unapproved.example.com/y"}      # 印の漏れ
+        e1 = site("t-6", "印あり園", ["秋バラ"], windows=[marked(win("秋バラ", "10-10", "11-08"))])
+        e2 = site("t-7", "印なし園", ["秋バラ"], windows=[plain_out])
+        e3 = site("t-8", "承認済み園", ["秋バラ"], windows=[{**win("秋バラ", "10-10", "11-08"), "source_url": f"https://www.{hosts[0]}/a"}])
+        out = catalog_audit.audit({"entries": [e1, e2, e3]}, hosts)
+        self.assertEqual([r["id"] for r in out["needs_confirmation"]], ["t-6"])
+        self.assertEqual(out["needs_confirmation"][0]["action"], "承認または別の公式情報源での確認が必要")
+        self.assertEqual([r["id"] for r in out["missing_mark"]], ["t-7"])
+        self.assertEqual(out["bad_mark"], [])
+        bad = {**win("秋バラ", "10-10", "11-08"), "source_url": f"https://{hosts[0]}/a", "unapproved_host": True, "source_host": hosts[0]}   # 承認済みなのに印
+        self.assertEqual(len(catalog_audit.audit({"entries": [site("t-9", "誤印園", ["秋バラ"], windows=[bad])]}, hosts)["bad_mark"]), 1)
+
+    def test_real_catalog_has_no_unmarked_values_outside_approved_hosts(self):
+        from ikimonobiyori import catalog_audit
+        out = catalog_audit.audit(catalog.load_catalog("flowers"), RP["approved_hosts"]["hosts"])
+        self.assertEqual((out["missing_mark"], out["bad_mark"]), ([], []))

@@ -86,6 +86,13 @@ def window_start_after(tw, d):
     return S.next_window_start(d, tw)
 
 
+def host_allowed(url, hosts):
+    """URL のホストが承認した通信先(またはそのサブドメイン)か。"""
+    from urllib.parse import urlparse
+    h = urlparse(url or "").hostname or ""
+    return any(h == x or h.endswith("." + x) for x in hosts)
+
+
 def kind_windows(entry, kind):
     """名所の花の種類ごとの例年の時期(flower_windows)。なければ、種類が 1 つだけの名所は typical_window。"""
     wins = [w for w in entry.get("flower_windows") or [] if w["kind"] == kind]
@@ -102,7 +109,7 @@ def event_hits(entry, kind, dates):
     """今年の(確認できた)イベント期間が対象の日を含むもの。前年以前・未確認の期間は使わない(例年の時期の根拠にだけなる)。"""
     out = []
     for ev in entry.get("events") or []:
-        if ev["kind"] != kind or not ev.get("verified"):
+        if ev["kind"] != kind or not ev.get("verified") or ev.get("unapproved_host"):    # 承認外のホスト由来の値は確度の判定に使わない
             continue
         s, e = date.fromisoformat(ev["start"]), date.fromisoformat(ev["end"])
         if ev["year"] != s.year or not any(d.year == ev["year"] and s <= d <= e for d in dates):
@@ -164,9 +171,10 @@ def evaluate_kind(entry, kind, rows, dates, rp, policy, on):
     hits = record_events(rows, dates) or event_hits(entry, kind, dates)
     wins = kind_windows(entry, kind)
     in_win = [w for w in wins if window_hits(w, dates)]
-    if hits and in_win:
+    in_win_ok = [w for w in in_win if not w.get("unapproved_host")]              # 承認外のホスト由来の時期は「今年のイベント期間つき」の重なりに使わない
+    if hits and in_win_ok:
         ev = hits[0]
-        return {"kind": kind, "tier": "event_period", "group": "recommend", "event": ev, "window": in_win[0]}
+        return {"kind": kind, "tier": "event_period", "group": "recommend", "event": ev, "window": in_win_ok[0]}
     if in_win:
         return {"kind": kind, "tier": "typical_only", "group": "recommend", "window": in_win[0]}
     near = [w for w in wins if 0 < (window_start_after(w, min(dates)) - min(dates)).days <= _val(rp["upcoming_within_days"])]

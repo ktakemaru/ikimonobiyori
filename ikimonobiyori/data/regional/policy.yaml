@@ -18,6 +18,13 @@ state_vocabulary:
     full: [満開, 満開です, 最盛期]
     falling: [散り始め, 散り始めです, 終盤, 見頃終盤, 見ごろ終盤, 見頃過ぎ, 見ごろ過ぎ, 見頃を過ぎました, 終わり, 終了, 見頃終了, 花期終了, 見頃は終了しました]
 
+# 地域を指定した花の答えで読んでよい通信先(ユーザーが承認したもの。段階32・指示書 3-5)。これ以外のホストは読まない(docs/pending-hosts.md)。
+# 名所の flower_windows・events の source_url がこの外のホストなら、source_host と unapproved_host: true の印が要る(catalog_audit が確かめる)。
+# 印のある値は確度の判定(公式の現況・今年のイベント期間)に使えず、「例年の時期のみ」にだけ使う。
+approved_hosts:
+  source: "ユーザーの承認(指示書 3-5、2026-10-31)。増やすのはユーザーだけ"
+  hosts: [kanagawaparks.com, sankeien.or.jp, kanagawa-kankou.or.jp, www.welcome.city.yokohama.jp]
+
 # 段階 → 答えの区分
 stage_groups:
   recommend: [good, full]        # 見頃(おすすめにできる)

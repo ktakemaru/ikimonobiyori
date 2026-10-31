@@ -35,6 +35,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/fetch/spot_coords.py` 公式のスポットのページ(日光市観光協会・箱根町観光協会だけ)の、地図の埋め込み(iframe の src)の座標の数字の組だけを読む小さなコード(`sources spot-coords`。段階19 の続き。HTML・本文は保存しない。数字がなければ「座標なし」で推測しない。計測フックの下・robots.txt を先に・2 秒以上空ける・429 で止める)。名所カタログの座標は、これで確認できたものだけを承認する(推定の座標は使わない)。
 - `ikimonobiyori/proposals.py` 同じ日に読んだ記録・名所カタログ・情報源の一覧から `biyori-proposal/1` の提案を組み立てる(`sources proposals`。段階18。通信しない・LLM なし・`go` を出さない。対応と規則は `docs/proposal-mapping.md`、値は `policy.yaml` の `proposals`)。`answer` と同じ記録・同じ使える行の判定(`sources.usable_status_row`)を使う。
 - `ikimonobiyori/regional.py` 地域(都道府県)を必須の絞り込みにした花の答え(`sources regional`。段階32。通信しない・書き込まない)。確度の 3 段階(公式の現況・今年のイベント期間つき・例年の時期のみ)・見頃を過ぎたものと状態を読み取れなかったものの除外・近隣(県外)の分離・内部用語の自己検査。値と文は `ikimonobiyori/data/regional/policy.yaml`。既存の `answer`(`answer.py`)は変えない。花の名所は `flower_windows`(種類ごとの例年の時期。取得元の年つき)・`events`(今年のイベント期間。`verified` は承認した通信先の年つきの記載だけ)・`tags.city` を持てる。
+- `ikimonobiyori/catalog_audit.py` 花の名所の承認外ホスト由来の値(印 `unapproved_host`)を一覧にする監査(`python -X utf8 -m ikimonobiyori.catalog_audit`。通信しない・書き込まない)。印の漏れ(承認した通信先の外なのに印がない値)は終了コード 1。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
 
@@ -91,6 +92,7 @@ python -X utf8 -m ikimonobiyori.sources regional --now <今の時刻 ISO 8601 +0
 - **見頃を過ぎたもの・状態を読み取れなかったものは推薦に入れない**: 状態の語は台帳の `notation.map` が先、なければ `ikimonobiyori/data/regional/policy.yaml` の語彙表(完全一致)。表にない語(「ブラウンがメイン」「咲いています」「2〜3分咲き」など)は推測で段階にせず「状態を読み取れなかったもの」に原文のまま出す。終盤・見頃過ぎ・終了は「見頃を過ぎたとみられるもの」に最大 2 行。
 - **出力はそのまま出す**: コマンドが組み立てた文(結論が先)を一字一句そのまま出す。答えに内部の言葉(簡易な読み取り・承認待ち・作業メモ・records など)を出さない(コードが自己検査する。内部の事情は `docs/stage32-report.md` へ)。
 - 読むのは**ユーザーが承認した通信先**(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)の台帳で `approved` の情報源だけ(要約の道具で 1 回ずつ。読んだ事実は答える前に `record` で記録する)。ほかのホストは読まず「公式の現況は未確認(公式ページ: URL)」として出る(`docs/pending-hosts.md`)。
+- **調査役・要約の道具に頼むときも、承認した通信先のホスト名だけを書く**(`data/regional/policy.yaml` の `approved_hosts`)。「優先して」「ほかも探して」のような言い方をしない。承認外のホストは読まない。名所の `flower_windows`・`events` に承認外のホストの値を入れるときは、`source_host` と `unapproved_host: true` の印を付ける。印のある値は確度の判定(公式の現況・今年のイベント期間)に使えず、『例年の時期のみ』にだけ使う。印のある値の一覧は `python -X utf8 -m ikimonobiyori.catalog_audit`(『承認または別の公式情報源での確認が必要』。通信しない)。
 
 ### 守ること
 - 読むのは、対象の台帳 `ikimonobiyori/data/sources/<対象>.yaml` で **`approval.status: approved` の情報源だけ**。pending・revoked は読まず、「人が開く URL」として示す。
