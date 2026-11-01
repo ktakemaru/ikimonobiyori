@@ -28,7 +28,7 @@ from ikimonobiyori.fetch import ParseError, birds_live, live as livemod  # noqa:
 from ikimonobiyori.fetch.cache import Cache  # noqa: E402
 
 
-def main(argv=None, http_get=None):
+def main(argv=None, http_get=None, clock=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--request", required=True)
     ap.add_argument("--inputs")
@@ -86,7 +86,7 @@ def main(argv=None, http_get=None):
         cdir = Path(a.cache_dir) if a.cache_dir else paths.data_path(cfg["cache"]["dir"])
         try:
             res = survey.run_density_survey(survey.load_survey(Path(a.survey_file) if a.survey_file else None), now, cfg=cfg, cache=Cache(cdir), http_get=http_get, live=a.live,
-                                            cache_only=a.cache_only, max_requests=a.max_requests, unparsed_dir=paths.data_path(cfg["cache"]["unparsed_dir"]))
+                                            cache_only=a.cache_only, max_requests=a.max_requests, unparsed_dir=paths.data_path(cfg["cache"]["unparsed_dir"]), clock=clock)
         except ParseError as e:
             print(f"応答を読めないため中止: {e}", file=sys.stderr)
             return 6
@@ -159,7 +159,7 @@ def main(argv=None, http_get=None):
                         continue
                     i2, r2 = birds_live.fetch_bird_counts(area, dates, prof, now, cache=Cache(cdir), cfg=cfg, http_get=http_get, live=a.live,
                                                           cache_only=a.cache_only, max_requests=left, unparsed_dir=unparsed,
-                                                          shape_check=a.shape_check, per_year=a.per_year)
+                                                          shape_check=a.shape_check, per_year=a.per_year, clock=clock)
                     if a.shape_check:
                         Path(a.shape_out or "shape.json").write_text(json.dumps(r2["shape"], ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
                         print(json.dumps({"requests": r2["requests"], "rate_headers": r2["rate_headers"], "shape_out": a.shape_out}, ensure_ascii=False))

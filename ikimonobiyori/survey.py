@@ -54,8 +54,8 @@ def planned_queries(survey, per_page_total=1):
 
 
 def run_density_survey(survey, now, *, cfg, cache, http_get=None, live=False, cache_only=False, max_requests=None, unparsed_dir=None,
-                       sleep=time.sleep):
-    """→ results(dict)。cache は ikimonobiyori.fetch.cache.Cache。"""
+                       sleep=time.sleep, clock=None):
+    """→ results(dict)。cache は ikimonobiyori.fetch.cache.Cache。取得時刻は応答を受け取った時刻(clock。段階36)。"""
     if live and cache_only:
         raise ValueError("--live と --cache-only は同時に指定できない")
     if not live and not cache_only:
@@ -110,7 +110,8 @@ def run_density_survey(survey, now, *, cfg, cache, http_get=None, live=False, ca
             else:
                 from .fetch.birds_live import minimize_species_counts
                 body = json.dumps(minimize_species_counts(parsed)[0], ensure_ascii=False)
-            fetched_at = now.isoformat(timespec="seconds")
+            from .fetch.birds_live import received_at
+            fetched_at = received_at(now, clock)                       # 段階36: --now ではなく、応答を受け取った時刻
             cache.put(url=q["url"], params=q["params"], body=body, source=SOURCE, fetched_at=fetched_at)
         r = json.loads(body)
         if kind == "total":

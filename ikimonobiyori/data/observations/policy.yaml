@@ -137,9 +137,12 @@ typical:
   event_note_words: [期間, フェスタ, フェスティバル, まつり, 祭, 開放]
   # 記録の「例年の見頃」の原文にこの語があれば、例年の時期ではなく行事・今年の予定(例年の時期として使わない)
   record_not_typical_words: [開催, 予定, 期間]
+  # 段階36(利用者の決定 2026-11-01。評価表 R4 の読み方 (b)): 例年の時期が分からない候補の代わりの材料にする、前の年の同じ時期の記録の幅(対象の日の前後の日数)
+  last_year_window_days: {value: 30, source: "仮置き(野鳥の season_window_days と同じ前後ひと月。根拠のある値ではない)", provisional: true}
 typical_labels:
   known: "例年の見頃: {text}"
   unknown_with_event: "例年の時期は分かりません(今年の行事「{name}」は{start}〜{end})"
+  unknown_with_last_year: "例年の時期は分かりません({year}年{md}の記録({publisher})では「{text}」)"
   unknown: "例年の時期は分かりません"
 
 # 段階35(穴2): 野鳥は「例年の見頃」ではなく「この時期に見られる鳥」で書く
@@ -148,6 +151,15 @@ birds:
   season_window_days: {value: 30, source: "仮置き(前後ひと月。根拠のある値ではない)", provisional: true}
   season_labels:
     inat: "この時期に見られる鳥: iNaturalist の過去{years}年の記録(前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
+    # 段階36: 前回の集計の中心の日が対象の日と違う(対象の日がその期間の中にある)とき
+    inat_other_center: "この時期に見られる鳥: iNaturalist の過去{years}年の記録({center}の前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
     past_record: "この時期に見られる鳥: {year}年{md}の記録({publisher})では「{text}」"
     page: "この時期に見られる鳥: {publisher}の紹介では「{text}」"
     unknown: "この時期に見られる鳥の記録は見つかっていません"
+
+# 段階36(利用者の決定 2026-11-01。指示書 biyori-hub/docs/stageH10-instructions.md 決定2): 野鳥の iNaturalist の集計の取り直し
+# 区域の集計が max_age_days より古いか、対象の日が前回の集計の期間(中心の日の前後 window_weeks 週。プロファイル)から外れたら、質問のときに取り直す。
+inat_refresh:
+  max_age_days: {value: 7, source: "利用者の決定 2026-11-01(7日より古ければ取り直す)", provisional: false}
+  max_requests_per_question: {value: 10, source: "利用者の決定 2026-11-01(1回の質問につき最大10リクエスト)", provisional: false}
+  index_file: observations/inat_index.json        # IKIMONOBIYORI_DATA_DIR の下。取り直した集計の中心の日と取得時刻
