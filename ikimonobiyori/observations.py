@@ -124,6 +124,8 @@ def normalize(subject, raw, policy=None):
     st = policy["states"].get(subject) or {}
     unknown = policy["unknown_state"]
     text = unicodedata.normalize("NFKC", raw or "")
+    for ph in policy.get("not_state_phrases") or []:            # 段階37: 「例年の見頃」「見頃予想」のような時期を表す語の中の「見頃」は今の状態として読まない
+        text = text.replace(unicodedata.normalize("NFKC", ph), " ")
     if not text.strip():
         return unknown
     if subject == "flowers":
@@ -183,27 +185,52 @@ def validate(rec, policy):
     return errs
 
 
-FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "typical", "event", "url", "publisher", "source_class")
+FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
+          "source_class")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
 
 
-def state_date_from_text(text, read_at):
-    """状態の原文に書かれた「10/25現在」「10月8日現在」→ YYYY-MM-DD(年は読んだ日から。読んだ日より後なら前の年)。なければ None。"""
+DAY_ONLY_RE = re.compile(r"(?<![\d/月])(\d{1,2})日\s*(?:現在|時点)")        # 段階37: 「01日現在」のように月がない書き方
+
+
+def _day_only(day, ra):
+    """月のない「D日」→ 読んだ日以前でいちばん近いその日(11/1 に読んだ「01日」→ 11/1、「31日」→ 10/31)。"""
+    y, m = ra.year, ra.month
+    for _ in range(13):
+        if day <= calendar.monthrange(y, m)[1]:
+            d = date(y, m, day)
+            if d <= ra:
+                return d
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+    return None
+
+
+def state_date_from_text(text, read_at, with_kind=False):
+    """状態の原文に書かれた「10/25現在」「10月8日現在」→ YYYY-MM-DD(年は読んだ日から。読んだ日より後なら前の年)。
+    段階37: 月のない「01日現在」は、読んだ日以前でいちばん近いその日(種類 day_only)。なければ None。
+    with_kind=True なら (日付, 種類 "month_day" / "day_only")。"""
     t = unicodedata.normalize("NFKC", text or "")
     ra = date.fromisoformat(str(read_at)[:10])
+    out = (None, None)
     for rx in STATE_DATE_RES:
         m = rx.search(t)
         if m:
             try:
                 d = date(ra.year, int(m.group(1)), int(m.group(2)))
             except ValueError:
-                return None
-            if d > ra:
+                d = None
+            if d is not None and d > ra:
                 d = date(ra.year - 1, d.month, d.day)
-            return d.isoformat()
-    return None
+            out = (d.isoformat() if d else None, "month_day")
+            break
+    else:
+        m = DAY_ONLY_RE.search(t)
+        if m and 1 <= int(m.group(1)) <= 31:
+            d = _day_only(int(m.group(1)), ra)
+            out = (d.isoformat() if d else None, "day_only")
+    return out if with_kind else out[0]
 
 
 def make_record(rec, policy, read_at):
@@ -215,9 +242,29 @@ def make_record(rec, policy, read_at):
         out["typical"] = str(out["typical"])[:mx]
     out["state_norm"] = normalize(rec["subject"], out["state"], policy)
     out.setdefault("state_date", None)
+    if out.get("state_date_text"):
+        out["state_date_text"] = str(out["state_date_text"])[:mx]
+    if not out["state_date"]:                    # 段階37: 月のない「01日現在」(状態の原文か state_date_text)は、読んだ日以前でいちばん近いその日として補い、印を残す
+        d, kind = state_date_from_text(out.get("state_date_text") or out["state"], read_at.isoformat(), with_kind=True)
+        if d and (kind == "day_only" or out.get("state_date_text")):
+            out["state_date"] = d
+            out["state_date_inferred"] = policy["state_date_inferred"][kind]
     out["host"] = urlparse(rec["url"]).hostname
     out["read_at"] = read_at.isoformat()
     return out
+
+
+def confirmed_path(subject, env=None, policy=None):
+    """段階37: 同じ事実を読み直したときの「最後に確かめた日時」(記録の行は書き換えず、別のファイルに持つ)。"""
+    policy = policy or load_policy()
+    return data_path(policy["record"]["dir"], env) / f"{subject}.confirmed.json"
+
+
+def read_confirmed(subject, env=None, policy=None):
+    try:
+        return json.loads(confirmed_path(subject, env, policy).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 
 
 def read_records(subject, env=None, policy=None):
@@ -226,15 +273,26 @@ def read_records(subject, env=None, policy=None):
         return []
     policy = policy or load_policy()
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
         if not r.get("state_date"):             # 段階35: 状態の日付が欄になくても、原文の「10/25現在」を状態の日付として使う(記録のファイルは書き換えない)
             r["state_date_from_text"] = state_date_from_text(r.get("state"), r["read_at"])
+        c = conf.get(dup_key_text(r))
+        if c and c.get("last_confirmed_at", "") > r["read_at"]:
+            r["last_confirmed_at"] = c["last_confirmed_at"]
     return rows
 
 
 def _dup_key(r):
-    return (r.get("spot") or _key(r.get("name")), r.get("url"), r.get("state"), r.get("state_date"), r["read_at"][:10], r.get("area"), r.get("prefecture"))
+    """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
+    ev = r.get("event")
+    return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]
+
+
+def dup_key_text(r):
+    return json.dumps(_dup_key(r), ensure_ascii=False)
 
 
 def record(batch, *, env=None, policy=None, now=None):
@@ -251,22 +309,31 @@ def record(batch, *, env=None, policy=None, now=None):
             continue
         by_subject.setdefault(rec["subject"], []).append(make_record(rec, policy, read_at))
     for subject, rows in by_subject.items():
-        have = {_dup_key(r) for r in read_records(subject, env, policy)}
+        have = {dup_key_text(r) for r in read_records(subject, env, policy)}
+        conf = read_confirmed(subject, env, policy)
+        conf_changed = False
         p = log_path(subject, env, policy)
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("a", encoding="utf-8", newline="") as f:
             for r in rows:
-                k = _dup_key(r)
+                if not r.get("state_date"):        # 重複の判定は、読むときと同じく原文の「10/25現在」も状態の日付として扱う(記録の行には入れない)
+                    k = dup_key_text({**r, "state_date_from_text": state_date_from_text(r.get("state"), r["read_at"])})
+                else:
+                    k = dup_key_text(r)
                 u = by_url.setdefault(r["url"], {"url": r["url"], "publisher": r.get("publisher"), "source_class": r["source_class"],
                                                   "written": 0, "duplicates": 0})
                 if k in have:
                     dup += 1
                     u["duplicates"] += 1
+                    conf.setdefault(k, {}).update(last_confirmed_at=r["read_at"], url=r["url"])   # 段階37: 新しい記録にせず、最後に確かめた日時だけ更新する
+                    conf_changed = True
                     continue
                 have.add(k)
                 u["written"] += 1
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
                 written.append(r)
+        if conf_changed:
+            confirmed_path(subject, env, policy).write_text(json.dumps(conf, ensure_ascii=False, indent=1), encoding="utf-8")
     return {"written": len(written), "duplicates": dup, "rejected": rejected, "by_url": list(by_url.values()), "records": written}
 
 
@@ -382,7 +449,9 @@ def state_date_of(rec):
 def basis_date(rec):
     """新しさの基準の日(段階35): 状態の日付。状態の日付がない記録だけ、読んだ日。"""
     sd = state_date_of(rec)
-    return date.fromisoformat(sd) if sd else date.fromisoformat(rec["read_at"][:10])
+    if sd:
+        return date.fromisoformat(sd)
+    return date.fromisoformat(max(rec["read_at"], rec.get("last_confirmed_at") or "")[:10])   # 段階37: 読み直して同じ事実なら、最後に確かめた日
 
 
 def freshness(rec, today, subject, policy):
@@ -664,6 +733,11 @@ def _inat_aggregation(area, d, now, *, cache, profile, cfg, env=None):
             ex = entries_for(c)
             if ex:
                 return {"center": it["center"], "entries": ex}
+    for k in range(1, span + 1):                 # 段階37: 索引ができる前(段階36より前)に取った集計も、期間(前後 window_weeks 週)が d を含めば使う(近い日から)
+        for c in (d - timedelta(days=k), d + timedelta(days=k)):
+            ex = entries_for(c)
+            if ex:
+                return {"center": c.isoformat(), "entries": ex}
     return None
 
 

@@ -1,6 +1,7 @@
 """テスト中のソケット通信を禁止する。import するだけで有効(プロセス全体)。通信が試みられたら AssertionError。"""
 import os
 import socket
+import tempfile
 
 _REAL = {"connect": socket.socket.connect, "connect_ex": socket.socket.connect_ex,
          "create_connection": socket.create_connection, "getaddrinfo": socket.getaddrinfo}
@@ -25,3 +26,6 @@ os.environ.pop("BIYORI_ALLOW_LIVE", None)
 os.environ["BIYORI_UNDER_TEST"] = "1"
 # テスト専用の時計(ikimonobiyori.sources.read_time。段階23)。このプロセスだけ。子プロセス(helpers.child_env)には渡さない = 子プロセスはふだんの実行と同じく、渡された時刻を使わない
 os.environ["IKIMONOBIYORI_TEST_CLOCK"] = "1"
+# 段階37: 書き込み先の既定が利用者ごとの場所(%LOCALAPPDATA%\ikimonobiyori など)になったので、テストは必ず一時フォルダに書く
+# (利用者の置き場所に触れない)。各テストが IKIMONOBIYORI_DATA_DIR を上書きするのは従来どおり。子プロセスにも helpers.child_env が渡す
+os.environ["IKIMONOBIYORI_DATA_DIR"] = tempfile.mkdtemp(prefix="ikimono-test-data-")

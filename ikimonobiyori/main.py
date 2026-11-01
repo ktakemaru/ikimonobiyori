@@ -131,7 +131,8 @@ def main(argv=None, http_get=None, clock=None):
                 dates = [d for d in engine.request_dates(request) if engine.in_season(prof, d)]
                 if dates:
                     i2, r2 = livemod.fetch_temperatures(site_ids, sites, prof, dates, now.date(), now, cache=Cache(cdir), cfg=cfg, http_get=http_get,
-                                                        live=a.live, cache_only=a.cache_only, max_requests=a.max_requests, unparsed_dir=unparsed)
+                                                        live=a.live, cache_only=a.cache_only, max_requests=a.max_requests, unparsed_dir=unparsed,
+                                                        clock=clock)               # 段階37: 取得時刻は応答を受け取った時刻
                     inputs.update(temperatures=i2["temperatures"], temperatures_meta=i2["temperatures_meta"], site_ids=site_ids,
                                   fetched_at=i2["fetched_at"])
                     reports.append(r2)

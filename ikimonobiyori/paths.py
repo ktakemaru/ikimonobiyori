@@ -1,7 +1,9 @@
 """ファイルの場所を1か所にまとめる(段階12)。読むファイルはすべてこのパッケージの中、書き込み先は IKIMONOBIYORI_DATA_DIR の下。
 - 読むもの: profiles/・data/・config.yaml・schemas/(パッケージ自身の場所 Path(__file__).parent からの相対)
-- 書くもの: キャッシュ・未解析の応答・部品。基準は環境変数 IKIMONOBIYORI_DATA_DIR。未設定なら、パッケージの親フォルダの
-  runtime/ikimonobiyori(biyori-hub の中で動かしていたときと同じ場所。単独のリポジトリでは <リポジトリ>/runtime/ikimonobiyori)。
+- 書くもの: キャッシュ・未解析の応答・部品・観察の記録。基準は環境変数 IKIMONOBIYORI_DATA_DIR。未設定なら、リポジトリにも
+  実行用コピー(biyori-hub の runtime/)にも依存しない利用者ごとの 1 か所(段階37。利用者の承認 2026-11-01):
+  Windows は %LOCALAPPDATA%\ikimonobiyori、それ以外は ~/.local/share/ikimonobiyori。
+  以前の既定(<リポジトリ>/runtime/ikimonobiyori)と biyori-hub の runtime-data/ikimonobiyori の記録は migrate_data で写す。
   config.yaml の cache.dir・cache.unparsed_dir・compose.component_dir は、この基準からの相対パス。
   vendor から動かすときは、呼び出し側が IKIMONOBIYORI_DATA_DIR を必ず渡す(vendor の中に書かない)。"""
 import os
@@ -23,14 +25,26 @@ SOURCES_DIR = DATA_FILES_DIR / "sources"                      # 現況を発信�
 SOURCES_POLICY_PATH = SOURCES_DIR / "policy.yaml"
 SOURCES_SCHEMA_PATH = SCHEMA_DIR / "status-sources.schema.json"
 REGIONS_PATH = DATA_FILES_DIR / "regions.yaml"                  # 地域の呼び名 → 名所カタログの条件・範囲の代表点(段階16 B-4)
-DEFAULT_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"      # パッケージの外を指すのはここだけ(未設定のときの書き込み先の既定)
+LEGACY_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"       # 段階36までの既定(移行の元。migrate_data だけが読む)
 ENV_DATA_DIR = "IKIMONOBIYORI_DATA_DIR"
+APP_DIR_NAME = "ikimonobiyori"
 
 
-def data_dir(env=None):
-    """書き込み先の基準。IKIMONOBIYORI_DATA_DIR(空なら未設定と同じ)→ 既定。"""
+def default_data_dir(env=None, os_name=None, home=None):
+    """IKIMONOBIYORI_DATA_DIR が無いときの書き込み先(段階37): Windows は %LOCALAPPDATA%\ikimonobiyori
+    (LOCALAPPDATA が無ければ ~/AppData/Local/ikimonobiyori)、それ以外は ~/.local/share/ikimonobiyori。"""
+    e = os.environ if env is None else env
+    home = Path(home) if home else Path.home()
+    if (os_name or os.name) == "nt":
+        base = e.get("LOCALAPPDATA")
+        return (Path(base) if base else home / "AppData" / "Local") / APP_DIR_NAME
+    return home / ".local" / "share" / APP_DIR_NAME
+
+
+def data_dir(env=None, os_name=None, home=None):
+    """書き込み先の基準。IKIMONOBIYORI_DATA_DIR(空なら未設定と同じ)→ 利用者ごとの既定。"""
     v = (os.environ if env is None else env).get(ENV_DATA_DIR)
-    return Path(v) if v else DEFAULT_DATA_DIR
+    return Path(v) if v else default_data_dir(env, os_name, home)
 
 
 def data_path(rel, env=None):

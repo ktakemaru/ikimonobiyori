@@ -18,7 +18,7 @@ PKG = ROOT / "ikimonobiyori"
 ALLOWED_TOP = {"ikimonobiyori", "yaml", "jsonschema", "requests"}
 OUTSIDE_WORDS = {"agents", "hub", "vendor", "adapters", "tests", "snapshots", "schemas/biyori"}
 # パッケージの外を指してよいのは、この2行だけ(未設定のときの書き込み先の既定、スクリプトとして起動されたときの import のため)
-ALLOWED_OUTSIDE = {("paths.py", 'DEFAULT_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"'),
+ALLOWED_OUTSIDE = {("paths.py", 'LEGACY_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"'),
                    ("main.py", "sys.path.insert(0, str(Path(__file__).resolve().parent.parent))")}
 
 
@@ -72,13 +72,15 @@ class WritePaths(unittest.TestCase):
         self.addCleanup(shutil.rmtree, d, True)
         self.assertEqual(paths.data_dir({"IKIMONOBIYORI_DATA_DIR": str(d)}), d)
         self.assertEqual(paths.data_path("cache", {"IKIMONOBIYORI_DATA_DIR": str(d)}), d / "cache")
-        self.assertEqual(paths.data_dir({}), ROOT / "runtime" / "ikimonobiyori")          # 未設定の既定
-        self.assertEqual(paths.data_dir({"IKIMONOBIYORI_DATA_DIR": ""}), ROOT / "runtime" / "ikimonobiyori")
+        # 段階37: 未設定の既定は利用者ごとの 1 か所(Windows は %LOCALAPPDATA%\ikimonobiyori、それ以外は ~/.local/share/ikimonobiyori)
+        self.assertEqual(paths.data_dir({"LOCALAPPDATA": str(d)}, os_name="nt"), d / "ikimonobiyori")
+        self.assertEqual(paths.data_dir({"IKIMONOBIYORI_DATA_DIR": "", "LOCALAPPDATA": str(d)}, os_name="nt"), d / "ikimonobiyori")
+        self.assertEqual(paths.data_dir({}, os_name="posix", home=d), d / ".local" / "share" / "ikimonobiyori")
 
     def test_the_default_write_location_is_ignored_by_git(self):
         lines = [l.strip() for l in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
         self.assertIn("/runtime/", lines)                                  # IKIMONOBIYORI_DATA_DIR 未設定のときの既定の書き込み先
-        rel = paths.DEFAULT_DATA_DIR.relative_to(ROOT).as_posix()
+        rel = paths.LEGACY_DATA_DIR.relative_to(ROOT).as_posix()                # 段階36までの既定(移行の元)も追跡しない
         self.assertTrue(rel.startswith("runtime/"), rel)
 
     def test_config_paths_are_relative_to_the_write_base(self):

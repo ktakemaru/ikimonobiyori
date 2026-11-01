@@ -36,6 +36,8 @@ def child_env(extra=None):
     PYTHONPATH に tests/nonet_child を入れて、子プロセスもソケット禁止にする。"""
     e = {k: os.environ[k] for k in _PASS_KEYS if k in os.environ}
     e.update(PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1", BIYORI_UNDER_TEST="1", PYTHONPATH=str(ROOT / "tests" / "nonet_child"))
+    if os.environ.get("IKIMONOBIYORI_DATA_DIR"):                 # 段階37: 子プロセスも一時フォルダに書く(利用者の置き場所に触れない)
+        e["IKIMONOBIYORI_DATA_DIR"] = os.environ["IKIMONOBIYORI_DATA_DIR"]
     for k, v in (extra or {}).items():
         if k in _TEST_KEYS:
             e[k] = v
