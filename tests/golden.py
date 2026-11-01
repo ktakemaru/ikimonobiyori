@@ -76,7 +76,7 @@ def seed_cache(cache_dir, work):
                 "--out", str(Path(work) / f"seed-{subject}.out.json"), "--inputs-out", str(Path(work) / f"seed-{subject}.in.json")]
         if subject == "autumn_leaves":
             argv += ["--sites", G4_SITES]
-        rc = imain.main(argv, http_get=http)
+        rc = imain.main(argv, http_get=http, clock=lambda: G4_NOW)       # 段階36: 取得時刻は受け取った時刻(clock)。記録したときと同じ時刻を返す時計
         if rc != 0:
             raise RuntimeError(f"キャッシュの準備に失敗: {subject} rc={rc}")
 

@@ -29,6 +29,10 @@ description: 「今週末の紅葉のおすすめは?」「白鳥はいつごろ
   - **野鳥は「例年の見頃」ではなく「この時期に見られる鳥」で書く**(`relation_label` は出さない)。材料は `season_line`(決定論の一文): ①iNaturalist の過去の記録の相対頻度(探鳥地の `bird_area` → `data/observations/bird_areas.yaml` の神奈川の 5 区域。`data/sites.yaml` の bird_areas とは別で、既定の問い合わせ・定期実行・合成の表示には入れない。キャッシュにあるものだけを読み、取得の日を添える。取るのは `main --live --area <ID>` を計測フックの下で)、②前の年の同じ時期(前後 30 日。仮置き)の観察の記録、③名所の一覧に書き写した紹介(`season_birds`)。
   - **休園日**: 名所の `closed.text` を `ikimonobiyori/closures.py` が対象の日と照らす(毎月第N X曜・毎週 X曜・祝日の場合は翌日/開園・M月D日～M月D日。祝日は内閣府の規則で計算)。結果は `closed_on[].line`(「11/2(月)は小谷戸の里が休みです(公園には入れます)。」)。読めない規則は原文を添える。
   - 運営者か分からないブログは「公式」としない。境川遊水地のブログは、ページに「指定管理者である(公財)神奈川県公園協会が運用」とあることを確かめた(`operator_evidence`)。
+- **段階36の修正**(指示書 `biyori-hub/docs/stageH10-instructions.md`。利用者の決定 2026-11-01):
+  - **例年の時期が分からない候補も外さない**(評価表 R4 の読み方 (b))。`facts` の各候補に `typical_unknown`(分からない印)と `typical_alternatives`(代わりの材料: 今年の行事の期間 `events`・前の年の同じ時期の状態の記録 `last_year`(前後 30 日。仮置き)・行事の期間とみなした値)。`typical_line` は「例年の時期は分かりません(今年の行事「○○」は○/○〜○/○)」か「例年の時期は分かりません(2025年11/4の記録(○○)では「…」)」。野鳥は `season_unknown`(この時期に見られる鳥の材料がない印)。
+  - **野鳥の iNaturalist の集計は、質問のときに取り直す**。`plan --subject birds` の `inat_refresh` が、候補の名所の区域のうち、集計が 7 日より古い(`stale`)・対象の日が前回の集計の期間(中心の日の前後 `window_weeks` 週)の外(`out_of_period`)・使える集計がない(`none`)区域を、1 回の質問の上限(10 リクエスト)の中で取る順に出す(収まらない区域は `deferred`。古い集計を日付つきで使う)。値は `data/observations/policy.yaml` の `inat_refresh`。取り直しは `python -X utf8 -m ikimonobiyori.observations inat-refresh --region <地域> --date <対象の日> --now <今の時刻> --max-requests <N> [--area <ID>]`(`BIYORI_ALLOW_LIVE=1`・計測フック `BIYORI_REQ_LOG`・許可ホスト `api.inaturalist.org` の下だけ。区域の間も間隔を空ける。失敗したら残りを止めて記録)。取り直した集計の中心の日は `IKIMONOBIYORI_DATA_DIR` の下の `observations/inat_index.json`。対象の日が前回の集計の期間の中なら、その集計を使い「11/2の前後1週間」と中心の日を書く。
+  - **取得時刻は応答を受け取った時刻**(`fetch/birds_live.py` の `received_at`)。`--now` は判定の基準の時刻で、取得時刻に使わない(以前は `--now` を入れていたため、実際より後の `--now` で取得時刻が未来になった)。iNaturalist の取得(野鳥・密度の調査)が対象。
 - 下の各手順のうち「承認済みの情報源だけを読む」「同じ日の記録だけを使う」「古い記録は参考程度」の部分は、段階34 で次のとおり読み替える: 台帳の承認(`approval.status`)は出所の区分(公式／紹介サイト)の判定にだけ使い、ほかのページも読む。日をまたいだ記録・古い記録も日付つきで使い、新しさは確かさとして示す。
 
 ### 現況型とガイド型(段階23)

@@ -18,6 +18,15 @@ SOURCE_INAT = "iNaturalist API"
 RATE_HEADER_PREFIXES = ("x-ratelimit", "retry-after")
 
 
+def received_at(now, clock=None):
+    """応答を受け取った時刻(オフセットつき ISO 8601)。clock は時刻を返す関数(テスト用)。既定は実際の時計を now と同じ時間帯で。
+    段階36: 以前は判定の基準の時刻 now(--now)を入れていたため、--now に実際より後の時刻を渡すと取得時刻が未来になった。"""
+    t = clock() if clock is not None else datetime.now(now.tzinfo)
+    if t.tzinfo is None:
+        raise ValueError("clock はオフセットつきの時刻を返すこと")
+    return t.isoformat(timespec="seconds")
+
+
 def minimize_species_counts(resp):
     """保存・キャッシュするのは集計値だけ。戻り値: (最小化した応答, 元の応答にあった項目名の一覧。形の記録用)"""
     seen = {"top": sorted(resp.keys()), "result": [], "taxon": []}
@@ -66,8 +75,9 @@ def bird_queries(area, dates, profile, per_page, per_year=False):
 
 
 def fetch_bird_counts(area, dates, profile, now, *, cache, cfg, http_get=None, live=False, cache_only=False, max_requests=None,
-                      unparsed_dir=None, sleep=time.sleep, shape_check=False, per_year=False):
+                      unparsed_dir=None, sleep=time.sleep, shape_check=False, per_year=False, clock=None):
     """→ (inputs, report)。inputs は engine.run の入力(ikimono-inputs/1)。
+    段階36: 取得時刻(fetched_at)は応答を受け取った時刻(clock。既定は実際の時計)。now は判定の基準の時刻(キャッシュの期限など)で、取得時刻には使わない。
     shape_check=True: 1日分・1年分の窓を per_page を小さくして1リクエストだけ(形の確認)。report['shape'] に最小化した応答と元の項目名。"""
     if live and cache_only:
         raise ValueError("--live と --cache-only は同時に指定できない")
@@ -127,7 +137,7 @@ def fetch_bird_counts(area, dates, profile, now, *, cache, cfg, http_get=None, l
                 raise ParseError(f"{area['name']} {key[0]} {lbl}: 応答を読めない: {e}(実応答を保存: {saved})") from e
             mini, seen = minimize_species_counts(parsed)
             body = json.dumps(mini, ensure_ascii=False)
-            fetched_at = now.isoformat(timespec="seconds")
+            fetched_at = received_at(now, clock)                       # 段階36: --now ではなく、応答を受け取った時刻
             cache.put(url=q["url"], params=q["params"], body=body, source=SOURCE_INAT, fetched_at=fetched_at)
             if shape_check:
                 rep["shape"] = {"url": q["url"], "status": int(status), "fetched_at": fetched_at, "headers_seen": sorted(headers.keys()),

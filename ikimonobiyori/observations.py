@@ -448,9 +448,12 @@ def plan(subject, *, region=None, dates, now, origin=None, env=None, policy=None
     summary = [] if not items else [p for pref in prefs for p in (policy["summary_pages"].get(subject) or {}).get(pref) or []]
     order = {"none": 0, "very_stale": 1, "stale": 2}
     items.sort(key=lambda x: (order[x["freshness"]["class"]], x["id"]))
-    return {"schema": "ikimono-observations-plan/1", "subject": subject, "region": reg["name"], "dates": [d.isoformat() for d in dates],
-            "now": now.isoformat(), "needs_fetch": bool(items), "summary_pages": summary, "items": items, "fresh": fresh,
-            "limits": policy["fetch_limits"]}
+    out = {"schema": "ikimono-observations-plan/1", "subject": subject, "region": reg["name"], "dates": [d.isoformat() for d in dates],
+           "now": now.isoformat(), "needs_fetch": bool(items), "summary_pages": summary, "items": items, "fresh": fresh,
+           "limits": policy["fetch_limits"]}
+    if subject == "birds":                          # 段階36(決定2): iNaturalist の集計が古い・対象の日が期間外の区域(取り直しは inat-refresh)
+        out["inat_refresh"] = inat_refresh_plan(cands, dates[0], now, origin=origin, env=env, policy=policy, cat_pol=cat_pol)
+    return out
 
 
 # ---- facts ----
@@ -531,21 +534,19 @@ def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=Non
     prec = area.get("location_precision") or profile["care"]["location_precision"]
     area = dict(area, lat=round_coord(area["lat"], prec), lon=round_coord(area["lon"], prec))
     cache = Cache(dp(cfg["cache"]["dir"], env))
-    rows, fetched, url = [], [], None
-    for _d, _k, q in birds_live.bird_queries(area, [d], profile, cfg["live"]["inaturalist"]["per_page"]):
-        entry, _st = cache.get(q["url"], q["params"], now=now, ttl_s=0, allow_expired=True)
-        if entry is None:
-            return None
-        from .fetch import inaturalist
-        rows.append(inaturalist.parse_species_counts(json.loads(entry["body"]))[0])
-        fetched.append(entry["fetched_at"])
-        url = url or q["url"]
+    found = _inat_aggregation(area, d, now, cache=cache, profile=profile, cfg=cfg, env=env)
+    if found is None:
+        return None
+    from .fetch import inaturalist
+    rows = [inaturalist.parse_species_counts(json.loads(e["body"]))[0] for e in found["entries"]]
+    fetched = [e["fetched_at"] for e in found["entries"]]
+    url = found["entries"][0]["url"]
     res = obsfreq.relative_frequencies(rows, min_total=param(profile, "min_total_observations"), top_n=param(profile, "top_species"))
     if not res["enough"]:
-        return {"area": area["name"], "enough": False, "total": res["total"], "fetched_at": min(fetched), "url": url}
+        return {"area": area["name"], "enough": False, "total": res["total"], "fetched_at": min(fetched), "url": url, "center": found["center"], "target": d.isoformat()}
     years = param(profile, "history_years")
     return {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
-            "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
+            "center": found["center"], "target": d.isoformat(), "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
             "site_url": "https://www.inaturalist.org/",       # 段階35: 答えの出典に並べる、人が開くページ(問い合わせの URL は長く、API のため)
             "species": [{"name": sp["common_name"] or sp["name"], "scientific_name": sp["name"], "count": sp["count"],
                          "relative_frequency": round(sp["relative_frequency"], 3)} for sp in res["species"]]}
@@ -579,8 +580,9 @@ def season_line(f, policy):
     inat = f.get("inat")
     if inat and inat.get("enough"):
         names = "・".join(sp["name"] for sp in inat["species"])
-        return lab["inat"].format(years=inat["years"], weeks=inat["window_weeks"], radius=inat["radius_km"], area=inat["area"],
-                                  names=names, fetched=_md(inat["fetched_at"]))
+        key = "inat" if not inat.get("center") or inat["center"] == inat.get("target") else "inat_other_center"     # 段階36: 前回の集計の中心の日が対象の日と違うとき
+        return lab[key].format(years=inat["years"], weeks=inat["window_weeks"], radius=inat["radius_km"], area=inat["area"],
+                               names=names, fetched=_md(inat["fetched_at"]), center=_md(inat["center"]) if inat.get("center") else "")
     pr = [x for x in f.get("season_birds") or [] if x["kind"] == "past_record"]
     if pr:
         x = sorted(pr, key=lambda x: x["date"], reverse=True)[0]
@@ -590,6 +592,187 @@ def season_line(f, policy):
         x = pg[0]
         return lab["page"].format(publisher=x.get("publisher") or "", text=x["text"])
     return lab["unknown"]
+
+
+# ---- 野鳥: iNaturalist の集計の取り直し(段階36。利用者の決定 2026-11-01) ----
+
+def _inat_policy(policy=None):
+    return (policy or load_policy())["inat_refresh"]
+
+
+def inat_index_path(env=None, policy=None):
+    return data_path(_inat_policy(policy)["index_file"], env)
+
+
+def read_inat_index(env=None, policy=None):
+    """取り直した集計の索引(区域 ID → [{center, window_days, fetched_at, requests}])。無ければ {}。"""
+    p = inat_index_path(env, policy)
+    if not p.is_file():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8")).get("areas") or {}
+    except ValueError:
+        return {}
+
+
+def _write_inat_index(idx, env=None, policy=None):
+    p = inat_index_path(env, policy)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name("." + p.name + ".tmp")
+    tmp.write_text(json.dumps({"schema": "ikimono-inat-index/1", "areas": idx}, ensure_ascii=False, indent=1) + "\n",
+                   encoding="utf-8", newline="\n")
+    tmp.replace(p)
+
+
+def _area_by_id(area_id, sites_doc=None):
+    from . import profiles as P
+    sites_doc = sites_doc or P.load_sites()[1]
+    return next((a for a in (sites_doc.get("bird_areas") or []) + load_obs_bird_areas() if a["id"] == area_id), None)
+
+
+def _rounded(area, profile):
+    from .engine import round_coord
+    prec = area.get("location_precision") or profile["care"]["location_precision"]
+    return dict(area, lat=round_coord(area["lat"], prec), lon=round_coord(area["lon"], prec))
+
+
+def _inat_queries(area, d, profile, cfg):
+    from .fetch import birds_live
+    return [q for _d, _k, q in birds_live.bird_queries(area, [d], profile, cfg["live"]["inaturalist"]["per_page"])]
+
+
+def _inat_aggregation(area, d, now, *, cache, profile, cfg, env=None):
+    """対象の日 d に使える集計(キャッシュにあるものだけ。通信しない)。→ {center, entries} か None。
+    ①対象の日そのものの問い合わせ ②索引にある集計のうち、その期間(中心の日の前後 window_weeks 週)が d を含むもの(取得の新しい順)。"""
+    from .profiles import param
+
+    def entries_for(center):
+        out = []
+        for q in _inat_queries(area, center, profile, cfg):
+            e, _st = cache.get(q["url"], q["params"], now=now, ttl_s=0, allow_expired=True)
+            if e is None:
+                return None
+            out.append(e)
+        return out
+    ex = entries_for(d)
+    if ex:
+        return {"center": d.isoformat(), "entries": ex}
+    span = param(profile, "window_weeks") * 7
+    for it in sorted(read_inat_index(env).get(area["id"]) or [], key=lambda x: x["fetched_at"], reverse=True):
+        c = date.fromisoformat(it["center"])
+        if abs((d - c).days) <= span:
+            ex = entries_for(c)
+            if ex:
+                return {"center": it["center"], "entries": ex}
+    return None
+
+
+def inat_status(area_id, d, now, *, env=None, policy=None, sites_doc=None, profile=None, cfg=None):
+    """区域の集計の状態(通信しない)。state: fresh / stale(取得が max_age_days より古い)/
+    out_of_period(前回の集計の期間から対象の日が外れた)/ none(対象の日に使える集計がない)。"""
+    from . import profiles as P
+    from .config import load_config
+    from .fetch.cache import Cache
+    policy = policy or load_policy()
+    area = _area_by_id(area_id, sites_doc)
+    if not area or area.get("lat") is None:
+        return None
+    profile = profile or P.load_profiles()["birds"]
+    cfg = cfg or load_config()
+    area = _rounded(area, profile)
+    cache = Cache(data_path(cfg["cache"]["dir"], env))
+    found = _inat_aggregation(area, d, now, cache=cache, profile=profile, cfg=cfg, env=env)
+    out = {"area": area_id, "name": area["name"], "requests": len(_inat_queries(area, d, profile, cfg)),
+           "center": None, "fetched_at": None, "age_days": None}
+    if found is None:
+        out["state"] = "out_of_period" if read_inat_index(env, policy).get(area_id) else "none"
+        return out
+    oldest = min(datetime.fromisoformat(e["fetched_at"]) for e in found["entries"])
+    age = (now - oldest).total_seconds() / 86400
+    out.update(center=found["center"], fetched_at=oldest.isoformat(timespec="seconds"), age_days=round(age, 2))
+    out["state"] = "stale" if age > _v(_inat_policy(policy)["max_age_days"]) else "fresh"
+    return out
+
+
+def inat_refresh_plan(cands, d, now, *, origin=None, env=None, policy=None, cat_pol=None):
+    """候補の名所の区域のうち、取り直す区域(1 回の質問の上限の中で、取る順)。通信しない。
+    順: 対象の日に使える集計がない区域 → 古い区域。同じなら出発地から近い名所の区域。上限に収まらない区域は deferred(古い集計を日付つきで使う)。"""
+    policy = policy or load_policy()
+    cat_pol = cat_pol or catalog_mod.load_policy()
+    origin = origin or cat_pol["range_limit"]["default_origin"]
+    limit = _v(_inat_policy(policy)["max_requests_per_question"])
+    near = {}
+    for c in cands:
+        a = c.get("bird_area")
+        if a:
+            dk = _distance(c, origin, cat_pol)
+            near[a] = min(near.get(a, float("inf")), dk if dk is not None else float("inf"))
+    sts = [x for x in (inat_status(a, d, now, env=env, policy=policy) for a in sorted(near)) if x]
+    rank = {"none": 0, "out_of_period": 0, "stale": 1}
+    todo = sorted([x for x in sts if x["state"] != "fresh"], key=lambda x: (rank[x["state"]], near[x["area"]], x["area"]))
+    used, areas, deferred = 0, [], []
+    for x in todo:
+        if used + x["requests"] <= limit:
+            used += x["requests"]
+            areas.append(x)
+        else:
+            deferred.append(x)
+    return {"needed": bool(areas), "date": d.isoformat(), "max_requests": limit, "planned_requests": used,
+            "areas": areas, "deferred": deferred, "fresh": [x for x in sts if x["state"] == "fresh"]}
+
+
+def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_get=None, sleep=None, clock=None):
+    """区域の集計を iNaturalist から取り直す(実通信。計測フックの下で。--max-requests 必須・1 回の質問の上限を超えない)。
+    上限に収まらない区域は取らない(古い集計を日付つきで使う)。取れた集計を索引に書く。通信の失敗は記録して残りを止める。
+    → {requests, max_requests, fetched, deferred, errors}"""
+    import time
+    from . import profiles as P
+    from .config import load_config
+    from .fetch import ParseError, birds_live
+    from .fetch.cache import Cache
+    from .fetch.live import LiveError
+    from .profiles import param
+    policy = policy or load_policy()
+    if max_requests is None or max_requests < 1:
+        raise ValueError("--max-requests (1 以上)が必要")
+    max_requests = min(max_requests, _v(_inat_policy(policy)["max_requests_per_question"]))
+    profile, cfg = P.load_profiles()["birds"], load_config()
+    cache = Cache(data_path(cfg["cache"]["dir"], env))
+    unparsed = data_path(cfg["cache"]["unparsed_dir"], env)
+    sleep = sleep or time.sleep
+    idx = read_inat_index(env, policy)
+    out = {"requests": 0, "max_requests": max_requests, "fetched": [], "deferred": [], "errors": []}
+    for aid in area_ids:
+        area = _area_by_id(aid)
+        if not area or area.get("lat") is None:
+            out["errors"].append({"area": aid, "error": "unknown_area"})
+            continue
+        area = _rounded(area, profile)
+        qs = _inat_queries(area, d, profile, cfg)
+        left = max_requests - out["requests"]
+        if len(qs) > left:
+            out["deferred"].append({"area": aid, "requests": len(qs), "reason": "max_requests"})
+            continue
+        if out["requests"] > 0:
+            sleep(cfg["live"]["min_interval_s"])                      # 区域の間でも間隔を空ける
+        try:
+            _inputs, rep = birds_live.fetch_bird_counts(area, [d], profile, now, cache=cache, cfg=cfg, http_get=http_get, live=True,
+                                                        max_requests=left, unparsed_dir=unparsed, sleep=sleep, clock=clock)
+        except (LiveError, ParseError) as e:
+            out["errors"].append({"area": aid, "error": str(e)})
+            break                                                      # 同じ通信先の残りは止める
+        out["requests"] += rep["requests"]
+        got = [cache.get(q["url"], q["params"], now=now, ttl_s=0, allow_expired=True)[0] for q in qs]
+        if any(e is None for e in got):
+            out["errors"].append({"area": aid, "error": "incomplete", "warnings": rep["warnings"]})
+            continue
+        ent = {"center": d.isoformat(), "window_days": param(profile, "window_weeks") * 7,
+               "fetched_at": min(e["fetched_at"] for e in got), "requests": rep["requests"]}
+        idx[aid] = [x for x in idx.get(aid) or [] if x["center"] != ent["center"]] + [ent]
+        out["fetched"].append({"area": aid, "requests": rep["requests"], "cache_hits": rep["cache_hits"], "fetched_at": ent["fetched_at"]})
+    if out["fetched"]:
+        _write_inat_index(idx, env, policy)
+    return out
 
 
 def closed_on(c, dates):
@@ -608,8 +791,34 @@ def closed_on(c, dates):
     return out
 
 
-def typical_line(typ, c, dates, policy):
-    """例年の時期の 1 文の材料(段階35)。例年の時期が分からないときは、今年の行事の期間と分けて書く。"""
+def last_year_records(rows, dates, policy):
+    """前の年の同じ時期(前後 typical.last_year_window_days 日)の状態の記録。新しい年・近い日の順(段階36。決定1の代わりの材料)。"""
+    d = dates[0]
+    w = _v(policy["typical"]["last_year_window_days"])
+    out = []
+    for r in rows:
+        sd = state_date_of(r)
+        if not sd:
+            continue
+        x = date.fromisoformat(sd)
+        if x.year >= d.year:
+            continue
+        try:
+            same = date(d.year, x.month, x.day)
+        except ValueError:
+            continue
+        if abs((same - d).days) <= w:
+            out.append({"state": r["state"], "state_norm": r.get("state_norm"), "date": sd, "year": x.year, "url": r["url"],
+                        "publisher": r.get("publisher") or r.get("host"), "source_class": r["source_class"], "_gap": abs((same - d).days)})
+    out.sort(key=lambda x: (-x["year"], x["_gap"], x["date"]))
+    for x in out:
+        x.pop("_gap")
+    return out
+
+
+def typical_line(typ, c, dates, policy, last_year=None):
+    """例年の時期の 1 文の材料(段階35)。例年の時期が分からないときは「分かりません」と明言し、
+    代わりに今年の行事の期間か、前の年の同じ時期の記録を添える(段階36。決定1)。"""
     lab = policy["typical_labels"]
     if typ:
         return lab["known"].format(text=typ["text"])
@@ -618,6 +827,9 @@ def typical_line(typ, c, dates, policy):
     if evs:
         e = evs[0]
         return lab["unknown_with_event"].format(name=e["name"], start=_md(e["start"]), end=_md(e["end"]))
+    if last_year:
+        x = last_year[0]
+        return lab["unknown_with_last_year"].format(year=x["year"], md=_md(x["date"]), publisher=x.get("publisher") or "", text=x["state"])
     return lab["unknown"]
 
 
@@ -698,7 +910,16 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                        + ([] if not typ or typ in real_typ else [typ]),
             "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
                                           for t in c.get("typical") or [] if t.get("event_derived")],
-            "typical_line": typical_line(typ, {"events": list(c.get("events") or []) + rec_events}, dates, policy) if subject != "birds" else None,
+            "typical_line": typical_line(typ, {"events": list(c.get("events") or []) + rec_events}, dates, policy,
+                                         last_year=last_year_records(rows, dates, policy)) if subject != "birds" else None,
+            # 段階36(決定1): 例年の時期が分からない候補の印と代わりの材料。候補からは外さない
+            "typical_unknown": subject != "birds" and typ is None,
+            "typical_alternatives": None if subject == "birds" or typ is not None else {
+                "events": [{k: e.get(k) for k in ("name", "start", "end", "url", "publisher", "source_class")}
+                           for e in list(c.get("events") or []) + rec_events if e.get("start") and e.get("end")],
+                "last_year": last_year_records(rows, dates, policy),
+                "event_periods_not_typical": [{k: t.get(k) for k in ("text", "start", "end", "publisher", "url", "year")}
+                                              for t in c.get("typical") or [] if t.get("event_derived")]},
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],
@@ -773,6 +994,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
                 inat_cache[a] = inat_season(a, dates[0], now, env)
             f["inat"] = inat_cache.get(a) if a else None
             f["season_line"] = season_line(f, policy)
+            f["season_unknown"] = f["season_line"] == policy["birds"]["season_labels"]["unknown"]      # 段階36(決定1): 野鳥の R4 の「分からない」の印
             if f["inat"] and f["inat"].get("enough"):
                 f["reasons"].append("inat_season")
             for k in ("relation", "relation_label"):          # 野鳥には「例年の見頃」の関係を出さない(この時期に見られる鳥で書く)
@@ -815,7 +1037,36 @@ def _dates(a, now):
     return S.next_weekend(now)
 
 
-def main(argv=None):
+def _inat_refresh_cli(a, http_get=None, clock=None):
+    import os
+    from . import livegate
+    if a.max_requests is None or a.max_requests < 1:
+        print("--max-requests (1 以上)が必要です", file=sys.stderr)
+        return 4
+    if http_get is None:                                   # 偽の http_get を注入したテストは実通信にならない。本物の通信は常にゲートを通る
+        if not livegate.live_allowed():
+            print(livegate.refusal(), file=sys.stderr)
+            return 4
+        if not os.environ.get("BIYORI_REQ_LOG"):
+            print("inat-refresh は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します", file=sys.stderr)
+            return 4
+    now = S.parse_now(a.now)
+    dates = _dates(a, now)
+    pl = None
+    if a.area:
+        ids = a.area
+    else:
+        pl = plan("birds", region=a.region, dates=dates, now=now, origin=a.origin)["inat_refresh"]
+        ids = [x["area"] for x in pl["areas"]]
+    out = inat_refresh(ids, dates[0], now, max_requests=a.max_requests, http_get=http_get, clock=clock) if ids else \
+        {"requests": 0, "max_requests": a.max_requests, "fetched": [], "deferred": [], "errors": []}
+    if pl is not None:
+        out["planned"] = pl
+    print(json.dumps(out, ensure_ascii=False, indent=1))
+    return 5 if out["errors"] else 0
+
+
+def main(argv=None, http_get=None, clock=None):
     ap = argparse.ArgumentParser(prog="observations")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("record", help="読んだ事実を記録に追記する(IKIMONOBIYORI_DATA_DIR の下。ホストでは拒否しない)")
@@ -832,7 +1083,16 @@ def main(argv=None):
     n = sub.add_parser("normalize")
     n.add_argument("--subject", required=True)
     n.add_argument("--state", required=True)
+    ir = sub.add_parser("inat-refresh", help="野鳥の区域の iNaturalist の集計を取り直す(段階36。実通信。BIYORI_ALLOW_LIVE=1・計測フック・--max-requests が必要)")
+    ir.add_argument("--region")
+    ir.add_argument("--date", action="append")
+    ir.add_argument("--now", required=True)
+    ir.add_argument("--origin")
+    ir.add_argument("--max-requests", type=int, required=True)
+    ir.add_argument("--area", action="append", help="区域 ID(省略時は refresh --plan の inat_refresh.areas の順)")
     a = ap.parse_args(argv)
+    if a.cmd == "inat-refresh":
+        return _inat_refresh_cli(a, http_get=http_get, clock=clock)
     if a.cmd == "record":
         batch = json.loads(Path(a.batch).read_text(encoding="utf-8"))
         out = record(batch if isinstance(batch, list) else [batch])

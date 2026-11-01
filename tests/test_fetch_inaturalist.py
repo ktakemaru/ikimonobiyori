@@ -174,7 +174,8 @@ class EndToEnd(unittest.TestCase):
         out, inp = Path(tempfile.mkdtemp()) / "o.json", Path(tempfile.mkdtemp()) / "i.json"
         http = Fake()
         rc = imain.main(["--request", str(r), "--live", "--max-requests", "10", "--dates-limit", "1", "--now", NOW.isoformat(),
-                         "--cache-dir", cdir, "--out", str(out), "--inputs-out", str(inp), "--per-year"], http_get=http)
+                         "--cache-dir", cdir, "--out", str(out), "--inputs-out", str(inp), "--per-year"], http_get=http,
+                        clock=lambda: NOW)                  # 段階36: 取得時刻は受け取った時刻(clock)。ここでは --now と同じ時刻を返す時計を渡す
         self.assertEqual(rc, 0)
         doc, inputs = json.loads(out.read_text(encoding="utf-8")), json.loads(inp.read_text(encoding="utf-8"))
         self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])
