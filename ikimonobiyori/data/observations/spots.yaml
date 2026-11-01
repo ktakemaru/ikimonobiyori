@@ -405,7 +405,7 @@ spots:
     catalog_ref: hana-0027
     flower_kinds: [コスモス]
     typical:
-      - {text: "11月上旬～11月下旬", kind: コスモス, publisher: 神奈川県観光協会, url: "https://kanagawa-kankou.or.jp/event/6763", year: 2025, source_class: secondary, checked_on: "2026-11-01", note: "2025年はコスモス園の開放を11/1～11/24に変更(生育が遅いため)。例年の見頃は9月～10月とする紹介サイトもある"}
+      - {text: "11月上旬～11月下旬", kind: コスモス, publisher: 神奈川県観光協会, url: "https://kanagawa-kankou.or.jp/event/6763", year: 2025, source_class: secondary, checked_on: "2026-11-01", event_derived: true, note: "段階35: 2025年の行事(開放)の期間に近い値のため例年の時期としては使わない。2025年はコスモス園の開放を11/1～11/24に変更(生育が遅いため)。例年の見頃は9月～10月とする紹介サイトもある"}
     pages:
       - {url: "https://www.kanagawaparks.com/kurihama/", publisher: くりはま花の国, source_class: official}
     search: "くりはま花の国 コスモス 開花状況"
@@ -433,9 +433,10 @@ spots:
     hours: {text: "10～2月 8:30～17:00(下飯田・今田遊水地は15分早く閉園)", url: "https://www.kanagawa-park.or.jp/sakaigawa/guide.html", checked_on: "2026-11-01"}
     closed: {text: "12月29日～1月3日", url: "https://www.kanagawa-park.or.jp/sakaigawa/guide.html", checked_on: "2026-11-01"}
     pages:
-      - {url: "https://sakaigawanature.blogspot.com/", publisher: 県立境川遊水地公園(自然情報), source_class: official}
+      - {url: "https://sakaigawanature.blogspot.com/", publisher: 県立境川遊水地公園(自然情報ブログ), source_class: official, operator_evidence: "このアカウントは、神奈川県立境川遊水地公園の指定管理者である(公財)神奈川県公園協会が運用しています。", checked_on: "2026-11-01"}
       - {url: "https://www.kanagawa-park.or.jp/sakaigawa/nature.html", publisher: 県立境川遊水地公園, source_class: official}
     search: "境川遊水地 野鳥 観察"
+    bird_area: kanagawa_sakaigawa
   - id: obs-yacho-0002
     subject: birds
     name: 舞岡公園
@@ -443,10 +444,11 @@ spots:
     city: 横浜市戸塚区
     area: 横浜
     hours: {text: "小谷戸の里 午前9時～午後5時(公園は通年開園)", url: "https://www.city.yokohama.lg.jp/business/kyoso/public-facility/kaku-katsuyou/kankyo/park/keikakuhoukoku/jigyokeikakuhoukoku.files/1013_20260710.pdf", checked_on: "2026-11-01"}
-    closed: {text: "小谷戸の里は毎月第1・3月曜(祝日の場合は翌日)と12月29日～1月3日", url: "https://www.city.yokohama.lg.jp/business/kyoso/public-facility/kaku-katsuyou/kankyo/park/keikakuhoukoku/jigyokeikakuhoukoku.files/1013_20260710.pdf", checked_on: "2026-11-01"}
+    closed: {text: "小谷戸の里は毎月第1・3月曜(祝日の場合は翌日)と12月29日～1月3日", facility: 小谷戸の里, open_note: "公園には入れます", url: "https://www.city.yokohama.lg.jp/business/kyoso/public-facility/kaku-katsuyou/kankyo/park/keikakuhoukoku/jigyokeikakuhoukoku.files/1013_20260710.pdf", checked_on: "2026-11-01"}
     pages:
       - {url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/koen/koen/daihyoteki/maioka.html", publisher: 横浜市, source_class: official}
     search: "舞岡公園 野鳥"
+    bird_area: kanagawa_sakaigawa
   - id: obs-yacho-0003
     subject: birds
     name: 横浜自然観察の森
@@ -460,6 +462,9 @@ spots:
     pages:
       - {url: "https://sancyokohama.sakura.ne.jp/", publisher: 横浜自然観察の森(日本野鳥の会), source_class: official}
     search: "横浜自然観察の森 野鳥 観察"
+    bird_area: kanagawa_kanazawa
+    hours: {text: "園内：日の出から日の入りまで / 自然観察センター：9:00～16:30", url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/midori_up/1mori/kansatsu/kansatsunomori.html", checked_on: "2026-11-01"}
+    closed: {text: "自然観察センターは毎週月曜日（祝日の場合はその翌日）、年末年始（12月28日～１月４日）休館", facility: 自然観察センター, open_note: "園内には入れます", url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/midori_up/1mori/kansatsu/kansatsunomori.html", checked_on: "2026-11-01", note: "原文は「毎週月曜日（祝日の場合はその翌日）、年末年始（12月28日～１月４日）休館」(自然観察センターの欄。施設名は前に足した)"}
   - id: obs-yacho-0004
     subject: birds
     name: 県立座間谷戸山公園
@@ -467,9 +472,10 @@ spots:
     city: 座間市
     area: 相模原
     pages:
-      - {url: "http://www.zamayatoyama.kanagawa-park.or.jp/birdsalbum/webdir/index.html", publisher: 県立座間谷戸山公園(鳥ごよみ), source_class: official}
+      - {url: "https://www.kanagawa-park.or.jp/zamayatoyama/birdsalbum/webdir/index.html", publisher: 県立座間谷戸山公園(鳥ごよみ), source_class: official}
       - {url: "https://www.kanagawa-park.or.jp/zamayatoyama/", publisher: 県立座間谷戸山公園, source_class: official}
     search: "座間谷戸山公園 野鳥"
+    bird_area: kanagawa_sagami
   - id: obs-yacho-0005
     subject: birds
     name: 鶴見川多目的遊水地
@@ -478,6 +484,7 @@ spots:
     area: 横浜
     pages: []
     search: "鶴見川多目的遊水地 野鳥 冬"
+    bird_area: kanagawa_tsurumi
   - id: obs-yacho-0006
     subject: birds
     name: 生田緑地
@@ -486,6 +493,7 @@ spots:
     area: 川崎
     pages: []
     search: "生田緑地 野鳥"
+    bird_area: kanagawa_ikuta
   - id: obs-yacho-0007
     subject: birds
     name: 県立相模原公園
@@ -494,3 +502,4 @@ spots:
     area: 相模原
     pages: []
     search: "相模原公園 野鳥"
+    bird_area: kanagawa_sagami
