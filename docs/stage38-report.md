@@ -3,7 +3,7 @@
 指示書: `docs/stage38-instructions.md`。ブランチ `stage38`。ハブは段階H12(`C:\biyori-hub` の `docs/stageH12-report.md`)。
 
 ## 1. PR と CI
-- ikimonobiyori: PR_PLACEHOLDER
+- ikimonobiyori: **push できていない**(この環境の権限設定で `git push` が拒否された。迂回していない)。ブランチ `stage38` はローカルの commit で止めた。PR と CI は、利用者が下の 9 の手順で行う。
 - テスト: `python -X utf8 -m unittest discover -s tests` → `Ran 983 tests` → `OK`
 
 ## 2. 問1のページとスクリーンショット
@@ -61,4 +61,11 @@
 - 鶴見川多目的遊水地の公園の座標(出典)を足せば、半径2kmの範囲にできる。
 
 ## 9. 利用者がやること
-REPLACE_STEPS
+1. PowerShell のウィンドウ(タブの名前 `C:\ikimonobiyori`)で `cd C:\ikimonobiyori` → `git push -u origin stage38` → `gh pr create --base main --head stage38 --fill` → `gh pr checks --watch`。確かめ方: 最後に全項目が `pass`。
+2. 同じく `C:\biyori-hub` のタブで `cd C:\biyori-hub` → `git push -u origin stageH12` → `gh pr create --base main --head stageH12 --fill` → `gh pr checks --watch`。確かめ方: 全項目が `pass`(ハブの CI は ikimonobiyori の commit を GitHub から取り込むので、1 の push のあとに行う)。
+3. ブラウザで ikimonobiyori の PR を開き、「Create a merge commit」でマージ(ブランチは消さない)。確かめ方: PR が「Merged」。
+4. ハブ(biyori-hub)の PR を同じく「Create a merge commit」でマージ(ブランチは消さない)。
+5. `C:\ikimonobiyori` のタブで `git checkout main` → `git pull`。確かめ方: `git log --oneline -1` がマージの commit。
+6. `C:\biyori-hub` のタブで `git checkout main` → `git pull`。
+7. 同じタブで `.venv-hub\Scripts\python.exe -X utf8 hub\prepare_runtime.py ikimonobiyori --checkout`。確かめ方: `OK  C:\biyori-hub\runtime\ikimonobiyori` と出る。
+8. ページを開いて写真を確かめる: エクスプローラーで `C:\Users\takem\AppData\Local\ikimonobiyori\guide\pages\birds-parks-2026-11-03.html` をダブルクリック。確かめ方: 公園ごとの節に鳥の写真が並び、各写真の下に撮影者名とライセンスが出る。
