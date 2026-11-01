@@ -214,7 +214,7 @@ class R4TypicalUnknown(Base):
         b = by["t-h-3"]
         self.assertTrue(b["typical_unknown"])
         self.assertEqual(b["typical_alternatives"]["events"][0]["name"], "試験の菊まつり")
-        self.assertEqual(b["typical_line"], "例年の時期は分かりません(今年の行事「試験の菊まつり」は10/31〜11/23)")
+        self.assertEqual(b["typical_line"], "例年の時期は分かりません。今年は10/31〜11/23に試験の菊まつりがあります。")   # 段階38で書き換え(指示書 3-4。旧: 例年の時期は分かりません(今年の行事「…」は…))
         c = by["t-h-2"]
         self.assertTrue(c["typical_unknown"])
         self.assertEqual(c["typical_alternatives"], {"events": [], "last_year": [], "event_periods_not_typical": []})

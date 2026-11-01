@@ -150,7 +150,8 @@ typical:
   last_year_window_days: {value: 30, source: "仮置き(野鳥の season_window_days と同じ前後ひと月。根拠のある値ではない)", provisional: true}
 typical_labels:
   known: "例年の見頃: {text}"
-  unknown_with_event: "例年の時期は分かりません(今年の行事「{name}」は{start}〜{end})"
+  # 段階38(指示書 3-4): 同じ期間を2度書かない言い方に
+  unknown_with_event: "例年の時期は分かりません。今年は{start}〜{end}に{name}があります。"
   unknown_with_last_year: "例年の時期は分かりません({year}年{md}の記録({publisher})では「{text}」)"
   unknown: "例年の時期は分かりません"
 
@@ -162,6 +163,10 @@ birds:
     inat: "この時期に見られる鳥: iNaturalist の過去{years}年の記録(前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
     # 段階36: 前回の集計の中心の日が対象の日と違う(対象の日がその期間の中にある)とき
     inat_other_center: "この時期に見られる鳥: iNaturalist の過去{years}年の記録({center}の前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
+    # 段階38: 一年の記録(分母)があるときは、季節らしさの順(この時期らしい鳥)で書く
+    inat_park: "この時期に見られる鳥: iNaturalist の記録({months}・{area}の半径{radius}km。{fetched}取得)では、{names}が記録されています。どれも、この時期は{region}で一年の平均より多く記録される鳥です"
+    inat_park_plain: "この時期に見られる鳥: iNaturalist の記録({months}・{area}の半径{radius}km。{fetched}取得)では、{names}が多く記録されています"
+    inat_seasonal: "この時期に見られる鳥: iNaturalist の過去{years}年の記録({center}の前後{weeks}週間・{area}の半径{radius}km。{fetched}取得)では、{names}がこの時期に多く記録されています(一年の平均と比べて)"
     past_record: "この時期に見られる鳥: {year}年{md}の記録({publisher})では「{text}」"
     page: "この時期に見られる鳥: {publisher}の紹介では「{text}」"
     unknown: "この時期に見られる鳥の記録は見つかっていません"
@@ -172,3 +177,75 @@ inat_refresh:
   max_age_days: {value: 7, source: "利用者の決定 2026-11-01(7日より古ければ取り直す)", provisional: false}
   max_requests_per_question: {value: 10, source: "利用者の決定 2026-11-01(1回の質問につき最大10リクエスト)", provisional: false}
   index_file: observations/inat_index.json        # IKIMONOBIYORI_DATA_DIR の下。取り直した集計の中心の日と取得時刻
+
+# 段階38(利用者の決定 2026-11-01。指示書 docs/stage38-instructions.md 3-1・3-2): 公園ごとに「見られる鳥」
+park_birds:
+  # 範囲: 半径10kmの円(bird_areas.yaml)をやめ、探鳥地ごとの範囲(spots.yaml の bird_range: 中心と半径)にする。
+  # bird_range がない名所だけ、従来の区域(bird_area)を使う。
+  range:
+    default_radius_km: {value: 2, source: "指示書 段階38 3-2(既定は半径2km)。仮置き(公園の広さに合わせた較正はしていない)", provisional: true}
+    # 公開の公園の代表点なので、冬鳥の飛来地(data/catalog/policy.yaml の wintering_birds)と同じ area_1km(小数2桁 = 約1km)に丸める。
+    # 群れ・ねぐら・観察者の位置ではない。問い合わせ・キャッシュ・出力にはこの丸めた値だけを使う(絶対ルール7)
+    location_precision: area_1km
+  # 季節らしさ(methods/observation_frequency.seasonal_rank):
+  #   lift = (対象の日の前後 window_weeks 週の、その種の記録の割合) ÷ (同じ場所・同じ過去の年の、一年の記録の中の割合)
+  #   lift が lift_min 以上で、時期の件数が min_window_count 以上の種を「この時期らしい」として先に、lift の大きい順。ほかは件数の順で後ろ(消さない)。
+  seasonality:
+    formula: "lift = (時期の種の件数 / 時期の鳥類の総数) / (一年の種の件数 / 一年の鳥類の総数)"
+    lift_min: {value: 1.2, source: "仮置き(一年の平均より2割多ければ『この時期らしい』。根拠のある値ではない)", provisional: true}
+    lift_strong: {value: 2.0, source: "仮置き(一年の平均の2倍以上を『特に多い』。根拠のある値ではない)", provisional: true}
+    min_window_count: {value: 2, source: "仮置き(1件だけの記録で季節らしさを決めない。根拠のある値ではない)", provisional: true}
+  # 公園ごとの範囲の「この時期」と年(2026-11-01 の実測: 半径2km・前後1週・過去5年では、公園ごとの記録が 2〜6 件しかなかった。docs/stage38-report.md)。
+  # 公園ごとの範囲は、対象の日の前後 half_days 日にかかる月(11/3 なら 10月・11月)の、すべての年の記録を 1 リクエストで取る。分母も同じくすべての年の一年の記録(1 リクエスト)
+  window:
+    half_days: {value: 15, source: "仮置き(前後半月にかかる月。半径2kmの公園で記録の数を確保するため。根拠のある値ではない)", provisional: true}
+    all_years: true                       # 年で絞らない(公園ごとの範囲では記録が少ないため)
+  min_total: {value: 15, source: "仮置き(公園ごとの範囲の『この時期』の記録の下限。プロファイルの min_total_observations 30 より小さい。2026-11-01 の実測で横浜自然観察の森が18件。根拠のある値ではない)", provisional: true}
+  # 季節らしさは地域全体の記録で決める(2026-11-01 の受け入れテストの採点: 公園ごとの記録(20件前後)では割合がぶれ、キジバト・メジロなど一年中いる鳥が上位に来た)。
+  # 公園の記録は「その公園で見られる鳥」(どの鳥か)にだけ使い、並び(この時期らしいか)は地域全体の同じ月・一年の記録の割合の比で決める。
+  # 地域の区域は都道府県ごとに 1 つ。座標は area_10km(小数1桁)。取得は公園と同じ形(この時期の月 1 リクエスト + 一年 1 リクエスト。キャッシュを使い回す)
+  regional_areas:
+    神奈川県: {id: "region:神奈川県", name: 神奈川県の探鳥地周辺, lat: 35.4, lon: 139.5, radius_km: 30, location_precision: area_10km,
+              source: "仮置き(横浜を中心に、神奈川の探鳥地の一覧の公園を含む半径。根拠のある値ではない)", provisional: true}
+  # 反対の季節との比べ(2026-11-01 の実測: 10・11月と一年の平均の比だけでは、コサギ・ハクセキレイ・トビなど一年中いる鳥も 1.3 前後になり、
+  # 冬鳥(コガモ 1.38)と分けられなかった。一年の平均には冬鳥の多い冬も入るため)。地域全体でだけ、反対の季節の月の記録も 1 リクエスト取る。
+  #   季節らしい = (一年の平均との比 lift >= lift_min) かつ (反対の季節との比 contrast_lift >= contrast_min。反対の季節に記録がなければ満たす)
+  #   contrast_lift = (この時期の種の割合) / (反対の季節の種の割合)。並びは contrast_lift の大きい順
+  contrast:
+    summer: [6, 7, 8]
+    winter: [12, 1, 2]
+    # この時期の月が summer の月にかかるときは winter と、それ以外は summer と比べる
+    # 2026-11-01 の実測(神奈川・10・11月 対 6〜8月): コガモ 26.9・モズ 6.9・ジョウビタキ(夏の記録なし)、一年中いる鳥 ヤマガラ 4.6・エナガ 4.0・コサギ 1.6
+    # (夏は葉が茂り観察者も少ないため、一年中いる小鳥も夏の記録の割合が下がる)。それを分ける値として 5
+    contrast_min: {value: 5.0, source: "仮置き(2026-11-01 の実測で一年中いる小鳥 4.6 以下・冬鳥 6.9 以上を分ける値。根拠のある値ではない)", provisional: true}
+  regional_min_window_count: {value: 5, source: "仮置き(地域全体のこの時期の記録がこれ未満の鳥は季節らしさを決めない。根拠のある値ではない)", provisional: true}
+  # 一年の記録(分母)の取り直しの間隔。季節で変わらないので、窓の集計(inat_refresh.max_age_days)より長くする
+  baseline_max_age_days: {value: 30, source: "仮置き(一年分の過去の記録はひと月では大きく変わらない想定。根拠のある値ではない)", provisional: true}
+  # 「最近の記録」とみなす幅(状態の日付から対象の日まで)
+  recent_days: {value: 30, source: "仮置き(公園の観察の記録は月に数回の更新が多い。根拠のある値ではない)", provisional: true}
+  # 公園ごとに出す鳥の数(閾値ではなく表示の件数の設計値)
+  max_species: {value: 8, source: "表示の件数の設計値(スマホの1画面で2〜3行)", provisional: false}
+  # そのうち最近の記録から出す数の上限(この時期の記録の鳥も並ぶように。最近の記録は先に出す)
+  max_recent: {value: 5, source: "表示の件数の設計値", provisional: false}
+  # 海の鳥(内陸の公園でこれが上位 sea_top_n に入ったら、範囲が広すぎる合図として facts の range_warnings に出す。報告書に書く)
+  sea_birds: [ウミネコ, カモメ, セグロカモメ, オオセグロカモメ, ユリカモメ, イソヒヨドリ, ウミウ, ミサゴ, スズガモ, ウミアイサ]
+  sea_top_n: {value: 5, source: "表示の上位(仮置き)", provisional: true}
+  # なぜ今か(決まった文。材料から作る)
+  why:
+    recent: "最近({md})、公園の記録に出ています"
+    seasonal_strong: "この時期は、一年の平均より特に多く記録されています"
+    seasonal: "この時期は、一年の平均より多く記録されています"
+    # 段階38(採点の後): 地域全体の記録で季節らしさを決めたとき
+    region_strong: "この公園で記録があり、この時期は{region}で一年の平均より特に多く記録される鳥です"
+    region: "この公園で記録があり、この時期は{region}で一年の平均より多く記録される鳥です"
+    region_year_round: "一年を通して見られる鳥です"
+    window_only: "この時期の記録があります"
+    year_round: "一年を通して記録されています"
+    last_year: "{year}年{md}にも記録があります({publisher})"
+    page: "{publisher}の紹介にあります"
+  kind_labels: {recent: 最近の記録, season: この時期の記録, last_year: 前の年の同じ時期の記録, page: 公園の紹介}
+  inat_period: "{center}の前後{weeks}週間(過去{years}年)"
+  inat_period_park: "{months}の記録"
+  months_label: "{months}月"
+  # 和名の辞書(記録の原文から鳥の名前を拾う): data/guide/bird_taxa.yaml の和名と、その公園の iNaturalist の集計の和名
+  name_min_len: {value: 2, source: "1文字の語(「鵜」など)を拾わない設計値", provisional: false}

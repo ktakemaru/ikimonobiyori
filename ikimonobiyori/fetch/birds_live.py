@@ -160,3 +160,55 @@ def fetch_bird_counts(area, dates, profile, now, *, cache, cfg, http_get=None, l
               "birds": [{"area": {**({"id": area["id"]} if area.get("id") else {}), "name": area["name"], "lat": area["lat"], "lon": area["lon"], "radius_km": area["radius_km"]},
                          "queries": qlist}]}
     return inputs, rep
+
+
+def baseline_query(area, d, profile, per_page):
+    """段階38: 季節らしさの分母(その場所の一年の記録。窓と同じ過去の年)の問い合わせ(通信しない)。座標は area の丸めた値だけ。"""
+    n = param(profile, "history_years")
+    years = sorted(d.year - k for k in range(1, n + 1))
+    return inaturalist.species_counts_years_query(lat=area["lat"], lng=area["lon"], radius_km=area["radius_km"], years=years,
+                                                  iconic_taxa=param(profile, "iconic_taxa"), quality_grade=param(profile, "quality_grade"),
+                                                  per_page=per_page)
+
+
+def park_queries(area, d, profile, per_page, half_days):
+    """段階38: 公園ごとの範囲の問い合わせ(通信しない)。→ (この時期 = 対象の日の前後 half_days 日にかかる月の、すべての年の記録, 一年の記録)。"""
+    months = sorted({(d + timedelta(days=k)).month for k in (-half_days, 0, half_days)})
+    common = dict(lat=area["lat"], lng=area["lon"], radius_km=area["radius_km"], iconic_taxa=param(profile, "iconic_taxa"),
+                  quality_grade=param(profile, "quality_grade"), per_page=per_page)
+    win = inaturalist.species_counts_months_query(months=months, locale=inaturalist.LOCALE, **common)
+    year = inaturalist.species_counts_years_query(years=[], **common)
+    year["params"].pop("year", None)
+    from urllib.parse import urlencode
+    year["url"] = f"{inaturalist.BASE}{year['endpoint']}?{urlencode(year['params'])}"
+    return win, year, months
+
+
+def contrast_query(area, profile, per_page, months):
+    """段階38: 反対の季節の月の、すべての年の記録(地域全体の季節らしさの比べに使う。通信しない)。"""
+    return inaturalist.species_counts_months_query(lat=area["lat"], lng=area["lon"], radius_km=area["radius_km"], months=months,
+                                                   iconic_taxa=param(profile, "iconic_taxa"), quality_grade=param(profile, "quality_grade"),
+                                                   per_page=per_page, locale=inaturalist.LOCALE)
+
+
+def fetch_baseline(area, d, profile, now, *, cache, cfg, http_get, unparsed_dir=None, clock=None, q=None):
+    """一年の記録を 1 リクエストで取り、キャッシュに置く(集計値だけ)。→ fetched_at。200 以外・読めない応答は止める(再試行しない)。
+    area は丸めた座標。http_get は呼び出し側が上限・間隔・許可ホストで包んだもの。q を渡せばその問い合わせ(公園ごとの範囲の問い合わせにも使う)。"""
+    q = q or baseline_query(area, d, profile, cfg["live"]["inaturalist"]["per_page"])
+    host = urlsplit(q["url"]).netloc
+    if host not in set(cfg["live"]["allowed_hosts_by_subject"]["birds"]):
+        raise LiveError(f"許可リスト外のホストには送らない: {host}")
+    res = http_get(q["url"])
+    status, raw = res[0], res[1]
+    if status != HTTPStatus.OK:
+        raise LiveError(f"HTTP {status}: {area['name']} 一年の記録。再試行せず中止する")
+    try:
+        parsed = json.loads(raw)
+        inaturalist.parse_species_counts(parsed)
+    except (ValueError, ParseError, AttributeError) as e:
+        saved = _save_unparsed(unparsed_dir, q["url"], status, raw, now, str(e))
+        raise ParseError(f"{area['name']} 一年の記録: 応答を読めない: {e}(実応答を保存: {saved})") from e
+    mini, _seen = minimize_species_counts(parsed)
+    fetched_at = received_at(now, clock)
+    cache.put(url=q["url"], params=q["params"], body=json.dumps(mini, ensure_ascii=False), source=SOURCE_INAT, fetched_at=fetched_at)
+    return fetched_at

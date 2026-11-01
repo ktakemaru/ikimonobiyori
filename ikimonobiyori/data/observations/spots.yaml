@@ -437,6 +437,8 @@ spots:
       - {url: "https://www.kanagawa-park.or.jp/sakaigawa/nature.html", publisher: 県立境川遊水地公園, source_class: official}
     search: "境川遊水地 野鳥 観察"
     bird_area: kanagawa_sakaigawa
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.39, lon: 139.48, radius_km: null, source: "https://ja.wikipedia.org/wiki/境川遊水地公園(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
   - id: obs-yacho-0002
     subject: birds
     name: 舞岡公園
@@ -449,6 +451,8 @@ spots:
       - {url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/koen/koen/daihyoteki/maioka.html", publisher: 横浜市, source_class: official}
     search: "舞岡公園 野鳥"
     bird_area: kanagawa_sakaigawa
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.39, lon: 139.55, radius_km: null, source: "https://ja.wikipedia.org/wiki/舞岡公園(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
   - id: obs-yacho-0003
     subject: birds
     name: 横浜自然観察の森
@@ -463,6 +467,8 @@ spots:
       - {url: "https://sancyokohama.sakura.ne.jp/", publisher: 横浜自然観察の森(日本野鳥の会), source_class: official}
     search: "横浜自然観察の森 野鳥 観察"
     bird_area: kanagawa_kanazawa
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.34, lon: 139.59, radius_km: null, source: "https://ja.wikipedia.org/wiki/横浜自然観察の森(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
     hours: {text: "園内：日の出から日の入りまで / 自然観察センター：9:00～16:30", url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/midori_up/1mori/kansatsu/kansatsunomori.html", checked_on: "2026-11-01"}
     closed: {text: "自然観察センターは毎週月曜日（祝日の場合はその翌日）、年末年始（12月28日～１月４日）休館", facility: 自然観察センター, open_note: "園内には入れます", url: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/midori-koen/midori_up/1mori/kansatsu/kansatsunomori.html", checked_on: "2026-11-01", note: "原文は「毎週月曜日（祝日の場合はその翌日）、年末年始（12月28日～１月４日）休館」(自然観察センターの欄。施設名は前に足した)"}
   - id: obs-yacho-0004
@@ -476,6 +482,8 @@ spots:
       - {url: "https://www.kanagawa-park.or.jp/zamayatoyama/", publisher: 県立座間谷戸山公園, source_class: official}
     search: "座間谷戸山公園 野鳥"
     bird_area: kanagawa_sagami
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.49, lon: 139.40, radius_km: null, source: "https://ja.wikipedia.org/wiki/座間谷戸山公園(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
   - id: obs-yacho-0005
     subject: birds
     name: 鶴見川多目的遊水地
@@ -484,6 +492,7 @@ spots:
     area: 横浜
     pages: []
     search: "鶴見川多目的遊水地 野鳥 冬"
+    # 段階38: 公園の代表点を出典で確かめられていない(ウィキペディアに記事なし。2026-11-01)。推測で埋めず、従来の区域(半径10km)を使う
     bird_area: kanagawa_tsurumi
   - id: obs-yacho-0006
     subject: birds
@@ -494,6 +503,8 @@ spots:
     pages: []
     search: "生田緑地 野鳥"
     bird_area: kanagawa_ikuta
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.61, lon: 139.56, radius_km: null, source: "https://ja.wikipedia.org/wiki/生田緑地(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
   - id: obs-yacho-0007
     subject: birds
     name: 県立相模原公園
@@ -503,3 +514,5 @@ spots:
     pages: []
     search: "相模原公園 野鳥"
     bird_area: kanagawa_sagami
+    # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
+    bird_range: {lat: 35.53, lon: 139.39, radius_km: null, source: "https://ja.wikipedia.org/wiki/相模原公園(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
