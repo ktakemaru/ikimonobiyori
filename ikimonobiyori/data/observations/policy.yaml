@@ -78,6 +78,15 @@ states:
     words: []
 unknown_state: 状態不明
 
+# 段階37(指示書 2-4-3): 時期を表す語の中の「見頃」は、今の状態として読まない(正規化の前に原文から取り除く。原文は残す)。
+# 段階H10 の試用で、ウォーカープラスの「(例年の見頃のみ)」が「見頃」と読まれた
+not_state_phrases: [例年の見頃, 例年の見ごろ, 例年見頃, 例年見ごろ, 見頃の時期, 見ごろの時期, 見頃時期, 見ごろ時期, 見頃予想, 見ごろ予想, 見頃予測, 見ごろ予測,
+                    見頃の予想, 見ごろの予想, 見頃は例年, 見ごろは例年, 見頃期, 見ごろ期]
+
+# 段階37(指示書 2-4-1): 状態の日付を原文から補ったときの印(記録の state_date_inferred)。
+# day_only: 月のない「01日現在」を、読んだ日以前でいちばん近いその日とした。month_day: state_date_text の「10/25現在」から年を補った
+state_date_inferred: {day_only: month_from_read_date, month_day: year_from_read_date}
+
 # 地域のまとめページ(1 ページで多くの名所の今の状態が分かる。plan の先頭)
 summary_pages:
   autumn_leaves:

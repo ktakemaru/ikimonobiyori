@@ -42,7 +42,8 @@ class FakeHttp:
 def fetch(cache, http, *, live_=True, cache_only=False, max_requests=10, sites=("m001", "m002", "m013"), now=NOW, unparsed=None):
     return live.fetch_temperatures(list(sites), SITES, AUT, DATES, now.date(), now, cache=cache, cfg=CFG, http_get=http, live=live_,
                                    cache_only=cache_only, max_requests=max_requests if live_ else None,
-                                   unparsed_dir=unparsed or tempfile.mkdtemp())
+                                   unparsed_dir=unparsed or tempfile.mkdtemp(),
+                                   clock=lambda: now)                  # 段階37: 取得時刻は応答を受け取った時刻。テストは時計を now に合わせる
 
 
 class CacheTests(unittest.TestCase):
@@ -67,7 +68,7 @@ class CacheTests(unittest.TestCase):
     def test_default_cache_dir_is_runtime_not_snapshots(self):
         from ikimonobiyori import paths                                              # 段階12: 書き込み先の基準(IKIMONOBIYORI_DATA_DIR)からの相対
         self.assertEqual((CFG["cache"]["dir"], CFG["cache"]["unparsed_dir"]), ("cache", "_unparsed"))
-        self.assertEqual(paths.data_path(CFG["cache"]["dir"], env={}), paths.PKG.parent / "runtime" / "ikimonobiyori" / "cache")   # 未設定は従来と同じ場所
+        self.assertEqual(paths.data_path(CFG["cache"]["dir"], env={}), paths.default_data_dir({}) / "cache")   # 段階37: 未設定は利用者ごとの 1 か所
         self.assertNotIn("snapshots", paths.data_path(CFG["cache"]["unparsed_dir"], env={}).parts)
         self.assertEqual(CFG["cache"]["ttl_s"]["open_meteo_forecast"], 10800)      # 3 時間(仮置き)
         self.assertEqual(CFG["live"]["allowed_hosts"], ["api.open-meteo.com"])
@@ -224,7 +225,8 @@ class EndToEnd(unittest.TestCase):
         r, cdir, inp_out, out = self.request_file(), tempfile.mkdtemp(), Path(tempfile.mkdtemp()) / "in.json", Path(tempfile.mkdtemp()) / "o.json"
         http = FakeHttp(body=json.dumps(resp(base=5.0, start="2026-10-11", days=8)))
         rc = imain.main(["--request", str(r), "--live", "--max-requests", "5", "--sites", "m001,m002,m013", "--now", NOW.isoformat(),
-                         "--cache-dir", cdir, "--out", str(out), "--inputs-out", str(inp_out)], http_get=http)
+                         "--cache-dir", cdir, "--out", str(out), "--inputs-out", str(inp_out)], http_get=http,
+                        clock=lambda: NOW)                              # 段階37: 取得時刻は応答を受け取った時刻。テストは時計を合わせる
         self.assertEqual(rc, 0)
         doc, inputs = json.loads(out.read_text(encoding="utf-8")), json.loads(inp_out.read_text(encoding="utf-8"))
         self.assertEqual(H.schema_errors("biyori-proposal/1", doc), [])

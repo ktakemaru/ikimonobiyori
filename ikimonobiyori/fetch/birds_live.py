@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 from ..profiles import param
 from . import ParseError, inaturalist
 from .live import LiveError, _save_unparsed, default_http_get
+from .live import received_at as _received_at
 
 SOURCE_INAT = "iNaturalist API"
 RATE_HEADER_PREFIXES = ("x-ratelimit", "retry-after")
@@ -20,11 +21,9 @@ RATE_HEADER_PREFIXES = ("x-ratelimit", "retry-after")
 
 def received_at(now, clock=None):
     """応答を受け取った時刻(オフセットつき ISO 8601)。clock は時刻を返す関数(テスト用)。既定は実際の時計を now と同じ時間帯で。
-    段階36: 以前は判定の基準の時刻 now(--now)を入れていたため、--now に実際より後の時刻を渡すと取得時刻が未来になった。"""
-    t = clock() if clock is not None else datetime.now(now.tzinfo)
-    if t.tzinfo is None:
-        raise ValueError("clock はオフセットつきの時刻を返すこと")
-    return t.isoformat(timespec="seconds")
+    段階36: 以前は判定の基準の時刻 now(--now)を入れていたため、--now に実際より後の時刻を渡すと取得時刻が未来になった。
+    段階37: 紅葉の Open-Meteo(fetch/live.py)と同じ関数を使う。"""
+    return _received_at(now, clock)
 
 
 def minimize_species_counts(resp):

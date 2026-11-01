@@ -187,8 +187,9 @@ def needed_days(profile, dates, today, limits):
 
 
 def fetch_temperatures(site_ids, sites, profile, dates, today, now, *, cache, cfg, http_get=None, live=False,
-                       cache_only=False, max_requests=None, unparsed_dir=None, sleep=time.sleep, session_factory=None):
+                       cache_only=False, max_requests=None, unparsed_dir=None, sleep=time.sleep, session_factory=None, clock=None):
     """→ (inputs, report)。inputs は engine.run の入力(ikimono-inputs/1)。report は requests / cache_hits / misses / warnings。
+    段階37: 取得時刻(fetched_at)は応答を受け取った時刻(clock。既定は実際の時計)。now は判定の基準の時刻(キャッシュの期限など)で、取得時刻には使わない。
     http_get を渡さないときは、この呼び出しの間 1 つの Session を共有し、終わったら(例外でも)閉じる。"""
     getter = None
     if http_get is None:
@@ -196,13 +197,22 @@ def fetch_temperatures(site_ids, sites, profile, dates, today, now, *, cache, cf
         getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"], session_factory=session_factory)
     try:
         return _fetch_temperatures(site_ids, sites, profile, dates, today, now, cache=cache, cfg=cfg, http_get=http_get or getter, live=live,
-                                   cache_only=cache_only, max_requests=max_requests, unparsed_dir=unparsed_dir, sleep=sleep)
+                                   cache_only=cache_only, max_requests=max_requests, unparsed_dir=unparsed_dir, sleep=sleep, clock=clock)
     finally:
         if getter is not None:
             getter.close()
 
 
-def _fetch_temperatures(site_ids, sites, profile, dates, today, now, *, cache, cfg, http_get, live, cache_only, max_requests, unparsed_dir, sleep):
+def received_at(now, clock=None):
+    """応答を受け取った時刻(オフセットつき ISO 8601)。clock は時刻を返す関数(テスト用)。既定は実際の時計を now と同じ時間帯で
+    (段階37。iNaturalist の fetch/birds_live.py の received_at と同じ規則)。"""
+    t = clock() if clock is not None else datetime.now(now.tzinfo or timezone.utc)
+    if t.tzinfo is None:
+        raise ValueError("clock はオフセットつきの時刻を返すこと")
+    return t.isoformat(timespec="seconds")
+
+
+def _fetch_temperatures(site_ids, sites, profile, dates, today, now, *, cache, cfg, http_get, live, cache_only, max_requests, unparsed_dir, sleep, clock=None):
     if live and cache_only:
         raise ValueError("--live と --cache-only は同時に指定できない")
     if not live and not cache_only:
@@ -244,7 +254,7 @@ def _fetch_temperatures(site_ids, sites, profile, dates, today, now, *, cache, c
             except (ValueError, ParseError) as e:                       # JSON でない・形が想定と違う
                 saved = _save_unparsed(unparsed_dir, q["url"], status, body, now, str(e))
                 raise ParseError(f"{s['name']}({sid}): 応答を読めない: {e}(実応答を保存: {saved})") from e
-            fetched_at = now.isoformat(timespec="seconds")
+            fetched_at = received_at(now, clock)                       # 段階37: --now ではなく、応答を受け取った時刻
             cache.put(url=q["url"], params=q["params"], body=body, source=SOURCE, fetched_at=fetched_at)
             from_cache = False
         temps[sid] = json.loads(body)

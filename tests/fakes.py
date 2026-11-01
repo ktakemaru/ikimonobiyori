@@ -36,4 +36,5 @@ class FakeHttp:
 def fetch(cache, http, *, live_=True, cache_only=False, max_requests=10, sites=("m001", "m002", "m013"), now=NOW, unparsed=None):
     return live.fetch_temperatures(list(sites), SITES, AUT, DATES, now.date(), now, cache=cache, cfg=CFG, http_get=http, live=live_,
                                    cache_only=cache_only, max_requests=max_requests if live_ else None,
-                                   unparsed_dir=unparsed or tempfile.mkdtemp())
+                                   unparsed_dir=unparsed or tempfile.mkdtemp(),
+                                   clock=lambda: now)                  # 段階37: 取得時刻は応答を受け取った時刻。テストは時計を now に合わせる

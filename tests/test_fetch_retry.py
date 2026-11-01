@@ -54,7 +54,8 @@ def run_fetch(session, *, cfg=None, sites=("m001", "m002", "m013"), max_requests
         made.append(session)
         return session
     out = live.fetch_temperatures(list(sites), T.SITES, T.AUT, T.DATES, T.NOW.date(), T.NOW, cache=Cache(tempfile.mkdtemp()), cfg=cfg or T.CFG,
-                                  live=True, max_requests=max_requests, unparsed_dir=tempfile.mkdtemp(), sleep=slept.append, session_factory=factory)
+                                  live=True, max_requests=max_requests, unparsed_dir=tempfile.mkdtemp(), sleep=slept.append, session_factory=factory,
+                                  clock=lambda: T.NOW)                    # 段階37: 取得時刻は応答を受け取った時刻。テストは時計を合わせる
     return out, made, slept
 
 
@@ -65,7 +66,8 @@ def run_fetch(session, *, cfg=None, sites=("m001", "m002", "m013"), max_requests
         made.append(session)
         return session
     out = live.fetch_temperatures(list(sites), T.SITES, T.AUT, T.DATES, T.NOW.date(), T.NOW, cache=Cache(tempfile.mkdtemp()), cfg=cfg or T.CFG,
-                                  live=True, max_requests=max_requests, unparsed_dir=tempfile.mkdtemp(), sleep=slept.append, session_factory=factory)
+                                  live=True, max_requests=max_requests, unparsed_dir=tempfile.mkdtemp(), sleep=slept.append, session_factory=factory,
+                                  clock=lambda: T.NOW)                    # 段階37: 取得時刻は応答を受け取った時刻。テストは時計を合わせる
     return out, made, slept
 
 

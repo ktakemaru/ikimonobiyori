@@ -1,0 +1,69 @@
+# 質問に答える手順(段階37。ikimonobiyori/ask.py)と、自然な文章の答えの検査器(ikimonobiyori/ask_verify.py)の語と値。
+# biyori-hub の concierge_skill/config.yaml の answer_check(段階H8〜H10)から生き物の部分を移した(指示書 docs/stage37-H11-instructions.md 2-1)。
+# 値・語はここに置き、コードに持たない(CLAUDE.md 規則 1)。評価表は docs/ask-rubric.md。
+schema: ikimono-ask-policy/1
+
+# 対象を指定しない質問(「11/3のおすすめをおしえて」)で横断する、実装済みの対象(observations の対象)
+default_subjects: [autumn_leaves, flowers, birds]
+# 答えの冒頭で示す対象の範囲の呼び名(facts の scope_line)
+scope_line: "{labels}のおすすめです(横浜などの出発地から行ける範囲)。"
+default_origin: 横浜
+
+# 書き込み先(IKIMONOBIYORI_DATA_DIR の下)。--out-dir を省いた prepare は、この下に日時のフォルダを作る
+work_dir: ask
+
+# 野鳥の iNaturalist の集計の取り直し(observations の inat_refresh。1 回の質問につき policy の上限まで)の宣言済みホスト。
+# 実通信は計測フック(BIYORI_REQ_LOG)と BIYORI_ALLOW_LIVE=1 の下だけ(CLAUDE.md 規則 6)。このリポジトリ単独では取り直さない
+inat_host: api.inaturalist.org
+
+# 答えの最後の 1〜3 行(この回の記録で実際に新しい記録が増えたページの数と発行元だけから作る。段階H9)
+fetch_lines:
+  new: "{md} に {pubs} の {pages}ページを読み直し、新しい記録が {n}件増えました。"
+  nothing_after_new: "{pubs} も読みに行きましたが、新しい情報は取れませんでした。"
+  nothing: "{md} に {pubs} を読みに行きましたが、新しい情報は取れませんでした。"
+  fresh: "記録が新しいため、今回は読み直していません。"
+  none: "今回は新しく読み直していません。"
+  failed: "読めなかったページ(ご自身で開いてください): "
+
+answer_check:
+  # 評価表 R10: 一つも出てはいけない言い方(答えを止める・利用者に実行や確認を頼む・作業の経過)
+  forbidden_phrases: [材料がない, 材料がありません, 材料もありません, 情報がない, 情報がありません, おすすめを出せません, 使える期限を過ぎ,
+                      更新は私からは始めません, 始めません, "! を付け", "!を付け", 実行してください, 承認してください, 集めた事実だけを並べます,
+                      実行しますか, 読みますか, 確認しますか, よろしいですか,
+                      # 段階H9(穴2): 作業の経過を答えに出さない
+                      検査が通った, 検査に通った, 検査を通った, 検査を通し, 答えを出します, 答えをお出しします, その答えを出, 書き直しました,
+                      # 段階H9(穴3): 古い記録を取りに行かずに答えたことの言い訳
+                      調べ直さず, 読み直さず,
+                      # 段階37(指示書 2-3): 単体の試用で出た作業の経過の文
+                      あとは答えを書くだけ, 答えを書くだけ, 答えを書きます, 答えを書いて, 取りに行っていません, 取りに行きません, 記録しました, 記録します,
+                      記録してから, 実行しました, 実行していません, 動かしました]
+  # 段階37(指示書 2-3): 開発・作業の言葉(正規表現。「フォトコンテスト」「ドレスコード」のような語の一部は数えない)
+  dev_terms: ["(?<!コン)テスト", "(?<![ドレスバー])コード", 作業メモ, 記録済み, スキル, コマンド, 検査, 実装, ゴールデン, 作業の経過, "(?<![A-Za-z])Python(?![A-Za-z])"]
+  # 内部用語(英字の語は前後が英字でないときだけ)
+  internal_terms: [snapshot, スナップショット, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary,
+                   fetch_notes, provisional, 作業フォルダ, materials, facts, verify, prepare, calls.json, plan.json, records.json, jsonl, IKIMONOBIYORI]
+  # 状態の語(文中の名所の記録の状態にあること)
+  state_words: [青葉, 色づき始め, 見頃過ぎ, 落葉, 見頃前, 満開, 分咲き, そろそろ見ごろ]
+  # 「見頃です」のような、今の状態として見頃と言う書き方(記録が見頃の名所がないと落とす)
+  peak_claims: ["(いま|今|現在)(が|は)?見頃(です|だ|。)", "見頃(です|でした|を迎え|になって|となって)", "見ごろ(です|でした|を迎え)"]
+  now_peak_claim: "(いま|今|現在)(が|は)?見頃(です|だ|。)"
+  # 「3件」「4ページ」のような数え方は、この数以下なら通す
+  small_count_max: 30
+  counters: [件, ページ, か所, カ所, 箇所, つ, 回, 枚, 種]
+  years_ok: [2025, 2026]
+  min_place_len: 2
+  # 評価表 R2・R11
+  min_candidates: 3
+  max_chars: 1500
+  # 評価表 R4: 候補の段(①②…)に、この語のどれかがあること(例年の見頃。なければ昨年の記録)
+  typical_words: [例年, 昨年]
+  # 段階H10(利用者の決定 2026-11-01。評価表 R4 の読み方 (b))
+  typical_unknown_phrases: [例年の時期は分かりません, 例年の見頃は分かりません, 例年の時期は分からない, 例年の見頃は分からない]
+  typical_alt_words: [今年の行事, 昨年, 去年, 前の年]
+  # 段階H9(穴1): 「読み直しました」の言い方。この回の record で新しい記録が 0 件なら落とす。文は lines.fetch の決まった文だけ
+  reread_words: [読み直しました, 読み直し、, 読み直しています, 調べ直しました, 新しく読みました]
+  # 段階H9(穴2): 野鳥の候補の段には「例年の見頃」を書かず、「この時期」(この時期に見られる鳥)を書く
+  birds_forbidden: [例年の見頃]
+  birds_typical_words: [この時期]
+  # 段階H9(穴2): 対象の日が休みの名所を書いたら、休みを言い切る文(施設名と「休み」を含む文)が要る
+  closed_words: [休み, 休園, 休館]
