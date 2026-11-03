@@ -140,11 +140,19 @@ def build_overview(r, *, policy, now, photo_for):
         meta = got[0]
         cr = h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"])
         return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span>{links(e)}</li>'
-    title = w["title_overview"]
+    kind = r.get("kind")
+    if kind == "mountain":
+        title, sections, question = w["title_mountain"].format(place=r["area"]), (("mountain", w["heading_mountain"]),), w["next_question"]
+    elif kind == "zukan":
+        title, sections, question = r["title"], (("mountain", r["heading"]),), w["next_question_zukan"]
+    else:
+        title, sections, question = w["title_overview"], (("alpine", w["heading_alpine"]), ("lowland", w["heading_lowland"])), w["next_question_overview"]
     body = [f'<h1>{esc(title)}</h1>', f'<p class="lead">{esc(r["conclusion"])}</p>', f'<p class="meta">{esc(guide_page.created_text(now, h))}</p>']
-    for section, heading in (("alpine", w["heading_alpine"]), ("lowland", w["heading_lowland"])):
+    if r.get("nav"):
+        body.append(r["nav"])
+    for section, heading in sections:
         cards, bare = [], []
-        for e in (x for x in r["species"] if x["section"] == section):
+        for e in (x for x in r["species"] if section == "mountain" or x["section"] == section):
             got = photo(e)
             (cards.append(card(e, got)) if got else bare.append(e))
         if cards:
@@ -166,8 +174,88 @@ def build_overview(r, *, policy, now, photo_for):
             items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} '
                          f'({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')
-    body.append(f'<p class="note">{esc(h["credit"])}</p><p class="lead">{esc(w["next_question_overview"])}</p>')
+    body.append(f'<p class="note">{esc(h["credit"])}</p><p class="lead">{esc(question)}</p>')
     return page_html(title, body, h, pool)
+
+
+def zukan_pages(r, *, policy, photo_for):
+    """図鑑の形: 季節（高山は月・旬、山麓〜山地は春夏秋冬）ごとにページを分け、あふれたら同じ季節の次のページに回す。
+    → [{file, title, label, entries}]（ファイル名は拡張子なし）。写真は縮小せず、1 ページの埋め込みの上限（photos.html.max_embed_bytes）で分ける。"""
+    z = policy["wildflower"]["zukan"]
+    names = {v: k for k, v in policy["wildflower"]["tens"].items()}
+    groups, order = {}, []
+
+    def add(key, label, fname, e):
+        if key not in groups:
+            groups[key] = {"label": label, "base": fname, "entries": []}
+            order.append(key)
+        groups[key]["entries"].append(e)
+    seasons = z["seasons"]
+    for e in r["species"]:
+        bloom = e["places"][0]["bloom"]
+        m, t = wildflower.parse_bloom(bloom)[0]
+        if e["section"] == "alpine":
+            prec = any(c in str(bloom) for c in policy["wildflower"]["tens"])
+            label = f"{m}月" + (names[t] if prec else "")
+            key = ("alpine", m, t if prec else -1)
+            add(key, z["alpine_label"] + "・" + label, z["files"]["alpine"].format(key=f"{m:02d}" + (str(t) if prec else "")), e)
+        else:
+            season = next(k for k, ms in seasons.items() if m in ms)
+            idx = list(seasons).index(season)
+            add(("lowland", idx), z["lowland_label"] + "・" + season, z["files"]["lowland"].format(key=str(idx + 1)), e)
+    order.sort(key=lambda k: (0 if k[0] == "alpine" else 1, k[1:]))
+    budget = policy["photos"]["html"]["max_embed_bytes"]["value"]
+    pages = []
+    for key in order:
+        g = groups[key]
+        cur, pool, n = [], PhotoPool(budget), 1
+
+        def flush(last=False):
+            nonlocal cur, pool, n
+            if cur or last:
+                pages.append({"file": g["base"] + ("" if n == 1 else f"-{n}"), "label": g["label"], "part": n, "entries": cur, "group": key})
+            cur, pool, n = [], PhotoPool(budget), n + 1
+        for e in g["entries"]:
+            got = None if e["protected"] else photo_for(e["name"])
+            if got and not pool.fits(got[1]) and cur:
+                flush()
+            if got:
+                pool.tag(got[0], got[1], e["name"])
+            cur.append(e)
+        flush(last=True)
+    return pages
+
+
+def zukan_nav(pages, here, policy):
+    w = policy["wildflower"]["page"]
+    firsts, seen = [], set()
+    for pg in pages:
+        if pg["group"] not in seen:
+            seen.add(pg["group"])
+            firsts.append(pg)
+    items = []
+    for pg in firsts:
+        label = esc(pg["label"])
+        if pg["group"] == here["group"]:
+            parts = [x for x in pages if x["group"] == pg["group"]]
+            sub = "".join(f' <a href="{esc(x["file"])}.html">{x["part"]}</a>' if x is not here else f" <b>{x['part']}</b>" for x in parts) if len(parts) > 1 else ""
+            items.append(f"<li><b>{label}</b>{esc(w['zukan_here'])}{sub}</li>")
+        else:
+            items.append(f'<li><a href="{esc(pg["file"])}.html">{label}</a></li>')
+    return f'<nav><p class="note">{esc(w["zukan_nav"])}</p><ul class="note">{"".join(items)}</ul></nav>'
+
+
+def build_zukan(r, *, policy, now, photo_for):
+    """→ [(ファイル名 .html, HTML)]。各ページの先頭に、ほかの季節のページへの案内を置く。"""
+    w = policy["wildflower"]["page"]
+    pages = zukan_pages(r, policy=policy, photo_for=photo_for)
+    out = []
+    for pg in pages:
+        label = pg["label"] if pg["part"] == 1 and sum(1 for x in pages if x["group"] == pg["group"]) == 1 else w["zukan_part"].format(label=pg["label"], n=pg["part"])
+        rr = dict(r, kind="zukan", species=pg["entries"], title=w["title_zukan"].format(label=label), heading=pg["label"], nav=zukan_nav(pages, pg, policy),
+                  conclusion=w["zukan_lead"].format(label=pg["label"], count=len(pg["entries"])))
+        out.append((pg["file"] + ".html", build_overview(rr, policy=policy, now=now, photo_for=photo_for)))
+    return out
 
 
 def overview_photo_names(r):
@@ -193,41 +281,83 @@ def wildflower_bloom_text(f):
     return a if a == b else f"{a}〜{b}"
 
 
+def page_mode(a):
+    """質問の型 → ページの切り方。zukan: 全部を図鑑の形で（季節ごとに複数ページ）/ now: 月で選ぶ（山・山域の指定なし）または月つきの山 /
+    mountain: 山・山域で選ぶ（月の指定なし。見ごろの早い順）。"""
+    if getattr(a, "zukan", False):
+        return "zukan"
+    if not a.site and not a.area:
+        return "now"
+    if not a.month and not a.date:
+        return "mountain"
+    return "place_month"
+
+
 def page_cmd(a, now=None):
+    import sys
     policy = guide.load_policy()
-    ph = policy["photos"]
     now = now or guide.clock_now()
     on = date.fromisoformat(a.date) if a.date else now.date()
-    overview = not a.site and not a.area
+    mode = page_mode(a)
     try:
-        r = (wildflower.overview(month=a.month, date_=a.date, today=on) if overview
-             else wildflower.query(site=a.site, area=a.area, month=a.month, date_=a.date, today=on, with_photo=False))
+        if mode == "zukan":
+            r = wildflower.overview(month=a.month, date_=a.date, today=on)
+        elif mode == "now":
+            r = wildflower.overview(month=a.month, date_=a.date, today=on)
+        elif mode == "mountain":
+            r = wildflower.overview(today=on, area=a.area, site=a.site)
+        else:
+            r = wildflower.query(site=a.site, area=a.area, month=a.month, date_=a.date, today=on, with_photo=False)
     except ValueError as ex:
-        print(str(ex), file=__import__("sys").stderr)
+        print(str(ex), file=sys.stderr)
         return 2
-    if getattr(a, "ensure_photos", True) and (overview or r["flowers"]):
-        guide_photos.ensure_for_page(overview_photo_names(r) if overview else photo_names(r), "野草", policy)
+    if getattr(a, "ensure_photos", True):
+        if mode in ("zukan", "mountain"):
+            names = [e["name"] for e in r["species"] if not e["protected"]]
+        elif mode == "now":
+            names = overview_photo_names(r)
+        else:
+            names = photo_names(r) if r["flowers"] else []
+        if names:
+            guide_photos.ensure_for_page(names, "野草", policy)
     table = guide_photos.load_table()
 
     def photo_for(name):
         row = table.get(name)
         return guide_photos.load_photo(row["taxon_id"]) if row else None
-    out = Path(a.out) if a.out else guide_photos.page_dir() / policy["wildflower"]["page"]["file"]
-    if not guide_page.out_path_ok(out):
-        print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです", file=__import__("sys").stderr)
-        return 2
-    page = (build_overview if overview else build)(r, policy=policy, now=now, photo_for=photo_for)
-    bad = self_check(page)
-    if bad:
-        print("ページの文が検査に通りません: " + ", ".join(f"{e['detail']}" for e in bad), file=__import__("sys").stderr)
-        return 2
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(page, encoding="utf-8", newline="\n")
-    print(str(out.resolve()))
+    fname = policy["wildflower"]["page"]["file"]
+    if mode == "zukan":
+        outdir = Path(a.out) if a.out else guide_photos.page_dir()
+        if not guide_page.out_path_ok(outdir / "x"):
+            print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです", file=sys.stderr)
+            return 2
+        pages = build_zukan(r, policy=policy, now=now, photo_for=photo_for)
+        outs = [(outdir / f, h) for f, h in pages]
+    else:
+        out = Path(a.out) if a.out else guide_photos.page_dir() / fname
+        if not guide_page.out_path_ok(out):
+            print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです", file=sys.stderr)
+            return 2
+        builder = build if mode == "place_month" else build_overview
+        outs = [(out, builder(r, policy=policy, now=now, photo_for=photo_for))]
+    for _o, page in outs:
+        bad = self_check(page)
+        if bad:
+            print("ページの文が検査に通りません: " + ", ".join(f"{e['detail']}" for e in bad), file=sys.stderr)
+            return 2
+    if mode == "zukan":                                    # 前の実行の古いページ（分け方が変わると残る）を消す
+        for old in outdir.glob(policy["wildflower"]["zukan"]["clean_glob"]):
+            old.unlink()
+    for o, page in outs:
+        o.parent.mkdir(parents=True, exist_ok=True)
+        with open(o, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(page)
+        print(str(o.resolve()))
     if a.open:
+        first = outs[0][0].resolve()
         if hasattr(os, "startfile"):
-            os.startfile(str(out.resolve()))
+            os.startfile(str(first))
         else:
             import webbrowser
-            webbrowser.open(out.resolve().as_uri())
+            webbrowser.open(first.as_uri())
     return 0
