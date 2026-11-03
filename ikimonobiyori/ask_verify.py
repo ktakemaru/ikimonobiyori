@@ -243,6 +243,9 @@ def check(text, facts, rules=None, gazetteer=()):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
+    for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
+        if text.count(w) > mx:
+            answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
     if len(text) > rules["max_chars"]:
         answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars']} 字)"})
     ok = not answer_errors and all(not x["errors"] for x in sents)
@@ -377,3 +380,42 @@ def report_lines(result):
 
 def load_facts(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def reply_check(text, facts, rules=None, gazetteer=(), page_line=None):
+    """段階38(指示書 3-4): 利用者への返事の全文の検査。答えの検査(check)に加えて、答えの本文の外に付け足した
+    作業・開発の説明(reply_terms)を落とす。ページの場所の 1 行(page_line。ask page が書いた行と同じもの)だけは検査から外す。"""
+    rules = rules or load_rules()
+    kept, skipped = [], False
+    for line in text.splitlines():
+        if page_line and line.strip() == page_line.strip() and not skipped:
+            skipped = True
+            continue
+        kept.append(line)
+    body = "\n".join(kept) + ("\n" if text.endswith("\n") else "")
+    r = check(body, facts, rules, gazetteer)
+    for x in r["sentences"]:
+        t = URL_RE.sub(" ", _n(x["text"]))
+        for pat in rules.get("reply_terms") or []:
+            if re.search(pat, t):
+                x["errors"].append({"code": "reply_dev_term", "detail": pat})
+    r["ok"] = not r["answer_errors"] and all(not x["errors"] for x in r["sentences"])
+    r["page_line_found"] = skipped
+    r["checked_text"] = body
+    return r
+
+
+def page_check(lines, facts, rules=None, gazetteer=()):
+    """段階38(指示書 3-3): 写真つきページの文(撮影者名・ライセンスの表記を除く)を、答えと同じ 1 文ずつの検査に通す。
+    答え全体の決まり(字数・候補の数・候補の段の書き方)はページには当てない。→ {ok, sentences}"""
+    rules = rules or load_rules()
+    mat = Material(facts, rules, gazetteer)
+    sents = []
+    for i, line in enumerate(lines):
+        if URL_RE.fullmatch(line.strip()):
+            errs = [] if line.strip().rstrip("/") in {u.rstrip("/") for u in mat.urls} else [{"code": "unknown_url", "detail": line.strip()}]
+            sents.append({"line": i, "text": line, "errors": errs})
+            continue
+        for _j, sen in split_sentences(line):
+            sents.append({"line": i, "text": sen, "errors": check_sentence(sen, mat)})
+    return {"ok": all(not x["errors"] for x in sents), "sentences": sents, "answer_errors": []}

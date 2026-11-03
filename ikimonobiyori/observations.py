@@ -171,6 +171,9 @@ def validate(rec, policy):
                 date.fromisoformat(v)
             except (TypeError, ValueError):
                 errs.append(f"{k} は YYYY-MM-DD か null")
+    sp = rec.get("species")                     # 段階38: 野鳥の記録に書かれた鳥の名前(書かれたとおり)。任意
+    if sp is not None and (not isinstance(sp, list) or not all(isinstance(x, str) and x.strip() and len(x) <= _v(policy["record"]["max_raw_chars"]) for x in sp)):
+        errs.append("species は鳥の名前(文字列)の配列")
     ev = rec.get("event")
     if ev is not None:
         if not isinstance(ev, dict) or not ev.get("name"):
@@ -186,7 +189,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class")
+          "source_class", "species")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -392,6 +395,11 @@ def _from_spot(s, policy, catalog_by_id):
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
          "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area")}
+    pa = park_area(s, policy)                    # 段階38: 探鳥地ごとの範囲があれば、その範囲で集計する(半径10kmの区域をやめる)
+    if pa:
+        c["bird_area"] = pa["id"]
+        c["bird_range"] = {k: pa[k] for k in ("radius_km", "location_precision")}
+        c["bird_area_fallback"] = s.get("bird_area")
     ref = catalog_by_id.get(s.get("catalog_ref"))
     if ref:
         cat = _from_catalog(ref, s["subject"], policy)
@@ -581,7 +589,43 @@ def _md(iso):
 
 # ---- 野鳥: この時期に見られる鳥(段階35) ----
 
-def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=None):
+def regional_seasonality(prefecture, d, now, env=None, profile=None, cfg=None):
+    """段階38: 地域全体の季節らしさ(キャッシュにあるものだけ。通信しない)。→ {name, fetched_at, by_sci: {学名: {lift, count, seasonal}}} か None。"""
+    from . import profiles as P
+    from .config import load_config
+    from .fetch import inaturalist
+    from .fetch.cache import Cache
+    from .methods import observation_frequency as obsfreq
+    rid = region_area_id(prefecture)
+    if not rid:
+        return None
+    profile = profile or P.load_profiles()["birds"]
+    cfg = cfg or load_config()
+    area = _rounded(_area_by_id(rid), profile)
+    cache = Cache(data_path(cfg["cache"]["dir"], env))
+    found = _inat_aggregation(area, d, now, cache=cache, profile=profile, cfg=cfg, env=env)
+    base = _baseline_entry(area, d, now, cache=cache, profile=profile, cfg=cfg) if found else None
+    if not found or base is None:
+        return None
+    pb = load_policy()["park_birds"]
+    win_rows = inaturalist.parse_species_counts(json.loads(found["entries"][0]["body"]))[0]
+    con_rows = inaturalist.parse_species_counts(json.loads(found["entries"][1]["body"]))[0] if len(found["entries"]) > 1 else None
+    yrows = inaturalist.parse_species_counts(json.loads(base["body"]))[0]
+    ranked = obsfreq.seasonal_rank([win_rows], [yrows], lift_min=_v(pb["seasonality"]["lift_min"]), min_count=_v(pb["regional_min_window_count"]))
+    cmin = _v(pb["contrast"]["contrast_min"])
+    con = obsfreq.seasonal_rank([win_rows], [con_rows], lift_min=cmin, min_count=_v(pb["regional_min_window_count"])) if con_rows is not None else []
+    cby = {s["name"]: s for s in con}
+    by = {}
+    for s in ranked:
+        c = cby.get(s["name"]) or {}
+        cl = c.get("lift")                          # None = 反対の季節に記録がない
+        seasonal = s["seasonal"] and (con_rows is None or cl is None or cl >= cmin)
+        by[s["name"]] = {"lift": s["lift"], "contrast_lift": cl, "count": s["count"], "seasonal": seasonal}
+    return {"name": prefecture, "area": area["name"], "fetched_at": min([e["fetched_at"] for e in found["entries"]] + [base["fetched_at"]]),
+            "by_sci": by}
+
+
+def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=None, prefecture=None):
     """iNaturalist の過去の記録(キャッシュにあるものだけ。通信しない。古くても使い、取得時刻を添える)から、
     対象の日の前後の相対頻度の上位の種。→ {area, radius_km, years, window_weeks, total, species, fetched_at, url} か None。"""
     from . import profiles as P
@@ -594,8 +638,7 @@ def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=Non
     from .profiles import param
     if not area_id:
         return None
-    sites_doc = sites_doc or P.load_sites()[1]
-    area = next((a for a in (sites_doc.get("bird_areas") or []) + load_obs_bird_areas() if a["id"] == area_id), None)
+    area = _area_by_id(area_id, sites_doc)
     if not area or area.get("lat") is None:
         return None
     profile = profile or P.load_profiles()["birds"]
@@ -610,15 +653,65 @@ def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=Non
     rows = [inaturalist.parse_species_counts(json.loads(e["body"]))[0] for e in found["entries"]]
     fetched = [e["fetched_at"] for e in found["entries"]]
     url = found["entries"][0]["url"]
-    res = obsfreq.relative_frequencies(rows, min_total=param(profile, "min_total_observations"), top_n=param(profile, "top_species"))
+    park = area.get("scope") == "park"
+    pbp = load_policy()["park_birds"]
+    res = obsfreq.relative_frequencies(rows, min_total=_v(pbp["min_total"]) if park else param(profile, "min_total_observations"),
+                                       top_n=param(profile, "top_species"))
     if not res["enough"]:
         return {"area": area["name"], "enough": False, "total": res["total"], "fetched_at": min(fetched), "url": url, "center": found["center"], "target": d.isoformat()}
     years = param(profile, "history_years")
-    return {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
-            "center": found["center"], "target": d.isoformat(), "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
-            "site_url": "https://www.inaturalist.org/",       # 段階35: 答えの出典に並べる、人が開くページ(問い合わせの URL は長く、API のため)
-            "species": [{"name": sp["common_name"] or sp["name"], "scientific_name": sp["name"], "count": sp["count"],
-                         "relative_frequency": round(sp["relative_frequency"], 3)} for sp in res["species"]]}
+    out = {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
+           "center": found["center"], "target": d.isoformat(), "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
+           "site_url": "https://www.inaturalist.org/",       # 段階35: 答えの出典に並べる、人が開くページ(問い合わせの URL は長く、API のため)
+           "scope": area.get("scope") or "area",
+           **({"months": birds_live.park_queries(area, date.fromisoformat(found["center"]), profile, cfg["live"]["inaturalist"]["per_page"],
+                                                 _park_half_days())[2], "all_years": True} if park else {}),
+           "species": [{"name": sp["common_name"] or sp["name"], "scientific_name": sp["name"], "count": sp["count"], "taxon_id": sp.get("taxon_id"),
+                        "relative_frequency": round(sp["relative_frequency"], 3)} for sp in res["species"]]}
+    # 段階38: 一年の記録(分母)がキャッシュにあれば、季節らしさの順の一覧を足す(通信しない)
+    reg = regional_seasonality(prefecture, d, now, env=env, profile=profile, cfg=cfg) if prefecture else None
+    if reg:                                       # 段階38(採点の後): 季節らしさは地域全体の記録で。公園の記録は「どの鳥か」だけ
+        from .methods.observation_frequency import merge_counts
+        merged, _t = merge_counts(rows)
+        items = []
+        for sci, m in merged.items():
+            r = reg["by_sci"].get(sci) or {}
+            cl = r.get("contrast_lift")
+            items.append({"name": m["common_name"] or sci, "scientific_name": sci, "taxon_id": m["taxon_id"], "count": m["count"], "year_count": None,
+                          "lift": round(r["lift"], 2) if r.get("lift") is not None else None, "seasonal": bool(r.get("seasonal")), "basis": "region",
+                          "contrast_lift": round(cl, 2) if cl is not None else None})
+        big = float("inf")
+        seas = sorted([x for x in items if x["seasonal"]], key=lambda x: (-(x["contrast_lift"] if x["contrast_lift"] is not None else big), -x["lift"],
+                                                                            -x["count"], x["scientific_name"]))
+        rest = sorted([x for x in items if not x["seasonal"]], key=lambda x: (-x["count"], x["scientific_name"]))
+        out["seasonal"] = seas + rest
+        out["region"] = {"name": reg["name"], "area": reg["area"], "fetched_at": reg["fetched_at"]}
+        return out
+    base = _baseline_entry(area, date.fromisoformat(found["center"]), now, cache=cache, profile=profile, cfg=cfg)
+    if base is not None:
+        pb = load_policy()["park_birds"]["seasonality"]
+        yrows = inaturalist.parse_species_counts(json.loads(base["body"]))[0]
+        ranked = obsfreq.seasonal_rank(rows, [yrows], lift_min=_v(pb["lift_min"]), min_count=_v(pb["min_window_count"]))
+        out["baseline_fetched_at"] = base["fetched_at"]
+        out["seasonal"] = [{"name": s["common_name"] or s["name"], "scientific_name": s["name"], "taxon_id": s["taxon_id"], "count": s["count"],
+                            "year_count": s["year_count"], "lift": round(s["lift"], 2) if s["lift"] is not None else None, "seasonal": s["seasonal"]}
+                           for s in ranked]
+    return out
+
+
+def _baseline_entry(area, center, now, *, cache, profile, cfg):
+    """一年の記録(分母)のキャッシュ(古くても使う)。なければ None。area は丸めた座標。"""
+    from .fetch import birds_live
+    q = _baseline_q(area, center, profile, cfg)
+    e, _st = cache.get(q["url"], q["params"], now=now, ttl_s=0, allow_expired=True)
+    return e
+
+
+def _baseline_q(area, center, profile, cfg):
+    from .fetch import birds_live
+    if area.get("scope") == "park":
+        return birds_live.park_queries(area, center, profile, cfg["live"]["inaturalist"]["per_page"], _park_half_days())[1]
+    return birds_live.baseline_query(area, center, profile, cfg["live"]["inaturalist"]["per_page"])
 
 
 def season_birds(c, rows, dates, policy):
@@ -647,6 +740,20 @@ def season_line(f, policy):
     """この時期に見られる鳥の 1 文(決定論)。材料がなければ、そう書く。"""
     lab = policy["birds"]["season_labels"]
     inat = f.get("inat")
+    if inat and inat.get("enough") and inat.get("months"):          # 段階38: 公園ごとの範囲
+        top = _v(policy["park_birds"]["sea_top_n"])
+        months = policy["park_birds"]["months_label"].format(months="・".join(str(m) for m in inat["months"]))
+        seas = [x["name"] for x in inat.get("seasonal") or [] if x["seasonal"]][:top]
+        if seas:
+            return lab["inat_park"].format(months=months, area=inat["area"], radius=inat["radius_km"], fetched=_md(inat["fetched_at"]), names="・".join(seas),
+                                           region=(inat.get("region") or {}).get("name") or inat["area"])
+        return lab["inat_park_plain"].format(months=months, area=inat["area"], radius=inat["radius_km"], fetched=_md(inat["fetched_at"]),
+                                             names="・".join(sp["name"] for sp in inat["species"]))
+    if inat and inat.get("enough") and inat.get("seasonal") and any(x["seasonal"] for x in inat["seasonal"]):    # 段階38: 季節らしさの順
+        top = _v(policy["park_birds"]["sea_top_n"])
+        names = "・".join([x["name"] for x in inat["seasonal"] if x["seasonal"]][:top])
+        return lab["inat_seasonal"].format(years=inat["years"], weeks=inat["window_weeks"], radius=inat["radius_km"], area=inat["area"],
+                                           names=names, fetched=_md(inat["fetched_at"]), center=_md(inat["center"]))
     if inat and inat.get("enough"):
         names = "・".join(sp["name"] for sp in inat["species"])
         key = "inat" if not inat.get("center") or inat["center"] == inat.get("target") else "inat_other_center"     # 段階36: 前回の集計の中心の日が対象の日と違うとき
@@ -693,8 +800,43 @@ def _write_inat_index(idx, env=None, policy=None):
     tmp.replace(p)
 
 
+PARK_AREA_PREFIX = "park:"
+REGION_AREA_PREFIX = "region:"
+
+
+def region_area_id(prefecture, policy=None):
+    ra = ((policy or load_policy())["park_birds"].get("regional_areas") or {}).get(prefecture)
+    return ra["id"] if ra else None
+_PARK_AREAS = {}                                 # 段階38: 候補を作ったときの探鳥地ごとの範囲(id → 区域)。名所の一覧を差し替えたテストでも引けるように
+
+
+def park_area(s, policy=None):
+    """名所の bird_range(中心と半径)→ 区域 {id, name, lat, lon, radius_km, location_precision}。なければ None。
+    座標は方針の location_precision に丸める(絶対ルール7)。半径の既定は方針の値。"""
+    from .engine import round_coord
+    br = s.get("bird_range") or {}
+    if br.get("lat") is None or br.get("lon") is None:
+        return None
+    rp = ((policy or load_policy()).get("park_birds") or {}).get("range") or {}
+    prec = rp.get("location_precision")
+    a = {"id": PARK_AREA_PREFIX + s["id"], "name": s["name"], "lat": round_coord(float(br["lat"]), prec), "lon": round_coord(float(br["lon"]), prec),
+         "radius_km": br.get("radius_km") if br.get("radius_km") is not None else _v(rp["default_radius_km"]),
+         "location_precision": prec, "status": "approved", "active": False, "scope": "park"}
+    _PARK_AREAS[a["id"]] = a
+    return a
+
+
 def _area_by_id(area_id, sites_doc=None):
     from . import profiles as P
+    if area_id and area_id.startswith(REGION_AREA_PREFIX):            # 段階38: 季節らしさを決める地域全体の区域
+        ra = next((a for a in (load_policy()["park_birds"].get("regional_areas") or {}).values() if a["id"] == area_id), None)
+        return dict(ra, scope="park", status="approved", active=False) if ra else None
+    if area_id and area_id.startswith(PARK_AREA_PREFIX):
+        if area_id not in _PARK_AREAS:
+            for s in load_spots().get("spots") or []:
+                if s.get("subject") == "birds":
+                    park_area(s)
+        return _PARK_AREAS.get(area_id)
     sites_doc = sites_doc or P.load_sites()[1]
     return next((a for a in (sites_doc.get("bird_areas") or []) + load_obs_bird_areas() if a["id"] == area_id), None)
 
@@ -705,8 +847,22 @@ def _rounded(area, profile):
     return dict(area, lat=round_coord(area["lat"], prec), lon=round_coord(area["lon"], prec))
 
 
+def contrast_months(months, policy=None):
+    c = (policy or load_policy())["park_birds"]["contrast"]
+    return list(c["winter"]) if set(months) & set(c["summer"]) else list(c["summer"])
+
+
+def _park_half_days(policy=None):
+    return _v((policy or load_policy())["park_birds"]["window"]["half_days"])
+
+
 def _inat_queries(area, d, profile, cfg):
     from .fetch import birds_live
+    if area.get("scope") == "park":              # 段階38: 公園ごとの範囲は、対象の日の前後にかかる月の、すべての年の記録(1 リクエスト)
+        win, _y, months = birds_live.park_queries(area, d, profile, cfg["live"]["inaturalist"]["per_page"], _park_half_days())
+        if area["id"].startswith(REGION_AREA_PREFIX):  # 地域全体は、反対の季節の月の記録も(季節らしさの比べ)
+            return [win, birds_live.contrast_query(area, profile, cfg["live"]["inaturalist"]["per_page"], contrast_months(months))]
+        return [win]
     return [q for _d, _k, q in birds_live.bird_queries(area, [d], profile, cfg["live"]["inaturalist"]["per_page"])]
 
 
@@ -758,6 +914,9 @@ def inat_status(area_id, d, now, *, env=None, policy=None, sites_doc=None, profi
     found = _inat_aggregation(area, d, now, cache=cache, profile=profile, cfg=cfg, env=env)
     out = {"area": area_id, "name": area["name"], "requests": len(_inat_queries(area, d, profile, cfg)),
            "center": None, "fetched_at": None, "age_days": None}
+    if area.get("scope") == "park":              # 段階38: 公園ごとの範囲は、一年の記録(分母)も要る(古ければ 1 リクエスト足す)
+        out["baseline_needed"] = _baseline_needed(area, d, now, cache=cache, profile=profile, cfg=cfg, policy=policy)
+        out["requests"] += 1 if out["baseline_needed"] else 0
     if found is None:
         out["state"] = "out_of_period" if read_inat_index(env, policy).get(area_id) else "none"
         return out
@@ -765,7 +924,19 @@ def inat_status(area_id, d, now, *, env=None, policy=None, sites_doc=None, profi
     age = (now - oldest).total_seconds() / 86400
     out.update(center=found["center"], fetched_at=oldest.isoformat(timespec="seconds"), age_days=round(age, 2))
     out["state"] = "stale" if age > _v(_inat_policy(policy)["max_age_days"]) else "fresh"
+    if out["state"] == "fresh" and out.get("baseline_needed"):
+        out["state"] = "stale"                   # 窓は新しいが、一年の記録(分母)がない・古い
+        out["requests"] = 1
+        out["baseline_only"] = True
     return out
+
+
+def _baseline_needed(area, d, now, *, cache, profile, cfg, policy=None):
+    e = _baseline_entry(area, d, now, cache=cache, profile=profile, cfg=cfg)
+    if e is None:
+        return True
+    age = (now - datetime.fromisoformat(e["fetched_at"])).total_seconds() / 86400
+    return age > _v((policy or load_policy())["park_birds"]["baseline_max_age_days"])
 
 
 def inat_refresh_plan(cands, d, now, *, origin=None, env=None, policy=None, cat_pol=None):
@@ -781,9 +952,12 @@ def inat_refresh_plan(cands, d, now, *, origin=None, env=None, policy=None, cat_
         if a:
             dk = _distance(c, origin, cat_pol)
             near[a] = min(near.get(a, float("inf")), dk if dk is not None else float("inf"))
+            rid = region_area_id(c.get("prefecture"), policy) if a.startswith(PARK_AREA_PREFIX) else None
+            if rid:
+                near[rid] = -1.0                          # 段階38: 季節らしさを決める地域全体の区域を先に
     sts = [x for x in (inat_status(a, d, now, env=env, policy=policy) for a in sorted(near)) if x]
     rank = {"none": 0, "out_of_period": 0, "stale": 1}
-    todo = sorted([x for x in sts if x["state"] != "fresh"], key=lambda x: (rank[x["state"]], near[x["area"]], x["area"]))
+    todo = sorted([x for x in sts if x["state"] != "fresh"], key=lambda x: (not x["area"].startswith(REGION_AREA_PREFIX), rank[x["state"]], near[x["area"]], x["area"]))
     used, areas, deferred = 0, [], []
     for x in todo:
         if used + x["requests"] <= limit:
@@ -795,7 +969,7 @@ def inat_refresh_plan(cands, d, now, *, origin=None, env=None, policy=None, cat_
             "areas": areas, "deferred": deferred, "fresh": [x for x in sts if x["state"] == "fresh"]}
 
 
-def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_get=None, sleep=None, clock=None):
+def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_get=None, sleep=None, clock=None, budget=None):
     """区域の集計を iNaturalist から取り直す(実通信。計測フックの下で。--max-requests 必須・1 回の質問の上限を超えない)。
     上限に収まらない区域は取らない(古い集計を日付つきで使う)。取れた集計を索引に書く。通信の失敗は記録して残りを止める。
     → {requests, max_requests, fetched, deferred, errors}"""
@@ -816,6 +990,8 @@ def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_
     sleep = sleep or time.sleep
     idx = read_inat_index(env, policy)
     out = {"requests": 0, "max_requests": max_requests, "fetched": [], "deferred": [], "errors": []}
+    if budget is not None:                                             # 段階38: 単体の上限(上限・間隔・許可ホスト・記録)で包む
+        http_get = budget(http_get or (lambda u: birds_live.default_http_get(u, user_agent=cfg["live"]["user_agent"], timeout=cfg["live"]["timeout_s"])))
     for aid in area_ids:
         area = _area_by_id(aid)
         if not area or area.get("lat") is None:
@@ -823,15 +999,32 @@ def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_
             continue
         area = _rounded(area, profile)
         qs = _inat_queries(area, d, profile, cfg)
+        need_base = area.get("scope") == "park" and _baseline_needed(area, d, now, cache=cache, profile=profile, cfg=cfg, policy=policy)
+        have = all(cache.get(q["url"], q["params"], now=now, ttl_s=_v(_inat_policy(policy)["max_age_days"]) * 86400)[0] for q in qs)
+        n_need = (0 if have else len(qs)) + (1 if need_base else 0)
         left = max_requests - out["requests"]
-        if len(qs) > left:
-            out["deferred"].append({"area": aid, "requests": len(qs), "reason": "max_requests"})
+        if n_need > left:
+            out["deferred"].append({"area": aid, "requests": n_need, "reason": "max_requests"})
             continue
-        if out["requests"] > 0:
+        if out["requests"] > 0 and n_need:
             sleep(cfg["live"]["min_interval_s"])                      # 区域の間でも間隔を空ける
         try:
-            _inputs, rep = birds_live.fetch_bird_counts(area, [d], profile, now, cache=cache, cfg=cfg, http_get=http_get, live=True,
-                                                        max_requests=left, unparsed_dir=unparsed, sleep=sleep, clock=clock)
+            if have:
+                rep = {"requests": 0, "cache_hits": len(qs), "warnings": []}
+            elif area.get("scope") == "park":            # 段階38: 公園ごとの範囲の問い合わせ(1 リクエスト)
+                for q in qs:
+                    birds_live.fetch_baseline(area, d, profile, now, cache=cache, cfg=cfg, unparsed_dir=unparsed, clock=clock, q=q,
+                                              http_get=http_get or (lambda u: birds_live.default_http_get(u, user_agent=cfg["live"]["user_agent"], timeout=cfg["live"]["timeout_s"])))
+                rep = {"requests": len(qs), "cache_hits": 0, "warnings": []}
+            else:
+                _inputs, rep = birds_live.fetch_bird_counts(area, [d], profile, now, cache=cache, cfg=cfg, http_get=http_get, live=True,
+                                                            max_requests=left, unparsed_dir=unparsed, sleep=sleep, clock=clock)
+            if need_base:
+                if rep["requests"]:
+                    sleep(cfg["live"]["min_interval_s"])
+                birds_live.fetch_baseline(area, d, profile, now, cache=cache, cfg=cfg, unparsed_dir=unparsed, clock=clock, q=_baseline_q(area, d, profile, cfg),
+                                          http_get=http_get or (lambda u: birds_live.default_http_get(u, user_agent=cfg["live"]["user_agent"], timeout=cfg["live"]["timeout_s"])))
+                rep = {**rep, "requests": rep["requests"] + 1}
         except (LiveError, ParseError) as e:
             out["errors"].append({"area": aid, "error": str(e)})
             break                                                      # 同じ通信先の残りは止める
@@ -847,6 +1040,125 @@ def inat_refresh(area_ids, d, now, *, max_requests, env=None, policy=None, http_
     if out["fetched"]:
         _write_inat_index(idx, env, policy)
     return out
+
+
+# ---- 野鳥: 公園ごとに見られる鳥(段階38。指示書 3-1) ----
+
+BIRD_TAXA_PATH = DATA_FILES_DIR / "guide" / "bird_taxa.yaml"
+
+
+def known_bird_names(extra=()):
+    """記録の原文から鳥の名前を拾うための和名の辞書: data/guide/bird_taxa.yaml の和名 + extra(その公園の集計の和名など)。"""
+    names = set(x for x in extra if x)
+    if BIRD_TAXA_PATH.exists():
+        for r in (yaml.safe_load(BIRD_TAXA_PATH.read_text(encoding="utf-8")) or {}).get("taxa") or []:
+            if r.get("name"):
+                names.add(r["name"])
+    return names
+
+
+def bird_names_in(text, names, min_len=2):
+    """原文に書かれた鳥の名前(辞書にあるものだけ。長い名前を先に。「アオサギ」の中の「サギ」は拾わない)。出てきた順。"""
+    t = unicodedata.normalize("NFKC", text or "")
+    hits = []
+    for n in sorted({x for x in names if len(x) >= min_len}, key=lambda x: (-len(x), x)):
+        i = t.find(n)
+        while i >= 0:
+            hits.append((i, n))
+            t = t[:i] + "\uffff" * len(n) + t[i + len(n):]
+            i = t.find(n)
+    seen, out = set(), []
+    for _i, n in sorted(hits):
+        if n not in seen:
+            seen.add(n)
+            out.append(n)
+    return out
+
+
+def park_birds(f, rows, dates, policy, taxa_names=None):
+    """公園ごとの「見られる鳥」(決定論)。材料の順: ①最近の記録 ②この時期の記録(iNaturalist。季節らしさの順。一年中多い鳥は後ろ)
+    ③前の年の同じ時期の記録 ④公園の紹介。→ (鳥の一覧, 範囲の注意)。鳥ごとに 和名・材料の種類・日付か集計の期間・出典・なぜ今か。"""
+    pb = policy["park_birds"]
+    why, kl = pb["why"], pb["kind_labels"]
+    d = dates[0]
+    inat = f.get("inat") or {}
+    inat_names = [x["name"] for x in (inat.get("seasonal") or inat.get("species") or [])]
+    names = known_bird_names(inat_names) if taxa_names is None else set(taxa_names) | set(inat_names)
+    by_sci = {x["name"]: x for x in (inat.get("seasonal") or inat.get("species") or [])}
+    minl = _v(pb["name_min_len"])
+    recent_w = _v(pb["recent_days"])
+    out, seen = [], set()
+
+    def add(item):
+        if item["name"] in seen:
+            return
+        seen.add(item["name"])
+        x = by_sci.get(item["name"]) or {}
+        item.setdefault("scientific_name", x.get("scientific_name"))
+        item.setdefault("taxon_id", x.get("taxon_id"))
+        if x.get("contrast_lift") is not None and item["kind"] == "season":
+            item["contrast_lift"] = x["contrast_lift"]
+        item["kind_label"] = kl[item["kind"]]
+        out.append(item)
+    dated = []
+    for r in rows:
+        sd = state_date_of(r)
+        if not sd:
+            continue
+        dated.append((sd, r))
+    for sd, r in sorted(dated, key=lambda x: (x[0], x[1]["read_at"]), reverse=True):        # ① 最近の記録(新しい順)
+        gap = (d - date.fromisoformat(sd)).days
+        if not (0 <= gap <= recent_w):
+            continue
+        for n in list(r.get("species") or []) + bird_names_in(r.get("state"), names, minl):
+            add({"name": n, "kind": "recent", "date": sd, "publisher": r.get("publisher") or r.get("host"), "url": r["url"],
+                 "source_class": r["source_class"], "why": why["recent"].format(md=_md(sd), publisher=r.get("publisher") or r.get("host") or "")})
+    if inat.get("enough"):                                                                    # ② この時期の記録
+        period = pb["inat_period_park"].format(months=pb["months_label"].format(months="・".join(str(m) for m in inat["months"]))) if inat.get("months") \
+            else pb["inat_period"].format(center=_md(inat["center"]), weeks=inat["window_weeks"], years=inat["years"])
+        base = {"kind": "season", "date": str(inat["fetched_at"])[:10], "period": period, "publisher": "iNaturalist", "url": inat.get("site_url"),
+                "source_class": "secondary"}
+        if inat.get("seasonal"):
+            strong = _v(pb["seasonality"]["lift_strong"])
+            for x in inat["seasonal"]:
+                lmin = _v(pb["seasonality"]["lift_min"])
+                if x.get("basis") == "region":
+                    rn = inat["region"]["name"]
+                    w = (why["region_strong"] if x["lift"] >= strong else why["region"]).format(region=rn) if x["seasonal"] else why["region_year_round"]
+                elif x["seasonal"]:
+                    w = why["seasonal_strong"] if x["lift"] >= strong else why["seasonal"]
+                elif x["lift"] is not None and x["lift"] >= lmin:
+                    w = why["window_only"]           # 割合は高いが記録が少ない(季節らしさを決めない)
+                else:
+                    w = why["year_round"]
+                add({**base, "name": x["name"], "scientific_name": x["scientific_name"], "taxon_id": x["taxon_id"], "lift": x["lift"],
+                     "count": x["count"], "seasonal": x["seasonal"], "why": w})
+        else:
+            for x in inat.get("species") or []:
+                add({**base, "name": x["name"], "scientific_name": x["scientific_name"], "taxon_id": x.get("taxon_id"), "count": x["count"],
+                     "seasonal": None, "why": why["window_only"]})
+    for x in f.get("season_birds") or []:                                                     # ③ 前の年の同じ時期 ④ 公園の紹介
+        if x["kind"] == "past_record":
+            for n in bird_names_in(x["text"], names, minl):
+                add({"name": n, "kind": "last_year", "date": x["date"], "publisher": x.get("publisher"), "url": x["url"],
+                     "source_class": x["source_class"], "why": why["last_year"].format(year=x["year"], md=_md(x["date"]), publisher=x.get("publisher") or "")})
+    for x in f.get("season_birds") or []:
+        if x["kind"] == "page":
+            for n in bird_names_in(x.get("text"), names, minl):
+                add({"name": n, "kind": "page", "date": x.get("checked_on"), "publisher": x.get("publisher"), "url": x.get("url"),
+                     "source_class": x.get("source_class") or "official", "why": why["page"].format(publisher=x.get("publisher") or "")})
+    # 一年中多い鳥(季節らしさが低い)は後ろ。最近の記録は先頭のまま
+    rank = {"recent": 0, "season": 1, "last_year": 2, "page": 3}
+    out.sort(key=lambda x: (rank[x["kind"]], 0 if x["kind"] != "season" or x.get("seasonal") in (True, None) else 1))
+    rec = [x for x in out if x["kind"] == "recent"][:_v(pb["max_recent"])]
+    out = (rec + [x for x in out if x["kind"] != "recent"])[:_v(pb["max_species"])]
+    warn = []
+    top = _v(pb["sea_top_n"])
+    if not (f.get("bird_range") or {}).get("coastal"):
+        sea = [x["name"] for x in out[:top] if x["name"] in set(pb["sea_birds"])]
+        if sea:
+            warn.append({"spot": f["name"], "sea_birds": sea, "note": "内陸の名所の上位に海の鳥(範囲が広すぎる合図)"})
+    return out, warn
 
 
 def closed_on(c, dates):
@@ -1004,6 +1316,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     if subject == "birds":
         out["season_birds"] = season_birds(c, rows, dates, policy)
         out["bird_area"] = c.get("bird_area")
+        out["bird_range"] = c.get("bird_range")
+        out["_rows"] = rows
     return out
 
 
@@ -1060,24 +1374,35 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     dk = [f for f in rec_f if f["distance_km"] is not None]
     for f in sorted(dk, key=lambda f: f["distance_km"])[:_v(policy["min_candidates"])]:
         f["reasons"].append("near")
+    range_warnings = []
     if subject == "birds":
         inat_cache = {}
         for f in all_f:
             a = f.get("bird_area")
-            if a and a not in inat_cache:
-                inat_cache[a] = inat_season(a, dates[0], now, env)
-            f["inat"] = inat_cache.get(a) if a else None
+            k = (a, f.get("prefecture"))
+            if a and k not in inat_cache:
+                inat_cache[k] = inat_season(a, dates[0], now, env, prefecture=f.get("prefecture"))
+            f["inat"] = inat_cache.get(k) if a else None
             f["season_line"] = season_line(f, policy)
             f["season_unknown"] = f["season_line"] == policy["birds"]["season_labels"]["unknown"]      # 段階36(決定1): 野鳥の R4 の「分からない」の印
             if f["inat"] and f["inat"].get("enough"):
                 f["reasons"].append("inat_season")
             for k in ("relation", "relation_label"):          # 野鳥には「例年の見頃」の関係を出さない(この時期に見られる鳥で書く)
                 f[k] = None
+            f["park_birds"], w = park_birds(f, f.get("_rows") or [], dates, policy)       # 段階38: 公園ごとに見られる鳥
+            dated = sorted([r for r in f.get("_rows") or [] if state_date_of(r)], key=lambda r: (state_date_of(r), r["read_at"]), reverse=True)
+            f["latest_dated"] = {"state_raw": dated[0]["state"], "state_date": state_date_of(dated[0]), "url": dated[0]["url"],
+                                 "publisher": dated[0].get("publisher") or dated[0].get("host"), "source_class": dated[0]["source_class"],
+                                 "recent": 0 <= (dates[0] - date.fromisoformat(state_date_of(dated[0]))).days <= _v(policy["park_birds"]["recent_days"])} if dated else None
+            range_warnings.extend(w)
+    if subject == "birds":                            # 段階38: 公園ごとの鳥の材料(最近の記録・この時期の記録)がある名所を先に(同じなら今の並び)
+        rec_f.sort(key=lambda f: 0 if any(x["kind"] in ("recent", "season") for x in f.get("park_birds") or []) else 1)
     for f in all_f:
         f["reason_labels"] = [policy["reason_labels"][r] for r in f["reasons"]]
         if f["avoid"]:
             f["avoid_label"] = policy["avoid_reasons"][f["avoid"]]
         f.pop("_order", None)
+        f.pop("_rows", None)
     alts = []
     if with_alternatives and subject == "autumn_leaves":
         fl = facts("flowers", region=region, dates=dates, now=now, origin=origin, env=env, policy=policy, spots_doc=spots_doc,
@@ -1095,7 +1420,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
             "summary": {"candidate_count": len(rec_f), "with_record": len(with_rec), "states": states, "state_dates": as_of,
                         "any_fresh": any(f["current"]["freshness"] == "fresh" for f in with_rec),
                         "any_official": any(f["current"]["source_class"] == "official" for f in with_rec)},
-            "source_urls": srcs}
+            "source_urls": srcs, **({"range_warnings": range_warnings} if subject == "birds" else {})}
 
 
 def self_check(text, policy=None):
@@ -1117,13 +1442,17 @@ def _inat_refresh_cli(a, http_get=None, clock=None):
     if a.max_requests is None or a.max_requests < 1:
         print("--max-requests (1 以上)が必要です", file=sys.stderr)
         return 4
+    budget = None
     if http_get is None:                                   # 偽の http_get を注入したテストは実通信にならない。本物の通信は常にゲートを通る
         if not livegate.live_allowed():
             print(livegate.refusal(), file=sys.stderr)
             return 4
-        if not os.environ.get("BIYORI_REQ_LOG"):
-            print("inat-refresh は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します", file=sys.stderr)
-            return 4
+        # 段階38(利用者の決定 2026-11-01): 計測フック(BIYORI_REQ_LOG)がなければ、自前の上限(netbudget)の下で取る
+        from . import netbudget
+        from .config import load_config
+        budget = netbudget.Budget("inat_counts", load_config()["live"]["allowed_hosts_by_subject"]["birds"],
+                                  min(a.max_requests, _v(_inat_policy()["max_requests_per_question"])),
+                                  load_policy()["fetch_limits"]["same_host_interval_s"])
     now = S.parse_now(a.now)
     dates = _dates(a, now)
     pl = None
@@ -1132,7 +1461,7 @@ def _inat_refresh_cli(a, http_get=None, clock=None):
     else:
         pl = plan("birds", region=a.region, dates=dates, now=now, origin=a.origin)["inat_refresh"]
         ids = [x["area"] for x in pl["areas"]]
-    out = inat_refresh(ids, dates[0], now, max_requests=a.max_requests, http_get=http_get, clock=clock) if ids else \
+    out = inat_refresh(ids, dates[0], now, max_requests=a.max_requests, http_get=http_get, clock=clock, budget=budget) if ids else \
         {"requests": 0, "max_requests": a.max_requests, "fetched": [], "deferred": [], "errors": []}
     if pl is not None:
         out["planned"] = pl

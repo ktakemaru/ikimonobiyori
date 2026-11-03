@@ -92,3 +92,12 @@ def observations_window_query(*, lat, lng, radius_km, years, month, days, iconic
     if locale:
         params["locale"] = locale
     return {"endpoint": endpoint, "params": params, "url": f"{BASE}{endpoint}?{urlencode(params)}"}
+
+
+def species_counts_years_query(*, lat, lng, radius_km, years, iconic_taxa, quality_grade, per_page, locale=LOCALE):
+    """段階38: 季節らしさの分母(その場所の一年の記録)。窓の問い合わせと同じ過去の年を、月日で絞らずに 1 リクエストで取る条件。"""
+    params = {"lat": lat, "lng": lng, "radius": radius_km, "year": ",".join(str(y) for y in years), "iconic_taxa": iconic_taxa,
+              "quality_grade": quality_grade, "per_page": per_page}
+    if locale:
+        params["locale"] = locale
+    return {"endpoint": "/observations/species_counts", "params": params, "url": f"{BASE}/observations/species_counts?{urlencode(params)}"}

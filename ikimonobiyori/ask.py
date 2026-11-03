@@ -22,7 +22,7 @@ from pathlib import Path
 import yaml
 
 from . import ask_verify as V
-from . import livegate
+from . import livegate, netbudget
 from . import observations as O
 from . import sources as S
 from .paths import DATA_FILES_DIR, PKG, data_dir, data_path
@@ -213,23 +213,34 @@ class Flow:
             if livegate.under_test():
                 self.call("inat_refresh", skipped="under_test")
                 return self._inat_done(plan_doc, {"ran": False, "reason": "under_test"})
-            if not livegate.live_allowed() or not os.environ.get("BIYORI_REQ_LOG"):
-                self.call("inat_refresh", skipped="no_measure_hook")
-                return self._inat_done(plan_doc, {"ran": False, "reason": "no_measure_hook"})
+            why = netbudget.refusal()                # 段階38: 単体でも自前の上限で取りに行く。計測フックの下では BIYORI_ALLOW_LIVE=1 が要る(従来どおり)
+            if why:
+                self.call("inat_refresh", skipped="not_allowed")
+                return self._inat_done(plan_doc, {"ran": False, "reason": "not_allowed"})
         n = ir["max_requests"]
         d = date.fromisoformat(ir.get("date") or self._load("params.json", {}).get("dates", [self.now.date().isoformat()])[0])
+        budget = self.budget("inat_counts", O.load_policy()["inat_refresh"]["max_requests_per_question"]["value"], sleep=sleep)
         try:
-            res = O.inat_refresh(ir["areas"], d, self.now, max_requests=n, env=self.env, http_get=http_get, sleep=sleep, clock=clock)
+            res = O.inat_refresh(ir["areas"], d, self.now, max_requests=n, env=self.env, http_get=http_get, sleep=sleep, clock=clock, budget=budget)
             rc = 5 if res.get("errors") else 0
         except Exception as e:                       # 失敗しても止めない(古い集計を日付つきで使う)
             res, rc = {"requests": None, "fetched": [], "deferred": [], "errors": [{"error": str(e)[:200]}]}, 5
-        self.call("inat_refresh", max_requests=n, areas=ir["areas"], rc=rc)
-        out = {"ran": True, "rc": rc, "max_requests": n, "requests": res.get("requests"), "fetched": res.get("fetched") or [],
-               "deferred": (res.get("deferred") or []) + (ir.get("deferred") or []), "errors": res.get("errors") or []}
+        self.call("inat_refresh", max_requests=n, areas=ir["areas"], rc=rc, net=budget.summary())
+        out = {"ran": True, "reason": "ran", "rc": rc, "max_requests": n, "requests": res.get("requests"), "fetched": res.get("fetched") or [],
+               "deferred": (res.get("deferred") or []) + (ir.get("deferred") or []), "errors": res.get("errors") or [], "net": budget.summary()}
         self._save("inat_refresh.json", out)
         if rc != 0:
             self.notes.append("野鳥の集計の取り直しは失敗。古い集計を日付つきで使います")
         return self._inat_done(plan_doc, out)
+
+    def budget(self, kind, max_requests, hosts=None, interval=None, sleep=None):
+        """段階38: 単体の小さな上限(netbudget)。許可ホストは config.yaml の宣言済みホスト、間隔は同じホストへ 1 秒以上(方針)。"""
+        from .config import load_config
+        cfg = load_config()
+        hosts = hosts or cfg["live"]["allowed_hosts_by_subject"]["birds"]
+        gap = max(O.load_policy()["fetch_limits"]["same_host_interval_s"], interval or 0)
+        kw = {"sleep": sleep} if sleep else {}
+        return netbudget.Budget(kind, hosts, max_requests, gap, env=self.env, **kw)
 
     def _inat_done(self, plan_doc, out):
         plan_doc["inat_refresh"] = {**(plan_doc.get("inat_refresh") or {}), **out}
@@ -278,12 +289,139 @@ class Flow:
         self.call("facts", subjects=list(subjects), new_records=rnd["new_records"], attempted=rnd["attempted"])
         return doc
 
+    # 3b. 写真(段階38。公園ごとの鳥の写真のうち、手元にないものを取りに行く。上限の範囲。足りなければ「写真なし」で止めない)
+    def photos(self, http_get=None, http_bytes=None, sleep=None):
+        from . import guide, guide_photos, park_page
+        from .config import load_config
+        from .fetch import commons_photos, inat_photos
+        from .fetch.live import LiveError
+        facts_doc = self._load("facts.json", None)
+        if facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        if http_get is None:
+            why = "under_test" if livegate.under_test() else ("not_allowed" if netbudget.refusal() else None)
+            if why:
+                self.call("photos", skipped=why)
+                out = {"ran": False, "reason": why}
+                self._save("photos.json", out)
+                return out
+        ph = guide.load_policy()["photos"]
+        cfg = load_config()
+        table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
+        review = guide_photos.load_review(self.env) if self.env else guide_photos.load_review()
+        rows, need_search, seen = [], [], []
+        for c in park_page.parks(facts_doc, self.policy["park_page"]):
+            for b in c["park_birds"]:
+                if b["name"] in seen:
+                    continue
+                seen.append(b["name"])
+                t = table.get(b["name"])
+                tid = b.get("taxon_id") or (t or {}).get("taxon_id")
+                sci = b.get("scientific_name") or (t or {}).get("scientific")
+                if tid and sci:
+                    rows.append({"name": b["name"], "scientific": sci, "taxon_id": int(tid)})
+                elif not inat_photos.skipped(b["name"], ph):
+                    need_search.append(b["name"])
+        rows = [r for r in rows if str(r["taxon_id"]) not in review]
+        has = (lambda t: guide_photos.has_cache(t, self.env)) if self.env else guide_photos.has_cache
+        save = (lambda it: guide_photos.save_photo(it, self.env)) if self.env else guide_photos.save_photo
+        getter = None
+        if http_get is None:
+            from .fetch.live import SessionGetter
+            t = cfg["live"]["request_timeout"]
+            getter = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
+            http_get, http_bytes = getter, getter.get_bytes
+        hosts = cfg["live"]["allowed_hosts_by_subject"]["guide_photos"]
+        b = self.budget("photos", ph["max_requests_per_run"]["value"], hosts=hosts, interval=ph["min_interval_s"]["value"], sleep=sleep)
+        hg, hb = b(http_get), b(http_bytes)
+        kw = {"sleep": sleep} if sleep else {}
+        rep_ = {"searched": [], "saved": [], "not_used": {}, "status": "ok"}
+        try:
+            if need_search:
+                entered, _no, r1 = inat_photos.build_table(need_search, http_get=hg, ph=ph, max_requests=max(b.left(), 1), **kw)
+                rows += [{k: e[k] for k in ("name", "scientific", "taxon_id")} for e in entered]
+                rep_["searched"] = [e["name"] for e in entered]
+                if r1["status"] != "ok":
+                    rep_["status"] = r1["status"]
+            todo = [r for r in rows if not has(r["taxon_id"])]
+            if todo and b.left() >= 2 and rep_["status"] == "ok":
+                got, unused, r2 = inat_photos.fetch_photos(todo, http_get=hg, http_bytes=hb, ph=ph, max_requests=b.left(), has_cache=has,
+                                                           skip_photos=guide_photos.load_skip_photos(self.env) if self.env else guide_photos.load_skip_photos(), **kw)
+                for item in got:
+                    save(item)
+                rep_["saved"] += [i["row"]["name"] for i in got]
+                rep_["not_used"].update(unused)
+                rep_["status"] = r2["status"]
+            # iNaturalist に使える写真がない種だけ、Commons(承認済みの通信先)から。少ない種数だけ
+            cap = self.policy["net"]["page_photos_commons_max_species"]["value"]
+            nocache = [r for r in rows if not has(r["taxon_id"]) and r["name"] in rep_["not_used"] and f"commons:{r['taxon_id']}" not in review][:cap]
+            if nocache:
+                cm = ph["commons"]
+                hs = cfg["live"]["allowed_hosts_by_subject"]
+                cb = self.budget("photos_commons", cm["max_requests_per_run"]["value"], hosts=hs["guide_photos_commons"] + hs["guide_places"],
+                                 interval=cm["min_interval_s"]["value"], sleep=sleep)
+                got, _un, _r3 = commons_photos.fetch_commons(nocache, http_get=cb(http_get), http_bytes=cb(http_bytes), ph=ph, max_requests=cb.left(),
+                                                             has_cache=has, on_got=save, **kw)
+                rep_["saved"] += [i["row"]["name"] for i in got]
+                rep_["commons_net"] = cb.summary()
+        except LiveError as e:                         # 上限・許可ホストの外: そこで止める(写真なしで出す)
+            rep_["status"] = "stopped"
+            rep_["error"] = str(e)[:200]
+        finally:
+            if getter is not None:
+                getter.close()
+        found = {r["name"]: r["taxon_id"] for r in rows}
+        out = {"ran": True, **rep_, "net": b.summary(),
+               "species": [{"name": n, "taxon_id": found.get(n), "photo": bool(found.get(n) and has(found[n]))} for n in seen]}
+        self._save("photos.json", out)
+        self.call("photos", requests=b.used, saved=len(rep_["saved"]), status=rep_["status"])
+        return out
+
+    # 3c. 写真つきの公園ページ(段階38)
+    def page(self, gazetteer=()):
+        from . import guide, guide_photos, park_page
+        from . import profiles as P
+        facts_doc = self._load("facts.json", None)
+        if facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        gp = guide.load_policy()["photos"]
+        table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
+        pinfo = {x["name"]: x.get("taxon_id") for x in (self._load("photos.json", {}) or {}).get("species") or []}
+
+        def photo_for(b):
+            tid = b.get("taxon_id") or pinfo.get(b["name"]) or (table.get(b["name"]) or {}).get("taxon_id")
+            if not tid:
+                return None
+            return guide_photos.load_photo(tid, self.env) if self.env else guide_photos.load_photo(tid)
+        care = P.load_profiles()["birds"]["care"]["manners"]
+        html_text, lines, shown = park_page.build(facts_doc, policy=self.policy["park_page"], photo_for=photo_for, author_re=gp["html"]["author_re"],
+                                                  commons_source_id=gp["commons"]["source_id"], now=self.now, care=care)
+        gaz = sorted(set(place_names()) | set(gazetteer))
+        chk = V.page_check(lines, facts_doc, gazetteer=gaz)
+        d0 = (facts_doc.get("dates") or [self.now.date().isoformat()])[0]
+        out = (guide_photos.page_dir(self.env) if self.env else guide_photos.page_dir()) / self.policy["park_page"]["file"].format(date=d0)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(html_text, encoding="utf-8", newline="\n")
+        line = self.policy["park_page"]["reply_line"].format(path=str(out.resolve()))
+        doc = {"path": str(out.resolve()), "line": line, "ok": chk["ok"], "errors": V.report_lines(chk),
+               "parks": [{"name": k, "birds": [{"name": n, "photo": x} for n, x in v]} for k, v in shown.items()]}
+        self._save("page.json", doc)
+        self.call("page", ok=chk["ok"], parks=len(shown))
+        return doc
+
     # 4. 検査
-    def verify(self, text, gazetteer=()):
+    def verify(self, text, gazetteer=(), reply=False):
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
         gaz = sorted(set(place_names()) | set(gazetteer))
+        if reply:                                     # 段階38: 利用者への返事の全文(答えの本文 + ページの場所の 1 行)
+            r = V.reply_check(text, facts_doc, gazetteer=gaz, page_line=(self._load("page.json", {}) or {}).get("line"))
+            self._save("check_reply.json", r)
+            final = text if r["ok"] else V.strip(r["checked_text"], r)
+            (self.workdir / "final_reply.txt").write_text(final, encoding="utf-8")
+            self.call("verify", reply=True, ok=r["ok"], errors=len(V.report_lines(r)))
+            return r, final
         r = V.check(text, facts_doc, gazetteer=gaz)
         self._save("check.json", r)
         final = text if r["ok"] else V.strip(text, r)
@@ -335,9 +473,15 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("record")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--batch", required=True)
+    p = sub.add_parser("photos", help="公園ごとの鳥の写真のうち、手元にないものを取りに行く(段階38。上限の範囲)")
+    p.add_argument("--out-dir", required=True)
+    p = sub.add_parser("page", help="公園ごとに見られる鳥の写真つきページ(段階38)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p = sub.add_parser("verify")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--text", required=True)
+    p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
     a = ap.parse_args(argv)
     pol = load_policy()
@@ -371,12 +515,28 @@ def main(argv=None, http_get=None):
             out = flow.record(a.batch)
             _out(out)
             return 1 if out.get("rejected") else 0
+        if a.step == "photos":
+            _out(flow.photos())
+            return 0
+        if a.step == "page":
+            doc = flow.page()
+            for line in doc["errors"]:
+                print(line, file=sys.stderr)
+            print(doc["line"])
+            if a.open:
+                if hasattr(os, "startfile"):
+                    os.startfile(doc["path"])
+                else:
+                    import webbrowser
+                    webbrowser.open(Path(doc["path"]).as_uri())
+            return 0 if doc["ok"] else 1
         if a.step == "verify":
             gaz = [n for g in a.gazetteer for n in load_gazetteer_file(g)]
-            r, _final = flow.verify(Path(a.text).read_text(encoding="utf-8"), gaz)
+            r, _final = flow.verify(Path(a.text).read_text(encoding="utf-8"), gaz, reply=a.reply)
             for line in V.report_lines(r):
                 print(line, file=sys.stderr)
-            print(("合格: " if r["ok"] else "不合格(通らない文を除いた答えを書きました): ") + str(Path(out_dir) / "final.txt"))
+            name = "final_reply.txt" if a.reply else "final.txt"
+            print(("合格: " if r["ok"] else "不合格(通らない文を除いた答えを書きました): ") + str(Path(out_dir) / name))
             return 0 if r["ok"] else 1
     finally:
         flow.save_calls()

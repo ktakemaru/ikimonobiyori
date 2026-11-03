@@ -59,7 +59,7 @@ answer_check:
   typical_words: [例年, 昨年]
   # 段階H10(利用者の決定 2026-11-01。評価表 R4 の読み方 (b))
   typical_unknown_phrases: [例年の時期は分かりません, 例年の見頃は分かりません, 例年の時期は分からない, 例年の見頃は分からない]
-  typical_alt_words: [今年の行事, 昨年, 去年, 前の年]
+  typical_alt_words: [今年の行事, 今年は, 昨年, 去年, 前の年]
   # 段階H9(穴1): 「読み直しました」の言い方。この回の record で新しい記録が 0 件なら落とす。文は lines.fetch の決まった文だけ
   reread_words: [読み直しました, 読み直し、, 読み直しています, 調べ直しました, 新しく読みました]
   # 段階H9(穴2): 野鳥の候補の段には「例年の見頃」を書かず、「この時期」(この時期に見られる鳥)を書く
@@ -67,3 +67,38 @@ answer_check:
   birds_typical_words: [この時期]
   # 段階H9(穴2): 対象の日が休みの名所を書いたら、休みを言い切る文(施設名と「休み」を含む文)が要る
   closed_words: [休み, 休園, 休館]
+  # 段階38(指示書 3-4): 同じ言い方を答えの中で繰り返さない(「公式ではない」は補足に1回まとめる。各行では出典名だけ)
+  max_repeats: {公式ではない: 1}
+  # 段階38(指示書 3-4): 利用者への返事の全文(答えの本文の外に付け足した文も)の検査。作業・開発の説明を落とす
+  reply_terms: [今回の作業, 作業で実行, 実行したこと, リポジトリ, 追跡ファイル, 保存先, 単体テスト, "(?<![A-Za-z])git(?![A-Za-z])", 変更していない, 変更していません, 書き込み先, 手順を]
+
+# 段階38(利用者の決定 2026-11-01。指示書 2-1): 単体で iNaturalist を取りに行くときの小さな上限(ikimonobiyori/netbudget.py)。
+# 1 回の実行の上限は observations の inat_refresh.max_requests_per_question(集計)と guide の photos.max_requests_per_run(写真)。
+# 同じホストへの間隔は observations の fetch_limits.same_host_interval_s 以上。記録は IKIMONOBIYORI_DATA_DIR の下の netlog/requests.jsonl
+net:
+  page_photos_commons_max_species: {value: 3, source: "仮置き(Commons は間隔が長いので、1 回の質問で探す種を少なくする)", provisional: true}
+
+# 段階38(指示書 3-3): 公園ごとに見られる鳥の写真つきページ(ikimonobiyori/park_page.py)。置き場所は IKIMONOBIYORI_DATA_DIR の下の guide/pages/
+park_page:
+  file: "birds-parks-{date}.html"
+  max_parks: {value: 5, source: "表示の件数の設計値(答えのおすすめ3件以上を含む)", provisional: false}
+  csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
+  # 利用者への返事に添えるページの場所の 1 行(verify --reply はこの 1 行だけを検査から外す)
+  reply_line: "写真つきのページ: {path}"
+  text:
+    title: "{dates} 公園で見られる鳥"
+    origin: "出発地: {origin}"
+    photo_note: "写真は種の代表写真で、その公園で撮られたものではありません。"
+    recent: "最近の記録: 「{text}」({publisher}、{md})"
+    recent_nodate: "最近の記録: 「{text}」({publisher})"
+    older: "以前の記録: 「{text}」({publisher}、{year}年{md})"
+    hours: "開園: {text}"
+    park_link: "公園のページ: "
+    no_photo: 写真なし
+    credit: "写真: {author}・{license}"
+    photo_link: 写真のページ(iNaturalist)
+    photo_link_commons: ファイルのページ(Wikimedia Commons)
+    source: "{kind}・{when}・{publisher}"
+    source_nodate: "{kind}・{publisher}"
+    care_heading: 観察のマナー
+    footer: "写真提供: iNaturalist / Wikimedia Commons。鳥の記録: 公園の観察の記録と iNaturalist の過去の記録。"

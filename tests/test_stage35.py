@@ -114,10 +114,10 @@ class Hole3Freshness(Base):
         rose = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-1")
         self.assertEqual(rose["typical"], [])
         self.assertEqual(rose["event_periods_not_typical"][0]["text"], "10/10〜11/8")
-        self.assertEqual(rose["typical_line"], "例年の時期は分かりません(今年の行事「試験のローズフェスティバル」は10/10〜11/8)")
+        self.assertEqual(rose["typical_line"], "例年の時期は分かりません。今年は10/10〜11/8に試験のローズフェスティバルがあります。")   # 段階38で書き換え(指示書 3-4。旧: 例年の時期は分かりません(今年の行事「…」は…))
         cos = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-h-1")
         self.assertEqual(cos["typical"], [])
-        self.assertEqual(cos["typical_line"], "例年の時期は分かりません(今年の行事「試験のコスモスまつり」は10/31〜11/29)")
+        self.assertEqual(cos["typical_line"], "例年の時期は分かりません。今年は10/31〜11/29に試験のコスモスまつりがあります。")   # 段階38で書き換え(指示書 3-4。旧: 例年の時期は分かりません(今年の行事「…」は…))
         self.assertEqual(cos["tier"], 2)                       # 対象の日に行事がある花は、例年の時期が分からなくても前の段
         plain = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-2")
         self.assertEqual(plain["typical_line"], "例年の見頃: 10/1〜10/20")    # 行事でない例年の時期はそのまま
@@ -247,7 +247,7 @@ class EventFromRecords(Base):
         f = O.facts("flowers", region="神奈川", dates=D, now=NOW, env=self.env, spots_doc={"spots": []}, catalogs={"flowers": cat})
         k = next(c for c in f["candidates"] + f["avoid"] if c["id"] == "t-cat-3")
         self.assertEqual(k["typical"], [])
-        self.assertEqual(k["typical_line"], "例年の時期は分かりません(今年の行事「試験の菊花展」は10/29〜11/19)")
+        self.assertEqual(k["typical_line"], "例年の時期は分かりません。今年は10/29〜11/19に試験の菊花展があります。")   # 段階38で書き換え(指示書 3-4。旧: 例年の時期は分かりません(今年の行事「…」は…))
 
     def test_typical_from_record_keeps_its_own_publisher(self):
         O.record([rec("t-cat-2", "開花状況の記載なし", None, subject="flowers", url="https://kankou.example.jp/", typical="秋は例年10月中旬～11月上旬",

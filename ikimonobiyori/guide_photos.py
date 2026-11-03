@@ -214,9 +214,7 @@ def _gate(a, http_get, name, cap=None):
     if a.max_requests is None or a.max_requests < 1:
         print("--live は明示的な --max-requests (1 以上)が必要です", file=sys.stderr)
         return 2, None
-    if http_get is None and not os.environ.get("BIYORI_REQ_LOG"):
-        print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します", file=sys.stderr)
-        return 2, None
+    # 段階38(利用者の決定 2026-11-01): 計測フック(BIYORI_REQ_LOG)がなければ、自前の上限(netbudget。_getters が包む)の下で取る
     return None, min(a.max_requests, (cap or photos_policy()["max_requests_per_run"])["value"])
 
 
@@ -226,14 +224,22 @@ def _only(a):
     return set(v) if isinstance(v, (list, tuple)) else set()
 
 
-def _getters(http_get, http_bytes):
+def _getters(http_get, http_bytes, budget_kind="photos"):
     cfg = load_config()
     if http_get is not None:
         return None, http_get, http_bytes
+    from . import netbudget
     from .fetch.live import SessionGetter
     t = cfg["live"]["request_timeout"]
     g = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
-    return g, g, g.get_bytes
+    ph = photos_policy()
+    hs = cfg["live"]["allowed_hosts_by_subject"]
+    if budget_kind == "commons":                                 # 段階38: 実通信は自前の上限(上限・間隔・許可ホスト・記録)で包む
+        b = netbudget.Budget("photos_commons", hs["guide_photos_commons"] + hs["guide_places"], ph["commons"]["max_requests_per_run"]["value"],
+                             ph["commons"]["min_interval_s"]["value"])
+    else:
+        b = netbudget.Budget("photos", hs["guide_photos"], ph["max_requests_per_run"]["value"], ph["min_interval_s"]["value"])
+    return g, b(g), b(g.get_bytes)
 
 
 def _log_requests(n, kind, env=None):
@@ -316,7 +322,7 @@ def commons_cmd(a, http_get=None, http_bytes=None):
     only = _only(a)
     rows = sorted((r for r in load_table().values() if (not only or r["name"] in only)), key=lambda r: r["name"])
     skip = {r["taxon_id"] for r in rows if f"commons:{r['taxon_id']}" in review}
-    getter, hg, hb = _getters(http_get, http_bytes)
+    getter, hg, hb = _getters(http_get, http_bytes, "commons")
     try:
         got, unused, rep = commons_photos.fetch_commons(rows, http_get=hg, http_bytes=hb, ph=ph, max_requests=left,
                                                         has_cache=lambda t: has_cache(t), skip=skip, on_got=save_photo)
@@ -340,7 +346,7 @@ def commons_season_cmd(a, http_get=None, http_bytes=None):
         print("photos-commons-season は --only で種を指定してください", file=sys.stderr)
         return 2
     rows = [r for n, r in sorted(load_table().items()) if n in only]
-    getter, hg, hb = _getters(http_get, http_bytes)
+    getter, hg, hb = _getters(http_get, http_bytes, "commons")
     saved, unused, reps, used = [], {}, [], 0
     try:
         for row in rows:

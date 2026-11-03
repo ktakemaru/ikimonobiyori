@@ -36,3 +36,27 @@ def band_for(relative_frequency, *, maybe_min, max_band):
     band = "maybe" if relative_frequency >= maybe_min else "no"
     order = {"no": 0, "maybe": 1, "go": 2}
     return band if order[band] <= order[max_band] else max_band
+
+
+def seasonal_rank(window_rows, year_rows, *, lift_min, min_count):
+    """段階38: 季節らしさ(純粋・決定論)。
+    季節らしさ(lift)= (その時期の種の件数 ÷ その時期の鳥類の総数) ÷ (一年の種の件数 ÷ 一年の鳥類の総数)。
+    同じ場所・同じ過去の年。lift が lift_min 以上かつ時期の件数が min_count 以上の種を「この時期らしい」(seasonal: True)とする。
+    並び: この時期らしい種(lift の降順・件数の降順・学名)→ ほかの種(件数の降順・学名)。消さない。
+    一年の記録にない種(分母 0)は lift を None にして、ほかの種に入れる。
+    → [{"name","common_name","taxon_id","count","year_count","window_share","year_share","lift","seasonal"}]"""
+    win, wt = merge_counts(window_rows)
+    yr, yt = merge_counts(year_rows)
+    out = []
+    for k, m in win.items():
+        y = yr.get(k)
+        ws = m["count"] / wt if wt else None
+        ys = (y["count"] / yt) if (y and yt) else None
+        lift = (ws / ys) if (ws is not None and ys) else None
+        common = m["common_name"] or (y or {}).get("common_name")
+        out.append({"name": m["name"], "common_name": common, "taxon_id": m["taxon_id"] or (y or {}).get("taxon_id"), "count": m["count"],
+                    "year_count": y["count"] if y else None, "window_share": ws, "year_share": ys, "lift": lift,
+                    "seasonal": lift is not None and lift >= lift_min and m["count"] >= min_count})
+    seasonal = sorted([s for s in out if s["seasonal"]], key=lambda s: (-s["lift"], -s["count"], s["name"]))
+    rest = sorted([s for s in out if not s["seasonal"]], key=lambda s: (-s["count"], s["name"]))
+    return seasonal + rest
