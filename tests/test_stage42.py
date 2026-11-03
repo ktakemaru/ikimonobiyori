@@ -40,7 +40,7 @@ class Overview(unittest.TestCase):
     def test_species_cover_alpine_sites_and_areas(self):
         r = W.overview(month=11)
         alpine = {e["name"] for e in r["species"] if e["section"] == "alpine"}
-        self.assertEqual(alpine, {"コマクサ", "ハクサンイチゲ", "クロユリ", "ミヤマキンポウゲ"})
+        self.assertEqual(alpine, {"コマクサ", "ハクサンイチゲ", "クロユリ", "ミヤマキンポウゲ", "メイゲツソウ"})
         low_places = {pl["place"] for e in r["species"] if e["section"] == "lowland" for pl in e["places"]}
         self.assertIn("丹沢", low_places)
         # 種ごとに 1 件。データのない種（花暦にない種）は作らない

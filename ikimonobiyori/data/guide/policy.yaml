@@ -420,6 +420,7 @@ wildflower:
   min_sources_established: {value: 2, source: "指示書 stage40 3章・stage39 D-2: 独立した発行元が 2 件以上で定評、1 件は仮", provisional: true}
   max_names_in_sentence: {value: 5, source: "仮置き(段階40)。コンシェルジュが添える文に並べる花の数", provisional: true}
   site_elevation_floor_margin_m: {value: 0, source: "仮置き(段階40)。地点の標高が、花の標高の下限に届かない花は、その地点の出力に入れない（下限の記載があるときだけ）", provisional: true}
+  alpine_min_elevation_m: {value: 2500, source: "仮置き(段階43)。高山の花と山麓〜山地の花を分ける標高の目安。富士登山オフィシャルサイトに森林限界は2,500m付近、国土交通省の観光情報に北岳の森林限界は2,700mとある。高原（霧ヶ峰など）は高山に入れない", provisional: true}
   upcoming_months: {value: 1, source: "仮置き(段階40)。『これから』に出す先の月数", provisional: true}
   elevation_shift_note: "標高が高いほど、花の時期は遅れます。"          # 標高ごとの遅れの数値は、出どころのあるときだけ書く（今は出どころなし）
   words: [野草, 山野草, 高山植物, お花畑, 高山の花, 山の花]          # 話題として登録する語（guide theme が wildflower を指す）
@@ -445,12 +446,30 @@ wildflower:
     heading_lowland_bare: 写真を出していない野草
     place_bloom: "{place}: {text}"
     bare_sep: "、"
+    heading_mountain: 咲き始めの早い順
+    title_mountain: "{place}の野草・高山植物（見ごろの早い順）"
+    title_zukan: "野草・高山植物の図鑑（{label}）"
+    zukan_nav: "ほかの季節のページ"
+    zukan_here: "（このページ）"
+    zukan_more: "（続き）"
+    zukan_part: "{label}（{n}ページ目）"
+    zukan_lead: "データのある山域・地点の花を、{label}に咲き始める順に並べた図鑑です（{count}種）。ほかの季節は上の案内から開けます。"
+    next_question_zukan: "高山の花と山麓の野草のどちらを先に見たいですか？"
     next_question_overview: "高山の花と山麓の野草のどちらを詳しく知りたいですか？ 山域や月が決まっていれば教えてください。"
+  zukan:                                                  # 図鑑の形のページの分け方
+    clean_glob: "wildflower-zukan-*.html"
+    alpine_label: "高山の花"
+    lowland_label: "山麓〜山地の野草"
+    seasons: {春: [3, 4, 5], 夏: [6, 7, 8], 秋: [9, 10, 11], 冬: [12, 1, 2]}
+    files: {alpine: "wildflower-zukan-takayama-{key}", lowland: "wildflower-zukan-sanroku-{key}"}
   overview:                                               # 山域も地点も指定がない質問（「高山植物と見頃を教えて」）の文
     area_label: データのある山域・地点
     not_now: "いまは高山の花の見ごろではありません。例年の見ごろは{span}です（{places}）。"
     alpine_now: "{month}月は高山の花の見ごろです。例年の見ごろは{span}です（{places}）。"
     lowland_now: "山麓〜山地では、{month}月は{items}などが例年見られます。"
+    mountain: "{place}で例年見られる花を、見ごろの早い順に並べました。いちばん早いのは{first_month}月の{first}、いちばん遅いのは{last_month}月の{last}です。"
+    mountain_now: "いま（{month}月）は{items}などが例年見られます。"
+    mountain_none: "いま（{month}月）は、例年見られる花の記録がありません。"
     lowland_none: "山麓〜山地でも、{month}月に例年見られる花の記録はありません。"
     area_only: 山域まで（保護が必要な種のため地点は出しません）
   hana_source: hhm                                        # 段階41: 「花の百名山に選定」を独立した出どころ 1 件として数える（wildflower_facts.yaml の sources）
