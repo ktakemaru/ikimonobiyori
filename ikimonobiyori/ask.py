@@ -524,7 +524,7 @@ def main(argv=None, http_get=None):
     try:
         if a.step in ("prepare", "facts"):
             subjects = a.subject or params.get("subjects") or pol["default_subjects"]
-            region = a.region if a.region is not None else params.get("region")
+            region = a.region if a.region is not None else (params.get("region") or pol.get("default_region"))     # 指定がなければ登録済みの全範囲
             origin = a.origin or params.get("origin")
             dates = parse_dates(a.when, flow.now) if a.when else ([date.fromisoformat(x) for x in params["dates"]] if params.get("dates")
                                                                   else parse_dates(None, flow.now))
