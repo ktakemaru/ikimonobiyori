@@ -333,3 +333,48 @@ class FlowerPage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PageFollowsAnswer(unittest.TestCase):
+    """利用者の指摘(2026-11-03): ページは答えの結論・順位をそのまま使う / 『今季の記録』の鳥を『記録が少ない鳥』にしない / 返事に作業の事情を書かない。"""
+    ANSWER = ("野鳥のおすすめです。今日は水辺の公園が向いています。\n\nおすすめ\n① 森の池公園(試験市)\n・今の状態: x\n\n② 谷の沼(試験市)\n・今の状態: y\n\n"
+              "避けたほうがよい場所\n谷戸山公園の記録は古いため外しました。\n\n確かさの補足\n今日確かめられたのは森の池公園だけです。\n\n好みを教えてください。\n")
+
+    def facts(self):
+        rec = {"name": "カルガモ", "kind": "recent", "kind_label": "今季の記録", "count": None, "lift": None, "date": "2026-10-21", "period": None, "why": "w", "publisher": "p"}
+        rare = {"name": "カルガモ", "kind": "season", "kind_label": "この時期の記録", "count": 1, "lift": 1.0, "date": "2026-11-01", "period": "10・11月の記録", "why": "w", "publisher": "p"}
+        mk = lambda n, birds: {"name": n, "city": "試験市", "park_birds": birds}  # noqa: E731
+        return {"dates": ["2026-11-03"], "subjects": {"birds": {"candidates": [
+            mk("谷戸山公園", [dict(rare, name="モズ", count=5)]), mk("谷の沼", [dict(rare, name="モズ", count=5)]), mk("森の池公園", [rec]), mk("池の端", [rare])]}}}
+
+    def build(self, answer):
+        from ikimonobiyori import ask, park_page
+        pol = ask.load_policy()["park_page"]
+        return park_page.build(self.facts(), policy=pol, photo_for=lambda b: None, author_re=".*", commons_source_id="c", now=None, answer=answer)
+
+    def test_page_uses_the_answers_conclusion_ranking_and_leaves_out_avoided_parks(self):
+        page, _lines, shown = self.build(self.ANSWER)
+        self.assertEqual(list(shown), ["森の池公園", "谷の沼"])
+        self.assertLess(page.index("今日は水辺の公園が向いています"), page.index("森の池公園"))
+        self.assertIn("谷戸山公園の記録は古いため外しました", page)
+        self.assertIn("今日確かめられたのは森の池公園だけです", page)
+        self.assertNotIn("<h2>① 谷戸山公園", page)
+
+    def test_without_an_answer_the_page_is_as_before(self):
+        _page, _lines, shown = self.build(None)
+        self.assertEqual(len(shown), 4)
+
+    def test_a_bird_with_a_recent_record_is_not_listed_as_rare_elsewhere(self):
+        page, _lines, _shown = self.build(None)
+        self.assertNotIn("この時期の記録が少ない鳥: カルガモ", page)
+
+    def test_working_notes_are_not_allowed_in_the_reply(self):
+        for s in ("検査に合格しました。", "テストは実行していません。", "新しい記録が1件増えました。"):
+            self.assertFalse(V.generic_check("① a\n② b\n③ c\n" + s + "\n")["ok"], s)
+            facts = {"subjects": {}, "dates": [], "lines": {}}
+            r = V.reply_check(s + "\n", facts)
+            self.assertFalse(r["ok"], s)
+
+    def test_prefetch_list_has_the_pictureless_birds(self):
+        for n in ("カワセミ", "オナガガモ", "ヒドリガモ", "アオサギ", "コゲラ", "ハッカチョウ", "ハシブトガラス"):
+            self.assertIn(n, POLICY["photos"]["prefetch"]["野鳥"])

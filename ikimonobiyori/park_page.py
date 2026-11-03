@@ -9,6 +9,7 @@
 - 通信しない。写真はキャッシュ(guide_photos)にあるものだけ。文はすべて data/ask/policy.yaml の park_page から作る。
 - 検査用の文の一覧(check_lines)も返す(撮影者名・ライセンスの表記は写真の情報なので検査に入れない)。"""
 import html
+import re
 from datetime import date
 from urllib.parse import urlsplit
 
@@ -98,7 +99,37 @@ def parks(facts, policy):
     return out[: policy["max_parks"]["value"]]
 
 
-def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=()):
+def parse_answer(text, names, policy):
+    """答えの文章(検査を通ったもの)から、結論・順位・避ける場所・確かさの補足を取り出す(段階39 A-7)。
+    → {"conclusion": 文, "ranked": [公園名(順位順)], "avoid": [文], "confidence": [文]}。ページは答えの結論と順位をそのまま使う。"""
+    t = policy["answer_parse"]
+    lines = [l.rstrip() for l in str(text).splitlines()]
+    first = next((i for i, l in enumerate(lines) if re.match(t["rank_re"], l.strip())), None)
+    ranked = []
+    for l in lines:
+        m = re.match(t["rank_re"], l.strip())
+        if m:
+            hit = next((n for n in names if n in m.group(1)), None)
+            if hit and hit not in ranked:
+                ranked.append(hit)
+    head = lines[:first] if first is not None else []
+    head = [l.strip() for l in head if l.strip() and l.strip() not in t["section_heads"]]
+    conclusion = "".join(head)
+
+    def section(title):
+        for i, l in enumerate(lines):
+            if l.strip() == title:
+                out = []
+                for x in lines[i + 1:]:
+                    if not x.strip():
+                        break
+                    out.append(x.strip())
+                return out
+        return []
+    return {"conclusion": conclusion, "ranked": ranked, "avoid": section(t["avoid_title"]), "confidence": section(t["confidence_title"])}
+
+
+def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(), answer=None):
     """facts.json → (HTML, 検査用の文の一覧, 載せた鳥 {公園: [(和名, 写真あり)]})。photo_for(鳥) → (メタデータ, バイト列) か None。"""
     t = policy["text"]
     lines = []
@@ -110,8 +141,16 @@ def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(
     dtxt = "・".join(f"{d.month}/{d.day}({WEEKDAYS[d.weekday()]})" for d in dates)
     pool = PhotoPool(_v(policy["max_embed_bytes"]))                                           # 段階39 A-6: 同じ写真は 1 回だけ埋め込む
     plist = parks(facts, policy)
+    ans = None
+    if answer:                                                   # 段階39 A-7: 答えの結論と順位をそのまま使う(答えで外した公園はおすすめに出さない)
+        ans = parse_answer(answer, [c["name"] for c in plist], policy)
+        if ans["ranked"]:
+            byname = {c["name"]: c for c in plist}
+            plist = [byname[n] for n in ans["ranked"]]
     body = [f"<h1>{say(t['title'].format(dates=dtxt))}</h1>"]
-    if plist:                                                    # 段階39 A-7: 結論(順位の先頭の公園の名前)を先頭に
+    if ans and ans["conclusion"]:
+        body.append(f'<p class="lead">{say(ans["conclusion"])}</p>')
+    elif plist:                                                  # 結論(順位の先頭の公園の名前)を先頭に
         body.append(f'<p class="lead">{say(t["conclusion"].format(dates=dtxt, names=t["conclusion_sep"].join(c["name"] for c in plist[: _v(policy["conclusion_max"])])))}</p>')
     if facts.get("origin"):
         body.append(f'<p class="meta">{say(t["origin"].format(origin=facts["origin"]))}</p>')
@@ -120,7 +159,8 @@ def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(
     old_years = _v(policy["old_record_years"])
     rare_max = _v(policy["rare_max_count"])
     rare_lift = _v(policy["rare_max_lift"])
-    avoid = []
+    avoid = list(ans["avoid"]) if ans else []
+    recent_names = {b["name"] for c in plist for b in c["park_birds"] if b.get("kind") == "recent"}      # 今季の記録がある鳥は、どの公園でも『記録が少ない鳥』にしない
     for i, c in enumerate(plist):
         head = f"{CIRCLED[i] if i < len(CIRCLED) else str(i + 1) + '.'} {c['name']}" + (f"({c['city']})" if c.get("city") else "")
         body.append(f"<section><h2>{say(head)}</h2>")
@@ -149,7 +189,7 @@ def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(
             body.append('<ul class="park-facts">' + "".join(f"<li>{x}</li>" for x in pf) + "</ul>")
         cards, nophoto, rare = [], [], []
         for b in c["park_birds"]:
-            if b.get("kind") != "recent" and b.get("count") is not None and b["count"] < rare_max and (b.get("lift") is None or b["lift"] < rare_lift):     # まれな種（記録が少なく、この時期らしくもない）はおすすめの鳥に入れない
+            if b.get("kind") != "recent" and b["name"] not in recent_names and b.get("count") is not None and b["count"] < rare_max and (b.get("lift") is None or b["lift"] < rare_lift):     # まれな種（記録が少なく、この時期らしくもない）はおすすめの鳥に入れない
                 rare.append(b["name"])
                 continue
             got = photo_for(b)
@@ -178,6 +218,8 @@ def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(
         body.append("</section>")
     if avoid:
         body.append(f'<h2>{say(t["avoid_heading"])}</h2><ul class="park-facts">' + "".join(f"<li>{say(m)}</li>" for m in avoid) + "</ul>")
+    if ans and ans["confidence"]:
+        body.append(f'<h2>{say(t["confidence_heading"])}</h2><ul class="park-facts">' + "".join(f"<li>{say(m)}</li>" for m in ans["confidence"]) + "</ul>")
     if care:
         body.append(f'<h2>{say(t["care_heading"])}</h2><ul class="park-facts">' + "".join(f"<li>{say(m)}</li>" for m in care) + "</ul>")
     body.append(f'<p class="note">{say(t["footer"])}</p>')

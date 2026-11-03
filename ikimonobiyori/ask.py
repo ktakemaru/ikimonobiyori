@@ -391,7 +391,7 @@ class Flow:
         return out
 
     # 3c. 写真つきの公園ページ(段階38)
-    def page(self, gazetteer=()):
+    def page(self, gazetteer=(), answer_path=None):
         from . import guide, guide_photos, park_page
         from . import profiles as P
         facts_doc = self._load("facts.json", None)
@@ -407,8 +407,10 @@ class Flow:
                 return None
             return guide_photos.load_photo(tid, self.env) if self.env else guide_photos.load_photo(tid)
         care = P.load_profiles()["birds"]["care"]["manners"]
+        ap = Path(answer_path) if answer_path else next((self.workdir / n for n in ("final.txt", "answer.txt") if (self.workdir / n).is_file()), None)
+        answer = ap.read_text(encoding="utf-8") if ap and ap.is_file() else None             # 答えの結論と順位をページの先頭に使う
         html_text, lines, shown = park_page.build(facts_doc, policy=self.policy["park_page"], photo_for=photo_for, author_re=gp["html"]["author_re"],
-                                                  commons_source_id=gp["commons"]["source_id"], now=self.now, care=care)
+                                                  commons_source_id=gp["commons"]["source_id"], now=self.now, care=care, answer=answer)
         gaz = sorted(set(place_names()) | set(gazetteer))
         chk = V.page_check(lines, facts_doc, gazetteer=gaz)
         d0 = (facts_doc.get("dates") or [self.now.date().isoformat()])[0]
@@ -491,6 +493,7 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("page", help="公園ごとに見られる鳥の写真つきページ(段階38)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
+    p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("verify")
     p.add_argument("--out-dir")
     p.add_argument("--text", required=True)
@@ -543,7 +546,7 @@ def main(argv=None, http_get=None):
             _out(flow.photos())
             return 0
         if a.step == "page":
-            doc = flow.page()
+            doc = flow.page(answer_path=a.answer)
             for line in doc["errors"]:
                 print(line, file=sys.stderr)
             print(doc["line"])
