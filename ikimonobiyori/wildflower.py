@@ -54,8 +54,21 @@ def month_active(bloom, month, tens=None):
     return month in span
 
 
+def effective_src(row, hana=None):
+    """行の出どころ。地点を指定した行で、そのすべての地点が花の百名山（sites.yaml の hana_hyakumeizan）なら、「花の百名山に選定」を独立した出どころ 1 件として足す
+    （山名の選定の事実。単独では定評にならない: 行には必ず別の出どころが 1 件以上ある）。"""
+    src = list(row["src"])
+    key = _pol()["hana_source"]
+    sites = row.get("sites")
+    if sites and key not in src:
+        hana = sites_by_id() if hana is None else hana
+        if all(hana.get(s, {}).get("hana_hyakumeizan") for s in sites):
+            src.append(key)
+    return src
+
+
 def independent_publishers(row, sources):
-    return sorted({sources[s]["publisher"] for s in row["src"]})
+    return sorted({sources[s]["publisher"] for s in effective_src(row)})
 
 
 def grade(row, sources):
@@ -101,7 +114,7 @@ def _flower(row, facts, with_photo=True):
         "tip": sp.get("tip"), "caution": sp.get("caution"), "protected": bool(sp.get("protected")),
         "grade": grade(row, src), "grade_label": t["established"] if grade(row, src) == "established" else t["tentative"],
         "source_count": len(independent_publishers(row, src)),
-        "sources": [{"url": src[s]["url"], "publisher": src[s]["publisher"], "class": src[s]["class"], "read_on": src[s]["read_on"]} for s in row["src"]],
+        "sources": [{"url": src[s]["url"], "publisher": src[s]["publisher"], "class": src[s]["class"], "read_on": src[s]["read_on"]} for s in effective_src(row)],
         "photo": has, "note": row.get("note"),
     }
 
@@ -149,12 +162,15 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     meta = data["areas"][area]
     out = {"schema": SCHEMA_OUT, "site": site_info, "area": area, "month": month, "status": "ok", "flowers": [], "upcoming": [],
            "season_note": t["season_note"], "caveats": [t["care"], t["weather"]]}
-    if meta["status"] != "ready":
+    partial = bool(site_info and site_info["id"] in (meta.get("partial_sites") or []))     # 山域全体は準備中でも、一部の地点だけ花暦がある
+    if meta["status"] != "ready" and not partial:
         out["status"] = "preparing"
         out["text"] = t["preparing"]
         out["caveats"] = [t["weather"]]
         return out
-    rows = [r for r in data["rows"] if r["area"] == area]
+    rows = [r for r in data["rows"] if r["area"] == area and (not site_info or not r.get("sites") or site_info["id"] in r["sites"])]
+    if partial:
+        out["caveats"].append(t["partial_note"])
     nxt = (month + _v(p["upcoming_months"]) - 1) % 12 + 1
 
     def keep(r):

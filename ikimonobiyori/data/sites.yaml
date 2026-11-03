@@ -73,6 +73,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m008
+  hana_hyakumeizan: true
 - id: m009
   name: 宝剣岳
   lat: 35.7814
@@ -137,6 +138,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m016
+  hana_hyakumeizan: true
 - id: m017
   name: 鉄砲木ノ頭(明神山)
   lat: 35.4111
@@ -225,6 +227,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m027
+  hana_hyakumeizan: true
 - id: m028
   name: 雲取山
   lat: 35.8547
@@ -233,6 +236,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m028
+  hana_hyakumeizan: true
 - id: m029
   name: 高尾山
   lat: 35.6253
@@ -241,6 +245,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m029
+  hana_hyakumeizan: true
 - id: m030
   name: 陣馬山
   lat: 35.6522
@@ -257,6 +262,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m031
+  hana_hyakumeizan: true
 - id: m032
   name: 棒ノ折山(棒ノ嶺)
   lat: 35.85861
@@ -289,6 +295,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m035
+  hana_hyakumeizan: true
 - id: m036
   name: 燕岳
   lat: 36.4066
@@ -305,6 +312,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m037
+  hana_hyakumeizan: true
 - id: m038
   name: 常念岳
   lat: 36.3308
@@ -329,6 +337,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m040
+  hana_hyakumeizan: true
 - id: m041
   name: 乗鞍岳(剣ヶ峰)
   lat: 36.1061
@@ -353,6 +362,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m043
+  hana_hyakumeizan: true
 - id: m044
   name: 北横岳
   lat: 36.0336
@@ -385,6 +395,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m047
+  hana_hyakumeizan: true
 - id: m048
   name: 入笠山
   lat: 35.8964
@@ -409,6 +420,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m050
+  hana_hyakumeizan: true
 - id: m051
   name: 瑞牆山
   lat: 35.8797
@@ -425,6 +437,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m052
+  hana_hyakumeizan: true
 - id: m053
   name: 榛名山(掃部ヶ岳)
   lat: 36.4711
@@ -449,6 +462,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m055
+  hana_hyakumeizan: true
 - id: m056
   name: 日光白根山
   lat: 36.7983
@@ -481,6 +495,7 @@ sites:
   region: 関東甲信
   kind: mountain
   site_ref: yamabiyori:m059
+  hana_hyakumeizan: true
 - id: m060
   name: 男体山
   lat: 36.7619
@@ -521,6 +536,7 @@ sites:
   region: 伊豆
   kind: mountain
   site_ref: yamabiyori:m064
+  hana_hyakumeizan: true
 - id: m065
   name: 立山(雄山)
   lat: 36.5758
@@ -529,6 +545,7 @@ sites:
   region: 北陸信越
   kind: mountain
   site_ref: yamabiyori:m065
+  hana_hyakumeizan: true
 - id: m066
   name: 白馬岳
   lat: 36.7583
@@ -537,6 +554,7 @@ sites:
   region: 北陸信越
   kind: mountain
   site_ref: yamabiyori:m066
+  hana_hyakumeizan: true
 - id: m067
   name: 白山(御前峰)
   lat: 36.1547
@@ -545,6 +563,7 @@ sites:
   region: 北陸信越
   kind: mountain
   site_ref: yamabiyori:m067
+  hana_hyakumeizan: true
 - id: m068
   name: 妙高山
   lat: 36.8886
@@ -561,6 +580,7 @@ sites:
   region: 北陸信越
   kind: mountain
   site_ref: yamabiyori:m069
+  hana_hyakumeizan: true
 - id: m070
   name: 苗場山
   lat: 36.8458
@@ -569,6 +589,7 @@ sites:
   region: 北陸信越
   kind: mountain
   site_ref: yamabiyori:m070
+  hana_hyakumeizan: true
 - id: m071
   name: 那須岳(茶臼岳)
   lat: 37.1225
@@ -593,6 +614,7 @@ sites:
   region: 東北南部
   kind: mountain
   site_ref: yamabiyori:m073
+  hana_hyakumeizan: true
 - id: m074
   name: 西吾妻山
   lat: 37.7382

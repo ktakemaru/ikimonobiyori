@@ -1406,6 +1406,9 @@ def main(argv=None, http_get=None, http_bytes=None):
     pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
     pg.add_argument("--from", dest="origin", help="出発地(横浜・東京。省略すると横浜)")
     pg.add_argument("--date", help="対象の日(YYYY-MM-DD。省略すると今日)")
+    pg.add_argument("--area", help="野草・高山植物のページ（--theme 野草 など）の山域名")
+    pg.add_argument("--site", help="野草・高山植物のページの地点ID（mNNN）")
+    pg.add_argument("--month", type=int, help="野草・高山植物のページの月")
     pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/)")
     pg.add_argument("--no-ensure-photos", dest="ensure_photos", action="store_false", help="写真を取りに行かず、キャッシュだけで作る(既定は、キャッシュにない種だけ確認なしで補う。段階39)")
     pg.add_argument("--open", action="store_true", help="ローカルのブラウザでそのファイルを開く(新しい通信はしない)")
@@ -1497,6 +1500,9 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "places-fetch":
         return _places_fetch(a, http_get)
     if a.cmd == "page":
+        if a.area or a.site or a.theme in (load_policy().get("wildflower") or {}).get("words", []):     # 段階41: 野草・高山植物も写真つきページ
+            from . import wildflower_page
+            return wildflower_page.page_cmd(a)
         from . import guide_page
         return guide_page.page_cmd(a)
     if a.cmd == "wildflower":
