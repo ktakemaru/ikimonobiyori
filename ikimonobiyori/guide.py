@@ -1409,6 +1409,7 @@ def main(argv=None, http_get=None, http_bytes=None):
     pg.add_argument("--area", help="野草・高山植物のページ（--theme 野草 など）の山域名")
     pg.add_argument("--site", help="野草・高山植物のページの地点ID（mNNN）")
     pg.add_argument("--month", type=int, help="野草・高山植物のページの月")
+    pg.add_argument("--alpine", action="store_true", help="質問に「高山植物」とあるとき: 高山・亜高山・高原の花を主役にし、山麓〜山地の野草は写真なしの短い一覧にする（段階44）")
     pg.add_argument("--zukan", action="store_true", help="野草・高山植物を図鑑の形で全部見せる（季節ごとにページを分ける）")
     pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/)")
     pg.add_argument("--no-ensure-photos", dest="ensure_photos", action="store_false", help="写真を取りに行かず、キャッシュだけで作る(既定は、キャッシュにない種だけ確認なしで補う。段階39)")

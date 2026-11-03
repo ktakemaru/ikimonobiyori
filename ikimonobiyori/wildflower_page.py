@@ -142,27 +142,61 @@ def build_overview(r, *, policy, now, photo_for):
         return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span>{links(e)}</li>'
     kind = r.get("kind")
     if kind == "mountain":
-        title, sections, question = w["title_mountain"].format(place=r["area"]), (("mountain", w["heading_mountain"]),), w["next_question"]
+        title, question = w["title_mountain"].format(place=r["area"]), w["next_question"]
     elif kind == "zukan":
-        title, sections, question = r["title"], (("mountain", r["heading"]),), w["next_question_zukan"]
+        title, question = r["title"], w["next_question_zukan"]
+    elif r.get("focus") == "alpine":
+        title, question = w["title_alpine"], w["next_question_overview"]
     else:
-        title, sections, question = w["title_overview"], (("alpine", w["heading_alpine"]), ("lowland", w["heading_lowland"])), w["next_question_overview"]
+        title, question = w["title_overview"], w["next_question_overview"]
     body = [f'<h1>{esc(title)}</h1>', f'<p class="lead">{esc(r["conclusion"])}</p>', f'<p class="meta">{esc(guide_page.created_text(now, h))}</p>']
     if r.get("nav"):
         body.append(r["nav"])
-    for section, heading in sections:
+    species = r["species"]
+    if kind in ("mountain", "zukan"):
+        groups = [(r["heading"] if kind == "zukan" else w["heading_mountain"], list(species), "cards")]
+    else:
+        # 段階44: 質問が「高山植物」のとき（focus=alpine）は、高山・亜高山・高原の花に写真の枠を先に割り当て、山麓〜山地の野草は写真なしの短い一覧にする。
+        # 「いま」の月に見られる花は、その月の花を先に写真つきで出す（山麓でも写真つきカード）。同じ種は 1 回だけ載せる。
+        focus_alpine = r.get("focus") == "alpine"
+        order = {"alpine": 0, "subalpine": 1, "lowland": 2}
+        rank = lambda e: (order[e["tier"]], -e["flower"]["source_count"], e["name"])
+        now_list = sorted((e for e in species if e["active_now"] and not e["protected"]), key=rank)
+        taken = {id(e) for e in now_list}
+        rest = [e for e in species if id(e) not in taken]
+        tiers = {t: [e for e in rest if e["tier"] == t] for t in order}
+        groups = []
+        if now_list:
+            groups.append((w["heading_now_month"].format(month=r["month"]), now_list, "cards"))
+        groups.append((w["heading_alpine"], tiers["alpine"], "cards"))
+        groups.append((w["heading_subalpine"], tiers["subalpine"], "cards"))
+        groups.append((w["heading_lowland_list"] if focus_alpine else w["heading_lowland"], tiers["lowland"], "list" if focus_alpine else "cards"))
+        # 写真の枠の割り当て順: いま見られる高山・亜高山 → 高山 → 亜高山 → いま見られる山麓 → (山麓の残りは focus でなければ手元にあるものだけ)
+        prio = ([e for e in now_list if e["tier"] != "lowland"] + tiers["alpine"] + tiers["subalpine"] + [e for e in now_list if e["tier"] == "lowland"]
+                + ([] if focus_alpine else tiers["lowland"]))
+        for e in prio:
+            gotten = photo(e)
+            if gotten:
+                pool.tag(gotten[0], gotten[1], e["name"])      # 枠を先に確定する（カードの並びとは別）
+    done = set()
+    for heading, items, mode in groups:
+        if not items:
+            continue
         cards, bare = [], []
-        for e in (x for x in r["species"] if section == "mountain" or x["section"] == section):
-            got = photo(e)
+        for e in items:
+            got = photo(e) if (mode == "cards" and e["name"] not in done) else None
+            done.add(e["name"])
             (cards.append(card(e, got)) if got else bare.append(e))
         if cards:
             body.append(f'<h2>{esc(heading)}</h2><ul class="grid">{"".join(cards)}</ul>')
-        if bare and section == "alpine":
-            body.append(f'<h2>{esc(w["heading_bare"])}</h2><ul class="grid">' + "".join(f'<li class="card">{body_of(e)}{links(e)}</li>' for e in bare) + "</ul>")
-        elif bare:
+        high = [e for e in bare if kind not in ("mountain", "zukan") and e["tier"] != "lowland" and mode == "cards"]
+        low = [e for e in bare if e not in high]
+        if high:
+            body.append(f'<h2>{esc(w["heading_bare"])}</h2><ul class="grid">' + "".join(f'<li class="card">{body_of(e)}{links(e)}</li>' for e in high) + "</ul>")
+        if low:
             rows = "".join(f'<li>{esc(e["name"])}（{esc(w["bare_sep"].join(w["place_bloom"].format(place=pl["place"], text=pl["bloom_text"]) for pl in e["places"]))}）'
-                           + (esc(w["protected_line"]) if e["protected"] else "") + "</li>" for e in bare)
-            body.append(f'<h2>{esc(w["heading_lowland_bare"])}</h2><ul class="note">{rows}</ul>')
+                           + (esc(w["protected_line"]) if e["protected"] else "") + "</li>" for e in low)
+            body.append(f'<h2>{esc(heading if mode == "list" else w["heading_lowland_bare"])}</h2><ul class="note">{rows}</ul>')
     body.append(f'<h2>{esc(w["heading_notes"])}</h2><ul>{"".join(f"<li>{esc(c)}</li>" for c in r["caveats"] + [r["season_note"]])}</ul>')
     shown = {n: v for n, v in used.items() if v}
     body.append(f'<p class="note">{esc(h["photo_note"])}</p>')
@@ -258,9 +292,10 @@ def build_zukan(r, *, policy, now, photo_for):
     return out
 
 
-def overview_photo_names(r):
-    """写真を補う種: 高山の花と、いまの月に見られる山麓の野草（保護が必要な種を除く）。ほかは手元にあるものだけ使う。"""
-    return [e["name"] for e in r["species"] if not e["protected"] and (e["section"] == "alpine" or e["active_now"])]
+def overview_photo_names(r, focus=None):
+    """写真を補う種（保護が必要な種を除く）: 高山・亜高山・高原の花と、いまの月に見られる花。質問が高山植物のとき（focus=alpine）は、
+    それ以外の山麓〜山地の野草には補わない。focus でないときも、手元にある写真だけは使う。"""
+    return [e["name"] for e in r["species"] if not e["protected"] and (e["tier"] != "lowland" or e["active_now"])]
 
 
 def self_check(html_text):
@@ -304,6 +339,8 @@ def page_cmd(a, now=None):
             r = wildflower.overview(month=a.month, date_=a.date, today=on)
         elif mode == "now":
             r = wildflower.overview(month=a.month, date_=a.date, today=on)
+            if getattr(a, "alpine", False):                # 質問に「高山植物」とあるとき: 高山・亜高山・高原の花を主役にする（段階44）
+                r["focus"] = "alpine"
         elif mode == "mountain":
             r = wildflower.overview(today=on, area=a.area, site=a.site)
         else:

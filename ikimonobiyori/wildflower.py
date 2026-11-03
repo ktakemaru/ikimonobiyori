@@ -60,7 +60,7 @@ def effective_src(row, hana=None):
     src = list(row["src"])
     key = _pol()["hana_source"]
     sites = row.get("sites")
-    if sites and key not in src:
+    if sites and key not in src and not row.get("no_hana"):        # no_hana: 紹介サイトなどの 1 件だけの行は、選定の事実で定評に上げない（段階44）
         hana = sites_by_id() if hana is None else hana
         if all(hana.get(s, {}).get("hana_hyakumeizan") for s in sites):
             src.append(key)
@@ -272,8 +272,21 @@ def overview(month=None, date_=None, today=None, area=None, site=None):
         pool_rows = [r for r in data["rows"] if r.get("sites") or r["area"] in ready]
     floor = _v(p["alpine_min_elevation_m"])
 
+    sub_floor = _v(p["subalpine_min_elevation_m"])
+
+    def row_elev(r):                                       # 行の場所の標高: 地点つきはいちばん低い地点、地点なしは行の place_elev_m（出どころに標高があるときだけ）
+        if r.get("sites"):
+            return min(sites[x]["elevation_m"] for x in r["sites"])
+        return r.get("place_elev_m")
+
     def is_alpine(r):                                      # 高山: 地点つきの行で、すべての地点が森林限界の目安の標高以上
         return bool(r.get("sites")) and all(sites[x]["elevation_m"] >= floor for x in r["sites"])
+
+    def tier_of(r):                                        # alpine（2500m以上）/ subalpine（1500m以上の亜高山・高原）/ lowland
+        if is_alpine(r):
+            return "alpine"
+        e = row_elev(r)
+        return "subalpine" if e is not None and e >= sub_floor else "lowland"
     alpine_rows = [r for r in pool_rows if is_alpine(r)]
     low_rows = [r for r in pool_rows if not is_alpine(r)]
     place_names = []
@@ -288,13 +301,16 @@ def overview(month=None, date_=None, today=None, area=None, site=None):
         a = f"{m1}月" + (tens_name[t1] if prec else "")
         b = f"{m2}月" + (tens_name[t2] if prec else "")
         return a if a == b else f"{a}〜{b}"
+    tier_rank = {"alpine": 0, "subalpine": 1, "lowland": 2}
     entries = {}
     for section, rows in (("alpine", alpine_rows), ("lowland", low_rows)):
         for r in rows:
             sp = facts["species"].get(r["name"]) or {}
             label = "・".join(sites[x]["name"] for x in r["sites"]) if r.get("sites") else r["area"]
             f = _flower(r, facts, False)
-            e = entries.setdefault((section, r["name"]), {"name": r["name"], "section": section, "places": [], "flower": f, "protected": bool(sp.get("protected")), "_rows": []})
+            e = entries.setdefault((section, r["name"]), {"name": r["name"], "section": section, "tier": tier_of(r), "places": [], "flower": f, "protected": bool(sp.get("protected")), "_rows": []})
+            if tier_rank[tier_of(r)] < tier_rank[e["tier"]]:        # 同じ種が複数の場所にあるときは、いちばん高い場所の区分に置く
+                e["tier"] = tier_of(r)
             e["places"].append({"place": label, "bloom_text": bloom_text(r), "bloom": r["bloom"], "elevation_m": r.get("elev"), "note": r.get("note"),
                                 "active_now": month_active(r["bloom"], month, tens)})
             e["_rows"].append(r)
