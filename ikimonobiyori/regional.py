@@ -501,6 +501,10 @@ def compose(*, region, kinds, dates, now, part, nearby_part=None, origin=None, r
         tn = (x["entry"].get("tags") or {}).get("traffic_note")
         if tn:
             notes.append(f"{x['entry']['name']}: {tn}")
+    for x in rec_shown + near_shown:                       # 群生地の踏み荒らし・乱掘の注意（段階44。名所の tags.care_note）
+        cn = (x["entry"].get("tags") or {}).get("care_note")
+        if cn:
+            notes.append(f"{x['entry']['name']}: {cn}")
     for m in (part.get("care_manners") or []):
         notes.append(m)
     if notes:

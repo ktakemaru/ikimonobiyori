@@ -8,6 +8,8 @@ default_subjects: [autumn_leaves, flowers, birds]
 # 答えの冒頭で示す対象の範囲の呼び名(facts の scope_line)
 scope_line: "{labels}のおすすめです(横浜などの出発地から行ける範囲)。"
 default_origin: 横浜
+# 地域の指定がない質問は、都道府県に縛らず登録済みの全範囲（出発地から片道250km前後。利用者の決定 2026-11-04）
+default_region: 全範囲
 
 # 書き込み先(IKIMONOBIYORI_DATA_DIR の下)。--out-dir を省いた prepare は、この下に日時のフォルダを作る
 work_dir: ask

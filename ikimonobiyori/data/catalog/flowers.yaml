@@ -1050,3 +1050,182 @@ entries:
       title: 生田緑地ばら苑
       checked_on: '2026-10-31'
     note: 『今回の一般開放をもって、当面の間、閉苑となります。』『ばら苑の再整備を予定』(2025年10月の公開。2026年の再開は確認できず)。公式で再開を確認できるまで推薦しない
+  - id: hana-0035
+    name: 万葉自然公園 かたくりの里（三毳山）
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 栃木県
+      area: 佐野
+      city: 佐野市
+      terrain: [mountain]
+      flower_kinds: [カタクリ]
+      care_note: 群生地では、花を採らない（乱掘は群生地が減る原因になる）。柵や園路の外に出て踏み荒らさない。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。出どころは sources に書いた紹介サイトなど・公式のページ。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://www.tochinavi.net/spot/home/?id=3375", title: "栃ナビ! 佐野市万葉自然公園 かたくりの里（紹介サイト。所在地 佐野市町谷町112-1・駐車場100台・見頃3月中旬より4月上旬）", checked_on: '2026-11-04'}
+      - {url: "https://summer.walkerplus.com/odekake/detail/ar0309s77294/", title: "ウォーカープラス 万葉自然公園 かたくりの里（紹介サイト。毎年3月から4月、約150万株）", checked_on: '2026-11-04'}
+      - {url: "https://rurubu.jp/andmore/spot/20001254", title: "るるぶ&more. かたくりの花まつり（佐野スプリングフラワーフェスティバル2026。2026年は3/11〜3/31、実行委員会（佐野市観光推進課）。料金無料・駐車場普通車500円）", checked_on: '2026-11-04'}
+    note: "公式（佐野市・佐野市観光協会）のページは読めなかったので、出どころは紹介サイト3件（定評。ただし公式ではない）。入園は無料、駐車場は有料（2026年は普通車500円）と紹介サイトにある。花まつりの期間は年ごとに変わる。座標は未確認"
+    flower_windows:
+      - kind: カタクリ
+        start: '03-11'
+        end: '04-10'
+        source_url: https://www.tochinavi.net/spot/home/?id=3375
+        source_host: www.tochinavi.net
+        source_class: secondary
+        source_year: null
+        note: "栃ナビ!のスポット情報に「見頃は3月中旬より4月上旬」とある（紹介サイト。年の記載なし）。ウォーカープラスは「毎年3月から4月」。年により前後する"
+  - id: hana-0036
+    name: 霧降高原 キスゲ平園地
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 栃木県
+      area: 日光
+      city: 日光市
+      terrain: [highland]
+      flower_kinds: [ニッコウキスゲ]
+      care_note: 群生地では、花を採らない。ロープや柵の内側に入って踏み荒らさない（植物は踏みつけに弱い）。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。出どころは sources に書いた紹介サイトなど・公式のページ。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://www.nikko-kankou.org/spot/595", title: "日光市観光協会（日光旅ナビ）キスゲ平園地（所在地 日光市所野1531。ヤマビルへの注意の記載あり）", checked_on: '2026-11-04'}
+      - {url: "https://www.env.go.jp/guide/info/ecojin/park/20210616.html", title: "環境省 find国立公園 日光国立公園（2021年6月16日。霧降高原のニッコウキスゲ、キスゲ平園地）", checked_on: '2026-11-04'}
+    note: "出どころ2件（定評）: 日光市観光協会と環境省。見ごろは年によって前後する。座標は未確認"
+    flower_windows:
+      - kind: ニッコウキスゲ
+        start: '06-11'
+        end: '07-20'
+        source_url: https://www.nikko-kankou.org/spot/595
+        source_host: www.nikko-kankou.org
+        source_class: official
+        source_year: null
+        note: "日光市観光協会（日光旅ナビ）に「６月中旬から７月中旬には、このキスゲ平を黄色に染め上げるように咲きます」とある。環境省の資料（2021年）は「6〜7月」"
+  - id: hana-0037
+    name: 霧ヶ峰（車山肩・富士見台・八島ヶ原湿原）
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 長野県
+      area: 霧ヶ峰
+      city: 諏訪市・下諏訪町
+      terrain: [highland, wetland]
+      flower_kinds: [ニッコウキスゲ]
+      care_note: 群生地では、花を採らない。ロープや柵の内側に入って踏み荒らさない（植物は踏みつけに弱い）。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。出どころは sources に書いた紹介サイトなど・公式のページ。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://www.kirigamine-vc.jp/nature/nikko-kisuge", title: "霧ヶ峰自然保護センター 霧ヶ峰のニッコウキスゲ（車山肩・富士見台・八島ヶ原湿原・センター前の園地に鹿防柵。柵の内側に入る場所は限られる）", checked_on: '2026-11-04'}
+      - {url: "https://www.kirigamine-vc.jp/blog/6948", title: "霧ヶ峰自然保護センター ニッコウキスゲ開花状況【2026年7月12日】（八島ヶ原湿原・富士見台は見頃、車山肩は4割程度）", checked_on: '2026-11-04'}
+      - {url: "https://summer.kurumayama-skypark.com/blooming-forecast2", title: "車山高原SKYPARK RESORT（施設運営者）開花予想", checked_on: '2026-11-04'}
+    note: "出どころ3件（定評）: 霧ヶ峰自然保護センター（2ページ）と車山高原SKYPARK RESORT。ロープの内側に入らない、三脚の脚を草原に入れない（センターの案内）。7・8月の土日は車山肩・八島湿原の駐車場が混雑。座標は未確認"
+    flower_windows:
+      - kind: ニッコウキスゲ
+        start: '07-11'
+        end: '07-31'
+        source_url: https://www.kirigamine-vc.jp/nature/nikko-kisuge
+        source_host: www.kirigamine-vc.jp
+        source_class: official
+        source_year: 2026
+        note: "霧ヶ峰自然保護センター（長野県設置・諏訪観光協会が指定管理）に「見ごろは例年７月中旬になることが多いです」とある。車山高原SKYPARK RESORTは7月中旬〜下旬"
+  - id: hana-0038
+    name: 尾瀬（大江湿原）
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 福島県
+      area: 尾瀬
+      city: 檜枝岐村
+      terrain: [highland, wetland]
+      flower_kinds: [ニッコウキスゲ]
+      care_note: 群生地では、花を採らない。ロープや柵の内側に入って踏み荒らさない（植物は踏みつけに弱い）。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。出どころは sources に書いた紹介サイトなど・公式のページ。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://oze-fnd.or.jp/oza/a-sp/", title: "尾瀬保護財団 尾瀬の見どころ（大江湿原は尾瀬沼周辺で一番大きな湿原。尾瀬沼は標高1,665m）", checked_on: '2026-11-04'}
+    note: "出どころ1件（仮）: 尾瀬保護財団。大江湿原の所在は福島県側（尾瀬沼の周辺）。尾瀬ヶ原のニッコウキスゲの記載は読めなかった。座標は未確認"
+    flower_windows:
+      - kind: ニッコウキスゲ
+        start: '07-15'
+        end: '07-31'
+        source_url: https://oze-fnd.or.jp/oza/a-sp/
+        source_host: oze-fnd.or.jp
+        source_class: official
+        source_year: null
+        note: "尾瀬保護財団に「例年、梅雨が明けるか明けないかぐらいの頃、国民の祝日「海の日」前後が見頃」とある。期間は海の日（7月第3月曜）前後を7月中旬〜下旬と置いた（出どころは日付を書いていない）"
+  - id: hana-0039
+    name: 城山かたくりの里
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 神奈川県
+      area: 相模原
+      city: 相模原市緑区
+      terrain: [mountain]
+      flower_kinds: [カタクリ]
+      care_note: 群生地では、花を採らない（乱掘は群生地が減る原因になる）。柵や園路の外に出て踏み荒らさない。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://www.minnacamera.com/spots/1048", title: "みんなのカメラ 城山かたくりの里（撮影スポットの紹介サイト。所在地 相模原市緑区川尻4307・開園期間 3月第2土曜〜4月第3日曜・駐車場無料・三脚や機材、足を柵内へ入れない）", checked_on: '2026-11-04'}
+    note: "公式（相模原市など）のページは読めなかったので、出どころは紹介サイト1件（仮。公式ではない）。私有林を春の約6週間だけ公開する。入園料は大人500円とも700円とも書かれていて食い違うため、現地で確認する。ペットは入園できない"
+    flower_windows:
+      - kind: カタクリ
+        start: '03-11'
+        end: '03-31'
+        source_url: https://www.minnacamera.com/spots/1048
+        source_host: www.minnacamera.com
+        source_class: secondary
+        source_year: null
+        note: "みんなのカメラに「3月中旬〜下旬は約30万株の日本カタクリ。見頃は年により変動」とある（紹介サイト）"
+  - id: hana-0040
+    name: 弟冨士カタクリ園・大塚カタクリの里
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-04'
+    tags:
+      prefecture: 埼玉県
+      area: 秩父
+      city: 秩父市
+      terrain: [mountain]
+      flower_kinds: [カタクリ]
+      care_note: 群生地では、花を採らない（乱掘は群生地が減る原因になる）。柵や園路の外に出て踏み荒らさない。
+      source: Claude Code が付けた(段階44。利用者の指示 2026-11-04。座標は公式の地図で確認できていないので point を入れない)
+    sources:
+      - {url: "https://www.mapple.net/station/283963/spot/", title: "まっぷるウェブ 武州日野駅の観光スポット（紹介サイト。所在地 秩父市荒川日野・秩父鉄道武州日野駅からすぐ・見学自由）", checked_on: '2026-11-04'}
+    note: "公式（秩父市・秩父観光協会）のページは見つからなかったので、出どころは紹介サイト1件（仮。公式ではない）。2か所を1件にまとめた掲載。入場料の記載はない"
+    flower_windows:
+      - kind: カタクリ
+        start: '03-21'
+        end: '04-20'
+        source_url: https://www.mapple.net/station/283963/spot/
+        source_host: www.mapple.net
+        source_class: secondary
+        source_year: 2026
+        note: "まっぷるウェブに「見頃は3月下旬～4月中旬」とある（紹介サイト）"

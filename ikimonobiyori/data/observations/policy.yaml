@@ -136,6 +136,9 @@ avoid_reasons:
 min_candidates: {value: 3, source: "指示書 R2(地域の候補を3件以上)", provisional: false}
 # 地域を指定しない質問の出発地 → 主に見る都道府県
 origin_home: {横浜: 神奈川県, 東京: 東京都}
+# 地域を指定しない質問（ask の既定。利用者の決定 2026-11-04）: 都道府県に縛らず、出発地から片道の範囲内（catalog の range_limit）の登録済みの名所すべて
+all_range_words: [全範囲, 登録済みの全範囲]
+all_range_name: 登録済みの全範囲（出発地から片道250km前後）
 
 # 答えに出さない内部用語(facts の文の自己検査)
 forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary, official]

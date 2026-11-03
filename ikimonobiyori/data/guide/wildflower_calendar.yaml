@@ -827,8 +827,9 @@ rows:
   area_only: true
   name: ニッコウキスゲ
   bloom: 7下
+  place_elev_m: 1665
   src: [ozf]
-  note: 大江湿原。例年、海の日前後が見ごろ
+  note: 大江湿原。例年、海の日前後が見ごろ（標高は尾瀬沼のもの。尾瀬保護財団に、大江湿原は尾瀬沼周辺で一番大きな湿原とある）
 - area: 尾瀬
   sites: [m076]
   name: ハクサンコザクラ
@@ -841,3 +842,66 @@ rows:
   bloom: 7-8
   src: [ykt]
   note: 富士山五合目〜御中道周辺（原文は「7月〜8月頃」）
+- area: 北アルプス
+  sites: [m065]
+  name: チングルマ
+  bloom: 6-8
+  elev: [2400, null]
+  src: [arf]
+  note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
+- area: 北アルプス
+  sites: [m065]
+  name: ハクサンイチゲ
+  bloom: 7-8
+  elev: [2400, null]
+  src: [arf]
+  note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
+- area: 北アルプス
+  sites: [m065]
+  name: クロユリ
+  bloom: 6-7
+  elev: [2400, null]
+  src: [arf]
+  note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
+- area: 北アルプス
+  sites: [m065]
+  name: イワカガミ
+  bloom: 6-8
+  elev: [2400, null]
+  src: [arf]
+  note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
+- area: 北アルプス
+  sites: [m065]
+  name: タテヤマリンドウ
+  bloom: 6-7
+  elev: [2400, null]
+  src: [arf]
+  note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
+- area: 北アルプス
+  sites: [m066]
+  name: ツクモグサ
+  bloom: 6下-7上
+  src: [ykn]
+  note: 山頂付近の稜線（山と溪谷オンライン 2025年の記事）。紹介サイトなど（公式ではない）の記載。仮
+  no_hana: true
+- area: 北アルプス
+  sites: [m066]
+  name: ウルップソウ
+  bloom: 7上-7下
+  src: [ykn]
+  note: 山と溪谷オンライン 2025年の記事。紹介サイトなど（公式ではない）の記載。仮
+  no_hana: true
+- area: 南アルプス
+  sites: [m046]
+  name: ハクサンイチゲ
+  bloom: 7
+  src: [yh2]
+  note: 北岳のお花畑のベストシーズン（7月）に咲く花として紹介。紹介サイトなど（公式ではない）の記載。仮
+  no_hana: true
+- area: 南アルプス
+  sites: [m046]
+  name: ミヤマキンバイ
+  bloom: 7
+  src: [yh2]
+  note: 北岳のお花畑のベストシーズン（7月）に咲く花として紹介。紹介サイトなど（公式ではない）の記載。仮
+  no_hana: true

@@ -421,6 +421,7 @@ wildflower:
   max_names_in_sentence: {value: 5, source: "仮置き(段階40)。コンシェルジュが添える文に並べる花の数", provisional: true}
   site_elevation_floor_margin_m: {value: 0, source: "仮置き(段階40)。地点の標高が、花の標高の下限に届かない花は、その地点の出力に入れない（下限の記載があるときだけ）", provisional: true}
   alpine_min_elevation_m: {value: 2500, source: "仮置き(段階43)。高山の花と山麓〜山地の花を分ける標高の目安。富士登山オフィシャルサイトに森林限界は2,500m付近、国土交通省の観光情報に北岳の森林限界は2,700mとある。高原（霧ヶ峰など）は高山に入れない", provisional: true}
+  subalpine_min_elevation_m: {value: 1500, source: "利用者の指示(2026-11-04): 高山の線(2500m)の下で、1500m以上を「亜高山・高原」として別の見出しにする（霧ヶ峰・尾瀬・八島ヶ原・会津駒ヶ岳など）", provisional: true}
   upcoming_months: {value: 1, source: "仮置き(段階40)。『これから』に出す先の月数", provisional: true}
   elevation_shift_note: "標高が高いほど、花の時期は遅れます。"          # 標高ごとの遅れの数値は、出どころのあるときだけ書く（今は出どころなし）
   words: [野草, 山野草, 高山植物, お花畑, 高山の花, 山の花]          # 話題として登録する語（guide theme が wildflower を指す）
@@ -441,7 +442,11 @@ wildflower:
     protected_line: "保護が必要な種のため、場所が分かる写真は出していません。"
     next_question: "ほかの月や山域でも調べられます。次は、どの山域や月を詳しく知りたいですか？"
     title_overview: "高山植物と山野草の例年の見ごろ"
+    title_alpine: "高山植物（高山・亜高山・高原）の例年の見ごろ"
     heading_alpine: 高山の花（地点で見ごろが違います）
+    heading_subalpine: 亜高山・高原の花（標高1500〜2500mの霧ヶ峰・尾瀬など）
+    heading_now_month: "いま（{month}月）見られる花"
+    heading_lowland_list: "山麓〜山地の野草（名前と時期）"
     heading_lowland: 山麓〜山地の野草（早い順）
     heading_lowland_bare: 写真を出していない野草
     place_bloom: "{place}: {text}"

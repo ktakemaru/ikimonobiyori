@@ -484,6 +484,10 @@ def best_record(rows):
 def resolve(region_query, origin, policy, regions_doc=None):
     """地域の呼び名 → {name, prefectures, areas}。指定がなければ出発地の都道府県。"""
     regions_doc = regions_doc or S.load_regions()
+    if region_query in (policy.get("all_range_words") or []):       # 地域の指定がない質問: 登録済みの全範囲（出発地から片道の範囲内）
+        home = policy["origin_home"].get(origin)
+        return {"name": policy["all_range_name"], "prefectures": [], "areas": [], "resolved": True, "all_range": True,
+                "unknown_distance_prefectures": [home] if home else []}
     if region_query:
         r = S.resolve_region(region_query, regions_doc)
         if r is None:
@@ -494,7 +498,13 @@ def resolve(region_query, origin, policy, regions_doc=None):
     return {"name": pref, "prefectures": [pref] if pref else [], "areas": [], "resolved": bool(pref), "from_origin": True}
 
 
-def in_region(c, region):
+def in_region(c, region, km=None, max_km=None):
+    """地域の中か。全範囲（all_range）は、出発地からの直線距離が範囲の上限以内。距離（座標）が分からない名所は、出発地の県のものだけ入れる
+    （他県の距離不明の名所は、範囲を確かめられないので入れない）。"""
+    if region.get("all_range"):
+        if km is None:
+            return c.get("prefecture") in (region.get("unknown_distance_prefectures") or [])
+        return max_km is not None and km <= max_km
     return c.get("prefecture") in region["prefectures"] or (c.get("area") in region["areas"])
 
 
@@ -506,7 +516,8 @@ def plan(subject, *, region=None, dates, now, origin=None, env=None, policy=None
     cat_pol = catalog_mod.load_policy()
     origin = origin or cat_pol["range_limit"]["default_origin"]
     reg = resolve(region, origin, policy)
-    cands = [c for c in all_candidates(subject, policy, spots_doc, catalogs) if in_region(c, reg)]
+    max_km = cat_pol["range_limit"]["max_km"]
+    cands = [c for c in all_candidates(subject, policy, spots_doc, catalogs) if in_region(c, reg, _distance(c, origin, cat_pol), max_km)]
     recs = read_records(subject, env, policy)
     today = now.date()
     items, fresh = [], []
@@ -1357,7 +1368,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     def sort_key(f):
         return (f["tier"], ev_rank[f["evidence"]], -f["_order"] if f["tier"] == 3 else 0, -f["reference_count"],
                 f["distance_km"] if f["distance_km"] is not None else float("inf"), f["id"])
-    inreg = [f for f in all_f if in_region({"prefecture": f["prefecture"], "area": f["area"]}, reg)]
+    inreg = [f for f in all_f if in_region({"prefecture": f["prefecture"], "area": f["area"]}, reg, f["distance_km"], cat_pol["range_limit"]["max_km"])]
     rec_f = sorted([f for f in inreg if not f["avoid"]], key=sort_key)
     avoid = sorted([f for f in inreg if f["avoid"]], key=lambda f: (f["avoid"], f["id"]))
     nearby = []
