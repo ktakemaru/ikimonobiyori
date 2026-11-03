@@ -7,6 +7,13 @@ sources:
   nbw: {url: 'https://nabewari.net/season', publisher: 鍋割山荘, class: secondary, read_on: '2026-11-03', page_year: null}
   hsk: {url: 'https://hakone-shisseikaen.com/flower_spring/', publisher: 箱根湿生花園, class: official, read_on: '2026-11-03', page_year: null}
   hkt: {url: 'https://www.hakone.or.jp/8336', publisher: 箱根町観光協会, class: official, read_on: '2026-11-03', page_year: null}
+  otm: {url: 'https://www.ohtama.or.jp/blooming.html', publisher: 大多摩観光連盟, class: official, read_on: '2026-11-03', page_year: null}
+  ykk: {url: 'https://www.yamakei-online.com/feature/okutama_siki.php', publisher: 山と溪谷社(奥多摩ナビ), class: secondary, read_on: '2026-11-03', page_year: null}
+  ykg: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=3023', publisher: 山と溪谷社(山と溪谷オンライン), class: secondary, read_on: '2026-11-03', page_year: 2026}
+  ome: {url: 'https://ometsu.net/mount-gozen-2021-04/', publisher: おめ通, class: secondary, read_on: '2026-11-03', page_year: 2021}
+  sks: {url: 'https://tozan.sockstar.jp/archives/1318', publisher: 登山日和, class: secondary, read_on: '2026-11-03', page_year: 2026}
+  okg: {url: 'https://www.omekanko.gr.jp/spot/80601/', publisher: 青梅市観光協会, class: official, read_on: '2026-11-03', page_year: null}
+  kkm: {url: 'https://kukimohuko.exblog.jp/26732427/', publisher: 野の花山の花ウォッチング(個人ブログ), class: secondary, read_on: '2026-11-03', page_year: 2018}
 species:
   キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
   マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
@@ -67,7 +74,7 @@ species:
   フクジュソウ: {}
   ザゼンソウ: {}
   ミズバショウ: {}
-  カタクリ: {}
+  カタクリ: {habitat: 雑木林・ブナ林の林床, caution: 乱掘が心配されている。花は採らず、登山道から出ない。種子から花まで8〜9年かかる}
   リュウキンカ: {}
   シラネアオイ: {}
   サクラソウ: {}
@@ -82,10 +89,18 @@ species:
   ヤマアジサイ: {}
   キキョウ: {}
   カワラナデシコ: {}
-  レンゲショウマ: {}
+  レンゲショウマ: {habitat: 太平洋側の山地の落葉林内（キンポウゲ科の多年草）, tip: 下向きの花。御岳山の斜面に群生する}
   エゾリンドウ: {}
   ワレモコウ: {}
   サクラタデ: {}
   エンシュウハグマ: {}
   ヤマラッキョウ: {}
   ミズトラノオ: {}
+  アカヤシオ: {}
+  ニリンソウ: {}
+  コアジサイ: {}
+  キンバイソウ: {}
+  スミレ類: {habitat: 日当たりの良い林道の法面など, tip: 50種類以上と紹介されている}
+  ツツジ類(石尾根): {}
+  アジサイ類: {}
+  コバイケイソウ: {caution: 有毒。オオバギボウシなど山菜と間違えない}

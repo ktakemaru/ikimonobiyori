@@ -394,3 +394,63 @@ rows:
   bloom: '10'
   src: [hsk]
   note: 園内（植栽・保全）の花期
+- area: 奥多摩
+  name: スミレ類
+  bloom: 3中-6上
+  src: [ykk]
+  note: 奥多摩むかしみち・林道の法面など
+- area: 奥多摩
+  name: ミツバツツジ
+  bloom: 3下-5上
+  src: [otm, ykk]
+  note: 川乗山。山と溪谷社は4月中旬
+- area: 奥多摩
+  name: アカヤシオ
+  bloom: 4下-5上
+  src: [otm]
+  note: 川乗山
+- area: 奥多摩
+  name: カタクリ
+  bloom: 4上-5上
+  src: [otm, ykg, ome, sks]
+  elev: [1000, 1405]
+  note: 御前山・惣岳山・御岳山。標高は御前山の記述。見ごろの書き方は出どころで4月中旬〜5月上旬と幅がある
+- area: 奥多摩
+  name: ニリンソウ
+  bloom: 4-5
+  src: [otm, kkm]
+  note: 大ブナ尾根（奥多摩）・御岳山
+- area: 奥多摩
+  name: シロヤシオ
+  bloom: 5上-5中
+  src: [otm, ykk]
+  note: 御岳山。山と溪谷社は5月上旬、観光連盟は5月中旬
+- area: 奥多摩
+  name: ツツジ類(石尾根)
+  bloom: 6上
+  src: [ykk]
+  note: 七ツ石山付近・石尾根の千本ツツジ
+- area: 奥多摩
+  name: コアジサイ
+  bloom: '6'
+  src: [otm]
+  note: 御岳山・高水山
+- area: 奥多摩
+  name: アジサイ類
+  bloom: 6-7
+  src: [ykk]
+- area: 奥多摩
+  name: コバイケイソウ
+  bloom: 6-8
+  src: [ome]
+  note: 御前山。「初夏〜夏」の記述を月に直した目安
+- area: 奥多摩
+  name: マルバダケブキ
+  bloom: 7下-8下
+  src: [otm, ykk]
+  note: 雲取山・稜線。山と溪谷社は8月中旬〜下旬
+- area: 奥多摩
+  name: レンゲショウマ
+  bloom: 7下-9中
+  src: [okg, otm]
+  note: 御岳山。青梅市観光協会は7月下旬〜8月下旬、観光連盟は8月上旬〜9月中旬
