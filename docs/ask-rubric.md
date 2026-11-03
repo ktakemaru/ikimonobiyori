@@ -33,7 +33,18 @@ R10 には、段階37(指示書 `docs/stage37-H11-instructions.md` 2-3)で、開
 | A6 | 段階38: 「HTMLにして」「写真つきで」と頼まれたとき、公園ごとの節に、その公園の鳥が写真つきで並ぶ(写真が付いた鳥が公園ごとに2種以上)。各鳥に、なぜ今か。撮影者名・ライセンス・「写真は種の代表写真で、その公園で撮られたものではありません」の1文がある |
 | A7 | 段階38: 利用者への返事は、答えの本文と(ページを作ったときは)ページの場所の1行だけ。「今回の作業で実行したこと」「テスト」「コード」「リポジトリ」「追跡ファイル」「保存先」など、作業・開発の説明がない |
 
+## ページ用の基準 P1〜P6(段階39。Artifact・HTML・ページを求められた質問に足して使う)
+| 番号 | 基準 |
+|---|---|
+| P1 | Artifact・ページの依頼で、**イラスト(手描きの SVG)が出ない**。鳥・花のカードは写真、取れなかった種は「名前だけの行」(枠にしない)。撮影者・ライセンス・元ページのクレジットが付く。 |
+| P2 | ページの大きさが、重複を除いて 2MB 以下(超えたら理由)。同じ種の写真が重複して埋め込まれない。 |
+| P3 | 結論・順位が先頭にある。次の質問は末尾に 1 つだけ。 |
+| P4 | 鳥・花は、場所の環境に合う。古い記録(7 日を超える)を「最近」と書かない。10 年以上前の記録を根拠にしない。まれな種をおすすめに入れない。 |
+| P5 | 答えに内部の言葉・作業メモ・検査やテストの報告がない(全質問)。全経路で検査を通っている(検査を飛ばしていない)。 |
+| P6 | 候補が 3 件以上で、聞き返しだけで終わらない。出どころ・日付・確度がある。野草は「例年の時期の目安」と明記し、採取・踏み荒らしの注意がある。 |
+
 ## 検査器との対応(`ikimonobiyori/ask_verify.py`。`python -X utf8 -m ikimonobiyori.ask verify`)
+- 段階39 B-1: facts を持たない経路（桜・梅などの `guide find --text` の出力、検索だけの答え、ページの文）は `ask verify --generic --text <ファイル>`（`generic_check`。作業・開発の言葉 `dev_term`・検査や記録の事情 `process_phrase`・出力の誤字 `typo`・聞き返しだけの答え `ask_back_only`・候補が少ない `too_few_candidates`）。
 - R2: `too_few_candidates`。R4: `no_typical_in_candidate`・`no_season_birds_in_candidate`・`typical_unknown_without_alternative`。
   R10: 禁止の言い方 `forbidden_phrase`・内部用語 `internal_term`・開発の言葉 `dev_term`(段階37)。R11: `too_long`。
   A1: `reread_without_new_records`・`reread_not_from_record`・`fetch_skipped`。A2: `birds_typical_phrase`・`closed_not_stated`。

@@ -18,6 +18,7 @@ import yaml
 from . import guide, livegate
 from .config import load_config
 from .fetch import commons_photos, inat_photos
+from .fetch.live import LiveError
 
 
 def photos_policy(policy=None):
@@ -61,19 +62,30 @@ def load_sources(env=None, include_runtime=True, policy=None):
     return out
 
 
-def load_table(env=None, include_runtime=True, policy=None):
-    """{和名: {name, scientific, taxon_id, checked_on}}。data/guide/ の表が先(同じ和名は上書きしない)。手元の書き出し(export/)も読む。"""
+def table_files(policy=None):
+    """対応表のファイル名(野鳥の既定 + テーマごとの表。段階39)。"""
     ph = photos_policy(policy)
-    rows = {r["name"]: r for r in _read_table(table_path(policy))}
-    if include_runtime:
-        for r in _read_table(export_dir(env) / ph["table_file"]):
+    names = [ph["table_file"]] + [t["table_file"] for t in (ph.get("themes") or {}).values() if t.get("table_file")]
+    return list(dict.fromkeys(names))
+
+
+def load_table(env=None, include_runtime=True, policy=None):
+    """{和名: {name, scientific, taxon_id, checked_on}}。data/guide/ の表が先(同じ和名は上書きしない)。手元の書き出し(export/)も読む。
+    野鳥の表(bird_taxa.yaml)に加え、テーマごとの表(花・野草。段階39)も合わせて読む。"""
+    rows = {}
+    for f in table_files(policy):
+        for r in _read_table(table_path(policy) if f == photos_policy(policy)["table_file"] else guide.GUIDE_DIR / f):
             rows.setdefault(r["name"], r)
+    if include_runtime:
+        for f in table_files(policy):
+            for r in _read_table(export_dir(env) / f):
+                rows.setdefault(r["name"], r)
     return rows
 
 
-def table_text(rows, policy=None):
+def table_text(rows, policy=None, theme=None):
     ph = photos_policy(policy)
-    head = ("# 野鳥の種の対応表(段階29)。和名 → 学名 / iNaturalist の taxon id / 確認日。事実だけで、画像・写真の URL・撮影者名は含まない。\n"
+    head = (f"# {theme or '野鳥'}の種の対応表(段階29・39)。和名 → 学名 / iNaturalist の taxon id / 確認日。事実だけで、画像・写真の URL・撮影者名は含まない。\n"
             "# guide photos-build-table が作る(手で直さない)。和名が日本語の一般名と完全に一致し、ランクが species・鳥類で、候補がちょうど 1 件のもの(候補が複数のときは、種が 1 件でほかがその下位のもの)。\n"
             "# sources の欄にある和名は、ユーザー指定の学名(iNaturalist で学名・ランク・鳥類が一致したもの)。\n")
     ordered = sorted(rows.values(), key=lambda r: r["name"])
@@ -369,3 +381,253 @@ def clear_cmd(a):
     n = clear_cache()
     guide._dump({"removed": n, "cache": str(cache_dir())})
     return 0
+
+
+# ---- 段階39: 確認なしの自動取得(承認B 2026-11-03)。キャッシュにない種だけ補う ----
+
+def add_to_table(new_rows, theme="野鳥", env=None, policy=None):
+    """表づくりで入った行（和名 → 学名・taxon id・確認日。事実だけ）を、テーマの表の手元の書き出し（export/）に足す。次の実行で探し直さないため。"""
+    policy = policy or guide.load_policy()
+    th = theme_cfg(theme, policy)
+    exp = export_dir(env) / th["table_file"]
+    cur = {r["name"]: r for r in _read_table(exp)}
+    for e in new_rows:
+        cur[e["name"]] = {k: e[k] for k in ("name", "scientific", "taxon_id", "checked_on") if k in e}
+    exp.parent.mkdir(parents=True, exist_ok=True)
+    exp.write_text(table_text(cur, policy, theme), encoding="utf-8", newline="\n")
+
+
+def _none_path(env=None, policy=None):
+    return export_dir(env) / photos_policy(policy)["none_file"]
+
+
+def load_none(env=None, policy=None):
+    """写真が取れなかった種の負のキャッシュ {和名: {"on": 日付, "reason": 理由}}。同じ実行・次の数回の実行で探し直さない。"""
+    p = _none_path(env, policy)
+    return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+
+
+def _save_none(rows, env=None, policy=None):
+    p = _none_path(env, policy)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(rows, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+
+
+def none_active(entry, today, policy=None):
+    """負のキャッシュが有効か(記録の日から negative_cache_days 日以内)。"""
+    from datetime import date as _d
+    days = photos_policy(policy)["negative_cache_days"]["value"]
+    try:
+        return (today - _d.fromisoformat(entry["on"])).days < days
+    except (KeyError, ValueError):
+        return False
+
+
+def theme_cfg(theme, policy=None):
+    ph = photos_policy(policy)
+    th = (ph.get("themes") or {}).get(theme or "野鳥")
+    if th is None:
+        raise ValueError(f"写真のテーマは {sorted((ph.get('themes') or {}))} のどれか: {theme}")
+    return th
+
+
+def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes, max_requests=None, today=None, sleep=None):
+    """和名の一覧 → 写真のキャッシュにないものだけ補う(対応表にない種は表を作る。iNaturalist で取れなければ Commons)。
+    取れなかった種は負のキャッシュに残し、次の数回の実行で探し直さない。上限(max_requests)に達したら残りは次の実行で。
+    通信の許可・上限・間隔・記録は呼び出し側が http_get / http_bytes を netbudget で包んで渡す。
+    → {"results": {和名: "cached"|"saved"|"none"|"pending"|"skipped"}, "requests", "saved", "status", "stopped"}。"""
+    import time as _t
+    from datetime import date as _d
+    policy = policy or guide.load_policy()
+    ph = policy["photos"]
+    th = theme_cfg(theme, policy)
+    pht = {**ph, "class_name": th["class_name"], "ranks": th.get("ranks") or [ph["rank"]]}
+    today = today or _d.today()
+    sleep = sleep or _t.sleep
+    table = load_table(env, policy=policy)
+    review = load_review(env, policy)
+    none = load_none(env, policy)
+
+    def has(t):
+        return has_cache(t, env, policy)
+
+    result, need_search, rows = {}, [], []
+    for n in dict.fromkeys(names):
+        if inat_photos.skipped(n, ph):
+            result[n] = "skipped"
+        elif n in table:
+            r = table[n]
+            if has(r["taxon_id"]):
+                result[n] = "cached"
+            elif str(r["taxon_id"]) in review or (n in none and none_active(none[n], today, policy)):
+                result[n] = "none"
+            else:
+                rows.append(r)
+        elif n in none and none_active(none[n], today, policy):
+            result[n] = "none"
+        else:
+            need_search.append(n)
+    left = max_requests if max_requests is not None else ph["max_requests_per_run"]["value"]
+    used = 0
+    rep = {"saved": [], "status": "ok", "stopped": None}
+    new_rows = []
+    todo, unused = [], {}
+    try:
+        if need_search and left >= 1:
+            entered, rejected, r1 = inat_photos.build_table(need_search, http_get=http_get, ph=pht, max_requests=left, sleep=sleep)
+            used += r1["requests"]
+            left -= r1["requests"]
+            new_rows = entered
+            rows += [{k: e[k] for k in ("name", "scientific", "taxon_id")} for e in entered]
+            for n, why in rejected.items():
+                none[n] = {"on": today.isoformat(), "reason": why}
+                result[n] = "none"
+            for n in r1["not_started"]:
+                result[n] = "pending"
+            if r1["status"] != "ok":
+                rep["status"], rep["stopped"] = r1["status"], r1["stopped"]
+        else:
+            for n in need_search:
+                result[n] = "pending"
+        if new_rows:                                                      # 表(事実だけ)は手元の書き出しに足す
+            add_to_table(new_rows, theme, env, policy)
+        todo = [r for r in rows if not has(r["taxon_id"]) and str(r["taxon_id"]) not in review]
+        unused = {}
+        if todo and left >= 2 and rep["status"] == "ok":
+            got, unused, r2 = inat_photos.fetch_photos(todo, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left, has_cache=has,
+                                                       skip_photos=load_skip_photos(env, policy), sleep=sleep)
+            used += r2["requests"]
+            left -= r2["requests"]
+            for item in got:
+                save_photo(item, env, policy)
+                result[item["row"]["name"]] = "saved"
+            rep["saved"] += [i["row"]["name"] for i in got]
+            for n in r2["not_started"]:
+                result[n] = "pending"
+            if r2["status"] != "ok":
+                rep["status"], rep["stopped"] = r2["status"], r2["stopped"]
+            cm = ph["commons"]                                           # iNaturalist に使える写真がない種だけ Commons(承認済み。学名で探す)。上限の範囲で
+            nocache = [r for r in todo if r["name"] in unused and not has(r["taxon_id"]) and f"commons:{r['taxon_id']}" not in review]
+            if nocache and rep["status"] == "ok" and left >= 1:
+                got3, _un, _r3 = commons_photos.fetch_commons(nocache, http_get=http_get, http_bytes=http_bytes, ph=pht,
+                                                              max_requests=min(cm["ensure_max_requests"]["value"], left), has_cache=has,
+                                                              on_got=lambda it: save_photo(it, env, policy), sleep=sleep)
+                for item in got3:
+                    result[item["row"]["name"]] = "saved"
+                rep["saved"] += [i["row"]["name"] for i in got3]
+    except LiveError as ex:                                       # 上限・許可ホストの外: そこで止める（取れていない種は次の実行で。ページは作る）
+        rep["status"], rep["stopped"] = "stopped", str(ex)[:200]
+    for r in todo:
+        st = result.get(r["name"])
+        if st in ("saved", "pending"):
+            continue
+        if has(r["taxon_id"]):
+            result[r["name"]] = "saved"
+        elif r["name"] in unused:                                     # 取りに行って使える写真がなかった種だけ負のキャッシュ(上限で取りに行けなかった種は次の実行で)
+            none[r["name"]] = {"on": today.isoformat(), "reason": unused[r["name"]]}
+            result[r["name"]] = "none"
+        else:
+            result[r["name"]] = "pending"
+    _save_none(none, env, policy)
+    return {"results": result, "requests": used, **rep}
+
+
+def _ensure_http(policy=None, http_get=None, http_bytes=None):
+    """netbudget で包んだ (http_get, http_bytes, 閉じるもの)。許可されない環境(テスト中など)は (None, None, 理由)。"""
+    from . import netbudget
+    if http_get is not None:
+        return http_get, http_bytes, None
+    why = netbudget.refusal()
+    if why:
+        return None, None, why
+    cfg = load_config()
+    from .fetch.live import SessionGetter
+    t = cfg["live"]["request_timeout"]
+    g = SessionGetter(user_agent=cfg["live"]["user_agent"], connect_s=t["connect_s"], read_s=t["read_s"])
+    ph = photos_policy(policy)
+    hs = cfg["live"]["allowed_hosts_by_subject"]
+    b = netbudget.Budget("photos", list(hs["guide_photos"]) + list(hs["guide_photos_commons"]) + list(hs["guide_places"]),
+                         ph["max_requests_per_run"]["value"], ph["min_interval_s"]["value"])
+    return b(g), b(g.get_bytes), g
+
+
+def ensure_cmd(a, http_get=None, http_bytes=None):
+    """guide photos-ensure --names <和名> ... [--theme 野鳥|花|野草]: キャッシュにない種だけ補う。確認なしで実行する(承認B)。"""
+    policy = guide.load_policy()
+    hg, hb, closer = _ensure_http(policy, http_get, http_bytes)
+    if hg is None:
+        guide._dump({"ran": False, "reason": closer})                   # テスト中・許可されない環境: 失敗にせず、キャッシュだけで続ける
+        return 0
+    try:
+        res = ensure(a.names, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb,
+                     max_requests=min(a.max_requests or 10 ** 9, policy["photos"]["max_requests_per_run"]["value"]))
+    finally:
+        if closer is not None and hasattr(closer, "close"):
+            closer.close()
+    _log_requests(res["requests"], "ensure")
+    guide._dump({"ran": True, **res})
+    return 0 if res["status"] == "ok" else 1
+
+
+def prefetch_cmd(a, http_get=None, http_bytes=None, sleep=None):
+    """guide photos-prefetch --theme 野鳥|花 [--all]: policy の一覧(photos.prefetch)の種を、1 回 80 件以内に分けて、実行の間に間隔をあけて取る。"""
+    import time as _t
+    policy = guide.load_policy()
+    ph = policy["photos"]
+    names = list((ph.get("prefetch") or {}).get(a.theme) or [])
+    if not names:
+        print(f"prefetch の一覧がない: {a.theme}", file=sys.stderr)
+        return 2
+    sleep = sleep or _t.sleep
+    total = {"requests": 0, "runs": 0, "saved": [], "status": "ok"}
+    pending = names
+    while pending:
+        hg, hb, closer = _ensure_http(policy, http_get, http_bytes)
+        if hg is None:
+            guide._dump({"ran": False, "reason": closer})
+            return 0
+        try:
+            res = ensure(pending, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb, max_requests=ph["max_requests_per_run"]["value"], sleep=sleep)
+        finally:
+            if closer is not None and hasattr(closer, "close"):
+                closer.close()
+        _log_requests(res["requests"], "prefetch")
+        total["requests"] += res["requests"]
+        total["runs"] += 1
+        total["saved"] += res["saved"]
+        pending = [n for n, st in res["results"].items() if st == "pending"]
+        if res["status"] != "ok":
+            total["status"] = res["status"]
+            break
+        if not a.all or res["requests"] == 0:
+            break
+        sleep(ph["prefetch_gap_s"]["value"])
+    total["pending"] = pending
+    total["names"] = len(names)
+    guide._dump(total)
+    return 0 if total["status"] == "ok" else 1
+
+
+def photo_theme_for(word, policy=None):
+    """質問の言葉 → 写真のテーマ(野鳥・花)。鳥のテーマ(野鳥・冬鳥)なら野鳥、ほかは花。"""
+    policy = policy or guide.load_policy()
+    themes, _kinds = guide.themes_for_words([word], policy)
+    return "野鳥" if themes and themes & {"野鳥", "冬鳥"} else "花"
+
+
+def ensure_for_page(names, word, policy=None, http_get=None, http_bytes=None, env=None):
+    """ページに出す種の写真を、キャッシュにないものだけ確認なしで補う(段階39 A-3)。許可されない環境(テスト中など)・通信できないときは、
+    止めずにキャッシュだけで続ける。1 回の上限(policy の photos.max_requests_per_run)に達した残りは、次の実行で続きを取る。→ ensure の結果か None。"""
+    policy = policy or guide.load_policy()
+    hg, hb, closer = _ensure_http(policy, http_get, http_bytes)
+    if hg is None:
+        return None
+    try:
+        res = ensure(names, theme=photo_theme_for(word, policy), env=env, policy=policy, http_get=hg, http_bytes=hb)
+    except OSError:
+        return None
+    finally:
+        if closer is not None and hasattr(closer, "close"):
+            closer.close()
+    _log_requests(res["requests"], "ensure-page", env)
+    return res

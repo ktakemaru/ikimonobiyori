@@ -83,7 +83,7 @@ def decide(name, cands, ph):
         c = species[0]
     else:
         c = exact[0]
-    if c["rank"] != ph["rank"]:
+    if c["rank"] not in (ph.get("ranks") or [ph["rank"]]):                  # 段階39: 花は属・雑種のランクも採る(theme の ranks)。鳥は従来どおり species だけ
         return None, f"ランクが {ph['rank']} でない({c['rank']})"
     if c["class_name"] != ph["class_name"]:
         return None, f"鳥類({ph['class_name']})でない({c['class_name']})"

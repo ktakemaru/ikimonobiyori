@@ -1098,7 +1098,7 @@ def park_birds(f, rows, dates, policy, taxa_names=None):
         item.setdefault("taxon_id", x.get("taxon_id"))
         if x.get("contrast_lift") is not None and item["kind"] == "season":
             item["contrast_lift"] = x["contrast_lift"]
-        item["kind_label"] = kl[item["kind"]]
+        item["kind_label"] = kl["recent_season"] if item.get("older") else kl[item["kind"]]
         out.append(item)
     dated = []
     for r in rows:
@@ -1111,8 +1111,9 @@ def park_birds(f, rows, dates, policy, taxa_names=None):
         if not (0 <= gap <= recent_w):
             continue
         for n in list(r.get("species") or []) + bird_names_in(r.get("state"), names, minl):
-            add({"name": n, "kind": "recent", "date": sd, "publisher": r.get("publisher") or r.get("host"), "url": r["url"],
-                 "source_class": r["source_class"], "why": why["recent"].format(md=_md(sd), publisher=r.get("publisher") or r.get("host") or "")})
+            older = gap > _v(pb["recent_strict_days"])          # 段階39 A-7: 7 日以内は「最近の記録」、30 日以内は「今季の記録」（渡りの鳥の古い記録を「最近」と書かない）
+            add({"name": n, "kind": "recent", "date": sd, "publisher": r.get("publisher") or r.get("host"), "url": r["url"], "older": older,
+                 "source_class": r["source_class"], "why": why["recent_season" if older else "recent"].format(md=_md(sd), publisher=r.get("publisher") or r.get("host") or "")})
     if inat.get("enough"):                                                                    # ② この時期の記録
         period = pb["inat_period_park"].format(months=pb["months_label"].format(months="・".join(str(m) for m in inat["months"]))) if inat.get("months") \
             else pb["inat_period"].format(center=_md(inat["center"]), weeks=inat["window_weeks"], years=inat["years"])

@@ -222,6 +222,7 @@ park_birds:
   # 一年の記録(分母)の取り直しの間隔。季節で変わらないので、窓の集計(inat_refresh.max_age_days)より長くする
   baseline_max_age_days: {value: 30, source: "仮置き(一年分の過去の記録はひと月では大きく変わらない想定。根拠のある値ではない)", provisional: true}
   # 「最近の記録」とみなす幅(状態の日付から対象の日まで)
+  recent_strict_days: {value: 7, source: "ユーザー指示(段階39 A-7)。この日数以内の記録を「最近の記録」、recent_days 以内を「今季の記録」とする", provisional: false}
   recent_days: {value: 30, source: "仮置き(公園の観察の記録は月に数回の更新が多い。根拠のある値ではない)", provisional: true}
   # 公園ごとに出す鳥の数(閾値ではなく表示の件数の設計値)
   max_species: {value: 8, source: "表示の件数の設計値(スマホの1画面で2〜3行)", provisional: false}
@@ -233,6 +234,7 @@ park_birds:
   # なぜ今か(決まった文。材料から作る)
   why:
     recent: "最近({md})、公園の記録に出ています"
+    recent_season: "今季({md})、公園の記録に出ています"
     seasonal_strong: "この時期は、一年の平均より特に多く記録されています"
     seasonal: "この時期は、一年の平均より多く記録されています"
     # 段階38(採点の後): 地域全体の記録で季節らしさを決めたとき
@@ -243,7 +245,7 @@ park_birds:
     year_round: "一年を通して記録されています"
     last_year: "{year}年{md}にも記録があります({publisher})"
     page: "{publisher}の紹介にあります"
-  kind_labels: {recent: 最近の記録, season: この時期の記録, last_year: 前の年の同じ時期の記録, page: 公園の紹介}
+  kind_labels: {recent: 最近の記録, recent_season: 今季の記録, season: この時期の記録, last_year: 前の年の同じ時期の記録, page: 公園の紹介}
   inat_period: "{center}の前後{weeks}週間(過去{years}年)"
   inat_period_park: "{months}の記録"
   months_label: "{months}月"

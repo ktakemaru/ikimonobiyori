@@ -229,8 +229,9 @@ def validate_item(item, policy):
             errs.append(f"{k} がない")
     if errs:
         return errs
-    if item["theme"] not in policy["themes"]:
-        errs.append(f"theme={item['theme']} は {policy['themes']} のどれでもない")
+    pend = (rp.get("pending_theme_prefix") or "")
+    if item["theme"] not in policy["themes"] and not (pend and item["theme"].startswith(pend) and len(item["theme"]) > len(pend)):
+        errs.append(f"theme={item['theme']} は {policy['themes']} のどれでもない(未登録の話題は {pend}<語> の仮のテーマで記録できる)")
     lim = {k: val(rp[f"max_{k}_chars"]) for k in ("name", "kind", "note", "title", "season", "state")}
     for k in ("name", "prefecture", "municipality"):
         if item.get(k) is not None and (not isinstance(item[k], str) or len(item[k]) > lim["name"]):
@@ -558,7 +559,8 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
                 kind_groups.setdefault(k, set())
                 if id(s) in gid:
                     kind_groups[k].add(gid[id(s)])
-        kinds = [{"kind": k, "independent_sources": len(g), "shown": len(g) >= show_min}
+        user_visited = any(s.get("origin") == "user" for s in live)         # 段階39 B-6: 利用者が実際に行った・確認した名所は、出どころの数に関わらず種類・時期を出してよい
+        kinds = [{"kind": k, "independent_sources": len(g), "shown": len(g) >= show_min or user_visited}
                  for k, g in sorted(kind_groups.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
         seasons = [(s, season_window(s["_season"], policy)) for s in _best(srcs) if s["_season"]]
         seasons = [(s, w) for s, w in seasons if w]
@@ -567,9 +569,11 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
             s0, w0 = seasons[0]
             agree = {gid[id(s)] for s, w in seasons if id(s) in gid and windows_overlap(w, w0)}
             season = {"text": s0["_season"]["text"], "window": w0 if w0 == "year_round" else {"start": w0[0], "end": w0[1]},
-                      "independent_sources": len(agree), "shown": len(agree) >= show_min, "from_url": s0["url"],
+                      "independent_sources": len(agree), "shown": len(agree) >= show_min or user_visited, "from_url": s0["url"],
                       "other_texts": sorted({s["_season"]["text"] for s, _ in seasons[1:] if s["_season"]["text"] != s0["_season"]["text"]})}
         visits = [v for v in [reviews.get(eid)] if v and v.get("state") == "visited"]
+        if user_visited and not visits:
+            visits = [{"state": "visited", "by": "user-origin"}]
         rv_ = reviews.get(eid)
         # ユーザーが見直しで承認した場所は、名前の退役・却下の保証を外す(人の判断が自動の保証より先。出どころの URL の保証は残る。段階25)
         retired_name = None if (rv_ and rv_.get("state") == "approved") else retired["names"].get(_base_name(rows[0]["name"]))
@@ -592,7 +596,7 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
             reasons.append(f"却下・退役済み({retired_name})")
         if not exists:
             reasons.append("実在を、自治体・公園・観光協会・メディアの出どころで確認できていない")
-        if rng["status"] == "pending":
+        if rng["status"] == "pending" and not user_visited:       # 段階39 B-6: 利用者が行った場所は、代表点がなくても範囲の確認で止めない
             reasons.append("範囲は未確認(市区町村の代表点がない)")
         elif rng["status"] == "out_of_range":
             reasons.append(f"範囲の外(約 {rng['km']} km)")
@@ -619,6 +623,8 @@ def build_entries(records, places, policy, catalog_policy, reviews=None, retired
              "sources": [{k: v for k, v in s.items() if not k.startswith("_") and k != "copies_of_publisher"} for s in srcs]}
         if acc:
             e["access"] = acc
+        if user_visited:
+            e["user_visited"] = True
         if status:
             e["latest_status"] = {**status[0]["status"], "url": status[0]["url"], "class": status[0]["class"]}
         out.append(e)
@@ -999,13 +1005,17 @@ def themes_for_words(words, policy):
     for w in words:
         got = theme_of(w, policy)
         if got is None:
+            pend = (policy["record"].get("pending_theme_prefix") or "") + (w or "").strip()     # 段階39 B-5: 未登録の話題は仮のテーマで記録された名所があればそれを使う
+            if pend != (policy["record"].get("pending_theme_prefix") or "") and any(r.get("theme") == pend for r in all_records()):
+                themes.add(pend)
+                continue
             return None, w
         themes |= set(got["themes"])
         kinds += got.get("kinds") or []
     return themes, kinds
 
 
-def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range=False):
+def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range=False, on=None):
     """find の結果 → ガイド型の答えの部品(欄ごとの行)。文字(render_answer)と HTML(guide_page)が、同じ部品から同じ文を作る(段階29)。
     各行は {"entry", "index"(おすすめだけ 1 から), "name", "where", "body"(「 — 」の後ろ。参照数の文末つき), "line"(文字の答えの 1 行そのもの)}。"""
     a, labels, classes = policy["answer"], policy["tiers"]["labels"], policy["classes"]
@@ -1022,6 +1032,10 @@ def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range
         kinds = "・".join(k["kind"] for k in e["kinds"] if k["shown"])
         if kinds:
             bits.append(a["bits"]["kinds"].format(text=kinds))
+        if e.get("user_visited"):
+            bits.append(a["bits"]["user"])
+        if i and se and se.get("shown") and on is not None:             # 段階39: おすすめの行に、なぜそこか（対象の日が例年の時期に入っている）を一言
+            bits.append(a["bits"]["why_in_season"])
         bits.append(a["bits"]["tier"].format(label=labels[e["tier"]]))
         bits.append(a["bits"]["classes"].format(text="・".join(classes[c] for c in e["classes"])))
         d = e.get("distance")
@@ -1040,33 +1054,131 @@ def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range
     rec = found.get("recommend") or []
     sections.append({"key": "recommend", "heading": a["headings"]["recommend"], "numbered": True, "none": a["none_found"],
                      "rows": [row(e, i) for i, e in enumerate(rec, 1)]})
+    ref_max = val(a["reference_max"])
     for key in ("upcoming", "other_season", "no_season", "reference", "out_of_range"):
         es = found.get(key) or []
         if key == "out_of_range" and not show_out_of_range:
             continue
         if es:
-            sections.append({"key": key, "heading": a["headings"][key], "numbered": False, "none": None, "rows": [row(e) for e in es]})
+            more = max(len(es) - ref_max, 0) if key == "reference" else 0          # 段階39 B-3: 参考の欄は最大 reference_max 件。残りは「ほか N 件」
+            sections.append({"key": key, "heading": a["headings"][key], "numbered": False, "none": None,
+                             "rows": [row(e) for e in (es[:ref_max] if more else es)], "more": a["reference_more"].format(n=more) if more else None})
     notes = care_notes(themes, policy) if themes else []
     anyrow = any(sec["rows"] for sec in sections)
     return {"origin_line": origin_line, "sections": sections, "notes_heading": a["headings"]["notes"], "notes": notes,
-            "legend": rc["legend"] if anyrow else None}
+            "legend": rc["legend"] if anyrow else None, "conclusion": conclusion_line(found, policy, on), "timeline": timeline_lines(found, policy, on),
+            "state_note": state_note(found, policy), "avoid": avoid_lines(found, policy), "sources": source_lines(found, policy), "next_question": a["next_question"]}
+
+
+def conclusion_line(found, policy, on):
+    """答えの先頭の結論 1 文(段階39 B-3)。名所の名前だけで作る(新しい事実を足さない)。"""
+    c = policy["answer"]["conclusion"]
+    when = c["date"].format(m=on.month, d=on.day) if on else c["no_date"]
+    mx = val(c["max_names"])
+    rec, up = found.get("recommend") or [], found.get("upcoming") or []
+    if rec:
+        return c["recommend"].format(when=when, names=c["sep"].join(e["name"] for e in rec[:mx]))
+    if up:
+        return c["upcoming"].format(when=when, names=c["sep"].join(e["name"] for e in up[:mx]))
+    return c["none"].format(when=when)
+
+
+def state_note(found, policy):
+    """今の咲き具合・色づきの日付つきの記録が、おすすめの名所にひとつもないときの 1 文（段階39 R3: 今の状態を言い切らず、例年の時期の目安だと書く）。"""
+    rec = found.get("recommend") or []
+    if rec and not any(e.get("latest_status") for e in rec):
+        return policy["answer"]["state_note"]
+    return None
+
+
+def avoid_lines(found, policy):
+    """避けたほうがよい場所と代わりの目的（段階39 R6）。例年の時期の外の名所は今日は見ごろの外と書き、代わりに今日のおすすめ・これからの名所を挙げる。
+    おすすめが少ない（few_max 件以下）ときは、そう書く。名所の名前だけで作る（新しい事実を足さない）。"""
+    a = policy["answer"]["avoid"]
+    out = []
+    other, rec, up = found.get("other_season") or [], found.get("recommend") or [], found.get("upcoming") or []
+    alt = [e["name"] for e in (rec + up)[: val(a["alt_max"])]]
+    if other:
+        names = a["sep"].join(e["name"] for e in other[: val(a["names_max"])])
+        out.append(a["out_of_season"].format(names=names) + (a["instead"].format(alt=a["sep"].join(alt)) if alt else ""))
+    if len(rec) <= val(a["few_max"]):
+        out.append(a["few"].format(n=len(rec)))
+    return out
+
+
+def source_lines(found, policy):
+    """出典の URL（おすすめの名所の出どころ。名所ごとに最大 sources_per_place 件、全体で max_sources 件）。記録された出どころの URL だけ。"""
+    a = policy["answer"]["sources"]
+    out, seen = [], set()
+    for e in (found.get("recommend") or []) + (found.get("upcoming") or []):
+        n = 0
+        for s_ in e.get("sources") or []:
+            u = s_.get("url")
+            if u and u not in seen and n < val(a["per_place"]) and len(out) < val(a["max"]):
+                seen.add(u)
+                out.append(u)
+                n += 1
+    return out
+
+
+def timeline_lines(found, policy, on):
+    """「いつ頃から見られるか」: 種類ごとに、対象の日から見て次に始まる(すでに始まっている)例年の時期を 1 行ずつ(段階39 B-3)。
+    出どころ 2 件以上が言う時期(shown)と種類だけ。名所は、その時期を言う名所の名前。"""
+    if on is None:
+        return []
+    t = policy["answer"]["timeline"]
+    best = {}
+    for key in ("recommend", "upcoming", "other_season"):
+        for e in found.get(key) or []:
+            se = e.get("season")
+            if not se or not se.get("shown") or not isinstance(se.get("window"), dict):
+                continue
+            w = (se["window"]["start"], se["window"]["end"])
+            d = days_until_start(on, w)
+            if d is None:
+                continue
+            for k in e["kinds"]:
+                if not k["shown"]:
+                    continue
+                cur = best.get(k["kind"])
+                if cur is None or d < cur["d"]:
+                    best[k["kind"]] = {"d": d, "text": se["text"], "names": [e["name"]]}
+                elif d == cur["d"] and e["name"] not in cur["names"]:
+                    cur["names"].append(e["name"])
+    rows = sorted(best.items(), key=lambda kv: (kv[1]["d"], kv[0]))[: val(t["max_kinds"])]
+    pre = t.get("strip_prefix") or ""
+    return [t["line"].format(kind=k, text=(v["text"][len(pre):] if pre and v["text"].startswith(pre) else v["text"]), names=t["sep"].join(v["names"][:2]) + (t["more"] if len(v["names"]) > 2 else "")) for k, v in rows]
 
 
 def render_answer(found, policy, origin_line=None, on=None, themes=None, show_out_of_range=False):
     """find の結果 → ガイド型の答え(コードが組み立てた文だけ)。各場所の行の文末に「（参照数 N）」、最後に凡例を 1 回。
     themes を渡すと「注意」(プロファイルのマナー)を凡例の前に付ける。show_out_of_range は名指しの質問のとき(範囲の外の名所を出す)。
     ここに出すのは、名所・所在・例年の時期(2 件以上の出どころが言うもの)・種類(同)・段階の日本語の呼び名・出どころの区分・距離だけ。"""
-    parts = answer_parts(found, policy, origin_line, themes, show_out_of_range)
+    parts = answer_parts(found, policy, origin_line, themes, show_out_of_range, on=on)
     lines = [origin_line, ""] if origin_line else []
+    lines += [parts["conclusion"]]
+    if parts.get("state_note"):
+        lines += [parts["state_note"]]
+    lines += [""]
     for sec in parts["sections"]:
         if sec["key"] != "recommend":
             lines.append("")
         lines.append(f"## {sec['heading']}")
         lines += [r["line"] for r in sec["rows"]] if sec["rows"] else [sec["none"]]
+        if sec.get("more"):
+            lines.append(sec["more"])
+        if sec["key"] == "recommend" and parts["timeline"]:
+            lines += ["", f"## {policy['answer']['timeline']['heading']}"] + parts["timeline"]
     if parts["notes"]:
         lines += ["", f"## {parts['notes_heading']}"] + [f"- {n}" for n in parts["notes"]]
     if parts["legend"]:
         lines += ["", parts["legend"]]
+    if parts.get("avoid"):
+        lines += ["", f"## {policy['answer']['avoid']['heading']}"] + [f"- {x}" for x in parts["avoid"]]
+    if parts.get("sources"):
+        lines += ["", f"## {policy['answer']['sources']['heading']}"] + parts["sources"]
+    if any(sec["rows"] for sec in parts["sections"]):
+        lines += ["", parts["next_question"]]
     return "\n".join(lines) + "\n"
 
 
@@ -1277,11 +1389,19 @@ def main(argv=None, http_get=None, http_bytes=None):
     pc.add_argument("--live", action="store_true")
     pc.add_argument("--max-requests", type=int)
     pc.add_argument("--only", nargs="*", help="この和名の種だけ(省略すると、写真のない表の全部)")
+    pe = sub.add_parser("photos-ensure", help="写真のキャッシュにない種だけ、確認なしで取りに行く(承認B 2026-11-03。通信先・間隔・上限は policy の photos のまま。段階39)")
+    pe.add_argument("--names", nargs="+", required=True, help="和名(複数)")
+    pe.add_argument("--theme", default="野鳥", help="野鳥・花・野草(policy photos.themes)")
+    pe.add_argument("--max-requests", type=int)
+    pp = sub.add_parser("photos-prefetch", help="policy の一覧(photos.prefetch)の種の写真を、80 件以内に分けて事前に取る(段階39。バックグラウンドで実行してよい)")
+    pp.add_argument("--theme", default="野鳥", help="野鳥・花・野草")
+    pp.add_argument("--all", action="store_true", help="一覧の全部が終わるまで、実行の間に間隔をあけて繰り返す")
     pg = sub.add_parser("page", help="野鳥の案内を写真つきの単独の HTML ページにする(guide find --text と同じ選び方・同じ文。通信しない。段階29)")
     pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
     pg.add_argument("--from", dest="origin", help="出発地(横浜・東京。省略すると横浜)")
     pg.add_argument("--date", help="対象の日(YYYY-MM-DD。省略すると今日)")
     pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/)")
+    pg.add_argument("--no-ensure-photos", dest="ensure_photos", action="store_false", help="写真を取りに行かず、キャッシュだけで作る(既定は、キャッシュにない種だけ確認なしで補う。段階39)")
     pg.add_argument("--open", action="store_true", help="ローカルのブラウザでそのファイルを開く(新しい通信はしない)")
     sub.add_parser("photos-clear", help="写真のキャッシュだけを消す(ほかは消さない。段階29)")
     b = sub.add_parser("build", help="候補をまとめ、段階・承認を決めて書き出す(IKIMONOBIYORI_DATA_DIR の下の guide/export/)")
@@ -1369,6 +1489,9 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "page":
         from . import guide_page
         return guide_page.page_cmd(a)
+    if a.cmd in ("photos-ensure", "photos-prefetch"):
+        from . import guide_photos
+        return guide_photos.ensure_cmd(a, http_get, http_bytes) if a.cmd == "photos-ensure" else guide_photos.prefetch_cmd(a, http_get, http_bytes)
     if a.cmd in ("photos-build-table", "photos-fetch", "photos-clear", "photos-commons", "photos-commons-season"):
         from . import guide_photos
         if a.cmd == "photos-clear":
@@ -1391,6 +1514,10 @@ def main(argv=None, http_get=None, http_bytes=None):
         themes, kinds = set(a.theme or []), list(a.kind or [])
         for w in a.word or []:
             got = theme_of(w, policy)
+            if got is None:                                       # 段階39 B-5: 仮のテーマ(pending:<語>)で記録された名所があれば、それで探す
+                pend = (policy["record"].get("pending_theme_prefix") or "") + (w or "").strip()
+                if any(r.get("theme") == pend for r in all_records()):
+                    got = {"themes": [pend]}
             if got is None:
                 _dump({"word": w, "themes": None, "note": "言い換えの表にない言葉(推測で結びつけない)"})
                 return 1
@@ -1413,7 +1540,7 @@ def main(argv=None, http_get=None, http_bytes=None):
                    municipalities=munis, names=a.name, policy=policy, origin=a.origin)
         origin, line = origin_line_for(a.origin)
         if a.text:
-            text = render_answer(got, policy, origin_line=line, themes=themes, show_out_of_range=bool(a.name))
+            text = render_answer(got, policy, origin_line=line, on=date.fromisoformat(a.date) if a.date else None, themes=themes, show_out_of_range=bool(a.name))
             bad = forbidden_in_answer(text, policy)
             if bad:
                 print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)

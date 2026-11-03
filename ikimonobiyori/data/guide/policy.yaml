@@ -154,6 +154,30 @@ words:
   サザンカ: {themes: [花], kinds: [サザンカ]}
   山茶花: {themes: [花], kinds: [サザンカ]}
   ロウバイ: {themes: [花], kinds: [ロウバイ]}
+  # 段階39 B-5: 花の種類(テーマは「花」。種類の名前で絞る)。名所は検索で見つけて record-candidate で記録する(未登録の話題は pending: の仮のテーマ)
+  ひまわり: {themes: [花], kinds: [ヒマワリ]}
+  ヒマワリ: {themes: [花], kinds: [ヒマワリ]}
+  向日葵: {themes: [花], kinds: [ヒマワリ]}
+  コスモス: {themes: [花], kinds: [コスモス]}
+  秋桜: {themes: [花], kinds: [コスモス]}
+  彼岸花: {themes: [花], kinds: [ヒガンバナ]}
+  ヒガンバナ: {themes: [花], kinds: [ヒガンバナ]}
+  曼珠沙華: {themes: [花], kinds: [ヒガンバナ]}
+  スズラン: {themes: [花], kinds: [スズラン]}
+  鈴蘭: {themes: [花], kinds: [スズラン]}
+  アジサイ: {themes: [花], kinds: [アジサイ]}
+  紫陽花: {themes: [花], kinds: [アジサイ]}
+  ハナショウブ: {themes: [花], kinds: [ハナショウブ]}
+  花菖蒲: {themes: [花], kinds: [ハナショウブ]}
+  フジ: {themes: [花], kinds: [フジ]}
+  藤: {themes: [花], kinds: [フジ]}
+  ツツジ: {themes: [花], kinds: [ツツジ]}
+  芝桜: {themes: [花], kinds: [芝桜]}
+  ネモフィラ: {themes: [花], kinds: [ネモフィラ]}
+  菜の花: {themes: [花], kinds: [菜の花]}
+  ラベンダー: {themes: [花], kinds: [ラベンダー]}
+  ハス: {themes: [花], kinds: [ハス]}
+  蓮: {themes: [花], kinds: [ハス]}
   蝋梅: {themes: [花], kinds: [ロウバイ]}
   ツバキ: {themes: [花], kinds: [ツバキ]}
   椿: {themes: [花], kinds: [ツバキ]}
@@ -163,6 +187,7 @@ words:
 # 候補の記録(record-candidate)の項目。本文を写さないための長さの上限(仮置き。data/sources/policy.yaml の record と同じ考え方)
 record:
   schema: ikimono-guide-candidate/1
+  pending_theme_prefix: "pending:"                       # 段階39 B-5: テーマの表にない話題(野草など)は pending:<語> の仮のテーマで記録できる(あとで種類に昇格)
   dir: guide                                             # 書き込み先の基準(IKIMONOBIYORI_DATA_DIR)からの相対
   fields: [schema, scope, theme, name, prefecture, municipality, kinds, season, url, title, note, copies_of, status, closure, access, origin, seed_id,
            read_at, read_at_note, read_by, host, publisher, class]
@@ -230,8 +255,38 @@ answer:
   season_default: {plain: "通年が目安（出どころに時期の特記なし）", with_text: "通年が目安（出どころ1件の記載: {text}）"}
   notes: {profiles: {野鳥: birds, 冬鳥: wintering_birds}, max_manners: 2, line: "{theme}の観察では、{text}"}
   none_found: "おすすめにできる名所は見つかりませんでした。"
+  # 段階39 B-3: 結論を先頭に、参考の欄は短く、「いつ頃から」は種類ごとの時期の順で答える
+  conclusion:
+    recommend: "{when}におすすめの名所は、{names}です。"
+    upcoming: "{when}はまだ早い時期です。これから見ごろに入る名所は、{names}です。"
+    none: "{when}におすすめできる名所は見つかりませんでした。"
+    date: "{m}月{d}日"
+    no_date: "いま"
+    sep: "・"
+    max_names: {value: 3, source: "仮置き(段階39)。結論の 1 文に並べる名所の数", provisional: true}
+  timeline:
+    heading: 時期の順
+    line: "- {kind}: 例年の時期は{text}({names})"
+    sep: "・"
+    more: "ほか"
+    strip_prefix: "例年"                                 # 「例年の時期は例年…」の重なりを避ける
+    max_kinds: {value: 6, source: "仮置き(段階39)。時期の順に出す種類の数", provisional: true}
+  reference_max: {value: 5, source: "仮置き(段階39 B-3)。参考の欄に出す名所の数。残りは「ほか N 件」", provisional: true}
+  reference_more: "- ほか{n}件"
+  avoid:
+    heading: 避けたほうがよい場所
+    out_of_season: "{names}などは、今日は例年の時期の外で、咲いていない見込みです。"
+    instead: "代わりに、{alt}がよいです。"
+    few: "今日おすすめにできる名所は{n}件でした。ほかの名所は、上の「時期の順」の時期が来てからが目安です。"
+    sep: "・"
+    names_max: {value: 3, source: "仮置き(段階39)。避ける場所に名前を挙げる数", provisional: true}
+    alt_max: {value: 3, source: "仮置き(段階39)。代わりの目的に挙げる数", provisional: true}
+    few_max: {value: 2, source: "仮置き(段階39)。おすすめがこの件数以下のとき、少ないと書く", provisional: true}
+  state_note: "今年の咲き具合・色づきの日付つきの記録は読めていません。以下は例年の時期の目安です。"
+  sources: {heading: 出典, per_place: {value: 1, source: "仮置き(段階39)。名所ごとに出す出典 URL の数", provisional: true}, max: {value: 5, source: "仮置き(段階39)。出典 URL の全体の数", provisional: true}}
+  next_question: "好みを1つ教えてください。近さと、見られる種類のどちらを優先しますか。"
   place: "{i}. **{name}**({where})"
-  bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端"}
+  bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端", user: "あなたが行った場所", why_in_season: "対象の日は例年の時期に入っています"}
   reference_item: "- {name}({where})"
   forbidden_terms: [tier, independent_sources, auto-rule, reference, curated, verified, provisional, candidate]
 
@@ -262,6 +317,18 @@ photos:
   max_requests_per_run: {value: 80, source: "ユーザー承認 2026-10-30(承認A。指示書 段階29 §2。1 回の実行の上限)", provisional: false}
   min_interval_s: {value: 1, source: "ユーザー承認 2026-10-30(指示書 段階29 §2。リクエストの間隔は 1 秒以上)", provisional: false}
   max_image_bytes: {value: 2000000, source: "ユーザー指示 2026-10-30(指示書 段階29 §3。1 枚 2MB を超えたら使わない)", provisional: false}
+  # 段階39: 確認なしの自動取得(ユーザー承認B 2026-11-03)。キャッシュにない種だけ取りに行く。通信先・間隔・1 回の上限は上の承認のまま変えない
+  auto_fetch_source: "ユーザー承認B 2026-11-03: 確認なしの自動取得(キャッシュにない種だけ。iNaturalist の API と画像の 2 ホスト、Wikimedia Commons。上限・間隔・通信先は承認A・段階30のまま)"
+  none_file: photo_none.json                              # 写真が取れなかった種の負のキャッシュ(IKIMONOBIYORI_DATA_DIR の下の guide/export/。コミットしない)
+  negative_cache_days: {value: 14, source: "仮置き(段階39 A-3)。写真が取れなかった種を探し直さない日数", provisional: true}
+  prefetch_gap_s: {value: 5, source: "仮置き(段階39 A-4)。事前取得で実行と実行の間にあける秒数(承認の間隔 1 秒以上)", provisional: true}
+  themes:                                                 # 写真の対象(段階39)。花・野草は植物(Plantae)。園芸種・雑種のランクも採る
+    野鳥: {class_name: Aves, table_file: bird_taxa.yaml}
+    花: {class_name: Plantae, table_file: flower_taxa.yaml, ranks: [species, hybrid, genus]}
+    野草: {class_name: Plantae, table_file: wildflower_taxa.yaml, ranks: [species, hybrid, genus]}
+  prefetch:                                               # 事前取得する和名の一覧(段階39 A-5。仮置き。数は目安)
+    野鳥: [カワセミ, ジョウビタキ, ルリビタキ, シロハラ, アカハラ, ツグミ, ヒヨドリ, メジロ, シジュウカラ, ヤマガラ, エナガ, コゲラ, アオゲラ, アカゲラ, モズ, ホオジロ, アオジ, カシラダカ, ミヤマホオジロ, シメ, イカル, マヒワ, カワラヒワ, ベニマシコ, ウソ, アトリ, スズメ, ハクセキレイ, セグロセキレイ, キセキレイ, タヒバリ, ムクドリ, ハシボソガラス, ハシブトガラス, オナガ, カケス, キジバト, ドバト, キジ, カルガモ, マガモ, コガモ, ハシビロガモ, オナガガモ, ヒドリガモ, オカヨシガモ, ヨシガモ, トモエガモ, ホシハジロ, キンクロハジロ, スズガモ, ミコアイサ, オシドリ, カイツブリ, カンムリカイツブリ, ハジロカイツブリ, カワウ, ダイサギ, チュウサギ, コサギ, アオサギ, ゴイサギ, バン, オオバン, クイナ, ヒクイナ, タゲリ, ケリ, コチドリ, イカルチドリ, シロチドリ, ダイゼン, ハマシギ, ミユビシギ, イソシギ, タシギ, ユリカモメ, ウミネコ, セグロカモメ, オオセグロカモメ, カモメ, ミサゴ, トビ, ノスリ, ハイタカ, オオタカ, チョウゲンボウ, ハヤブサ, フクロウ, アオバズク, ヒレンジャク, キレンジャク, イソヒヨドリ, ノビタキ, キビタキ, オオルリ, ウグイス, コハクチョウ, オオハクチョウ, マナヅル, ナベヅル, オオジュリン]
+    花: [ソメイヨシノ, ヤマザクラ, オオシマザクラ, カワヅザクラ, フユザクラ, ジュウガツザクラ, カンヒザクラ, シバザクラ, ウメ, ロウバイ, スイセン, ツバキ, サザンカ, ヒマワリ, コスモス, キバナコスモス, ヒガンバナ, スズラン, アジサイ, ハナショウブ, フジ, ツツジ, サツキ, ネモフィラ, ナノハナ, ラベンダー, ハス, ダリア, キク, バラ, ポピー, チューリップ, ムスカリ, ハナモモ, モクレン, コブシ, ヤマブキ, ユキヤナギ, ミツバツツジ, カタクリ, ミズバショウ, ニリンソウ, リンドウ, ノコンギク, ススキ, ハギ, キンモクセイ, ツワブキ, フジバカマ, ミズヒキ, コキア, サルビア, ジニア, マリーゴールド, ガーベラ, クリスマスローズ, シクラメン, パンジー]
   photo_size: medium_url                                  # 中くらいのサイズ(iNaturalist の medium は 500px 前後)
   licenses: {cc0: CC0, cc-by: CC BY, cc-by-sa: CC BY-SA}  # 使ってよいライセンス(iNaturalist の license_code → 表示)。ここにないもの・不明は使わない
   image_hosts: [static.inaturalist.org, inaturalist-open-data.s3.amazonaws.com]   # 写真の実体を取ってよいホスト(承認A)
@@ -296,6 +363,7 @@ photos:
     thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト → 配信元のホストに置き換える。パスは同じ・クエリは外す(段階30。報告に明記)
     thumb_path_prefix: /wikipedia/commons/thumb/            # 置き換えてよいパスの先頭
     file_namespace: "6"                                     # Commons のファイルの名前空間
+    ensure_max_requests: {value: 6, source: "仮置き(段階39 A-3)。photos-ensure が 1 回の実行で Commons に送る上限(iNaturalist に写真がない種だけ)", provisional: true}
     season_search_limit: {value: 10, source: "仮置き(段階31)。季節の合う写真を探す検索で見る候補の数の上限", provisional: true}
     season_query: "{scientific} winter plumage"             # 冬羽を探す検索語(段階31。ユリカモメなど、関東で冬に見る姿の写真に差し替える)
     season_terms: [winter, non-breeding, nonbreeding]       # ファイル名・カテゴリ・説明のどれかに、学名とこの語のどれかがあるものだけ(見た目の推測だけで選ばない)
@@ -312,6 +380,17 @@ photos:
     created: "作成: {y}年{m}月{d}日 {h}:{mi:02d}"
     origin: "出発地: {origin}"
     no_photo: "写真なし"
+    # 段階39: 花・桜・野草のページ（鳥以外）。題名・見出し・文を花向けにする。鳥のページは上の値のまま
+    by_theme:
+      花:
+        title: 花の案内
+        headings: {birds: いま見たい花, birds_out: 例年の時期の外の花, birds_unknown: ほかに見られる花(時期は未確認), places: おすすめの名所}
+        row_birds: "見られる花: {text}"
+        birds_unknown_note: "例年の時期は、まだ確かめられていません。"
+        no_photo_names: "写真が取れなかった花: {names}"
+    max_embed_bytes: {value: 2000000, source: "ユーザー指示(段階39 A-6)。ページに埋め込む写真の合計（base64 後）の目安。超える新しい写真は載せず名前だけの行に回す", provisional: true}
+    no_photo_names: "写真が取れなかった鳥: {names}"            # 段階39 A-7: 写真のない種は枠を出さず名前だけ
+    next_question: "ほかの日や出発地でも調べられます。日にちと出発地を教えてください。"      # 段階39 P3: 次の質問は末尾に 1 つだけ
     others: "そのほか: {names}"
     others_sep: "、"
     season_unknown: "時期: 例年の時期を確かめられていない"

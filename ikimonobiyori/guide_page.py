@@ -17,6 +17,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import guide, guide_photos, paths
+from .photo_pool import PhotoPool
 
 MIME = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
 CSS = """
@@ -30,12 +31,12 @@ h3 { font-size: 1.05rem; margin: 0 0 0.25rem; }
 .meta, .where, .note, .legend { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.75rem; padding: 0; list-style: none; margin: 0; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem; }
-.card img { display: block; width: 100%; height: auto; border-radius: 0.25rem; }
+.lead { background: var(--card); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.7rem 0.9rem; margin: 0.5rem 0; font-size: 1.05rem; }
 .badge { display: inline-block; border: 1px solid var(--accent); color: var(--accent); border-radius: 0.25rem; padding: 0 0.4rem; font-size: 0.8rem; margin-right: 0.25rem; }
 .nophoto { border: 1px dashed var(--line); color: var(--muted); font-size: 0.85rem; padding: 0.5rem; text-align: center; }
 .thumbs { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.5rem 0; padding: 0; list-style: none; }
 .thumbs figure { margin: 0; width: 9.5rem; max-width: 100%; }
-.thumbs img { width: 100%; height: auto; }
+.thumbs .ph { aspect-ratio: 4 / 3; }
 figcaption { margin: 0.15rem 0 0; font-size: 0.8rem; line-height: 1.35; }
 figcaption .name { display: block; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
 .credit { display: block; color: var(--faint); font-size: 0.7rem; line-height: 1.3; overflow-wrap: anywhere; }
@@ -134,23 +135,28 @@ def created_text(now, h):
     return h["created"].format(y=now.year, m=now.month, d=now.day, h=now.hour, mi=now.minute)
 
 
-def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None, retired_urls=frozenset(), in_table=lambda name: True):
+def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None, retired_urls=frozenset(), in_table=lambda name: True, h_over=None):
     """答えの部品(guide.answer_parts)→ 単独の HTML(文字列)。photo_for(和名) → (メタデータ, バイト列) か None。
     in_table(和名) が偽の種(対応表にない語)はカードにせず、「そのほか: …」の 1 行(文字だけ)にまとめる。
     鳥のカードは、時期が確認できて今(作成日の月)に合う鳥・時期の外の鳥・時期が未確認の鳥の 3 つのグループに分ける(段階31)。"""
-    h = policy["photos"]["html"]
+    h = {**policy["photos"]["html"], **(h_over or {})}          # 段階39: 花・桜のページは、題名・見出し・文を花向けに差し替える（policy photos.html.by_theme）
+    if h_over and h_over.get("headings"):
+        h["headings"] = {**policy["photos"]["html"]["headings"], **h_over["headings"]}
     used = {}                                                   # 和名 → (メタデータ, バイト列)(ページに載せた写真)
+    pool = PhotoPool(h["max_embed_bytes"]["value"])                                          # 段階39 A-6: 同じ写真は 1 回だけ埋め込む
 
     def photo(name):
         if name not in used:
-            used[name] = photo_for(name)
+            got = photo_for(name)
+            if got and not pool.fits(got[1]):                    # 容量の上限（約 2MB）を超える新しい写真は載せず、名前だけの行に回す
+                got = None
+            used[name] = got
         return used[name]
 
     notes_by_name = {e["name"]: e for e in kind_notes if e.get("scope") == "kind"}
 
     def img(name, got):
-        # data URI の画像には遅延読み込み(loading="lazy")を付けない: 利点がなく、ページ全体を撮る・印刷するときに下の欄の画像が空になりうる(段階31)
-        return f'<img src="{esc(data_uri(*got))}" alt="{esc(name)}">'
+        return pool.tag(got[0], got[1], name) or f'<div class="nophoto">{esc(h["no_photo"])}</div>'
 
     def credit(got):
         meta = got[0]
@@ -168,10 +174,15 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
 
     def bird_section(heading, names, with_season, note=None):
         names = sorted(names, key=lambda n: (season_state(notes_by_name.get(n), now.month) == "unknown"))     # 時期が確認できたものを先に(安定。あとは今の並び)
+        with_photo = [n for n in names if photo(n)]
+        no_photo = [n for n in names if not photo(n)]
         out = [f'<h2>{esc(heading)}</h2>']
         if note:
             out.append(f'<p class="note">{esc(note)}</p>')
-        out.append(f'<ul class="grid">{"".join(species_card(n, with_season) for n in names)}</ul>')
+        if with_photo:
+            out.append(f'<ul class="grid">{"".join(species_card(n, with_season) for n in with_photo)}</ul>')
+        if no_photo:                                            # 写真が取れなかった種: 「写真なし」の枠にせず、名前だけの行
+            out.append(f'<p class="note">{esc(h["no_photo_names"].format(names=h["others_sep"].join(no_photo)))}</p>')
         return out
 
     def place_card(row, sec):
@@ -213,7 +224,10 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
                 + link_html
                 + "</li>")
 
-    body = [f'<h1>{esc(h["title"])}</h1>', f'<p class="meta">{esc(created_text(now, h))}</p>']
+    body = [f'<h1>{esc(h["title"])}</h1>']
+    if parts.get("conclusion"):                                 # 段階39 A-7: 結論(コードが作った 1 文)を先頭に
+        body.append(f'<p class="lead">{esc(parts["conclusion"])}</p>')
+    body.append(f'<p class="meta">{esc(created_text(now, h))}</p>')
     if parts["origin_line"]:
         body.append(f'<p class="meta">{esc(parts["origin_line"])}</p>')
     if parts["legend"]:
@@ -256,10 +270,11 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
             items.append(f'<li>{esc(line)} ({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')   # 閉じた状態(open なし)
     body.append(f'<p class="note">{esc(h["credit"])}</p>')
+    body.append(f'<p class="lead">{esc(h["next_question"])}</p>')
     return ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             f'<meta http-equiv="Content-Security-Policy" content="{esc(h["csp"])}">\n'
-            f"<title>{esc(h['title'])}</title>\n<style>{CSS}</style>\n</head>\n<body>\n<main>\n" + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
+            f"<title>{esc(h['title'])}</title>\n<style>{CSS}\n{pool.css()}</style>\n</head>\n<body>\n<main>\n" + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
 
 
 def out_path_ok(path):
@@ -284,12 +299,15 @@ def page_cmd(a, now=None):
     entries = guide.build()[0]
     found = guide.find(entries, themes=themes, kinds=kinds, on=on, policy=policy, origin=a.origin)
     origin, line = guide.origin_line_for(a.origin)
-    parts = guide.answer_parts(found, policy, origin_line=line, themes=themes)
-    text = guide.render_answer(found, policy, origin_line=line, themes=themes)
+    parts = guide.answer_parts(found, policy, origin_line=line, themes=themes, on=on)
+    text = guide.render_answer(found, policy, origin_line=line, on=on, themes=themes)
     bad = guide.forbidden_in_answer(text, policy)
     if bad:
         print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)
         return 1
+    if getattr(a, "ensure_photos", True):                       # 段階39 A-3: 写真のキャッシュにない種だけ、確認なしで補う(許可されない環境ではキャッシュだけで作る)
+        names = [n for n in species_in(parts) + [k["kind"] for k in (found.get("kind_notes") or []) if False]]
+        guide_photos.ensure_for_page(names, a.theme, policy)
     table = guide_photos.load_table()
 
     def photo_for(name):
@@ -300,8 +318,9 @@ def page_cmd(a, now=None):
     if not out_path_ok(out):
         print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです(リポジトリの追跡ファイルを実行で変えません)", file=sys.stderr)
         return 2
+    over = (ph["html"].get("by_theme") or {}).get(guide_photos.photo_theme_for(a.theme, policy))
     page = build_page(parts, policy=policy, now=now, kind_notes=found.get("kind_notes") or [], photo_for=photo_for,
-                      retired_urls=set(guide.load_retired(policy)["urls"]), in_table=lambda n: n in table)
+                      retired_urls=set(guide.load_retired(policy)["urls"]), in_table=lambda n: n in table, h_over=over)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding="utf-8", newline="\n")
     print(str(out.resolve()))
