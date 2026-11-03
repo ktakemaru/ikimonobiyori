@@ -177,6 +177,8 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     sent = t["sentence_site" if site_info else "sentence_area"].format(month=month, area=(site_info["name"] + "（" + area + "）") if site_info else area, items="・".join(_item(f) for f in names))
     if nx:
         sent += t["upcoming"].format(month=nxt, items="・".join(f["name"] for f in nx[: _v(p["max_names_in_sentence"])]))
+    if area == "箱根":
+        sent += t["garden_note"]
     out["text"] = sent + t["season_note"] + t["care"] + t["weather"]
     return out
 

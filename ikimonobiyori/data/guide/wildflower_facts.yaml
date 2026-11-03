@@ -5,6 +5,8 @@ sources:
   kpr: {url: 'https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html', publisher: 神奈川県(かながわパークレンジャー開花記録), class: official, read_on: '2026-11-03', page_year: 2026}
   fyk: {url: 'https://fujisawa-yamanokai.com/php/grview.php?recid=hana010Tanzawa', publisher: 藤沢山の会, class: secondary, read_on: '2026-11-03', page_year: null}
   nbw: {url: 'https://nabewari.net/season', publisher: 鍋割山荘, class: secondary, read_on: '2026-11-03', page_year: null}
+  hsk: {url: 'https://hakone-shisseikaen.com/flower_spring/', publisher: 箱根湿生花園, class: official, read_on: '2026-11-03', page_year: null}
+  hkt: {url: 'https://www.hakone.or.jp/8336', publisher: 箱根町観光協会, class: official, read_on: '2026-11-03', page_year: null}
 species:
   キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
   マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
@@ -56,3 +58,34 @@ species:
   ギンラン: {family: ラン科, habitat: 低地から山地の林内, tip: 白い花, caution: ラン科。採らない・林床に入り込まない, protected: true}
   キバナノショウキラン: {family: ラン科, habitat: 山地の落葉樹林下, tip: 腐生植物, caution: ラン科。採らない・林床に入り込まない, protected: true}
   クモキリソウ: {family: ラン科, habitat: 落葉広葉樹の林床や林縁, tip: 淡緑色の花。唇弁が強く反り返る, caution: ラン科。採らない・林床に入り込まない, protected: true}
+  クマガイソウ: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  カキラン: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  ミズチドリ: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  ススキ: {habitat: 仙石原の台ケ岳の山裾の草原, tip: 秋の七草の一つ。毎年3月に山焼きが行われる}
+  ノハナショウブ: {habitat: 湿原, tip: 仙石原湿原を代表する花の一つ}
+  セツブンソウ: {}
+  フクジュソウ: {}
+  ザゼンソウ: {}
+  ミズバショウ: {}
+  カタクリ: {}
+  リュウキンカ: {}
+  シラネアオイ: {}
+  サクラソウ: {}
+  キレンゲツツジ: {}
+  カキツバタ: {}
+  クロユリ: {}
+  ニッコウキスゲ: {}
+  ヤマボウシ: {}
+  クガイソウ: {}
+  ヒメユリ: {}
+  オカトラノオ: {}
+  ヤマアジサイ: {}
+  キキョウ: {}
+  カワラナデシコ: {}
+  レンゲショウマ: {}
+  エゾリンドウ: {}
+  ワレモコウ: {}
+  サクラタデ: {}
+  エンシュウハグマ: {}
+  ヤマラッキョウ: {}
+  ミズトラノオ: {}
