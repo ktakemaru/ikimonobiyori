@@ -4,7 +4,7 @@
 利用者の指示で、実行したのは **0 章(進め方)・3 章(フェーズA)・4 章(フェーズB)だけ**。受け入れテストは 8 章の**質問 1・3・7 の 3 本だけ**。C・D・第 2 部は実行せず、下の「残作業」に書いて止めた。
 
 ## 1. PR とテスト
-- PR・CI: 末尾の「PR の結果」に書く(セッションの最後に確定)。
+- PR・CI: **push できていない**（この環境の権限の判定が `git push -u origin stage39` を拒否した。段階38と同じ。迂回していない）。PR・CI・マージは未実施。ローカルの commit は `stage39` に置いた。
 - テスト: `python -X utf8 -m unittest discover -s tests` → `Ran 1016 tests in 781.998s` → `OK`（stage38 の 983 本 + 新しいテスト 33 本）。
 
 ## 2. 決めたこと(判断を求めずに決めた所と理由)
@@ -62,4 +62,6 @@
 
 ## 7. 利用者がやること
 1. `docs/stage39-claude-md-proposal.md` を読み、`CLAUDE.md`・`AGENTS.md`・`.claude/skills/ikimono-weekend/SKILL.md` に入れてよければ、「提案書の 1〜3 を 3 つのファイルに適用して」と Claude Code に頼む(許可を出す)。
-2. PR の push・マージは、下の「PR の結果」を見て、必要なら指示する。
+2. PowerShell で `cd C:\ikimonobiyori` → `git push -u origin stage39` → `gh pr create --base main --head stage39 --fill` → `gh pr checks --watch`。確かめ方: 最後に全項目が `pass`。この PR は **stage38 の commit も含む**（stage38 は PR が作られていないため）。
+3. ブラウザで PR を「Create a merge commit」でマージ（ブランチは消さない）。確かめ方: PR が「Merged」。
+4. その後 `git checkout main` → `git pull`。
