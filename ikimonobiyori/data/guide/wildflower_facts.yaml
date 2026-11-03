@@ -24,6 +24,13 @@ sources:
   mnc: {url: 'https://www.minnacamera.com/spots/1254', publisher: みんなのカメラ(硫黄岳), class: secondary, read_on: '2026-11-03', page_year: null}
   yhk: {url: 'https://yamahack.com/2001', publisher: YAMA HACK, class: secondary, read_on: '2026-11-03', page_year: 2026}
   hhm: {url: 'https://ja.wikipedia.org/wiki/%E8%8A%B1%E3%81%AE%E7%99%BE%E5%90%8D%E5%B1%B1', publisher: 花の百名山（田中澄江選定。山名の一覧）, class: secondary, read_on: '2026-11-03', page_year: 2026}
+  kvc: {url: 'https://www.kirigamine-vc.jp/nature/nikko-kisuge', publisher: 霧ヶ峰自然保護センター(長野県設置・諏訪観光協会が指定管理), class: official, read_on: '2026-11-03', page_year: 2026}
+  kmy: {url: 'https://summer.kurumayama-skypark.com/blooming-forecast2', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
+  kmys: {url: 'https://summer.kurumayama-skypark.com/flowers/flowers-spring', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
+  kmyn: {url: 'https://summer.kurumayama-skypark.com/flowers/flowers-summer', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
+  kmya: {url: 'https://summer.kurumayama-skypark.com/flowers/flowers-autumn', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
+  ozf: {url: 'https://oze-fnd.or.jp/oza/a-sp/', publisher: 尾瀬保護財団, class: official, read_on: '2026-11-03', page_year: null}
+  ykt: {url: 'http://www.yamanashi-kankou.jp/fujisan/tanosimo/tanosimo001.html', publisher: やまなし観光推進機構(富士の国やまなし観光ネット), class: official, read_on: '2026-11-03', page_year: 2026}
 species:
   キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
   マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
@@ -91,7 +98,7 @@ species:
   キレンゲツツジ: {}
   カキツバタ: {}
   クロユリ: {}
-  ニッコウキスゲ: {}
+  ニッコウキスゲ: {caution: 'ロープの内側に入らない。植物は踏みつけに弱い（霧ヶ峰自然保護センター）', tip: '1つの花は1日でしぼむが、1本の花茎に10前後のつぼみがつき、順に開く'}
   ヤマボウシ: {}
   クガイソウ: {}
   ヒメユリ: {}

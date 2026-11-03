@@ -169,7 +169,7 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
         out["conclusion"] = t["preparing"]
         out["caveats"] = [t["weather"]]
         return out
-    rows = [r for r in data["rows"] if r["area"] == area and (not site_info or not r.get("sites") or site_info["id"] in r["sites"])]
+    rows = [r for r in data["rows"] if r["area"] == area and (not site_info or (not r.get("area_only") and (not r.get("sites") or site_info["id"] in r["sites"])))]
     if partial:
         out["caveats"].append(t["partial_note"])
     nxt = (month + _v(p["upcoming_months"]) - 1) % 12 + 1
