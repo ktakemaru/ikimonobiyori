@@ -421,6 +421,8 @@ wildflower:
   site_elevation_floor_margin_m: {value: 0, source: "仮置き(段階40)。地点の標高が、花の標高の下限に届かない花は、その地点の出力に入れない（下限の記載があるときだけ）", provisional: true}
   upcoming_months: {value: 1, source: "仮置き(段階40)。『これから』に出す先の月数", provisional: true}
   elevation_shift_note: "標高が高いほど、花の時期は遅れます。"          # 標高ごとの遅れの数値は、出どころのあるときだけ書く（今は出どころなし）
+  words: [野草, 山野草, 高山植物, お花畑, 高山の花, 山の花]          # 話題として登録する語（guide theme が wildflower を指す）
+  command_hint: "python -X utf8 -m ikimonobiyori.guide wildflower --area <山域> | --site <地点ID> [--month N] [--json]"
   areas_file: wildflower_areas.yaml
   facts_file: wildflower_facts.yaml
   calendar_file: wildflower_calendar.yaml

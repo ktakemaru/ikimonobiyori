@@ -1448,6 +1448,10 @@ def main(argv=None, http_get=None, http_bytes=None):
 
     if a.cmd == "theme":
         got = theme_of(a.word, policy)
+        wf = policy.get("wildflower") or {}
+        if not got and a.word in (wf.get("words") or []):           # 段階40: 野草・高山植物の話題は guide wildflower で答える（山・山域と月で引く）
+            _dump({"word": a.word, "themes": None, "wildflower": True, "command": wf["command_hint"]})
+            return 0
         _dump({"word": a.word, **(got or {"themes": None})})
         return 0 if got else 1
     if a.cmd == "record-candidate":

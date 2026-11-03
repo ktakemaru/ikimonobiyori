@@ -101,3 +101,17 @@ class Output(unittest.TestCase):
         r = W.query(area="丹沢", month=5, with_photo=False)
         for f in r["flowers"]:
             self.assertEqual(f["grade"] == "established", f["source_count"] >= 2)
+
+
+class Audit(unittest.TestCase):
+    def test_audit_finds_no_problems_and_lists_preparing_areas(self):
+        r = W.audit()
+        self.assertEqual(r["problems"], [])
+        self.assertIn("北アルプス", r["preparing"])
+        self.assertGreater(r["areas"]["丹沢"]["rows"], 20)
+
+    def test_topic_words_point_to_the_command(self):
+        from ikimonobiyori import guide
+        wf = guide.load_policy()["wildflower"]
+        for w in ("野草", "山野草", "高山植物", "お花畑"):
+            self.assertIn(w, wf["words"])

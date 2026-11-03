@@ -190,3 +190,34 @@ def wildflower_cmd(a):
     else:
         print(r["text"])
     return 0
+
+
+def audit():
+    """野草の点検(通信しない・書き込まない): 出どころのない行・標高と花期の矛盾・保護種の説明の欠け・山域ごとの被覆率と定評/仮の内訳。"""
+    d = load()
+    src, sp = d["facts"]["sources"], d["facts"]["species"]
+    problems, by_area = [], {}
+    for r in d["rows"]:
+        a = by_area.setdefault(r["area"], {"rows": 0, "species": set(), "months": set(), "established": 0, "tentative": 0, "publishers": set()})
+        a["rows"] += 1
+        a["species"].add(r["name"])
+        a["months"].update(m for m in range(1, 13) if month_active(r["bloom"], m))
+        a[grade(r, src)] += 1
+        a["publishers"].update(independent_publishers(r, src))
+        if not r.get("src") or any(s not in src for s in r["src"]):
+            problems.append(f"{r['area']} {r['name']}: 出どころがない")
+        if r.get("elev") and r["elev"][0] is not None and r["elev"][1] is not None and r["elev"][0] > r["elev"][1]:
+            problems.append(f"{r['area']} {r['name']}: 標高の範囲が逆")
+        if sp.get(r["name"], {}).get("protected") and not sp[r["name"]].get("caution"):
+            problems.append(f"{r['name']}: 保護種に注意の文がない")
+        if sp.get(r["name"], {}).get("protected") and r.get("note") and any(w in r["note"] for w in ("山", "林道", "尾根", "沢")):
+            problems.append(f"{r['area']} {r['name']}: 保護種の行に場所を思わせる語がある")
+    cover = {k: {"rows": v["rows"], "species": len(v["species"]), "months_covered": len(v["months"]), "established": v["established"],
+                 "tentative": v["tentative"], "publishers": len(v["publishers"])} for k, v in by_area.items()}
+    return {"problems": problems, "areas": cover, "preparing": [k for k, v in d["areas"].items() if v["status"] != "ready"]}
+
+
+if __name__ == "__main__":
+    r = audit()
+    print(json.dumps(r, ensure_ascii=False, indent=1))
+    raise SystemExit(1 if r["problems"] else 0)
