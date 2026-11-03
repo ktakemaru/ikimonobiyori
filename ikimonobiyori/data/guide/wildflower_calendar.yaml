@@ -690,7 +690,7 @@ rows:
   name: ミズチドリ
   bloom: 7
   src: [kmyn]
-  note: 花ページの花期（保護種のため山域まで）
+  note: 花ページの花期（保護種のため地点は出さない）
 - area: 霧ヶ峰
   sites: [m043]
   name: オオバギボウシ
