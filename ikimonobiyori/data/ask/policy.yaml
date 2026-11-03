@@ -46,7 +46,7 @@ answer_check:
                    fetch_notes, provisional, 作業フォルダ, materials, facts, verify, prepare, calls.json, plan.json, records.json, jsonl, IKIMONOBIYORI]
   # 段階39 B-1: facts を持たない経路の検査(generic_check)。検査・記録の事情を利用者に見せない。聞き返しだけの答えを落とす
   generic:
-    process_phrases: [検査器, 通りませんでした, 通らなかった, 検査を実行, 記録を実行, 記録していません, 実行していません, 実行しました, 通らない文, 作業メモ]
+    process_phrases: [検査に合格, 合格しました, テストは, 新しい記録が, 件増えました, 検査器, 通りませんでした, 通らなかった, 検査を実行, 記録を実行, 記録していません, 実行していません, 実行しました, 通らない文, 作業メモ]
     typos: [出どろ, 出ところ, 出どこら]                      # 出力の項目名の誤字(「出どころ」の抜け・書き間違い)
     candidate_markers: ['^\s*[①-⑩]', '^\s*\d+\.\s', '^\s*- \S']      # 候補の行(①②、1. 、- 名所)
     min_candidates: 3
@@ -80,7 +80,7 @@ answer_check:
   # 段階38(指示書 3-4): 同じ言い方を答えの中で繰り返さない(「公式ではない」は補足に1回まとめる。各行では出典名だけ)
   max_repeats: {公式ではない: 1}
   # 段階38(指示書 3-4): 利用者への返事の全文(答えの本文の外に付け足した文も)の検査。作業・開発の説明を落とす
-  reply_terms: [今回の作業, 作業で実行, 実行したこと, リポジトリ, 追跡ファイル, 保存先, 単体テスト, "(?<![A-Za-z])git(?![A-Za-z])", 変更していない, 変更していません, 書き込み先, 手順を]
+  reply_terms: [検査に合格, 合格しました, 合格です, テストは, 新しい記録が, 件増えました, 今回の作業, 作業で実行, 実行したこと, リポジトリ, 追跡ファイル, 保存先, 単体テスト, "(?<![A-Za-z])git(?![A-Za-z])", 変更していない, 変更していません, 書き込み先, 手順を]
 
 # 段階38(利用者の決定 2026-11-01。指示書 2-1): 単体で iNaturalist を取りに行くときの小さな上限(ikimonobiyori/netbudget.py)。
 # 1 回の実行の上限は observations の inat_refresh.max_requests_per_question(集計)と guide の photos.max_requests_per_run(写真)。
@@ -96,6 +96,11 @@ park_page:
   old_record_years: {value: 10, source: "ユーザー指示(段階39 A-7)。この年数以上前の記録は根拠に使わない", provisional: false}
   rare_max_count: {value: 2, source: "仮置き(段階39 A-7)。公園の範囲の記録の件数がこれ未満で、かつ rare_max_lift 未満の鳥は『記録が少ない鳥』としておすすめの鳥に入れない（2026-11-03 の実測: 公園ごとの件数は 1〜5）", provisional: true}
   rare_max_lift: {value: 1.2, source: "仮置き(段階39 A-7)。observations の park_birds.seasonality.lift_min と同じ値。この時期らしい鳥（これ以上）は件数が少なくても『まれ』にしない", provisional: true}
+  answer_parse:                                          # 段階39 A-7: 答えの文章から結論・順位・避ける場所・確かさの補足を取り出す
+    rank_re: '^[①-⑩]\s*(.+)$'
+    avoid_title: 避けたほうがよい場所
+    confidence_title: 確かさの補足
+    section_heads: [おすすめ]
   aliases: {リュウキュウサンショウクイ: サンショウクイ}      # 亜種・別名は種に丸める（段階39 A-7。指示書 F7: 神奈川では想定しにくい亜種名）
   max_parks: {value: 5, source: "表示の件数の設計値(答えのおすすめ3件以上を含む)", provisional: false}
   csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
@@ -125,4 +130,5 @@ park_page:
     source: "{kind}・{when}・{publisher}"
     source_nodate: "{kind}・{publisher}"
     care_heading: 観察のマナー
+    confidence_heading: 確かさの補足
     footer: "写真提供: iNaturalist / Wikimedia Commons。鳥の記録: 公園の観察の記録と iNaturalist の過去の記録。"
