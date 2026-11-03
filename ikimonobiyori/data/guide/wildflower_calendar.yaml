@@ -143,7 +143,7 @@ rows:
   name: ヤマユリ
   bloom: 7中-8上
   src: [nbw]
-  elev: [0, 900]
+  elev: [null, 900]
   note: '山荘の発信: 標高800〜900m以下でよく見かける'
 - area: 丹沢
   name: マルバダケブキ

@@ -30,7 +30,8 @@ class Data(unittest.TestCase):
             W.parse_bloom(r["bloom"])
             if r.get("elev"):
                 lo, hi = r["elev"]
-                self.assertLessEqual(lo, hi, r)
+                if lo is not None and hi is not None:
+                    self.assertLessEqual(lo, hi, r)
         for a in self.d["areas"].values():
             for s in a["sites"]:
                 self.assertIn(s, sites)
@@ -115,3 +116,10 @@ class Audit(unittest.TestCase):
         wf = guide.load_policy()["wildflower"]
         for w in ("野草", "山野草", "高山植物", "お花畑"):
             self.assertIn(w, wf["words"])
+
+
+class UnmappedSite(unittest.TestCase):
+    def test_a_site_without_an_area_is_preparing_not_an_error(self):
+        r = W.query(site="m001", month=7, with_photo=False)
+        jsonschema.validate(r, SCHEMA)
+        self.assertEqual((r["status"], r["flowers"]), ("preparing", []))

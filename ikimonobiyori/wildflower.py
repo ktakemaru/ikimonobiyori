@@ -138,8 +138,12 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
         s = sites[site]
         site_info = {"id": s["id"], "name": s["name"], "elevation_m": s["elevation_m"]}
         area = area_of_site(site, data["areas"])
-    if not area:
-        raise ValueError("--site か --area が要ります(site が山域に結ばれていないときは --area を使う)")
+    if not area and not site_info:
+        raise ValueError("--site か --area が要ります")
+    if not area:                                           # 地点はあるが、まだどの山域にも結ばれていない
+        t = _pol()["text"]
+        return {"schema": SCHEMA_OUT, "site": site_info, "area": t["no_area"], "month": month, "status": "preparing", "flowers": [], "upcoming": [],
+                "season_note": t["season_note"], "caveats": [t["weather"]], "text": t["preparing"]}
     if area not in data["areas"]:
         raise ValueError(f"山域 {area} は wildflower_areas.yaml にありません")
     meta = data["areas"][area]
