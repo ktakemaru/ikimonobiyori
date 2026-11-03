@@ -28,7 +28,7 @@ class Overview(unittest.TestCase):
     def test_not_now_leads_with_the_usual_season(self):
         r = W.overview(month=11)
         self.assertFalse(r["alpine_now"])
-        self.assertTrue(r["conclusion"].startswith("いまは高山の花の見ごろではありません。例年の見ごろは7月〜8月です"))
+        self.assertTrue(r["conclusion"].startswith("いまは高山の花の見ごろではありません。例年の見ごろは6月〜8月です"))   # 段階44: 立山のチングルマ・クロユリ（6月から）を足したため 7月〜8月 → 6月〜8月
         for place in ("乗鞍岳", "燕岳", "横岳", "硫黄岳"):
             self.assertIn(place, r["conclusion"])
 
@@ -40,13 +40,14 @@ class Overview(unittest.TestCase):
     def test_species_cover_alpine_sites_and_areas(self):
         r = W.overview(month=11)
         alpine = {e["name"] for e in r["species"] if e["section"] == "alpine"}
-        self.assertEqual(alpine, {"コマクサ", "ハクサンイチゲ", "クロユリ", "ミヤマキンポウゲ", "メイゲツソウ"})
+        self.assertEqual(alpine, {"コマクサ", "ハクサンイチゲ", "クロユリ", "ミヤマキンポウゲ", "メイゲツソウ",
+                                  "イワカガミ", "ウルップソウ", "チングルマ", "タテヤマリンドウ", "ミヤマキンバイ", "ツクモグサ"})   # 段階44: 立山・白馬岳・北岳の行を足した
         low_places = {pl["place"] for e in r["species"] if e["section"] == "lowland" for pl in e["places"]}
         self.assertIn("丹沢", low_places)
         # 種ごとに 1 件。データのない種（花暦にない種）は作らない
         names = [(e["section"], e["name"]) for e in r["species"]]
         self.assertEqual(len(names), len(set(names)))
-        self.assertNotIn("チングルマ", {e["name"] for e in r["species"]})
+        self.assertNotIn("キタダケソウ", {e["name"] for e in r["species"]})      # 段階44: チングルマは立山の行（公式）を足したので、花暦にない種の例を変えた
 
     def test_cli_without_area_or_site_gives_the_overview(self):
         class A:

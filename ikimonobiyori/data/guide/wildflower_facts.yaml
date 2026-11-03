@@ -31,6 +31,9 @@ sources:
   kmya: {url: 'https://summer.kurumayama-skypark.com/flowers/flowers-autumn', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
   ozf: {url: 'https://oze-fnd.or.jp/oza/a-sp/', publisher: 尾瀬保護財団, class: official, read_on: '2026-11-03', page_year: null}
   ykt: {url: 'http://www.yamanashi-kankou.jp/fujisan/tanosimo/tanosimo001.html', publisher: やまなし観光推進機構(富士の国やまなし観光ネット), class: official, read_on: '2026-11-03', page_year: 2026}
+  ykn: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=4108', publisher: 山と溪谷オンライン(山岳・風景写真の教科書 第15回 白馬岳のお花畑を撮る), class: secondary, read_on: '2026-11-04', page_year: 2025}
+  arf: {url: 'https://alpen-route.com/enjoy_navi/field_note/alpine_plant.html', publisher: 立山黒部アルペンルート(立山黒部貫光), class: official, read_on: '2026-11-04', page_year: null}
+  yh2: {url: 'https://yamahack.com/2396/2', publisher: YAMA HACK(お花畑が広がる山おすすめ7座), class: secondary, read_on: '2026-11-04', page_year: 2026}
 species:
   キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
   マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
@@ -171,3 +174,9 @@ species:
   アキノキリンソウ: {}
   ハクサンコザクラ: {}
   メイゲツソウ: {}
+  ツクモグサ: {habitat: 山頂付近の稜線, tip: 白馬岳では山頂付近の稜線で咲く（山と溪谷オンライン）, caution: 分布が限られる花。花は採らず、登山道から出ない}
+  ウルップソウ: {tip: 本州では白馬岳から五竜岳と、八ヶ岳・横岳周辺に限られる（山と溪谷オンライン）, caution: 分布が限られる花。花は採らず、登山道から出ない}
+  チングルマ: {}
+  ミヤマキンバイ: {}
+  イワカガミ: {}
+  タテヤマリンドウ: {}
