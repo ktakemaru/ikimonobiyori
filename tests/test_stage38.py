@@ -359,8 +359,10 @@ class Page(Base):
         self.assertNotIn("コガモ", mori)
         self.assertIn("コガモ", ike)
         self.assertNotIn("ジョウビタキ", ike)
-        self.assertIn('src="data:image/jpeg;base64,', mori)
-        self.assertIn("写真なし", mori)                                    # トビなど写真のない鳥
+        self.assertIn('background-image: url("data:image/jpeg;base64,', self.html)         # 段階39 A-6: 写真は CSS に 1 回だけ。カードはクラスで参照する
+        self.assertIn('class="ph ph', mori)
+        self.assertNotIn("<img", self.html)
+        self.assertIn("写真が取れなかった鳥", mori)                        # トビなど写真のない鳥は枠にせず名前だけの行（段階39 A-7）
         self.assertTrue(self.doc["ok"], self.doc["errors"])
 
     def test_credit_license_link_and_the_one_note(self):

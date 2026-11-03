@@ -38,10 +38,20 @@ answer_check:
                       あとは答えを書くだけ, 答えを書くだけ, 答えを書きます, 答えを書いて, 取りに行っていません, 取りに行きません, 記録しました, 記録します,
                       記録してから, 実行しました, 実行していません, 動かしました]
   # 段階37(指示書 2-3): 開発・作業の言葉(正規表現。「フォトコンテスト」「ドレスコード」のような語の一部は数えない)
-  dev_terms: ["(?<!コン)テスト", "(?<![ドレスバー])コード", 作業メモ, 記録済み, スキル, コマンド, 検査, 実装, ゴールデン, 作業の経過, "(?<![A-Za-z])Python(?![A-Za-z])"]
+  dev_terms: ["(?<!コン)テスト", "(?<![ドレスバー])コード", 作業メモ, 記録済み, スキル, コマンド, 検査, 実装, ゴールデン, 作業の経過, "(?<![A-Za-z])Python(?![A-Za-z])",
+              # 段階39 B-2: コマンド名・設定の名前・作業の報告の言い方(全経路で答えに出さない)
+              "guide find", record-candidate, policy.yaml, "ask verify", "ask record", "(?<![A-Za-z])ask(?![A-Za-z])", テーマの表, 提案として報告, コードは変更, final.txt, 作業フォルダ]
   # 内部用語(英字の語は前後が英字でないときだけ)
   internal_terms: [snapshot, スナップショット, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary,
                    fetch_notes, provisional, 作業フォルダ, materials, facts, verify, prepare, calls.json, plan.json, records.json, jsonl, IKIMONOBIYORI]
+  # 段階39 B-1: facts を持たない経路の検査(generic_check)。検査・記録の事情を利用者に見せない。聞き返しだけの答えを落とす
+  generic:
+    process_phrases: [検査器, 通りませんでした, 通らなかった, 検査を実行, 記録を実行, 記録していません, 実行していません, 実行しました, 通らない文, 作業メモ]
+    typos: [出どろ, 出ところ, 出どこら]                      # 出力の項目名の誤字(「出どころ」の抜け・書き間違い)
+    candidate_markers: ['^\s*[①-⑩]', '^\s*\d+\.\s', '^\s*- \S']      # 候補の行(①②、1. 、- 名所)
+    min_candidates: 3
+    unanswerable_ok: [お答えできません]                    # 検索しても独立した出どころが 1 件も見つからないときだけ(理由と探した言葉を書く)
+    ask_words: [ください, でしょうか, ですか, 教えて]
   # 状態の語(文中の名所の記録の状態にあること)
   state_words: [青葉, 色づき始め, 見頃過ぎ, 落葉, 見頃前, 満開, 分咲き, そろそろ見ごろ]
   # 「見頃です」のような、今の状態として見頃と言う書き方(記録が見頃の名所がないと落とす)
@@ -81,6 +91,12 @@ net:
 # 段階38(指示書 3-3): 公園ごとに見られる鳥の写真つきページ(ikimonobiyori/park_page.py)。置き場所は IKIMONOBIYORI_DATA_DIR の下の guide/pages/
 park_page:
   file: "birds-parks-{date}.html"
+  max_embed_bytes: {value: 2000000, source: "ユーザー指示(段階39 A-6)。ページに埋め込む写真の合計（base64 後）の目安。超える新しい写真は載せず名前だけの行に回す（縮小・再圧縮はしない）", provisional: true}
+  conclusion_max: {value: 3, source: "仮置き(段階39 A-7)。結論の 1 文に並べる公園の数", provisional: true}
+  old_record_years: {value: 10, source: "ユーザー指示(段階39 A-7)。この年数以上前の記録は根拠に使わない", provisional: false}
+  rare_max_count: {value: 2, source: "仮置き(段階39 A-7)。公園の範囲の記録の件数がこれ未満で、かつ rare_max_lift 未満の鳥は『記録が少ない鳥』としておすすめの鳥に入れない（2026-11-03 の実測: 公園ごとの件数は 1〜5）", provisional: true}
+  rare_max_lift: {value: 1.2, source: "仮置き(段階39 A-7)。observations の park_birds.seasonality.lift_min と同じ値。この時期らしい鳥（これ以上）は件数が少なくても『まれ』にしない", provisional: true}
+  aliases: {リュウキュウサンショウクイ: サンショウクイ}      # 亜種・別名は種に丸める（段階39 A-7。指示書 F7: 神奈川では想定しにくい亜種名）
   max_parks: {value: 5, source: "表示の件数の設計値(答えのおすすめ3件以上を含む)", provisional: false}
   csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
   # 利用者への返事に添えるページの場所の 1 行(verify --reply はこの 1 行だけを検査から外す)
@@ -95,6 +111,14 @@ park_page:
     hours: "開園: {text}"
     park_link: "公園のページ: "
     no_photo: 写真なし
+    conclusion: "{dates}のおすすめは、{names}です。"
+    conclusion_sep: "・"
+    nophoto_names: "写真が取れなかった鳥: {names}"
+    rare_names: "この時期の記録が少ない鳥: {names}"
+    names_sep: "、"
+    avoid_heading: 避けたほうがよい場所
+    avoid_old: "{name}: 最新の記録が{year}年と古く、今の様子は分かりません。"
+    next_question: "ほかの日や出発地でも調べられます。日にちと出発地を教えてください。"
     credit: "写真: {author}・{license}"
     photo_link: 写真のページ(iNaturalist)
     photo_link_commons: ファイルのページ(Wikimedia Commons)

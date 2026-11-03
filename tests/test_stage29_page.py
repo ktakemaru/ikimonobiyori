@@ -195,18 +195,19 @@ class Photos(unittest.TestCase):
         self.es = entries(("試験の沼", [U1, U2], KINDS))
         self.found, self.parts = parts_for(self.es)
 
-    def test_species_card_without_photo_says_so_and_never_borrows_another_image(self):
+    def test_species_without_photo_is_a_names_only_line_and_never_borrows_another_image(self):
+        # 段階39 A-7: 写真がない種は「写真なし」の枠にせず、名前だけの行（イラストにもしない）
         page = page_for(self.parts, self.found)
-        self.assertIn(P["photos"]["html"]["no_photo"], parse(page).text)
-        self.assertEqual([t for t in parse(page).tags if t[0] == "img"], [])
-        self.assertIn("カワセミ", parse(page).text)
+        self.assertIn(P["photos"]["html"]["no_photo_names"].split("{")[0], " ".join(parse(page).text))
+        self.assertEqual([t for t in parse(page).tags if t[0] in ("img", "svg")], [])
+        self.assertNotIn('class="ph ph', page)
+        self.assertIn("カワセミ", " ".join(parse(page).text))
 
     def test_photo_is_embedded_as_data_uri_with_credit_and_license_and_link(self):
         page = page_for(self.parts, self.found, photos={"カワセミ": (META, JPEG)})
-        imgs = [a for t, a in parse(page).tags if t == "img"]
-        self.assertTrue(imgs)
-        for a in imgs:
-            self.assertTrue(a["src"].startswith("data:image/jpeg;base64,"), a["src"][:30])
+        self.assertEqual([a for t, a in parse(page).tags if t == "img"], [])                       # 段階39 A-6: 写真は CSS に 1 回だけ（data: URI）。カードはクラスで参照する
+        self.assertIn('background-image: url("data:image/jpeg;base64,', page)
+        self.assertTrue([a for t, a in parse(page).tags if t == "div" and "ph" in (a.get("class") or "").split()])
         text = " ".join(parse(page).text)
         self.assertIn("(c) 撮影者, some rights reserved (CC BY)", text)
         self.assertIn("CC BY", text)
@@ -254,11 +255,11 @@ class Safety(unittest.TestCase):
 
     def test_images_are_only_data_uris(self):
         page = self.evil_page()
-        imgs = [a for t, a in parse(page).tags if t == "img"]
-        self.assertTrue(imgs)
-        self.assertTrue(all(a["src"].startswith("data:") for a in imgs))
-        self.assertNotRegex(page, r'<img[^>]+src="https?:')
-        self.assertNotRegex(page, r"url\(")
+        self.assertEqual([a for t, a in parse(page).tags if t == "img"], [])
+        urls = re.findall(r"url\(([^)]*)\)", page)
+        self.assertTrue(urls)
+        self.assertTrue(all(u.startswith('"data:image/') for u in urls), urls)                   # 段階39: 画像の URL は data: だけ（外部の URL を書かない）
+        self.assertNotRegex(page, r"https?://[^\s\"']*\.(jpe?g|png|webp)")
 
     def test_links_are_http_https_only_with_noopener(self):
         page = self.evil_page()

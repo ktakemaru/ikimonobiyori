@@ -115,7 +115,8 @@ class ReferenceCountDisplay(unittest.TestCase):
         self.assertIn("（参照数 3）", text)                     # 発行元 3 件(A・るるぶ・ウォーカープラス)
         self.assertIn("（参照数 1）", text)
         self.assertEqual(text.count(P["reference_count"]["legend"]), 1)
-        self.assertTrue(text.rstrip().endswith(P["reference_count"]["legend"]))
+        self.assertTrue(text.rstrip().endswith(P["answer"]["next_question"]))             # 段階39 B-3: 凡例のあとに出典・好みの質問が続く（質問が最後）
+        self.assertLess(text.index(P["reference_count"]["legend"]), text.index(P["answer"]["next_question"]))
 
     def test_no_legend_when_no_places(self):
         text = guide.render_answer({"recommend": []}, P)

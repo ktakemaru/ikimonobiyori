@@ -104,7 +104,7 @@ class BirdGroups(unittest.TestCase):
         es = TP.entries(("試験の沼", [TP.U1, TP.U2], {u: {"kinds": names} for u in (TP.U1, TP.U2)}))
         found, parts = TP.parts_for(es)
         order = guide_page.species_in(parts)
-        page = guide_page.build_page(parts, policy=P, now=TP.NOW, kind_notes=[note("ニ", "10-01", "10-31")], photo_for=lambda n: None)
+        page = guide_page.build_page(parts, policy=P, now=TP.NOW, kind_notes=[note("ニ", "10-01", "10-31")], photo_for=lambda n: (TP.META, TP.JPEG))
         sec = self.sections(page)
         self.assertEqual(sec[H_["headings"]["birds"]], ["ニ"])
         self.assertEqual(sec[H_["headings"]["birds_unknown"]], [n for n in order if n != "ニ"])
@@ -265,7 +265,7 @@ class WholePage(unittest.TestCase):
             for r in sec["rows"]:
                 card = cards[(sec["heading"], r["name"])]
                 for k in r["entry"]["kinds"]:
-                    alt = f'alt="{k["kind"]}"'
+                    alt = f'aria-label="{k["kind"]}"'
                     if k["shown"]:
                         self.assertIn(alt, card, (sec["heading"], r["name"], k["kind"]))
                         seen_sections.add(sec["key"])
@@ -274,9 +274,12 @@ class WholePage(unittest.TestCase):
         self.assertIn("no_season", seen_sections)                                    # 「時期を確かめられていない」の欄にも出る
 
     def test_no_external_image_url_no_lazy_loading_no_script(self):
-        srcs = re.findall(r'<img [^>]*src="([^"]*)"', self.page)
-        self.assertGreater(len(srcs), 10)
+        srcs = re.findall(r'url\("([^"]*)"\)', self.page)                       # 段階39 A-6: 写真は CSS の背景（data: URI）に 1 回だけ
+        refs = re.findall(r'class="ph ph\d+"', self.page)
+        self.assertGreater(len(refs), 10)
+        self.assertLessEqual(len(srcs), len(refs))
         self.assertTrue(all(s.startswith("data:image/") for s in srcs))
+        self.assertNotIn("<img", self.page)
         self.assertNotIn("loading=", self.page)
         self.assertNotIn("<script", self.page)
         self.assertIn("default-src &#x27;none&#x27;; img-src data:", self.page)

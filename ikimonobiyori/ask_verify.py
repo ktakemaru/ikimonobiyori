@@ -419,3 +419,42 @@ def page_check(lines, facts, rules=None, gazetteer=()):
         for _j, sen in split_sentences(line):
             sents.append({"line": i, "text": sen, "errors": check_sentence(sen, mat)})
     return {"ok": all(not x["errors"] for x in sents), "sentences": sents, "answer_errors": []}
+
+
+def generic_check(text, rules=None):
+    """段階39 B-1: facts を持たない経路(桜・梅などの guide find の出力、検索だけで答える経路、ページ)の答えの検査。
+    すべての経路が、出す前にこれか check を通す。落とすもの: 作業・開発の言葉(dev_terms・internal_terms・reply_terms)、作業の経過の文(forbidden_phrases)、
+    検査・記録の事情(process_phrases)、聞き返しだけで終わる答え(候補が min_candidates 件未満で、お答えできない旨もない)。
+    → {"ok", "errors": [{"code", "detail", "line"}]}。URL は検査から外す(出典の URL に語が含まれるため)。"""
+    rules = rules or load_rules()
+    g = rules["generic"]
+    errs = []
+    for i, line in enumerate(text.splitlines()):
+        t = URL_RE.sub(" ", _n(line))
+        for code, key in (("forbidden_phrase", "forbidden_phrases"), ("process_phrase", None)):
+            pats = rules.get(key) if key else g["process_phrases"]
+            for ph in pats or []:
+                if ph in t:
+                    errs.append({"code": code, "detail": ph, "line": i + 1})
+        for key in ("dev_terms", "reply_terms"):
+            for pat in rules.get(key) or []:
+                if re.search(pat, t):
+                    errs.append({"code": "dev_term", "detail": pat, "line": i + 1})
+        for term in rules.get("internal_terms") or []:
+            if re.search(rf"(?<![A-Za-z0-9_]){re.escape(term)}(?![A-Za-z0-9_])" if term.isascii() else re.escape(term), t, flags=re.IGNORECASE):
+                errs.append({"code": "internal_term", "detail": term, "line": i + 1})
+    for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
+        if pat in text:
+            errs.append({"code": "typo", "detail": pat, "line": 0})
+    n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
+    if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):
+        asks = any(w in text for w in g["ask_words"])
+        errs.append({"code": "ask_back_only" if asks else "too_few_candidates",
+                     "detail": f"候補が {n_cand} 件(下限 {g['min_candidates']})。聞き返しだけで終えず、見つかった範囲の候補と出どころを出す" if asks else f"候補が {n_cand} 件(下限 {g['min_candidates']})"})
+    return {"ok": not errs, "errors": errs, "candidates": n_cand}
+
+
+def generic_strip(text, result):
+    """generic_check が落とした行を除いた答え(利用者に見せない文を出さない)。"""
+    bad = {e["line"] for e in result["errors"] if e.get("line")}
+    return "\n".join(l for i, l in enumerate(text.splitlines(), 1) if i not in bad) + "\n"

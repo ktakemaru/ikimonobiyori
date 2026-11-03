@@ -52,7 +52,8 @@ class WholeAnswerFromCode(unittest.TestCase):
         rows = {ln for ln in text.splitlines() if " — " in ln}
         checked = 0
         for key in ("recommend", "upcoming", "other_season", "no_season", "reference"):
-            for e in found[key]:
+            shown = found[key][: P["answer"]["reference_max"]["value"]] if key == "reference" else found[key]       # 段階39 B-3: 参考の欄は最大 reference_max 件（残りは「ほか N 件」）
+            for e in shown:
                 line = next(r for r in rows if e["name"] in r.split(" — ")[0])
                 after = line.split(" — ", 1)[1]
                 m = re.search(r"種類: ([^、]+)", after)
@@ -78,7 +79,8 @@ class WholeAnswerFromCode(unittest.TestCase):
         text = guide.render_answer(found, P, themes=themes)
         legend = P["reference_count"]["legend"]
         self.assertEqual(text.count(legend), 1)
-        self.assertTrue(text.rstrip().endswith(legend))
+        self.assertTrue(text.rstrip().endswith(P["answer"]["next_question"]))             # 段階39 B-3: 凡例のあとに出典・好みの質問が続く（質問が最後）
+        self.assertLess(text.index(legend), text.index(P["answer"]["next_question"]))
         notes = text.split(f"## {P['answer']['headings']['notes']}\n", 1)[1].split("\n\n", 1)[0].splitlines()
         self.assertEqual(len(notes), 2)                                   # 野鳥と冬鳥の 1 行ずつ(注意は 2 行まで)
         self.assertEqual(guide.forbidden_in_answer(text, P), [])

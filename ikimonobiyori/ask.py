@@ -309,12 +309,17 @@ class Flow:
         cfg = load_config()
         table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
         review = guide_photos.load_review(self.env) if self.env else guide_photos.load_review()
+        from datetime import date as _date
+        none_cache = guide_photos.load_none(self.env) if self.env else guide_photos.load_none()      # 段階39 A-3: 取れなかった種は探し直さない（負のキャッシュ）
+        today = self.now.date() if hasattr(self.now, "date") else _date.today()
         rows, need_search, seen = [], [], []
         for c in park_page.parks(facts_doc, self.policy["park_page"]):
             for b in c["park_birds"]:
                 if b["name"] in seen:
                     continue
                 seen.append(b["name"])
+                if b["name"] in none_cache and guide_photos.none_active(none_cache[b["name"]], today):
+                    continue
                 t = table.get(b["name"])
                 tid = b.get("taxon_id") or (t or {}).get("taxon_id")
                 sci = b.get("scientific_name") or (t or {}).get("scientific")
@@ -341,6 +346,8 @@ class Flow:
                 entered, _no, r1 = inat_photos.build_table(need_search, http_get=hg, ph=ph, max_requests=max(b.left(), 1), **kw)
                 rows += [{k: e[k] for k in ("name", "scientific", "taxon_id")} for e in entered]
                 rep_["searched"] = [e["name"] for e in entered]
+                if entered:                                                                # 段階39: 表に入った行は手元の書き出しに残す（次の実行で探し直さない）
+                    guide_photos.add_to_table(entered, "野鳥", self.env) if self.env else guide_photos.add_to_table(entered, "野鳥")
                 if r1["status"] != "ok":
                     rep_["status"] = r1["status"]
             todo = [r for r in rows if not has(r["taxon_id"])]
@@ -371,6 +378,12 @@ class Flow:
             if getter is not None:
                 getter.close()
         found = {r["name"]: r["taxon_id"] for r in rows}
+        tried_none = [n for n in seen if n not in found and n in need_search and n not in rep_["searched"] and rep_["status"] == "ok"]             + [r["name"] for r in rows if not has(r["taxon_id"]) and r["name"] in rep_["not_used"]]
+        if tried_none:                                                                  # 取りに行って使える写真がなかった種だけ記録する（上限・停止で届かなかった種は記録しない）
+            nc = dict(none_cache)
+            for n in tried_none:
+                nc[n] = {"on": today.isoformat(), "reason": rep_["not_used"].get(n, "対応表に入らなかった")}
+            guide_photos._save_none(nc, self.env) if self.env else guide_photos._save_none(nc)
         out = {"ran": True, **rep_, "net": b.summary(),
                "species": [{"name": n, "taxon_id": found.get(n), "photo": bool(found.get(n) and has(found[n]))} for n in seen]}
         self._save("photos.json", out)
@@ -479,8 +492,9 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", required=True)
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p = sub.add_parser("verify")
-    p.add_argument("--out-dir", required=True)
+    p.add_argument("--out-dir")
     p.add_argument("--text", required=True)
+    p.add_argument("--generic", action="store_true", help="facts を持たない経路(桜・梅などの guide find の出力・検索だけの答え)の検査。--out-dir は不要(段階39 B-1)")
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
     a = ap.parse_args(argv)
@@ -493,6 +507,16 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "verify" and a.generic:                 # 段階39 B-1: facts を持たない経路。出す前に必ず通す。落ちた行は利用者に見せない
+        text = Path(a.text).read_text(encoding="utf-8")
+        r = V.generic_check(text)
+        for e in r["errors"]:
+            print(f"NG  [{e['code']}] {e.get('line') or '(全体)'}: {e['detail']}", file=sys.stderr)
+        final = text if r["ok"] else V.generic_strip(text, r)
+        fp = Path(a.text).with_name("final.txt")
+        fp.write_text(final, encoding="utf-8")
+        print(("合格: " if r["ok"] else "不合格(通らない行を除いた答えを書きました): ") + str(fp))
+        return 0 if r["ok"] else 1
     flow = Flow(out_dir, now=now)
     try:
         if a.step in ("prepare", "facts"):

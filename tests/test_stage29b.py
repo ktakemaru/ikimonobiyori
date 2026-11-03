@@ -177,12 +177,13 @@ class PageCards(unittest.TestCase):
         h3_texts = TP.parse(page).text
         self.assertIn(P["photos"]["html"]["others"].format(names=P["photos"]["html"]["others_sep"].join(rest)), h3_texts)
         self.assertEqual(page.count('class="card"'), page.count('<li class="card">'))
-        self.assertEqual(page.count(P["photos"]["html"]["no_photo"]), 1)         # 対応表にある 1 種のカードだけ
+        self.assertEqual(page.count('class="card"') + page.count('<li class="card">'), page.count('<li class="card">') * 2)
+        self.assertIn(P["photos"]["html"]["no_photo_names"].format(names=keep), page)   # 対応表にある 1 種は写真がなく、名前だけの行（段階39）
         self.assertTrue(cards is not None)
 
     def test_without_in_table_every_species_is_a_card(self):
         page = guide_page.build_page(self.parts, policy=P, now=TP.NOW, kind_notes=self.found.get("kind_notes") or [], photo_for=lambda n: None)
-        self.assertEqual(page.count(P["photos"]["html"]["no_photo"]), len(self.names))
+        self.assertIn(P["photos"]["html"]["no_photo_names"].format(names=P["photos"]["html"]["others_sep"].join(self.names)), page)   # 全部が写真なし → 名前だけの行（段階39）
         self.assertNotIn(P["photos"]["html"]["others"].split("{")[0], TP.parse(page).text)
 
     def test_the_others_line_is_escaped_text(self):
