@@ -7,6 +7,8 @@
 - PR・CI: **push できていない**（この環境の権限の判定が `git push -u origin stage39` を拒否した。段階38と同じ。迂回していない）。PR・CI・マージは未実施。ローカルの commit は `stage39` に置いた。
 - テスト: `python -X utf8 -m unittest discover -s tests` → `Ran 1016 tests in 781.998s` → `OK`（stage38 の 983 本 + 新しいテスト 33 本）。
 
+> **追記**: 利用者の許可を受け、`docs/stage39-claude-md-proposal.md` の 1〜3 を `CLAUDE.md`・`AGENTS.md`・`.claude/skills/ikimono-weekend/SKILL.md` に適用した（段階39の節の挿入・写真の節の差し替え・絶対ルール 6 への承認B。ルール 6 は stage38 の文言に合わせて「ユーザーがその場で認めたときだけ。」の直後に入れた）。`CLAUDE.md` と `AGENTS.md` は同じ内容。適用後の全テスト: `Ran 1016 tests in 1106.590s` → `OK`。以下の「決めたこと」2・3 と「残作業」の該当項目は、この追記で解消済み。push はしていない。
+
 ## 2. 決めたこと(判断を求めずに決めた所と理由)
 1. **ブランチの土台は main ではなく、未マージの `stage38`**。`stage38` は PR が作られていない(前回、`git push` が拒否された)が、指示書の A-2・A-3 が頼る自前の上限(`netbudget.py`)・`ask photos`・`ask page`・`verify --reply` がそこにだけある。main から切ると同じものを作り直して衝突するため、`stage38` から `stage39` を切った。したがって **stage39 の PR は stage38 の commit も含む**(利用者が前回マージするつもりだった内容)。
 2. **`CLAUDE.md`・`AGENTS.md`・スキル `SKILL.md` は書き換えていない**。この環境の権限の判定が、3 つのファイルの書き換えを「自己変更」として拒否した。迂回していない。書き足す文(段階39の最優先の節・絶対ルール 6 の承認B・写真の節の差し替え)は **`docs/stage39-claude-md-proposal.md`** に全文を置いた。利用者の許可のあとに適用する(手順は同文書の 4)。→ 残作業。
