@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ikimono-wildflower/1: guide wildflower --json の出力（段階40）",
+  "type": "object",
+  "required": ["schema", "site", "area", "month", "status", "flowers", "upcoming", "season_note", "caveats", "text"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "ikimono-wildflower/1"},
+    "site": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["id", "name", "elevation_m"], "additionalProperties": false,
+      "properties": {"id": {"type": "string", "pattern": "^m[0-9]{3}$"}, "name": {"type": "string"}, "elevation_m": {"type": "number"}}}]},
+    "area": {"type": "string"},
+    "month": {"type": "integer", "minimum": 1, "maximum": 12},
+    "status": {"enum": ["ok", "no_data", "preparing"]},
+    "flowers": {"type": "array", "items": {"type": "object",
+      "required": ["name", "scientific", "taxon_id", "family", "elevation_m", "bloom", "bloom_precision", "tip", "caution", "protected", "grade", "grade_label", "source_count", "sources", "photo", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"}, "scientific": {"type": ["string", "null"]}, "taxon_id": {"type": ["integer", "null"]}, "family": {"type": ["string", "null"]},
+        "elevation_m": {"oneOf": [{"type": "null"}, {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": ["number", "null"]}}]},
+        "bloom": {"type": "string"}, "bloom_precision": {"enum": ["decade", "month"]},
+        "tip": {"type": ["string", "null"]}, "caution": {"type": ["string", "null"]}, "protected": {"type": "boolean"},
+        "grade": {"enum": ["established", "tentative"]}, "grade_label": {"type": "string"}, "source_count": {"type": "integer", "minimum": 1},
+        "sources": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["url", "publisher", "class", "read_on"], "additionalProperties": false,
+          "properties": {"url": {"type": "string", "pattern": "^https?://"}, "publisher": {"type": "string"}, "class": {"enum": ["official", "secondary"]}, "read_on": {"type": "string"}}}},
+        "photo": {"type": "boolean"}, "note": {"type": ["string", "null"]}}}},
+    "upcoming": {"type": "array", "items": {"type": "object", "required": ["name", "bloom", "elevation_m"], "additionalProperties": false,
+      "properties": {"name": {"type": "string"}, "bloom": {"type": "string"}, "elevation_m": {}}}},
+    "season_note": {"type": "string"},
+    "caveats": {"type": "array", "items": {"type": "string"}},
+    "text": {"type": "string"}
+  }
+}

@@ -1393,6 +1393,12 @@ def main(argv=None, http_get=None, http_bytes=None):
     pe.add_argument("--names", nargs="+", required=True, help="和名(複数)")
     pe.add_argument("--theme", default="野鳥", help="野鳥・花・野草(policy photos.themes)")
     pe.add_argument("--max-requests", type=int)
+    pw = sub.add_parser("wildflower", help="山・山域の、この月に例年見られる野草・高山植物（コンシェルジュが山の提案に添える短い文か --json。通信しない。段階40）")
+    pw.add_argument("--site", help="地点ID（data/sites.yaml の mNNN。ヤマビヨリと同じ）")
+    pw.add_argument("--area", help="山域名（丹沢・箱根・奥多摩・高尾 など）")
+    pw.add_argument("--month", type=int, help="月（既定は今日の月）")
+    pw.add_argument("--date", help="YYYY-MM-DD（月に直す）")
+    pw.add_argument("--json", action="store_true")
     pp = sub.add_parser("photos-prefetch", help="policy の一覧(photos.prefetch)の種の写真を、80 件以内に分けて事前に取る(段階39。バックグラウンドで実行してよい)")
     pp.add_argument("--theme", default="野鳥", help="野鳥・花・野草")
     pp.add_argument("--all", action="store_true", help="一覧の全部が終わるまで、実行の間に間隔をあけて繰り返す")
@@ -1442,6 +1448,10 @@ def main(argv=None, http_get=None, http_bytes=None):
 
     if a.cmd == "theme":
         got = theme_of(a.word, policy)
+        wf = policy.get("wildflower") or {}
+        if not got and a.word in (wf.get("words") or []):           # 段階40: 野草・高山植物の話題は guide wildflower で答える（山・山域と月で引く）
+            _dump({"word": a.word, "themes": None, "wildflower": True, "command": wf["command_hint"]})
+            return 0
         _dump({"word": a.word, **(got or {"themes": None})})
         return 0 if got else 1
     if a.cmd == "record-candidate":
@@ -1489,6 +1499,13 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "page":
         from . import guide_page
         return guide_page.page_cmd(a)
+    if a.cmd == "wildflower":
+        from . import wildflower
+        try:
+            return wildflower.wildflower_cmd(a)
+        except ValueError as ex:
+            print(str(ex), file=sys.stderr)
+            return 2
     if a.cmd in ("photos-ensure", "photos-prefetch"):
         from . import guide_photos
         return guide_photos.ensure_cmd(a, http_get, http_bytes) if a.cmd == "photos-ensure" else guide_photos.prefetch_cmd(a, http_get, http_bytes)

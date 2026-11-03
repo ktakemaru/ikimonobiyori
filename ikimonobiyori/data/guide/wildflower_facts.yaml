@@ -1,0 +1,132 @@
+# 野草・高山植物の種の事実と出どころ(段階40)。事実だけ（本文の写し・写真は残さない）。出どころは読んだ日と区分（official / secondary）つき。
+schema: ikimono-wildflower-facts/1
+sources:
+  tvc: {url: 'https://www.kanagawa-park.or.jp/tanzawavc/koyomi4.html', publisher: 神奈川県公園協会 丹沢ビジターセンター, class: official, read_on: '2026-11-03', page_year: null}
+  kpr: {url: 'https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html', publisher: 神奈川県(かながわパークレンジャー開花記録), class: official, read_on: '2026-11-03', page_year: 2026}
+  fyk: {url: 'https://fujisawa-yamanokai.com/php/grview.php?recid=hana010Tanzawa', publisher: 藤沢山の会, class: secondary, read_on: '2026-11-03', page_year: null}
+  nbw: {url: 'https://nabewari.net/season', publisher: 鍋割山荘, class: secondary, read_on: '2026-11-03', page_year: null}
+  hsk: {url: 'https://hakone-shisseikaen.com/flower_spring/', publisher: 箱根湿生花園, class: official, read_on: '2026-11-03', page_year: null}
+  hkt: {url: 'https://www.hakone.or.jp/8336', publisher: 箱根町観光協会, class: official, read_on: '2026-11-03', page_year: null}
+  otm: {url: 'https://www.ohtama.or.jp/blooming.html', publisher: 大多摩観光連盟, class: official, read_on: '2026-11-03', page_year: null}
+  ykk: {url: 'https://www.yamakei-online.com/feature/okutama_siki.php', publisher: 山と溪谷社(奥多摩ナビ), class: secondary, read_on: '2026-11-03', page_year: null}
+  ykg: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=3023', publisher: 山と溪谷社(山と溪谷オンライン), class: secondary, read_on: '2026-11-03', page_year: 2026}
+  ome: {url: 'https://ometsu.net/mount-gozen-2021-04/', publisher: おめ通, class: secondary, read_on: '2026-11-03', page_year: 2021}
+  sks: {url: 'https://tozan.sockstar.jp/archives/1318', publisher: 登山日和, class: secondary, read_on: '2026-11-03', page_year: 2026}
+  okg: {url: 'https://www.omekanko.gr.jp/spot/80601/', publisher: 青梅市観光協会, class: official, read_on: '2026-11-03', page_year: null}
+  kkm: {url: 'https://kukimohuko.exblog.jp/26732427/', publisher: 野の花山の花ウォッチング(個人ブログ), class: secondary, read_on: '2026-11-03', page_year: 2018}
+  tkp: {url: 'https://www.takaopress.net/kusabana.html', publisher: 高尾通信, class: secondary, read_on: '2026-11-03', page_year: null}
+  fyt: {url: 'https://fujisawa-yamanokai.com/php/grview.php?recid=hana200Takao', publisher: 藤沢山の会, class: secondary, read_on: '2026-11-03', page_year: null}
+  mtm: {url: 'https://mttakaomagazine.com/flower', publisher: 高尾山マガジン, class: secondary, read_on: '2026-11-03', page_year: null}
+species:
+  キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
+  マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
+  コケリンドウ: {habitat: 標高が高く、日当たりの良い尾根筋, tip: 丹沢で最も小さいリンドウの仲間}
+  エイザンスミレ: {tip: 切れ込みの入った葉。花は淡紅色から白色, habitat: 沢沿いや林の下}
+  コイワザクラ: {habitat: 岩場やその周辺の草地, caution: 盗掘による減少の心配がある。採らない, protected: true}
+  ツルキンバイ: {tip: 同じ時期によく似たミツバツチグリも咲く}
+  ツルシロカネソウ: {habitat: 早春のブナ林, tip: 白い花びらのようなガクに、黄色の球状の花びらが目立つ}
+  シロヤシオ: {family: ツツジ科, habitat: 太平洋側の山地, tip: 枝先に5枚の葉が輪生し、白い花。別名ゴヨウツツジ}
+  トウゴクミツバツツジ: {family: ツツジ科, habitat: 山地の温帯上部の林内, tip: 赤紫色の花が咲くころ、枝先に3枚の葉が開く。雄しべは10本。類似種にミツバツツジ}
+  ミツバツツジ: {family: ツツジ科, habitat: 山地の林内, tip: 葉より花が先に咲く。雄しべは5本}
+  サラサドウダン: {tip: 風鈴のような小さい花が鈴なりに垂れ下がる}
+  サンショウバラ: {family: バラ科, habitat: 山地（富士箱根周辺に分布）, tip: 葉がサンショウに似る。別名ハコネバラ}
+  ヤマツツジ: {tip: 表丹沢の鍋割山などで5月に見られる（開花記録）}
+  ケイワタバコ: {habitat: 渓谷などの湿った岩場, tip: 全体に毛が多い。似たイワタバコは毛がなく、花期も一か月ほど遅い}
+  シモツケ: {habitat: 草地や岩場, tip: 枝先にピンク色の花が半球状に集まる。似た花にシモツケソウ}
+  オオバイケイソウ: {habitat: やや湿った林内, tip: 梅に似た緑白色の花を多数つける}
+  マルバダケブキ: {tip: 大型の草本。黄色い大きな花と根元の大きな葉が目立つ}
+  ウスユキソウ: {tip: 薄く雪をまとったように見える葉の上に、目立たない花を咲かせる}
+  タンザワイケマ: {caution: 有毒のつる性植物。触れない・口にしない, tip: 小さな白い花が半球状にまとまる。「丹沢」の名を持つ数少ない種}
+  ヤマユリ: {tip: 神奈川県の花, caution: シカの食害で減っている。踏まない・採らない}
+  イワギボウシ: {habitat: 湿った岩場や木の幹に着生, tip: 淡紫色の花。茎に紫褐色の斑点}
+  タテヤマギク: {tip: 野菊の仲間。縁がぎざぎざの三角形の葉。白い舌状花が5〜8枚と少ない}
+  ヤマホトトギス: {tip: 白地に紅紫色の斑点。花びらが反り返る（反り返らないのはホトトギス）, habitat: 山地・丘陵地の明るい林下}
+  フジアザミ: {habitat: 砂礫地や崩壊地, tip: 10cm近い大きな花を下向きに咲かせる}
+  テンニンソウ: {tip: 淡黄白色の花を密につける。雄しべと雌しべが突き出る, caution: シカの食害などで極端に減ったと山荘の発信にある}
+  シロヨメナ: {habitat: 山麓からブナ林まで普通, tip: 花は直径2cmほど}
+  サガミジョウロウホトトギス: {habitat: 谷間, tip: 黄色い花。丹沢が原産地の希少植物, caution: 希少種。採らない・谷に入り込まない, protected: true}
+  イワシャジン: {habitat: 湿った岩場, tip: 細い茎に釣鐘形の花}
+  ホソエノアザミ: {tip: 葉に針状のトゲ。花のつけ根にも強く反り返ったトゲ}
+  ヤマトリカブト: {tip: 鳥兜に似た青紫色の花, caution: 草全体に毒がある。触れない・口にしない}
+  ダイモンジソウ: {habitat: 湿った岩場や木の幹に着生, tip: 花の形が「大」の字に見える}
+  リンドウ: {tip: 紫色のすじが入った花を上向きに咲かせる}
+  センブリ: {caution: 資料に、リンドウと同じ説明文が重なって載っている（見分けは図鑑で確認）}
+  リュウノウギク: {habitat: 日当たりの良い尾根筋など, tip: 浅く裂けた葉の野菊の仲間。花は直径3〜4.5cm}
+  ヤマルリソウ: {habitat: 落葉樹林の林縁や道端, tip: 淡紫色から淡紅色の花を次々につける}
+  ヒトリシズカ: {family: センリョウ科, habitat: 丘陵や低山の林内, tip: ブラシのような白い花を1本だけ出す}
+  ミツマタ: {tip: 中国南部原産の落葉低木。丹沢にも群生地がある}
+  ワチガイソウ: {habitat: 山地の木陰, tip: 細い茎の先に白い小さな5弁の花。星のような赤い雄しべ}
+  ギンリョウソウ: {habitat: 山地の林内, tip: 葉緑素がない腐生植物}
+  マムシグサ: {habitat: 山地のやや暗い林内, tip: 仏炎苞は緑色で白い筋が入る（紫褐色もある）, caution: 有毒のサトイモ科。触れた手で目をこすらない}
+  ミミガタテンナンショウ: {habitat: 山野の林内, tip: 仏炎苞の口辺部が耳たぶ状に張り出す}
+  ヨゴレネコノメ: {habitat: 低山から山地の湿地, tip: 萼片の色が汚れた色。見分けが難しい花の一つ, family: ユキノシタ科}
+  タニギキョウ: {habitat: 山地の湿った林内, tip: 小さな花が上向きに咲く}
+  クワガタソウ: {habitat: 山地のやや湿った林内, tip: 似た花にヤマクワガタ}
+  ヒメレンゲ: {habitat: 低地から山地の沢沿いの岩の上, tip: 黄色い花。別名コマンネンソウ}
+  マルバスミレ: {habitat: 低山の森林や林縁, family: スミレ科}
+  キンラン: {family: ラン科, habitat: 平地・丘陵地の林の下, tip: 黄色い花。花弁の内側に赤い筋, caution: ラン科。採らない・林床に入り込まない, protected: true}
+  ギンラン: {family: ラン科, habitat: 低地から山地の林内, tip: 白い花, caution: ラン科。採らない・林床に入り込まない, protected: true}
+  キバナノショウキラン: {family: ラン科, habitat: 山地の落葉樹林下, tip: 腐生植物, caution: ラン科。採らない・林床に入り込まない, protected: true}
+  クモキリソウ: {family: ラン科, habitat: 落葉広葉樹の林床や林縁, tip: 淡緑色の花。唇弁が強く反り返る, caution: ラン科。採らない・林床に入り込まない, protected: true}
+  クマガイソウ: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  カキラン: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  ミズチドリ: {caution: 保護が必要な野草。採らない・湿原や林床に入り込まない, protected: true}
+  ススキ: {habitat: 仙石原の台ケ岳の山裾の草原, tip: 秋の七草の一つ。毎年3月に山焼きが行われる}
+  ノハナショウブ: {habitat: 湿原, tip: 仙石原湿原を代表する花の一つ}
+  セツブンソウ: {}
+  フクジュソウ: {}
+  ザゼンソウ: {}
+  ミズバショウ: {}
+  カタクリ: {habitat: 雑木林・ブナ林の林床, caution: 乱掘が心配されている。花は採らず、登山道から出ない。種子から花まで8〜9年かかる, family: ユリ科}
+  リュウキンカ: {}
+  シラネアオイ: {}
+  サクラソウ: {}
+  キレンゲツツジ: {}
+  カキツバタ: {}
+  クロユリ: {}
+  ニッコウキスゲ: {}
+  ヤマボウシ: {}
+  クガイソウ: {}
+  ヒメユリ: {}
+  オカトラノオ: {}
+  ヤマアジサイ: {}
+  キキョウ: {}
+  カワラナデシコ: {}
+  レンゲショウマ: {habitat: 太平洋側の山地の落葉林内（キンポウゲ科の多年草）, tip: 下向きの花。御岳山の斜面に群生する, family: キンポウゲ科}
+  エゾリンドウ: {}
+  ワレモコウ: {}
+  サクラタデ: {}
+  エンシュウハグマ: {}
+  ヤマラッキョウ: {}
+  ミズトラノオ: {}
+  アカヤシオ: {}
+  ニリンソウ: {family: キンポウゲ科, habitat: 平地〜丘陵地の明るい林内, tip: 1輪〜3輪の花をつける}
+  コアジサイ: {}
+  キンバイソウ: {}
+  スミレ類: {habitat: 日当たりの良い林道の法面など, tip: 50種類以上と紹介されている}
+  ツツジ類(石尾根): {}
+  アジサイ類: {}
+  コバイケイソウ: {caution: 有毒。オオバギボウシなど山菜と間違えない}
+  シャガ: {family: アヤメ科, habitat: 沢沿いの湿った林下に群生, tip: 実はできず、地下茎で増える}
+  セッコク: {family: ラン科, habitat: 大木の枝や岩に着生, caution: 保護が必要な野草。採らない・林床に入り込まない, protected: true}
+  タカオヒゴタイ: {family: キク科, tip: アザミに似るが刺はない。高さ30〜60cm}
+  チゴユリ: {family: ユリ科, habitat: 林の下, tip: 白い小さな花を下向きにつける}
+  フタリシズカ: {family: センリョウ科, tip: 高さ30〜50cmでヒトリシズカよりやや高い}
+  ヤブデマリ: {family: スイカズラ科, habitat: 沢沿い, tip: 装飾花が縁を囲む。高さ2〜6m}
+  タカオスミレ: {family: スミレ科, habitat: 山地の谷や沢沿い, tip: ヒカゲスミレの変種}
+  ジュウニヒトエ: {family: シソ科, habitat: 明るい林内や道端, tip: 薄紫色の花が何段にも重なる}
+  イカリソウ: {family: メギ科, habitat: 山地の雑木林の下}
+  イチリンソウ: {family: キンポウゲ科, habitat: 落葉広葉樹林や山麓の土手}
+  ミヤマエンレイソウ: {family: ユリ科, habitat: 山地の林内}
+  ベニバナヤマシャクヤク: {family: ボタン科, habitat: 落葉樹林内, caution: 環境省絶滅危惧II類。盗掘が危惧される。採らない, protected: true}
+  エビネ: {family: ラン科, habitat: 落葉樹林内, caution: 園芸目的の盗掘で減少。採らない, protected: true}
+  スズムシソウ: {family: ラン科, habitat: 林床, caution: 盗掘で著しく減少。採らない, protected: true}
+  アケボノスミレ: {family: スミレ科, tip: 葉が開く前に花が咲く}
+  ナガバノスミレサイシン: {family: スミレ科, habitat: 山地の林下}
+  ヤマネコノメソウ: {family: ユキノシタ科, habitat: 林縁部や渓谷}
+  ハナネコノメ: {family: ユキノシタ科, habitat: 山地の谷筋の湿った場所, tip: 白く見えるのは萼}
+  ミヤマカタバミ: {family: カタバミ科, habitat: 山地の落葉広葉樹林の林床, tip: 白花で3葉}
+  ウグイスカグラ: {family: スイカズラ科, habitat: 山野の日当たりのよいところ, tip: 淡紅色の花が下向き}
+  フシグロセンノウ: {family: ナデシコ科, habitat: 谷沿いの明るい林内・林縁, tip: 節が紫黒色。高さ50〜90cm}
+  ミズヒキ: {family: タデ科, habitat: 林縁や沢沿い, tip: 上からは赤、下からは白に見える4弁花}
+  キジョラン: {family: ガガイモ科, habitat: 常緑樹林内, tip: アサギマダラの幼虫の食草, caution: 植物の伐採は国定公園内で規制されている。引き抜かない}
