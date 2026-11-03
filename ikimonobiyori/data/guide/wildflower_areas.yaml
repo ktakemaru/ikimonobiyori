@@ -1,0 +1,12 @@
+# 野草・高山植物の山域と、地点(data/sites.yaml の識別子。ヤマビヨリの mNNN と同じ)の対応(段階40)。
+# 地点の名前・座標・標高は sites.yaml が正本で、ここには複製しない。sites.yaml に地点がない山域(箱根)は sites を空にする。
+schema: ikimono-wildflower-areas/1
+areas:
+  丹沢:     {status: ready, sites: [m022, m023, m024, m025, m026, m027], prefectures: [神奈川]}
+  箱根:     {status: ready, sites: [], prefectures: [神奈川, 静岡], note: "sites.yaml に箱根の地点がないため、山域でだけ引く"}
+  奥多摩:   {status: ready, sites: [m028, m031, m032, m058], prefectures: [東京, 山梨, 埼玉]}
+  高尾:     {status: ready, sites: [m029, m030], prefectures: [東京, 神奈川]}
+  富士山周辺: {status: preparing, sites: [m012, m013, m014, m015, m016, m017, m018, m019, m020], prefectures: [山梨, 静岡]}
+  八ヶ岳:   {status: preparing, sites: [m002, m003, m004, m005, m006, m007], prefectures: [長野, 山梨]}
+  南アルプス: {status: preparing, sites: [m045, m046, m047], prefectures: [山梨, 長野]}
+  北アルプス: {status: preparing, sites: [m036, m037, m038, m039, m040, m041, m065, m066], prefectures: [長野, 富山, 岐阜]}
