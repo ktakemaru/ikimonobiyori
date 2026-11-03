@@ -12,7 +12,7 @@ from ikimonobiyori import ask_verify as V
 from ikimonobiyori import wildflower as W
 
 SCHEMA = json.loads((Path(__file__).resolve().parent.parent / "ikimonobiyori" / "schemas" / "wildflower.schema.json").read_text(encoding="utf-8"))
-READY = ["丹沢", "箱根"]
+READY = ["丹沢", "箱根", "高尾"]
 
 
 class Data(unittest.TestCase):
