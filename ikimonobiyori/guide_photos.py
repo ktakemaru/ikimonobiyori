@@ -611,6 +611,8 @@ def prefetch_cmd(a, http_get=None, http_bytes=None, sleep=None):
 def photo_theme_for(word, policy=None):
     """質問の言葉 → 写真のテーマ(野鳥・花)。鳥のテーマ(野鳥・冬鳥)なら野鳥、ほかは花。"""
     policy = policy or guide.load_policy()
+    if word in (policy.get("wildflower") or {}).get("words", []):      # 段階41: 野草・高山植物
+        return "野草"
     themes, _kinds = guide.themes_for_words([word], policy)
     return "野鳥" if themes and themes & {"野鳥", "冬鳥"} else "花"
 

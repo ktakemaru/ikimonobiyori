@@ -7,6 +7,6 @@ areas:
   奥多摩:   {status: ready, sites: [m028, m031, m032, m058], prefectures: [東京, 山梨, 埼玉]}
   高尾:     {status: ready, sites: [m029, m030], prefectures: [東京, 神奈川]}
   富士山周辺: {status: preparing, sites: [m012, m013, m014, m015, m016, m017, m018, m019, m020], prefectures: [山梨, 静岡]}
-  八ヶ岳:   {status: preparing, sites: [m002, m003, m004, m005, m006, m007], prefectures: [長野, 山梨]}
+  八ヶ岳:   {status: preparing, partial_sites: [m003, m004], sites: [m002, m003, m004, m005, m006, m007], prefectures: [長野, 山梨]}
   南アルプス: {status: preparing, sites: [m045, m046, m047], prefectures: [山梨, 長野]}
-  北アルプス: {status: preparing, sites: [m036, m037, m038, m039, m040, m041, m065, m066], prefectures: [長野, 富山, 岐阜]}
+  北アルプス: {status: preparing, partial_sites: [m036, m041], sites: [m036, m037, m038, m039, m040, m041, m065, m066], prefectures: [長野, 富山, 岐阜]}

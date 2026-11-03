@@ -17,6 +17,13 @@ sources:
   tkp: {url: 'https://www.takaopress.net/kusabana.html', publisher: 高尾通信, class: secondary, read_on: '2026-11-03', page_year: null}
   fyt: {url: 'https://fujisawa-yamanokai.com/php/grview.php?recid=hana200Takao', publisher: 藤沢山の会, class: secondary, read_on: '2026-11-03', page_year: null}
   mtm: {url: 'https://mttakaomagazine.com/flower', publisher: 高尾山マガジン, class: secondary, read_on: '2026-11-03', page_year: null}
+  gn1: {url: 'https://www.go-nagano.net/theme/id=19629', publisher: 長野県観光機構(Go! NAGANO 燕岳), class: official, read_on: '2026-11-03', page_year: 2024}
+  gn2: {url: 'https://www.go-nagano.net/nature-and-outdoors/id22415', publisher: 長野県観光機構(Go! NAGANO 乗鞍岳), class: official, read_on: '2026-11-03', page_year: 2025}
+  nrk2: {url: 'https://norikura.gr.jp/norikuradake/', publisher: のりくら観光協会, class: official, read_on: '2026-11-03', page_year: null}
+  jpe: {url: 'https://www.jeepe.jp/ja/articles/norikura-mountain-guide-1926', publisher: JeePe(旅行ガイド), class: secondary, read_on: '2026-11-03', page_year: null}
+  mnc: {url: 'https://www.minnacamera.com/spots/1254', publisher: みんなのカメラ(硫黄岳), class: secondary, read_on: '2026-11-03', page_year: null}
+  yhk: {url: 'https://yamahack.com/2001', publisher: YAMA HACK, class: secondary, read_on: '2026-11-03', page_year: 2026}
+  hhm: {url: 'https://ja.wikipedia.org/wiki/%E8%8A%B1%E3%81%AE%E7%99%BE%E5%90%8D%E5%B1%B1', publisher: 花の百名山（田中澄江選定。山名の一覧）, class: secondary, read_on: '2026-11-03', page_year: 2026}
 species:
   キクザキイチゲ: {family: キンポウゲ科, habitat: 低地から山地の明るい林内, tip: 花は一般に白色。丹沢の高標高域では淡青色や桃色もある。葉は3出複葉で深く切れ込む}
   マメザクラ: {habitat: 山地, tip: 葉が出る前に、他の桜より小さな花が下向きに咲く。丹沢で最も早く咲く野生の桜}
@@ -130,3 +137,7 @@ species:
   フシグロセンノウ: {family: ナデシコ科, habitat: 谷沿いの明るい林内・林縁, tip: 節が紫黒色。高さ50〜90cm}
   ミズヒキ: {family: タデ科, habitat: 林縁や沢沿い, tip: 上からは赤、下からは白に見える4弁花}
   キジョラン: {family: ガガイモ科, habitat: 常緑樹林内, tip: アサギマダラの幼虫の食草, caution: 植物の伐採は国定公園内で規制されている。引き抜かない}
+  コマクサ: {tip: 高山帯の砂礫地に咲くピンクの花。「高山植物の女王」と呼ばれる, caution: 国定公園などで採取が禁止されている。抜かない・砂礫地に入り込まない}
+  クロユリ: {tip: 畳平のお花畑で見られる花として紹介されている}
+  ハクサンイチゲ: {tip: 畳平のお花畑で見られる白い花として紹介されている}
+  ミヤマキンポウゲ: {tip: 畳平周辺で見られる花として紹介されている}

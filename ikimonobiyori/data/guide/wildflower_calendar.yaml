@@ -588,3 +588,41 @@ rows:
   name: タカオヒゴタイ
   bloom: 9中-10下
   src: [tkp]
+- area: 北アルプス
+  sites: [m041]
+  name: コマクサ
+  bloom: 7中-8中
+  elev: [2700, null]
+  src: [gn2, nrk2]
+  note: 畳平のお花畑（のりくら観光協会は標高2700mの畳平）
+- area: 北アルプス
+  sites: [m041]
+  name: クロユリ
+  bloom: 7中-8中
+  elev: [2700, null]
+  src: [nrk2]
+- area: 北アルプス
+  sites: [m041]
+  name: ハクサンイチゲ
+  bloom: 7中-8中
+  elev: [2700, null]
+  src: [nrk2, jpe]
+  note: JeePe は7月上旬〜8月中旬
+- area: 北アルプス
+  sites: [m041]
+  name: ミヤマキンポウゲ
+  bloom: 7上-8中
+  src: [jpe]
+- area: 北アルプス
+  sites: [m036]
+  name: コマクサ
+  bloom: 7下-8上
+  src: [gn1]
+  note: 稜線上の砂礫地
+- area: 八ヶ岳
+  sites: [m003, m004]
+  name: コマクサ
+  bloom: 7中-8
+  src: [mnc, yhk]
+  note: 横岳〜硫黄岳間の西斜面に群落があるとされる
+
