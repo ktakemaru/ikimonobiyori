@@ -156,7 +156,7 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     if not area:                                           # 地点はあるが、まだどの山域にも結ばれていない
         t = _pol()["text"]
         return {"schema": SCHEMA_OUT, "site": site_info, "area": t["no_area"], "month": month, "status": "preparing", "flowers": [], "upcoming": [],
-                "season_note": t["season_note"], "caveats": [t["weather"]], "text": t["preparing"]}
+                "season_note": t["season_note"], "caveats": [t["weather"]], "text": t["preparing"], "conclusion": t["preparing"]}
     if area not in data["areas"]:
         raise ValueError(f"山域 {area} は wildflower_areas.yaml にありません")
     meta = data["areas"][area]
@@ -166,6 +166,7 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     if meta["status"] != "ready" and not partial:
         out["status"] = "preparing"
         out["text"] = t["preparing"]
+        out["conclusion"] = t["preparing"]
         out["caveats"] = [t["weather"]]
         return out
     rows = [r for r in data["rows"] if r["area"] == area and (not site_info or not r.get("sites") or site_info["id"] in r["sites"])]
@@ -192,6 +193,7 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     if not cur:
         out["status"] = "no_data"
         out["text"] = t["no_data"] + t["season_note"]
+        out["conclusion"] = t["no_data"]
         return out
     names = [f for f in cur][: _v(p["max_names_in_sentence"])]
     sent = t["sentence_site" if site_info else "sentence_area"].format(month=month, area=(site_info["name"] + "（" + area + "）") if site_info else area, items="・".join(_item(f) for f in names))
@@ -200,12 +202,96 @@ def query(site=None, area=None, month=None, date_=None, today=None, with_photo=T
     if area == "箱根":
         sent += t["garden_note"]
     out["text"] = sent + t["season_note"] + t["care"] + t["weather"]
+    out["conclusion"] = sent
     return out
 
 
+def _months(bloom, tens):
+    (m1, _), (m2, _) = parse_bloom(bloom, tens)
+    return list(range(m1, m2 + 1)) if m1 <= m2 else list(range(m1, 13)) + list(range(1, m2 + 1))
+
+
+def _span(rows, tens):
+    """花期の月の集合 → '7月〜8月'（続いた月）か '3月・11月'。"""
+    ms = sorted({m for r in rows for m in _months(r["bloom"], tens)})
+    if not ms:
+        return ""
+    if ms == list(range(ms[0], ms[-1] + 1)):
+        return f"{ms[0]}月" if len(ms) == 1 else f"{ms[0]}月〜{ms[-1]}月"
+    return "・".join(f"{m}月" for m in ms)
+
+
+def overview(month=None, date_=None, today=None):
+    """山域も地点も指定がない質問用。データのある地点（高山: 地点つきの花暦）と山域の例年の見頃を、種ごとにまとめる。
+    → {kind: overview, month, conclusion, text, species[], ...}。species[] の各: name・section(alpine/lowland)・places[{place, bloom_text, ...}]・flower(代表の行)・start(並び順)。"""
+    data = load()
+    p = _pol()
+    t = p["text"]
+    o = p["overview"]
+    if date_:
+        month = date.fromisoformat(date_).month
+    month = month or (today or date.today()).month
+    sites = sites_by_id()
+    facts = data["facts"]
+    tens = p["tens"]
+    tens_name = {v: k for k, v in tens.items()}
+    ready = {n for n, a in data["areas"].items() if a["status"] == "ready"}
+    alpine_rows = [r for r in data["rows"] if r.get("sites")]
+    low_rows = [r for r in data["rows"] if not r.get("sites") and r["area"] in ready]
+    place_names = []
+    for r in alpine_rows:
+        for sid in r["sites"]:
+            if sites[sid]["name"] not in place_names:
+                place_names.append(sites[sid]["name"])
+
+    def bloom_text(r):
+        (m1, t1), (m2, t2) = parse_bloom(r["bloom"], tens)
+        prec = any(c in str(r["bloom"]) for c in tens)
+        a = f"{m1}月" + (tens_name[t1] if prec else "")
+        b = f"{m2}月" + (tens_name[t2] if prec else "")
+        return a if a == b else f"{a}〜{b}"
+    entries = {}
+    for section, rows in (("alpine", alpine_rows), ("lowland", low_rows)):
+        for r in rows:
+            sp = facts["species"].get(r["name"]) or {}
+            label = "・".join(sites[s]["name"] for s in r["sites"]) if section == "alpine" else r["area"]
+            f = _flower(r, facts, False)
+            e = entries.setdefault((section, r["name"]), {"name": r["name"], "section": section, "places": [], "flower": f, "protected": bool(sp.get("protected")), "_rows": []})
+            e["places"].append({"place": label, "bloom_text": bloom_text(r), "bloom": r["bloom"], "elevation_m": r.get("elev"), "note": r.get("note"),
+                                "active_now": month_active(r["bloom"], month, tens)})
+            e["_rows"].append(r)
+            if (f["source_count"], f["grade"] == "established") > (e["flower"]["source_count"], e["flower"]["grade"] == "established"):
+                e["flower"] = f
+    species = []
+    for e in entries.values():
+        rows = e.pop("_rows")
+        e["sources"] = list({s["url"]: s for r in rows for s in _flower(r, facts, False)["sources"]}.values())
+        e["start"] = min(parse_bloom(r["bloom"], tens)[0][0] * 3 + parse_bloom(r["bloom"], tens)[0][1] for r in rows)
+        e["active_now"] = any(pl["active_now"] for pl in e["places"])
+        species.append(e)
+    species.sort(key=lambda e: (0 if e["section"] == "alpine" else 1, e["start"], e["name"]))
+    span = _span(alpine_rows, tens)
+    alpine_now = any(month_active(r["bloom"], month, tens) for r in alpine_rows)
+    now_low = sorted((e for e in species if e["section"] == "lowland" and e["active_now"] and not e["protected"]),
+                     key=lambda e: (-e["flower"]["source_count"], e["name"]))
+    k = _v(p["max_names_in_sentence"])
+    places = "・".join(place_names)
+    sent = (o["alpine_now"] if alpine_now else o["not_now"]).format(month=month, span=span, places=places)
+    sent += o["lowland_now"].format(month=month, items="・".join(e["name"] for e in now_low[:k])) if now_low else o["lowland_none"].format(month=month)
+    return {"schema": SCHEMA_OUT, "kind": "overview", "site": None, "area": o["area_label"], "month": month, "status": "ok", "alpine_now": alpine_now,
+            "alpine_span": span, "places": place_names, "species": species, "flowers": [], "upcoming": [],
+            "season_note": t["season_note"], "caveats": [t["care"], t["weather"], t["partial_note"]], "conclusion": sent,
+            "text": sent + t["season_note"] + t["care"] + t["weather"]}
+
+
 def wildflower_cmd(a):
-    r = query(site=a.site, area=a.area, month=a.month, date_=a.date)
+    if not a.site and not a.area:                          # 山域も地点も指定がない質問: データのある地点・山域の例年の見頃をまとめて答える
+        r = overview(month=a.month, date_=a.date)
+    else:
+        r = query(site=a.site, area=a.area, month=a.month, date_=a.date)
     if a.json:
+        if r.get("kind") == "overview":
+            r = dict(r, species=[{k: v for k, v in e.items() if k != "flower"} for e in r["species"]])
         print(json.dumps(r, ensure_ascii=False, indent=1))
     else:
         print(r["text"])

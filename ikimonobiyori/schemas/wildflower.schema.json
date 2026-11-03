@@ -26,6 +26,7 @@
     "upcoming": {"type": "array", "items": {"type": "object", "required": ["name", "bloom", "elevation_m"], "additionalProperties": false,
       "properties": {"name": {"type": "string"}, "bloom": {"type": "string"}, "elevation_m": {}}}},
     "season_note": {"type": "string"},
+    "conclusion": {"type": "string"},
     "caveats": {"type": "array", "items": {"type": "string"}},
     "text": {"type": "string"}
   }

@@ -40,7 +40,9 @@ answer_check:
   # 段階37(指示書 2-3): 開発・作業の言葉(正規表現。「フォトコンテスト」「ドレスコード」のような語の一部は数えない)
   dev_terms: ["(?<!コン)テスト", "(?<![ドレスバー])コード", 作業メモ, 記録済み, スキル, コマンド, 検査, 実装, ゴールデン, 作業の経過, "(?<![A-Za-z])Python(?![A-Za-z])",
               # 段階39 B-2: コマンド名・設定の名前・作業の報告の言い方(全経路で答えに出さない)
-              "guide find", record-candidate, policy.yaml, "ask verify", "ask record", "(?<![A-Za-z])ask(?![A-Za-z])", テーマの表, 提案として報告, コードは変更, final.txt, 作業フォルダ]
+              "guide find", record-candidate, policy.yaml, "ask verify", "ask record", "(?<![A-Za-z])ask(?![A-Za-z])", テーマの表, 提案として報告, コードは変更, final.txt, 作業フォルダ,
+              # 括弧つきの作業の事情（「(コードは変更していないので、テストは実行していません。)」など）
+              "[（(][^）)]*(変更していない|変更していません|実行していない|実行していません|テストは|検査は|検査を)[^）)]*[）)]"]
   # 内部用語(英字の語は前後が英字でないときだけ)
   internal_terms: [snapshot, スナップショット, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary,
                    fetch_notes, provisional, 作業フォルダ, materials, facts, verify, prepare, calls.json, plan.json, records.json, jsonl, IKIMONOBIYORI]
