@@ -32,6 +32,7 @@ import yaml
 
 from . import catalog as catalog_mod
 from . import livegate
+from . import yamlcache
 from .config import load_config
 from .paths import DATA_FILES_DIR, data_path
 from .profiles import load_profiles
@@ -54,7 +55,7 @@ ID_HEX = 10                                            # 名所の id の長さ(
 # ---- 読み込み・時計 ----
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(path or POLICY_PATH)
 
 
 def val(x):
@@ -891,7 +892,7 @@ def committed_entries(catalog_only=False):
     out = []
     for p in ((CATALOG_PATH,) if catalog_only else (CATALOG_PATH, CANDIDATES_PATH)):
         if p.is_file():
-            out += (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("entries") or []
+            out += (yamlcache.load(p) or {}).get("entries") or []
     return out
 
 

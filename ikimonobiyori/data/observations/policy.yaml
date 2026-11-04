@@ -91,7 +91,6 @@ state_date_inferred: {day_only: month_from_read_date, month_day: year_from_read_
 summary_pages:
   autumn_leaves:
     神奈川県:
-      - {url: "https://tenki.jp/kouyou/3/17/", publisher: tenki.jp, source_class: secondary, note: "神奈川県の紅葉見頃時期(名所ごとの色づき・例年の見頃)"}
       - {url: "https://koyo.walkerplus.com/ranking/ar0314/", publisher: ウォーカープラス, source_class: secondary, note: "神奈川の紅葉名所ランキング(例年の見頃)"}
       - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県, source_class: official, note: "丹沢の紅葉記録の一覧(山の色づき)"}
       - {url: "https://koyo.walkerplus.com/list/ar0314/", publisher: ウォーカープラス, source_class: secondary, note: "神奈川の紅葉名所の一覧(例年の見頃。今の色づき段階は一覧に出ない)"}

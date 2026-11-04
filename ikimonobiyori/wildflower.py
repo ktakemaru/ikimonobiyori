@@ -11,6 +11,7 @@ from datetime import date
 import yaml
 
 from . import guide
+from . import yamlcache
 from .paths import SITES_PATH
 
 SCHEMA_OUT = "ikimono-wildflower/1"
@@ -76,7 +77,8 @@ def grade(row, sources):
 
 
 def sites_by_id():
-    d = yaml.safe_load(SITES_PATH.read_text(encoding="utf-8"))
+    """地点 ID → 地点。YAML は大きく、1 回の呼び出しで何百回も呼ばれるので、読み込みは yamlcache で 1 回だけにする（段階46: テストの時間を減らす。出力は変えない）。"""
+    d = yamlcache.load(SITES_PATH)
     return {s["id"]: s for s in d["sites"]}
 
 

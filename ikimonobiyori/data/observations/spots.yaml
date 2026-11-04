@@ -17,7 +17,6 @@ spots:
       - {text: "11月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30787.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154535/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30787.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154535/", publisher: ウォーカープラス, source_class: secondary}
     search: "箱根美術館 紅葉 色づき"
   - id: obs-kouyou-0002
@@ -30,7 +29,6 @@ spots:
       - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34666.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e123975/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/34666.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e123975/", publisher: ウォーカープラス, source_class: secondary}
     search: "三溪園 紅葉 色づき"
   - id: obs-kouyou-0003
@@ -42,7 +40,6 @@ spots:
     typical:
       - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30830.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30830.html", publisher: tenki.jp, source_class: secondary}
     search: "生田緑地 紅葉 色づき"
   - id: obs-kouyou-0004
     subject: autumn_leaves
@@ -53,7 +50,6 @@ spots:
     typical:
       - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30103.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30103.html", publisher: tenki.jp, source_class: secondary}
     search: "奥湯河原 紅葉 色づき"
   - id: obs-kouyou-0005
     subject: autumn_leaves
@@ -64,7 +60,6 @@ spots:
     typical:
       - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30106.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30106.html", publisher: tenki.jp, source_class: secondary}
     search: "鶴岡八幡宮 紅葉 色づき"
   - id: obs-kouyou-0006
     subject: autumn_leaves
@@ -75,7 +70,6 @@ spots:
     typical:
       - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30714.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30714.html", publisher: tenki.jp, source_class: secondary}
     search: "万葉公園 紅葉 色づき"
   - id: obs-kouyou-0007
     subject: autumn_leaves
@@ -87,7 +81,6 @@ spots:
       - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30107.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154527/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30107.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154527/", publisher: ウォーカープラス, source_class: secondary}
     search: "大雄山最乗寺 紅葉 色づき"
   - id: obs-kouyou-0008
@@ -99,7 +92,6 @@ spots:
     typical:
       - {text: "10月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30281.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30281.html", publisher: tenki.jp, source_class: secondary}
     search: "ターンパイク箱根 紅葉 色づき"
   - id: obs-kouyou-0009
     subject: autumn_leaves
@@ -110,7 +102,6 @@ spots:
     typical:
       - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30689.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30689.html", publisher: tenki.jp, source_class: secondary}
     search: "震生湖 紅葉 色づき"
   - id: obs-kouyou-0010
     subject: autumn_leaves
@@ -122,7 +113,6 @@ spots:
       - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30786.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13129/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30786.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e13129/", publisher: ウォーカープラス, source_class: secondary}
     search: "箱根強羅公園 紅葉 色づき"
   - id: obs-kouyou-0011
@@ -134,7 +124,6 @@ spots:
     typical:
       - {text: "11月20日頃", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30858.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30858.html", publisher: tenki.jp, source_class: secondary}
     search: "BIOTOPIA 紅葉 色づき"
   - id: obs-kouyou-0012
     subject: autumn_leaves
@@ -146,7 +135,6 @@ spots:
       - {text: "11月上旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30806.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154538/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30806.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154538/", publisher: ウォーカープラス, source_class: secondary}
     search: "横浜市立金沢動物園 紅葉 色づき"
   - id: obs-kouyou-0013
@@ -158,7 +146,6 @@ spots:
     typical:
       - {text: "10月下旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34653.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/34653.html", publisher: tenki.jp, source_class: secondary}
     search: "相模湖「嵐山」 紅葉 色づき"
   - id: obs-kouyou-0014
     subject: autumn_leaves
@@ -170,7 +157,6 @@ spots:
       - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30108.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13171/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30108.html", publisher: tenki.jp, source_class: secondary}
       - {url: "https://koyo.walkerplus.com/detail/ar0314e13171/", publisher: ウォーカープラス, source_class: secondary}
     search: "丹沢湖 紅葉 色づき"
   - id: obs-kouyou-0015
@@ -182,7 +168,6 @@ spots:
     typical:
       - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30690.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30690.html", publisher: tenki.jp, source_class: secondary}
     search: "弘法山 紅葉 色づき"
   - id: obs-kouyou-0016
     subject: autumn_leaves
@@ -193,7 +178,6 @@ spots:
     typical:
       - {text: "10月下旬～11月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30790.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30790.html", publisher: tenki.jp, source_class: secondary}
     search: "小田急 山のホテル 紅葉 色づき"
   - id: obs-kouyou-0017
     subject: autumn_leaves
@@ -204,7 +188,6 @@ spots:
     typical:
       - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30755.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30755.html", publisher: tenki.jp, source_class: secondary}
     search: "源氏山公園 紅葉 色づき"
   - id: obs-kouyou-0018
     subject: autumn_leaves
@@ -215,7 +198,6 @@ spots:
     typical:
       - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30772.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
-      - {url: "https://tenki.jp/kouyou/3/17/30772.html", publisher: tenki.jp, source_class: secondary}
     search: "中川温泉 紅葉 色づき"
   - id: obs-kouyou-0019
     subject: autumn_leaves

@@ -166,3 +166,10 @@
 | www.kanagawa-kankou.or.jp | 花の台帳で承認済みのホスト。紅葉の特集 /features/koyo-kanagawa は固定の時期だけ(地点ごとの状況はない) | 既存の承認 |
 | www.gotokyo.org | 英語の記事 /en/story/guide/autumn-leaves-forecast/ は固定の時期だけ(Updated: 2026-09-01) | pending(人が開くリンク) |
 | tenki.jp/kouyou | 地点ごとの色づき状況の語のラベル。日付はページ全体の『04日現在』(年・月なし)。robots.txt に /kouyou/ の Disallow なし | 観察の記録では使用済み。台帳には入れていない(気象会社を禁じる既存テストのため) |
+
+## 9. 紹介サイト・予報会社の台帳の分離と、読まないサイト(段階46。2026-11-04、ユーザー承認: 指示書 docs/stage46-registry-split-instructions.md)
+
+- 公式の台帳(`ikimonobiyori/data/sources/autumn_leaves.yaml`)とは別に、紹介サイト・予報会社の台帳 `ikimonobiyori/data/sources/secondary/autumn_leaves.yaml` を新設した(スキーマ `status-sources-secondary.schema.json`。各件に確度ラベル「紹介サイト(公式ではない)」「予報会社」)。ウォーカープラス(3 件)・ジョルダン・GO TOKYO は段階45 で公式の台帳に入れたものを移した。日本気象・tenki.jp・ウェザーニュースを新しく入れた。
+- **tenki.jp**: robots.txt は /kouyou/ を拒否していないが、利用規約(https://tenki.jp/docs/rule/ 第8条 6)が「ブラウザ・RSSリーダー以外のものを用いて取得し利用する行為」を禁じる。読み取りの道具での取得はこれに当たるため、今後は読まない(人が開くリンク)。段階34〜45 で読んで観察の記録に残した値は、日付つきの参考として残る。
+- **ウェザーニュース**: robots.txt の User-agent: * に /koyo の Disallow はない。利用規約(https://weathernews.jp/ip/kiyaku/ 第9条 3)は許諾のない複製・二次利用・転載を禁じ、自動取得の規定はない。取得が複製・転載に当たるか判断に迷うため、読まない側に倒した。
+- **東京都公園協会**: ホストは `www.tokyo-park.or.jp`(公式の台帳に既出。robots.txt は 404)。小石川後楽園の「庭園の見どころ」(日付つき)、催しのお知らせは公式の記載として観察の記録に入れた。浜離宮恩賜庭園は、公式ページの URL を特定できなかった(`/park/hamarikyu/`・`/park/hamarikyu-gardens/` は 404)。
