@@ -6,7 +6,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 
 ## 完了条件(必ず守る)
 コードを変更したとき:
-1. **完了を報告する前に、必ずテストを実行し、その結果を報告に含める。** `python -X utf8 -m unittest discover -s tests` の最後の行(`OK` / `FAILED` と件数)をそのまま書く。実行していないなら完了と言わない。
+1. **作業中は、変更に関係するテストだけを実行する。全テストは CI に任せ、CI の全項目が pass であることをマージの条件にする**(段階46。手元の全テストは約 33 分かかっていたが、遅い原因を直して短くした)。完了を報告するときは、実行した関係するテストの最後の行(`OK` / `FAILED` と件数)と、CI の結果を報告に含める。実行していないなら完了と言わない。手元で全テストを実行したいとき(大きな変更のあと・CI が使えないとき)のコマンドは残す: `python -X utf8 -m unittest discover -s tests`(最後の行が `OK` / `FAILED` と件数)。テストごとの所要時間は `python -X utf8 tools/slow_tests.py` で測れる。
 2. **既存テストの期待値を書き換えない。テストを削除・スキップもしない。** 落ちたら、挙動を変えてしまった合図なので自分の変更を見直す。どうしても必要なら、変える前に理由を示してユーザーに確認する。新しいテストを足すのはよい。
 3. **ゴールデン(`tests/fixtures/golden/`、`tests/test_golden.py`)を作り直して合わせない。** 出力が変わるのは、閾値・式・band の判定・出力の項目を変えたときだけで、それは下の規則 5 の対象(ユーザーの承認が要る)。
 
@@ -157,6 +157,7 @@ python -X utf8 -m ikimonobiyori.sources regional --now <今の時刻 ISO 8601 +0
 - **出力はそのまま出す**: コマンドが組み立てた文(結論が先)を一字一句そのまま出す。答えに内部の言葉(簡易な読み取り・承認待ち・作業メモ・records など)を出さない(コードが自己検査する。内部の事情は `docs/stage32-report.md` へ)。
 - 読むページはホストで限らない(段階34)。台帳の公式の通信先(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)は出所の区分「公式」、ほかは「紹介サイトなど」(`secondary`)として扱う(要約の道具で 1 回ずつ。読んだ事実は答える前に記録する)。
 - **紅葉の紹介サイトの通信先(段階45。ユーザー承認 2026-11-04、指示書 `docs/stage45-koyo-sources-instructions.md`)**: `koyo.walkerplus.com`(ウォーカープラス。一覧・個別ページに今の色づき段階は出ず、例年の時期だけ)・`n-kishou.com`(日本気象。見頃予想。`s.n-kishou.co.jp` は読めなかったので対象外)を、要約の道具で読んでよい(出所の区分 `secondary`。Python のコードでは通信しない)。`weathernews.jp/koyo` は読まず人が開くリンク、`www.jorudan.co.jp/koyo` は転送ページしか返らず pending。台帳の追加は `ikimonobiyori/data/sources/autumn_leaves.yaml` の末尾、報告は `docs/stage45-report.md`。
+- **紹介サイト・予報会社の台帳(段階46。2026-11-04)**: 公式の台帳(`ikimonobiyori/data/sources/autumn_leaves.yaml`)とは別に、`ikimonobiyori/data/sources/secondary/autumn_leaves.yaml` を置く(各件に確度ラベル「紹介サイト(公式ではない)」「予報会社」。検査は `sources check`)。公式の台帳のテスト(気象会社・まとめサイトを置かない)は緩めていない。**tenki.jp は利用規約 第8条 6 が「ブラウザ・RSSリーダー以外での取得」を禁じるため、今後は読まない**(人が開くリンク。過去の読みの値は日付つきで残る)。ウェザーニュース(`weathernews.jp/koyo`)は robots は拒否していないが、利用規約 第9条 3 の複製・転載の禁止が取得に及ぶか判断に迷うため読まない。東京都公園協会は `www.tokyo-park.or.jp`(公式の台帳に既出。robots.txt は 404)。報告は `docs/stage46-report.md`。
 - 名所の `flower_windows`・`events` に公式の通信先の外の値を入れるときは、`source_host` と出所の区分 `source_class: secondary` を付ける(段階34。旧い印 `unapproved_host` も同じに扱う)。区分 secondary の値も確度の判定(今年のイベント期間)に使い、答えに「(公式ではない情報: ホスト)」を添える。一覧は `python -X utf8 -m ikimonobiyori.catalog_audit`(通信しない)。
 
 ### 守ること

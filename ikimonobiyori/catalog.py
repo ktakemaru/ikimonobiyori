@@ -15,6 +15,7 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
+from . import yamlcache
 from .paths import CATALOG_DIR, CATALOG_POLICY_PATH, CATALOG_SCHEMA_PATH, PROFILE_DIR
 from .profiles import validate_profile
 
@@ -209,7 +210,7 @@ def approved_entries(doc):
 def load_catalog(subject, catalog_dir=None):
     """本番のカタログ(data/catalog/<subject>.yaml)。なければ None。"""
     p = Path(catalog_dir or CATALOG_DIR) / f"{subject}.yaml"
-    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+    return yamlcache.load(p) if p.is_file() else None
 
 
 def catalog_sites(doc):

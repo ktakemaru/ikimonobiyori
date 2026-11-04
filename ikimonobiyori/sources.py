@@ -32,7 +32,8 @@ from jsonschema import Draft202012Validator
 from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
-from .paths import REGIONS_PATH, SOURCES_DIR, SOURCES_POLICY_PATH, SOURCES_SCHEMA_PATH, data_path
+from .paths import (REGIONS_PATH, SECONDARY_SOURCES_DIR, SECONDARY_SOURCES_SCHEMA_PATH, SOURCES_DIR, SOURCES_POLICY_PATH,
+                    SOURCES_SCHEMA_PATH, data_path)
 
 APPROVED = "approved"
 USABLE_TERMS = "no_prohibition_found"
@@ -205,6 +206,66 @@ def check_all(sources_dir=None, catalog_dir=None, policy_path=None):
             continue
         out.append((p, check_registry(doc, name=p.stem, catalog_doc=catalog_mod.load_catalog(p.stem, catalog_dir), policy=policy)))
     return out
+
+
+# ---- 紹介サイト・予報会社の台帳(段階46。公式の台帳とは別のファイル) ----
+
+SECONDARY_LABELS = ("紹介サイト(公式ではない)", "予報会社")
+
+
+def load_secondary_registry(subject, sources_dir=None):
+    """紹介サイト・予報会社の台帳(data/sources/secondary/<subject>.yaml)。なければ None。"""
+    p = Path(sources_dir or SECONDARY_SOURCES_DIR) / f"{subject}.yaml"
+    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+
+
+def check_secondary_registry(doc, *, name, policy):
+    """紹介・予報の台帳 1 ファイルの検査。公式の台帳と同じ承認の条件(読める・robots が拒否していない・利用条件が禁止していない)を使う。
+    公式の台帳の検査(check_registry)は緩めない。→ エラーのリスト。"""
+    v = Draft202012Validator(json.loads(SECONDARY_SOURCES_SCHEMA_PATH.read_text(encoding="utf-8")))
+    errs = ["/".join(map(str, e.path)) + ": " + e.message[:160] for e in sorted(v.iter_errors(doc), key=lambda e: list(e.path))]
+    if errs:
+        return errs
+    subject = doc["subject"]
+    if subject != name:
+        errs.append(f"subject={subject} がファイル名 {name} と違う")
+    if subject not in policy["stages"]:
+        return errs + [f"subject={subject} の共通の段階が方針(policy.yaml の stages)にない"]
+    official = {s["id"] for s in (load_registry(subject) or {}).get("sources") or []}
+    seen = set()
+    for src in doc["sources"]:
+        sid = src["id"]
+        if sid in seen or sid in official:
+            errs.append(f"{sid}: id が重複(公式の台帳とも別の id にする)")
+        seen.add(sid)
+        if src["confidence_label"] not in SECONDARY_LABELS:
+            errs.append(f"{sid}: confidence_label が {SECONDARY_LABELS} にない")
+        if any("site" in c for c in src["covers"]):
+            errs.append(f"{sid}: 紹介・予報の台帳の covers は名所カタログの名所(site)に結びつけない(name だけ)")
+        errs += check_source(src, subject=subject, policy=policy, catalog_ids=set())
+        if src["approval"]["status"] == APPROVED and src["kind"] == "status_page":
+            errs.append(f"{sid}: 紹介・予報の情報源は status_page にしない(現況の情報源に数えるのは公式の台帳だけ)")
+    return errs
+
+
+def check_all_secondary(sources_dir=None, policy_path=None):
+    """→ [(台帳のファイル, エラーのリスト)]。"""
+    policy = load_policy(policy_path)
+    out = []
+    for p in sorted(Path(sources_dir or SECONDARY_SOURCES_DIR).glob("*.yaml")):
+        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        out.append((p, ["YAML の最上位が辞書でない"] if not isinstance(doc, dict) else check_secondary_registry(doc, name=p.stem, policy=policy)))
+    return out
+
+
+def secondary_label(url, subject="autumn_leaves", registry=None):
+    """出所の URL のホストが紹介・予報の台帳の情報源のホストと同じなら、その確度ラベル。台帳にないホストは「紹介サイト(公式ではない)」。"""
+    host = urlsplit(url or "").netloc.lower()
+    doc = registry if registry is not None else load_secondary_registry(subject)
+    for s in (doc or {}).get("sources") or []:
+        if urlsplit(s["url"]).netloc.lower() == host and host:
+            return s["confidence_label"]
+    return SECONDARY_LABELS[0]
 
 
 # ---- 状態の書き方 → 共通の段階 ----
@@ -1400,6 +1461,12 @@ def main(argv=None, http_get=None):
             print(f"NG  段階の並び(profiles/*.yaml の stages): {e}")
         bad = int(bool(serr))
         for p, errs in check_all(a.sources_dir, a.catalog_dir):
+            for e in errs:
+                print(f"NG  {p.parent.name}/{p.name}: {e}")
+            if not errs:
+                print(f"OK  {p.parent.name}/{p.name}")
+            bad += bool(errs)
+        for p, errs in check_all_secondary():
             for e in errs:
                 print(f"NG  {p.parent.name}/{p.name}: {e}")
             if not errs:

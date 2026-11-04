@@ -27,6 +27,7 @@ import yaml
 from . import catalog as catalog_mod
 from . import closures
 from . import sources as S
+from . import yamlcache
 from .paths import DATA_FILES_DIR, data_path
 
 OBS_DIR = DATA_FILES_DIR / "observations"
@@ -42,11 +43,11 @@ def _v(x):
 
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(path or POLICY_PATH)
 
 
 def load_spots(path=None):
-    return yaml.safe_load(Path(path or SPOTS_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(path or SPOTS_PATH)
 
 
 def load_obs_bird_areas(path=None):
@@ -1297,7 +1298,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     if cur:
         current = {"state": cur["state_norm"], "state_raw": cur["state"], "state_date": cur.get("state_date"), "read_at": cur["read_at"],
                    "publisher": cur.get("publisher") or cur.get("host"), "url": cur["url"], "source_class": cur["source_class"],
-                   "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"]}
+                   "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"],
+                   "confidence_label": _confidence_label(cur)}
     pubs = _publishers(c, rows)
     out = {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
@@ -1331,6 +1333,15 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         out["bird_range"] = c.get("bird_range")
         out["_rows"] = rows
     return out
+
+
+def _confidence_label(rec):
+    """公式でない情報(source_class: secondary)の確度ラベル(段階46)。紹介・予報の台帳(data/sources/secondary/)にあるホストは台帳のラベル、
+    なければ「紹介サイト(公式ではない)」。公式の情報は None。"""
+    if rec.get("source_class") != "secondary":
+        return None
+    from . import sources
+    return sources.secondary_label(rec.get("url"), rec.get("subject") or "autumn_leaves")
 
 
 def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=None, spots_doc=None, catalogs=None, with_alternatives=True):
