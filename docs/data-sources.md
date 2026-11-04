@@ -173,3 +173,8 @@
 - **tenki.jp**: robots.txt は /kouyou/ を拒否していないが、利用規約(https://tenki.jp/docs/rule/ 第8条 6)が「ブラウザ・RSSリーダー以外のものを用いて取得し利用する行為」を禁じる。読み取りの道具での取得はこれに当たるため、今後は読まない(人が開くリンク)。段階34〜45 で読んで観察の記録に残した値は、日付つきの参考として残る。
 - **ウェザーニュース**: robots.txt の User-agent: * に /koyo の Disallow はない。利用規約(https://weathernews.jp/ip/kiyaku/ 第9条 3)は許諾のない複製・二次利用・転載を禁じ、自動取得の規定はない。取得が複製・転載に当たるか判断に迷うため、読まない側に倒した。
 - **東京都公園協会**: ホストは `www.tokyo-park.or.jp`(公式の台帳に既出。robots.txt は 404)。小石川後楽園の「庭園の見どころ」(日付つき)、催しのお知らせは公式の記載として観察の記録に入れた。浜離宮恩賜庭園は、公式ページの URL を特定できなかった(`/park/hamarikyu/`・`/park/hamarikyu-gardens/` は 404)。
+
+## 10. 段階47: tenki.jp を外し、承認ホストを足す(2026-11-05、ユーザー承認: 指示書 docs/stage47-sources-instructions.md)
+- tenki.jp は答えの材料から外した(利用規約 第8条 禁止事項 6)。人が開くリンクとしてだけ台帳に残る。
+- 要約の道具で読んでよい通信先(承認日 2026-11-05): www.pref.kanagawa.jp(かながわパークレンジャー紅葉記録)・www.hakone.or.jp・www.tokyo-park.or.jp・www.kensetsu.metro.tokyo.lg.jp・www.gotokyo.org・www.kanagawa-kankou.or.jp・www.ibarakiguide.jp・maruchiba.jp・www.nikko-kankou.org。
+- ウェザーニュース(weathernews.jp)は読まない(段階46 の判断のまま)。

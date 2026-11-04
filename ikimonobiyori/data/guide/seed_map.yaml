@@ -65,7 +65,7 @@ rows:
 # 表ではない節(付録A の箇条書き)。行と同じ形で、URL を明示する
 extra:
   - {id: S02-koyo, theme: 紅葉, name: 桜山公園, prefecture: 群馬県, municipality: 藤岡市, season: {text: 10月下旬〜11月中旬, from: 10月下旬, to: 11月中旬}, note: "冬桜と同時に楽しめる",
-     urls: ["https://rurubu.jp/andmore/spot/80007869/koyo", "https://tenki.jp/kouyou/3/13/30672.html"]}
+     urls: ["https://rurubu.jp/andmore/spot/80007869/koyo"]}
   - {id: K-fuyuzakura, scope: kind, theme: 桜, name: 冬桜(フユザクラ), kinds: [冬桜], season: {text: 秋〜冬(10月下旬〜12月)に咲き、春にも咲く二度咲き, from: 10月下旬, to: 12月}, note: "山桜と豆桜の交配種といわれる。花は小さく白〜淡紅色",
      urls: ["https://tabi-mag.jp/gu0100/", "https://www.walkerplus.com/article/1068351/"]}
   - {id: K-kanzakura, scope: kind, theme: 桜, name: 寒桜(カンザクラ), kinds: [寒桜], season: {text: 1〜2月, from: 1月, to: 2月}, note: "淡紅色の一重。冬桜とは別の種",
@@ -73,8 +73,8 @@ extra:
   - {id: K-kawazu, scope: kind, theme: 桜, name: 河津桜, kinds: [河津桜], season: {text: 1月下旬からつぼみがほころび、3月上旬まで, from: 1月下旬, to: 3月上旬}, note: "寒緋桜系と早咲きの大島桜系の自然交配種と考えられる",
      urls: ["https://www.walkerplus.com/article/1329757/"]}
   - {id: K-genji, scope: kind, theme: ホタル, name: ゲンジボタル, kinds: [ゲンジボタル], season: {text: 関東では5月下旬〜6月中旬, from: 5月下旬, to: 6月中旬}, note: "大きく光が強い。水のきれいな川",
-     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://tenki.jp/suppl/usagida/2016/06/13/13151.html", "https://www.pref.miyagi.jp/documents/53315/arikabetikugennzibotaru.pdf", "https://weathernews.jp/news/202505/270196/"]}
+     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://www.pref.miyagi.jp/documents/53315/arikabetikugennzibotaru.pdf", "https://weathernews.jp/news/202505/270196/"]}
   - {id: K-heike, scope: kind, theme: ホタル, name: ヘイケボタル, kinds: [ヘイケボタル], season: {text: 関東では6月中旬〜8月ごろ, from: 6月中旬, to: 8月}, note: "小さく光が弱い。水田・池・湿地",
-     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://tenki.jp/suppl/usagida/2016/06/13/13151.html", "https://weathernews.jp/news/202505/270196/"]}
+     urls: ["https://allabout.co.jp/gm/gc/463681/", "https://weathernews.jp/news/202505/270196/"]}
   - {id: K-hime, scope: kind, theme: ホタル, name: ヒメボタル, kinds: [ヒメボタル], season: {text: 5月下旬〜7月下旬ごろ, from: 5月下旬, to: 7月下旬}, note: "水辺ではなく湿った森。黄色く激しく点滅",
      urls: ["https://weathernews.jp/news/202505/270196/", "https://www.pref.iwate.jp/_res/projects/default_project/_page_/001/014/229/himehoraruannai.pdf"]}

@@ -3612,19 +3612,19 @@ entries:
   municipality: null
   kinds:
   - kind: ヘイケボタル
-    independent_sources: 3
+    independent_sources: 2
     shown: true
   season:
     text: 関東では6月中旬〜8月ごろ
     window:
       start: 06-11
       end: 08-31
-    independent_sources: 3
+    independent_sources: 2
     shown: true
     from_url: https://allabout.co.jp/gm/gc/463681/
     other_texts: []
-  tier: curated
-  independent_sources: 3
+  tier: reference
+  independent_sources: 2
   classes:
   - C
   exists_confirmed: true
@@ -3638,14 +3638,6 @@ entries:
   - url: https://allabout.co.jp/gm/gc/463681/
     host: allabout.co.jp
     publisher: All About
-    class: C
-    read_at: '2026-10-25T16:26:45+09:00'
-    origin: seed
-    seed_id: K-heike
-    note: 小さく光が弱い。水田・池・湿地
-  - url: https://tenki.jp/suppl/usagida/2016/06/13/13151.html
-    host: tenki.jp
-    publisher: tenki.jp
     class: C
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
@@ -3933,19 +3925,19 @@ entries:
   municipality: null
   kinds:
   - kind: ゲンジボタル
-    independent_sources: 4
+    independent_sources: 3
     shown: true
   season:
     text: 関東では5月下旬〜6月中旬
     window:
       start: 05-21
       end: 06-20
-    independent_sources: 4
+    independent_sources: 3
     shown: true
     from_url: https://allabout.co.jp/gm/gc/463681/
     other_texts: []
   tier: curated
-  independent_sources: 4
+  independent_sources: 3
   classes:
   - C
   exists_confirmed: true
@@ -3959,14 +3951,6 @@ entries:
   - url: https://allabout.co.jp/gm/gc/463681/
     host: allabout.co.jp
     publisher: All About
-    class: C
-    read_at: '2026-10-25T16:26:45+09:00'
-    origin: seed
-    seed_id: K-genji
-    note: 大きく光が強い。水のきれいな川
-  - url: https://tenki.jp/suppl/usagida/2016/06/13/13151.html
-    host: tenki.jp
-    publisher: tenki.jp
     class: C
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed
@@ -3996,19 +3980,11 @@ entries:
   municipality: 立川市
   kinds:
   - kind: イチョウ
-    independent_sources: 2
-    shown: true
-  season:
-    text: 例年10月下旬〜11月下旬
-    window:
-      start: 10-21
-      end: 11-30
     independent_sources: 1
     shown: false
-    from_url: https://tenki.jp/lite/kouyou/3/16/30110.html
-    other_texts: []
+  season: null
   tier: curated
-  independent_sources: 5
+  independent_sources: 4
   classes:
   - C
   exists_confirmed: true
@@ -4045,12 +4021,6 @@ entries:
   - url: https://sp.jorudan.co.jp/leaf/spot_55011.html
     host: sp.jorudan.co.jp
     publisher: ジョルダン
-    class: C
-    read_at: '2026-10-25T16:34:49+09:00'
-    origin: search
-  - url: https://tenki.jp/lite/kouyou/3/16/30110.html
-    host: tenki.jp
-    publisher: tenki.jp
     class: C
     read_at: '2026-10-25T16:34:49+09:00'
     origin: search
@@ -4611,13 +4581,13 @@ entries:
     window:
       start: 10-21
       end: 11-20
-    independent_sources: 4
+    independent_sources: 3
     shown: true
     from_url: https://rurubu.jp/andmore/spot/80007869/koyo
     other_texts:
     - 11月中旬〜11月下旬
   tier: curated
-  independent_sources: 5
+  independent_sources: 4
   classes:
   - C
   - D
@@ -4642,14 +4612,6 @@ entries:
   - url: https://rurubu.jp/andmore/spot/80007869/koyo
     host: rurubu.jp
     publisher: るるぶ
-    class: C
-    read_at: '2026-10-25T16:26:45+09:00'
-    origin: seed
-    seed_id: S02-koyo
-    note: 冬桜と同時に楽しめる
-  - url: https://tenki.jp/kouyou/3/13/30672.html
-    host: tenki.jp
-    publisher: tenki.jp
     class: C
     read_at: '2026-10-25T16:26:45+09:00'
     origin: seed

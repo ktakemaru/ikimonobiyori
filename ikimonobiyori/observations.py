@@ -150,6 +150,12 @@ def clock_now():
     return S.read_time(None)
 
 
+def _blocked_host(host, policy):
+    """段階47: 利用規約が自動取得を禁じるホスト(policy record.not_read_hosts)か。サブドメインも含む。"""
+    host = (host or "").lower()
+    return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
+
+
 def validate(rec, policy):
     errs = []
     r = policy["record"]
@@ -165,6 +171,8 @@ def validate(rec, policy):
     u = urlparse(rec.get("url") or "")
     if rec.get("url") and (u.scheme not in ("http", "https") or not u.hostname):
         errs.append("url は http(s) の URL")
+    if u.hostname and _blocked_host(u.hostname, policy):
+        errs.append("このホストは読まない対象(利用規約)")
     for k in ("state_date",):
         v = rec.get(k)
         if v is not None:
@@ -277,6 +285,7 @@ def read_records(subject, env=None, policy=None):
         return []
     policy = policy or load_policy()
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
@@ -474,9 +483,12 @@ def freshness(rec, today, subject, policy):
 
 
 def best_record(rows):
-    """同じ名所の記録から 1 つ(状態の日付が新しい → 公式 → 読んだ時刻が新しい)。古い記録も捨てない(history に残る)。"""
+    """同じ名所の記録から 1 つ(状態を持つ記録だけ → 状態の日付が新しい → 公式 → 読んだ時刻が新しい)。古い記録も捨てない(history に残る)。"""
     if not rows:
         return None
+    unknown = load_policy()["unknown_state"]
+    with_state = [r for r in rows if r.get("state_norm") != unknown]       # 段階47: 状態を持つ記録を使う。「状態の記載なし」の記録が新しくても、状態を持つ記録を隠さない
+    rows = with_state or rows
     return sorted(rows, key=lambda r: (basis_date(r), r.get("source_class") == "official", r["read_at"]), reverse=True)[0]
 
 

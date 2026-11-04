@@ -1,7 +1,7 @@
 # 観察の記録(段階34)で使う名所の一覧。ikimonobiyori/observations.py が読む(通信しない)。
 # - typical: 例年の見頃の原文(取得元・年・出所の区分つき)。start/end はコードが原文の旬(上旬・中旬・下旬)から作る(方針 policy.yaml の month_thirds)。
-# - 紅葉(神奈川): 2026-11-01 に Claude Code が tenki.jp(神奈川県の紅葉見頃時期 2026。https://tenki.jp/kouyou/3/17/)と
-#   ウォーカープラス(神奈川の紅葉名所ランキング・一覧。https://koyo.walkerplus.com/ranking/ar0314/)を読んで、名前・市区町村・例年の見頃を書き写した。
+# - 紅葉(神奈川): 2026-11-01 に Claude Code が ウォーカープラス(神奈川の紅葉名所ランキング・一覧。https://koyo.walkerplus.com/ranking/ar0314/)を読んで、名前・市区町村・例年の見頃を書き写した。
+#   (段階47: tenki.jp は利用規約により読まないことにしたので、tenki.jp 由来の例年の時期は除いた。)
 # - 座標(point)は持たない。既存の名所カタログに同じ名所があれば catalog_ref で座標・標高を借りる(座標は Wikidata か公式の地図で確かめたものだけ入れる。指示書 4-3)。
 # - 公式の運営者のページが見つからない名所も外さない(紹介サイトの情報で載せる)。
 schema: ikimono-spots/1
@@ -14,7 +14,6 @@ spots:
     area: 箱根
     catalog_ref: kouyou-0018
     typical:
-      - {text: "11月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30787.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154535/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154535/", publisher: ウォーカープラス, source_class: secondary}
@@ -26,7 +25,6 @@ spots:
     city: 横浜市中区
     area: 横浜
     typical:
-      - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34666.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e123975/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e123975/", publisher: ウォーカープラス, source_class: secondary}
@@ -38,7 +36,6 @@ spots:
     city: 川崎市多摩区
     area: 川崎
     typical:
-      - {text: "11月中旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30830.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "生田緑地 紅葉 色づき"
   - id: obs-kouyou-0004
@@ -48,7 +45,6 @@ spots:
     city: 湯河原町
     area: 湯河原
     typical:
-      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30103.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "奥湯河原 紅葉 色づき"
   - id: obs-kouyou-0005
@@ -58,7 +54,6 @@ spots:
     city: 鎌倉市
     area: 鎌倉
     typical:
-      - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30106.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "鶴岡八幡宮 紅葉 色づき"
   - id: obs-kouyou-0006
@@ -68,7 +63,6 @@ spots:
     city: 湯河原町
     area: 湯河原
     typical:
-      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30714.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "万葉公園 紅葉 色づき"
   - id: obs-kouyou-0007
@@ -78,7 +72,6 @@ spots:
     city: 南足柄市
     area: 足柄
     typical:
-      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30107.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154527/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154527/", publisher: ウォーカープラス, source_class: secondary}
@@ -90,7 +83,6 @@ spots:
     city: 小田原市
     area: 箱根
     typical:
-      - {text: "10月中旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30281.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "ターンパイク箱根 紅葉 色づき"
   - id: obs-kouyou-0009
@@ -100,7 +92,6 @@ spots:
     city: 秦野市
     area: 丹沢・大山
     typical:
-      - {text: "11月下旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30689.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "震生湖 紅葉 色づき"
   - id: obs-kouyou-0010
@@ -110,7 +101,6 @@ spots:
     city: 箱根町
     area: 箱根
     typical:
-      - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30786.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13129/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e13129/", publisher: ウォーカープラス, source_class: secondary}
@@ -122,7 +112,6 @@ spots:
     city: 大井町
     area: 足柄
     typical:
-      - {text: "11月20日頃", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30858.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "BIOTOPIA 紅葉 色づき"
   - id: obs-kouyou-0012
@@ -132,7 +121,6 @@ spots:
     city: 横浜市金沢区
     area: 横浜
     typical:
-      - {text: "11月上旬～12月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30806.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e154538/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e154538/", publisher: ウォーカープラス, source_class: secondary}
@@ -144,7 +132,6 @@ spots:
     city: 相模原市緑区
     area: 相模原
     typical:
-      - {text: "10月下旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/34653.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "相模湖「嵐山」 紅葉 色づき"
   - id: obs-kouyou-0014
@@ -154,7 +141,6 @@ spots:
     city: 山北町
     area: 丹沢・大山
     typical:
-      - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30108.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
       - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13171/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e13171/", publisher: ウォーカープラス, source_class: secondary}
@@ -166,7 +152,6 @@ spots:
     city: 秦野市
     area: 丹沢・大山
     typical:
-      - {text: "11月中旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30690.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "弘法山 紅葉 色づき"
   - id: obs-kouyou-0016
@@ -176,7 +161,6 @@ spots:
     city: 箱根町
     area: 箱根
     typical:
-      - {text: "10月下旬～11月中旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30790.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "小田急 山のホテル 紅葉 色づき"
   - id: obs-kouyou-0017
@@ -186,7 +170,6 @@ spots:
     city: 鎌倉市
     area: 鎌倉
     typical:
-      - {text: "11月下旬～12月上旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30755.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "源氏山公園 紅葉 色づき"
   - id: obs-kouyou-0018
@@ -196,7 +179,6 @@ spots:
     city: 山北町
     area: 丹沢・大山
     typical:
-      - {text: "11月上旬～11月下旬", publisher: tenki.jp, url: "https://tenki.jp/kouyou/3/17/30772.html", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
     search: "中川温泉 紅葉 色づき"
   - id: obs-kouyou-0019
@@ -740,3 +722,36 @@ spots:
     bird_area: kanagawa_sagami
     # 段階38: 探鳥地ごとの範囲(公園の代表点を方針の location_precision = 小数2桁に丸めた値。元は出典の記事の座標)。半径は方針の既定(2km)
     bird_range: {lat: 35.53, lon: 139.39, radius_km: null, source: "https://ja.wikipedia.org/wiki/相模原公園(記事の座標。2026-11-01 に読んだ)", checked_on: "2026-11-01"}
+  - id: obs-kouyou-0053
+    subject: autumn_leaves
+    name: "養老渓谷"
+    prefecture: 千葉県
+    city: 大多喜町・市原市
+    area: 房総
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ちば観光ナビ, url: "https://maruchiba.jp/feature/detail_553.html", year: 2026, source_class: secondary, checked_on: '2026-11-05'}
+    pages:
+      - {url: "https://maruchiba.jp/feature/detail_553.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "養老渓谷 紅葉 色づき"
+  - id: obs-kouyou-0054
+    subject: autumn_leaves
+    name: "千葉公園"
+    prefecture: 千葉県
+    city: 千葉市中央区
+    area: 房総
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ちば観光ナビ, url: "https://maruchiba.jp/feature/detail_48.html", year: 2026, source_class: secondary, checked_on: '2026-11-05'}
+    pages:
+      - {url: "https://maruchiba.jp/feature/detail_48.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "千葉公園 紅葉 色づき"
+  - id: obs-kouyou-0055
+    subject: autumn_leaves
+    name: "清水公園"
+    prefecture: 千葉県
+    city: 野田市
+    area: 房総
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ちば観光ナビ, url: "https://maruchiba.jp/feature/detail_48.html", year: 2026, source_class: secondary, checked_on: '2026-11-05'}
+    pages:
+      - {url: "https://maruchiba.jp/feature/detail_48.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "清水公園 紅葉 色づき"
