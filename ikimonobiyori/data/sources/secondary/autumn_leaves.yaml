@@ -140,3 +140,36 @@ sources:
     terms: {status: not_checked}
     approval: {status: pending, reason: 現況でも今年の予想でもなく、固定の時期だけ。通信先として承認されていない(gotokyo.org)ので、人が開くリンクにとどめる}
     confidence_label: 紹介サイト(公式ではない)
+  # ---- 段階47(2026-11-05) ----
+  - id: gotokyo-autumn-leaves-ja
+    publisher: GO TOKYO(東京都観光財団。紹介サイト)
+    publisher_kind: tourism_association
+    url: https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/
+    kind: reference_link
+    covers:
+    - {name: 東京の紅葉スポット(日本語の記事), label: '東京の紅葉スポット 12 件の例年の見頃'}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: '更新日 2026-09-01。地点ごとの例年の見頃だけ(例: 六義園 11月下旬～12月中旬、国営昭和記念公園 10月下旬～11月中旬、高尾山 11月中旬～12月上旬)で、今年の色づき段階と日付はない。千鳥ヶ淵・御岳渓谷(YouTube)・払沢の滝のライブ配信は人が開くリンク'
+    readable: {status: ok, checked_on: '2026-11-05', robots: allows, observed_latest_update: '2026-09-01', note: 'robots.txt は /*/travel-directory/result/index/ だけ拒否'}
+    terms: {status: no_prohibition_found, url: 'https://www.gotokyo.org/jp/about-tcvb/index.html', note: '『著作権』(番号なし, 2026-05-22 更新): 許可なく複製・転載・貸与・配布・販売などに利用することを禁じる。自動取得の規定はない。地点名と時期の短い事実を出典つきで示すだけ'}
+    approval: {status: approved, approved_by: user, approved_on: '2026-11-05', reason: 指示書 docs/stage47-sources-instructions.md でホスト www.gotokyo.org を承認(2026-11-05)}
+    confidence_label: 紹介サイト(公式ではない)
+  - id: maruchiba-koyo-feature
+    publisher: ちば観光ナビ(千葉県観光物産協会。紹介サイト)
+    publisher_kind: tourism_association
+    url: https://maruchiba.jp/feature/detail_48.html
+    kind: reference_link
+    covers:
+    - {name: 千葉の紅葉スポット特集 2026, label: '千葉の紅葉スポット特集【2026年度】(例年の見頃 15 件)'}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: '更新日の表示なし。地点ごとの見頃は例年の時期だけ(例: 千葉公園 11月中旬～12月上旬、清水公園 11月中旬～12月上旬)。養老渓谷の記事 https://maruchiba.jp/feature/detail_553.html も例年の時期(11月下旬～12月上旬)で、今の色づき段階と日付はない'
+    readable: {status: ok, checked_on: '2026-11-05', robots: no_file, note: 'robots.txt は HTTP 404(なし)。特集ページは HTTP 200'}
+    terms: {status: no_prohibition_found, url: 'https://maruchiba.jp/about-site', note: '『著作権について』(番号なし): 掲載著作物の無断の複製・転載・貸与・配布・販売などの二次利用を禁じる。自動取得の規定はない。地点名と時期の短い事実を出典つきで示すだけ'}
+    approval: {status: approved, approved_by: user, approved_on: '2026-11-05', reason: 指示書 docs/stage47-sources-instructions.md でホスト maruchiba.jp を承認(2026-11-05)}
+    confidence_label: 紹介サイト(公式ではない)

@@ -12,6 +12,8 @@ record:
   max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
   source_classes: [official, secondary]
   required: [url, state, source_class]
+  # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
+  not_read_hosts: {value: [tenki.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
 
 # 新しさの区分(状態の日付、なければ読んだ日 から 今日まで の日数)。どれも捨てない
 freshness:

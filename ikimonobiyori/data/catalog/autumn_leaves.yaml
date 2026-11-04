@@ -257,7 +257,7 @@ entries:
     access_notes: "伊勢原駅北口からバスで大山ケーブル(終点)。紅葉ライトアップの期間はケーブルカーが夜も動く"
     status: approved
     tags: {prefecture: 神奈川県, area: 丹沢・大山, terrain: [mountain, temple_shrine], access: [cable_car, bus], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
-    status_sources: [isehara-oyama-koyo]
+    status_sources: [isehara-oyama-koyo, kanagawa-parkranger-koyo]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/", title: "伊勢原市 紅葉(大山)", checked_on: "2026-10-22"}
