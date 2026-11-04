@@ -119,6 +119,7 @@ python -X utf8 -m ikimonobiyori.sources regional --now <今の時刻 ISO 8601 +0
 - **見頃を過ぎたもの・状態を読み取れなかったものは推薦に入れない**: 状態の語は台帳の `notation.map` が先、なければ `ikimonobiyori/data/regional/policy.yaml` の語彙表(完全一致)。表にない語(「ブラウンがメイン」「咲いています」「2〜3分咲き」など)は推測で段階にせず「状態を読み取れなかったもの」に原文のまま出す。終盤・見頃過ぎ・終了は「見頃を過ぎたとみられるもの」に最大 2 行。
 - **出力はそのまま出す**: コマンドが組み立てた文(結論が先)を一字一句そのまま出す。答えに内部の言葉(簡易な読み取り・承認待ち・作業メモ・records など)を出さない(コードが自己検査する。内部の事情は `docs/stage32-report.md` へ)。
 - 読むページはホストで限らない(段階34)。台帳の公式の通信先(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)は出所の区分「公式」、ほかは「紹介サイトなど」(`secondary`)として扱う(要約の道具で 1 回ずつ。読んだ事実は答える前に記録する)。
+- **紅葉の紹介サイトの通信先(段階45。ユーザー承認 2026-11-04、指示書 `docs/stage45-koyo-sources-instructions.md`)**: `koyo.walkerplus.com`(ウォーカープラス。一覧・個別ページに今の色づき段階は出ず、例年の時期だけ)・`n-kishou.com`(日本気象。見頃予想。`s.n-kishou.co.jp` は読めなかったので対象外)を、要約の道具で読んでよい(出所の区分 `secondary`。Python のコードでは通信しない)。`weathernews.jp/koyo` は読まず人が開くリンク、`www.jorudan.co.jp/koyo` は転送ページしか返らず pending。台帳の追加は `ikimonobiyori/data/sources/autumn_leaves.yaml` の末尾、報告は `docs/stage45-report.md`。
 - 名所の `flower_windows`・`events` に公式の通信先の外の値を入れるときは、`source_host` と出所の区分 `source_class: secondary` を付ける(段階34。旧い印 `unapproved_host` も同じに扱う)。区分 secondary の値も確度の判定(今年のイベント期間)に使い、答えに「(公式ではない情報: ホスト)」を添える。一覧は `python -X utf8 -m ikimonobiyori.catalog_audit`(通信しない)。
 
 ### 守ること
