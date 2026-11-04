@@ -94,6 +94,15 @@ summary_pages:
       - {url: "https://tenki.jp/kouyou/3/17/", publisher: tenki.jp, source_class: secondary, note: "神奈川県の紅葉見頃時期(名所ごとの色づき・例年の見頃)"}
       - {url: "https://koyo.walkerplus.com/ranking/ar0314/", publisher: ウォーカープラス, source_class: secondary, note: "神奈川の紅葉名所ランキング(例年の見頃)"}
       - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県, source_class: official, note: "丹沢の紅葉記録の一覧(山の色づき)"}
+      - {url: "https://koyo.walkerplus.com/list/ar0314/", publisher: ウォーカープラス, source_class: secondary, note: "神奈川の紅葉名所の一覧(例年の見頃。今の色づき段階は一覧に出ない)"}
+      - {url: "https://koyo.walkerplus.com/list/ar0314/ct08800/", publisher: ウォーカープラス, source_class: secondary, note: "箱根の紅葉名所の一覧(例年の見頃)"}
+      - {url: "https://koyo.walkerplus.com/list/ar0314/ct08700/", publisher: ウォーカープラス, source_class: secondary, note: "小田原・県西の紅葉名所の一覧(例年の見頃)"}
+      - {url: "https://koyo.walkerplus.com/list/ar0314/ct08000/", publisher: ウォーカープラス, source_class: secondary, note: "鎌倉の紅葉名所の一覧(例年の見頃)"}
+      - {url: "https://koyo.walkerplus.com/topics/article/161896/", publisher: ウォーカープラス, source_class: secondary, note: "2026年の紅葉見頃時期予想【東日本編】(ウェザーニュース予想の転載。2026-10-29発表。芦ノ湖は11/7頃から)"}
+    東京都:
+      - {url: "https://koyo.walkerplus.com/list/ar0313/", publisher: ウォーカープラス, source_class: secondary, note: "東京の紅葉名所の一覧(例年の見頃。今の色づき段階は一覧に出ない)"}
+      - {url: "https://koyo.walkerplus.com/topics/article/161896/", publisher: ウォーカープラス, source_class: secondary, note: "2026年の紅葉見頃時期予想【東日本編】(ウェザーニュース予想の転載。2026-10-29発表。高尾山は11/13頃から)"}
+      - {url: "https://n-kishou.com/corp/news-contents/autumn/", publisher: 日本気象, source_class: secondary, note: "紅葉・黄葉の見頃予想(現況ではない。第3回 2026-11-04発表で今シーズン最後。東京は紅葉予想日11/30・黄葉予想日11/29)"}
   flowers:
     神奈川県:
       - {url: "https://gardennecklace.city.yokohama.lg.jp/", publisher: ガーデンネックレス横浜, source_class: official, note: "横浜の花の行事"}

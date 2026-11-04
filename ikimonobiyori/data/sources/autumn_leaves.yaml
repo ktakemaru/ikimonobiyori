@@ -375,3 +375,94 @@ sources:
     readable: {status: ok, checked_on: "2026-10-23", robots: no_file, note: "催し『深山紅葉を楽しむ』2026-11-21〜12-06、9:00〜17:00。今の状況の記載はない。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ(ユーザーの判断 2026-10-23: 状態と更新日の短い事実を出典つきで示すだけで、複製には当たらない)"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
+
+  # ---- 段階45(2026-11-04): 紹介サイト・見頃予想の追加。公式ではない(secondary)。docs/stage45-report.md ----
+  # 実読の結果: ウォーカープラスの一覧・個別ページには、地点ごとの『今の色づき段階』と更新日が出ない(例年の色づき始め・例年の紅葉見頃だけ)。
+  # そのため status_page ではなく reference_link(現況の情報源に数えない)。名所の一覧は ikimonobiyori/data/observations/spots.yaml に写した。
+  - id: walkerplus-koyo-kanagawa
+    publisher: ウォーカープラス(紹介サイト。公式ではない)
+    publisher_kind: portal_media
+    url: "https://koyo.walkerplus.com/list/ar0314/"
+    kind: reference_link
+    covers:
+      - {name: 神奈川の紅葉名所(箱根・小田原・鎌倉の一覧を含む), label: "神奈川県の紅葉名所 57件(一覧。箱根 ct08800・小田原 ct08700・鎌倉 ct08000)"}
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: "一覧の各件は名称・市区町村・例年の色づき始め・例年の紅葉見頃。今の色づき段階(青葉/色づき始め/今見頃/色あせ始め/落葉)は凡例にあるだけで、地点には付いていない(2026-11-04 に確認)。ページの更新日の記載もない"
+    readable: {status: ok, checked_on: "2026-11-04", robots: allows, note: "robots.txt は Disallow なし。一覧は 1 ページ 10 件、HTTP 200。決まった形(名称・タグライン・市区町村・例年の色づき始め・例年の紅葉見頃)が安定していた"}
+    terms: {status: no_prohibition_found, url: "https://www.walkerplus.com/info/rules.html", note: "サイト利用規約(2026-11-04 に読んだ): 無断の複製・転載・公衆送信を禁じ、利用は私的利用の範囲。引用・要約・自動取得(クローラー)の規定はない。名称と例年の時期の短い事実を出典つきで示すだけで、複製・転載には当たらないと判断(迷った点。tokyo-park と同じ考え方。本文・写真は写さない)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-04", reason: "指示書 docs/stage45-koyo-sources-instructions.md でホスト koyo.walkerplus.com を承認(2026-11-04)"}
+
+  - id: walkerplus-koyo-tokyo
+    publisher: ウォーカープラス(紹介サイト。公式ではない)
+    publisher_kind: portal_media
+    url: "https://koyo.walkerplus.com/list/ar0313/"
+    kind: reference_link
+    covers:
+      - {name: 東京の紅葉名所(一覧), label: "東京都の紅葉名所 61件(一覧)"}
+    notation:
+      style: none
+      map: {}
+      updated: none
+      note: "神奈川の一覧と同じ形。今の色づき段階・更新日は地点に出ない(2026-11-04 に確認)"
+    readable: {status: ok, checked_on: "2026-11-04", robots: allows, note: "robots.txt は Disallow なし。1 ページ 10 件。個別ページ(日比谷公園)も読めたが、色づき状況は『問い合わせ先に確認』の注意書きだけで、掲載情報は『2026年10月時点』"}
+    terms: {status: no_prohibition_found, url: "https://www.walkerplus.com/info/rules.html", note: "サイト利用規約(2026-11-04 に読んだ): 無断の複製・転載・公衆送信を禁じ、利用は私的利用の範囲。引用・要約・自動取得(クローラー)の規定はない。名称と例年の時期の短い事実を出典つきで示すだけで、複製・転載には当たらないと判断(迷った点。tokyo-park と同じ考え方。本文・写真は写さない)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-04", reason: "指示書でホスト koyo.walkerplus.com を承認(2026-11-04)"}
+
+  - id: walkerplus-koyo-forecast-east
+    publisher: ウォーカープラス(ウェザーニュースの予想の転載。紹介サイト)
+    publisher_kind: portal_media
+    url: "https://koyo.walkerplus.com/topics/article/161896/"
+    kind: forecast_page
+    covers:
+      - {name: 高尾山, label: "高尾山(東京都) 見頃予想 11月13日(金)頃から"}
+      - {name: 芦ノ湖, label: "芦ノ湖(神奈川県) 見頃予想 11月7日(土)頃から"}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      forecast: none
+      note: "2026年11月2日更新。予想はウェザーニュースの第3回(2026-10-29 発表)。現況ではなく見頃の予想。関東・甲信で載るのは高尾山と芦ノ湖だけ"
+    readable: {status: ok, checked_on: "2026-11-04", robots: allows, observed_latest_update: "2026-11-02", note: "ページのフッターに『2018年9月13日 配信』の表記が残っている(記事の初版の日付とみられるが確認していない)"}
+    terms: {status: no_prohibition_found, url: "https://www.walkerplus.com/info/rules.html", note: "サイト利用規約(2026-11-04 に読んだ): 無断の複製・転載・公衆送信を禁じ、利用は私的利用の範囲。引用・要約・自動取得(クローラー)の規定はない。名称と例年の時期の短い事実を出典つきで示すだけで、複製・転載には当たらないと判断(迷った点。tokyo-park と同じ考え方。本文・写真は写さない)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-04", reason: "指示書でホスト koyo.walkerplus.com を承認(2026-11-04)"}
+
+
+
+  - id: jorudan-koyo
+    publisher: ジョルダン(紹介サイト)
+    publisher_kind: portal_media
+    url: "https://www.jorudan.co.jp/koyo/"
+    kind: reference_link
+    covers:
+      - {name: ジョルダン 紅葉情報, label: "紅葉情報(本文を読めない)"}
+    notation: {style: none, map: {}, updated: none, note: "読めない"}
+    readable: {status: unconfirmed, checked_on: "2026-11-04", robots: unknown, note: "HTTP 200 だが 175 文字の転送ページ(『If the page does not move, please click.』)しか返らない。Cookie・転送前提で、本文が読めない。回避しない"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "転送ページしか返らず本文が読めない。回避の工夫(別経路・キャッシュ)はしない"}
+
+  - id: kanagawa-kankou-koyo-feature
+    publisher: 神奈川県観光協会(観光かながわNOW。紹介サイト)
+    publisher_kind: tourism_association
+    url: "https://www.kanagawa-kankou.or.jp/features/koyo-kanagawa"
+    kind: reference_link
+    covers:
+      - {name: 神奈川の紅葉・黄葉の名所 2026, label: "神奈川の紅葉・黄葉の名所 2026(特集)"}
+    notation: {style: none, map: {}, updated: none, note: "地点ごとの今の状況・更新日はない。一部の名所に固定の時期(例: 県立相模原公園 11月下旬～12月上旬、鳥居原園地 10月下旬〜11月初旬頃)と、大山のイルミネーション 2026-11-20〜11-29 の記載がある"}
+    readable: {status: ok, checked_on: "2026-11-04", robots: unknown, note: "トップページ(https://www.kanagawa-kankou.or.jp/)は紅葉の状況を持たない。特集ページは HTTP 200、23,372 文字"}
+    terms: {status: no_prohibition_found, url: "https://www.kanagawa-kankou.or.jp/features/about-site", note: "花の台帳(flowers.yaml)で確かめた『このサイトについて』と同じ。私的使用・引用の範囲を超える複製・転用を不可とし、要約・自動取得の禁止の記載はない。事実を出典つきで短く示す"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-04", reason: "kanagawa-kankou.or.jp は花の台帳で承認済みのホスト(同じ観光協会)"}
+
+  - id: gotokyo-autumn-leaves
+    publisher: GO TOKYO(東京都観光財団。紹介サイト)
+    publisher_kind: tourism_association
+    url: "https://www.gotokyo.org/en/story/guide/autumn-leaves-forecast/index.html"
+    kind: reference_link
+    covers:
+      - {name: 東京の紅葉スポット(英語の記事), label: "Autumn Leaves in Tokyo: Best Time and 12 Viewing Spots"}
+    notation: {style: none, map: {}, updated: per_page, note: "英語の記事、Updated: September 1, 2026。地点ごとの固定の時期(例: 六義園 Late November to Mid December)だけで、今年の状況ではない。日本語版は読んでいない"}
+    readable: {status: ok, checked_on: "2026-11-04", robots: unknown, observed_latest_update: "2026-09-01", note: "トップページ(https://www.gotokyo.org/)は紅葉の状況を持たない"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "現況でも今年の予想でもなく、固定の時期だけ。通信先として承認されていない(gotokyo.org)ので、人が開くリンクにとどめる"}

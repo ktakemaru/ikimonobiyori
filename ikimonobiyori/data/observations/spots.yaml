@@ -356,6 +356,248 @@ spots:
 
   # ---- 花(神奈川)。既存の名所カタログ(data/catalog/flowers.yaml)の名所はそのまま候補に入る(observations.py が都道府県のタグで読む)。
   #      ここには、カタログにない名所と、カタログの名所に足す例年の時期・行事だけを書く(2026-11-01 に Claude Code が読んだもの) ----
+  - id: obs-kouyou-0031
+    subject: autumn_leaves
+    name: "横浜公園"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e373745/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e373745/", publisher: ウォーカープラス, source_class: secondary}
+    search: "横浜公園 紅葉 色づき"
+  - id: obs-kouyou-0032
+    subject: autumn_leaves
+    name: "山下公園通り"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e394013/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e394013/", publisher: ウォーカープラス, source_class: secondary}
+    search: "山下公園通り 紅葉 色づき"
+  - id: obs-kouyou-0033
+    subject: autumn_leaves
+    name: "大佛次郎記念館"
+    prefecture: 神奈川県
+    city: 横浜市中区
+    area: 横浜
+    events:
+      - {name: "秋の和室公開2026", kind: 紅葉, start: "2026-11-25", end: "2026-12-18", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e394675/", source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e394675/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大佛次郎記念館 紅葉 色づき"
+  - id: obs-kouyou-0034
+    subject: autumn_leaves
+    name: "箱根小涌園 蓬莱園"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322489/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322489/", publisher: ウォーカープラス, source_class: secondary}
+    search: "箱根小涌園 蓬莱園 紅葉 色づき"
+  - id: obs-kouyou-0035
+    subject: autumn_leaves
+    name: "出山鉄橋(早川橋梁)"
+    prefecture: 神奈川県
+    city: 箱根町
+    area: 箱根
+    typical:
+      - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322390/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322390/", publisher: ウォーカープラス, source_class: secondary}
+    search: "出山鉄橋(早川橋梁) 紅葉 色づき"
+  - id: obs-kouyou-0036
+    subject: autumn_leaves
+    name: "瑞泉寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e12674/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e12674/", publisher: ウォーカープラス, source_class: secondary}
+    search: "瑞泉寺 紅葉 色づき"
+  - id: obs-kouyou-0037
+    subject: autumn_leaves
+    name: "海蔵寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322484/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322484/", publisher: ウォーカープラス, source_class: secondary}
+    search: "海蔵寺 紅葉 色づき"
+  - id: obs-kouyou-0038
+    subject: autumn_leaves
+    name: "覚園寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322485/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322485/", publisher: ウォーカープラス, source_class: secondary}
+    search: "覚園寺 紅葉 色づき"
+  - id: obs-kouyou-0039
+    subject: autumn_leaves
+    name: "円覚寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322949/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322949/", publisher: ウォーカープラス, source_class: secondary}
+    search: "円覚寺 紅葉 色づき"
+  - id: obs-kouyou-0040
+    subject: autumn_leaves
+    name: "浄智寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322954/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322954/", publisher: ウォーカープラス, source_class: secondary}
+    search: "浄智寺 紅葉 色づき"
+  - id: obs-kouyou-0041
+    subject: autumn_leaves
+    name: "明月院"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e322957/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e322957/", publisher: ウォーカープラス, source_class: secondary}
+    search: "明月院 紅葉 色づき"
+  - id: obs-kouyou-0042
+    subject: autumn_leaves
+    name: "建長寺"
+    prefecture: 神奈川県
+    city: 鎌倉市
+    area: 鎌倉
+    typical:
+      - {text: "11月中旬～12月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e323198/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0314e323198/", publisher: ウォーカープラス, source_class: secondary}
+    search: "建長寺 紅葉 色づき"
+  - id: obs-kouyou-0043
+    subject: autumn_leaves
+    name: "日比谷公園"
+    prefecture: 東京都
+    city: 千代田区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154521/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154521/", publisher: ウォーカープラス, source_class: secondary}
+    search: "日比谷公園 紅葉 色づき"
+  - id: obs-kouyou-0044
+    subject: autumn_leaves
+    name: "靖国神社"
+    prefecture: 東京都
+    city: 千代田区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154522/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154522/", publisher: ウォーカープラス, source_class: secondary}
+    search: "靖国神社 紅葉 色づき"
+  - id: obs-kouyou-0045
+    subject: autumn_leaves
+    name: "皇居東御苑"
+    prefecture: 東京都
+    city: 千代田区
+    area: 都内
+    typical:
+      - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e393170/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e393170/", publisher: ウォーカープラス, source_class: secondary}
+    search: "皇居東御苑 紅葉 色づき"
+  - id: obs-kouyou-0046
+    subject: autumn_leaves
+    name: "北の丸公園"
+    prefecture: 東京都
+    city: 千代田区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e612281/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e612281/", publisher: ウォーカープラス, source_class: secondary}
+    search: "北の丸公園 紅葉 色づき"
+  - id: obs-kouyou-0047
+    subject: autumn_leaves
+    name: "浜離宮恩賜庭園"
+    prefecture: 東京都
+    city: 中央区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154508/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154508/", publisher: ウォーカープラス, source_class: secondary}
+    search: "浜離宮恩賜庭園 紅葉 色づき"
+  - id: obs-kouyou-0048
+    subject: autumn_leaves
+    name: "芝公園"
+    prefecture: 東京都
+    city: 港区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154517/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154517/", publisher: ウォーカープラス, source_class: secondary}
+    search: "芝公園 紅葉 色づき"
+  - id: obs-kouyou-0049
+    subject: autumn_leaves
+    name: "国立科学博物館附属自然教育園"
+    prefecture: 東京都
+    city: 港区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154520/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154520/", publisher: ウォーカープラス, source_class: secondary}
+    search: "国立科学博物館附属自然教育園 紅葉 色づき"
+  - id: obs-kouyou-0050
+    subject: autumn_leaves
+    name: "東京都庭園美術館"
+    prefecture: 東京都
+    city: 港区
+    area: 都内
+    typical:
+      - {text: "12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e154523/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e154523/", publisher: ウォーカープラス, source_class: secondary}
+    search: "東京都庭園美術館 紅葉 色づき"
+  - id: obs-kouyou-0051
+    subject: autumn_leaves
+    name: "有栖川宮記念公園"
+    prefecture: 東京都
+    city: 港区
+    area: 都内
+    typical:
+      - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e372621/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e372621/", publisher: ウォーカープラス, source_class: secondary}
+    search: "有栖川宮記念公園 紅葉 色づき"
+  - id: obs-kouyou-0052
+    subject: autumn_leaves
+    name: "旧芝離宮恩賜庭園"
+    prefecture: 東京都
+    city: 港区
+    area: 都内
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e372632/", year: 2026, source_class: secondary, checked_on: "2026-11-04"}
+    pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e372632/", publisher: ウォーカープラス, source_class: secondary}
+    search: "旧芝離宮恩賜庭園 紅葉 色づき"
   - id: obs-hana-0001
     subject: flowers
     name: 三溪園

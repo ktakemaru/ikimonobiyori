@@ -154,3 +154,15 @@
 - 仮承認(段階15、ユーザー不在のため): 公式・実際に読めた・利用条件が要約や出典つきの事実の利用を禁じていない、の**すべて**を満たすものを `approval.status: approved`、`approved_by: claude_code_provisional` にした。ユーザーが見直して取り消せる(`docs/stage15-review.md`)。
 - ユーザーの見直し(2026-10-23): 承認済み 13 件をユーザーの承認(`approved_by: user`)に切り替えた。伊勢原市の大山のページは現況の情報源にせず pending(例年の時期の参考)。年のない更新日(箱根町観光協会)は「新しさ不明」として扱う。記録は `docs/stage15-decisions.md` D-34〜D-40。
 - 台帳: `ikimonobiyori/data/sources/autumn_leaves.yaml`。各件の利用条件の確認結果は `terms` に書く。
+
+## 8. 紅葉の紹介サイトの追加(段階45。2026-11-04、ユーザー承認: 指示書 docs/stage45-koyo-sources-instructions.md)
+
+| ホスト | 扱い | 承認 |
+|---|---|---|
+| koyo.walkerplus.com | 紹介サイト(secondary)。一覧・個別ページとも、地点ごとの今の色づき段階と更新日は出ない(例年の色づき始め・例年の紅葉見頃だけ)。robots.txt は Disallow なし。利用規約(www.walkerplus.com/info/rules.html)は無断の複製・転載を禁じ、引用・要約・自動取得の規定はない | 承認(2026-11-04) |
+| n-kishou.com | 見頃予想(現況ではない。台帳ではなく観察の記録の summary_pages に載せた。台帳は既存テストが気象会社を禁じるため)。2026-11-04 発表の第3回が今シーズン最後。東京は紅葉予想日 11/30・黄葉予想日 11/29。サイトポリシーは無断転用を禁じ、引用・要約・自動取得の規定はない。s.n-kishou.co.jp は 24 文字しか返らず読めない | 承認(2026-11-04) |
+| weathernews.jp/koyo | 読まない。人が開くリンク。指示書は robots で禁止としているが、robots.txt の User-agent: * に /koyo の Disallow は見当たらなかった(食い違い。要確認) | pending |
+| www.jorudan.co.jp/koyo | 175 文字の転送ページしか返らず、本文を読めない。回避しない | pending |
+| www.kanagawa-kankou.or.jp | 花の台帳で承認済みのホスト。紅葉の特集 /features/koyo-kanagawa は固定の時期だけ(地点ごとの状況はない) | 既存の承認 |
+| www.gotokyo.org | 英語の記事 /en/story/guide/autumn-leaves-forecast/ は固定の時期だけ(Updated: 2026-09-01) | pending(人が開くリンク) |
+| tenki.jp/kouyou | 地点ごとの色づき状況の語のラベル。日付はページ全体の『04日現在』(年・月なし)。robots.txt に /kouyou/ の Disallow なし | 観察の記録では使用済み。台帳には入れていない(気象会社を禁じる既存テストのため) |
