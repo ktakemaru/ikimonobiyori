@@ -111,3 +111,34 @@ class PracticalInfo(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---- 第5部: 高山植物ページに種ごとの花期 ----
+class AlpinePageSpecies(unittest.TestCase):
+    def page(self, month):
+        from datetime import datetime
+        from ikimonobiyori import wildflower, wildflower_page, guide
+        r = wildflower.overview(month=month)
+        r["focus"] = "alpine"
+        return wildflower_page.build_overview(r, policy=guide.load_policy(), now=datetime(2026, 11, 6, 6, 0), photo_for=lambda n: None)
+
+    def text(self, html):
+        import re
+        return re.sub(r"<style.*?</style>|<[^>]+>", "\n", html, flags=re.S)
+
+    def test_november_page_says_out_of_season_and_shows_each_species_with_class(self):
+        t = self.text(self.page(11))
+        self.assertIn("今は11月で、高山の花は見られない時期です", t)
+        self.assertIn("チングルマの花期は例年6月〜8月です", t)
+        self.assertIn("〈公式〉", t)
+        self.assertIn("〈公式ではありません〉", t)
+
+    def test_conflicts_are_shown_together_and_no_month_is_not_invented(self):
+        t = self.text(self.page(11))
+        self.assertIn("コマクサの花期は、出どころによって幅があります", t)
+        self.assertIn("5月〜7月", t)
+        self.assertIn("ハクサンコザクラは、月の記載がなく", t)
+        self.assertNotIn("ハクサンコザクラの花期は例年", t)
+
+    def test_in_season_month_has_no_out_of_season_banner(self):
+        self.assertNotIn("高山の花は見られない時期です", self.text(self.page(7)))
