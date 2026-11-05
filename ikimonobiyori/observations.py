@@ -156,6 +156,13 @@ def _blocked_host(host, policy):
     return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
 
 
+def _reprint_of_blocked(r, policy):
+    """段階52: ウェザーニュース(ウェザーニューズ)由来を示す語を含む事実か(転載を含む)。"""
+    words = [w.lower() for w in _v(policy.get("not_read_words") or {"value": []})]
+    text = " ".join(str(r.get(k) or "") for k in ("state", "typical", "publisher", "url", "forecast")).lower()
+    return any(w in text for w in words)
+
+
 def validate(rec, policy):
     errs = []
     r = policy["record"]
@@ -173,6 +180,8 @@ def validate(rec, policy):
         errs.append("url は http(s) の URL")
     if u.hostname and _blocked_host(u.hostname, policy):
         errs.append("このホストは読まない対象(利用規約)")
+    if isinstance(rec, dict) and _reprint_of_blocked(rec, policy):
+        errs.append("ウェザーニュース由来の事実は使わない(転載を含む)")
     for k in ("state_date",):
         v = rec.get(k)
         if v is not None:
@@ -286,6 +295,7 @@ def read_records(subject, env=None, policy=None):
     policy = policy or load_policy()
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
+    rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
