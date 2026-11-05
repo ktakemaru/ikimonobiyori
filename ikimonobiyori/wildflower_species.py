@@ -91,6 +91,7 @@ def species_answer(name, month=None, date_=None, today=None):
                                            note=(i.get("note") or "").rstrip("。")))
     for i in nomo:
         lines.append(p["no_month"].format(name=name, timing=i["timing"], pubs=_pubs(i["src"], facts)))
+    bloom_lines = list(lines)                                                  # 段階52: ページに載せる花期の文（いまの月の文・標高の注意は含まない）
     months = sorted({m for i in main for m in wildflower._months(i["bloom"], tens)})
     if not months:
         in_season, now = None, p["now_unknown"]
@@ -102,7 +103,7 @@ def species_answer(name, month=None, date_=None, today=None):
         now = p["now_out"].format(month=month, span=span)
     lines.append(now)
     lines.append(p["elevation_note"])
-    return {"schema": SCHEMA_OUT, "name": name, "month": month, "conflict": conflict, "in_season": in_season,
+    return {"schema": SCHEMA_OUT, "name": name, "month": month, "conflict": conflict, "in_season": in_season, "bloom_lines": bloom_lines,
             "items": [{"bloom": i.get("bloom"), "bloom_text": bloom_text(i["bloom"]) if i.get("bloom") else None, "timing": i.get("timing"),
                        "place": i.get("place"), "elevation_m": i.get("elev"), "reference_only": bool(i.get("reference_only")),
                        "sources": _src_rows(i["src"], facts), "note": i.get("note")} for i in items],

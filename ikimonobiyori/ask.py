@@ -149,6 +149,26 @@ def load_gazetteer_file(path):
 
 # ---- 手順 ----
 
+def mark_stale_display(subj, policy):
+    """段階52: 古い表示が残ることのある発行元(箱根町観光協会)は、取得日と状態の日付が min_gap_days 以上離れたら、現況の断定に使わない印
+    (current.reference_only)を付ける。日付つきの参考として出す。"""
+    cfg = ((policy.get("answer_check") or {}).get("stage51") or {}).get("stale_display")
+    if not cfg:
+        return
+    pubs, gap = cfg["publishers"]["value"], cfg["min_gap_days"]["value"]
+    for s in subj.values():
+        for c in s.get("candidates") or []:
+            cur = c.get("current") or {}
+            if not cur.get("state_date") or not cur.get("read_at"):
+                continue
+            if not any(p in (cur.get("publisher") or "") for p in pubs):
+                continue
+            days = (date.fromisoformat(cur["read_at"][:10]) - date.fromisoformat(cur["state_date"])).days
+            if days >= gap:
+                cur["reference_only"] = True
+                cur["gap_days"] = days
+
+
 class Flow:
     """1 回の質問の手順。作業フォルダの calls.json に、手順ごとの呼び出しを順に追記する(別のコマンドで呼ばれても同じ質問の記録に足す)。"""
 
@@ -280,6 +300,7 @@ class Flow:
         origin = origin or self.policy["default_origin"]
         plan_doc = plan_doc if plan_doc is not None else self._load("plan.json", None)
         subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
+        mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
         inat = (plan_doc or {}).get("inat_refresh")
         if inat and inat.get("reason") == "not_yet":   # 取り直しの対象があったが、計測フックの下で取り直していない(単体で聞いたとき)
@@ -291,6 +312,7 @@ class Flow:
                "summary_pages": [p for pl in ((plan_doc or {}).get("subjects") or {}).values() for p in pl.get("summary_pages") or []],
                "this_round": rnd,
                "lines": {"fetch": fetch_line(rnd, self.now, self.policy),
+                         "practical_rules": True,                        # 段階52: 実用情報の決まり（出た候補の実用情報を書く／なければ決まった一文）を当てる印
                          "answer_rules": "stage51",                      # 段階51: 答えの検査の新しい決まりを当てる印（作業の報告を答えに出さない など）
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
                          "scope": self.policy["scope_line"].format(labels="・".join(labels[s] for s in subjects))},

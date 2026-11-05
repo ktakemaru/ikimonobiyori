@@ -152,6 +152,14 @@ def build_overview(r, *, policy, now, photo_for):
     body = [f'<h1>{esc(title)}</h1>', f'<p class="lead">{esc(r["conclusion"])}</p>', f'<p class="meta">{esc(guide_page.created_text(now, h))}</p>']
     if r.get("nav"):
         body.append(r["nav"])
+    species_block = ""
+    if r.get("focus") == "alpine" and kind not in ("mountain", "zukan"):         # 段階52: 種ごとの花期（wildflower_species）。月の記載がない種に月を足さない
+        from . import wildflower_species as WS
+        ans = [WS.species_answer(n, month=r["month"]) for n in WS.names()]
+        if not any(a["in_season"] for a in ans):
+            body.append(f'<p class="lead">{esc(w["species_not_now"].format(month=r["month"]))}</p>')
+        rows = "".join(f'<li><b>{esc(a["name"])}</b> {esc("".join(a["bloom_lines"]))}</li>' for a in ans)
+        species_block = f'<h2>{esc(w["heading_species"])}</h2><p class="note">{esc(w["species_lead"])}</p><ul class="note">{rows}</ul>'
     species = r["species"]
     if kind in ("mountain", "zukan"):
         groups = [(r["heading"] if kind == "zukan" else w["heading_mountain"], list(species), "cards")]
@@ -197,6 +205,8 @@ def build_overview(r, *, policy, now, photo_for):
             rows = "".join(f'<li>{esc(e["name"])}（{esc(w["bare_sep"].join(w["place_bloom"].format(place=pl["place"], text=pl["bloom_text"]) for pl in e["places"]))}）'
                            + (esc(w["protected_line"]) if e["protected"] else "") + "</li>" for e in low)
             body.append(f'<h2>{esc(heading if mode == "list" else w["heading_lowland_bare"])}</h2><ul class="note">{rows}</ul>')
+    if species_block:
+        body.append(species_block)
     body.append(f'<h2>{esc(w["heading_notes"])}</h2><ul>{"".join(f"<li>{esc(c)}</li>" for c in r["caveats"] + [r["season_note"]])}</ul>')
     shown = {n: v for n, v in used.items() if v}
     body.append(f'<p class="note">{esc(h["photo_note"])}</p>')

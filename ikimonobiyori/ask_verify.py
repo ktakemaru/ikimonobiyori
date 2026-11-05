@@ -77,6 +77,23 @@ def short_names(name):
     return {f for f in forms if len(f) >= 2}
 
 
+def prefix_of(name):
+    m = re.match(r"^(.*?)\((.*?)\)(.*)$", _n(name))
+    return m.group(1).strip() if m and m.group(1).strip() and m.group(2).strip() else None
+
+
+def strict_names(name, shared=frozenset()):
+    """段階52: short_names から、同じ地域名を持つ別の名所がある、かっこの前の形（「箱根(芦ノ湖)」「箱根(湯本)」の「箱根」）を除く。別の名所を取り違えない。"""
+    p = prefix_of(name)
+    return short_names(name) - ({p} if p in shared else set())
+
+
+def shared_prefixes(mat):
+    from collections import Counter
+    cnt = Counter(prefix_of(c["name"]) for c in mat.region_candidates)
+    return frozenset(p for p, n in cnt.items() if p and n > 1)
+
+
 class Material:
     def __init__(self, facts, rules, gazetteer=()):
         self.facts = facts
@@ -298,6 +315,9 @@ def stage51_errors(text, facts, mat, rules):
             for kw in cfg["lead_kind_words"]:
                 if kw in lead and kw not in pick_text:
                     errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{len(picks)}件にない"})
+            if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
+                if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
+                    errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
             for c in mat.region_candidates:
                 names = short_names(c["name"])
                 if any(f in lead for f in names) and not any(f in pick_text for f in names):
@@ -310,7 +330,7 @@ def stage51_errors(text, facts, mat, rules):
                 errs.append({"code": "inat_scope_missing", "detail": s.strip()[:40]})
     urls = {u.rstrip("/") for u in URL_RE.findall(text)}                    # ④ 出典
     for c in mat.region_candidates:
-        if any(f in norm for f in short_names(c["name"])):
+        if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat))):
             u = ((c.get("current") or {}).get("url") or "").rstrip("/")
             if u and u not in urls:
                 errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
@@ -322,11 +342,53 @@ def stage51_errors(text, facts, mat, rules):
         if any(p in s for p in cfg["assertive_phrases"]):
             errs.append({"code": "assertive_forecast", "detail": s.strip()[:40]})
 
+    for s in lines:                                                          # 段階52: 状態の日付は 1 つ(範囲にしない)
+        if re.search(cfg["date_range_re"], s):
+            errs.append({"code": "date_range", "detail": s.strip()[:40]})
+    for c in mat.region_candidates:                                          # 段階52: 古い表示が残ることのある発行元の状態は参考として書く
+        if (c.get("current") or {}).get("reference_only"):
+            for s in lines:
+                if any(f in _n(s) for f in strict_names(c["name"], shared_prefixes(mat))) and (c["current"].get("state") and cfg["reference_word"] not in s) and                         any(w in s for w in ("色づき", "見ごろ", "見頃", "真っ盛り", "まだまだ")):
+                    errs.append({"code": "stale_state_asserted", "detail": f"{c['name']}: {s.strip()[:30]}"})
+                    break
+    if (facts.get("lines") or {}).get("practical_rules"):                  # 段階52: 出典リストは本文で使った事実の出どころだけ
+        allowed = set()
+        for c in mentioned_cands(mat, norm):
+            allowed |= candidate_urls(c)
+        if cfg["inat_word"] in text:
+            allowed |= {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots}
+        allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
+        for u in sorted(urls - allowed - {""}):
+            errs.append({"code": "source_unused", "detail": u[:60]})
+    # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
+    mentioned = mentioned_cands(mat, norm)
+    have = [pr["text"] for c in mentioned for pr in c.get("practical") or []]
+    if not (facts.get("lines") or {}).get("practical_rules"):
+        pass
+    elif have:
+        if not any(_n(h) in norm for h in have):
+            errs.append({"code": "practical_missing", "detail": have[0][:30]})
+    elif cfg.get("practical_fallback") and cfg["practical_fallback"] not in text and mentioned:
+        errs.append({"code": "practical_fallback_missing", "detail": cfg["practical_fallback"][:20]})
     for s in lines:                                                          # 公式の文の丸ごとの転載（「」の中が長い。行ごとに見る）
         for q in re.findall(cfg["quote_re"], s):
             if len(q) > val_of(cfg["max_quote_chars"]):
                 errs.append({"code": "long_quote", "detail": q[:30]})
     return errs
+
+
+def mentioned_cands(mat, norm):
+    return [c for c in mat.region_candidates if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat)))]
+
+
+def candidate_urls(c):
+    """候補の事実の出どころ（今の状態・履歴・例年の時期・実用情報・行事）の URL。"""
+    out = set()
+    for k in ("current",):
+        out.add(((c.get(k) or {}).get("url") or "").rstrip("/"))
+    for k in ("history", "typical", "typical_from_records", "practical", "events"):
+        out |= {((x or {}).get("url") or "").rstrip("/") for x in c.get(k) or [] if isinstance(x, dict)}
+    return out - {""}
 
 
 def val_of(x):

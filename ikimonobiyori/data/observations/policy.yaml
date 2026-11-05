@@ -13,7 +13,11 @@ record:
   source_classes: [official, secondary]
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
-  not_read_hosts: {value: [tenki.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+
+# 段階52(利用者の決定 2026-11-06): ウェザーニュース(ウェザーニューズ)の予想は、他サイトの転載でも答えの材料にしない。
+# 記録に次の語を含む事実(状態・例年の時期・出所・発行元の欄)は、既にあっても使わない(記録は消さない)。ウォーカープラスの記事 161896 は転載で、転載の部分を判別できないため今年の予想は使わない。
+not_read_words: {value: [ウェザーニュース, ウェザーニューズ, weathernews, "topics/article/161896"], source: "利用者の決定 2026-11-06(転載であっても使わない)", provisional: false}
 
 # 新しさの区分(状態の日付、なければ読んだ日 から 今日まで の日数)。どれも捨てない
 freshness:
@@ -99,11 +103,8 @@ summary_pages:
       - {url: "https://koyo.walkerplus.com/list/ar0314/ct08800/", publisher: ウォーカープラス, source_class: secondary, note: "箱根の紅葉名所の一覧(例年の見頃)"}
       - {url: "https://koyo.walkerplus.com/list/ar0314/ct08700/", publisher: ウォーカープラス, source_class: secondary, note: "小田原・県西の紅葉名所の一覧(例年の見頃)"}
       - {url: "https://koyo.walkerplus.com/list/ar0314/ct08000/", publisher: ウォーカープラス, source_class: secondary, note: "鎌倉の紅葉名所の一覧(例年の見頃)"}
-      - {url: "https://koyo.walkerplus.com/topics/article/161896/", publisher: ウォーカープラス, source_class: secondary, note: "2026年の紅葉見頃時期予想【東日本編】(ウェザーニュース予想の転載。2026-10-29発表。芦ノ湖は11/7頃から)"}
     東京都:
       - {url: "https://koyo.walkerplus.com/list/ar0313/", publisher: ウォーカープラス, source_class: secondary, note: "東京の紅葉名所の一覧(例年の見頃。今の色づき段階は一覧に出ない)"}
-      - {url: "https://koyo.walkerplus.com/topics/article/161896/", publisher: ウォーカープラス, source_class: secondary, note: "2026年の紅葉見頃時期予想【東日本編】(ウェザーニュース予想の転載。2026-10-29発表。高尾山は11/13頃から)"}
-      - {url: "https://n-kishou.com/corp/news-contents/autumn/", publisher: 日本気象, source_class: secondary, note: "紅葉・黄葉の見頃予想(現況ではない。第3回 2026-11-04発表で今シーズン最後。東京は紅葉予想日11/30・黄葉予想日11/29)"}
   flowers:
     神奈川県:
       - {url: "https://gardennecklace.city.yokohama.lg.jp/", publisher: ガーデンネックレス横浜, source_class: official, note: "横浜の花の行事"}

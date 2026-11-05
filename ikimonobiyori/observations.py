@@ -156,6 +156,13 @@ def _blocked_host(host, policy):
     return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
 
 
+def _reprint_of_blocked(r, policy):
+    """段階52: ウェザーニュース(ウェザーニューズ)由来を示す語を含む事実か(転載を含む)。"""
+    words = [w.lower() for w in _v(policy.get("not_read_words") or {"value": []})]
+    text = " ".join(str(r.get(k) or "") for k in ("state", "typical", "publisher", "url", "forecast")).lower()
+    return any(w in text for w in words)
+
+
 def validate(rec, policy):
     errs = []
     r = policy["record"]
@@ -173,6 +180,8 @@ def validate(rec, policy):
         errs.append("url は http(s) の URL")
     if u.hostname and _blocked_host(u.hostname, policy):
         errs.append("このホストは読まない対象(利用規約)")
+    if isinstance(rec, dict) and _reprint_of_blocked(rec, policy):
+        errs.append("ウェザーニュース由来の事実は使わない(転載を含む)")
     for k in ("state_date",):
         v = rec.get(k)
         if v is not None:
@@ -198,7 +207,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species")
+          "source_class", "species", "practical")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -250,6 +259,8 @@ def make_record(rec, policy, read_at):
     mx = _v(policy["record"]["max_raw_chars"])
     out = {k: rec.get(k) for k in FIELDS if rec.get(k) is not None}
     out["state"] = str(rec["state"])[:mx]
+    if out.get("practical"):                     # 段階52: 読めた公式ページの実用情報(アクセス・駐車場・運行・開園時間の変更など)の短い原文
+        out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
         out["typical"] = str(out["typical"])[:mx]
     out["state_norm"] = normalize(rec["subject"], out["state"], policy)
@@ -286,6 +297,7 @@ def read_records(subject, env=None, policy=None):
     policy = policy or load_policy()
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
+    rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
@@ -301,7 +313,7 @@ def _dup_key(r):
     """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
     ev = r.get("event")
     return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
-            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
 
 
 def dup_key_text(r):
@@ -1332,6 +1344,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                 "last_year": last_year_records(rows, dates, policy),
                 "event_periods_not_typical": [{k: t.get(k) for k in ("text", "start", "end", "publisher", "url", "year")}
                                               for t in c.get("typical") or [] if t.get("event_derived")]},
+            "practical": [{"text": r["practical"], "publisher": r.get("publisher"), "url": r["url"], "state_date": r.get("state_date")}
+                          for r in rows if r.get("practical") and r.get("source_class") == "official"][:2],
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],
