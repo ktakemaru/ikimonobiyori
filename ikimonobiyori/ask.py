@@ -112,6 +112,14 @@ def fetch_line(rnd, now, policy=None):
     return lines
 
 
+def open_urls_line(rnd, policy=None):
+    """段階51: 答えに書いてよい取得の結果は、読めなかったページを利用者が自分で開く 1 行だけ（なければ None）。
+    「読み直し、新しい記録が N件増えました」「新しい情報は取れませんでした」のような作業の報告は答えに出さない（lines.fetch は作業の記録として残す）。"""
+    L = (policy or load_policy())["fetch_lines"]
+    failed = rnd.get("failed") or []
+    return (L["failed"] + " ".join(f["url"] for f in failed)) if failed else None
+
+
 # ---- 名所の名前の一覧(答えの検査器の地名の辞書) ----
 
 def place_names():
@@ -283,6 +291,8 @@ class Flow:
                "summary_pages": [p for pl in ((plan_doc or {}).get("subjects") or {}).values() for p in pl.get("summary_pages") or []],
                "this_round": rnd,
                "lines": {"fetch": fetch_line(rnd, self.now, self.policy),
+                         "answer_rules": "stage51",                      # 段階51: 答えの検査の新しい決まりを当てる印（作業の報告を答えに出さない など）
+                         "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
                          "scope": self.policy["scope_line"].format(labels="・".join(labels[s] for s in subjects))},
                "inat_refresh": inat, "notes": self.notes}
         self._save("facts.json", doc)

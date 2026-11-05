@@ -50,3 +50,11 @@ R10 には、段階37(指示書 `docs/stage37-H11-instructions.md` 2-3)で、開
   A1: `reread_without_new_records`・`reread_not_from_record`・`fetch_skipped`。A2: `birds_typical_phrase`・`closed_not_stated`。
   A7: 返事の全文の検査 `ask verify --reply`(`reply_dev_term`。段階38)。
 - 語の一覧は `ikimonobiyori/data/ask/policy.yaml` の `answer_check`。
+
+## 段階51の追加（2026-11-06 の試用で見つかった5点。facts の lines.answer_rules が stage51 のときに検査器が当てる）
+
+- **A1 の読み替え**: 上の A1（答えの末尾の「読み直し、新しい記録が N件増えました」）は、段階51で**答えに書かない**ことにした。作業の報告（読みに行った・記録が増えた・取れなかった）は答えの外に書く。答えに書いてよい取得の結果は、読めなかったページを利用者が自分で開く 1 行（`lines.open_urls`）だけ。印のない古い形の facts は従来どおり（既存のテストの期待値は変えない）。
+- **B1**: 冒頭の要約は「今回のおすすめ」の候補から書く。冒頭に書いた場所の種類（庭園・菊・野鳥など）と名前が、おすすめの候補にあること（`lead_mismatch`）。
+- **B2**: iNaturalist の記録に基づく文には「公式ではありません」を添え、「一年の平均より多い」など傾向を言うときは、公園そのものでなく神奈川県などの範囲の傾向であることを書く（`inat_unlabeled`・`inat_scope_missing`）。
+- **B3**: 本文で使った現況の事実の出典 URL と、iNaturalist のサイトを、出典の一覧に漏れなく出す（`source_missing`）。
+- **B4**: 見込みを言い切らない（「見ごろに入る時期です」は不可。「入っている可能性があります」）。公式の文は丸ごと転載せず、状態の見出し（「◎ 真っ盛り」など）だけ原文のまま、ほかは短くまとめる（`assertive_forecast`・`long_quote`）。

@@ -243,6 +243,7 @@ def check(text, facts, rules=None, gazetteer=()):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
+    answer_errors += stage51_errors(text, facts, mat, rules)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx:
             answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
@@ -267,6 +268,69 @@ def reread_errors(text, facts, rules):
     if rnd.get("needs_fetch") and not rnd.get("attempted"):
         errs.append({"code": "fetch_skipped", "detail": "記録が古い名所があるのに、この回は読みに行っていない"})
     return errs
+
+
+def stage51_errors(text, facts, mat, rules):
+    """段階51(2026-11-06 の試用で見つかった 5 点)。facts の lines.answer_rules が印と同じときだけ当てる（ask facts が付ける）。
+    ① 作業の報告を答えに出さない ② 冒頭の要約と「今回のおすすめ」の食い違い ③ iNaturalist の傾向は公式ではない・傾向の範囲を書く
+    ④ 本文で使った事実の出典を出典リストに出す ⑤ 見込みを言い切らない・公式の文を丸ごと転載しない。"""
+    cfg = rules.get("stage51")
+    if not cfg or (facts.get("lines") or {}).get("answer_rules") != cfg["flag"]:
+        return []
+    errs = []
+    norm = _n(text)
+    sents = split_sentences(text)
+    for _i, s in sents:                                                      # ① 作業の報告
+        if any(p in s for p in cfg["work_report_phrases"]):
+            errs.append({"code": "work_report", "detail": s.strip()[:40]})
+    lines = text.splitlines()                                               # ② 冒頭とおすすめ
+    heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
+    if heads:
+        h = heads[0]
+        picks = []
+        for l in lines[h + 1:]:
+            if re.match(cfg["lead_pick_re"], l):
+                picks.append(l)
+            elif picks:
+                break
+        lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
+        if picks and lead.strip():
+            for kw in cfg["lead_kind_words"]:
+                if kw in lead and kw not in pick_text:
+                    errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{len(picks)}件にない"})
+            for c in mat.region_candidates:
+                names = short_names(c["name"])
+                if any(f in lead for f in names) and not any(f in pick_text for f in names):
+                    errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
+    for s in lines:                                                          # ③ iNaturalist（かっこの中の「。」で文が切れるので、行ごとに見る）
+        if cfg["inat_word"] in s:
+            if cfg["inat_label"] not in s:
+                errs.append({"code": "inat_unlabeled", "detail": s.strip()[:40]})
+            if cfg["inat_trend"] in s and not any(w in s for w in cfg["inat_scope_words"]):
+                errs.append({"code": "inat_scope_missing", "detail": s.strip()[:40]})
+    urls = {u.rstrip("/") for u in URL_RE.findall(text)}                    # ④ 出典
+    for c in mat.region_candidates:
+        if any(f in norm for f in short_names(c["name"])):
+            u = ((c.get("current") or {}).get("url") or "").rstrip("/")
+            if u and u not in urls:
+                errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
+    if cfg["inat_word"] in text:
+        site = {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots} - {""}
+        if site and not (site & urls):
+            errs.append({"code": "source_missing", "detail": f"{cfg['inat_word']}: {sorted(site)[0]}"})
+    for _i, s in sents:                                                      # ⑤ 見込み・転載
+        if any(p in s for p in cfg["assertive_phrases"]):
+            errs.append({"code": "assertive_forecast", "detail": s.strip()[:40]})
+
+    for s in lines:                                                          # 公式の文の丸ごとの転載（「」の中が長い。行ごとに見る）
+        for q in re.findall(cfg["quote_re"], s):
+            if len(q) > val_of(cfg["max_quote_chars"]):
+                errs.append({"code": "long_quote", "detail": q[:30]})
+    return errs
+
+
+def val_of(x):
+    return x["value"] if isinstance(x, dict) and "value" in x else x
 
 
 def closed_errors(text, mat, rules):
