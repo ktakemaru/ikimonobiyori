@@ -128,3 +128,91 @@ class PageDisplay(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---- 第2部: まつり・イベント ----
+import copy
+from datetime import date
+
+from ikimonobiyori import festivals as FE, season
+from ikimonobiyori import ask_verify as V
+from test_stage51 import STRICT, GOOD51, c51
+
+
+class Weekday(unittest.TestCase):
+    TODAY = date(2026, 11, 6)
+
+    def test_2025_and_2024_calendars_are_previous_year(self):
+        self.assertTrue(season.previous_year_by_weekday("10月25日(土)～11月24日(月)", self.TODAY))        # 2025年の暦
+        self.assertTrue(season.previous_year_by_weekday("10月26日（土）～11月24日（日）", self.TODAY))     # 2024年の暦
+        self.assertTrue(season.previous_year_by_weekday("11月15日（土）", self.TODAY))                    # 2026年の11/15は日曜
+
+    def test_2026_calendar_passes_and_no_weekday_is_not_judged(self):
+        self.assertFalse(season.previous_year_by_weekday("11月1日（日）～11月30日（月）", self.TODAY))
+        self.assertFalse(season.previous_year_by_weekday("10/24(土)〜11/23(月)", self.TODAY))
+        self.assertIsNone(season.previous_year_by_weekday("2026年10月24日 - 2026年11月23日", self.TODAY))
+
+    def test_check_reports_the_mismatching_fragments(self):
+        r = season.weekday_check("10/25(土)と11/15(日)", 2026)
+        self.assertEqual(r["checked"], 2)
+        self.assertEqual(len(r["mismatches"]), 1)
+
+
+class FestivalStatus(unittest.TestCase):
+    def doc(self, **kw):
+        f = {"id": "x", "name": "試験もみじまつり", "spots": ["s1"], "organizer": "試験協会", "organizer_class": "official", "start": "2026-11-01", "end": "2026-11-30",
+             "url": "https://example.org/", "raw": ["11月1日（日）～11月30日（月）"], "lightup": None}
+        f.update(kw)
+        return {"festivals": [f]}
+
+    def test_ongoing_upcoming_and_ended_are_computed_from_today(self):
+        d = self.doc()
+        self.assertEqual(FE.for_spot("s1", date(2026, 11, 6), d)[0]["period_line"], "主催者が設定した期間: まつり期間中(11/1〜11/30)")
+        self.assertEqual(FE.for_spot("s1", date(2026, 10, 25), d)[0]["period_line"], "主催者が設定した期間: あと7日で開始(11/1〜11/30)")
+        self.assertEqual(FE.for_spot("s1", date(2026, 11, 1), self.doc(start="2026-11-01"))[0]["state"], "ongoing")
+        self.assertEqual(FE.for_spot("s1", date(2026, 12, 1), d), [])                      # 終了したものは出さない
+
+    def test_previous_season_year_missing_and_weekday_mismatch_are_not_used(self):
+        t = date(2026, 11, 6)
+        self.assertEqual(FE.for_spot("s1", t, self.doc(start="2025-11-01", end="2025-11-30")), [])
+        self.assertEqual(FE.for_spot("s1", t, self.doc(start=None)), [])
+        self.assertEqual(FE.for_spot("s1", t, self.doc(raw=["10月25日(土)～11月24日(月)"])), [])    # 2025年の暦
+
+    def test_lightup_line_has_period_and_hours(self):
+        d = self.doc(lightup={"start": "2026-11-06", "end": "2026-11-29", "hours": "16:00〜21:00", "note": None})
+        self.assertEqual(FE.for_spot("s1", date(2026, 11, 6), d)[0]["lightup_line"], "ライトアップ: 11/6〜11/29 16:00〜21:00")
+
+    def test_the_real_data_is_all_usable_this_season_and_mitake_is_secondary(self):
+        t = date(2026, 11, 6)
+        self.assertEqual(FE.dropped(t), {})
+        by = {f["id"]: f for f in FE.load()["festivals"]}
+        self.assertEqual(by["mitake-tenku-momiji-2026"]["organizer_class"], "secondary")
+        self.assertEqual((by["mitake-tenku-momiji-2026"]["start"], by["mitake-tenku-momiji-2026"]["end"]), ("2026-10-24", "2026-11-23"))
+        self.assertEqual(by["nagatoro-koyo-2026"]["organizer_class"], "official")
+        self.assertEqual(FE.dropped(date(2025, 11, 6)).keys(), by.keys())                  # 前年の日付に対しては、どれも今シーズンの情報ではない
+
+
+class FestivalAnswerRules(unittest.TestCase):
+    def facts(self, with_state):
+        f = copy.deepcopy(STRICT)
+        f["lines"]["practical_rules"] = True
+        for c in f["subjects"]["birds"]["candidates"]:
+            c["practical"] = []
+            c["festivals"] = []
+        c0 = f["subjects"]["birds"]["candidates"][0]
+        c0["festivals"] = [{"name": "試験まつり", "url": "https://birds.example.org/", "period_line": "主催者が設定した期間: まつり期間中(11/1〜11/30)"}]
+        if not with_state:
+            c0["current"] = None
+        return f, c0["name"]
+
+    def test_festival_period_must_be_a_separate_line_from_the_state(self):
+        f, name = self.facts(True)
+        bad = GOOD51 + f"{name}: 主催者が設定した期間: まつり期間中(11/1〜11/30)で、11/3時点で見ごろです。\n"
+        self.assertIn("festival_mixed_with_state", c51(bad, f))
+        ok = GOOD51 + f"{name}: 主催者が設定した期間: まつり期間中(11/1〜11/30)です。\n"
+        self.assertNotIn("festival_mixed_with_state", c51(ok, f))
+
+    def test_no_state_candidate_needs_the_sentence(self):
+        f, name = self.facts(False)
+        self.assertIn("festival_no_state_missing", c51(GOOD51, f))
+        self.assertNotIn("festival_no_state_missing", c51(GOOD51 + "色づき状況は確認できていません。\n", f))

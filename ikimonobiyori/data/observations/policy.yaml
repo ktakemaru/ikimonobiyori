@@ -19,6 +19,28 @@ record:
 # 記録に次の語を含む事実(状態・例年の時期・出所・発行元の欄)は、既にあっても使わない(記録は消さない)。ウォーカープラスの記事 161896 は転載で、転載の部分を判別できないため今年の予想は使わない。
 not_read_words: {value: [ウェザーニュース, ウェザーニューズ, weathernews, "topics/article/161896"], source: "利用者の決定 2026-11-06(転載であっても使わない)", provisional: false}
 
+# 段階53 第2部: まつり・イベント（festivals.yaml。ikimonobiyori/festivals.py）。期間は主催者が設定した運営上の日程で、色づきを保証しない。現況とは別の行にする
+festivals:
+  file: festivals.yaml
+  period_label: 主催者が設定した期間
+  status_text:
+    ongoing: "まつり期間中({start}〜{end})"
+    starts_today: "本日開始({start}〜{end})"
+    starts_in: "あと{days}日で開始({start}〜{end})"
+    ended: "終了しました({start}〜{end})"
+  lightup_text: "ライトアップ: {start}〜{end}{hours}{note}"
+  lightup_no_period: "ライトアップ: {hours}{note}"
+  hours_fmt: " {hours}"
+  note_fmt: "。{note}"
+  organizer_line: "主催: {organizer}({klass})"
+  class_labels: {official: 公式, secondary: 公式ではありません}
+  no_state: "色づき状況は確認できていません"
+  contact_line: "問い合わせ: {contact}"
+  dropped:
+    other_year: 今シーズンの情報ではない
+    weekday_mismatch: 日付と曜日が今年の暦と合わない
+    year_missing: 年が読めない
+
 # 新しさの区分(状態の日付、なければ読んだ日 から 今日まで の日数)。どれも捨てない
 freshness:
   source: "指示書 4-4(紅葉・花は2日以内、野鳥は7日以内が新しい。14日以内が古い。それより前がかなり古い)"

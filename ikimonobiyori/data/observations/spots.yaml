@@ -1027,3 +1027,45 @@ spots:
     area: 都内
     search: "清澄庭園 紅葉 色づき"
     trees: {species: "ハゼノキ", color: "紅色", count: 3, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
+  # 段階53 第2部: まつり情報による候補（festivals.yaml）。座標は確認できたものだけ（町田薬師池公園: Wikidata Q6632026 の座標。高尾山・御岳山: data/sites.yaml の m029・m031）
+  - id: obs-kouyou-0087
+    subject: autumn_leaves
+    name: "町田薬師池公園"
+    aliases: ["薬師池公園", "町田薬師池公園四季彩の杜"]
+    prefecture: 東京都
+    city: 町田市
+    area: 都内
+    origin: festival
+    point: {lat: 35.578889, lon: 139.447778, source: "Wikidata Q6632026(薬師池公園)の座標 P625。2026-11-06 に読んだ", checked_on: '2026-11-06'}
+    typical:
+    pages:
+      - {url: "https://www.city.machida.tokyo.jp/kanko/miru_aso/ibe_gyou_matu/event.html", publisher: 町田市, source_class: official}
+    search: "町田薬師池公園 紅葉 ライトアップ"
+  - id: obs-kouyou-0088
+    subject: autumn_leaves
+    name: "高尾山"
+    aliases: ["高尾山もみじまつり"]
+    prefecture: 東京都
+    city: 八王子市
+    area: 都内
+    origin: festival
+    point: {lat: 35.6253, lon: 139.2436, elevation_m: 599, source: "ikimonobiyori/data/sites.yaml m029(高尾山)の座標", checked_on: '2026-11-06'}
+    elevation_m: 599
+    typical:
+    pages:
+      - {url: "https://www.hkc.or.jp/takaosan/momiji_fes/", publisher: 八王子観光コンベンション協会, source_class: official}
+    search: "高尾山 紅葉 色づき"
+  - id: obs-kouyou-0089
+    subject: autumn_leaves
+    name: "御岳山"
+    aliases: ["御岳山 天空もみじまつり", "天空もみじまつり"]
+    prefecture: 東京都
+    city: 青梅市
+    area: 都内
+    origin: festival
+    point: {lat: 35.7829, lon: 139.1495, elevation_m: 929, source: "ikimonobiyori/data/sites.yaml m031(御岳山)の座標", checked_on: '2026-11-06'}
+    elevation_m: 929
+    typical:
+    pages:
+      - {url: "https://www.gotokyo.org/jp/spot/ev073/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
+    search: "御岳山 紅葉 色づき"
