@@ -298,6 +298,9 @@ def stage51_errors(text, facts, mat, rules):
             for kw in cfg["lead_kind_words"]:
                 if kw in lead and kw not in pick_text:
                     errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{len(picks)}件にない"})
+            if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
+                if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
+                    errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
             for c in mat.region_candidates:
                 names = short_names(c["name"])
                 if any(f in lead for f in names) and not any(f in pick_text for f in names):
@@ -331,6 +334,15 @@ def stage51_errors(text, facts, mat, rules):
                 if any(f in _n(s) for f in short_names(c["name"])) and (c["current"].get("state") and cfg["reference_word"] not in s) and                         any(w in s for w in ("色づき", "見ごろ", "見頃", "真っ盛り", "まだまだ")):
                     errs.append({"code": "stale_state_asserted", "detail": f"{c['name']}: {s.strip()[:30]}"})
                     break
+    if (facts.get("lines") or {}).get("practical_rules"):                  # 段階52: 出典リストは本文で使った事実の出どころだけ
+        allowed = set()
+        for c in mentioned_cands(mat, norm):
+            allowed |= candidate_urls(c)
+        if cfg["inat_word"] in text:
+            allowed |= {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots}
+        allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
+        for u in sorted(urls - allowed - {""}):
+            errs.append({"code": "source_unused", "detail": u[:60]})
     # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
     mentioned = [c for c in mat.region_candidates if any(f in norm for f in short_names(c["name"]))]
     have = [pr["text"] for c in mentioned for pr in c.get("practical") or []]
@@ -346,6 +358,20 @@ def stage51_errors(text, facts, mat, rules):
             if len(q) > val_of(cfg["max_quote_chars"]):
                 errs.append({"code": "long_quote", "detail": q[:30]})
     return errs
+
+
+def mentioned_cands(mat, norm):
+    return [c for c in mat.region_candidates if any(f in norm for f in short_names(c["name"]))]
+
+
+def candidate_urls(c):
+    """候補の事実の出どころ（今の状態・履歴・例年の時期・実用情報・行事）の URL。"""
+    out = set()
+    for k in ("current",):
+        out.add(((c.get(k) or {}).get("url") or "").rstrip("/"))
+    for k in ("history", "typical", "typical_from_records", "practical", "events"):
+        out |= {((x or {}).get("url") or "").rstrip("/") for x in c.get(k) or [] if isinstance(x, dict)}
+    return out - {""}
 
 
 def val_of(x):

@@ -100,6 +100,9 @@ answer_check:
     quote_re: '「([^」]+)」'
     date_range_re: '\d{1,2}/\d{1,2}\s*[～〜~]\s*\d{1,2}/\d{1,2}\s*時点'
     reference_word: 参考
+    pick_hedge_phrases: [可能性があります, かもしれません, 見込みです]
+    lead_assertive_phrases: [の週末です, 楽しめる週末, 真っ盛り, 見ごろです, 見頃です, 満喫できます, 間違いなく]
+    lead_hedge_words: [可能性, そうです, かもしれません, 向かう, 見込み, 期待]
     practical_fallback: アクセスや混雑は出かける前に公式ページで確認してください
     stale_display:
       publishers: {value: [箱根町観光協会], source: "過去の確認(古い表示が残ることがある。指示書 段階52 第3部)", provisional: false}

@@ -184,3 +184,30 @@ class ScientificCommons(unittest.TestCase):
     def test_nc_license_and_missing_scientific_name_are_not_used(self):
         self.assertEqual(self.run_ensure(self.net("CC BY-NC 4.0", "Primula cuneifolia"))["results"], {"ハクサンコザクラ": "none"})
         self.assertEqual(self.run_ensure(self.net("CC BY 4.0", "a pretty flower"))["results"], {"ハクサンコザクラ": "none"})
+
+
+# ---- 第7部: 出典リストと冒頭文 ----
+class SourcesAndLead(unittest.TestCase):
+    def facts(self):
+        f = copy.deepcopy(STRICT)
+        f["lines"]["practical_rules"] = True
+        for c in f["subjects"]["birds"]["candidates"]:
+            c["practical"] = []
+        return f
+
+    def test_source_not_used_in_the_body_is_rejected(self):
+        f = self.facts()
+        self.assertNotIn("source_unused", c51(GOOD51, f))
+        extra = GOOD51 + "https://www.kawasakidaishi.com\n"
+        self.assertIn("source_unused", c51(extra, f))
+
+    def test_old_facts_do_not_get_the_new_source_rule(self):
+        self.assertNotIn("source_unused", c51(GOOD51 + "https://www.kawasakidaishi.com\n"))
+
+    def test_lead_must_not_be_assertive_when_a_pick_is_hedged(self):
+        f = self.facts()
+        hedged = GOOD51.replace("③ 試験の公園: この時期に見られる鳥は、コガモ・オナガガモです。", "③ 試験の公園: 見ごろに近い可能性があります。この時期に見られる鳥は、コガモ・オナガガモです。")
+        self.assertNotIn("lead_too_assertive", c51(hedged, f))                        # 冒頭は「見られそうです」
+        bad = hedged.replace("で、冬鳥のカモ類が見られそうです。", "で、冬鳥のカモ類が同時に楽しめる週末です。", 1)
+        self.assertIn("lead_too_assertive", c51(bad, f))
+        self.assertNotIn("lead_too_assertive", c51(bad.replace("可能性があります", "です"), f))   # おすすめに弱い確かさがなければ対象外
