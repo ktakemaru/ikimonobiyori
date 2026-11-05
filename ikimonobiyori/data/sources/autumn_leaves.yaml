@@ -152,6 +152,63 @@ sources:
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "サイトポリシー: 情報・画像は権利者の許可なく複製・転用・販売などの二次利用を禁じる。リンクは原則自由。事実(状態・日付)を出典つきで短く伝えることは二次利用(複製・転用)に当たらないと判断。迷った点として review に書く"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "状態と更新日の短い事実を出典つきで示すだけで、複製には当たらないとユーザーが判断(2026-10-23)"}
 
+  # ---- 段階50(2026-11-05): 東京都公園協会「紅葉を見に行こう!」(都立公園・庭園の紅葉情報。37 か所)。指示書 docs/stage50-sources-data-instructions.md ----
+  # 2026-11-05 の本文は 2025 年シーズンの最終版(「最終情報更新日：令和7年12月18日（木）17時」。全地点が「落葉」または「散始め」。令和7年12月22日に閉鎖)。
+  # したがって 2026 年の現況としては使わない(今シーズンの更新が始まるまで『未開始(前シーズンの最終版のみ)』)。記録は ikimonobiyori/season.py が前シーズンの日付を拒否する。
+  - id: tokyo-park-kouyou-special
+    publisher: 東京都公園協会(紅葉を見に行こう!)
+    publisher_kind: park_manager
+    url: "https://www.tokyo-park.or.jp/special/kouyou/index.html"
+    kind: status_page
+    covers:
+      - {name: "石神井公園", label: "石神井公園"}
+      - {name: "光が丘公園", label: "光が丘公園"}
+      - {name: "芝公園", label: "芝公園"}
+      - {name: "砧公園", label: "砧公園"}
+      - {name: "林試の森公園", label: "林試の森公園"}
+      - {name: "善福寺川緑地・和田堀公園", label: "善福寺川緑地・和田堀公園"}
+      - {name: "木場公園", label: "木場公園"}
+      - {name: "城北中央公園", label: "城北中央公園"}
+      - {name: "舎人公園", label: "舎人公園"}
+      - {name: "戸山公園", label: "戸山公園"}
+      - {name: "大泉中央公園", label: "大泉中央公園"}
+      - {name: "蘆花恒春園", label: "蘆花恒春園"}
+      - {name: "日比谷公園", label: "日比谷公園"}
+      - {name: "水元公園", label: "水元公園"}
+      - {name: "代々木公園", label: "代々木公園"}
+      - {name: "駒沢オリンピック公園", label: "駒沢オリンピック公園"}
+      - {name: "上野恩賜公園", label: "上野恩賜公園"}
+      - {name: "小金井公園", label: "小金井公園"}
+      - {name: "陵南公園", label: "陵南公園"}
+      - {name: "府中の森公園", label: "府中の森公園"}
+      - {name: "武蔵野公園", label: "武蔵野公園"}
+      - {name: "東大和南公園", label: "東大和南公園"}
+      - {name: "狭山公園", label: "狭山公園"}
+      - {name: "桜ヶ丘公園", label: "桜ヶ丘公園"}
+      - {name: "神代植物公園", label: "神代植物公園"}
+      - {name: "井の頭恩賜公園", label: "井の頭恩賜公園"}
+      - {name: "野山北・六道山公園", label: "野山北・六道山公園"}
+      - {name: "小宮公園", label: "小宮公園"}
+      - {site: kouyou-0032, label: "小石川後楽園"}
+      - {site: kouyou-0022, label: "六義園"}
+      - {name: "浜離宮恩賜庭園", label: "浜離宮恩賜庭園"}
+      - {name: "向島百花園", label: "向島百花園"}
+      - {name: "旧古河庭園", label: "旧古河庭園"}
+      - {name: "殿ヶ谷戸庭園", label: "殿ヶ谷戸庭園"}
+      - {name: "旧芝離宮恩賜庭園", label: "旧芝離宮恩賜庭園"}
+      - {name: "旧岩崎邸庭園", label: "旧岩崎邸庭園"}
+      - {name: "清澄庭園", label: "清澄庭園"}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      year_shown: true
+      season_check: true
+      note: "状況は文字ではなく画像(alt テキストに状態名)。2025 年版で確かめた値は『落葉』『散始め』だけ。凡例画像(kouyou-hanrei.gif)は読めず、ほかの状態名は未確認なので map は空(段階は決めず、凡例にない語は原文のまま出す)。ページの先頭に『最終情報更新日：令和N年M月D日』があり、今シーズン(その年の9月以降)の日付でなければ前シーズンの情報として現況に使わない。地点ごとに『ひとくちメモ』(https://www.tokyo-park.or.jp/special/kouyou/memo/index.html の #番号)へのリンクがある。樹種・本数は 2025 年版の原文(変わりにくい属性。ikimonobiyori/data/observations/spots.yaml の trees)"
+    readable: {status: ok, checked_on: "2026-11-05", robots: no_file, observed_latest_update: "2025-12-18", note: "2026-11-05 時点の本文は 2025 年シーズンの最終版(令和7年12月18日 17時更新、12月22日閉鎖)。meta の説明文は『2026年版』だが本文は未更新。2025 年は 11/10(月)〜12/22(月)に提供、毎週月曜・木曜の夕方に更新(祝日は翌日)、37 公園・庭園(東京都報道発表 2025-11-04 https://www.metro.tokyo.lg.jp/information/press/2025/11/2025110407 )。2026 年の開始日は未確認(例年 11 月第 2 週の月曜ごろの可能性。推測で、断定しない)。同じサイトの robots.txt は 404(なし。段階15・16)"}
+    terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ(ユーザーの判断 2026-10-23: 状態と更新日の短い事実を出典つきで示すだけで、複製・転用には当たらない)"}
+    approval: {status: pending, reason: "ユーザーの承認待ち(段階50)。条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)は満たすが、今は前シーズンの最終版で今年の現況がない。通信先 www.tokyo-park.or.jp は段階47で承認済み。今シーズンの更新が始まったら見直す。season_check により前シーズンの日付の記録は受け付けない"}
+
   - id: fng-shinjuku-seasonal
     publisher: 国民公園協会 新宿御苑
     publisher_kind: park_manager

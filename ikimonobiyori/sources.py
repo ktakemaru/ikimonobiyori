@@ -769,6 +769,11 @@ def validate_record(rec, *, registry, policy):
                 isinstance(x, dict) and set(x) == {"part", "state"} and isinstance(x["part"], str) and isinstance(x["state"], str)
                 and 0 < len(x["part"]) <= lim_l and 0 < len(x["state"]) <= lim_s for x in parts)):
             errs.append(f"official_parts は [{{part, state}}] の配列(part は {lim_l} 文字以内、state は {lim_s} 文字以内の原文)")
+    if (src.get("notation") or {}).get("season_check") and rec.get("official_state") is not None:                  # 段階50: 前シーズンの最終版は現況に記録しない
+        from . import season
+        upd = rec.get("official_updated") or rec.get("official_observed")
+        if upd and catalog_mod.valid_date(upd) and season.is_previous_season(date.fromisoformat(upd), date.fromisoformat(rec["read_at"].split("T")[0]), policy):
+            errs.append(f"情報源 {src['id']} の {upd} は前シーズンの情報(今年の現況として記録しない)")
     ev = [rec.get(k) for k in ("event_start", "event_end")]
     if any(v is not None for v in ev):
         if not all(v is not None and catalog_mod.valid_date(v) for v in ev):

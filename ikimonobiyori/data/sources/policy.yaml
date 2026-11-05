@@ -278,3 +278,13 @@ proposals:
     too_old: "{name}: 公式の日付({date})が対象の日より {days} 日以上前のため、提案にしていません(昨シーズンの表示の恐れ)"
     outside_catalog: "名所の一覧にない地点のため提案にしていない({subject}): {names}"
     reference_link: "参考(公式ページ): {name} — {url}"
+
+# 前シーズンの情報の判定(段階50。ikimonobiyori/season.py)。「最終情報更新日：令和N年M月D日」が今シーズンの日付でなければ、現況に使わない。
+season_check:
+  season_start_month: {value: 9, source: "指示書(段階50 §1): 『その年の9月以降』を今シーズンとする。紅葉の提供が始まる前の月(9月)を区切りにした仮置き", provisional: true}
+  era_base_year:
+    令和: {value: 2018, source: "令和1年 = 2019年(元号の換算。令和N年 = 2018 + N)", provisional: false}
+    平成: {value: 1988, source: "平成1年 = 1989年(平成N年 = 1988 + N)", provisional: false}
+  labels:
+    previous_season: "前シーズンの情報"
+    note: "{date}の最終版(前シーズン)です。今年の現況ではありません"
