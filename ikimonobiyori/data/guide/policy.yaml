@@ -426,6 +426,29 @@ wildflower:
   elevation_shift_note: "標高が高いほど、花の時期は遅れます。"          # 標高ごとの遅れの数値は、出どころのあるときだけ書く（今は出どころなし）
   words: [野草, 山野草, 高山植物, お花畑, 高山の花, 山の花]          # 話題として登録する語（guide theme が wildflower を指す）
   command_hint: "python -X utf8 -m ikimonobiyori.guide wildflower --area <山域> | --site <地点ID> [--month N] [--json]"
+  species_file: wildflower_species.yaml                   # 段階51: 種ごとの花期（山ごとの花暦とは別の層）と、山ごとの記載
+  species:
+    schema: ikimono-wildflower-species/1
+    official_tag: 公式
+    secondary_tag: 公式ではありません
+    main: "{name}の花期は例年{span}です({where}{pubs})。"
+    main_conflict: "{name}の花期は、出どころによって幅があります。{parts}。紹介サイトで幅があるため、目安として見てください。"
+    conflict_part: "{span}({pubs})"
+    parts_sep: "、"
+    reference: "参考: {place}では{span}です({pubs})。{note}。"
+    no_month: "{name}は、月の記載がなく、{timing}とあります({pubs})。"
+    now_in: "今は{month}月で、例年の花期にあたります。今年の開花状況は確かめられていません。"
+    now_out: "今は{month}月で、見られる時期ではありません(例年{span})。"
+    now_unknown: "月の記載がないため、今が見られる時期かは分かりません。"
+    elev_lo: "標高{lo}m以上"
+    where_sep: "、"
+    where_end: "。"
+    pub_sep: "、"
+    pub_fmt: "{publisher}〈{tag}〉"
+    elevation_note: "標高が高いほど、花の時期は遅れます。"
+    notes_title: "{name}の記載"
+    unknown_species: "種 {name} は種ごとの花期の一覧にありません"
+    unknown_site: "地点 {site} の記載はありません"
   page:                                                   # 段階41: 写真つきページ（ikimonobiyori/wildflower_page.py）の文言
     file: wildflower-guide.html
     title: "{place}の{month}月の野草・高山植物"

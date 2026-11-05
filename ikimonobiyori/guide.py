@@ -1419,6 +1419,8 @@ def main(argv=None, http_get=None, http_bytes=None):
     pw.add_argument("--area", help="山域名（丹沢・箱根・奥多摩・高尾 など）")
     pw.add_argument("--month", type=int, help="月（既定は今日の月）")
     pw.add_argument("--date", help="YYYY-MM-DD（月に直す）")
+    pw.add_argument("--species", help="種の名前（段階51。種ごとの花期。例: チングルマ。山ごとの花暦とは別の層）")
+    pw.add_argument("--notes", action="store_true", help="--site の山の記載（段階51。見られる花の言い方と、花を見に行ける時期の前提）")
     pw.add_argument("--json", action="store_true")
     pp = sub.add_parser("photos-prefetch", help="policy の一覧(photos.prefetch)の種の写真を、80 件以内に分けて事前に取る(段階39。バックグラウンドで実行してよい)")
     pp.add_argument("--theme", default="野鳥", help="野鳥・花・野草")
@@ -1531,6 +1533,9 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "wildflower":
         from . import wildflower
         try:
+            if a.species or a.notes:
+                from . import wildflower_species
+                return wildflower_species.species_cmd(a)
             return wildflower.wildflower_cmd(a)
         except ValueError as ex:
             print(str(ex), file=sys.stderr)
