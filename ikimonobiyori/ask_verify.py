@@ -331,6 +331,16 @@ def stage51_errors(text, facts, mat, rules):
                 if any(f in _n(s) for f in short_names(c["name"])) and (c["current"].get("state") and cfg["reference_word"] not in s) and                         any(w in s for w in ("色づき", "見ごろ", "見頃", "真っ盛り", "まだまだ")):
                     errs.append({"code": "stale_state_asserted", "detail": f"{c['name']}: {s.strip()[:30]}"})
                     break
+    # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
+    mentioned = [c for c in mat.region_candidates if any(f in norm for f in short_names(c["name"]))]
+    have = [pr["text"] for c in mentioned for pr in c.get("practical") or []]
+    if not (facts.get("lines") or {}).get("practical_rules"):
+        pass
+    elif have:
+        if not any(_n(h) in norm for h in have):
+            errs.append({"code": "practical_missing", "detail": have[0][:30]})
+    elif cfg.get("practical_fallback") and cfg["practical_fallback"] not in text and mentioned:
+        errs.append({"code": "practical_fallback_missing", "detail": cfg["practical_fallback"][:20]})
     for s in lines:                                                          # 公式の文の丸ごとの転載（「」の中が長い。行ごとに見る）
         for q in re.findall(cfg["quote_re"], s):
             if len(q) > val_of(cfg["max_quote_chars"]):

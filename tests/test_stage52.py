@@ -85,5 +85,29 @@ class DatesAndStaleDisplay(unittest.TestCase):
         self.assertNotIn("stale_state_asserted", c51(ok, f))
 
 
+class PracticalInfo(unittest.TestCase):
+    def facts(self, practical):
+        f = copy.deepcopy(STRICT)
+        f["lines"]["practical_rules"] = True
+        for c in f["subjects"]["birds"]["candidates"]:
+            c["practical"] = []
+        if practical:
+            f["subjects"]["birds"]["candidates"][0]["practical"] = [{"text": "11/6の昭和記念公園は有料エリア9:30~21:00", "publisher": "試験", "url": "https://birds.example.org/"}]
+        return f
+
+    def test_practical_line_must_be_used_when_a_read_page_has_it(self):
+        f = self.facts(True)
+        self.assertIn("practical_missing", c51(GOOD51, f))
+        self.assertNotIn("practical_missing", c51(GOOD51 + "11/6の昭和記念公園は有料エリア9:30~21:00です。\n", f))
+
+    def test_fallback_sentence_when_nothing_was_read(self):
+        f = self.facts(False)
+        self.assertIn("practical_fallback_missing", c51(GOOD51, f))
+        self.assertNotIn("practical_fallback_missing", c51(GOOD51 + "アクセスや混雑は出かける前に公式ページで確認してください。\n", f))
+
+    def test_old_facts_without_the_mark_are_unchanged(self):
+        self.assertNotIn("practical_fallback_missing", c51(GOOD51))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -207,7 +207,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species")
+          "source_class", "species", "practical")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -259,6 +259,8 @@ def make_record(rec, policy, read_at):
     mx = _v(policy["record"]["max_raw_chars"])
     out = {k: rec.get(k) for k in FIELDS if rec.get(k) is not None}
     out["state"] = str(rec["state"])[:mx]
+    if out.get("practical"):                     # 段階52: 読めた公式ページの実用情報(アクセス・駐車場・運行・開園時間の変更など)の短い原文
+        out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
         out["typical"] = str(out["typical"])[:mx]
     out["state_norm"] = normalize(rec["subject"], out["state"], policy)
@@ -1342,6 +1344,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                 "last_year": last_year_records(rows, dates, policy),
                 "event_periods_not_typical": [{k: t.get(k) for k in ("text", "start", "end", "publisher", "url", "year")}
                                               for t in c.get("typical") or [] if t.get("event_derived")]},
+            "practical": [{"text": r["practical"], "publisher": r.get("publisher"), "url": r["url"], "state_date": r.get("state_date")}
+                          for r in rows if r.get("practical") and r.get("source_class") == "official"][:2],
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],

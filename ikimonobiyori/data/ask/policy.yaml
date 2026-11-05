@@ -100,6 +100,7 @@ answer_check:
     quote_re: '「([^」]+)」'
     date_range_re: '\d{1,2}/\d{1,2}\s*[～〜~]\s*\d{1,2}/\d{1,2}\s*時点'
     reference_word: 参考
+    practical_fallback: アクセスや混雑は出かける前に公式ページで確認してください
     stale_display:
       publishers: {value: [箱根町観光協会], source: "過去の確認(古い表示が残ることがある。指示書 段階52 第3部)", provisional: false}
       min_gap_days: {value: 3, source: "指示書 段階52 第3部(取得日と状態の日付が3日以上離れる)", provisional: false}
