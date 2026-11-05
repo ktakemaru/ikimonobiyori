@@ -1425,7 +1425,9 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     for f in sorted(dk, key=lambda f: f["distance_km"])[:_v(policy["min_candidates"])]:
         f["reasons"].append("near")
     for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
-        f["festivals"] = festivals_mod.for_spot(f["id"], now.date() if hasattr(now, "date") else now)
+        _today = now.date() if hasattr(now, "date") else now
+        f["festivals"] = festivals_mod.for_spot(f["id"], _today)
+        f["practical"] = (f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":
         inat_cache = {}

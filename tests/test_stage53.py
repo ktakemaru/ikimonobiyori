@@ -239,3 +239,25 @@ class Ledger(unittest.TestCase):
 
     def test_the_ledger_passes_the_check(self):
         self.assertEqual(dict((p.name, e) for p, e in _sources.check_all_secondary())["autumn_leaves.yaml"], [])
+
+
+# ---- 第4部: 実用情報（読めた公式ページだけ） ----
+class Practical(unittest.TestCase):
+    DOC = {"items": [{"spots": ["p1"], "text": "開園 9:00〜16:30", "url": "https://e.example/", "publisher": "試験", "valid_from": "2026-11-01", "valid_to": "2027-01-31", "taken_on": "2026-11-06"},
+                     {"spots": ["p1"], "text": "駐車場は無料", "url": "https://e.example/a", "publisher": "試験"},
+                     {"spots": ["p2"], "text": "別の名所", "url": "https://e.example/b"}]}
+
+    def test_only_the_spots_items_and_only_inside_the_valid_period(self):
+        r = FE.practical_for("p1", date(2026, 11, 6), self.DOC)
+        self.assertEqual([x["text"] for x in r], ["開園 9:00〜16:30", "駐車場は無料"])
+        self.assertEqual([x["text"] for x in FE.practical_for("p1", date(2026, 7, 1), self.DOC)], ["駐車場は無料"])      # 季節の外では出さない
+        self.assertEqual(FE.practical_for("none", date(2026, 11, 6), self.DOC), [])
+
+    def test_real_items_are_official_pages_with_urls_and_short_text(self):
+        doc = FE.load(FE.PRACTICAL_PATH)
+        for it in doc["items"]:
+            self.assertTrue(it["url"].startswith("https://"), it)
+            self.assertLessEqual(len(it["text"]), 100, it)
+            self.assertNotIn("yamakei-online", it["url"])                                  # 承認待ちのビジターセンターは入れない
+        self.assertTrue(FE.practical_for("yacho-0001", date(2026, 11, 6)))
+        self.assertTrue(FE.practical_for("obs-kouyou-0089", date(2026, 11, 6)))

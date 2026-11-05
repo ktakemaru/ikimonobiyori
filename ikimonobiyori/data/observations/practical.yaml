@@ -1,0 +1,48 @@
+# 実用情報（段階53 第4部）。読めた**公式**ページに書かれているものだけを、短い原文（80字まで）で、出典 URL と取得日つきで持つ。ikimonobiyori/festivals.py が読む（通信しない）。
+# - 推測・一般知識で補わない。ビジターセンター（山と溪谷オンライン掲載）は台帳で承認待ちのため、ここには入れない。
+# - valid_from / valid_to: その情報が当てはまる期間（季節で変わる開園時間など）。期間の外では出さない。
+# - 取得は 2026-11-06 に web-fetch で行った。
+schema: ikimono-practical/1
+items:
+  - spots: [yacho-0001]
+    text: "開園 9:00〜16:30(11〜1月。入園受付は閉園30分前まで)、休園日は毎週月曜(祝日の場合は翌平日)"
+    url: "https://www.tptc.co.jp/park/03_08/guide"
+    publisher: 東京港埠頭株式会社(指定管理者・東京港野鳥公園グループ)
+    valid_from: '2026-11-01'
+    valid_to: '2027-01-31'
+    taken_on: '2026-11-06'
+  - spots: [yacho-0001]
+    text: "アクセス: JR大森駅東口・京急平和島駅から京急バスで「野鳥公園」下車、徒歩5分。駐車場は無料(平日・土曜午前23台、土曜午後・日曜祝日40台)"
+    url: "https://www.tptc.co.jp/park/03_08/access"
+    publisher: 東京港埠頭株式会社(指定管理者・東京港野鳥公園グループ)
+    taken_on: '2026-11-06'
+  - spots: [obs-kouyou-0089]
+    text: "ケーブルカー運賃(2026年10月1日改定): 大人 片道700円・往復1,400円。リフトは天候・季節により運休の場合あり"
+    url: "https://www.mitaketozan.co.jp/timetable.html"
+    publisher: 御岳登山鉄道
+    taken_on: '2026-11-06'
+  - spots: [obs-kouyou-0088]
+    text: "高尾山口観光案内所(むささびハウス) 042-673-3461"
+    url: "https://www.hkc.or.jp/takaosan/momiji_fes/"
+    publisher: 八王子観光コンベンション協会
+    taken_on: '2026-11-06'
+  - spots: [kouyou-0035]
+    text: "入園自由・入園無料。小田原駅からバス(箱根・元箱根行き)で「恩賜公園前」下車(10/29現在の記載)"
+    url: "https://www.hakone.or.jp/1804"
+    publisher: 箱根町観光協会
+    taken_on: '2026-11-06'
+  - spots: [kouyou-0033]
+    text: "県道75号線 湖尻、芦ノ湖スカイライン入口より1km地点(11/03現在の記載)"
+    url: "https://www.hakone.or.jp/1804"
+    publisher: 箱根町観光協会
+    taken_on: '2026-11-06'
+  - spots: [kouyou-0034]
+    text: "箱根登山バスまたは小田急高速バス「仙石」バス停で下車(10/29現在の記載)"
+    url: "https://www.hakone.or.jp/1804"
+    publisher: 箱根町観光協会
+    taken_on: '2026-11-06'
+  - spots: [obs-kouyou-0002, obs-hana-0001]
+    text: "開園 9:00〜17:00(最終入園16:30)。茶店の臨時休業のお知らせあり(11/4更新)"
+    url: "https://www.sankeien.or.jp/"
+    publisher: 三溪園
+    taken_on: '2026-11-06'

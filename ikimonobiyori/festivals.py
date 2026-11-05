@@ -96,3 +96,21 @@ def dropped(today, doc=None):
     """使わなかったまつり {id: 理由}（報告用）。"""
     doc = doc if doc is not None else load()
     return {f["id"]: usable(f, today)[1] for f in doc.get("festivals") or [] if not usable(f, today)[0]}
+
+
+PRACTICAL_PATH = DATA_FILES_DIR / "observations" / "practical.yaml"
+
+
+def practical_for(spot_id, today, doc=None):
+    """段階53 第4部: 名所に結びついた、読めた公式ページの実用情報（期間つきのものは期間の中だけ）。→ [{text, url, publisher, taken_on}]"""
+    doc = doc if doc is not None else load(PRACTICAL_PATH)
+    out = []
+    for it in doc.get("items") or []:
+        if spot_id not in (it.get("spots") or []):
+            continue
+        if it.get("valid_from") and today < date.fromisoformat(str(it["valid_from"])):
+            continue
+        if it.get("valid_to") and today > date.fromisoformat(str(it["valid_to"])):
+            continue
+        out.append({"text": it["text"], "publisher": it.get("publisher"), "url": it["url"], "state_date": it.get("taken_on")})
+    return out
