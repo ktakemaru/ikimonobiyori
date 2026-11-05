@@ -298,26 +298,51 @@ def fetch_commons(rows, *, http_get, http_bytes, ph, max_requests, has_cache, to
     return got, unused, rep
 
 
-def scientific_pick(pages, row, cm, ordered_titles):
-    """段階52: 検索順に見て、ライセンス等を満たし(usable)、ファイル名・カテゴリ・説明に学名がある最初の 1 枚。学名の記載がないものは使わない。
-    → ({"usable", "title"}, 判定の内訳) か (None, 内訳)。"""
+def classify_state(text, pp):
+    """段階53: ファイル名・カテゴリ・説明の語から写真の状態を判定する。→ "avoid"（果実・枯れ）／"開花"／"つぼみ"／"不明"。"""
+    low = text.lower()
+    if any(w.lower() in low for w in pp["avoid_words"]):
+        return "avoid"
+    if any(w.lower() in low for w in pp["flower_words"]):
+        return "開花"
+    if any(w.lower() in low for w in pp["bud_words"]):
+        return "つぼみ"
+    return pp["unknown_label"]
+
+
+def scientific_pick(pages, row, cm, ordered_titles, pp=None):
+    """段階52: 検索順に見て、ライセンス等を満たし(usable)、ファイル名・カテゴリ・説明に学名がある写真。学名の記載がないものは使わない。
+    段階53: pp（花の写真の規則）があれば、果実・枯れの語のあるものは使わず、開花 ＞ つぼみ ＞ 不明 の順で選ぶ。
+    → ({"usable", "title", "state"}, 判定の内訳) か (None, 内訳)。"""
     by_title = {t: i for t, i in pages}
     seen = []
+    best = {}
     for t in ordered_titles:
         info = by_title.get(t)
         ok, why = usable(info, cm)
         if not ok:
             seen.append(why)
             continue
-        text = " ".join([t, info["categories"], info["description"]]).lower()
-        if row["scientific"].lower() not in text:
+        text = " ".join([t, info["categories"], info["description"]])
+        if row["scientific"].lower() not in text.lower():
             seen.append("学名の記載がない")
             continue
-        return {"usable": ok, "title": t}, seen
+        if not pp:
+            return {"usable": ok, "title": t}, seen
+        st = classify_state(text, pp)
+        if st == "avoid":
+            seen.append("果実・枯れ姿の語がある")
+            continue
+        if st == "開花":
+            return {"usable": ok, "title": t, "state": st}, seen
+        best.setdefault(st, {"usable": ok, "title": t, "state": st})
+    for st in ("つぼみ", pp["unknown_label"] if pp else None):
+        if st in best:
+            return best[st], seen
     return None, seen
 
 
-def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=None, sleep=time.sleep, on_got=None, wait_first=False, season=True):
+def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=None, sleep=time.sleep, on_got=None, wait_first=False, season=True, pp=None):
     """1 種について、Commons のファイル検索「学名 + 冬羽(season_query)」→ 候補をまとめて imageinfo → 季節の語のある最初の 1 枚を取る(3 リクエスト)。
     → (取れた [{row, meta, data, ext}], 使わなかった理由 {和名: 理由}, 報告)。HTTP の非 200・通信エラーはそこで止める(再試行しない)。"""
     cm = ph["commons"]
@@ -361,7 +386,7 @@ def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=N
                 unused[name] = "Commons の検索で候補がない"
                 return got, unused, rep
             pages = parse_imageinfo_pages(js(call(http_get, titles_imageinfo_url(titles, cm))))
-            pick, rep["decisions"] = (seasonal_pick if season else scientific_pick)(pages, row, cm, titles)
+            pick, rep["decisions"] = (seasonal_pick(pages, row, cm, titles) if season else scientific_pick(pages, row, cm, titles, pp))
             if not pick:
                 unused[name] = "季節の語・学名・ライセンスを満たす候補がない"
                 return got, unused, rep
@@ -381,6 +406,8 @@ def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=N
             "image_type": kind}
     if season:
         meta["season_term"] = pick["term"]
+    if pp and pick.get("state"):                                 # 段階53: 写真の状態と規則の版
+        meta["state"], meta["rule"] = pick["state"], pp["rule_version"]["value"]
     item = {"row": row, "meta": meta, "data": body, "ext": kind}
     got.append(item)
     if on_got:

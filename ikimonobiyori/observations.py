@@ -24,6 +24,7 @@ from urllib.parse import urlparse
 
 import yaml
 
+from . import festivals as festivals_mod
 from . import catalog as catalog_mod
 from . import closures
 from . import sources as S
@@ -413,7 +414,7 @@ def _from_spot(s, policy, catalog_by_id):
         x["event_derived"] = bool(t.get("event_derived")) or (bool(w) and event_derived(x, s.get("events"), {"typical": {"event_note_words": []}}))
         typ.append(x)
     c = {"id": s["id"], "subject": s["subject"], "name": s["name"], "aliases": s.get("aliases") or [], "prefecture": s.get("prefecture"),
-         "city": s.get("city"), "area": s.get("area"), "point": None, "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
+         "city": s.get("city"), "area": s.get("area"), "point": s.get("point"), "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
          "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area")}
@@ -1423,6 +1424,10 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     dk = [f for f in rec_f if f["distance_km"] is not None]
     for f in sorted(dk, key=lambda f: f["distance_km"])[:_v(policy["min_candidates"])]:
         f["reasons"].append("near")
+    for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
+        _today = now.date() if hasattr(now, "date") else now
+        f["festivals"] = festivals_mod.for_spot(f["id"], _today)
+        f["practical"] = (f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":
         inat_cache = {}

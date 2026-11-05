@@ -312,3 +312,117 @@ def fetch_photos(rows, *, http_get, http_bytes, ph, max_requests, has_cache, tod
                 "photo_page": ph["photo_page_url"].format(id=ok["photo_id"]), "fetched_on": today, "image_type": kind}
         got.append({"row": row, "meta": meta, "data": data, "ext": kind})
     return got, unused, rep
+
+
+# ---- 段階53 第1部: 花が咲いている写真（開花 ＞ つぼみ）を観察の注釈（Plant Phenology）で探す ----
+
+def observations_url(taxon_id, term_value_id, ph):
+    """taxon の観察のうち、注釈 Plant Phenology が term_value_id（開花中・つぼみ）で、許可ライセンスの写真つきのものを、支持の多い順に。"""
+    pp = ph["phenology"]
+    q = {"taxon_id": int(taxon_id), "term_id": pp["term_id"]["value"], "term_value_id": term_value_id, "photo_license": ",".join(ph["licenses"]),
+         "quality_grade": pp["quality_grade"], "order_by": "votes", "order": "desc", "per_page": pp["per_page"]["value"], "locale": ph["locale"]}
+    return ph["api_base"] + "/observations?" + urlencode(q)
+
+
+def parse_observation_photos(doc):
+    """observations の応答 → 写真の候補 [{"photo_id", "license_code", "attribution", "urls"}]（観察の順。位置・観察者の情報は取らない）。"""
+    out, seen = [], set()
+    for o in _results(doc):
+        for p in o.get("photos") or []:
+            pid = p.get("id") if isinstance(p, dict) else None
+            if not isinstance(pid, int) or isinstance(pid, bool):
+                raise ParseError("写真の id が整数でない")
+            if pid in seen:
+                continue
+            seen.add(pid)
+            url = p.get("url") if isinstance(p.get("url"), str) else None
+            out.append({"photo_id": pid, "license_code": p.get("license_code") if isinstance(p.get("license_code"), str) else None,
+                        "attribution": p.get("attribution") if isinstance(p.get("attribution"), str) else None,
+                        "urls": {"medium_url": url.replace("/square.", "/medium.")} if url else {}})
+    return out
+
+
+def fetch_phenology(rows, *, http_get, http_bytes, ph, max_requests, has_cache, today=None, sleep=time.sleep, skip_photos=None):
+    """表の種ごとに、開花の写真 → つぼみの写真の順で探して取る（観察の検索 1〜2 回 + 写真の実体 1 回）。has_cache(taxon_id) が真の種は飛ばす。
+    → (取れた [{row, meta, data, ext}]（meta.state は 開花／つぼみ）, 見つからなかった {和名: 理由}, 報告)。HTTP の非 200 ならそこで止める。"""
+    today = (today or date.today()).isoformat()
+    gap = ph["min_interval_s"]["value"]
+    pp = ph["phenology"]
+    rep = {"requests": 0, "status": "ok", "stopped": None, "not_started": []}
+    got, unused = [], {}
+    todo = [r for r in rows if not has_cache(r["taxon_id"])]
+    for r in [r for r in todo if r["taxon_id"] >= pp["pseudo_taxon_min"]["value"]]:        # 学名で Commons から取った種（仮の id）は iNaturalist に taxon がない
+        unused[r["name"]] = "iNaturalist に taxon がない（学名で探した種）"
+    todo = [r for r in todo if r["taxon_id"] < pp["pseudo_taxon_min"]["value"]]
+
+    def stop(i, status, why, after=False):
+        rep["status"], rep["stopped"] = status, why
+        rep["not_started"] = [r["name"] for r in todo[i + (1 if after else 0):]]
+
+    for i, row in enumerate(todo):
+        if rep["requests"] + 2 > max_requests:
+            rep["stopped"] = f"--max-requests {max_requests} に達したため、残り {len(todo) - i} 種は取らない"
+            rep["not_started"] = [r["name"] for r in todo[i:]]
+            break
+        chosen, state_label, reasons = None, None, []
+        halted = False
+        for st in pp["states"]:
+            if rep["requests"] >= max_requests:
+                halted = True
+                break
+            _wait(rep, gap, sleep)
+            rep["requests"] += 1
+            try:
+                status, body, _ = http_get(observations_url(row["taxon_id"], st["term_value_id"], ph))
+            except OSError as ex:
+                stop(i, "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で")
+                halted = True
+                break
+            if status != HTTPStatus.OK:
+                stop(i, f"HTTP {status}", f"HTTP {status} のため止めた(残りは読まない)", after=True)
+                halted = True
+                break
+            try:
+                cands = parse_observation_photos(json.loads(body))
+            except (ValueError, ParseError) as ex:
+                stop(i, "parse_error", f"応答の形が想定と違う: {ex}", after=True)
+                halted = True
+                break
+            for p in cands:
+                if p["photo_id"] in (skip_photos or {}).get(row["taxon_id"], frozenset()):
+                    continue
+                ok, why = _usable_one(p, ph)
+                if ok:
+                    chosen, state_label = ok, st["label"]
+                    break
+                reasons.append(why)
+            if chosen:
+                break
+        if halted and not chosen:
+            break
+        if not chosen:
+            unused[row["name"]] = "開花・つぼみの写真（許可ライセンス）が見つからない" + (f"（{reasons[0]}）" if reasons else "")
+            continue
+        sleep(gap)
+        rep["requests"] += 1
+        try:
+            status, data, _ = http_bytes(chosen["image_url"], ph["max_image_bytes"]["value"])
+        except OSError as ex:
+            stop(i, "network_error", f"通信エラーのため止めた({type(ex).__name__})。ここまでの結果は残す。続きは再実行で")
+            break
+        if status != HTTPStatus.OK:
+            if status in (HTTPStatus.TOO_MANY_REQUESTS,) or status >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                stop(i, f"HTTP {status}", f"HTTP {status} のため止めた(残りは読まない)", after=True)
+                break
+            unused[row["name"]] = f"写真の取得が HTTP {status}"
+            continue
+        kind, why = check_image(data, ph)
+        if not kind:
+            unused[row["name"]] = f"写真を捨てた({why})"
+            continue
+        meta = {"name": row["name"], "scientific": row["scientific"], "taxon_id": row["taxon_id"], "photo_id": chosen["photo_id"],
+                "license": chosen["license"], "license_code": chosen["license_code"], "attribution": chosen["attribution"],
+                "photo_page": ph["photo_page_url"].format(id=chosen["photo_id"]), "fetched_on": today, "image_type": kind,
+                "state": state_label, "rule": pp["rule_version"]["value"]}
+        got.append({"row": row, "meta": meta, "data": data, "ext": kind})
+    return got, unused, rep

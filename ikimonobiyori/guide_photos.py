@@ -191,6 +191,45 @@ def save_photo(item, env=None, policy=None):
     _meta_path(tid, env, policy).write_text(json.dumps(item["meta"], ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
 
 
+def phenology_cfg(theme, policy=None):
+    """段階53: 花の写真の規則（開花 ＞ つぼみ）を当てるテーマなら方針の phenology、そうでなければ None。"""
+    pp = photos_policy(policy).get("phenology")
+    return pp if pp and theme in pp["themes"] else None
+
+
+def stale_for_rule(taxon_id, pp, env=None, policy=None):
+    """キャッシュの写真が新しい規則の版で評価されていないか。"""
+    mp = _meta_path(taxon_id, env, policy)
+    if not mp.is_file():
+        return False
+    return json.loads(mp.read_text(encoding="utf-8")).get("rule") != pp["rule_version"]["value"]
+
+
+def archive_rejected(taxon_id, pp, reason, env=None, policy=None):
+    """新しい規則で外れた写真を、消さずに rejected/ へ移して「不採用」の印を付ける。"""
+    d = cache_dir(env, policy)
+    mp = _meta_path(taxon_id, env, policy)
+    meta = json.loads(mp.read_text(encoding="utf-8"))
+    out = d / pp["rejected_dir"]
+    out.mkdir(parents=True, exist_ok=True)
+    stem = f"{int(taxon_id)}-{meta.get('photo_id') or meta.get('source') or 'x'}"
+    img = d / f"{int(taxon_id)}.{meta['image_type']}"
+    if img.is_file():
+        (out / f"{stem}.{meta['image_type']}").write_bytes(img.read_bytes())
+    meta["rejected_by_rule"] = pp["rule_version"]["value"]
+    meta["rejected_reason"] = reason
+    (out / f"{stem}.json").write_text(json.dumps(meta, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+
+
+def stamp_unknown(taxon_id, pp, env=None, policy=None):
+    """新しい規則で良い写真が見つからない種: 今の写真を「状態: 不明」として残し、評価済みの印を付ける（毎回探し直さない）。"""
+    mp = _meta_path(taxon_id, env, policy)
+    meta = json.loads(mp.read_text(encoding="utf-8"))
+    meta.setdefault("state", pp["unknown_label"])
+    meta["rule"] = pp["rule_version"]["value"]
+    mp.write_text(json.dumps(meta, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline="\n")
+
+
 def load_photo(taxon_id, env=None, policy=None):
     """→ (メタデータ, 画像のバイト列) か None。"""
     if not has_cache(taxon_id, env, policy):
@@ -431,7 +470,7 @@ def theme_cfg(theme, policy=None):
     return th
 
 
-def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes, max_requests=None, today=None, sleep=None):
+def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes, max_requests=None, today=None, sleep=None, phenology=False):
     """和名の一覧 → 写真のキャッシュにないものだけ補う(対応表にない種は表を作る。iNaturalist で取れなければ Commons)。
     取れなかった種は負のキャッシュに残し、次の数回の実行で探し直さない。上限(max_requests)に達したら残りは次の実行で。
     通信の許可・上限・間隔・記録は呼び出し側が http_get / http_bytes を netbudget で包んで渡す。
@@ -451,7 +490,8 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
     def has(t):
         return has_cache(t, env, policy)
 
-    result, need_search, rows = {}, [], []
+    pp = phenology_cfg(theme, policy) if phenology else None      # 段階53: 実際の取得（コマンド・ページ）が True にする。花の写真は 開花 ＞ つぼみ
+    result, need_search, rows, reeval = {}, [], [], []
     for n in dict.fromkeys(names):
         if inat_photos.skipped(n, ph):
             result[n] = "skipped"
@@ -459,6 +499,8 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             r = table[n]
             if has(r["taxon_id"]):
                 result[n] = "cached"
+                if pp and stale_for_rule(r["taxon_id"], pp, env, policy):          # 段階53: 古い規則の写真は再評価する
+                    reeval.append(r)
             elif str(r["taxon_id"]) in review or (n in none and none_active(none[n], today, policy)):
                 result[n] = "none"
             else:
@@ -494,8 +536,8 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
         todo = [r for r in rows if not has(r["taxon_id"]) and str(r["taxon_id"]) not in review]
         unused = {}
         if todo and left >= 2 and rep["status"] == "ok":
-            got, unused, r2 = inat_photos.fetch_photos(todo, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left, has_cache=has,
-                                                       skip_photos=load_skip_photos(env, policy), sleep=sleep)
+            got, unused, r2 = _fetch_for_theme(todo, pp, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left, has=has,
+                                               skip=load_skip_photos(env, policy), sleep=sleep, today=today)
             used += r2["requests"]
             left -= r2["requests"]
             for item in got:
@@ -511,7 +553,7 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             if nocache and rep["status"] == "ok" and left >= 1:
                 got3, _un, _r3 = commons_photos.fetch_commons(nocache, http_get=http_get, http_bytes=http_bytes, ph=pht,
                                                               max_requests=min(cm["ensure_max_requests"]["value"], left), has_cache=has,
-                                                              on_got=lambda it: save_photo(it, env, policy), sleep=sleep)
+                                                              on_got=lambda it: save_photo(_state_unknown(it, pp), env, policy), sleep=sleep)
                 for item in got3:
                     result[item["row"]["name"]] = "saved"
                 rep["saved"] += [i["row"]["name"] for i in got3]
@@ -528,17 +570,90 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             result[r["name"]] = "none"
         else:
             result[r["name"]] = "pending"
+    if reeval and pp and rep["status"] == "ok" and left >= 2:            # 段階53: 古い規則のキャッシュの再評価（開花 ＞ つぼみの写真があれば置き換え、なければ「不明」の印）
+        try:
+            used += _reevaluate(reeval, pp, result, http_get, http_bytes, pht, left, env, policy, today, sleep, rep)
+            left -= 0
+        except LiveError as ex:
+            rep["status"], rep["stopped"] = "stopped", str(ex)[:200]
     if rep["status"] == "ok":                                         # 段階52: 取れなかった種のうち学名の対応がある種は、学名で Commons のファイルを探す
         try:
             used += _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today, sleep, http_get, http_bytes,
-                                         max(0, left), rep)
+                                         max(0, left), rep, pp=pp)
         except LiveError as ex:
             rep["status"], rep["stopped"] = "stopped", str(ex)[:200]
     _save_none(none, env, policy)
     return {"results": result, "requests": used, **rep}
 
 
-def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today, sleep, http_get, http_bytes, left, rep):
+def _state_unknown(item, pp):
+    """Wikidata の代表画像（P18）は状態を判定できない: 花の規則のテーマでは「不明」として残す。"""
+    if pp:
+        item["meta"].setdefault("state", pp["unknown_label"])
+        item["meta"]["rule"] = pp["rule_version"]["value"]
+    return item
+
+
+def _fetch_for_theme(todo, pp, *, http_get, http_bytes, pht, left, has, skip, sleep, today):
+    """写真を取る。花・野草（pp あり）は 開花 ＞ つぼみ の写真を先に、見つからない種は代表写真を「不明」として。→ fetch_photos と同じ形。"""
+    if not pp:
+        return inat_photos.fetch_photos(todo, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left, has_cache=has, skip_photos=skip, sleep=sleep)
+    got, unused, rep = inat_photos.fetch_phenology(todo, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left, has_cache=has,
+                                                   today=today, sleep=sleep, skip_photos=skip)
+    rest = [r for r in todo if r["name"] in unused]
+    if rep["status"] == "ok" and rest and left - rep["requests"] >= 2:
+        g2, un2, r2 = inat_photos.fetch_photos(rest, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left - rep["requests"], has_cache=has,
+                                               skip_photos=skip, sleep=sleep)
+        for it in g2:
+            it["meta"]["state"] = pp["unknown_label"]
+            it["meta"]["rule"] = pp["rule_version"]["value"]
+        got += g2
+        unused = {**{k: v for k, v in unused.items() if k not in {i["row"]["name"] for i in g2}}, **un2}
+        rep["requests"] += r2["requests"]
+        rep["not_started"] = list(rep["not_started"]) + list(r2["not_started"])
+        if r2["status"] != "ok":
+            rep["status"], rep["stopped"] = r2["status"], r2["stopped"]
+    return got, unused, rep
+
+
+def _reevaluate(rows, pp, result, http_get, http_bytes, pht, left, env, policy, today, sleep, rep):
+    """→ 使ったリクエスト数。iNaturalist の taxon がある種は観察の注釈で、仮の id の種（学名で Commons から取った種）は Commons の語の判定で探し直す。"""
+    sci = (pht.get("scientific_names") or {}).get("value") or {}
+    pseudo_min = pp["pseudo_taxon_min"]["value"]
+    real = [r for r in rows if r["taxon_id"] < pseudo_min]
+    fake = [r for r in rows if r["taxon_id"] >= pseudo_min]
+    used = 0
+    got, unused = [], {}
+    if real:
+        got, unused, r = inat_photos.fetch_phenology(real, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left, has_cache=lambda _t: False,
+                                                     today=today, sleep=sleep, skip_photos=load_skip_photos(env, policy))
+        used += r["requests"]
+        if r["status"] != "ok":
+            rep["status"], rep["stopped"] = r["status"], r["stopped"]
+    for row in fake + [r for r in real if r["name"] in unused and r["name"] in sci]:      # iNaturalist に開花・つぼみがない種も、学名の対応があれば Commons で探す
+        if rep["status"] != "ok" or left - used < 3:
+            break
+        row = {**row, "scientific": sci.get(row["name"]) or row["scientific"]}
+        g, _un, r2 = commons_photos.fetch_commons_season(row, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left - used, today=today,
+                                                         sleep=sleep, season=False, pp=pp)
+        used += r2["requests"]
+        got += [it for it in g if it["meta"].get("state") in ("開花", "つぼみ")]
+        if r2["status"] != "ok":
+            rep["status"], rep["stopped"] = r2["status"], r2["stopped"]
+    for it in got:
+        tid = it["row"]["taxon_id"]
+        archive_rejected(tid, pp, "新しい規則（開花 ＞ つぼみ）で、開花またはつぼみの写真に置き換えた", env, policy)
+        save_photo(it, env, policy)
+        result[it["row"]["name"]] = "saved"
+        rep["saved"].append(it["row"]["name"])
+    done = {it["row"]["name"] for it in got}
+    for row in rows:
+        if row["name"] not in done and has_cache(row["taxon_id"], env, policy):
+            stamp_unknown(row["taxon_id"], pp, env, policy)
+    return used
+
+
+def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today, sleep, http_get, http_bytes, left, rep, pp=None):
     """→ 使ったリクエスト数。results が none の種のうち policy photos.scientific_names にある種を、学名で Commons から探して保存する(1 種 3 リクエスト)。"""
     import zlib
     sci = (ph.get("scientific_names") or {}).get("value") or {}
@@ -553,7 +668,7 @@ def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today
             none.pop(n, None)
             continue
         got, _un, r = commons_photos.fetch_commons_season(row, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left - used,
-                                                          today=today, sleep=sleep, on_got=lambda it: save_photo(it, env, policy), season=False)
+                                                          today=today, sleep=sleep, on_got=lambda it: save_photo(it, env, policy), season=False, pp=pp)
         used += r["requests"]
         if got:
             result[n] = "saved"
@@ -594,7 +709,7 @@ def ensure_cmd(a, http_get=None, http_bytes=None):
         guide._dump({"ran": False, "reason": closer})                   # テスト中・許可されない環境: 失敗にせず、キャッシュだけで続ける
         return 0
     try:
-        res = ensure(a.names, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb,
+        res = ensure(a.names, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb, phenology=True,
                      max_requests=min(a.max_requests or 10 ** 9, policy["photos"]["max_requests_per_run"]["value"]))
     finally:
         if closer is not None and hasattr(closer, "close"):
@@ -622,7 +737,7 @@ def prefetch_cmd(a, http_get=None, http_bytes=None, sleep=None):
             guide._dump({"ran": False, "reason": closer})
             return 0
         try:
-            res = ensure(pending, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb, max_requests=ph["max_requests_per_run"]["value"], sleep=sleep)
+            res = ensure(pending, theme=a.theme, policy=policy, http_get=hg, http_bytes=hb, phenology=True, max_requests=ph["max_requests_per_run"]["value"], sleep=sleep)
         finally:
             if closer is not None and hasattr(closer, "close"):
                 closer.close()
@@ -660,7 +775,7 @@ def ensure_for_page(names, word, policy=None, http_get=None, http_bytes=None, en
     if hg is None:
         return None
     try:
-        res = ensure(names, theme=photo_theme_for(word, policy), env=env, policy=policy, http_get=hg, http_bytes=hb)
+        res = ensure(names, theme=photo_theme_for(word, policy), env=env, policy=policy, http_get=hg, http_bytes=hb, phenology=True)
     except OSError:
         return None
     finally:

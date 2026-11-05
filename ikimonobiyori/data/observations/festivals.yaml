@@ -1,0 +1,127 @@
+# まつり・イベント(段階53 第2部。利用者の考え 2026-11-06: 主催者が見頃を見込んで設定するまつりは、見頃情報の一つになる)。
+# ikimonobiyori/festivals.py が読む(通信しない)。年つきの開催期間だけを持つ。今シーズンでないもの・年が読めないもの・曜日が今年の暦と合わないものは使わない。
+# - start/end: 開催期間(ISO。年つき)。lightup: ライトアップの期間・時間(あれば)。raw: ページに書かれた日付の原文(曜日つき)。曜日が今年の暦と合うかをコードが確かめる。
+# - organizer_class: official=主催者自身の発信 / secondary=それ以外(紹介)。迷ったら secondary。
+# - まつりの期間は、主催者が見頃を見込んで設定した運営上の日程で、その時点の色づきを保証しない。現況(色づき状況)とは別の行で出す。
+# - 取得は 2026-11-06 に web-fetch で行った。指示書(docs/stage53-festivals-photos-instructions.md)の調査値と食い違った点は notes に書いた(取得結果を優先)。
+schema: ikimono-festivals/1
+festivals:
+  - id: nagatoro-koyo-2026
+    name: 長瀞紅葉まつり2026
+    spots: [kouyou-0013]
+    organizer: 長瀞町観光協会
+    organizer_class: official
+    organizer_note: "月の石もみじ公園ライトアップの主催として「(一社)長瀞町観光協会」と明記。まつり全体の主催の明記は記事にない。発行元は長瀞町観光協会"
+    start: '2026-11-01'
+    end: '2026-11-30'
+    lightup: {start: '2026-11-06', end: '2026-11-29', hours: "16:00〜21:00", where: 月の石もみじ公園, note: "紅葉の色づき状況等により、日程が前後する場合がある"}
+    venue: 月の石もみじ公園・埼玉県立自然の博物館・寳登山神社・宝登山ロープウエイほか
+    contact: "長瀞町観光協会 事務局 0494-66-3311"
+    url: "https://www.nagatoro.gr.jp/2026/10/%e9%95%b7%e7%80%9e%e7%b4%85%e8%91%89%e3%81%be%e3%81%a4%e3%82%8a2026/"
+    publisher: 長瀞町観光協会
+    published: '2026-10-25'
+    taken_on: '2026-11-06'
+    raw: ["11月1日（日）～11月30日（月）", "11月6日（金）～29日（日）"]
+    notes: "2026年版の公式ページを取得して確認した(区分は公式)。入場料はページに記載があるが、情報源どうしで金額が食い違うため(指示書 2-2 の4)答えに書かない。旧年のページ(2021・2023・2024年)は使わない"
+  - id: machida-akiasobi-2026
+    name: 町田薬師池公園 秋遊び2026(紅葉ライトアップ)
+    spots: [obs-kouyou-0087]
+    organizer: 町田市
+    organizer_class: official
+    organizer_note: "町田市のホームページの掲載。主催者の明記はない(町田市観光コンベンション協会のホームページへ案内)"
+    start: '2026-10-03'
+    end: '2026-11-29'
+    lightup: {start: '2026-11-14', end: '2026-11-29', hours: "17:00〜20:00", where: 薬師池, note: "池の周りのカエデ類のライトアップと、たいこ橋の「雲海」の演出"}
+    venue: 町田薬師池公園四季彩の杜(薬師池ほか)
+    contact: "町田市 経済観光部 観光まちづくり課 042-724-2128"
+    url: "https://www.city.machida.tokyo.jp/kanko/miru_aso/ibe_gyou_matu/event.html"
+    publisher: 町田市
+    published: '2026-09-29'
+    taken_on: '2026-11-06'
+    raw: ["2026年10月3日（土曜日）から11月29日（日曜日）", "11月14日（土曜日）から29日（日曜日）"]
+    notes: "指示書の調査値は「紅葉まつり」10/31〜11/29・ライトアップ期間の閉園 20:00(NEST Machida 共同事業体のプレスリリース)。町田市のページでは「紅葉まつり」の名称も 10/31 開始も確認できず、「秋遊び2026」10/3〜11/29 と紅葉ライトアップ 11/14〜11/29 の 17:00〜20:00 だった。取得結果を優先した。プレスリリースは取得できていない"
+  - id: takao-momiji-2026
+    name: 高尾山もみじまつり
+    spots: [obs-kouyou-0088]
+    organizer: 八王子観光コンベンション協会
+    organizer_class: official
+    organizer_note: "公式ページの発行元は(公社)八王子観光コンベンション協会。「主催」の明記は高尾山口観光案内所の欄にある。もみじまつり自体の主催欄は見当たらない"
+    start: '2026-10-24'
+    end: '2026-12-13'
+    lightup: {start: '2026-11-01', end: '2026-12-06', hours: "日没〜20:30", where: "ケーブルカー沿線(紅葉ライトアップ＆夜景観賞)", note: 金土日祝のみ}
+    venue: 高尾山(柴燈護摩は清滝駅前広場)
+    contact: "高尾山口観光案内所(むささびハウス) 042-673-3461"
+    url: "https://www.hkc.or.jp/takaosan/momiji_fes/"
+    publisher: 八王子観光コンベンション協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年10月24日(土)～12月13日(日)", "11月1日(日)〜12月6日(日)"]
+    notes: "公式ページを取得して確認した。ライトアップの終了日は 12/6(日)(指示書では未確認だった点)。ページに更新日の記載はない"
+  - id: mitake-tenku-momiji-2026
+    name: 御岳山 天空もみじまつり
+    spots: [obs-kouyou-0089]
+    organizer: 御岳山商店組合
+    organizer_class: secondary
+    organizer_note: "主催者サイト(momiji.tenku-geisha.com。フッターの著作表示が御岳山商店組合)は日付が前年以前の暦で使えない。GO TOKYO のページには主催者名の明記がない。日付は GO TOKYO(東京観光財団)掲載の転記"
+    start: '2026-10-24'
+    end: '2026-11-23'
+    lightup: {start: null, end: null, hours: "21:30まで", where: 御岳山, note: "期間中ライトアップを実施(開始日の別記はない)"}
+    venue: 東京都青梅市御岳山
+    contact: "御岳登山鉄道(ケーブルカー) 0428-78-8121"
+    url: "https://www.gotokyo.org/jp/spot/ev073/index.html"
+    publisher: GO TOKYO(東京観光財団)
+    published: '2026-10-21'
+    taken_on: '2026-11-06'
+    raw: ["2026年10月24日 - 2026年11月23日"]
+    notes: "2026年の開催期間は GO TOKYO の日本語版(更新日 2026年10月21日)で確認した。2026年の暦と整合する(10/24 は土曜・11/23 は月曜〈祝〉)。英語版は2025年の情報が残るので使わない。主催者サイトの日付は 2025年・2024年の暦で曜日チェックに落ちるため使わない。御岳登山鉄道・青梅市観光協会のページでは2026年の日程を確認できなかった(御岳登山鉄道には 10/8 付の「薪神楽に伴い臨時ケーブルカー・路線バスを運行」のお知らせ見出しがある)。以前の紹介サイトの「10月下旬〜11月下旬」はこの確認で置き換える"
+  - id: showa-koyo-2026
+    name: 黄葉・紅葉まつり＆秋の夜散歩2026
+    spots: [kouyou-0024]
+    organizer: 国営昭和記念公園
+    organizer_class: official
+    organizer_note: 公式サイトの掲載
+    start: '2026-10-29'
+    end: '2026-11-29'
+    lightup: {start: null, end: null, hours: "16:30〜21:00(西立川口・立川口のみ開園)", where: 園内, note: "秋の夜散歩"}
+    venue: 国営昭和記念公園
+    contact: null
+    url: "https://www.showakinen-koen.jp/"
+    publisher: 国営昭和記念公園
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["10月29日(木)～11月29日(日)"]
+    notes: "公式サイトで確認した(2026-11-06)。GO TOKYO にも同じ期間の掲載がある"
+  - id: sankeien-kikka-2026
+    name: 三溪園 菊花展2026
+    spots: [obs-kouyou-0002, obs-hana-0001]
+    organizer: 三溪園
+    organizer_class: official
+    organizer_note: 公式サイトの掲載
+    start: '2026-10-31'
+    end: '2026-11-23'
+    lightup: null
+    venue: 三溪園
+    contact: null
+    url: "https://www.sankeien.or.jp/"
+    publisher: 三溪園
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年10月31日(土)～11月23日(月・祝)"]
+    notes: "公式サイトで確認した(2026-11-06)。紅葉の現況(色づき状況)はトップページにない"
+  - id: sankeien-koyo-events-2026
+    name: 三溪園 紅葉の遊歩道開放ほか紅葉関連イベント
+    spots: [obs-kouyou-0002]
+    organizer: 三溪園
+    organizer_class: official
+    organizer_note: 公式サイトの掲載
+    start: '2026-11-20'
+    end: '2026-12-13'
+    lightup: {start: '2026-11-20', end: '2026-12-20', hours: null, where: 特別企画「横浜・三溪園 夜奏 -夜間式 回遊庭園-」, note: 金・土・日・祝のみ}
+    venue: 三溪園
+    contact: null
+    url: "https://www.sankeien.or.jp/"
+    publisher: 三溪園
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年11月20日(金)～12月13日(日)", "2026年11月20日(金)～12月20日(日)"]
+    notes: "公式サイトで確認した(2026-11-06)"

@@ -360,6 +360,16 @@ def stage51_errors(text, facts, mat, rules):
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
         for u in sorted(urls - allowed - {""}):
             errs.append({"code": "source_unused", "detail": u[:60]})
+    if (facts.get("lines") or {}).get("practical_rules"):                  # 段階53: まつりの期間は主催者が設定した日程。現況（色づき状況）とは別の行にする
+        for c in mentioned_cands(mat, norm):
+            if not c.get("festivals"):
+                continue
+            for s in lines:
+                if any(w in s for w in ("主催者が設定した期間", "まつり期間中")) and any(w in s for w in cfg["festival_state_words"]):
+                    errs.append({"code": "festival_mixed_with_state", "detail": s.strip()[:40]})
+                    break
+            if not c.get("current") and cfg["festival_no_state"] not in text:
+                errs.append({"code": "festival_no_state_missing", "detail": c["name"]})
     # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
     mentioned = mentioned_cands(mat, norm)
     have = [pr["text"] for c in mentioned for pr in c.get("practical") or []]
@@ -386,7 +396,7 @@ def candidate_urls(c):
     out = set()
     for k in ("current",):
         out.add(((c.get(k) or {}).get("url") or "").rstrip("/"))
-    for k in ("history", "typical", "typical_from_records", "practical", "events"):
+    for k in ("history", "typical", "typical_from_records", "practical", "events", "festivals"):
         out |= {((x or {}).get("url") or "").rstrip("/") for x in c.get(k) or [] if isinstance(x, dict)}
     return out - {""}
 
