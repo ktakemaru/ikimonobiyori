@@ -290,7 +290,7 @@ entries:
     access_notes: "2026年の夜間特別観賞は11月25日〜12月6日(夜は特別観賞券のみ。1日の販売数に限りがある)"
     status: approved
     tags: {prefecture: 東京都, area: 都心, terrain: [garden, urban], access: [walk_from_station], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
-    status_sources: [tokyo-park-rikugien-news, tokyo-park-rikugien-lightup]
+    status_sources: [tokyo-park-rikugien-news, tokyo-park-rikugien-lightup, tokyo-park-kouyou-special]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html", title: "東京都公園協会 庭紅葉の六義園 夜間特別観賞(2026)", checked_on: "2026-10-22"}
@@ -479,7 +479,7 @@ entries:
     approved_by: user
     approved_at: "2026-10-23"
     tags: {prefecture: 東京都, area: 都心, terrain: [garden, urban], access: [walk_from_station], source: "Claude Code が付けた(推定。段階16 フェーズ4)"}
-    status_sources: [tokyo-park-koishikawa-event]
+    status_sources: [tokyo-park-koishikawa-event, tokyo-park-kouyou-special]
     sources:
       - {url: "https://www.tokyo-park.or.jp/event_search/event_57.html", title: "東京都公園協会 小石川後楽園「深山紅葉を楽しむ」", checked_on: "2026-10-23"}
     note: "段階16 A-6(都内)。都立庭園。催し「深山紅葉を楽しむ」は 2026-11-21〜12-06(イロハモミジの見ごろに合わせた催し)。現況のページは、東京都公園協会の「紅葉を見に行こう!」(2025 年は 11 月 10 日から提供)が今年はまだ見つからない。代表点は Claude Code の推定。例年の時期は書かない(公式の数値の記載がない)"
