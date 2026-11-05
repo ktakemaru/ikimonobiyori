@@ -142,3 +142,45 @@ class AlpinePageSpecies(unittest.TestCase):
 
     def test_in_season_month_has_no_out_of_season_banner(self):
         self.assertNotIn("高山の花は見られない時期です", self.text(self.page(7)))
+
+
+# ---- 第6部: 学名での Commons 検索（通信しない） ----
+from ikimonobiyori import guide as G52, guide_photos as GP52  # noqa: E402
+from test_stage39 import Net, search as nsearch, NOSLEEP, TODAY  # noqa: E402
+
+POL52 = G52.load_policy()
+
+
+def commons_pages(title, lic, text, artist="Foo Bar"):
+    p = {"title": title, "imageinfo": [{"descriptionurl": "https://commons.wikimedia.org/wiki/" + title, "mime": "image/jpeg",
+                                         "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/x.jpg/500px-x.jpg",
+                                         "extmetadata": {"LicenseShortName": {"value": lic}, "Artist": {"value": artist},
+                                                          "Categories": {"value": text}, "ImageDescription": {"value": text}}}]}
+    return json.dumps({"query": {"pages": [p]}})
+
+
+class ScientificCommons(unittest.TestCase):
+    def run_ensure(self, net):
+        return GP52.ensure(["ハクサンコザクラ"], theme="野草", policy=POL52, http_get=net.get, http_bytes=net.get_bytes, today=TODAY, sleep=NOSLEEP)
+
+    def net(self, lic, text):
+        return Net({"/taxa?": (200, nsearch()),
+                    "list=search": (200, json.dumps({"query": {"search": [{"title": "File:Primula_cuneifolia.jpg"}]}})),
+                    "prop=imageinfo": (200, commons_pages("File:Primula_cuneifolia.jpg", lic, text))})
+
+    def test_policy_has_the_scientific_names_from_the_instructions(self):
+        sci = POL52["photos"]["scientific_names"]["value"]
+        self.assertEqual(sci["ハクサンコザクラ"], "Primula cuneifolia")
+        self.assertEqual(sci["ツワブキ"], "Farfugium japonicum")
+        self.assertNotIn("バラ", sci)                                        # 園芸種は学名で決めない
+
+    def test_photo_with_scientific_name_and_allowed_license_is_saved_and_cached(self):
+        net = self.net("CC BY-SA 4.0", "Primula cuneifolia flowers")
+        self.assertEqual(self.run_ensure(net)["results"], {"ハクサンコザクラ": "saved"})
+        net2 = Net({})
+        self.assertEqual(self.run_ensure(net2)["results"], {"ハクサンコザクラ": "cached"})     # 2 回目は通信しない
+        self.assertEqual(net2.n, 0)
+
+    def test_nc_license_and_missing_scientific_name_are_not_used(self):
+        self.assertEqual(self.run_ensure(self.net("CC BY-NC 4.0", "Primula cuneifolia"))["results"], {"ハクサンコザクラ": "none"})
+        self.assertEqual(self.run_ensure(self.net("CC BY 4.0", "a pretty flower"))["results"], {"ハクサンコザクラ": "none"})

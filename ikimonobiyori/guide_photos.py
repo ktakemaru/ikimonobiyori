@@ -528,8 +528,43 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             result[r["name"]] = "none"
         else:
             result[r["name"]] = "pending"
+    if rep["status"] == "ok":                                         # 段階52: 取れなかった種のうち学名の対応がある種は、学名で Commons のファイルを探す
+        try:
+            used += _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today, sleep, http_get, http_bytes,
+                                         max(0, left), rep)
+        except LiveError as ex:
+            rep["status"], rep["stopped"] = "stopped", str(ex)[:200]
     _save_none(none, env, policy)
     return {"results": result, "requests": used, **rep}
+
+
+def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today, sleep, http_get, http_bytes, left, rep):
+    """→ 使ったリクエスト数。results が none の種のうち policy photos.scientific_names にある種を、学名で Commons から探して保存する(1 種 3 リクエスト)。"""
+    import zlib
+    sci = (ph.get("scientific_names") or {}).get("value") or {}
+    used = 0
+    for n in [k for k, v in result.items() if v == "none" and k in sci]:
+        if left - used < 3:
+            break
+        row = dict(table[n]) if n in table else {"name": n, "scientific": sci[n], "taxon_id": 9_000_000_000 + zlib.crc32(sci[n].encode("utf-8"))}
+        row = {**row, "name": n, "scientific": sci[n]}                 # 検索と「学名の記載」の確認は、対応表(指示書の学名)の学名を使う
+        if has_cache(row["taxon_id"], env, policy):
+            result[n] = "saved"
+            none.pop(n, None)
+            continue
+        got, _un, r = commons_photos.fetch_commons_season(row, http_get=http_get, http_bytes=http_bytes, ph=pht, max_requests=left - used,
+                                                          today=today, sleep=sleep, on_got=lambda it: save_photo(it, env, policy), season=False)
+        used += r["requests"]
+        if got:
+            result[n] = "saved"
+            none.pop(n, None)
+            rep["saved"].append(n)
+            if n not in table:
+                add_to_table([{**{k: row[k] for k in ("name", "scientific", "taxon_id")}, "checked_on": today.isoformat()}], theme, env, policy)
+        if r["status"] != "ok":
+            rep["status"], rep["stopped"] = r["status"], r["stopped"]
+            break
+    return used
 
 
 def _ensure_http(policy=None, http_get=None, http_bytes=None):

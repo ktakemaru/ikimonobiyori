@@ -342,6 +342,9 @@ photos:
   skip_name_chars: ["・", "(", "（"]                        # 「シギ・チドリ」など複数をまとめた語、「ハクチョウ類(関東)」など注記つきの語は対象外
   named_source: ユーザー指定の学名                        # 表の出どころの欄(段階30。ユーザー指示 2026-10-31)
   named_scientific: {シロハラ: Turdus pallidus, ヨシガモ: Mareca falcata}   # 日本語名では決まらない種。学名はユーザー指定(iNaturalist で学名・ランク・鳥類が一致したときだけ表に入れる)
+  # 段階52(指示書 第6部): iNaturalist で許可ライセンスの写真が取れなかった種を、学名で Wikimedia Commons のファイルを検索して探す(学名がファイル名・カテゴリ・説明に書かれ、許可ライセンスと作者の表記が機械的に確かめられるものだけ)。
+  # 学名は指示書の目安。取得結果の名前が一致したものだけ写真にする(一致しない種は写真なしのまま)。バラ・キクは園芸種が多く学名で決められないので入れない。
+  scientific_names: {value: {ハクサンコザクラ: Primula cuneifolia, ニッコウキスゲ: Hemerocallis dumortieri, タテヤマリンドウ: Gentiana thunbergii, ミヤマリンドウ: Gentiana nipponica, クロユリ: Fritillaria camschatcensis, コスモス: Cosmos bipinnatus, ダリア: Dahlia pinnata, ツワブキ: Farfugium japonicum, サザンカ: Camellia sasanqua}, source: "指示書 段階52 第6部の学名の目安(変種名の var. は検索に使わず種の学名で探す)。ファイルに学名の記載があるものだけ採用", provisional: true}
   commons:                                                # iNaturalist に許可ライセンスの写真がない種だけ、Wikimedia Commons から(段階30。ユーザー承認 2026-10-31。新しい通信先は commons.wikimedia.org と upload.wikimedia.org の 2 つ。Wikidata は承認済みの www.wikidata.org を画像の名前を調べるためだけに使う)
     max_requests_per_run: {value: 60, source: "ユーザー指示(段階30)。1 回の実行の上限", provisional: false}
     min_interval_s: {value: 6, source: "仮置き(段階30)。Wikimedia へのリクエスト間隔(秒)。ユーザー指示は 1 秒以上。Wikidata の 429 を 2 回受けて 2→3→6 に広げた", provisional: true}

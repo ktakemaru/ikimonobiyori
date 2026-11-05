@@ -298,7 +298,26 @@ def fetch_commons(rows, *, http_get, http_bytes, ph, max_requests, has_cache, to
     return got, unused, rep
 
 
-def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=None, sleep=time.sleep, on_got=None, wait_first=False):
+def scientific_pick(pages, row, cm, ordered_titles):
+    """段階52: 検索順に見て、ライセンス等を満たし(usable)、ファイル名・カテゴリ・説明に学名がある最初の 1 枚。学名の記載がないものは使わない。
+    → ({"usable", "title"}, 判定の内訳) か (None, 内訳)。"""
+    by_title = {t: i for t, i in pages}
+    seen = []
+    for t in ordered_titles:
+        info = by_title.get(t)
+        ok, why = usable(info, cm)
+        if not ok:
+            seen.append(why)
+            continue
+        text = " ".join([t, info["categories"], info["description"]]).lower()
+        if row["scientific"].lower() not in text:
+            seen.append("学名の記載がない")
+            continue
+        return {"usable": ok, "title": t}, seen
+    return None, seen
+
+
+def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=None, sleep=time.sleep, on_got=None, wait_first=False, season=True):
     """1 種について、Commons のファイル検索「学名 + 冬羽(season_query)」→ 候補をまとめて imageinfo → 季節の語のある最初の 1 枚を取る(3 リクエスト)。
     → (取れた [{row, meta, data, ext}], 使わなかった理由 {和名: 理由}, 報告)。HTTP の非 200・通信エラーはそこで止める(再試行しない)。"""
     cm = ph["commons"]
@@ -335,13 +354,14 @@ def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=N
 
     try:
         try:
-            titles = parse_file_search(js(call(http_get, search_files_url(cm["season_query"].format(scientific=row["scientific"]), cm))), cm)
+            query = cm["season_query"].format(scientific=row["scientific"]) if season else row["scientific"]    # 段階52: season=False は学名だけで探す
+            titles = parse_file_search(js(call(http_get, search_files_url(query, cm))), cm)
             rep["candidates"] = len(titles)
             if not titles:
                 unused[name] = "Commons の検索で候補がない"
                 return got, unused, rep
             pages = parse_imageinfo_pages(js(call(http_get, titles_imageinfo_url(titles, cm))))
-            pick, rep["decisions"] = seasonal_pick(pages, row, cm, titles)
+            pick, rep["decisions"] = (seasonal_pick if season else scientific_pick)(pages, row, cm, titles)
             if not pick:
                 unused[name] = "季節の語・学名・ライセンスを満たす候補がない"
                 return got, unused, rep
@@ -358,7 +378,9 @@ def fetch_commons_season(row, *, http_get, http_bytes, ph, max_requests, today=N
     ok = pick["usable"]
     meta = {"name": name, "scientific": row["scientific"], "taxon_id": row["taxon_id"], "photo_id": None, "source": cm["source_id"],
             "license": ok["license"], "license_code": None, "attribution": ok["author"], "photo_page": ok["page"], "fetched_on": today,
-            "image_type": kind, "season_term": pick["term"]}
+            "image_type": kind}
+    if season:
+        meta["season_term"] = pick["term"]
     item = {"row": row, "meta": meta, "data": body, "ext": kind}
     got.append(item)
     if on_got:
