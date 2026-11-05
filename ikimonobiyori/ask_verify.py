@@ -322,6 +322,15 @@ def stage51_errors(text, facts, mat, rules):
         if any(p in s for p in cfg["assertive_phrases"]):
             errs.append({"code": "assertive_forecast", "detail": s.strip()[:40]})
 
+    for s in lines:                                                          # 段階52: 状態の日付は 1 つ(範囲にしない)
+        if re.search(cfg["date_range_re"], s):
+            errs.append({"code": "date_range", "detail": s.strip()[:40]})
+    for c in mat.region_candidates:                                          # 段階52: 古い表示が残ることのある発行元の状態は参考として書く
+        if (c.get("current") or {}).get("reference_only"):
+            for s in lines:
+                if any(f in _n(s) for f in short_names(c["name"])) and (c["current"].get("state") and cfg["reference_word"] not in s) and                         any(w in s for w in ("色づき", "見ごろ", "見頃", "真っ盛り", "まだまだ")):
+                    errs.append({"code": "stale_state_asserted", "detail": f"{c['name']}: {s.strip()[:30]}"})
+                    break
     for s in lines:                                                          # 公式の文の丸ごとの転載（「」の中が長い。行ごとに見る）
         for q in re.findall(cfg["quote_re"], s):
             if len(q) > val_of(cfg["max_quote_chars"]):

@@ -1,4 +1,5 @@
 """段階52: ウェザーニュース由来(転載を含む)の予想を答えの材料にしない。通信しない。"""
+import copy
 import json
 import sys
 import tempfile
@@ -46,6 +47,42 @@ class WeathernewsExcluded(unittest.TestCase):
                 for pg in pages:
                     self.assertNotIn("161896", pg["url"])
                     self.assertNotIn("n-kishou", pg["url"])
+
+
+# ---- 第3部: 日付の統一・古い表示 ----
+import helpers as H  # noqa: E402,F401
+from ikimonobiyori import ask  # noqa: E402
+from test_stage51 import STRICT, GOOD51, c51  # noqa: E402
+
+
+class DatesAndStaleDisplay(unittest.TestCase):
+    def test_date_range_on_one_state_is_rejected(self):
+        self.assertIn("date_range", c51(GOOD51 + "箱根は10/29～11/3時点で「色づきはじめ」です。\n"))
+        self.assertIn("date_range", c51(GOOD51 + "箱根は10/29〜11/3時点で「色づきはじめ」です。\n"))
+        self.assertNotIn("date_range", c51(GOOD51 + "箱根は10/29時点で「色づきはじめ」です。\n"))
+        self.assertNotIn("date_range", c51(GOOD51 + "菊花展が10/31～11/23にあります。\n"))          # 行事の期間は対象外
+
+    def test_hakone_state_far_from_read_date_is_reference_only(self):
+        cur = {"state": "色づきはじめ", "state_date": "2026-10-29", "read_at": "2026-11-06T05:00:00+09:00", "publisher": "箱根町観光協会"}
+        subj = {"autumn_leaves": {"candidates": [{"name": "箱根強羅公園", "current": dict(cur)},
+                                                   {"name": "箱根湖尻", "current": dict(cur, state_date="2026-11-05")},
+                                                   {"name": "日光", "current": dict(cur, publisher="日光市観光協会")}]}}
+        ask.mark_stale_display(subj, ask.load_policy())
+        c = subj["autumn_leaves"]["candidates"]
+        self.assertTrue(c[0]["current"]["reference_only"])
+        self.assertEqual(c[0]["current"]["gap_days"], 8)
+        self.assertNotIn("reference_only", c[1]["current"])        # 2 日前までは現況として使える
+        self.assertNotIn("reference_only", c[2]["current"])        # 箱根町観光協会以外は対象外
+
+    def test_reference_only_state_must_be_written_as_reference(self):
+        f = copy.deepcopy(STRICT)
+        c0 = f["subjects"]["birds"]["candidates"][0]
+        c0["current"] = {**(c0.get("current") or {}), "state": "色づきはじめ", "reference_only": True, "url": "https://www.inaturalist.org/"}
+        name = c0["name"]
+        bad = GOOD51 + f"{name}は10/29時点で「色づきはじめ」です。\n"
+        self.assertIn("stale_state_asserted", c51(bad, f))
+        ok = GOOD51 + f"{name}は10/29時点の参考として「色づきはじめ」との表示があります。\n"
+        self.assertNotIn("stale_state_asserted", c51(ok, f))
 
 
 if __name__ == "__main__":
