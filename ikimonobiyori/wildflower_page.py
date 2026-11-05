@@ -99,6 +99,14 @@ def page_html(title, body, h, pool):
             + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
 
 
+def state_text(meta, policy):
+    """段階53: 写真の下に、取得に使った学名と判定した状態（開花／つぼみ／不明）。つぼみは注記を添える。"""
+    pp = policy["photos"]["phenology"]
+    st = meta.get("state") or pp["unknown_label"]
+    line = pp["state_line"].format(scientific=meta.get("scientific") or "", state=st)
+    return line + (pp["bud_note"] if st == "つぼみ" else "")
+
+
 def build_overview(r, *, policy, now, photo_for):
     """山域も地点も指定がない質問のページ: 先頭に結論、データのある地点・山域の例年の見ごろを種ごとのカードで並べ、末尾に好みの質問を 1 つ置く。"""
     h = policy["photos"]["html"]
@@ -139,7 +147,7 @@ def build_overview(r, *, policy, now, photo_for):
     def card(e, got):
         meta = got[0]
         cr = h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"])
-        return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span>{links(e)}</li>'
+        return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span><span class="credit">{esc(state_text(meta, policy))}</span>{links(e)}</li>'
     kind = r.get("kind")
     if kind == "mountain":
         title, question = w["title_mountain"].format(place=r["area"]), w["next_question"]
@@ -182,6 +190,10 @@ def build_overview(r, *, policy, now, photo_for):
         # 写真の枠の割り当て順: いま見られる高山・亜高山 → 高山 → 亜高山 → いま見られる山麓 → (山麓の残りは focus でなければ手元にあるものだけ)
         prio = ([e for e in now_list if e["tier"] != "lowland"] + tiers["alpine"] + tiers["subalpine"] + [e for e in now_list if e["tier"] == "lowland"]
                 + ([] if focus_alpine else tiers["lowland"]))
+        if focus_alpine:                                      # 段階53: 種ごとの花期を載せる高山植物（wildflower_species）を写真の枠の先頭に（1 ページの上限で名前だけの行に回らないように）
+            from . import wildflower_species as WS
+            featured = set(WS.names())
+            prio = sorted(prio, key=lambda e: e["name"] not in featured)
         for e in prio:
             gotten = photo(e)
             if gotten:
@@ -215,7 +227,7 @@ def build_overview(r, *, policy, now, photo_for):
         for n in sorted(shown):
             meta = shown[n][0]
             commons = meta.get("source") == policy["photos"]["commons"]["source_id"]
-            items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} '
+            items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} {esc(state_text(meta, policy))} '
                          f'({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')
     body.append(f'<p class="note">{esc(h["credit"])}</p><p class="lead">{esc(question)}</p>')
