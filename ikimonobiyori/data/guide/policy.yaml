@@ -501,3 +501,6 @@ wildflower:
     weather: "山の天気はヤマビヨリで確かめてください。"
     upcoming: "来月（{month}月）は、{items}が例年の見ごろに入ります。"
     garden_note: "箱根湿生花園の園内（植栽・保全された花）の花期を含みます。"
+
+# 公式の確認の印(段階49。find の JSON の official_check にだけ出す。定評の条件ではない。--text の行は変えない)
+official_check: {classes: [A, B], label_found: "公式の確認あり", label_missing: "公式未確認"}

@@ -710,7 +710,27 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
     for k in out:
         out[k].sort(key=rank)
     out["upcoming"].sort(key=lambda e: (days_until_start(on, _w(e)) if on else 0, rank(e)))
+    _mark_official(out, policy)
     return out
+
+
+def official_check_of(entry, policy):
+    """段階49: 公式(運営者の発信 A・公的機関の資料 B)の出どころが 1 件以上あるか。ラベルは「公式の確認あり」「公式未確認」。定評の条件には使わない。"""
+    c = policy.get("official_check")
+    if not c:
+        return None
+    has = any(s.get("class") in c["classes"] for s in entry.get("sources") or [])
+    return {"has_official": has, "label": c["label_found"] if has else c["label_missing"]}
+
+
+def _mark_official(out, policy):
+    for k, rows in out.items():
+        if k == "kind_notes":
+            continue
+        for i, e in enumerate(rows):
+            oc = official_check_of(e, policy)
+            if oc:
+                rows[i] = {**e, "official_check": oc}
 
 
 def _w(e):
