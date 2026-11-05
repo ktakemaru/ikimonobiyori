@@ -58,7 +58,7 @@ sources:
       note: 2026年11月2日更新。予想はウェザーニュースの第3回(2026-10-29 発表)。現況ではなく見頃の予想。関東・甲信で載るのは高尾山と芦ノ湖だけ
     readable: {status: ok, checked_on: '2026-11-04', robots: allows, observed_latest_update: '2026-11-02', note: ページのフッターに『2018年9月13日 配信』の表記が残っている(記事の初版の日付とみられるが確認していない)}
     terms: {status: no_prohibition_found, url: 'https://www.walkerplus.com/info/rules.html', note: 'サイト利用規約(2026-11-04 に読んだ): 無断の複製・転載・公衆送信を禁じ、利用は私的利用の範囲。引用・要約・自動取得(クローラー)の規定はない。名称と例年の時期の短い事実を出典つきで示すだけで、複製・転載には当たらないと判断(迷った点。tokyo-park と同じ考え方。本文・写真は写さない)'}
-    approval: {status: approved, approved_by: user, approved_on: '2026-11-04', reason: 指示書でホスト koyo.walkerplus.com を承認(2026-11-04)}
+    approval: {status: revoked, approved_by: user, approved_on: '2026-11-04', reason: "利用者の決定 2026-11-06: ウェザーニュース由来の予想は転載であっても使わない。承認を取り消した(段階52)"}
     confidence_label: 紹介サイト(公式ではない)
   - id: nihon-kisho-koyo-forecast
     publisher: 日本気象(n-kishou。お天気ナビゲータ。紹介サイト)
@@ -75,7 +75,7 @@ sources:
       note: 現況ではなく見頃予想。『2026年紅葉・黄葉見頃予想(第3回)』、発表日 2026-11-04、今シーズンの最後の発表(指示書の想定は第2回 2026-10-01・次回は11月上旬だったが、実読では第3回が最新だった)。東日本は平年並みか平年より遅め。神奈川の都市の行はない。山の紅葉見頃予想(約3,000山)は有料側のため使わない。来週以降の候補と時期の目安にだけ使い、『今見頃』の判断には使わない
     readable: {status: ok, checked_on: '2026-11-04', robots: unknown, observed_latest_update: '2026-11-04', note: n-kishou.com は読めた。s.n-kishou.co.jp は 24 文字(『お天気ナビゲータ』)しか返らず、読めない(スクリプトで描画とみられる)ので使わない}
     terms: {status: no_prohibition_found, url: 'https://n-kishou.com/corp/site-policy/', note: 'サイトポリシー(2026-11-04 に読んだ): 情報の無断転用を禁じる。引用・転載・要約・自動取得の規定はない。予想日を出典・発表日つきで短く示すだけで、無断転用には当たらないと判断(迷った点)'}
-    approval: {status: approved, approved_by: user, approved_on: '2026-11-04', reason: 指示書でホスト n-kishou.com を承認(2026-11-04)。s.n-kishou.co.jp は読めなかったので対象外}
+    approval: {status: revoked, approved_by: user, approved_on: '2026-11-04', reason: "利用者の決定 2026-11-06: n-kishou.com(ウェザーニューズの企業サイト)は読まない。承認を取り消した(段階52)"}
     confidence_label: 予報会社
   - id: tenki-kouyou-kanagawa
     publisher: tenki.jp(日本気象協会。紹介サイト)
@@ -173,4 +173,37 @@ sources:
     readable: {status: ok, checked_on: '2026-11-05', robots: no_file, note: 'robots.txt は HTTP 404(なし)。特集ページは HTTP 200'}
     terms: {status: no_prohibition_found, url: 'https://maruchiba.jp/about-site', note: '『著作権について』(番号なし): 掲載著作物の無断の複製・転載・貸与・配布・販売などの二次利用を禁じる。自動取得の規定はない。地点名と時期の短い事実を出典つきで示すだけ'}
     approval: {status: approved, approved_by: user, approved_on: '2026-11-05', reason: 指示書 docs/stage47-sources-instructions.md でホスト maruchiba.jp を承認(2026-11-05)}
+    confidence_label: 紹介サイト(公式ではない)
+  # 段階53 第3部: 高尾山・御岳山の現況（ビジターセンターの最新情報。山と溪谷オンライン掲載）。承認待ち(pending)。承認されるまで答えの材料にしない
+  - id: yamakei-takao-visitor-center
+    publisher: 高尾ビジターセンター(発信元)・山と溪谷オンライン(掲載。紹介サイト)
+    publisher_kind: portal_media
+    url: https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1012
+    kind: reference_link
+    covers:
+    - {name: 高尾山, label: 高尾ビジターセンターから高尾山・陣馬山の情報(紅葉の状態・6号路の一方通行・日没と下山の目安・混雑予想)}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: "紅葉の状態は文章で書かれる(例: 2026.11.04更新「紅葉ほんのり」「高尾山山頂 3割」「ケーブルカー沿線と薬王院周辺(中腹)ともみじ台は色づき始め」「例年、おおむね11月中旬～12月上旬が紅葉の見頃」)。状態の語は変換せず原文のまま扱う。発信元: 高尾ビジターセンター(東京都の施設)"
+    readable: {status: ok, checked_on: '2026-11-06', robots: unknown, observed_latest_update: '2026-11-04', note: "HTTP 200 で本文が読めた(2026-11-06)。robots.txt は今回確認していない。過去分: https://www.yamakei-online.com/mt_info/past.php?id=1012"}
+    terms: {status: not_checked, url: 'https://www.yamakei-online.com/info/about.php', note: "利用規約のリンクは確認したが、本文は未読。ページの天気欄に「気象情報を第三者へ二次的に提供することは法律で禁止」の注記がある(気象情報の注記で、状態の文は対象ではないとみられるが未確認)。承認の前に利用規約を読む必要がある"}
+    approval: {status: pending, reason: "承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない"}
+    confidence_label: 紹介サイト(公式ではない)
+  - id: yamakei-mitake-visitor-center
+    publisher: 御岳ビジターセンター(発信元)・山と溪谷オンライン(掲載。紹介サイト)
+    publisher_kind: portal_media
+    url: https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1065
+    kind: reference_link
+    covers:
+    - {name: 御岳山, label: 御岳ビジターセンターから御岳山・大岳山の情報(紅葉の状態・日没・通行止め・混雑)}
+    notation:
+      style: none
+      map: {}
+      updated: per_page
+      note: "紅葉の状態は文章で書かれる(例: 2026.11.05更新「紅葉はこれから」「ビジター周辺 早い木(さくら)などは色づくも、基本的には先端少し」「山全体としてはこれから」「来週か再来週くらいが見頃予想」)。状態の語は変換せず原文のまま扱う。発信元: 御岳ビジターセンター(東京都の施設)。最新の情報ページの URL は info_detail.php?info_id=1065 で確認した"
+    readable: {status: ok, checked_on: '2026-11-06', robots: unknown, observed_latest_update: '2026-11-05', note: "HTTP 200 で本文が読めた(2026-11-06)。robots.txt は今回確認していない。過去分: https://www.yamakei-online.com/mt_info/past.php?id=1065"}
+    terms: {status: not_checked, url: 'https://www.yamakei-online.com/info/about.php', note: "高尾と同じ。承認の前に利用規約を読む必要がある"}
+    approval: {status: pending, reason: "承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない"}
     confidence_label: 紹介サイト(公式ではない)

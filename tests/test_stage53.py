@@ -216,3 +216,26 @@ class FestivalAnswerRules(unittest.TestCase):
         f, name = self.facts(False)
         self.assertIn("festival_no_state_missing", c51(GOOD51, f))
         self.assertNotIn("festival_no_state_missing", c51(GOOD51 + "色づき状況は確認できていません。\n", f))
+
+
+# ---- 第3部: ビジターセンターの台帳（承認待ち）とウェザーニュース由来の承認取り消し ----
+import yaml as _yaml
+from ikimonobiyori import sources as _sources
+
+
+class Ledger(unittest.TestCase):
+    SEC = {s["id"]: s for s in _yaml.safe_load((_sources.SECONDARY_SOURCES_DIR / "autumn_leaves.yaml").read_text(encoding="utf-8"))["sources"]}
+
+    def test_visitor_centers_are_pending_and_never_approved_by_the_code(self):
+        for k in ("yamakei-takao-visitor-center", "yamakei-mitake-visitor-center"):
+            self.assertEqual(self.SEC[k]["approval"]["status"], "pending", k)
+            self.assertIn("info_id=", self.SEC[k]["url"])
+            self.assertEqual(self.SEC[k]["terms"]["status"], "not_checked")
+
+    def test_weathernews_derived_entries_are_revoked(self):
+        self.assertEqual(self.SEC["walkerplus-koyo-forecast-east"]["approval"]["status"], "revoked")
+        self.assertEqual(self.SEC["nihon-kisho-koyo-forecast"]["approval"]["status"], "revoked")
+        self.assertEqual(self.SEC["walkerplus-koyo-kanagawa"]["approval"]["status"], "approved")        # ウォーカープラスの一覧（例年の時期）は引き続き使える
+
+    def test_the_ledger_passes_the_check(self):
+        self.assertEqual(dict((p.name, e) for p, e in _sources.check_all_secondary())["autumn_leaves.yaml"], [])
