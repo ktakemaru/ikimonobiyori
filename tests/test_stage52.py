@@ -211,3 +211,12 @@ class SourcesAndLead(unittest.TestCase):
         bad = hedged.replace("で、冬鳥のカモ類が見られそうです。", "で、冬鳥のカモ類が同時に楽しめる週末です。", 1)
         self.assertIn("lead_too_assertive", c51(bad, f))
         self.assertNotIn("lead_too_assertive", c51(bad.replace("可能性があります", "です"), f))   # おすすめに弱い確かさがなければ対象外
+
+
+class StrictNames(unittest.TestCase):
+    def test_shared_area_prefix_does_not_match_another_spot(self):
+        from ikimonobiyori import ask_verify as V
+        shared = frozenset({"箱根"})
+        self.assertNotIn("箱根", V.strict_names("箱根(芦ノ湖)", shared))
+        self.assertIn("芦ノ湖", V.strict_names("箱根(芦ノ湖)", shared))
+        self.assertIn("中禅寺湖・いろは坂", V.strict_names("中禅寺湖・いろは坂(中禅寺温泉付近)", frozenset()))   # 共通でない前半の形は残す
