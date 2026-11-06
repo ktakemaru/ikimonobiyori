@@ -74,7 +74,21 @@ def short_names(name):
             if f.endswith(suf) and len(f) > len(suf) + 1 and suf == "の紅葉":
                 forms.add(f[: -len(suf)])
     forms |= {re.sub(r"[「」『』]", "", f) for f in forms}
-    return {f for f in forms if len(f) >= 2}
+    return {f for f in forms if len(f) >= 2 and not _only_generic(f)}
+
+
+_GENERIC = None
+
+
+def _only_generic(form):
+    """段階54: 『菊花展』『まつり』『紅葉』のような一般的な語だけの形は、名所の短い呼び名にしない（別の名所と取り違える）。固有の部分（三溪園・川崎大師など）を含む形だけ使う。"""
+    global _GENERIC
+    if _GENERIC is None:
+        _GENERIC = sorted({_n(w) for w in load_rules().get("generic_name_words", [])}, key=len, reverse=True)
+    rest = _n(form)
+    for w in _GENERIC:
+        rest = rest.replace(w, "")
+    return not re.sub(r"[\s0-9・、,]", "", rest)
 
 
 def prefix_of(name):
@@ -261,6 +275,7 @@ def check(text, facts, rules=None, gazetteer=()):
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
     answer_errors += stage51_errors(text, facts, mat, rules)
+    answer_errors += restricted_source_errors(facts)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx:
             answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
@@ -284,6 +299,21 @@ def reread_errors(text, facts, rules):
                 errs.append({"code": "reread_not_from_record", "detail": sent.strip()[:40]})
     if rnd.get("needs_fetch") and not rnd.get("attempted"):
         errs.append({"code": "fetch_skipped", "detail": "記録が古い名所があるのに、この回は読みに行っていない"})
+    return errs
+
+
+def restricted_source_errors(facts):
+    """段階54 第1部: 山と溪谷オンライン由来の事実が、規則(状態の語は30字以内・文章でない・安全情報を含まない)を満たさないときは落とす。
+    承認待ちの間はそもそも材料に入らない(observations.read_records)ので、ここは念のための二重の検査。"""
+    from . import observations as O
+    pol = O.load_policy()
+    errs = []
+    for c in _spots(facts):
+        cur = c.get("current") or {}
+        rec = {"url": cur.get("url"), "state": cur.get("state_raw") or cur.get("state"), "state_date_text": None}
+        bad = O.restricted_errors(rec, pol)
+        if bad:
+            errs.append({"code": "restricted_source", "detail": f"{c.get('name')}: {bad[0]}"})
     return errs
 
 

@@ -10,6 +10,7 @@
 - 通信は --live・BIYORI_ALLOW_LIVE=1・明示的な --max-requests・計測フック(BIYORI_REQ_LOG)がそろったときだけ(places-fetch と同じ)。
   1 回の実行の上限は policy の photos.max_requests_per_run。"""
 import json
+import re
 import os
 import sys
 
@@ -212,7 +213,8 @@ def archive_rejected(taxon_id, pp, reason, env=None, policy=None):
     meta = json.loads(mp.read_text(encoding="utf-8"))
     out = d / pp["rejected_dir"]
     out.mkdir(parents=True, exist_ok=True)
-    stem = f"{int(taxon_id)}-{meta.get('photo_id') or meta.get('source') or 'x'}"
+    tag = re.sub(r"[^0-9A-Za-z_-]", "_", str(meta.get("photo_id") or meta.get("source") or "x"))[:40]       # 段階54: 取得した値をファイル名に使うときは無害化する
+    stem = f"{int(taxon_id)}-{tag}"
     img = d / f"{int(taxon_id)}.{meta['image_type']}"
     if img.is_file():
         (out / f"{stem}.{meta['image_type']}").write_bytes(img.read_bytes())

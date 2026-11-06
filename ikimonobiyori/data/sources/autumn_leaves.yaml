@@ -131,7 +131,7 @@ sources:
       no_info: ["現在、情報がありません"]
       updated: per_page
       note: "地域(6 区分)ごとの欄。2026-10-23 の読みではすべての欄が『現在、情報がありません』で、状態の書き方は未確認。地点ではなく地域の単位(label は地域名)"
-    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-16", note: "ページの更新日 2026-10-16。robots.txt は 404(なし)"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-10-16", note: "【要確認(2026-11-06): 更新日は 2026-11-06 だが6エリアすべて「現在、情報がありません」】ページの更新日 2026-10-16。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, note: "「このサイトについて」に引用・要約・転載・自動取得の規定なし。© 表示だけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
@@ -205,7 +205,7 @@ sources:
       year_shown: true
       season_check: true
       note: "状況は文字ではなく画像(alt テキストに状態名)。2025 年版で確かめた値は『落葉』『散始め』だけ。凡例画像(kouyou-hanrei.gif)は読めず、ほかの状態名は未確認なので map は空(段階は決めず、凡例にない語は原文のまま出す)。ページの先頭に『最終情報更新日：令和N年M月D日』があり、今シーズン(その年の9月以降)の日付でなければ前シーズンの情報として現況に使わない。地点ごとに『ひとくちメモ』(https://www.tokyo-park.or.jp/special/kouyou/memo/index.html の #番号)へのリンクがある。樹種・本数は 2025 年版の原文(変わりにくい属性。ikimonobiyori/data/observations/spots.yaml の trees)"
-    readable: {status: ok, checked_on: "2026-11-05", robots: no_file, observed_latest_update: "2025-12-18", note: "2026-11-05 時点の本文は 2025 年シーズンの最終版(令和7年12月18日 17時更新、12月22日閉鎖)。meta の説明文は『2026年版』だが本文は未更新。2025 年は 11/10(月)〜12/22(月)に提供、毎週月曜・木曜の夕方に更新(祝日は翌日)、37 公園・庭園(東京都報道発表 2025-11-04 https://www.metro.tokyo.lg.jp/information/press/2025/11/2025110407 )。2026 年の開始日は未確認(例年 11 月第 2 週の月曜ごろの可能性。推測で、断定しない)。同じサイトの robots.txt は 404(なし。段階15・16)"}
+    readable: {status: ok, checked_on: "2026-11-05", robots: no_file, observed_latest_update: "2025-12-18", note: "【要確認(2026-11-06): 再点検でも令和7年版の最終版(最終情報更新日 令和7年12月18日)のまま。令和8年版は未開始】2026-11-05 時点の本文は 2025 年シーズンの最終版(令和7年12月18日 17時更新、12月22日閉鎖)。meta の説明文は『2026年版』だが本文は未更新。2025 年は 11/10(月)〜12/22(月)に提供、毎週月曜・木曜の夕方に更新(祝日は翌日)、37 公園・庭園(東京都報道発表 2025-11-04 https://www.metro.tokyo.lg.jp/information/press/2025/11/2025110407 )。2026 年の開始日は未確認(例年 11 月第 2 週の月曜ごろの可能性。推測で、断定しない)。同じサイトの robots.txt は 404(なし。段階15・16)"}
     terms: {status: no_prohibition_found, url: "https://www.tokyo-park.or.jp/sitepolicy/", note: "tokyo-park-rikugien-news と同じ(ユーザーの判断 2026-10-23: 状態と更新日の短い事実を出典つきで示すだけで、複製・転用には当たらない)"}
     approval: {status: pending, reason: "ユーザーの承認待ち(段階50)。条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)は満たすが、今は前シーズンの最終版で今年の現況がない。通信先 www.tokyo-park.or.jp は段階47で承認済み。今シーズンの更新が始まったら見直す。season_check により前シーズンの日付の記録は受け付けない"}
 
@@ -322,7 +322,7 @@ sources:
     kind: event_page
     covers:
       - {site: kouyou-0021, label: "秋の夜間特別拝観・紅葉ライトアップ"}
-    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-17", note: "2026-10-17 のお知らせ。紅葉の今の状態の記載はない。robots.txt は wp-admin だけ拒否"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-17", note: "【要確認(2026-11-06): 2026-11-06 に HTTP 302 でトップページへ転送された。記事のURLが変わった可能性】2026-10-17 のお知らせ。紅葉の今の状態の記載はない。robots.txt は wp-admin だけ拒否"}
     terms: {status: no_prohibition_found, note: "利用規約のページは見当たらない。Copyright 表示だけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
@@ -347,7 +347,7 @@ sources:
       - {site: kouyou-0001, label: "日光の渋滞・混雑情報"}
       - {site: kouyou-0002, label: "日光の渋滞・混雑情報"}
       - {site: kouyou-0003, label: "日光の渋滞・混雑情報"}
-    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-09-02", note: "2026 年版(3 か月に 1 度更新)。渋滞予想カレンダーは画像と PDF"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-09-02", note: "【要確認(2026-11-06): 「現在」の混雑値が埋め込みで読めず、ページの最終更新は 2026-09-02】2026 年版(3 か月に 1 度更新)。渋滞予想カレンダーは画像と PDF"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "nikko-kankou-autumn-leaves と同じ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
@@ -389,7 +389,7 @@ sources:
       updated: per_article
       year_shown: true
       note: "お知らせ一覧に『紅葉情報:…』の記事が出る形。2026-10-22 の記事で、地点ごとの語『見頃を迎えています』『落葉が始まっています』を見た(ほかの語は未確認)。見頃予測の記載はなかった"
-    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "robots.txt は /cms/wp-admin/ だけ拒否。旧 URL www.tanigawadake-rw.com は tanigawadake-joch.com へ転送"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: allows, observed_latest_update: "2026-10-22", note: "【要確認(2026-11-06): 「開花状況」の掲載は 2026-07 が最後(夏のまま)。紅葉情報は 2026-10-26・11-06 に更新あり】robots.txt は /cms/wp-admin/ だけ拒否。旧 URL www.tanigawadake-rw.com は tanigawadake-joch.com へ転送"}
     terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見当たらない(索道約款・プライバシーポリシーだけ)"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
@@ -450,7 +450,7 @@ sources:
     covers:
       - {name: 神奈川の紅葉・黄葉の名所 2026, label: "神奈川の紅葉・黄葉の名所 2026(特集)"}
     notation: {style: none, map: {}, updated: none, note: "地点ごとの今の状況・更新日はない。一部の名所に固定の時期(例: 県立相模原公園 11月下旬～12月上旬、鳥居原園地 10月下旬〜11月初旬頃)と、大山のイルミネーション 2026-11-20〜11-29 の記載がある"}
-    readable: {status: ok, checked_on: "2026-11-04", robots: unknown, note: "トップページ(https://www.kanagawa-kankou.or.jp/)は紅葉の状況を持たない。特集ページは HTTP 200、23,372 文字"}
+    readable: {status: ok, checked_on: "2026-11-04", robots: unknown, note: "【要確認(2026-11-06): 2026-11-06 に HTTP 503 で取得できなかった(一時的な可能性)】トップページ(https://www.kanagawa-kankou.or.jp/)は紅葉の状況を持たない。特集ページは HTTP 200、23,372 文字"}
     terms: {status: no_prohibition_found, url: "https://www.kanagawa-kankou.or.jp/features/about-site", note: "花の台帳(flowers.yaml)で確かめた『このサイトについて』と同じ。私的使用・引用の範囲を超える複製・転用を不可とし、要約・自動取得の禁止の記載はない。事実を出典つきで短く示す"}
     approval: {status: approved, approved_by: user, approved_on: "2026-11-04", reason: "kanagawa-kankou.or.jp は花の台帳で承認済みのホスト(同じ観光協会)"}
 

@@ -768,6 +768,7 @@ spots:
     name: "石神井公園"
     prefecture: 東京都
     city: 練馬区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "石神井公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 350, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -776,6 +777,7 @@ spots:
     name: "光が丘公園"
     prefecture: 東京都
     city: 練馬区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(板橋区・練馬区にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "光が丘公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 236, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -784,6 +786,7 @@ spots:
     name: "砧公園"
     prefecture: 東京都
     city: 世田谷区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "砧公園 紅葉 色づき"
     trees: {species: "ケヤキ", color: "レンガ色", count: 1000, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -792,6 +795,7 @@ spots:
     name: "林試の森公園"
     prefecture: 東京都
     city: 目黒区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(目黒区・品川区にまたがる(一覧は品川区のみ、詳細ページは目黒区と品川区)。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "林試の森公園 紅葉 色づき"
     trees: {species: "ラクウショウ", color: "レンガ色", count: 29, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -800,6 +804,7 @@ spots:
     name: "善福寺川緑地・和田堀公園"
     prefecture: 東京都
     city: 杉並区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "善福寺川緑地・和田堀公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 120, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -808,6 +813,7 @@ spots:
     name: "木場公園"
     prefecture: 東京都
     city: 江東区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "木場公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 60, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -816,6 +822,7 @@ spots:
     name: "城北中央公園"
     prefecture: 東京都
     city: 練馬区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(板橋区・練馬区にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     typical:
       - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e373501/data.html", year: 2025, source_class: secondary, checked_on: "2026-11-05", start_text: "11月中旬"}
@@ -828,6 +835,7 @@ spots:
     name: "舎人公園"
     prefecture: 東京都
     city: 足立区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     typical:
       - {text: "11月中旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e373499/data.html", year: 2025, source_class: secondary, checked_on: "2026-11-05", start_text: "11月中旬"}
@@ -840,6 +848,7 @@ spots:
     name: "戸山公園"
     prefecture: 東京都
     city: 新宿区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     typical:
       - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e373498/data.html", year: 2025, source_class: secondary, checked_on: "2026-11-05", start_text: "11月下旬"}
@@ -852,6 +861,7 @@ spots:
     name: "大泉中央公園"
     prefecture: 東京都
     city: 練馬区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "大泉中央公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 42, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -860,6 +870,7 @@ spots:
     name: "蘆花恒春園"
     prefecture: 東京都
     city: 世田谷区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "蘆花恒春園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 22, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -868,6 +879,8 @@ spots:
     name: "水元公園"
     prefecture: 東京都
     city: 葛飾区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
+    point: {lat: 35.786, lon: 139.869, source: "Wikidata Q3541303(水元公園)の座標 P625。項目の説明に区が書かれていることを確かめた。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     area: 都内
     search: "水元公園 紅葉 色づき"
     trees: {species: "メタセコイア", color: "レンガ色", count: 1500, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -876,6 +889,7 @@ spots:
     name: "代々木公園"
     prefecture: 東京都
     city: 渋谷区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "代々木公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 260, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -884,6 +898,7 @@ spots:
     name: "駒沢オリンピック公園"
     prefecture: 東京都
     city: 世田谷区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(目黒区・世田谷区にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "駒沢オリンピック公園 紅葉 色づき"
     trees: {species: "ケヤキ", color: "レンガ色", count: 500, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -892,6 +907,7 @@ spots:
     name: "上野恩賜公園"
     prefecture: 東京都
     city: 台東区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "上野恩賜公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 278, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -900,6 +916,7 @@ spots:
     name: "小金井公園"
     prefecture: 東京都
     city: 小金井市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(武蔵野市・小金井市・小平市・西東京市にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "小金井公園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 250, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -907,7 +924,8 @@ spots:
     subject: autumn_leaves
     name: "陵南公園"
     prefecture: 東京都
-    city: 府中市
+    city: 八王子市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "修正(府中市→八王子市。公式の一覧の記載)", checked_on: '2026-11-06'}
     area: 都内
     search: "陵南公園 紅葉 色づき"
     trees: {species: "ケヤキ", color: "レンガ", count: 180, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -916,6 +934,7 @@ spots:
     name: "府中の森公園"
     prefecture: 東京都
     city: 府中市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "府中の森公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 170, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -924,6 +943,7 @@ spots:
     name: "武蔵野公園"
     prefecture: 東京都
     city: 府中市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(府中市・小金井市にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     typical:
       - {text: "11月中旬～12月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e393647/data.html", year: 2025, source_class: secondary, checked_on: "2026-11-05", start_text: "11月中旬"}
@@ -936,6 +956,7 @@ spots:
     name: "東大和南公園"
     prefecture: 東京都
     city: 東大和市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "東大和南公園 紅葉 色づき"
     trees: {species: "クヌギ・コナラ", color: "レンガ色", count: 270, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -944,6 +965,7 @@ spots:
     name: "狭山公園"
     prefecture: 東京都
     city: 東大和市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(東村山市・東大和市にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "狭山公園 紅葉 色づき"
     trees: {species: "カエデ類", color: "紅・黄色", count: 600, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -952,6 +974,7 @@ spots:
     name: "桜ヶ丘公園"
     prefecture: 東京都
     city: 多摩市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "桜ヶ丘公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 100, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -960,6 +983,7 @@ spots:
     name: "神代植物公園"
     prefecture: 東京都
     city: 調布市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "神代植物公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 150, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -968,6 +992,7 @@ spots:
     name: "井の頭恩賜公園"
     prefecture: 東京都
     city: 武蔵野市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(武蔵野市・三鷹市にまたがる。主な1つを残した)", checked_on: '2026-11-06'}
     area: 都内
     search: "井の頭恩賜公園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 600, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -976,6 +1001,7 @@ spots:
     name: "野山北・六道山公園"
     prefecture: 東京都
     city: 武蔵村山市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "野山北・六道山公園 紅葉 色づき"
     trees: {species: "雑木林", color: "黄色", count: null, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -984,6 +1010,7 @@ spots:
     name: "小宮公園"
     prefecture: 東京都
     city: 八王子市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "小宮公園 紅葉 色づき"
     trees: {species: "雑木林", color: "黄色", count: null, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -992,6 +1019,8 @@ spots:
     name: "向島百花園"
     prefecture: 東京都
     city: 墨田区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
+    point: {lat: 35.724, lon: 139.815, source: "Wikidata Q7076776(向島百花園)の座標 P625。項目の説明に区が書かれていることを確かめた。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     area: 都内
     search: "向島百花園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 11, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -1000,6 +1029,8 @@ spots:
     name: "旧古河庭園"
     prefecture: 東京都
     city: 北区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
+    point: {lat: 35.743, lon: 139.747, source: "Wikidata Q3082256(旧古河庭園)の座標 P625。項目の説明に区が書かれていることを確かめた。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     area: 都内
     search: "旧古河庭園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅色", count: 200, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -1008,6 +1039,7 @@ spots:
     name: "殿ヶ谷戸庭園"
     prefecture: 東京都
     city: 国分寺市
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     search: "殿ヶ谷戸庭園 紅葉 色づき"
     trees: {species: "モミジ", color: "紅・黄色", count: 200, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -1016,6 +1048,8 @@ spots:
     name: "旧岩崎邸庭園"
     prefecture: 東京都
     city: 台東区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
+    point: {lat: 35.71, lon: 139.768, source: "Wikidata Q1358767(旧岩崎邸庭園)の座標 P625。項目の説明に区が書かれていることを確かめた。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     area: 都内
     search: "旧岩崎邸庭園 紅葉 色づき"
     trees: {species: "イチョウ", color: "黄色", count: 11, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -1024,6 +1058,8 @@ spots:
     name: "清澄庭園"
     prefecture: 東京都
     city: 江東区
+    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
+    point: {lat: 35.68, lon: 139.798, source: "Wikidata Q4388146(清澄庭園)の座標 P625。項目の説明に区が書かれていることを確かめた。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     area: 都内
     search: "清澄庭園 紅葉 色づき"
     trees: {species: "ハゼノキ", color: "紅色", count: 3, publisher: 東京都公園協会, url: "https://www.tokyo-park.or.jp/special/kouyou/index.html", year: 2025, source_class: official, checked_on: "2026-11-05", note: "2025年版ページの原文"}
@@ -1069,3 +1105,70 @@ spots:
     pages:
       - {url: "https://www.gotokyo.org/jp/spot/ev073/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
     search: "御岳山 紅葉 色づき"
+  # 段階54 第13部: まつり情報による候補（festivals.yaml）。座標は確認できていないため付けない
+  - id: obs-kouyou-0090
+    subject: autumn_leaves
+    name: "八王子いちょう祭り(甲州街道)"
+    prefecture: 東京都
+    city: 八王子市
+    area: 都内
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.gotokyo.org/jp/spot/ev122/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
+    search: "八王子 甲州街道 いちょう 黄葉"
+  - id: obs-kouyou-0091
+    subject: autumn_leaves
+    name: "華厳滝"
+    prefecture: 栃木県
+    city: 日光市
+    area: 日光
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.nikko-kankou.org/event/1626", publisher: 日光市観光協会, source_class: secondary}
+    search: "華厳滝 紅葉 ライトアップ"
+  - id: obs-hana-0006
+    subject: flowers
+    name: "成田山新勝寺"
+    prefecture: 千葉県
+    city: 成田市
+    area: 千葉
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.maruchiba.jp/event/detail_11212.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "成田山 菊花大会"
+  - id: obs-hana-0007
+    subject: flowers
+    name: "笠間稲荷神社"
+    prefecture: 茨城県
+    city: 笠間市
+    area: 茨城
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=753", publisher: 観光いばらき, source_class: secondary}
+    search: "笠間の菊まつり"
+  - id: obs-hana-0008
+    subject: flowers
+    name: "千葉市都市緑化植物園"
+    prefecture: 千葉県
+    city: 千葉市中央区
+    area: 千葉
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.maruchiba.jp/event/detail_13346.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "千葉市都市緑化植物園 菊花展"
+  - id: obs-hana-0009
+    subject: flowers
+    name: "大宝八幡宮(下妻市菊まつり)"
+    prefecture: 茨城県
+    city: 下妻市
+    area: 茨城
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=1394", publisher: 観光いばらき, source_class: secondary}
+    search: "下妻市菊まつり 大宝八幡宮"

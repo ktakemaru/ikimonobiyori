@@ -25,6 +25,8 @@ festivals:
     notes: "2026年版の公式ページを取得して確認した(区分は公式)。入場料はページに記載があるが、情報源どうしで金額が食い違うため(指示書 2-2 の4)答えに書かない。旧年のページ(2021・2023・2024年)は使わない"
   - id: machida-akiasobi-2026
     name: 町田薬師池公園 秋遊び2026(紅葉ライトアップ)
+    umbrella: true
+    umbrella_note: "上位の企画。見頃の目安には、同じ名所の「薬師池 紅葉まつり」の期間を使う（段階54）。紅葉まつりがあるときは答えに出さない"
     spots: [obs-kouyou-0087]
     organizer: 町田市
     organizer_class: official
@@ -40,6 +42,23 @@ festivals:
     taken_on: '2026-11-06'
     raw: ["2026年10月3日（土曜日）から11月29日（日曜日）", "11月14日（土曜日）から29日（日曜日）"]
     notes: "指示書の調査値は「紅葉まつり」10/31〜11/29・ライトアップ期間の閉園 20:00(NEST Machida 共同事業体のプレスリリース)。町田市のページでは「紅葉まつり」の名称も 10/31 開始も確認できず、「秋遊び2026」10/3〜11/29 と紅葉ライトアップ 11/14〜11/29 の 17:00〜20:00 だった。取得結果を優先した。プレスリリースは取得できていない"
+  - id: machida-yakushiike-momijimatsuri-2026
+    name: 薬師池 紅葉まつり
+    spots: [obs-kouyou-0087]
+    organizer: 町田薬師池公園四季彩の杜グループ指定管理者 NEST Machida
+    organizer_class: official
+    organizer_note: "指定管理者 NEST Machida の公式サイト(machida-shikisainomori.com)の記事で、主催として明記。町田市のページには紅葉まつりの記載がなく、上位の企画「秋遊び2026」(10/3〜11/29)だけが載る"
+    start: '2026-10-31'
+    end: '2026-11-29'
+    lightup: {start: '2026-11-14', end: '2026-11-29', hours: "17:00〜20:00", where: 薬師池, note: "開園時間を20時まで延長。薬師雲海は10:00〜19:00に1時間おきに実施"}
+    venue: 町田薬師池公園四季彩の杜 薬師池(東京都町田市野津田町3270)
+    contact: null
+    url: "https://machida-shikisainomori.com/shikisai/post-578.html"
+    publisher: 町田薬師池公園四季彩の杜(指定管理者 NEST Machida)
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年10月31日（土）～11月29日（日）", "11月14日（土）～11月29日（日）"]
+    notes: "公式サイトの記事で 10/31 開始を確認したので区分は公式。プレスリリース(oricon、2026-10-14掲載)も同じ期間。ライトアップの時刻はプレスリリースの表が文字化けで読めず、公式記事の 17:00〜20:00 を使った。通常期の閉園時刻は記載がなく、書かない。上位の企画「秋遊び2026」は別に保持し、見頃の目安には紅葉まつりを使う"
   - id: takao-momiji-2026
     name: 高尾山もみじまつり
     spots: [obs-kouyou-0088]
@@ -125,3 +144,217 @@ festivals:
     taken_on: '2026-11-06'
     raw: ["2026年11月20日(金)～12月13日(日)", "2026年11月20日(金)～12月20日(日)"]
     notes: "公式サイトで確認した(2026-11-06)"
+
+  - id: koganei-akiirodoro-2026
+    name: 花と光のムーブメント 小金井公園「秋彩ものがたり」2026
+    spots: [obs-kouyou-0071]
+    organizer: 東京都(協力 東京都公園協会)
+    organizer_class: official
+    organizer_note: "公式ページに【主催】東京都【協力】東京都公園協会と明記"
+    start: '2026-10-23'
+    end: '2026-11-08'
+    lightup: {start: '2026-10-23', end: '2026-11-08', hours: "月〜金 17:00〜20:00、土日祝 17:00〜20:30", where: "小金井公園", note: "入場無料"}
+    venue: 都立小金井公園（小金井市ほか）
+    contact: null
+    url: "https://www.tokyo-park.or.jp/special/flowerandlight/koganei2026autumn/"
+    publisher: 東京都公園協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026.10.23(金)〜2026.11.8(日)"]
+    notes: "公式ページを取得して確認した(第13部)。曜日は2026年の暦と合う"
+  - id: sayama-hanahikari-2026
+    name: 花と光のムーブメント 狭山公園2026
+    spots: [obs-kouyou-0076]
+    organizer: 東京都(協力 東京都公園協会)
+    organizer_class: official
+    organizer_note: "小金井公園のページの注記による(狭山公園の個別ページは未読)"
+    start: '2026-11-14'
+    end: '2026-11-23'
+    venue: 都立狭山公園
+    contact: null
+    url: "https://www.tokyo-park.or.jp/special/flowerandlight/koganei2026autumn/"
+    publisher: 東京都公園協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年11月14日（土）・15日（日）・21日（土）〜 23日（月・祝）"]
+    notes: "小金井公園のページの注記に書かれた日程。実施日は11/14・15・21〜23で、期間の途中に実施しない日がある。個別ページ未読のため時間は不明"
+  - id: koishikawa-miyama-koyo-2026
+    name: 小石川後楽園 深山紅葉を楽しむ
+    spots: [kouyou-0032]
+    organizer: 東京都公園協会(掲載元)
+    organizer_class: official
+    organizer_note: "都立庭園の指定管理者の発信。主催の別記はない"
+    start: '2026-11-21'
+    end: '2026-12-06'
+    venue: 小石川後楽園（文京区）
+    contact: null
+    url: "https://www.tokyo-park.or.jp/event_search/event_57.html"
+    publisher: 東京都公園協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["令和8年11月21日（土）～12月6日（日）"]
+    notes: "公式ページを取得して確認した(第10部の点検でも確認)。9時〜17時(最終入園16時30分)"
+  - id: koishikawa-night-2026
+    name: 小石川後楽園 夜間特別開園「深山光葉を楽しむ」
+    spots: [kouyou-0032]
+    organizer: 東京都公園協会(掲載元)
+    organizer_class: official
+    organizer_note: "都立庭園の指定管理者の一覧の記載。個別ページは未読"
+    start: '2026-11-13'
+    end: '2026-11-24'
+    lightup: {start: '2026-11-13', end: '2026-11-24', hours: "18:00〜21:00(最終入園20:00)", where: "小石川後楽園", note: null}
+    venue: 小石川後楽園（文京区）
+    contact: null
+    url: "https://www.tokyo-park.or.jp/event_search/11_13_11_24.html"
+    publisher: 東京都公園協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["令和８年11月13日(金)～11月24日(火)"]
+    notes: "公園協会のイベント一覧の記載（個別ページは未読）。曜日は2026年の暦と合う"
+  - id: furukawa-koyo-rose-2026
+    name: 旧古河庭園「紅葉とバラ、和と洋の秋」
+    spots: [obs-kouyou-0083]
+    organizer: 東京都公園協会(掲載元)
+    organizer_class: official
+    organizer_note: "都立庭園の指定管理者の一覧の記載。個別ページは未読"
+    start: '2026-11-07'
+    end: '2026-12-06'
+    venue: 旧古河庭園（北区）
+    contact: null
+    url: "https://www.tokyo-park.or.jp/event_search/11_13.html"
+    publisher: 東京都公園協会
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["令和８年11月７日（土）～12月６日（日）"]
+    notes: "公園協会のイベント一覧の記載（個別ページは未読）。曜日は2026年の暦と合う"
+  - id: shinjuku-kikukadan-2026
+    name: 菊花壇展（新宿御苑）
+    spots: [kouyou-0023]
+    organizer: 明記なし
+    organizer_class: secondary
+    organizer_note: "GO TOKYO のページに主催の明記がない(写真提供は環境省新宿御苑管理事務所)"
+    start: '2026-11-01'
+    end: '2026-11-15'
+    venue: 新宿御苑（新宿区）
+    contact: null
+    url: "https://www.gotokyo.org/jp/spot/ev113/index.html"
+    publisher: GO TOKYO(東京観光財団)
+    published: '2026-10-01'
+    taken_on: '2026-11-06'
+    raw: ["2026年11月1日 - 2026年11月15日"]
+    notes: "GO TOKYO の日本語ページ(更新日 2026年10月1日)。曜日の記載がなく、曜日チェックはできない。9:00〜16:30(最終入園16:00)"
+  - id: hachioji-icho-2026
+    name: 八王子いちょう祭り
+    spots: [obs-kouyou-0090]
+    organizer: 明記なし(八王子いちょう祭り祭典委員会)
+    organizer_class: secondary
+    organizer_note: "GO TOKYO のページに主催の別記はなく、著作表示が祭典委員会"
+    start: '2026-11-21'
+    end: '2026-11-22'
+    venue: 甲州街道（追分町交差点〜小仏関跡、八王子市）
+    contact: null
+    url: "https://www.gotokyo.org/jp/spot/ev122/index.html"
+    publisher: GO TOKYO(東京観光財団)
+    published: '2026-10-01'
+    taken_on: '2026-11-06'
+    raw: ["2026年11月21日 - 2026年11月22日", "11月21日（土）9:00～16:30 / 11月22日（日）9:00～16:00"]
+    notes: "GO TOKYO の日本語ページ(更新日 2026年10月1日)。曜日は2026年の暦と合う"
+  - id: narita-kikuka-2026
+    name: 成田山菊花大会
+    spots: [obs-hana-0006]
+    organizer: 明記なし
+    organizer_class: secondary
+    organizer_note: "ちば観光ナビ（千葉県観光物産協会）のページに主催の明記がない"
+    start: '2026-10-20'
+    end: '2026-11-15'
+    venue: 成田山新勝寺境内（成田市）
+    contact: null
+    url: "https://www.maruchiba.jp/event/detail_11212.html"
+    publisher: ちば観光ナビ(千葉県観光物産協会)
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年10月20日（火）～11月15日（日）"]
+    notes: "詳細ページを取得して確認した(見頃は11月初旬と記載)。曜日は2026年の暦と合う"
+  - id: kasama-kiku-2026
+    name: 第119回 笠間の菊まつり
+    spots: [obs-hana-0007]
+    organizer: 笠間の菊まつり連絡協議会
+    organizer_class: secondary
+    organizer_note: "観光いばらきのページに実施主体として記載。公式サイトではなく観光サイトの掲載"
+    start: '2026-10-24'
+    end: '2026-11-23'
+    lightup: {start: null, end: null, hours: "かさま歴史交流館井筒屋 9時〜21時(有料エリア、11/1〜23)。やっぺ祭り(夜祭り)は11/22 18:00〜21:00", where: "笠間稲荷神社周辺", note: null}
+    venue: 笠間稲荷神社周辺（笠間市）
+    contact: null
+    url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=753"
+    publisher: 観光いばらき
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["10月24日(土曜日)～11月23日(月曜日・祝日)"]
+    notes: "詳細ページを取得して確認した。本文に年の数字はなく、開催期間欄が 2026-10-24〜2026-11-23。曜日は2026年の暦と合う"
+  - id: chiba-kikuka-2026
+    name: 菊花展（千葉市都市緑化植物園）
+    spots: [obs-hana-0008]
+    organizer: 明記なし
+    organizer_class: secondary
+    organizer_note: "ちば観光ナビのページに主催の明記がない"
+    start: '2026-11-07'
+    end: '2026-11-23'
+    venue: 千葉市都市緑化植物園（千葉市中央区）
+    contact: null
+    url: "https://www.maruchiba.jp/event/detail_13346.html"
+    publisher: ちば観光ナビ(千葉県観光物産協会)
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年11月7日（土）～23日（月・祝）"]
+    notes: "詳細ページを取得して確認した。10:00〜16:00、11/9・16は休園。曜日は2026年の暦と合う"
+  - id: shimotsuma-kiku-2026
+    name: 下妻市菊まつり
+    spots: [obs-hana-0009]
+    organizer: 下妻市菊花会
+    organizer_class: secondary
+    organizer_note: "観光いばらきのページに主催として記載(後援: 下妻市・下妻市観光協会)"
+    start: '2026-11-01'
+    end: '2026-11-25'
+    venue: 大宝八幡宮（下妻市大宝）
+    contact: null
+    url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=1394"
+    publisher: 観光いばらき
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["11月1日(日曜日)～11月25日(水曜日)"]
+    notes: "詳細ページを取得して確認した。本文に年の数字はなく、開催期間欄が 2026-11-01〜2026-11-25。曜日は2026年の暦と合う"
+  - id: nikko-lightup-2026
+    name: ライトアップNIKKO 2026
+    spots: [kouyou-0046]
+    organizer: "明記なし(問合せ先: 日光商工会議所)"
+    organizer_class: secondary
+    organizer_note: "日光旅ナビ(日光市観光協会)のページに主催の明記がない"
+    start: '2026-11-06'
+    end: '2026-11-08'
+    lightup: {start: '2026-11-06', end: '2026-11-08', hours: "17:00〜21:00(11/8は20:00まで)", where: "日光東照宮・日光二荒山神社・日光山輪王寺", note: null}
+    venue: 世界遺産「日光の社寺」（日光市山内）
+    contact: null
+    url: "https://www.nikko-kankou.org/event/1246"
+    publisher: 日光市観光協会(日光旅ナビ)
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年11月6日（金）～11月8日（日）"]
+    notes: "詳細ページを取得して確認した。曜日は2026年の暦と合う"
+  - id: kegon-lightup-2026
+    name: 華厳滝ライトアップ
+    spots: [obs-kouyou-0091]
+    organizer: 奥日光観光事業振興会
+    organizer_class: secondary
+    organizer_note: "日光旅ナビ(日光市観光協会)の別ページに【主催】奥日光観光事業振興会と記載"
+    start: '2026-11-14'
+    end: '2026-11-23'
+    lightup: {start: '2026-11-14', end: '2026-11-23', hours: "日没〜19:00", where: "華厳滝県営無料観瀑台", note: "土日祝の夕刻に和太鼓(11/14・15・21・22・23)"}
+    venue: 華厳滝県営無料観瀑台（日光市中宮祠）
+    contact: null
+    url: "https://www.nikko-kankou.org/event/1626"
+    publisher: 日光市観光協会(日光旅ナビ)
+    published: null
+    taken_on: '2026-11-06'
+    raw: ["2026年11月14日（土）～11月23日（月・祝）"]
+    notes: "詳細ページを取得して確認した。曜日は2026年の暦と合う"

@@ -157,6 +157,13 @@ def _blocked_host(host, policy):
     return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
 
 
+def _restricted_unusable(r, policy):
+    cfg = restricted_cfg(r.get("host") or urlparse(r.get("url") or "").hostname, policy)
+    if not cfg:
+        return False
+    return (not cfg.get("approved")) or bool(restricted_errors(r, policy))
+
+
 def _reprint_of_blocked(r, policy):
     """段階52: ウェザーニュース(ウェザーニューズ)由来を示す語を含む事実か(転載を含む)。"""
     words = [w.lower() for w in _v(policy.get("not_read_words") or {"value": []})]
@@ -164,9 +171,67 @@ def _reprint_of_blocked(r, policy):
     return any(w in text for w in words)
 
 
+def restricted_cfg(host, policy):
+    """段階54: 山と溪谷オンラインなど、使い方を限るホストの設定（該当しなければ None）。"""
+    cfg = (policy["record"].get("restricted_sources") or {})
+    host = (host or "").lower()
+    if cfg and any(host == b or host.endswith("." + b) for b in _v(cfg["hosts"])):
+        return cfg
+    return None
+
+
+def restricted_errors(rec, policy):
+    """段階54 第1部: 限るホストの事実は、状態の短い語句(30字以内・1文でない・安全情報の文を含まない)・日付・URL だけ。"""
+    host = urlparse(rec.get("url") or "").hostname
+    cfg = restricted_cfg(host, policy)
+    if not cfg:
+        return []
+    errs = []
+    mx = _v(cfg["max_state_chars"])
+    for k in ("state", "state_date_text"):
+        t = str(rec.get(k) or "")
+        if len(t) > mx:
+            errs.append(f"山と溪谷オンライン由来の {k} は {mx} 文字以内の語句だけ")
+        if any(m in t for m in cfg["sentence_marks"]):
+            errs.append(f"山と溪谷オンライン由来の {k} は文章でなく語句だけ")
+        if any(w in t for w in cfg["safety_words"]):
+            errs.append(f"山と溪谷オンライン由来の {k} に安全情報の文は使わない")
+    for k in cfg["forbidden_fields"]:
+        if rec.get(k):
+            errs.append(f"山と溪谷オンライン由来では {k} を使わない")
+    return errs
+
+
+def untrusted_errors(rec, policy):
+    """段階54 第8部: 取得した文字列は指示ではなくデータ。制御文字・極端に長い欄・指示に見える文を含む事実は記録しない。"""
+    cfg = policy["record"].get("untrusted_text")
+    if not cfg:
+        return []
+    errs = []
+    caps = _v(cfg["max_field_chars"])
+    words = [w.lower() for w in cfg["instruction_words"]]
+    mx = _v(policy["record"]["max_raw_chars"])
+    for k, v in rec.items():
+        if k in ("event", "species") or not isinstance(v, str):
+            continue
+        if any(ord(c) < 32 or ord(c) == 127 for c in v):
+            errs.append(f"{k} に制御文字がある")
+        if len(v) > caps.get(k, 4 * mx if k in ("state", "typical", "practical", "forecast", "state_date_text") else mx):
+            errs.append(f"{k} が長すぎる")
+        if k != "url" and any(w in v.lower() for w in words):
+            errs.append(f"{k} に指示に見える文が含まれる(取得した文章は指示ではなくデータ)")
+    ev = rec.get("event")
+    if isinstance(ev, dict) and isinstance(ev.get("name"), str):
+        if len(ev["name"]) > mx or any(w in ev["name"].lower() for w in words) or any(ord(c) < 32 for c in ev["name"]):
+            errs.append("event.name が不正（長い・指示に見える文・制御文字）")
+    return errs
+
+
 def validate(rec, policy):
     errs = []
     r = policy["record"]
+    errs += untrusted_errors(rec, policy)
+    errs += restricted_errors(rec, policy)
     for k in r["required"]:
         if not rec.get(k):
             errs.append(f"{k} がない")
@@ -299,6 +364,7 @@ def read_records(subject, env=None, policy=None):
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
+    rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)

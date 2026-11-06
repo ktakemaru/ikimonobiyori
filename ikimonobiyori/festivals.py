@@ -88,7 +88,10 @@ def for_spot(spot_id, today, doc=None, policy=None):
             continue
         row = festival_row(f, today, policy)
         if row and row["state"] != "ended":
+            row["umbrella"] = bool(f.get("umbrella"))
             out.append(row)
+    if any(not r["umbrella"] for r in out):          # 段階54: 同じ名所に個別のまつりがあれば、上位の企画（秋遊びなど）は見頃の目安に使わない
+        out = [r for r in out if not r["umbrella"]]
     return out
 
 

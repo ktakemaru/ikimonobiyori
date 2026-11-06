@@ -73,8 +73,8 @@ tests/test_stage53.py(通信なし): 開花 ＞ つぼみ ＞ なし、許可外
 ## 第3部: 高尾山・御岳山の現況の情報源
 
 承認が必要な情報源(承認待ち pending。台帳 `secondary/autumn_leaves.yaml`):
-1. `yamakei-takao-visitor-center`: 高尾ビジターセンターの最新情報(山と溪谷オンライン掲載)https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1012 。取得できた(2026.11.04 更新): 「紅葉ほんのり」「高尾山山頂 3割」「ケーブルカー沿線と薬王院周辺(中腹)ともみじ台は色づき始め」「例年、おおむね11月中旬～12月上旬が紅葉の見頃」、6号路は 10/31〜12/6 登り方向一方通行、日没は 17 時前で下山完了は 16 時まで(安全圏は 15 時半)。
-2. `yamakei-mitake-visitor-center`: 御岳ビジターセンターの最新情報 https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1065 (**info_id=1065 が最新の情報ページであることを確認した**)。取得できた(2026.11.05 更新): 「紅葉はこれから」「山全体としてはこれから」「来週か再来週くらいが見頃予想」、日没は 17 時前で 16 時前には下山、通行止めの延長(三室山〜愛宕山間)ほか。
+1. `yamakei-takao-visitor-center`: 高尾ビジターセンターの最新情報(山と溪谷オンライン掲載)https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1012 。取得できた(2026.11.04 更新)。記事の文章は、段階54の取り扱い規則(状態の短い語句・日付・URL だけ)により、この報告書からも削除した。
+2. `yamakei-mitake-visitor-center`: 御岳ビジターセンターの最新情報 https://www.yamakei-online.com/mt_info/info_detail.php?info_id=1065 (**info_id=1065 が最新の情報ページであることを確認した**)。取得できた(2026.11.05 更新)。記事の文章は、段階54の規則によりこの報告書から削除した。
 - 承認の前に、利用規約(https://www.yamakei-online.com/info/about.php。本文は未読)と robots.txt の確認が要る(`terms: not_checked`、`robots: unknown`)。ページの天気欄に「気象情報を第三者へ二次的に提供することは法律で禁止」の注記があるが、状態の文が対象かは未確認。
 - 区分は「紹介サイト(公式ではない)」、備考に発信元(ビジターセンター)を書いた。状態の語は変換せず原文のまま。**承認されるまで答えの材料にしない**ので、今回の答えには高尾山・御岳山の色づき状況は出ない(「色づき状況は確認できていません」と書く)。
 - あわせて、ウェザーニュース由来の 2 件(`walkerplus-koyo-forecast-east`・`nihon-kisho-koyo-forecast`)の承認を取り消し(revoked)にした。段階52 の決定(転載を含めて使わない)を台帳にも反映した。
