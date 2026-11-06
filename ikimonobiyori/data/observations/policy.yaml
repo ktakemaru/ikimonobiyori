@@ -44,6 +44,12 @@ festivals:
     starts_today: "本日開始({start}〜{end})"
     starts_in: "あと{days}日で開始({start}〜{end})"
     ended: "終了しました({start}〜{end})"
+  # 段階56: 1日だけの行事（開始日と終了日が同じ）。ラベル（主催者が設定した期間）は付けない
+  single_day_text:
+    ongoing: "本日{md}（{wd}）に開催"
+    starts_today: "本日{md}（{wd}）に開催"
+    starts_in: "{md}（{wd}）に開催（あと{days}日）"
+    ended: "{md}（{wd}）に開催（終了しました）"
   lightup_text: "ライトアップ: {start}〜{end}{hours}{note}"
   lightup_no_period: "ライトアップ: {hours}{note}"
   hours_fmt: " {hours}"
@@ -202,6 +208,7 @@ typical:
   last_year_window_days: {value: 30, source: "仮置き(野鳥の season_window_days と同じ前後ひと月。根拠のある値ではない)", provisional: true}
 typical_labels:
   known: "例年の見頃: {text}"
+  known_strip: "例年"          # 段階56: 原文に「例年」があるときは、重ねないよう原文の「例年」を外す
   # 段階38(指示書 3-4): 同じ期間を2度書かない言い方に
   unknown_with_event: "例年の時期は分かりません。今年は{start}〜{end}に{name}があります。"
   unknown_with_last_year: "例年の時期は分かりません({year}年{md}の記録({publisher})では「{text}」)"

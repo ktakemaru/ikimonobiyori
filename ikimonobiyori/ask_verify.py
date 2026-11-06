@@ -395,7 +395,7 @@ def stage51_errors(text, facts, mat, rules):
             if u and u not in urls:
                 errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
     if cfg["inat_word"] in text:
-        site = {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots} - {""}
+        site = {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots} - {""}
         if site and not (site & urls):
             errs.append({"code": "source_missing", "detail": f"{cfg['inat_word']}: {sorted(site)[0]}"})
     for _i, s in sents:                                                      # ⑤ 見込み・転載
@@ -416,7 +416,7 @@ def stage51_errors(text, facts, mat, rules):
         for c in mentioned_cands(mat, norm):
             allowed |= candidate_urls(c)
         if cfg["inat_word"] in text:
-            allowed |= {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots}
+            allowed |= {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots}
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
         allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
         for u in sorted(urls - allowed - {""}):

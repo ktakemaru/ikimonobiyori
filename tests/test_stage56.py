@@ -332,3 +332,73 @@ class TypicalWindows(unittest.TestCase):
         w = O.parse_typical("10月下旬～11月中旬", pol)
         f = fest["御岳山 天空もみじまつり"]
         self.assertNotEqual((w[0], w[1]), (f["start"][5:], f["end"][5:]))
+
+
+# ---- 第4部: 答えの文面の不具合 ----
+class TextDefects(unittest.TestCase):
+    def test_1_past_window_gets_no_late_phrase(self):
+        # 例年の見頃が 10/1〜10/20 で、対象日が 11/14 → 過ぎている見込み。「終盤の可能性」と書かない
+        c = cand("終わった花畑", km=60, typical=("10-01", "10-20"), rel="after_peak")
+        p = plan_of([c, BASE[0]])
+        row = next(r for r in p["ranking"] if r["name"] == "終わった花畑")
+        self.assertEqual(row["outlook"], "past")
+        self.assertEqual(POL["outlook"]["phrases"]["past"], "見頃を過ぎている可能性が高いです")
+        names_of = V.short_names
+        bad = "避けたほうがよい場所: 終わった花畑は、例年の見頃が10/1〜10/20で、今週末は終盤の可能性があります。"
+        self.assertEqual([e["code"] for e in AP.outlook_conflicts(bad, p, names_of)], ["outlook_conflict"])
+        ok = "避けたほうがよい場所: 終わった花畑は、例年の見頃が10/1〜10/20で、見頃を過ぎている可能性が高いです。"
+        self.assertEqual(AP.outlook_conflicts(ok, p, names_of), [])
+
+    def test_1b_a_sentence_with_two_spots_is_not_judged(self):
+        c = cand("終わった花畑", km=60, typical=("10-01", "10-20"), rel="after_peak")
+        p = plan_of([c, BASE[0]])
+        text = "終わった花畑は見頃を過ぎ、近場の庭園は終盤の可能性があります。"
+        self.assertEqual(AP.outlook_conflicts(text, p, V.short_names), [])
+
+    def test_2_single_day_festival_has_no_period_label(self):
+        from datetime import date
+        from ikimonobiyori import festivals as FE
+        f = {"id": "one", "name": "試験の一日行事", "start": "2026-11-29", "end": "2026-11-29", "organizer": "試験センター", "organizer_class": "official",
+             "url": "https://example.org/e", "publisher": "試験センター", "taken_on": "2026-11-06"}
+        r = FE.festival_row(f, date(2026, 11, 7))
+        self.assertEqual(r["period_line"], "11/29（日）に開催（あと22日）")
+        self.assertNotIn("主催者が設定した期間", r["period_line"])
+        self.assertNotIn("11/29〜11/29", r["period_line"])
+        self.assertTrue(r["single_day"])
+        self.assertEqual(FE.festival_row(f, date(2026, 11, 29))["period_line"], "本日11/29（日）に開催")
+        rng = FE.festival_row(dict(f, end="2026-11-30"), date(2026, 11, 7))
+        self.assertEqual(rng["period_line"], "主催者が設定した期間: あと22日で開始(11/29〜11/30)")       # 期間があるものは従来どおり
+        self.assertFalse(rng["single_day"])
+
+    def test_3_inat_source_is_the_search_not_the_top_page(self):
+        from ikimonobiyori import observations as O
+        api = "https://api.inaturalist.org/v1/observations/species_counts?lat=35.4&lng=139.6&radius=2&d1=2025-10-25&d2=2025-11-08&iconic_taxa=Aves&quality_grade=research&per_page=200&locale=ja"
+        u = O.human_inat_url(api)
+        self.assertTrue(u.startswith("https://www.inaturalist.org/observations?"))
+        for k in ("lat=35.4", "lng=139.6", "radius=2", "d1=2025-10-25", "iconic_taxa=Aves", "view=species"):
+            self.assertIn(k, u)
+        for k in ("per_page", "locale"):
+            self.assertNotIn(k, u)
+        self.assertIsNone(O.human_inat_url(None))
+        self.assertIsNone(O.human_inat_url("https://example.org/v1/observations/species_counts?lat=1"))
+        self.assertIsNone(O.human_inat_url("https://api.inaturalist.org/v1/observations/species_counts?radius=2"))
+
+    def test_3b_verifier_wants_the_search_url_when_the_facts_have_it(self):
+        facts = copy.deepcopy(STRICT)
+        src = "https://www.inaturalist.org/observations?lat=35.4&lng=139.6&radius=2&view=species"
+        for c in facts["subjects"]["birds"]["candidates"]:
+            c["inat"] = dict(c["inat"], source_url=src)
+        top_only = V.check(GOOD51, facts, R37)
+        self.assertIn("source_missing", [e["code"] for e in top_only["answer_errors"]])
+        with_search = V.check(GOOD51.replace("https://www.inaturalist.org/", src), facts, R37)
+        self.assertNotIn("source_missing", [e["code"] for e in with_search["answer_errors"]])
+        self.assertNotIn("source_unused", [e["code"] for e in with_search["answer_errors"]])
+
+    def test_4_no_double_nenrei(self):
+        from ikimonobiyori import observations as O
+        pol = O.load_policy()
+        dup = O.typical_line({"text": "神奈川の秋バラは例年10月中旬～11月上旬頃のスポットが多く"}, {}, [], pol)
+        self.assertEqual(dup.count("例年"), 1)
+        self.assertEqual(dup, "例年の見頃: 神奈川の秋バラは10月中旬～11月上旬頃のスポットが多く")
+        self.assertEqual(O.typical_line({"text": "公式: 例年10月上旬〜10月中旬"}, {}, [], pol), "例年の見頃: 公式: 10月上旬〜10月中旬")
+        self.assertEqual(O.typical_line({"text": "11月上旬～11月下旬"}, {}, [], pol), "例年の見頃: 11月上旬～11月下旬")      # 重なりのないものは変えない

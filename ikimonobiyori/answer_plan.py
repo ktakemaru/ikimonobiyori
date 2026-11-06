@@ -300,6 +300,27 @@ def explain(plan, name):
 
 # ---- 答えとの照合(ask_verify から呼ぶ) ----
 
+def outlook_conflicts(text, plan, names_of, pol=None):
+    """名所を1つだけ書いた文に、その名所の見込みと食い違う言い回しがないか(見頃の終了日を過ぎた名所に「終盤の可能性」など)。"""
+    pol = pol or load_policy()
+    conf = pol["outlook"].get("conflicts") or {}
+    rank = [(r["name"], r.get("outlook")) for r in plan.get("ranking") or []]
+    errs, seen = [], set()
+    for unit in re.split(r"[。\n]", text):
+        if not unit.strip():
+            continue
+        hits = [(n, o) for n, o in rank if any(f in unit for f in names_of(n))]
+        names = {n for n, _ in hits}
+        if len(names) != 1:
+            continue
+        n, o = hits[0]
+        for ph in conf.get(o, []):
+            if ph in unit and (n, ph) not in seen:
+                seen.add((n, ph))
+                errs.append({"code": "outlook_conflict", "detail": f"「{n}」は{pol['outlook']['labels'][o]}なのに「{ph}」と書いている"})
+    return errs
+
+
 def plan_errors(text, plan, mat, blocks, names_of):
     """答えの ①②③ の段が、計画の「今回のおすすめ」と合っているか。計画にない名所は、理由の記録(overrides)がなければ不合格。
     names_of(name) → その名所の短い呼び名の一覧。"""
@@ -320,4 +341,5 @@ def plan_errors(text, plan, mat, blocks, names_of):
     for n in pick_names:
         if n not in shown and n not in replaced:
             errs.append({"code": "plan_pick_missing", "detail": f"計画の今回のおすすめ「{n}」が答えの①②③にない"})
+    errs += outlook_conflicts(text, plan, names_of)
     return errs
