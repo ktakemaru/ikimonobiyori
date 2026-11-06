@@ -468,12 +468,10 @@ class Flow:
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
         subs = list(facts_doc["subjects"])
-        sj = subject or (subs[0] if len(subs) == 1 else None)
-        if sj is None:
-            raise ValueError(f"対象が複数ある。--subject で選ぶ: {subs}")
+        sj = subject or ("all" if len(subs) > 1 else subs[0])         # 対象が複数の質問(総合)は all
         old = self._load("answer_plan.json", None)
         keep = (old or {}).get("overrides") if old and old.get("subject") == sj else []
-        doc = AP.build(facts_doc, sj, overrides=keep)
+        doc = AP.build_all(facts_doc, overrides=keep) if sj == "all" else AP.build(facts_doc, sj, overrides=keep)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
         self._save("answer_plan.json", doc)
@@ -552,7 +550,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", required=True)
-    p.add_argument("--subject", choices=O.load_policy()["subjects"])
+    p.add_argument("--subject", choices=list(O.load_policy()["subjects"]) + ["all"], help="省くと、対象が1つならそれ、複数なら all(総合)")
     p.add_argument("--explain", help="名所の順位・点数の内訳・不採用の理由を見る")
     p.add_argument("--override", help="計画にない名所を答えに足す(--reason が要る)")
     p.add_argument("--reason")

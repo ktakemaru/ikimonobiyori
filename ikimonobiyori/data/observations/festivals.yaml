@@ -443,3 +443,40 @@ festivals:
     taken_on: '2026-11-07'
     raw: ["2026年11月21日（土）～23日（月・祝）"]
     notes: "公式サイトの事業ページで確認した（9:30〜15:30）。曜日は2026年の暦と合う"
+  - id: sayama-fuyumomiji-2026
+    name: 狭山丘陵自然観察会《湖畔への路 冬紅葉》
+    spots: [obs-kouyou-0092]
+    organizer: 埼玉県 狭山丘陵いきものふれあいの里センター（指定管理者：公益財団法人トトロのふるさと基金）
+    organizer_class: official
+    organizer_note: "埼玉県の公式ページの掲載。『主催』の行はなく、問い合わせ先として県みどり自然課と施設が書かれている"
+    start: '2026-11-15'
+    end: '2026-11-15'
+    lightup: null
+    venue: 狭山丘陵いきものふれあいの里センター（所沢市）。集合は西武球場前駅前
+    contact: "狭山丘陵いきものふれあいの里センター 04-2939-9412"
+    url: "https://www.pref.saitama.lg.jp/a0508/library-info/hureai0811-4-2.html"
+    publisher: 埼玉県
+    published: '2026-10-01'
+    taken_on: '2026-11-07'
+    raw: ["令和8年11月15日（日曜日）9時30分～14時30分"]
+    notes: "公式ページで確認した（高校生以上、1人700円、定員20名の抽選、申込は11月10日15時までにwebか電話）。曜日は2026年の暦と合う。掲載日 2026年10月1日"
+  - id: fujikawaguchiko-koyo-2026
+    name: 第28回 富士河口湖紅葉まつり
+    spots: [kouyou-0012]
+    organizer: 富士河口湖町紅葉まつり運営協議会（発表は山梨県富士河口湖町）
+    organizer_class: official
+    organizer_note: "町（富士河口湖町）が発表したプレスリリースの掲載。町の観光サイト fujisan.ne.jp への案内あり。リリースは共同通信PRワイヤー経由"
+    start: '2026-11-07'
+    end: '2026-11-29'
+    lightup:
+      hours: "日没〜21:00"
+      where: もみじ回廊
+      note: null
+    venue: もみじ回廊（山梨県南都留郡富士河口湖町河口）
+    contact: null
+    url: "https://kyodonewsprwire.jp/release/202610208271"
+    publisher: 富士河口湖町（共同通信PRワイヤー）
+    published: '2026-10-30'
+    taken_on: '2026-11-07'
+    raw: ["2026年11月7日（土）～ 11月29日（日）"]
+    notes: "町が発表したリリースで確認した（開場 9:00〜19:00、ライトアップは日没〜21:00。ライトアップの期間はリリースに明記がない（日にちは書かない））。問い合わせ先の記載なし。曜日は2026年の暦と合う"

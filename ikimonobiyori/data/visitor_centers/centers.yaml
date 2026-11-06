@@ -405,3 +405,47 @@ centers:
     last_issue: '2026-10-30'
     note: 今期最終（記事に明記）
   notes: 『今週の八島湿原』『花便り』（記事に印刷用 PDF のリンクあり。PDF 本文は読めず）。2026-10-30 の記事が今期最終（『今シーズン最後』の明記）。冬季閉鎖。2025年の最終号の日付は確認できず（一覧 page/3 を次回確認）
+- id: okutama-vc
+  name: 奥多摩ビジターセンター
+  operator: 株式会社自然教育研究センター（CES）（指定管理者）
+  operator_kind: 企業
+  prefecture: 東京都
+  site_url: https://okutamavc.ces-net.jp/
+  info_url: https://okutamavc.ces-net.jp/info
+  frequency: 約週1回（2026-09-09〜11-06 の8件）
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: https://okutamavc.ces-net.jp/policy
+    reprint_banned: true
+    note: '転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可'
+  within_range: true
+  hours: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階56 第5部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: お知らせの中身はイベント・登山道情報・ツキノワグマが中心で、紅葉・花・鳥の現況（状態の語）が読める専用ページは確認できなかった。段階55で404だった tokyo-park.or.jp/nature/okutama/ ではなく、東京都公園協会の一覧（tokyo-park.or.jp/park/okutama/）から指定管理者の公式サイトに辿れた
+- id: yatsuhigata-nature-center
+  name: 谷津干潟自然観察センター
+  operator: 谷津干潟ワイズユース・パートナーズ（代表企業 西武造園株式会社）（指定管理者）
+  operator_kind: 企業
+  prefecture: 千葉県
+  site_url: https://www.seibu-la.co.jp/yatsuhigata/
+  info_url: https://www.seibu-la.co.jp/yatsuhigata/blog/
+  frequency: 月1〜7件（2026年のアーカイブ。最新は10/13）
+  format: html
+  last_update: '2026-10-13'
+  class: official
+  terms:
+    url: null
+    reprint_banned: false
+    note: 利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可
+  within_range: true
+  hours: 9:00〜17:00（入館は16:30まで）、休館日は月曜（祝休日の場合は次の平日）・12/28〜1/1
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階56 第5部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 『谷津干潟ブログ』の『自然情報』（304件）に渡り鳥の観察記録（例 10/6 エゾビタキ、10/1 ノビタキ）。最新は10/13で、11月分は未掲載。習志野市のトップが外部リンクで向いている別ホスト（seibu-la.co.jp）
