@@ -124,7 +124,9 @@ coordinates:
   decimals: 3
   bounds_by_prefecture:
     神奈川県: {lat: [35.1, 35.7], lon: [138.9, 139.8]}
-    # 段階54 第11部: 概略の枠（都道府県の外にはみ出した座標を弾くための粗い範囲。provisional。島しょ部・飛び地は含めない）
+  # 段階54 第11部: 観察の名所（data/observations/spots.yaml）の座標を検査するための概略の枠。花のカタログの座標入れ（catalog_coords）の対象は上の bounds_by_prefecture だけで、
+  # ここの県は対象にしない（test_stage33 の『範囲の定めのない県は座標を入れない』の前提を保つため、別の鍵にした）。provisional。島しょ部・飛び地は含めない
+  spot_bounds_by_prefecture:
     東京都: {lat: [35.5, 35.9], lon: [138.9, 139.95]}
     埼玉県: {lat: [35.75, 36.3], lon: [138.7, 139.9]}
     栃木県: {lat: [36.2, 37.2], lon: [139.3, 140.3]}

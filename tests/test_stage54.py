@@ -191,7 +191,7 @@ class Coordinates(unittest.TestCase):
 
     def test_points_are_inside_the_prefecture_box_and_have_a_source(self):
         from ikimonobiyori import regional
-        box = regional.load_policy()["coordinates"]["bounds_by_prefecture"]["東京都"]
+        box = regional.load_policy()["coordinates"]["spot_bounds_by_prefecture"]["東京都"]
         pts = [s for s in self.spots.values() if s.get("point") and s["prefecture"] == "東京都"]
         self.assertGreaterEqual(len(pts), 5)
         for s in pts:
