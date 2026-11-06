@@ -95,5 +95,24 @@ class NameCollision(unittest.TestCase):
         self.assertEqual(bad, {})
 
 
+class Machida(unittest.TestCase):
+    def test_momijimatsuri_replaces_umbrella(self):
+        from datetime import date
+        from ikimonobiyori import festivals as F
+        rows = F.for_spot("obs-kouyou-0087", date(2026, 11, 6))
+        self.assertEqual([r["name"] for r in rows], ["薬師池 紅葉まつり"])
+        self.assertIn("10/31〜11/29", rows[0]["period_line"])
+        self.assertIn("11/14〜11/29", rows[0]["lightup_line"])
+        self.assertEqual(rows[0]["source_class"], "official")
+
+    def test_umbrella_kept_in_data_and_weekdays_pass(self):
+        from datetime import date
+        from ikimonobiyori import festivals as F
+        doc = F.load()
+        ids = {f["id"] for f in doc["festivals"]}
+        self.assertIn("machida-akiasobi-2026", ids)
+        self.assertEqual(F.dropped(date(2026, 11, 6), doc), {})            # 曜日チェックを通る
+
+
 if __name__ == "__main__":
     unittest.main()
