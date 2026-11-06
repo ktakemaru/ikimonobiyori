@@ -7,3 +7,4 @@
 | 1 | 済み | (下記) | 山と溪谷オンライン規則(policy record.restricted_sources、validate、read_records、検査器 restricted_source_errors、tests/test_stage54.py 8件 OK)。自前サイト調査: 東京都環境局 naturepark の高尾・御岳ビジターセンターのページに紅葉の現況なし(最新の新着は2023-11)。サイト下部に「無断使用・転載を禁止」、専用の利用規約ページ・自動取得の記載は確認できず、robots.txt は404。ces-net.jp/takaovc・mitakevc は未読 |
 | 2 | 済み | (下記) | 一般語だけの短い呼び名(菊花展など)を名所の呼び名にしない(policy generic_name_words、ask_verify._only_generic)。総当たりで他の誤一致は、かっこ前の地域名を共有する既知の組(箱根・国営昭和記念公園・養老渓谷)のみ(既に strict_names で対処済み)。test_stage54 11件 OK |
 | 3 | 済み | (下記) | 薬師池 紅葉まつり(10/31〜11/29、公式=NEST Machida 記事で確認)を別イベントで追加。秋遊び2026は umbrella として保持し、紅葉まつりがあるときは出さない。ライトアップ時刻は公式記事の 17:00〜20:00(oricon は文字化けで読めず) |
+| 5 | 未確認(足さない) | (下記) | みたけ渓谷秋色まつり: GO TOKYO ev069 は404、GO TOKYO トップ・奥多摩ガイド・青梅市観光協会イベント一覧・青梅市観光ガイドのいずれにも2026年の掲載なし。推測で日付を入れず、足さなかった |
