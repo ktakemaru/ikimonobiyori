@@ -206,7 +206,7 @@ class FestivalSweep(unittest.TestCase):
         from ikimonobiyori import festivals as F
         doc = F.load()
         self.assertEqual(F.dropped(date(2026, 11, 6), doc), {})
-        known = {c["id"] for subj in ("autumn_leaves", "flowers") for c in O.all_candidates(subj)}
+        known = {c["id"] for subj in ("autumn_leaves", "flowers", "birds") for c in O.all_candidates(subj)}
         for f in doc["festivals"]:
             for sid in f["spots"]:
                 self.assertIn(sid, known, (f["id"], sid))
