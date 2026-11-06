@@ -74,7 +74,21 @@ def short_names(name):
             if f.endswith(suf) and len(f) > len(suf) + 1 and suf == "の紅葉":
                 forms.add(f[: -len(suf)])
     forms |= {re.sub(r"[「」『』]", "", f) for f in forms}
-    return {f for f in forms if len(f) >= 2}
+    return {f for f in forms if len(f) >= 2 and not _only_generic(f)}
+
+
+_GENERIC = None
+
+
+def _only_generic(form):
+    """段階54: 『菊花展』『まつり』『紅葉』のような一般的な語だけの形は、名所の短い呼び名にしない（別の名所と取り違える）。固有の部分（三溪園・川崎大師など）を含む形だけ使う。"""
+    global _GENERIC
+    if _GENERIC is None:
+        _GENERIC = sorted({_n(w) for w in load_rules().get("generic_name_words", [])}, key=len, reverse=True)
+    rest = _n(form)
+    for w in _GENERIC:
+        rest = rest.replace(w, "")
+    return not re.sub(r"[\s0-9・、,]", "", rest)
 
 
 def prefix_of(name):

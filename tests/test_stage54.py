@@ -69,5 +69,31 @@ class Restricted(unittest.TestCase):
         self.assertEqual(AV.restricted_source_errors(facts), [])
 
 
+class NameCollision(unittest.TestCase):
+    def test_generic_only_form_is_not_a_name(self):
+        for n in ("川崎大師 菊花展", "平塚八幡宮 菊花展", "三溪園 菊花展"):
+            self.assertNotIn("菊花展", AV.short_names(n))
+        self.assertIn("三溪園", AV.short_names("三溪園"))
+
+    def test_sankeien_sentence_not_matched_to_kawasaki(self):
+        facts = {"subjects": {"flowers": {"subject": "flowers", "candidates": [
+            {"name": "川崎大師 菊花展", "_x": 1}, {"name": "三溪園", "_x": 2}]}}}
+        mat = AV.Material(facts, AV.load_rules())
+        hit = [s["name"] for s in mat.spots_in("三溪園の菊花展は11/23までです")]
+        self.assertEqual(hit, ["三溪園"])
+
+    def test_no_short_name_shared_across_catalog(self):
+        """カタログ・名所の一覧全体で、同じ短い呼び名が別の名所に付かない（かっこ前の地域名を共有する既知の組を除く）。"""
+        names = {}
+        for subj in ("autumn_leaves", "flowers", "birds"):
+            for c in O.all_candidates(subj):
+                for f in AV.short_names(c["name"]):
+                    names.setdefault(f, set()).add(c["name"])
+        shared = {AV.prefix_of(n) for v in names.values() for n in v if AV.prefix_of(n)}
+        bad = {f: sorted(v) for f, v in names.items() if len(v) > 1 and f not in shared
+               and not all(AV.prefix_of(n) == f or n == f for n in v)}
+        self.assertEqual(bad, {})
+
+
 if __name__ == "__main__":
     unittest.main()
