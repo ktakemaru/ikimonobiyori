@@ -130,6 +130,19 @@ class VisitorCenterLedger(unittest.TestCase):
         for c in V.load_centers():                              # 新しく足す施設はすべて承認待ち（承認は本人）
             self.assertEqual(c["approval"]["status"], "pending", c["id"])
 
+    def test_every_center_in_the_ledger_is_valid_pending_and_unused(self):
+        cs = V.load_centers()
+        self.assertGreaterEqual(len(cs), 15)
+        ids = [c["id"] for c in cs]
+        self.assertEqual(len(ids), len(set(ids)))
+        for c in cs:
+            self.assertEqual(V.validate_center(c, VP), [], c["id"])
+            self.assertEqual(c["approval"]["status"], "pending", c["id"])
+            self.assertFalse(V.usable_center(c, self.TODAY, VP)[0], c["id"])
+        self.assertEqual(V.approved_centers(self.TODAY), [])
+        self.assertTrue(next(c for c in cs if c["id"] == "yashima-vc")["terms"]["reprint_banned"])
+        self.assertEqual(V.season_open(next(c for c in cs if c["id"] == "yashima-vc"), self.TODAY), (False, "ended"))
+
     def test_required_fields_and_ranges(self):
         self.assertTrue(V.validate_center(center(name=None), VP))
         self.assertTrue(V.validate_center(center(**{"class": "official?"}), VP))
