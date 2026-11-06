@@ -19,3 +19,10 @@ line:
   species_open: "（"
   species_close: "）"
   species_sep: "・"
+# 答えの材料（段階55 第5部）
+facts:
+  file: reports.jsonl                       # IKIMONOBIYORI_DATA_DIR の下の visitor_centers/（リポジトリの外）
+  max_age_days: {value: 14, source: "仮置き（施設のお便りは週1回〜随時。新しさの区分 stale_days と同じ14日）", provisional: true}
+  subjects_default: [autumn_leaves, flowers, birds]
+  hours_label: "開館時間・休館日: {hours}"
+

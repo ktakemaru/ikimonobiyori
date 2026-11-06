@@ -38,3 +38,6 @@
 ## 確認
 `ikimonobiyori/` 以下で yamakei-online を含むファイルは、上記の「変更しないもの」だけ（`tests/test_stage55.py` の `NoYamakeiUrlInData` が見張る）。保存データ（`%LOCALAPPDATA%\ikimonobiyori`）は 0 件。回帰テストは 20/20。
 注: 以前に claude.ai に公開した高山植物の Artifact（2026-11-06 版）には、山と溪谷オンラインの写真・出典リンクが残っている可能性がある。必要なら作り直して差し替える。
+
+## 変更したテスト（追記）
+`tests/test_stage52.py` の `test_conflicts_are_shown_together_and_no_month_is_not_invented`: コマクサの「出どころによって幅があります」の併記を期待していたが、山と溪谷オンラインの値の削除で1件の値（5月〜7月）になったため、併記なし・「コマクサの花期は例年5月〜7月です」に変えた。第8部の時点で test_stage52 を実行しておらず、第5部の実行中に見つけた。ハクサンコザクラの「月の記載がなく」の期待値は変えていない。

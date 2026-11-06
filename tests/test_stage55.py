@@ -209,5 +209,74 @@ class VisitorCenterLedger(unittest.TestCase):
         self.assertEqual(line, "試験自然観察センター発信、11/5時点: 紅葉が見ごろ（ジョウビタキ・シメ）")
 
 
+# ---- 第5部: 答えでの使い方 ----
+import os  # noqa: E402
+import tempfile  # noqa: E402
+
+from ikimonobiyori import ask_verify as AV  # noqa: E402
+
+APPR = {"status": "approved", "approved_by": "利用者", "reason": "承認"}
+
+
+class VisitorCenterFacts(unittest.TestCase):
+    TODAY = date(2026, 11, 7)
+
+    def test_record_validates_dedups_and_stays_outside_the_repo(self):
+        c = center(approval=APPR)
+        with tempfile.TemporaryDirectory() as d:
+            env = {**os.environ, "IKIMONOBIYORI_DATA_DIR": d}
+            out = V.record_reports([report(), report(), report(state="あ" * 40), report(center="unknown")], env=env, policy=VP, centers=[c])
+            self.assertEqual((out["written"], out["duplicates"], len(out["rejected"])), (1, 1, 2))
+            path = V.reports_path(env, VP)
+            self.assertTrue(str(path).startswith(d))
+            self.assertEqual(len(V.read_reports(env, VP)), 1)
+            self.assertNotIn("body", path.read_text(encoding="utf-8"))
+
+    def test_pending_center_gives_no_rows(self):
+        self.assertEqual(V.fact_rows(self.TODAY, centers=[center()], reports=[report()]), [])          # 承認待ち
+        self.assertEqual(V.fact_rows(self.TODAY, reports=[report()]), [])                                # 台帳の施設はすべて承認待ち
+
+    def test_approved_center_gives_one_line_with_hours(self):
+        c = center(approval=APPR, hours="9:00〜16:30")
+        rows = V.fact_rows(self.TODAY, centers=[c], reports=[report(date="2026-11-01"), report(date="2026-11-05")])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["line"], "試験自然観察センター発信、11/5時点: 紅葉が見ごろ（ジョウビタキ・シメ）")
+        self.assertEqual(rows[0]["hours_line"], "開館時間・休館日: 9:00〜16:30")
+        self.assertEqual(rows[0]["url"], "https://nature.example.org/news/1")
+
+    def test_old_or_future_or_ended_reports_are_not_used(self):
+        c = center(approval=APPR)
+        self.assertEqual(V.fact_rows(self.TODAY, centers=[c], reports=[report(date="2026-10-01")]), [])       # 14日より古い
+        self.assertEqual(V.fact_rows(self.TODAY, centers=[c], reports=[report(date="2026-11-20")]), [])       # 未来の日付
+        ended = center(approval=APPR, season_end={"last_issue": "2026-10-30"})
+        self.assertEqual(V.fact_rows(self.TODAY, centers=[ended], reports=[report(date="2026-11-05")]), [])   # シーズン終了後
+
+    def test_subject_filter(self):
+        c = center(approval=APPR, subjects=["birds"])
+        self.assertEqual(len(V.fact_rows(self.TODAY, subjects=["birds"], centers=[c], reports=[report()])), 1)
+        self.assertEqual(V.fact_rows(self.TODAY, subjects=["flowers"], centers=[c], reports=[report()]), [])
+
+
+class VisitorCenterVerifier(unittest.TestCase):
+    FACTS = {"subjects": {"flowers": {"subject": "flowers", "candidates": []}}}
+
+    def codes(self, text, facts=None):
+        return [e["code"] for e in AV.visitor_center_errors(text, facts or self.FACTS)]
+
+    def test_pending_center_in_the_answer_is_rejected(self):
+        names = [c["name"] for c in V.load_centers()]
+        self.assertTrue(names)
+        for n in names[:5]:
+            self.assertEqual(self.codes(f"{n}発信、11/5時点: 紅葉が見ごろ"), ["visitor_center_not_approved"], n)
+
+    def test_unknown_center_is_rejected_and_listed_approved_one_passes(self):
+        self.assertEqual(self.codes("架空ビジターセンター発信、11/5時点: 見ごろ"), ["visitor_center_not_approved"])
+        facts = {**self.FACTS, "visitor_centers": [{"name": "試験自然観察センター", "url": "https://nature.example.org/news/1", "line": "x"}]}
+        self.assertEqual(self.codes("試験自然観察センター発信、11/5時点: 紅葉が見ごろ", facts), [])
+
+    def test_no_mention_when_nothing_is_approved(self):
+        self.assertEqual(self.codes("今週末の神奈川は菊の見ごろです。"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

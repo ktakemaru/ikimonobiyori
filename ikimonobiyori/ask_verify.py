@@ -276,6 +276,7 @@ def check(text, facts, rules=None, gazetteer=()):
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
     answer_errors += stage51_errors(text, facts, mat, rules)
     answer_errors += restricted_source_errors(facts)
+    answer_errors += visitor_center_errors(text, facts)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx:
             answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
@@ -299,6 +300,21 @@ def reread_errors(text, facts, rules):
                 errs.append({"code": "reread_not_from_record", "detail": sent.strip()[:40]})
     if rnd.get("needs_fetch") and not rnd.get("attempted"):
         errs.append({"code": "fetch_skipped", "detail": "記録が古い名所があるのに、この回は読みに行っていない"})
+    return errs
+
+
+def visitor_center_errors(text, facts):
+    """段階55 第5部: 「○○発信、○/○時点」の形で施設の発信を書けるのは、承認済みで、facts の visitor_centers にある施設だけ。承認待ち・取り消し・季節外の施設は使わない。"""
+    from . import visitor_centers as VC
+    allowed = {r["name"] for r in facts.get("visitor_centers") or []}
+    errs = []
+    names = {c["name"] for c in VC.load_centers()}
+    for n in sorted(names - allowed):
+        if n + "発信" in text:
+            errs.append({"code": "visitor_center_not_approved", "detail": f"{n}は承認済みで季節内の施設ではない"})
+    for m in re.finditer(r"([^\s、。「」（）()]{2,24}?(?:ビジターセンター|自然観察の森|自然観察公園|自然学習センター))発信", text):
+        if m.group(1) not in allowed and m.group(1) not in names:
+            errs.append({"code": "visitor_center_not_approved", "detail": f"{m.group(1)}は台帳にない施設"})
     return errs
 
 
@@ -388,6 +404,7 @@ def stage51_errors(text, facts, mat, rules):
         if cfg["inat_word"] in text:
             allowed |= {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots}
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
+        allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
         for u in sorted(urls - allowed - {""}):
             errs.append({"code": "source_unused", "detail": u[:60]})
     if (facts.get("lines") or {}).get("practical_rules"):                  # 段階53: まつりの期間は主催者が設定した日程。現況（色づき状況）とは別の行にする

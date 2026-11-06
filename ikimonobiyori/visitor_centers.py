@@ -8,14 +8,14 @@
 - 「転載禁止の明示あり」の施設は、台帳の規約メモに書き、承認の判断材料にする（短い語・日付・URL だけの利用は、本人の判断）。
 - 更新が止まる施設（例: 八島は10月末で終了）は、今シーズン最後の日付を超えたら今年の情報として使わない（年つきの日付で判定。season.py）。
 値（上限・語）は data/visitor_centers/policy.yaml。"""
-import re
+import json
 from datetime import date
 from urllib.parse import urlparse
 
 import yaml
 
 from . import season
-from .paths import DATA_FILES_DIR
+from .paths import DATA_FILES_DIR, data_path
 
 DIR = DATA_FILES_DIR / "visitor_centers"
 POLICY_PATH = DIR / "policy.yaml"
@@ -173,3 +173,80 @@ def report_line(c, rep, policy=None):
         sp = sep.join(rep["species"])
         body = f"{body}{p['line']['species_open']}{sp}{p['line']['species_close']}" if body else sp
     return head + body
+
+
+# ---- 第5部: 読んだ事実の記録と、答えの材料 ----
+
+def reports_path(env=None, policy=None):
+    p = policy or load_policy()
+    return data_path("visitor_centers/" + p["facts"]["file"], env)
+
+
+def record_reports(batch, env=None, policy=None, centers=None):
+    """読んだ事実（日付・状態の語・種名・URL）を記録に追記する。規則を満たさないものは記録しない。→ {written, duplicates, rejected: [{index, errors}]}
+    記録はリポジトリの外（IKIMONOBIYORI_DATA_DIR の下）。承認待ちの施設の事実も記録はできる（答えには使わない）。"""
+    p = policy or load_policy()
+    centers = load_centers() if centers is None else centers
+    ids = {c["id"] for c in centers}
+    path = reports_path(env, p)
+    have = set()
+    if path.exists():
+        have = {json.dumps(json.loads(l), sort_keys=True, ensure_ascii=False) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()}
+    out, rejected, dup = [], [], 0
+    for i, rep in enumerate(batch):
+        errs = validate_report(rep, p)
+        if rep.get("center") not in ids:
+            errs.append("center が台帳にない")
+        if errs:
+            rejected.append({"index": i, "errors": errs})
+            continue
+        row = {k: rep[k] for k in p["report_fields"] if rep.get(k) is not None}
+        key = json.dumps(row, sort_keys=True, ensure_ascii=False)
+        if key in have:
+            dup += 1
+            continue
+        have.add(key)
+        out.append(row)
+    if out:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8", newline="\n") as f:
+            for r in out:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    return {"written": len(out), "duplicates": dup, "rejected": rejected}
+
+
+def read_reports(env=None, policy=None):
+    path = reports_path(env, policy)
+    if not path.exists():
+        return []
+    return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
+def fact_rows(today, subjects=None, env=None, policy=None, centers=None, reports=None, sp=None):
+    """答えの材料: 承認済み・季節内の施設の、いちばん新しい事実（max_age_days 以内）を 1 行にする。承認待ちの施設・古い事実・規則違反の事実は出さない。
+    承認済みの施設がなければ空の配列（答えには何も出さない）。→ [{center, name, operator, class, date, line, url, hours, closed}]"""
+    p = policy or load_policy()
+    centers = load_centers() if centers is None else centers
+    reports = read_reports(env, p) if reports is None else reports
+    mx = _v(p["facts"]["max_age_days"])
+    want = set(subjects or p["facts"]["subjects_default"])
+    rows = []
+    for c in centers:
+        if not (set(c.get("subjects") or p["facts"]["subjects_default"]) & want):
+            continue
+        if not usable_center(c, today, p, sp)[0]:
+            continue
+        cand = []
+        for r in reports:
+            if r.get("center") != c["id"] or not usable_report(r, centers, today, p, sp)[0]:
+                continue
+            age = (today - date.fromisoformat(str(r["date"]))).days
+            if 0 <= age <= mx:
+                cand.append(r)
+        if not cand:
+            continue
+        r = max(cand, key=lambda x: str(x["date"]))
+        rows.append({"center": c["id"], "name": c["name"], "operator": c["operator"], "class": c["class"], "date": str(r["date"]),
+                     "line": report_line(c, r, p), "url": r["url"], "hours": c.get("hours"),
+                     "hours_line": p["facts"]["hours_label"].format(hours=c["hours"]) if c.get("hours") else None})
+    return rows
