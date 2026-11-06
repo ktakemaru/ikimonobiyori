@@ -1074,7 +1074,9 @@ spots:
     origin: festival
     point: {lat: 35.578889, lon: 139.447778, source: "Wikidata Q6632026(薬師池公園)の座標 P625。2026-11-06 に読んだ", checked_on: '2026-11-06'}
     typical:
+      - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e612279/data.html", year: 2026, source_class: secondary, checked_on: '2026-11-07', note: "例年の色付き始めは11月上旬。掲載情報は2026年9月時点。気象条件により前後する"}
     pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e612279/data.html", publisher: ウォーカープラス, source_class: secondary}
       - {url: "https://www.city.machida.tokyo.jp/kanko/miru_aso/ibe_gyou_matu/event.html", publisher: 町田市, source_class: official}
     search: "町田薬師池公園 紅葉 ライトアップ"
   - id: obs-kouyou-0088
@@ -1088,7 +1090,9 @@ spots:
     point: {lat: 35.6253, lon: 139.2436, elevation_m: 599, source: "ikimonobiyori/data/sites.yaml m029(高尾山)の座標", checked_on: '2026-11-06'}
     elevation_m: 599
     typical:
+      - {text: "11月中旬～12月上旬", publisher: Enjoy Tokyo, url: "https://www.enjoytokyo.jp/article/109052/", year: 2026, source_class: secondary, checked_on: '2026-11-07', note: "情報提供・確認元は八王子観光コンベンション協会。記事の公開は2026-10-13。確認日の記載はない"}
     pages:
+      - {url: "https://www.enjoytokyo.jp/article/109052/", publisher: Enjoy Tokyo, source_class: secondary}
       - {url: "https://www.hkc.or.jp/takaosan/momiji_fes/", publisher: 八王子観光コンベンション協会, source_class: official}
     search: "高尾山 紅葉 色づき"
   - id: obs-kouyou-0089
@@ -1102,7 +1106,9 @@ spots:
     point: {lat: 35.7829, lon: 139.1495, elevation_m: 929, source: "ikimonobiyori/data/sites.yaml m031(御岳山)の座標", checked_on: '2026-11-06'}
     elevation_m: 929
     typical:
+      - {text: "10月下旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0313e12662/data.html", year: 2026, source_class: secondary, checked_on: '2026-11-07', note: "例年の色付き始めは10月下旬。掲載情報は2026年9月時点。気象条件により前後する"}
     pages:
+      - {url: "https://koyo.walkerplus.com/detail/ar0313e12662/data.html", publisher: ウォーカープラス, source_class: secondary}
       - {url: "https://www.gotokyo.org/jp/spot/ev073/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
     search: "御岳山 紅葉 色づき"
   # 段階54 第13部: まつり情報による候補（festivals.yaml）。座標は確認できていないため付けない

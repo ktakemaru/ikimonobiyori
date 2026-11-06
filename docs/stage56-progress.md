@@ -7,3 +7,6 @@ answer_plan.py・data/ask/plan.yaml・ask.py(plan)・ask_verify.py(plan照合)�
 
 ## 第2部 済み(狙い別の節と検査の整合)
 lead_mismatch は見出しを挟んでも数える(第1部の commit に実装)。文面を CLAUDE.md/AGENTS.md/スキルで plan と整合(該当ある狙いだけ・節2つ以上のときだけ見出し)。テスト追加。全テスト OK。
+
+## 第3部 済み(例年の見頃の補完)
+町田薬師池(ウォーカープラス 11月中旬～下旬)・高尾山(Enjoy Tokyo 11月中旬～12月上旬)・御岳山(ウォーカープラス 10月下旬～11月中旬)を spots.yaml の typical に追加(紹介=secondary、2026-11-07 取得)。長瀞(阪急トラベル)は検索で該当ページに到達できず確認できなかったため入れない(tenki.jp は使わない)。全テスト OK。

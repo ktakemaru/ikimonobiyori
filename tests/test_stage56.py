@@ -306,3 +306,29 @@ class SectionHeadings(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---- 第3部: 例年の見頃の補完 ----
+class TypicalWindows(unittest.TestCase):
+    def test_three_spots_have_a_secondary_typical_window(self):
+        import yaml
+        spots = {s["name"]: s for s in yaml.safe_load((ROOT / "ikimonobiyori" / "data" / "observations" / "spots.yaml").read_text(encoding="utf-8"))["spots"]}
+        want = {"町田薬師池公園": "11月中旬～11月下旬", "高尾山": "11月中旬～12月上旬", "御岳山": "10月下旬～11月中旬"}
+        for name, text in want.items():
+            t = spots[name]["typical"]
+            self.assertEqual([x["text"] for x in t], [text], name)
+            self.assertEqual(t[0]["source_class"], "secondary")               # 紹介サイト。公式でないことを答えに添える
+            self.assertTrue(t[0]["url"].startswith("https://"))
+            self.assertNotIn("tenki.jp", t[0]["url"])
+        from ikimonobiyori import observations as O
+        for name, text in want.items():
+            self.assertIsNotNone(O.parse_typical(text, O.load_policy()), name)   # 窓として読める
+
+    def test_festival_period_is_not_used_as_the_typical_window(self):
+        import yaml
+        from ikimonobiyori import observations as O
+        fest = {f["name"]: f for f in yaml.safe_load((ROOT / "ikimonobiyori" / "data" / "observations" / "festivals.yaml").read_text(encoding="utf-8"))["festivals"]}
+        pol = O.load_policy()
+        w = O.parse_typical("10月下旬～11月中旬", pol)
+        f = fest["御岳山 天空もみじまつり"]
+        self.assertNotEqual((w[0], w[1]), (f["start"][5:], f["end"][5:]))
