@@ -1,0 +1,28 @@
+# ビジターセンター・自然観察施設の情報源（段階55 第2部。ikimonobiyori/visitor_centers.py）の方針。値・語・文はここに置く。
+schema: ikimono-visitor-centers-policy/1
+# 台帳の必須項目（不明な項目は null にして報告書に列挙する。推測で補わない）
+required: [id, name, operator, site_url, class, approval, terms, within_range]
+classes: [official, secondary]          # official = 施設自身（運営主体）の発信 / secondary = 第三者サイトの掲載
+formats: [html, pdf, image]
+approval_statuses: [pending, approved, revoked]
+# 読んだ事実の上限（利用者の指示 2026-11-06: 山と溪谷オンラインと同じ考え方。文章は保存・転載・要約・言い換えしない）
+max_state_chars: {value: 30, source: "段階55 指示書 第2部 2（状態の語は30文字以内）", provisional: false}
+max_species: {value: 10, source: "段階55 指示書 第2部 2（1施設・1日付につき最大10種）", provisional: false}
+max_species_chars: {value: 20, source: "種名は1語ずつ。長さの上限は仮置き", provisional: true}
+sentence_marks: ["。", "！", "？", "!", "?", "\n"]
+# 読み取りの記録に入れてよい項目だけ（これ以外、とくに文章の欄は受け付けない）
+report_fields: [center, date, state, species, url, hours, closed]
+# 対象外のホスト（SNS・第三者サイト・読まない対象）。サブドメインも含む
+excluded_hosts: [facebook.com, x.com, twitter.com, instagram.com, tenki.jp, weathernews.jp, n-kishou.com, yamakei-online.com]
+line:
+  head: "{center}発信、{month}/{day}時点: "
+  species_open: "（"
+  species_close: "）"
+  species_sep: "・"
+# 答えの材料（段階55 第5部）
+facts:
+  file: reports.jsonl                       # IKIMONOBIYORI_DATA_DIR の下の visitor_centers/（リポジトリの外）
+  max_age_days: {value: 14, source: "仮置き（施設のお便りは週1回〜随時。新しさの区分 stale_days と同じ14日）", provisional: true}
+  subjects_default: [autumn_leaves, flowers, birds]
+  hours_label: "開館時間・休館日: {hours}"
+

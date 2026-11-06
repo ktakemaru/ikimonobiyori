@@ -317,6 +317,10 @@ class Flow:
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
                          "scope": self.policy["scope_line"].format(labels="・".join(labels[s] for s in subjects))},
                "inat_refresh": inat, "notes": self.notes}
+        from . import visitor_centers as VC               # 段階55 第5部: 承認済みのビジターセンター・自然観察施設の事実（なければキーごと出さない）
+        vc = VC.fact_rows(self.now.date(), subjects=list(subjects), env=self.env)
+        if vc:
+            doc["visitor_centers"] = vc
         self._save("facts.json", doc)
         self.call("facts", subjects=list(subjects), new_records=rnd["new_records"], attempted=rnd["attempted"])
         return doc

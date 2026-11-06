@@ -51,6 +51,8 @@ def build_facts(case):
            "subjects": {subj: {"subject": subj, "candidates": [spot(c) for c in f["candidates"]], "avoid": [spot(c) for c in f.get("avoid", [])],
                                "alternatives": [], "nearby_out_of_region": []}},
            "lines": {"answer_rules": "stage51", "practical_rules": True, "open_urls": None}, "summary_pages": []}
+    if f.get("visitor_centers"):                      # 段階55: 承認済みの施設の事実（合成）
+        doc["visitor_centers"] = f["visitor_centers"]
     return doc
 
 
@@ -90,6 +92,8 @@ def policy_words():
     rec = pol["record"]
     blocked = list(O._v(rec["not_read_hosts"])) + list(O._v(pol["not_read_words"]))
     pending = ["山と溪谷オンライン掲載", "yamakei-online"] if not (rec.get("restricted_sources") or {}).get("approved") else []
+    from . import visitor_centers as VC            # 段階55: 承認待ちの施設の「○○発信」を答えに出さない
+    pending += [c["name"] + "発信" for c in VC.pending_centers()]
     return {"blocked": blocked, "pending": pending}
 
 

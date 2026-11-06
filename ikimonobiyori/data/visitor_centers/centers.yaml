@@ -1,0 +1,407 @@
+# ビジターセンター・自然観察施設の台帳（段階55）。新しく足す施設の情報源はすべて承認待ち（approval.status: pending）。承認は本人が行う。
+# 項目: id / name / operator（運営主体）/ operator_kind / site_url（施設の公式サイト）/ info_url（最新の自然情報のページ）/ frequency（更新頻度）/ format / season_end（更新が止まる施設の今シーズン最後の日付）/
+#       terms {url, reprint_banned, note}（規約・ポリシーのページと、転載・自動取得に関する記載の要約）/ within_range（横浜から直線250km前後か）/ prefecture / class / approval。
+# 使うのは日付・状態の語（30字以内）・種名（1施設1日付10種まで）・URL・開館時間と休館日だけ。記事・お便りの文章は使わない。
+schema: ikimono-visitor-centers/1
+centers:
+- id: tanzawa-oyama-navi
+  name: 丹沢大山ナビ（神奈川県）
+  operator: 神奈川県 自然環境保全センター（所管）
+  operator_kind: 県
+  prefecture: 神奈川県
+  site_url: https://www.pref.kanagawa.jp/docs/f4y/tanzawaoyama_navi.html
+  info_url: https://www.pref.kanagawa.jp/docs/f4y/tanzawaoyama_navi.html
+  frequency: null
+  format: html
+  last_update: '2026-06-12'
+  class: official
+  terms:
+    url: https://www.pref.kanagawa.jp/master/sitepolicy.html
+    reprint_banned: false
+    note: 'サイトポリシー: 引用は自由・出典を記載・二次利用は所管へ事前問い合わせ。転載禁止の明示なし。自動取得の記載なし。robots.txt は /docs/f4y/ を拒否していない'
+  within_range: true
+  hours: null
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 「旬の植物」「開花情報」「紅葉情報」「積雪情報」の各ページの URL は、ナビの本文から確認できなかった（空欄。推測しない）
+- id: kanagawa-ranger-bloom
+  name: かながわパークレンジャー 開花記録（神奈川県）
+  operator: 神奈川県 自然環境保全センター 自然保護公園部自然保護課
+  operator_kind: 県
+  prefecture: 神奈川県
+  site_url: https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger.html
+  info_url: https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html
+  frequency: null
+  format: html
+  last_update: '2026-06-20'
+  class: official
+  terms:
+    url: https://www.pref.kanagawa.jp/master/sitepolicy.html
+    reprint_banned: false
+    note: 丹沢大山ナビと同じサイトポリシー。転載禁止の明示なし。robots.txt は拒否していない
+  within_range: true
+  hours: null
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 令和8年の種別ページ（ツツジ・サンショウバラ・サクラ・ミツマタ）。2026-06-20 以降の更新はページ上で見えない。紅葉記録は公式の台帳（kanagawa-parkranger の紅葉）に既出
+- id: hadano-vc
+  name: 県立秦野ビジターセンター
+  operator: 神奈川県立（指定管理者の原文は未確認）
+  operator_kind: 県立施設
+  prefecture: 神奈川県
+  site_url: https://www.kanagawa-park.or.jp/tanzawavc/
+  info_url: https://hadanovc.blogspot.com/
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: https://www.kanagawa-park.or.jp/tanzawavc/
+    reprint_banned: false
+    note: 専用の規約ページは確認できず。丹沢公式トップに『サイト内の写真は無断使用禁止』（写真のみ。要約由来）。robots.txt 未確認
+  within_range: true
+  hours: 9:00〜16:30、休館は年末年始（12/29〜1/3）のみ
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 公式ブログ（Blogger）。【自然情報】の記事が日付つきで並ぶ
+- id: nishitanzawa-vc
+  name: 県立西丹沢ビジターセンター
+  operator: 神奈川県立（指定管理者の原文は未確認）
+  operator_kind: 県立施設
+  prefecture: 神奈川県
+  site_url: https://www.kanagawa-park.or.jp/tanzawavc/
+  info_url: https://nishitanzawashizenkyoushitsu.blogspot.com/
+  frequency: null
+  format: html
+  last_update: '2026-11-01'
+  class: official
+  terms:
+    url: https://www.kanagawa-park.or.jp/tanzawavc/
+    reprint_banned: false
+    note: 専用の規約ページは確認できず。記載なし（取得した範囲）。robots.txt 未確認
+  within_range: true
+  hours: 8:30〜16:30（12月〜3月は16:00まで）、休館は月曜（祝日の場合は翌平日）と年末年始
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 公式ブログ（旧 西丹沢自然教室）
+- id: hakone-vc
+  name: 箱根ビジターセンター
+  operator: 環境省の施設（ページ上の運営主体の明記なし。イベント告知に自然公園財団箱根支部の表記）
+  operator_kind: 国
+  prefecture: 神奈川県
+  site_url: https://hakonevc.sunnyday.jp/
+  info_url: https://hakonevc.sunnyday.jp/?page_id=160
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: null
+    reprint_banned: false
+    note: 専用の規約ページは確認できず。フッターは All Rights Reserved のみ。転載禁止の明示なし。robots.txt 未確認
+  within_range: true
+  hours: 9:00〜17:00（最終入館16:30）、休館は毎週月曜と12/29〜1/3。2026-12-01〜2027年1月中旬は大規模改修のため休館
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  season_end:
+    last_issue: '2026-11-30'
+    note: 2026-12-01 から改修で休館（情報の更新が止まる見込み）
+  notes: 「箱根四季だより」というページ・記事は確認できず（指示書の記載との相違）。解説資料は PDF リンクあり
+- id: yokohama-shizen-kansatsu
+  name: 横浜自然観察の森
+  operator: 指定管理者 公益財団法人日本野鳥の会（所管 横浜市みどり環境局）
+  operator_kind: 指定管理者
+  prefecture: 神奈川県
+  site_url: https://sancyokohama.sakura.ne.jp/
+  info_url: https://wbsj-yokohama.blog.jp/
+  frequency: null
+  format: html
+  last_update: '2026-10-24'
+  class: official
+  terms:
+    url: null
+    reprint_banned: false
+    note: 専用の規約ページは確認できず。フッターは著作権表示のみ。robots.txt 未確認
+  within_range: true
+  hours: null
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 公式トップは https://sancyokohama.sakura.ne.jp/（wbsj.org/sanctuary/yokohama/ から301。公式トップの更新情報 2026-11-05）。同じブログは公式の台帳（birds）に承認済みで既出
+- id: takao-vc
+  name: 高尾ビジターセンター
+  operator: 指定管理者 株式会社自然教育研究センター（東京都の施設）
+  operator_kind: 指定管理者
+  prefecture: 東京都
+  site_url: https://takaovc.ces-net.jp/
+  info_url: https://takaovc.ces-net.jp/
+  frequency: null
+  format: html
+  last_update: '2026-11-04'
+  class: official
+  terms:
+    url: https://takaovc.ces-net.jp/?page_id=302
+    reprint_banned: true
+    note: '転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止。『無断転載を禁ずる』の語そのものはない）。robots.txt 未確認'
+  within_range: true
+  hours: 10:00〜16:00、休館は月曜（祝日の場合は連休明けの平日）・年末年始
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 旧 URL（ces-net.jp/takaovc/）は移転案内のみ。紅葉情報の記事（2026-10-30、『11/06更新』）と『近ごろの自然情報』（花・実・野鳥の種名。日付なし）がある。山と溪谷オンラインに載っていた情報の発信元はここ。この施設自身のサイトを使うため、山と溪谷オンラインの掲載は使わない
+- id: mitake-vc
+  name: 御岳ビジターセンター
+  operator: 指定管理者 株式会社自然教育研究センター（東京都の施設）
+  operator_kind: 指定管理者
+  prefecture: 東京都
+  site_url: https://mitakevc.ces-net.jp/
+  info_url: https://mitakevc.ces-net.jp/nowmitake.html
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: https://mitakevc.ces-net.jp/saitepolicy.html
+    reprint_banned: true
+    note: '転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止）。フッターに All Rights Reserved。robots.txt 未確認'
+  within_range: true
+  hours: 9:00〜16:30、休館は月曜（祝日の場合は翌日）・年末年始
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 『御岳山の今』に紅葉・花・鳥・実が日付つき（2026.11.6 など）で載る。旧 URL は移転案内のみ
+- id: kitamoto-shizen-gakushu
+  name: 埼玉県自然学習センター・北本自然観察公園
+  operator: 指定管理者 公益財団法人埼玉県生態系保護協会（県の案内の原文）
+  operator_kind: 指定管理者
+  prefecture: 埼玉県
+  site_url: http://www.saitama-shizen.info/
+  info_url: http://www.saitama-shizen.info/today/index.html
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: http://www.saitama-shizen.info/privacypolicy.html
+    reprint_banned: false
+    note: プライバシーポリシー・免責事項のみ（転載・自動取得の記載なし）。robots.txt は 404（拒否の記述なし）。日本語が文字化けして取得された部分がある
+  within_range: true
+  hours: 9:00〜17:00、休館は月曜（祝日の場合は開館）・祝日の翌日・年末年始
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 事業ページ（event/event.html）の最終更新 2026-11-04
+- id: sayama-ikimono-fureai
+  name: 狭山丘陵いきものふれあいの里センター
+  operator: 指定管理者 公益財団法人トトロのふるさと基金（県の案内の原文）
+  operator_kind: 指定管理者
+  prefecture: 埼玉県
+  site_url: http://www.ikifure.info/
+  info_url: https://ikifure.info/category/nature/
+  frequency: ふれあいの里だより（令和8年N月号の形式で投稿）
+  format: html
+  last_update: '2026-11-01'
+  class: official
+  terms:
+    url: https://ikifure.info/policy/
+    reprint_banned: false
+    note: 個人情報保護方針と免責事項のみ（転載・自動取得の記載なし）。robots.txt は /info2/wp-admin/ のみ拒否
+  within_range: true
+  hours: 9:00〜17:00、月曜定休（祝日・県民の日を除く）、祝日の翌日、年末年始（12/29〜1/3）
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+- id: kiryu-shizen-kansatsu
+  name: 桐生自然観察の森
+  operator: 桐生市 都市整備部 公園緑地課
+  operator_kind: 市
+  prefecture: 群馬県
+  site_url: https://www.city.kiryu.lg.jp/forest/index.html
+  info_url: https://www.city.kiryu.lg.jp/forest/shizen/ennai/1027794.html
+  frequency: null
+  format: html
+  last_update: '2026-11-04'
+  class: official
+  terms:
+    url: https://www.city.kiryu.lg.jp/site/aboutsite.html
+    reprint_banned: true
+    note: '転載禁止の明示あり（このサイトについて: 文書・画像は許可なく使用・転載を禁止）。自動取得の記載なし。robots.txt 未確認'
+  within_range: true
+  hours: 3〜10月 9:00〜16:30、11〜2月 9:30〜16:00。休園は火曜（祝日の場合は開園）と12/29〜1/3
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 『最近の園内情報』は月別アーカイブ。更新日は森トップのもの（令和8年11月4日）で、園内情報ページ自体の更新日は確認できず
+- id: gyotoku-ainest
+  name: 市川市行徳野鳥観察舎（あいねすと）
+  operator: 市川市 環境部 自然環境課
+  operator_kind: 市
+  prefecture: 千葉県
+  site_url: https://www.city.ichikawa.lg.jp/page/1760.html
+  info_url: https://www.city.ichikawa.lg.jp/page/1759.html
+  frequency: 年に4回（あいねすと通信）
+  format: pdf
+  last_update: '2025-10-27'
+  class: official
+  terms:
+    url: https://www.city.ichikawa.lg.jp/page/2414.html
+    reprint_banned: true
+    note: '転載禁止の明示あり（サイトポリシー: 無断で複製・転用することはできない。引用等の例外あり）。自動取得の記載なし。robots.txt 未確認'
+  within_range: true
+  hours: null
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: あいねすと通信は PDF。ページの更新日（2025-10-27）と掲載号（2026年夏号）に不整合。PDF 本文は未読。休館日は別の PDF
+- id: nikko-yumoto-vc
+  name: 日光湯元ビジターセンター
+  operator: 自然公園財団 日光支部（フッターの原文）
+  operator_kind: 財団
+  prefecture: 栃木県
+  site_url: http://www.nikkoyumoto-vc.com/
+  info_url: http://www.nikkoyumoto-vc.com/new/nature_l.html
+  frequency: null
+  format: html
+  last_update: '2026-11-05'
+  class: official
+  terms:
+    url: null
+    reprint_banned: false
+    note: 規約ページのリンクなし。フッターは All rights reserved のみ。転載禁止の明示なし。robots.txt 未確認
+  within_range: true
+  hours: 2026-09-01〜11-30 毎日 9:00〜16:00
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  season_end:
+    last_issue: '2026-11-30'
+    note: 開館期間の終わり（開館 9/1〜11/30）
+- id: nikko-shizen-hakubutsukan
+  name: 栃木県立日光自然博物館
+  operator: 株式会社日光自然博物館（個人情報保護方針の原文）
+  operator_kind: 民間（県立施設）
+  prefecture: 栃木県
+  site_url: http://www.nikko-nsm.co.jp/
+  info_url: https://blog.nikko-nsm.co.jp/blog/
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: https://www.nikko-nsm.co.jp/privacy.html
+    reprint_banned: false
+    note: 個人情報保護方針のみ（著作権の記載なし）。フッターは All Rights Reserved のみ。robots.txt 未確認
+  within_range: true
+  hours: 4/1〜11/10 9:00〜17:00、11/11〜3/31 10:00〜16:00。休館は5〜11月無休、12〜4月は月曜、12/29〜1/3
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+- id: nasu-kogen-vc
+  name: 那須高原ビジターセンター
+  operator: 那須平成の森フィールドセンター（プライバシーポリシーの原文）
+  operator_kind: 財団等
+  prefecture: 栃木県
+  site_url: https://nasu-vc.jp/
+  info_url: https://nasu-vc.jp/nature/
+  frequency: 随時（ページの記載）
+  format: html
+  last_update: '2026-05-09'
+  class: official
+  terms:
+    url: https://nasu-vc.jp/privacy/
+    reprint_banned: false
+    note: プライバシーポリシーのみ（著作権ページは未確認）。転載禁止の明示なし。robots.txt 未確認
+  within_range: true
+  hours: 4〜11月 8:30〜17:30、休館は水曜（祝日の場合は翌日。紅葉期などは開館）
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 最新の自然情報の記事は 2026-05-09（秋の情報は出ていない）
+- id: nasu-heisei-no-mori
+  name: 那須平成の森
+  operator: 那須平成の森フィールドセンター（プライバシーポリシーの原文）
+  operator_kind: 財団等
+  prefecture: 栃木県
+  site_url: https://nasuheisei-f.jp/
+  info_url: https://nasuheisei-f.jp/nature/
+  frequency: null
+  format: html
+  last_update: '2026-10-23'
+  class: official
+  terms:
+    url: https://nasuheisei-f.jp/privacy/
+    reprint_banned: false
+    note: プライバシーポリシーのみ。フッターは Copyright の表示のみ。転載禁止の明示なし。robots.txt 未確認
+  within_range: true
+  hours: 9:00〜16:30（5・7・8月は〜17:00）、休園は水曜（祝日の翌日、GW・お盆・年末年始は無休）
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+- id: shiobara-vc
+  name: 塩原温泉ビジターセンター
+  operator: 確認できず（トップが文字化けして原文を読めなかった）
+  operator_kind: 不明
+  prefecture: 栃木県
+  site_url: http://www.siobara.or.jp/vc/
+  info_url: http://www.siobara.or.jp/vc/
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  terms:
+    url: null
+    reprint_banned: false
+    note: 規約ページのリンクは見当たらず。フッターは Copyrights (C) 2023 のみ。ページが Shift_JIS 系で文字化けし、確認できていない項目が多い。robots.txt 未確認
+  within_range: true
+  hours: 9:00〜16:30（休館の曜日は確認できず）、12/29〜1/3 休館
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  notes: 自然情報の入口は『フィールド情報』（field.stm）。本文は未確認
+- id: yashima-vc
+  name: 八島ビジターセンター（霧ヶ峰）
+  operator: 町立（ページの記載。町名の文字はページ上で確認できず）
+  operator_kind: 町
+  prefecture: 長野県
+  site_url: https://shimosuwaonsen.jp/yashima
+  info_url: https://shimosuwaonsen.jp/yashima/category/weekly/
+  frequency: 週1回（2026年は9/4〜10/30の毎週）
+  format: html
+  last_update: '2026-10-30'
+  class: official
+  terms:
+    url: https://shimosuwaonsen.jp/yashima/policy/
+    reprint_banned: true
+    note: '転載禁止の明示あり（指示書の調査: PDF に『無断転載を禁ずる』。今回は PDF 本文が読めず確認できていない）。サイトのポリシーページは個人情報の取り扱いのみ。robots.txt は /wp-admin/ のみ拒否'
+  within_range: true
+  hours: 開館 4月下旬〜11月上旬 9:30〜16:30、期間中無休。2026年の営業は 11/3 に終了
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+  season_end:
+    last_issue: '2026-10-30'
+    note: 今期最終（記事に明記）
+  notes: 『今週の八島湿原』『花便り』（記事に印刷用 PDF のリンクあり。PDF 本文は読めず）。2026-10-30 の記事が今期最終（『今シーズン最後』の明記）。冬季閉鎖。2025年の最終号の日付は確認できず（一覧 page/3 を次回確認）

@@ -30,16 +30,30 @@ class SpeciesBloom(unittest.TestCase):
         self.assertIn("今年の開花状況は確かめられていません", r["text"])
 
     def test_komakusa_and_hakusanfuro_show_ranges_with_note(self):
+        # 段階55 第8部（利用者の決定 2026-11-06）: 山と溪谷オンラインの出どころを削除したため、コマクサ・ハクサンフウロは1件の値だけになり、
+        # 食い違いの併記は成り立たない。併記の仕組みそのものは、合成の2件で確かめる。
         r = WS.species_answer("コマクサ", month=11)
-        self.assertTrue(r["conflict"])
-        self.assertIn("7月〜8月", r["text"])
+        self.assertFalse(r["conflict"])
         self.assertIn("5月〜7月", r["text"])
-        self.assertIn("紹介サイトで幅がある", r["text"])
-        self.assertEqual(r["text"].count("公式ではありません"), 2)
+        self.assertNotIn("紹介サイトで幅がある", r["text"])
+        self.assertNotIn("7月〜8月", r["text"])
         r = WS.species_answer("ハクサンフウロ", month=11)
-        self.assertTrue(r["conflict"])
-        self.assertIn("6月〜7月", r["text"])
+        self.assertFalse(r["conflict"])
         self.assertIn("7月〜8月", r["text"])
+        self.assertNotIn("6月〜7月", r["text"])
+        import copy
+        from unittest import mock
+        facts, data = WS.load()
+        data = copy.deepcopy(data)
+        sp = next(x for x in data["species"] if x["name"] == "コマクサ")
+        src = sp["items"][0]["src"][0]
+        sp["items"].append({"bloom": "7-8", "src": [src]})
+        with mock.patch.object(WS, "load", return_value=(facts, data)):
+            r = WS.species_answer("コマクサ", month=11)
+        self.assertTrue(r["conflict"])
+        self.assertIn("5月〜7月", r["text"])
+        self.assertIn("7月〜8月", r["text"])
+        self.assertIn("紹介サイトで幅がある", r["text"])
 
     def test_no_month_is_not_invented(self):
         for name, timing in (("ハクサンコザクラ", "雪解け直後に咲き始める"), ("トウヤクリンドウ", "晩夏〜初秋")):

@@ -135,8 +135,9 @@ class AlpinePageSpecies(unittest.TestCase):
 
     def test_conflicts_are_shown_together_and_no_month_is_not_invented(self):
         t = self.text(self.page(11))
-        self.assertIn("コマクサの花期は、出どころによって幅があります", t)
-        self.assertIn("5月〜7月", t)
+        # 段階55 第8部（利用者の決定 2026-11-06）: 山と溪谷オンラインの出どころを削除したため、コマクサは1件の値（5月〜7月）になり、幅の併記は出ない
+        self.assertNotIn("コマクサの花期は、出どころによって幅があります", t)
+        self.assertIn("コマクサの花期は例年5月〜7月です", t)
         self.assertIn("ハクサンコザクラは、月の記載がなく", t)
         self.assertNotIn("ハクサンコザクラの花期は例年", t)
 

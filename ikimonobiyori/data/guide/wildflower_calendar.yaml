@@ -395,15 +395,10 @@ rows:
   src: [hsk]
   note: 園内（植栽・保全）の花期
 - area: 奥多摩
-  name: スミレ類
-  bloom: 3中-6上
-  src: [ykk]
-  note: 奥多摩むかしみち・林道の法面など
-- area: 奥多摩
   name: ミツバツツジ
   bloom: 3下-5上
-  src: [otm, ykk]
-  note: 川乗山。山と溪谷社は4月中旬
+  src: [otm]
+  note: 川乗山
 - area: 奥多摩
   name: アカヤシオ
   bloom: 4下-5上
@@ -412,9 +407,9 @@ rows:
 - area: 奥多摩
   name: カタクリ
   bloom: 4上-5上
-  src: [otm, ykg, ome, sks]
+  src: [otm, ome, sks]
   elev: [1000, 1405]
-  note: 御前山・惣岳山・御岳山。標高は御前山の記述。見ごろの書き方は出どころで4月中旬〜5月上旬と幅がある
+  note: 御前山・惣岳山・御岳山。標高は御前山の記述
 - area: 奥多摩
   name: ニリンソウ
   bloom: 4-5
@@ -422,23 +417,14 @@ rows:
   note: 大ブナ尾根（奥多摩）・御岳山
 - area: 奥多摩
   name: シロヤシオ
-  bloom: 5上-5中
-  src: [otm, ykk]
-  note: 御岳山。山と溪谷社は5月上旬、観光連盟は5月中旬
-- area: 奥多摩
-  name: ツツジ類(石尾根)
-  bloom: 6上
-  src: [ykk]
-  note: 七ツ石山付近・石尾根の千本ツツジ
+  bloom: 5中
+  src: [otm]
+  note: 御岳山
 - area: 奥多摩
   name: コアジサイ
   bloom: '6'
   src: [otm]
   note: 御岳山・高水山
-- area: 奥多摩
-  name: アジサイ類
-  bloom: 6-7
-  src: [ykk]
 - area: 奥多摩
   name: コバイケイソウ
   bloom: 6-8
@@ -447,8 +433,8 @@ rows:
 - area: 奥多摩
   name: マルバダケブキ
   bloom: 7下-8下
-  src: [otm, ykk]
-  note: 雲取山・稜線。山と溪谷社は8月中旬〜下旬
+  src: [otm]
+  note: 雲取山・稜線
 - area: 奥多摩
   name: レンゲショウマ
   bloom: 7下-9中
@@ -877,20 +863,6 @@ rows:
   elev: [2400, null]
   src: [arf]
   note: 立山黒部アルペンルート周辺（高山帯は標高2400m以上）の花期。公式の花の案内
-- area: 北アルプス
-  sites: [m066]
-  name: ツクモグサ
-  bloom: 6下-7上
-  src: [ykn]
-  note: 山頂付近の稜線（山と溪谷オンライン 2025年の記事）。紹介サイトなど（公式ではない）の記載。仮
-  no_hana: true
-- area: 北アルプス
-  sites: [m066]
-  name: ウルップソウ
-  bloom: 7上-7下
-  src: [ykn]
-  note: 山と溪谷オンライン 2025年の記事。紹介サイトなど（公式ではない）の記載。仮
-  no_hana: true
 - area: 南アルプス
   sites: [m046]
   name: ハクサンイチゲ

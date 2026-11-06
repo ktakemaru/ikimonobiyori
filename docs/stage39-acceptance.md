@@ -117,6 +117,5 @@ https://rurubu.jp/andmore/spot/80007869/sakura
 出典
 https://www.rinya.maff.go.jp/kanto/takao/pdf/fit28122.pdf
 https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html
-https://www.yamakei-online.com/yama-ya/detail.php?id=4108
 https://kyodonewsprwire.jp/release/201907319278
 ```
