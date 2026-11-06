@@ -1070,7 +1070,6 @@ spots:
     aliases: ["薬師池公園", "町田薬師池公園四季彩の杜"]
     prefecture: 東京都
     city: 町田市
-    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     origin: festival
     point: {lat: 35.578889, lon: 139.447778, source: "Wikidata Q6632026(薬師池公園)の座標 P625。2026-11-06 に読んだ", checked_on: '2026-11-06'}
@@ -1084,7 +1083,6 @@ spots:
     aliases: ["高尾山もみじまつり"]
     prefecture: 東京都
     city: 八王子市
-    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     origin: festival
     point: {lat: 35.6253, lon: 139.2436, elevation_m: 599, source: "ikimonobiyori/data/sites.yaml m029(高尾山)の座標", checked_on: '2026-11-06'}
@@ -1099,7 +1097,6 @@ spots:
     aliases: ["御岳山 天空もみじまつり", "天空もみじまつり"]
     prefecture: 東京都
     city: 青梅市
-    city_source: {url: "https://www.tokyo-park.or.jp/park_list/", publisher: 東京都公園協会, result: "確認(公式の一覧に同じ区市がある)", checked_on: '2026-11-06'}
     area: 都内
     origin: festival
     point: {lat: 35.7829, lon: 139.1495, elevation_m: 929, source: "ikimonobiyori/data/sites.yaml m031(御岳山)の座標", checked_on: '2026-11-06'}
@@ -1108,3 +1105,70 @@ spots:
     pages:
       - {url: "https://www.gotokyo.org/jp/spot/ev073/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
     search: "御岳山 紅葉 色づき"
+  # 段階54 第13部: まつり情報による候補（festivals.yaml）。座標は確認できていないため付けない
+  - id: obs-kouyou-0090
+    subject: autumn_leaves
+    name: "八王子いちょう祭り(甲州街道)"
+    prefecture: 東京都
+    city: 八王子市
+    area: 都内
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.gotokyo.org/jp/spot/ev122/index.html", publisher: GO TOKYO(東京観光財団), source_class: secondary}
+    search: "八王子 甲州街道 いちょう 黄葉"
+  - id: obs-kouyou-0091
+    subject: autumn_leaves
+    name: "華厳滝"
+    prefecture: 栃木県
+    city: 日光市
+    area: 日光
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.nikko-kankou.org/event/1626", publisher: 日光市観光協会, source_class: secondary}
+    search: "華厳滝 紅葉 ライトアップ"
+  - id: obs-hana-0006
+    subject: flowers
+    name: "成田山新勝寺"
+    prefecture: 千葉県
+    city: 成田市
+    area: 千葉
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.maruchiba.jp/event/detail_11212.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "成田山 菊花大会"
+  - id: obs-hana-0007
+    subject: flowers
+    name: "笠間稲荷神社"
+    prefecture: 茨城県
+    city: 笠間市
+    area: 茨城
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=753", publisher: 観光いばらき, source_class: secondary}
+    search: "笠間の菊まつり"
+  - id: obs-hana-0008
+    subject: flowers
+    name: "千葉市都市緑化植物園"
+    prefecture: 千葉県
+    city: 千葉市中央区
+    area: 千葉
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.maruchiba.jp/event/detail_13346.html", publisher: ちば観光ナビ, source_class: secondary}
+    search: "千葉市都市緑化植物園 菊花展"
+  - id: obs-hana-0009
+    subject: flowers
+    name: "大宝八幡宮(下妻市菊まつり)"
+    prefecture: 茨城県
+    city: 下妻市
+    area: 茨城
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=1394", publisher: 観光いばらき, source_class: secondary}
+    search: "下妻市菊まつり 大宝八幡宮"

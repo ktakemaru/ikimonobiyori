@@ -200,5 +200,20 @@ class Coordinates(unittest.TestCase):
             self.assertIn("Wikidata", p["source"]) if "水元" in s["name"] or "清澄" in s["name"] else None
 
 
+class FestivalSweep(unittest.TestCase):
+    def test_all_festivals_pass_the_weekday_check_and_point_to_known_spots(self):
+        from datetime import date
+        from ikimonobiyori import festivals as F
+        doc = F.load()
+        self.assertEqual(F.dropped(date(2026, 11, 6), doc), {})
+        known = {c["id"] for subj in ("autumn_leaves", "flowers") for c in O.all_candidates(subj)}
+        for f in doc["festivals"]:
+            for sid in f["spots"]:
+                self.assertIn(sid, known, (f["id"], sid))
+            self.assertIn(f["organizer_class"], ("official", "secondary"))
+            self.assertNotIn("yamakei", f["url"])
+            self.assertFalse(any(b in f["url"] for b in ("tenki.jp", "weathernews", "n-kishou")))
+
+
 if __name__ == "__main__":
     unittest.main()
