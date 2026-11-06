@@ -70,5 +70,36 @@ class FestivalCrossYear(unittest.TestCase):
         self.assertEqual(F.dropped(date(2026, 11, 7), doc), {})
 
 
+class NoYamakeiUrlInData(unittest.TestCase):
+    """段階55 第8部（利用者の決定 2026-11-06）: 事実データに山と溪谷オンラインの URL を置かない。台帳の承認待ち情報源（ビジターセンター）と
+    取り扱い規則（policy の restricted_sources）は除く。"""
+    ALLOWED = {"sources/secondary/autumn_leaves.yaml", "observations/policy.yaml"}
+
+    def test_fact_data_has_no_yamakei_url(self):
+        from pathlib import Path
+        from ikimonobiyori.paths import DATA_FILES_DIR
+        bad = []
+        for p in Path(DATA_FILES_DIR).rglob("*"):
+            if p.is_file() and p.suffix in (".yaml", ".yml", ".json", ".jsonl", ".md", ".html"):
+                rel = p.relative_to(DATA_FILES_DIR).as_posix()
+                if rel in self.ALLOWED:
+                    continue
+                if "yamakei-online" in p.read_text(encoding="utf-8", errors="replace"):
+                    bad.append(rel)
+        self.assertEqual(bad, [])
+
+    def test_a_synthetic_leak_would_be_found(self):
+        self.assertIn("yamakei-online", "出どころ: https://www.yamakei-online.com/x")
+
+    def test_removed_facts_are_gone_and_others_stay(self):
+        from ikimonobiyori import wildflower_species as WS
+        facts, data = WS.load()
+        self.assertFalse([k for k in facts["sources"] if "yamakei" in facts["sources"][k]["url"]])
+        names = {s["name"] for s in data["species"]}
+        self.assertIn("コマクサ", names)
+        notes_sites = {m["site"] for m in data["mountain_notes"]}
+        self.assertNotIn("m076", notes_sites)                       # 会津駒ヶ岳: 山と溪谷オンラインだけが出どころの記載を削除
+
+
 if __name__ == "__main__":
     unittest.main()

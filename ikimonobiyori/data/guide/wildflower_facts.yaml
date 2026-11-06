@@ -8,8 +8,6 @@ sources:
   hsk: {url: 'https://hakone-shisseikaen.com/flower_spring/', publisher: 箱根湿生花園, class: official, read_on: '2026-11-03', page_year: null}
   hkt: {url: 'https://www.hakone.or.jp/8336', publisher: 箱根町観光協会, class: official, read_on: '2026-11-03', page_year: null}
   otm: {url: 'https://www.ohtama.or.jp/blooming.html', publisher: 大多摩観光連盟, class: official, read_on: '2026-11-03', page_year: null}
-  ykk: {url: 'https://www.yamakei-online.com/feature/okutama_siki.php', publisher: 山と溪谷社(奥多摩ナビ), class: secondary, read_on: '2026-11-03', page_year: null}
-  ykg: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=3023', publisher: 山と溪谷社(山と溪谷オンライン), class: secondary, read_on: '2026-11-03', page_year: 2026}
   ome: {url: 'https://ometsu.net/mount-gozen-2021-04/', publisher: おめ通, class: secondary, read_on: '2026-11-03', page_year: 2021}
   sks: {url: 'https://tozan.sockstar.jp/archives/1318', publisher: 登山日和, class: secondary, read_on: '2026-11-03', page_year: 2026}
   okg: {url: 'https://www.omekanko.gr.jp/spot/80601/', publisher: 青梅市観光協会, class: official, read_on: '2026-11-03', page_year: null}
@@ -31,20 +29,16 @@ sources:
   kmya: {url: 'https://summer.kurumayama-skypark.com/flowers/flowers-autumn', publisher: 車山高原SKYPARK RESORT(施設運営者), class: official, read_on: '2026-11-03', page_year: null}
   ozf: {url: 'https://oze-fnd.or.jp/oza/a-sp/', publisher: 尾瀬保護財団, class: official, read_on: '2026-11-03', page_year: null}
   ykt: {url: 'http://www.yamanashi-kankou.jp/fujisan/tanosimo/tanosimo001.html', publisher: やまなし観光推進機構(富士の国やまなし観光ネット), class: official, read_on: '2026-11-03', page_year: 2026}
-  ykn: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=4108', publisher: 山と溪谷オンライン(山岳・風景写真の教科書 第15回 白馬岳のお花畑を撮る), class: secondary, read_on: '2026-11-04', page_year: 2025}
   arf: {url: 'https://alpen-route.com/enjoy_navi/field_note/alpine_plant.html', publisher: 立山黒部アルペンルート(立山黒部貫光), class: official, read_on: '2026-11-04', page_year: null}
   yh2: {url: 'https://yamahack.com/2396/2', publisher: YAMA HACK(お花畑が広がる山おすすめ7座), class: secondary, read_on: '2026-11-04', page_year: 2026}
   # ---- 段階51(2026-11-06): 種ごとの花期と山の記載。チャット側の調査を取り込んだもの(読めたものだけ) ----
   hbk: {url: 'https://www.hokudai.ac.jp/fsc/bg/pdf/letter2018.pdf', publisher: 北海道大学北方生物圏フィールド科学センター植物園(植物園だより 2018), class: official, read_on: '2026-11-06', page_year: 2018}
   yh53: {url: 'https://yamahack.com/5350', publisher: YAMA HACK(ミヤマキンバイ), class: secondary, read_on: '2026-11-06', page_year: null}
   mlt: {url: 'https://www.mlit.go.jp/tagengo-db/R1-02333.html', publisher: 観光庁(多言語解説文データベース 白山), class: official, read_on: '2026-11-06', page_year: null}
-  ykh: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=2517', publisher: 山と溪谷オンライン(ハクサンコザクラ), class: secondary, read_on: '2026-11-06', page_year: null}
-  ykf: {url: 'https://www.yamakei-online.com/special2/flower_pics.php', publisher: 山と溪谷オンライン(花の図鑑), class: secondary, read_on: '2026-11-06', page_year: null}
   yh17: {url: 'https://yamahack.com/1785', publisher: YAMA HACK(コマクサ), class: secondary, read_on: '2026-11-06', page_year: null}
   yh53b: {url: 'https://yamahack.com/5373', publisher: YAMA HACK(ハクサンフウロ), class: secondary, read_on: '2026-11-06', page_year: null}
   yh69: {url: 'https://yamahack.com/6993', publisher: YAMA HACK(槍ヶ岳・トウヤクリンドウ), class: secondary, read_on: '2026-11-06', page_year: null}
   yh51: {url: 'https://yamahack.com/5106/2', publisher: YAMA HACK(立山 天狗平のチングルマ), class: secondary, read_on: '2026-11-06', page_year: null}
-  ykm: {url: 'https://www.yamakei-online.com/yama-ya/detail.php?id=1522', publisher: 山と溪谷オンライン(会津駒ヶ岳), class: secondary, read_on: '2026-11-06', page_year: null}
   ynk: {url: 'https://www.yamanashi-kankou.jp/kankou/spot/p1_4647.html', publisher: 山梨県観光(仙丈ヶ岳), class: official, read_on: '2026-11-05', page_year: null}
   rnk: {url: 'https://www.rinya.maff.go.jp/chubu/policy/business/conservation/hogorin/2-15.html', publisher: 林野庁 中部森林管理局(仙丈ヶ岳), class: official, read_on: '2026-11-05', page_year: null}
   ina: {url: 'https://inashi-kankoukyoukai.jp/oidenaina/wp-content/themes/oidenaina/img/spot/spot-05/southernalps/lodge-2023.pdf', publisher: 伊那市観光協会(山小屋の営業期間 2023), class: official, read_on: '2026-11-06', page_year: 2023}
@@ -189,8 +183,8 @@ species:
   アキノキリンソウ: {}
   ハクサンコザクラ: {}
   メイゲツソウ: {}
-  ツクモグサ: {habitat: 山頂付近の稜線, tip: 白馬岳では山頂付近の稜線で咲く（山と溪谷オンライン）, caution: 分布が限られる花。花は採らず、登山道から出ない}
-  ウルップソウ: {tip: 本州では白馬岳から五竜岳と、八ヶ岳・横岳周辺に限られる（山と溪谷オンライン）, caution: 分布が限られる花。花は採らず、登山道から出ない}
+  ツクモグサ: {caution: 分布が限られる花。花は採らず、登山道から出ない}
+  ウルップソウ: {caution: 分布が限られる花。花は採らず、登山道から出ない}
   チングルマ: {}
   ミヤマキンバイ: {}
   イワカガミ: {}
