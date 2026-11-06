@@ -186,7 +186,7 @@ sources:
       style: none
       map: {}
       updated: per_page
-      note: "紅葉の状態は文章で書かれる(例: 2026.11.04更新「紅葉ほんのり」「高尾山山頂 3割」「ケーブルカー沿線と薬王院周辺(中腹)ともみじ台は色づき始め」「例年、おおむね11月中旬～12月上旬が紅葉の見頃」)。状態の語は変換せず原文のまま扱う。発信元: 高尾ビジターセンター(東京都の施設)"
+      note: "紅葉の状態は文章で書かれる。段階54の取り扱い規則により、記事の文章はここにも記録にも残さず、状態を表す短い語句(30字以内)・掲載の日付・URL だけを使う。発信元: 高尾ビジターセンター(東京都の施設)"
     readable: {status: ok, checked_on: '2026-11-06', robots: unknown, observed_latest_update: '2026-11-04', note: "HTTP 200 で本文が読めた(2026-11-06)。robots.txt は今回確認していない。過去分: https://www.yamakei-online.com/mt_info/past.php?id=1012"}
     terms: {status: not_checked, url: 'https://www.yamakei-online.com/info/about.php', note: "利用規約のリンクは確認したが、本文は未読。ページの天気欄に「気象情報を第三者へ二次的に提供することは法律で禁止」の注記がある(気象情報の注記で、状態の文は対象ではないとみられるが未確認)。承認の前に利用規約を読む必要がある。段階54: 利用規約 第4条⑧(事前の承諾のない複製・転用の禁止)により、状態の短い語句(30字以内)・日付・URL だけを使う規則を policy record.restricted_sources に実装済み(承認は本人)"}
     approval: {status: pending, reason: "承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない"}
@@ -202,7 +202,7 @@ sources:
       style: none
       map: {}
       updated: per_page
-      note: "紅葉の状態は文章で書かれる(例: 2026.11.05更新「紅葉はこれから」「ビジター周辺 早い木(さくら)などは色づくも、基本的には先端少し」「山全体としてはこれから」「来週か再来週くらいが見頃予想」)。状態の語は変換せず原文のまま扱う。発信元: 御岳ビジターセンター(東京都の施設)。最新の情報ページの URL は info_detail.php?info_id=1065 で確認した"
+      note: "紅葉の状態は文章で書かれる。段階54の取り扱い規則により、記事の文章はここにも記録にも残さず、状態を表す短い語句(30字以内)・掲載の日付・URL だけを使う。発信元: 御岳ビジターセンター(東京都の施設)。最新の情報ページの URL は info_detail.php?info_id=1065 で確認した"
     readable: {status: ok, checked_on: '2026-11-06', robots: unknown, observed_latest_update: '2026-11-05', note: "HTTP 200 で本文が読めた(2026-11-06)。robots.txt は今回確認していない。過去分: https://www.yamakei-online.com/mt_info/past.php?id=1065"}
     terms: {status: not_checked, url: 'https://www.yamakei-online.com/info/about.php', note: "高尾と同じ。承認の前に利用規約を読む必要がある。段階54: 取り扱い規則(状態の短い語句30字以内・日付・URLだけ。文章は使わない。承認まで答えの材料にしない)を policy record.restricted_sources に実装済み"}
     approval: {status: pending, reason: "承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない"}
