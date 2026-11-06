@@ -23,7 +23,7 @@ class Regress(unittest.TestCase):
         doc = regress.load_cases()
         case = dict(next(c for c in doc["cases"] if c["id"] == "defect-date-range"), expect="ok")
         case.pop("expect_fail")
-        self.assertFalse(regress.run_case(case, regress.policy_words())["ok"])
+        self.assertFalse(regress.run_case(case, regress.policy_words(), 12)["ok"])
 
 
 if __name__ == "__main__":

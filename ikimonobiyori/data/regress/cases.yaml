@@ -2,6 +2,8 @@
 # expect: ok = 検査が全部通る答え。 expect_fail: [コード] = これまでの試用で見つかった崩れの再現（検査が見つけられること）。
 # facts: 集めた事実の合成（subject・dates・region・candidates[name,state,date,typ,cls,url,festivals]）。
 schema: ikimono-regress/1
+# 先頭の結論の文の最小の長さ（これより短い先頭行は結論とみなさない）。仮置き（provisional）
+min_lead_chars: 12
 cases:
   # ---- 通る答え（質問の型ごと） ----
   - id: weekend-autumn-kanagawa

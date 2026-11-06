@@ -54,11 +54,11 @@ def build_facts(case):
     return doc
 
 
-def common_checks(text, case, facts, policy_words):
+def common_checks(text, case, facts, policy_words, min_lead=0):
     """全部の答えに当てる共通の条件。→ [{code, detail}]"""
     errs = []
     lines = [l for l in text.splitlines() if l.strip()]
-    if not lines or len(lines[0]) < 12 or lines[0].lstrip().startswith(LEAD_BAD_START):
+    if not lines or len(lines[0]) < min_lead or lines[0].lstrip().startswith(LEAD_BAD_START):
         errs.append({"code": "no_lead", "detail": "先頭に結論の文がない"})
     g = V.generic_check(text)
     for e in g["errors"]:
@@ -104,10 +104,10 @@ def generated_text(g):
     raise ValueError(g["kind"])
 
 
-def run_case(case, words):
+def run_case(case, words, min_lead=0):
     text = case["answer"] if "answer" in case else generated_text(case["generate"])
     facts = build_facts(case)
-    errs = common_checks(text, case, facts, words)
+    errs = common_checks(text, case, facts, words, min_lead)
     if case.get("generate"):                      # コードが作る文は、聞き返しだけで終わらないなどの汎用の検査も通す
         errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in V.generic_check(text)["errors"] if e["code"] not in ("ask_back_only", "too_few_candidates")]
     if facts is not None:
@@ -130,7 +130,8 @@ def run_case(case, words):
 def run_all(only=None, path=None):
     doc = load_cases(path)
     words = policy_words()
-    out = [run_case(c, words) for c in doc["cases"] if not only or c["id"] == only]
+    min_lead = doc.get("min_lead_chars", 0)
+    out = [run_case(c, words, min_lead) for c in doc["cases"] if not only or c["id"] == only]
     return out
 
 
