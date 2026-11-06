@@ -10,3 +10,6 @@
 | 3 | 済み(一部) | (下記) | 施設18件を承認待ちで台帳に追加(約90回の取得+検索4回)。奥多摩VC・キスゲ平・牛久・谷津干潟は確認できず。八島は2026-10-30が最終号(ended)。docs/stage55-facilities.md |
 | 4 | 済み(一部) | (下記) | 行事4件を追加(横浜自然観察の森2・北本2。公式で確認)。年が読めない・市名未確認・翌シーズンのものは足さず(docs/stage55-events.md)。候補の名所 obs-yacho-0008 を追加 |
 | 5 | 済み | (下記) | 答えでの使い方: visitor_centers.record_reports/read_reports/fact_rows(承認済み・季節内・14日以内だけ)、ask facts に visitor_centers(なければキーなし)、検査器 visitor_center_errors(承認済みでない施設の「○○発信」を落とす)、回帰テスト2件追加(22/22)。スキル3か所に(k)を追記。test_stage52 の併記の期待値を第8部の影響で更新 |
+| 6 | 済み | (下記) | 4問を実通信で読んで記録→facts→答え→検査(合格)。全文は docs/stage55-report.md。全テスト1237件を最後に一度実行し、失敗1件(test_stage42。第8部の影響)を直した |
+
+全部の完了: 2026-11-07。push は未実施(本人が `git push -u origin stage55`)。

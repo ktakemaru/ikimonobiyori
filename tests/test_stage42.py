@@ -41,7 +41,7 @@ class Overview(unittest.TestCase):
         r = W.overview(month=11)
         alpine = {e["name"] for e in r["species"] if e["section"] == "alpine"}
         self.assertEqual(alpine, {"コマクサ", "ハクサンイチゲ", "クロユリ", "ミヤマキンポウゲ", "メイゲツソウ",
-                                  "イワカガミ", "ウルップソウ", "チングルマ", "タテヤマリンドウ", "ミヤマキンバイ", "ツクモグサ"})   # 段階44: 立山・白馬岳・北岳の行を足した
+                                  "イワカガミ", "チングルマ", "タテヤマリンドウ", "ミヤマキンバイ"})   # 段階44: 立山・白馬岳・北岳の行を足した。段階55 第8部（利用者の決定 2026-11-06）: 山と溪谷オンラインだけが出どころだったウルップソウ・ツクモグサの行を削除した
         low_places = {pl["place"] for e in r["species"] if e["section"] == "lowland" for pl in e["places"]}
         self.assertIn("丹沢", low_places)
         # 種ごとに 1 件。データのない種（花暦にない種）は作らない
