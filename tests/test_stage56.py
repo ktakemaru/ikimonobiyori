@@ -430,3 +430,21 @@ class Recheck(unittest.TestCase):
         fuji = FE.for_spot("kouyou-0012", date(2026, 11, 14), doc)
         self.assertEqual(fuji[0]["period_line"], "主催者が設定した期間: まつり期間中(11/7〜11/29)")
         self.assertEqual(fuji[0]["lightup_line"], "ライトアップ: 日没〜21:00")             # 期間が書かれていないので日にちを足さない
+
+
+# ---- 第6部: 承認待ちの一覧 ----
+class ApprovalList(unittest.TestCase):
+    def test_every_pending_center_is_in_the_list_with_a_recommendation(self):
+        import yaml
+        doc = (ROOT / "docs" / "sources-approval.md").read_text(encoding="utf-8")
+        cs = yaml.safe_load((ROOT / "ikimonobiyori" / "data" / "visitor_centers" / "centers.yaml").read_text(encoding="utf-8"))["centers"]
+        for c in cs:
+            line = next((l for l in doc.splitlines() if l.startswith("| " + c["name"] + " |")), None)
+            self.assertIsNotNone(line, c["name"])
+            self.assertTrue(any(f"**{r}**" in line for r in ("承認してよい", "要判断", "保留")), c["name"])
+            self.assertEqual(c["approval"]["status"], "pending")
+
+    def test_the_list_has_no_yamakei_url_and_keeps_the_user_decision(self):
+        doc = (ROOT / "docs" / "sources-approval.md").read_text(encoding="utf-8")
+        self.assertNotIn("yamakei-online", doc)
+        self.assertIn("承認は本人が行う", doc)
