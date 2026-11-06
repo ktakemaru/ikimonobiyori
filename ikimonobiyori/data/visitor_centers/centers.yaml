@@ -156,6 +156,7 @@ centers:
     note: '転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止。『無断転載を禁ずる』の語そのものはない）。robots.txt 未確認'
   within_range: true
   hours: 10:00〜16:00、休館は月曜（祝日の場合は連休明けの平日）・年末年始
+  allowed_fields: [state, date, url, hours]        # 種名は使わない（段階56b。承認は変えない）
   checked_on: '2026-11-07'
   approval:
     status: pending
@@ -178,6 +179,7 @@ centers:
     note: '転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止）。フッターに All Rights Reserved。robots.txt 未確認'
   within_range: true
   hours: 9:00〜16:30、休館は月曜（祝日の場合は翌日）・年末年始
+  allowed_fields: [state, date, url, hours]        # 種名は使わない（段階56b。承認は変えない）
   checked_on: '2026-11-07'
   approval:
     status: pending
@@ -197,14 +199,14 @@ centers:
   terms:
     url: http://www.saitama-shizen.info/privacypolicy.html
     reprint_banned: false
-    note: プライバシーポリシー・免責事項のみ（転載・自動取得の記載なし）。robots.txt は 404（拒否の記述なし）。日本語が文字化けして取得された部分がある
+    note: プライバシーポリシー・免責事項のみ（転載・自動取得の記載なし）。robots.txt は 404（拒否の記述なし）。ページ全体が Shift_JIS（CP932。文字コードの宣言なし）で、要約の道具では UTF-8 として読まれて日本語が全部文字化けする（2026-11-07 に今日の様子・事業ページ・トップで確認）
   within_range: true
   hours: 9:00〜17:00、休館は月曜（祝日の場合は開館）・祝日の翌日・年末年始
   checked_on: '2026-11-07'
   approval:
     status: pending
     reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
-  notes: 事業ページ（event/event.html）の最終更新 2026-11-04
+  notes: 事業ページ（event/event.html）の最終更新 2026-11-04。文字コードは CP932（宣言なし）。現在の読み取りの道具では状態の語・種名を正しく読めない。読むには、バイト列を CP932 で復号するコード（visitor_centers.decode_html）による取得が要り、これは Python のコードによる実通信なので、利用者がその場で認めたときだけ（CLAUDE.md 規則 6）
 - id: sayama-ikimono-fureai
   name: 狭山丘陵いきものふれあいの里センター
   operator: 指定管理者 公益財団法人トトロのふるさと基金（県の案内の原文）

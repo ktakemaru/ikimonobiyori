@@ -10,6 +10,12 @@ max_state_chars: {value: 30, source: "段階55 指示書 第2部 2（状態の�
 max_species: {value: 10, source: "段階55 指示書 第2部 2（1施設・1日付につき最大10種）", provisional: false}
 max_species_chars: {value: 20, source: "種名は1語ずつ。長さの上限は仮置き", provisional: true}
 sentence_marks: ["。", "！", "？", "!", "?", "\n"]
+# 段階56b: 施設ごとの『使う項目』（台帳の allowed_fields）。台帳に書かなければ全項目（既存の挙動）。
+# state=状態の語 / date=日付 / species=種名 / url=URL / hours=開館時間・休館日。date と url は1行に必ず付くので外せない
+fields: [state, date, species, url, hours]
+required_fields: [date, url]
+# 読み取りの記録の項目 → 使う項目（closed は休館日で、開館時間と同じ項目）
+field_of: {state: state, date: date, species: species, url: url, hours: hours, closed: hours}
 # 読み取りの記録に入れてよい項目だけ（これ以外、とくに文章の欄は受け付けない）
 report_fields: [center, date, state, species, url, hours, closed]
 # 対象外のホスト（SNS・第三者サイト・読まない対象）。サブドメインも含む
