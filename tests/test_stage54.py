@@ -178,5 +178,27 @@ class UntrustedCandidates(unittest.TestCase):
         self.assertEqual(guide._untrusted_item_errors({"name": "試験の花園", "theme": "花", "url": "https://example.org/a"}), [])
 
 
+class Coordinates(unittest.TestCase):
+    def setUp(self):
+        self.spots = {s["id"]: s for s in O.load_spots()["spots"]}
+
+    def test_metropolitan_parks_have_a_city_source(self):
+        for n in range(56, 87):
+            s = self.spots[f"obs-kouyou-{n:04d}"]
+            self.assertIn("city_source", s, s["name"])
+            self.assertTrue(s["city_source"]["url"].startswith("https://www.tokyo-park.or.jp/"))
+        self.assertEqual(self.spots["obs-kouyou-0072"]["city"], "八王子市")
+
+    def test_points_are_inside_the_prefecture_box_and_have_a_source(self):
+        from ikimonobiyori import regional
+        box = regional.load_policy()["coordinates"]["bounds_by_prefecture"]["東京都"]
+        pts = [s for s in self.spots.values() if s.get("point") and s["prefecture"] == "東京都"]
+        self.assertGreaterEqual(len(pts), 5)
+        for s in pts:
+            p = s["point"]
+            self.assertTrue(box["lat"][0] <= p["lat"] <= box["lat"][1] and box["lon"][0] <= p["lon"] <= box["lon"][1], s["name"])
+            self.assertIn("Wikidata", p["source"]) if "水元" in s["name"] or "清澄" in s["name"] else None
+
+
 if __name__ == "__main__":
     unittest.main()
