@@ -765,6 +765,7 @@ def inat_season(area_id, d, now, env=None, sites_doc=None, profile=None, cfg=Non
     years = param(profile, "history_years")
     out = {"area": area["name"], "radius_km": area["radius_km"], "years": years, "window_weeks": param(profile, "window_weeks"),
            "center": found["center"], "target": d.isoformat(), "total": res["total"], "enough": True, "fetched_at": min(fetched), "url": url, "publisher": "iNaturalist",
+           "source_url": human_inat_url(url),               # 段階56: 実際に使った条件（場所の半径・期間）を人が開けるページ。作れなければ None
            "site_url": "https://www.inaturalist.org/",       # 段階35: 答えの出典に並べる、人が開くページ(問い合わせの URL は長く、API のため)
            "scope": area.get("scope") or "area",
            **({"months": birds_live.park_queries(area, date.fromisoformat(found["center"]), profile, cfg["live"]["inaturalist"]["per_page"],
@@ -1220,7 +1221,7 @@ def park_birds(f, rows, dates, policy, taxa_names=None):
     if inat.get("enough"):                                                                    # ② この時期の記録
         period = pb["inat_period_park"].format(months=pb["months_label"].format(months="・".join(str(m) for m in inat["months"]))) if inat.get("months") \
             else pb["inat_period"].format(center=_md(inat["center"]), weeks=inat["window_weeks"], years=inat["years"])
-        base = {"kind": "season", "date": str(inat["fetched_at"])[:10], "period": period, "publisher": "iNaturalist", "url": inat.get("site_url"),
+        base = {"kind": "season", "date": str(inat["fetched_at"])[:10], "period": period, "publisher": "iNaturalist", "url": inat.get("source_url") or inat.get("site_url"),
                 "source_class": "secondary"}
         if inat.get("seasonal"):
             strong = _v(pb["seasonality"]["lift_strong"])
@@ -1311,7 +1312,10 @@ def typical_line(typ, c, dates, policy, last_year=None):
     代わりに今年の行事の期間か、前の年の同じ時期の記録を添える(段階36。決定1)。"""
     lab = policy["typical_labels"]
     if typ:
-        return lab["known"].format(text=typ["text"])
+        text = typ["text"]
+        if lab.get("known_strip") and lab["known_strip"] in text:            # 段階56: 「例年の見頃: …例年10月…」のように「例年」を重ねない
+            text = text.replace(lab["known_strip"], "", 1)
+        return lab["known"].format(text=text)
     evs = [e for e in c.get("events") or [] if e.get("start") and e.get("end")]
     evs = sorted(evs, key=lambda e: (not any(date.fromisoformat(e["start"]) <= d <= date.fromisoformat(e["end"]) for d in dates), e["start"]))
     if evs:
@@ -1321,6 +1325,22 @@ def typical_line(typ, c, dates, policy, last_year=None):
         x = last_year[0]
         return lab["unknown_with_last_year"].format(year=x["year"], md=_md(x["date"]), publisher=x.get("publisher") or "", text=x["state"])
     return lab["unknown"]
+
+
+def human_inat_url(api_url):
+    """iNaturalist の集計に使った問い合わせ(API)の URL → 人が開ける観察の一覧(種ごと)の URL。座標はすでに丸めてある。
+    使う条件(場所・半径・期間・分類・品質)だけを写し、件数や言語の指定は写さない。作れなければ None。"""
+    from urllib.parse import parse_qsl, urlencode, urlparse
+    if not api_url:
+        return None
+    u = urlparse(api_url)
+    if u.hostname != "api.inaturalist.org":
+        return None
+    keep = ("lat", "lng", "radius", "d1", "d2", "year", "iconic_taxa", "quality_grade")
+    q = [(k, v) for k, v in parse_qsl(u.query) if k in keep]
+    if not any(k == "lat" for k, _ in q):
+        return None
+    return "https://www.inaturalist.org/observations?" + urlencode(q + [("view", "species")])
 
 
 def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):

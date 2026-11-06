@@ -14,6 +14,7 @@ from pathlib import Path
 
 import yaml
 
+from . import answer_plan as AP
 from .paths import DATA_FILES_DIR
 
 CONFIG = DATA_FILES_DIR / "ask" / "policy.yaml"
@@ -245,7 +246,7 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
-def check(text, facts, rules=None, gazetteer=()):
+def check(text, facts, rules=None, gazetteer=(), plan=None):
     """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。"""
     rules = rules or load_rules()
     mat = Material(facts, rules, gazetteer)
@@ -276,6 +277,8 @@ def check(text, facts, rules=None, gazetteer=()):
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
     answer_errors += stage51_errors(text, facts, mat, rules)
     answer_errors += restricted_source_errors(facts)
+    if plan:                                                                 # 段階56: 答えの採用と計画の照合
+        answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx:
@@ -333,6 +336,11 @@ def restricted_source_errors(facts):
     return errs
 
 
+def section_headings():
+    """狙い別の節の見出し(data/ask/plan.yaml の aims.labels)。"""
+    return set(AP.load_policy()["aims"]["labels"].values())
+
+
 def stage51_errors(text, facts, mat, rules):
     """段階51(2026-11-06 の試用で見つかった 5 点)。facts の lines.answer_rules が印と同じときだけ当てる（ask facts が付ける）。
     ① 作業の報告を答えに出さない ② 冒頭の要約と「今回のおすすめ」の食い違い ③ iNaturalist の傾向は公式ではない・傾向の範囲を書く
@@ -351,9 +359,15 @@ def stage51_errors(text, facts, mat, rules):
     if heads:
         h = heads[0]
         picks = []
-        for l in lines[h + 1:]:
+        heads_ = section_headings()
+        rest_ = lines[h + 1:]
+        for j, l in enumerate(rest_):
             if re.match(cfg["lead_pick_re"], l):
                 picks.append(l)
+            elif picks and l.strip() in heads_:                              # 段階56: 狙い別の節の見出しを挟んでも、おすすめの続きとして数える
+                continue
+            elif picks and not l.strip() and next((x.strip() for x in rest_[j + 1:] if x.strip()), "") in heads_:
+                continue
             elif picks:
                 break
         lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
@@ -381,7 +395,7 @@ def stage51_errors(text, facts, mat, rules):
             if u and u not in urls:
                 errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
     if cfg["inat_word"] in text:
-        site = {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots} - {""}
+        site = {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots} - {""}
         if site and not (site & urls):
             errs.append({"code": "source_missing", "detail": f"{cfg['inat_word']}: {sorted(site)[0]}"})
     for _i, s in sents:                                                      # ⑤ 見込み・転載
@@ -402,7 +416,7 @@ def stage51_errors(text, facts, mat, rules):
         for c in mentioned_cands(mat, norm):
             allowed |= candidate_urls(c)
         if cfg["inat_word"] in text:
-            allowed |= {((c.get("inat") or {}).get("site_url") or "").rstrip("/") for c in mat.spots}
+            allowed |= {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots}
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
         allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
         for u in sorted(urls - allowed - {""}):

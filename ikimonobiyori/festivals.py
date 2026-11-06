@@ -23,6 +23,9 @@ def _pol(policy=None):
     return policy["festivals"]
 
 
+WEEKDAYS = "月火水木金土日"
+
+
 def _md(d):
     return f"{d.month}/{d.day}"
 
@@ -61,7 +64,11 @@ def festival_row(f, today, policy=None):
         return None
     st = status(f, today)
     start, end = date.fromisoformat(str(f["start"])), date.fromisoformat(str(f["end"]))
-    period = p["status_text"][st["state"]].format(start=_md(start), end=_md(end), days=st["days"])
+    single = start == end                              # 段階56: 1日だけの行事は「11/29（日）に開催（あと22日）」。期間のラベルは期間があるまつりにだけ付ける
+    if single:
+        period = p["single_day_text"][st["state"]].format(md=_md(start), wd=WEEKDAYS[start.weekday()], days=st["days"])
+    else:
+        period = p["status_text"][st["state"]].format(start=_md(start), end=_md(end), days=st["days"])
     lu = f.get("lightup")
     lu_line = None
     if lu:
@@ -72,7 +79,8 @@ def festival_row(f, today, policy=None):
         else:
             lu_line = p["lightup_no_period"].format(hours=(lu.get("hours") or ""), note=note)
     return {"id": f["id"], "name": f["name"], "state": st["state"], "days": st["days"], "start": str(f["start"]), "end": str(f["end"]),
-            "period_label": p["period_label"], "period_line": f"{p['period_label']}: {period}", "lightup_line": lu_line,
+            "period_label": None if single else p["period_label"], "single_day": single,
+            "period_line": period if single else f"{p['period_label']}: {period}", "lightup_line": lu_line,
             "organizer": f["organizer"], "organizer_class": f["organizer_class"],
             "organizer_line": p["organizer_line"].format(organizer=f["organizer"], klass=p["class_labels"][f["organizer_class"]]),
             "contact": f.get("contact"), "venue": f.get("venue"), "url": f["url"], "publisher": f.get("publisher"), "published": f.get("published"),
