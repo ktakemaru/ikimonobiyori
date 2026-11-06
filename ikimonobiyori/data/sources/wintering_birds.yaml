@@ -59,7 +59,7 @@ sources:
       updated: per_item
       year_shown: true
       note: "『飛来情報/確認数』(場所・羽数・令和の日付)と『白鳥飛来数一斉調査』の表。2026-10-23 の読みでは今季(2026 年秋〜)の記載はまだなく、最新は令和8年3月3日 多々良沼 3羽(前のシーズン)"
-    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-03-10", note: "ページの更新日 2026-03-10。robots.txt は 404(なし)"}
+    readable: {status: ok, checked_on: "2026-10-23", robots: no_file, observed_latest_update: "2026-03-10", note: "【要確認(2026-11-06): ページの更新日は 2026-03-10 のまま。今季の飛来情報は未更新】ページの更新日 2026-03-10。robots.txt は 404(なし)"}
     terms: {status: no_prohibition_found, url: "https://www.city.tatebayashi.gunma.jp/s002/020/20200110065000.html", note: "サイトポリシー: 私的使用や引用など著作権法で認められる場合を除き、無断の複製・転用・販売を禁じる(2026-10-23 の見直しのあと、ページを WebFetch で読んで確認。要約・自動取得の規定なし)。事実を出典つきで短く示すのは当たらない(段階15 のユーザーの判断に合わせた)"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23", reason: "ユーザーの見直し(2026-10-23): 利用条件のページを実際に読めたら承認。読めて、文面は段階15 のユーザーの判断と同じ型だった"}
 
