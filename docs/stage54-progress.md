@@ -12,3 +12,4 @@
 | 4 | 済み | (下記) | 花58種・野草142種を再評価(花: 開花27/不明5/写真なし26、野草: 開花29/不明40/写真なし73。結果は docs/stage54-photos-flowers.md)。花のガイドページにも学名・状態を出すようにした(guide_page.state_text)。通信: 野草 11 + 花 約70 リクエスト(iNaturalist/Commons) |
 | 8 | 済み | (下記) | 取得文章の安全対策: 記録と候補で指示に見える文・制御文字・長すぎる欄を拒否、写真ファイル名の無害化。点検結果は docs/stage54-injection-audit.md。test_stage54 20件 OK |
 | 7 | 保留(第9部の後に実施) | - | 動作確認は第10〜13部のデータ更新後に行うほうが意味があるため、第9部のあと(第14部の前)に回す |
+| 9 | 済み | (下記) | 回帰テスト基盤: ikimonobiyori/regress.py、data/regress/cases.yaml(20件: 通る12・既知の崩れ8)、tests/test_regress.py、docs/regression.md。約5秒 |
