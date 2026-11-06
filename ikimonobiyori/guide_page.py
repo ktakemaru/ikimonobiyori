@@ -111,6 +111,14 @@ def source_links_numbered(entry, retired_urls, policy):
     return out
 
 
+def state_text(meta, policy):
+    """段階53・54: 写真の下に、取得に使った学名と判定した状態（開花／つぼみ／不明）。つぼみは注記を添える。"""
+    pp = policy["photos"]["phenology"]
+    st = meta.get("state") or pp["unknown_label"]
+    line = pp["state_line"].format(scientific=meta.get("scientific") or "", state=st)
+    return line + (pp["bud_note"] if st == "つぼみ" else "")
+
+
 def short_author(meta, policy):
     """カードに添える撮影者名。iNaturalist の定型の表記(「(c) 名前, some rights reserved …」)は名前だけ、ほかは表記そのまま。"""
     a = meta["attribution"]
@@ -160,7 +168,10 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
 
     def credit(got):
         meta = got[0]
-        return f'<span class="credit">{esc(h["photo_credit"].format(author=short_author(meta, policy), license=meta["license"]))}</span>'
+        out = f'<span class="credit">{esc(h["photo_credit"].format(author=short_author(meta, policy), license=meta["license"]))}</span>'
+        if meta.get("rule"):                                    # 段階54: 花の写真（開花優先の規則で評価したもの）は、学名と状態も出す
+            out += f'<span class="credit">{esc(state_text(meta, policy))}</span>'
+        return out
 
     def species_card(name, with_season):
         got = photo(name)

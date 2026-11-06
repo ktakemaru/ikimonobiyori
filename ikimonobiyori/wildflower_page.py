@@ -99,12 +99,7 @@ def page_html(title, body, h, pool):
             + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
 
 
-def state_text(meta, policy):
-    """段階53: 写真の下に、取得に使った学名と判定した状態（開花／つぼみ／不明）。つぼみは注記を添える。"""
-    pp = policy["photos"]["phenology"]
-    st = meta.get("state") or pp["unknown_label"]
-    line = pp["state_line"].format(scientific=meta.get("scientific") or "", state=st)
-    return line + (pp["bud_note"] if st == "つぼみ" else "")
+state_text = guide_page.state_text
 
 
 def build_overview(r, *, policy, now, photo_for):

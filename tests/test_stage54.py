@@ -114,5 +114,17 @@ class Machida(unittest.TestCase):
         self.assertEqual(F.dropped(date(2026, 11, 6), doc), {})            # 曜日チェックを通る
 
 
+class PagesShowState(unittest.TestCase):
+    def test_state_text_shared(self):
+        from ikimonobiyori import guide, guide_page, wildflower_page
+        pol = guide.load_policy()
+        meta = {"scientific": "Fritillaria testus", "state": "つぼみ", "rule": pol["photos"]["phenology"]["rule_version"]["value"]}
+        t = guide_page.state_text(meta, pol)
+        self.assertIn("Fritillaria testus", t)
+        self.assertIn("つぼみ", t)
+        self.assertIs(wildflower_page.state_text, guide_page.state_text)
+        self.assertIn(pol["photos"]["phenology"]["unknown_label"], guide_page.state_text({"scientific": "A b"}, pol))
+
+
 if __name__ == "__main__":
     unittest.main()
