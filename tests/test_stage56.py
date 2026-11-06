@@ -293,6 +293,13 @@ class SectionHeadings(unittest.TestCase):
         third_only = HEAD.replace("で、冬鳥のカモ類が見られそうです。", "で、冬鳥のカモ類と、湿地の鳥が見られそうです。", 1).replace("試験の公園: この時期", "試験の公園: 湿地ではなく、この時期")
         self.assertNotIn("lead_mismatch", codes(self.c(third_only)))
 
+    def test_rule_text_matches_the_plan_in_all_three_files(self):
+        for f in ("CLAUDE.md", "AGENTS.md", ".claude/skills/ikimono-weekend/SKILL.md"):
+            t = (ROOT / f).read_text(encoding="utf-8")
+            self.assertIn("節が2つ以上のときだけ", t, f)
+            self.assertIn("plan の `sections` に従う", t, f)
+            self.assertNotIn("該当がない狙いは作らない)で", t, f)             # 計画と矛盾する古い文面は残さない
+
     def test_headings_come_from_the_plan_policy(self):
         self.assertEqual(V.section_headings(), set(POL["aims"]["labels"].values()))
 
