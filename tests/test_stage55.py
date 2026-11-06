@@ -73,7 +73,7 @@ class FestivalCrossYear(unittest.TestCase):
 class NoYamakeiUrlInData(unittest.TestCase):
     """段階55 第8部（利用者の決定 2026-11-06）: 事実データに山と溪谷オンラインの URL を置かない。台帳の承認待ち情報源（ビジターセンター）と
     取り扱い規則（policy の restricted_sources）は除く。"""
-    ALLOWED = {"sources/secondary/autumn_leaves.yaml", "observations/policy.yaml"}
+    ALLOWED = {"sources/secondary/autumn_leaves.yaml", "observations/policy.yaml", "visitor_centers/policy.yaml"}
 
     def test_fact_data_has_no_yamakei_url(self):
         from pathlib import Path
@@ -99,6 +99,101 @@ class NoYamakeiUrlInData(unittest.TestCase):
         self.assertIn("コマクサ", names)
         notes_sites = {m["site"] for m in data["mountain_notes"]}
         self.assertNotIn("m076", notes_sites)                       # 会津駒ヶ岳: 山と溪谷オンラインだけが出どころの記載を削除
+
+
+# ---- 第2部: ビジターセンター・自然観察施設の台帳 ----
+from ikimonobiyori import visitor_centers as V  # noqa: E402
+
+VP = V.load_policy()
+
+
+def center(**kw):
+    c = {"id": "vc-test", "name": "試験自然観察センター", "operator": "試験財団", "operator_kind": "財団", "site_url": "https://nature.example.org/",
+         "info_url": "https://nature.example.org/news/", "frequency": "毎週", "format": "html", "class": "official", "within_range": True,
+         "terms": {"url": "https://nature.example.org/policy", "reprint_banned": False, "note": "転載・自動取得の記載なし"},
+         "approval": {"status": "pending", "reason": "承認待ち"}}
+    c.update(kw)
+    return c
+
+
+def report(**kw):
+    r = {"center": "vc-test", "date": "2026-11-05", "state": "紅葉が見ごろ", "species": ["ジョウビタキ", "シメ"], "url": "https://nature.example.org/news/1"}
+    r.update(kw)
+    return r
+
+
+class VisitorCenterLedger(unittest.TestCase):
+    TODAY = date(2026, 11, 7)
+
+    def test_valid_center_passes_and_ledger_starts_pending(self):
+        self.assertEqual(V.validate_center(center(), VP), [])
+        for c in V.load_centers():                              # 新しく足す施設はすべて承認待ち（承認は本人）
+            self.assertEqual(c["approval"]["status"], "pending", c["id"])
+
+    def test_required_fields_and_ranges(self):
+        self.assertTrue(V.validate_center(center(name=None), VP))
+        self.assertTrue(V.validate_center(center(**{"class": "official?"}), VP))
+        self.assertTrue(V.validate_center(center(format="docx"), VP))
+        self.assertTrue(V.validate_center(center(site_url="javascript:alert(1)"), VP))
+
+    def test_excluded_hosts(self):
+        for u in ("https://www.facebook.com/x", "https://x.com/y", "https://tenki.jp/a", "https://www.yamakei-online.com/mt_info/info_detail.php"):
+            self.assertTrue(V.validate_center(center(info_url=u), VP), u)
+
+    def test_state_is_limited_to_30_chars_and_not_a_sentence(self):
+        self.assertEqual(V.validate_report(report(), VP), [])
+        self.assertTrue(V.validate_report(report(state="あ" * 31), VP))
+        self.assertEqual(V.validate_report(report(state="あ" * 30), VP), [])
+        self.assertTrue(V.validate_report(report(state="色づき始めました。山頂は寒いです"), VP))
+
+    def test_species_are_limited_to_10_one_word_each(self):
+        self.assertEqual(V.validate_report(report(species=[f"鳥{i}" for i in range(10)]), VP), [])
+        self.assertTrue(V.validate_report(report(species=[f"鳥{i}" for i in range(11)]), VP))
+        self.assertTrue(V.validate_report(report(species=["ジョウビタキが木にとまっていました。"]), VP))
+
+    def test_article_text_is_not_accepted(self):
+        self.assertTrue(V.validate_report(report(body="記事の本文"), VP))
+        self.assertTrue(V.validate_report(report(text="お便りの文章"), VP))
+        self.assertTrue(V.validate_report(report(date="11/5"), VP))                      # 年のない日付は受け付けない
+
+    def test_pending_center_is_never_used(self):
+        c = center()
+        self.assertEqual(V.usable_center(c, self.TODAY, VP), (False, "not_approved"))
+        self.assertEqual(V.usable_report(report(), [c], self.TODAY, VP), (False, "not_approved"))
+        self.assertEqual(V.approved_centers(self.TODAY, [c], VP), [])
+        self.assertEqual(len(V.pending_centers([c])), 1)
+
+    def test_approved_center_is_used_and_revoked_is_not(self):
+        ok = center(approval={"status": "approved", "approved_by": "利用者", "reason": "承認"})
+        self.assertEqual(V.usable_report(report(), [ok], self.TODAY, VP), (True, None))
+        rv = center(approval={"status": "revoked", "reason": "取り消し"})
+        self.assertEqual(V.usable_center(rv, self.TODAY, VP), (False, "revoked"))
+        noone = center(approval={"status": "approved", "reason": "承認者なし"})
+        self.assertEqual(V.usable_center(noone, self.TODAY, VP), (False, "invalid"))        # 承認した人が書かれていない承認は通さない
+
+    def test_reprint_ban_must_be_stated_in_the_note(self):
+        bad = center(terms={"url": "https://nature.example.org/policy", "reprint_banned": True, "note": "規約あり"})
+        self.assertTrue(V.validate_center(bad, VP))
+        good = center(terms={"url": "https://nature.example.org/policy", "reprint_banned": True, "note": "転載禁止の明示あり（無断転載を禁ずる）"})
+        self.assertEqual(V.validate_center(good, VP), [])
+
+    def test_season_end_uses_dated_year(self):
+        appr = {"status": "approved", "approved_by": "利用者", "reason": "承認"}
+        last_year = center(approval=appr, season_end={"last_issue": "2025-10-31"})
+        self.assertEqual(V.usable_center(last_year, self.TODAY, VP), (False, "previous_season"))      # 前シーズンの最終号しかない
+        ended = center(approval=appr, season_end={"last_issue": "2026-10-31"})
+        self.assertEqual(V.usable_center(ended, self.TODAY, VP), (False, "ended"))                   # 今シーズンの最終号を過ぎた
+        running = center(approval=appr, season_end={"last_issue": "2026-12-25"})
+        self.assertEqual(V.usable_center(running, self.TODAY, VP), (True, None))
+        self.assertTrue(V.validate_center(center(season_end={"last_issue": "10/31"}), VP))             # 年のない日付は受け付けない
+
+    def test_old_report_of_previous_season_is_not_used(self):
+        appr = {"status": "approved", "approved_by": "利用者", "reason": "承認"}
+        self.assertEqual(V.usable_report(report(date="2025-11-05"), [center(approval=appr)], self.TODAY, VP), (False, "previous_season"))
+
+    def test_report_line_has_only_short_words_date_and_center(self):
+        line = V.report_line(center(), report(), VP)
+        self.assertEqual(line, "試験自然観察センター発信、11/5時点: 紅葉が見ごろ（ジョウビタキ・シメ）")
 
 
 if __name__ == "__main__":

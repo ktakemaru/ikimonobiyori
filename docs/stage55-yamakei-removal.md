@@ -26,7 +26,7 @@
 
 ## 残っているもの（変更しないもの。指示書 第8部 6）
 - `ikimonobiyori/data/sources/secondary/autumn_leaves.yaml`: 高尾・御岳ビジターセンターの承認待ちの情報源（URL）。
-- `ikimonobiyori/data/observations/policy.yaml`: 取り扱い規則（`restricted_sources.hosts`）。
+- `ikimonobiyori/data/observations/policy.yaml`: 取り扱い規則（`restricted_sources.hosts`）。`ikimonobiyori/data/visitor_centers/policy.yaml`: 対象外のホストの一覧（第2部で追加。規則の記述）。
 - 規則を説明・検査するコードとテスト: `ikimonobiyori/regress.py`（承認待ちの語の検出）、`tests/test_stage53.py`・`tests/test_stage54.py`（合成データ。実在の記事ではない）。
 - `docs/operations.md`（規則の説明）。
 - 利用者が書いた指示書（`docs/stage51-…`・`docs/stage53-…`・`docs/stage54-…`・`docs/stage55-…-instructions.md`）と、`docs/stage16-decisions.md` の決定の記録（サイト名の言及のみ）。
