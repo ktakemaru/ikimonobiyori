@@ -23,3 +23,6 @@ lead_mismatch は見出しを挟んでも数える(第1部の commit に実装)�
 
 ## 第6部 済み(commit)
 docs/sources-approval.md(施設20件+台帳の承認待ち32件+山と溪谷オンライン。推奨 承認してよい8/要判断4/保留8)。tests に ApprovalList。全テストを4分割: 1278件(数えた全体 1278)すべて OK。
+
+## 第7部 済み(commit)
+動作確認4問(plan→答え→検査 合格)。見つかった不具合3件(休みの判定・野鳥の見込み・総合の plan)を修正。docs/stage56-report.md。全テスト4分割 1281件 OK。回帰 24/24。

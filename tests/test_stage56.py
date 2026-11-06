@@ -448,3 +448,50 @@ class ApprovalList(unittest.TestCase):
         doc = (ROOT / "docs" / "sources-approval.md").read_text(encoding="utf-8")
         self.assertNotIn("yamakei-online", doc)
         self.assertIn("承認は本人が行う", doc)
+
+
+# ---- 第7部の動作確認で見つかった不具合の修正 ----
+class LiveCheckFixes(unittest.TestCase):
+    def test_a_facility_that_is_open_that_day_is_not_excluded(self):
+        # 休みの規則を調べて「休みの日ではありません」(closed: false)の結果が付いているだけでは、除かない
+        open_day = [{"date": "2026-11-14", "closed": False, "line": "11/14(土)は試験の施設の休みの日ではありません。"}]
+        shut = [{"date": "2026-11-14", "closed": True, "line": "11/14(土)は試験の施設が休みです。"}]
+        c1 = cand("開いている公園", km=20, state="見頃", sdate="2026-11-12", age=1, rel="in_peak", closed_on=open_day)
+        c2 = cand("休みの公園", km=21, state="見頃", sdate="2026-11-12", age=1, rel="in_peak", closed_on=shut)
+        p = plan_of([c1, c2], dates=("2026-11-14",))
+        r = {x["name"]: x["reason"] for x in p["ranking"]}
+        self.assertIsNone(r["開いている公園"])
+        self.assertEqual(r["休みの公園"], "closed_that_day")
+
+    def test_birds_are_scored_by_the_park_records(self):
+        def bird(name, kind, date_, older=False):
+            return {"name": name, "kind": kind, "date": date_, "older": older}
+        recent = dict(cand("新しい記録の公園", km=20, typical=None, rel=None), park_birds=[bird("カルガモ", "recent", "2026-11-06")])
+        old = dict(cand("古い記録の公園", km=20, typical=None, rel=None), park_birds=[bird("サシバ", "recent", "2026-10-12", True)])
+        none = dict(cand("記録なしの公園", km=20, typical=None, rel=None), park_birds=[])
+        f = {"dates": ["2026-11-07"], "origin": "横浜", "now": "2026-11-07T10:00:00+09:00",
+             "subjects": {"birds": {"candidates": [recent, old, none], "avoid": [], "nearby_out_of_region": []}}}
+        p = AP.build(f, "birds", POL)
+        by = {x["name"]: x for x in p["ranking"]}
+        self.assertEqual(by["新しい記録の公園"]["outlook"], "in_peak")
+        self.assertEqual(by["古い記録の公園"]["outlook"], "toward")
+        self.assertEqual(by["記録なしの公園"]["outlook"], "unknown")
+        self.assertGreater(by["新しい記録の公園"]["score"], by["古い記録の公園"]["score"])
+        self.assertTrue(all(x["phrase"] is None for x in p["picks"]))              # 野鳥に『見頃』の言い回しは付けない
+
+    def test_all_subjects_plan_takes_one_pick_from_each_subject(self):
+        f = facts_of(BASE)
+        flower = [cand("花の試験園", km=30, state="見頃", sdate="2026-11-12", age=1, rel="in_peak", city="花市")]
+        bird = [dict(cand("鳥の試験園", km=25, typical=None, rel=None, city="鳥市"),
+                     park_birds=[{"name": "カルガモ", "kind": "recent", "date": "2026-11-06", "older": False}])]
+        f["subjects"]["flowers"] = {"candidates": flower, "avoid": [], "nearby_out_of_region": []}
+        f["subjects"]["birds"] = {"candidates": bird, "avoid": [], "nearby_out_of_region": []}
+        p = AP.build_all(f, POL)
+        self.assertEqual(p["subject"], "all")
+        self.assertEqual({x["subject"] for x in p["picks"]}, {"autumn_leaves", "flowers", "birds"})
+        self.assertEqual(len(p["picks"]), 3)
+        self.assertEqual({r["subject"] for r in p["ranking"]}, {"autumn_leaves", "flowers", "birds"})
+        with tempfile.TemporaryDirectory() as d:                                         # ask plan は、対象が複数なら all で作る
+            Path(d, "facts.json").write_text(json.dumps(f, ensure_ascii=False), encoding="utf-8")
+            doc = ask.Flow(d, now=ask.S.parse_now("2026-11-07T10:00:00+09:00")).plan()
+            self.assertEqual(doc["subject"], "all")
