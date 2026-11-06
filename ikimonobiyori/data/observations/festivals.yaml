@@ -358,3 +358,20 @@ festivals:
     taken_on: '2026-11-06'
     raw: ["2026年11月14日（土）～11月23日（月・祝）"]
     notes: "詳細ページを取得して確認した。曜日は2026年の暦と合う"
+  - id: ibaraki-moonlight-rose-2026
+    name: Moonlight Rose Garden 2026
+    spots: [obs-hana-0010]
+    organizer: いばらきフラワーパーク
+    organizer_class: official
+    organizer_note: "施設自身の公式サイトの発信。『主催』の明記はないが、施設の催しとして掲載している"
+    start: '2026-10-10'
+    end: '2027-01-24'
+    lightup: {start: '2026-10-10', end: '2027-01-24', hours: "17:00〜20:30", where: いばらきフラワーパーク, note: "開園時間は第1部10/10〜11/23 9:00〜20:30、第2部11/28〜1/24 12:00〜20:30"}
+    venue: いばらきフラワーパーク（石岡市下青柳200）
+    contact: null
+    url: "https://www.flowerpark.or.jp/news-column/moonlight2026/"
+    publisher: いばらきフラワーパーク
+    published: '2026-09-11'
+    taken_on: '2026-11-07'
+    raw: ["2026年10月10日（土）から2027年1月24日（日）まで", "11/28（土）～2027/1/24（日）"]
+    notes: "公式サイトで確認した（段階55 第7部。段階54で曜日チェックが年またぎで落ちたため保留していたもの）。曜日は各日付の年の暦と合う"

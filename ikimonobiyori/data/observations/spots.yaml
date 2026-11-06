@@ -1172,3 +1172,14 @@ spots:
     pages:
       - {url: "https://www.ibarakiguide.jp/event.php?mode=detail&code=1394", publisher: 観光いばらき, source_class: secondary}
     search: "下妻市菊まつり 大宝八幡宮"
+  - id: obs-hana-0010
+    subject: flowers
+    name: "いばらきフラワーパーク"
+    prefecture: 茨城県
+    city: 石岡市
+    area: 茨城
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.flowerpark.or.jp/news-column/moonlight2026/", publisher: いばらきフラワーパーク, source_class: official}
+    search: "いばらきフラワーパーク バラ"

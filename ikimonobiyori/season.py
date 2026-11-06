@@ -52,26 +52,61 @@ def is_previous_season(update, today, policy=None):
 
 
 # ---- 段階53: 日付と曜日の整合性（前年以前の情報を見分ける） ----
-WEEKDAY_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*[（(]\s*([月火水木金土日])"),
-               re.compile(r"(\d{1,2})月\s*(\d{1,2})日\s*[（(]\s*([月火水木金土日])"))
+WD = "月火水木金土日"
+RANGE_MARKS = "〜～~-−–ー"
+TOKEN_RE = re.compile(
+    r"(?P<full>(?:(?P<y>\d{4})\s*[年/]\s*)?(?P<mo>\d{1,2})\s*[月/]\s*(?P<d>\d{1,2})\s*日?(?:\s*[（(]\s*(?P<w>[月火水木金土日])(?:曜日?)?[）)]?)?)"
+    r"|(?<=[" + RANGE_MARKS + r"])\s*(?P<d2>\d{1,2})\s*日\s*[（(]\s*(?P<w2>[月火水木金土日])(?:曜日?)?[）)]?")
+GAP_RE = re.compile(r"^\s*(?:[" + RANGE_MARKS + r"]|から)\s*$")
+
+
+def _tokens(text, base_year):
+    """本文の日付を順に読み、年を決める。年つきの日付はその年。年のない日付は、直前の日付と範囲（〜）でつながっていれば直前の日付以後の最初の該当日の年
+    （「2026年12月25日〜1月3日」の終わりは2027年）、そうでなければ base_year。月のない終わり（「10月23日（金）〜24日（土）」の24日）は直前の月。
+    → [(原文, date か None, 曜日 か None)]。存在しない日付は date が None。"""
+    out, prev = [], None
+    for m in TOKEN_RE.finditer(text or ""):
+        linked = prev is not None and prev["date"] is not None and GAP_RE.match(text[prev["end"]:m.start()] or "") is not None
+        if m.group("full"):
+            mo, d, w = int(m.group("mo")), int(m.group("d")), m.group("w")
+            if m.group("y"):
+                y = int(m.group("y"))
+            elif linked:
+                y = prev["date"].year + (1 if (mo, d) < (prev["date"].month, prev["date"].day) else 0)
+            else:
+                y = base_year
+        else:
+            if not linked:
+                continue
+            d, w = int(m.group("d2")), m.group("w2")
+            mo, y = prev["date"].month, prev["date"].year
+            if d < prev["date"].day:
+                mo += 1
+                if mo > 12:
+                    mo, y = 1, y + 1
+        try:
+            dt = date(y, mo, d)
+        except ValueError:
+            dt = None
+        tok = {"text": m.group(0).strip(), "date": dt, "weekday": w, "end": m.end()}
+        out.append(tok)
+        prev = tok
+    return out
 
 
 def weekday_check(text, year, policy=None):
-    """「10/25(土)」「11月15日（土曜日）」のように日付と曜日が書かれている箇所が、year の暦と合うかを確かめる。
+    """「10/25(土)」「11月15日（土曜日）」「2026年12月25日（金）〜2027年1月3日（日）」のように日付と曜日が書かれている箇所が、その日付の年の暦と合うかを確かめる。
+    年のない日付は year（今シーズンの年）の暦で、範囲の終わりは直前の日付以後の最初の該当日の年で照合する（年またぎ。段階55）。
     → {"checked": 件数, "mismatches": [原文の断片]}。曜日の書かれた日付がなければ checked は 0（判定しない）。存在しない日付は不一致にする。"""
     policy = policy or load_policy()
     names = val(policy["season_check"]["weekday_names"])
     checked, bad = 0, []
-    for rx in WEEKDAY_RES:
-        for m in rx.finditer(text or ""):
-            mo, d, w = int(m.group(1)), int(m.group(2)), m.group(3)
-            checked += 1
-            try:
-                ok = names[date(year, mo, d).weekday()] == w
-            except ValueError:
-                ok = False
-            if not ok:
-                bad.append(m.group(0))
+    for t in _tokens(text, year):
+        if not t["weekday"]:
+            continue
+        checked += 1
+        if t["date"] is None or names[t["date"].weekday()] != t["weekday"]:
+            bad.append(t["text"])
     return {"checked": checked, "mismatches": bad}
 
 

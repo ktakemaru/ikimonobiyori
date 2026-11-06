@@ -4,3 +4,4 @@
 
 | 部 | 状態 | commit | メモ |
 |---|---|---|---|
+| 7 | 済み | (下記) | 曜日チェックを日付ごとの年で照合(season._tokens)。年またぎ・年省略の終わり・月省略の終わりに対応。Moonlight Rose Garden を公式(flowerpark.or.jp)で確認して追加。test_stage55 11件 OK、回帰 20/20 |
