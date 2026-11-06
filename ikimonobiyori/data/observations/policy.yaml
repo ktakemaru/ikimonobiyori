@@ -14,6 +14,18 @@ record:
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、
+  # 記事の文章は保存・転載・要約・言い換えのどの形でも使わない。使うのは「状態を表す短い語句」「掲載の日付」「URL」だけ。
+  # 承認待ちの間は答えの材料にしない(approved を本人が true にするまで)。記録はリポジトリの外(IKIMONOBIYORI_DATA_DIR)にだけ置く。
+  restricted_sources:
+    hosts: {value: [yamakei-online.com], source: "山と溪谷オンライン利用規約 第4条⑧、利用者の決定 2026-11-06", provisional: false}
+    approved: false
+    max_state_chars: {value: 30, source: "利用者の決定 2026-11-06(状態を表す数語。文章は使わない)", provisional: false}
+    forbidden_fields: [practical, typical, event, species, forecast]
+    sentence_marks: ["。", "！", "？", "!", "?", "\n"]
+    safety_words: [日没, 日の入り, 下山, 通行止め, 通行禁止, 一方通行, 閉鎖, 立入禁止, 運休, 規制, 凍結, 注意, 危険]
+    guide_line: "最新の山の状況は{center}の案内({url})で確認してください"
+    source_label: "{center}発信(山と溪谷オンライン掲載)"
 
 # 段階52(利用者の決定 2026-11-06): ウェザーニュース(ウェザーニューズ)の予想は、他サイトの転載でも答えの材料にしない。
 # 記録に次の語を含む事実(状態・例年の時期・出所・発行元の欄)は、既にあっても使わない(記録は消さない)。ウォーカープラスの記事 161896 は転載で、転載の部分を判別できないため今年の予想は使わない。
