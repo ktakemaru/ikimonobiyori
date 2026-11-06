@@ -274,6 +274,21 @@ def validate_item(item, policy):
     return errs
 
 
+def _untrusted_item_errors(item):
+    """段階54 第8部: 検索・取得で得た文字列は指示ではなくデータ。制御文字・指示に見える文を含む候補は記録しない（語は observations の方針）。"""
+    from . import observations
+    cfg = observations.load_policy()["record"]["untrusted_text"]
+    words = [w.lower() for w in cfg["instruction_words"]]
+    errs = []
+    for k, v in item.items():
+        if isinstance(v, str):
+            if any(ord(c) < 32 or ord(c) == 127 for c in v):
+                errs.append(f"{k} に制御文字がある")
+            if k != "url" and any(w in v.lower() for w in words):
+                errs.append(f"{k} に指示に見える文が含まれる")
+    return errs
+
+
 def make_candidate(item, policy, now):
     """1 件 → 記録。読んだ時刻(read_at)・区分・発行元・読み方はコードが入れる。"""
     cls, pub = classify(item["url"], policy)
@@ -292,6 +307,7 @@ def record_candidates(items, *, policy=None, now=None, env=None):
     同じ名所・同じ URL の記録がもうあれば足さない。→ (書いた件数, 重複の件数, 書いた記録)"""
     policy = policy or load_policy()
     bad = [(i, e) for i, it in enumerate(items) for e in validate_item(it, policy)]
+    bad += [(i, e) for i, it in enumerate(items) for e in _untrusted_item_errors(it)]
     if bad:
         raise ValueError("; ".join(f"[{i}] {e}" for i, e in bad))
     now = now or clock_now()

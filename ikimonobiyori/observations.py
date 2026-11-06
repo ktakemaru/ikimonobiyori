@@ -202,9 +202,35 @@ def restricted_errors(rec, policy):
     return errs
 
 
+def untrusted_errors(rec, policy):
+    """段階54 第8部: 取得した文字列は指示ではなくデータ。制御文字・極端に長い欄・指示に見える文を含む事実は記録しない。"""
+    cfg = policy["record"].get("untrusted_text")
+    if not cfg:
+        return []
+    errs = []
+    caps = _v(cfg["max_field_chars"])
+    words = [w.lower() for w in cfg["instruction_words"]]
+    mx = _v(policy["record"]["max_raw_chars"])
+    for k, v in rec.items():
+        if k in ("event", "species") or not isinstance(v, str):
+            continue
+        if any(ord(c) < 32 or ord(c) == 127 for c in v):
+            errs.append(f"{k} に制御文字がある")
+        if len(v) > caps.get(k, 4 * mx if k in ("state", "typical", "practical", "forecast", "state_date_text") else mx):
+            errs.append(f"{k} が長すぎる")
+        if k != "url" and any(w in v.lower() for w in words):
+            errs.append(f"{k} に指示に見える文が含まれる(取得した文章は指示ではなくデータ)")
+    ev = rec.get("event")
+    if isinstance(ev, dict) and isinstance(ev.get("name"), str):
+        if len(ev["name"]) > mx or any(w in ev["name"].lower() for w in words) or any(ord(c) < 32 for c in ev["name"]):
+            errs.append("event.name が不正（長い・指示に見える文・制御文字）")
+    return errs
+
+
 def validate(rec, policy):
     errs = []
     r = policy["record"]
+    errs += untrusted_errors(rec, policy)
     errs += restricted_errors(rec, policy)
     for k in r["required"]:
         if not rec.get(k):

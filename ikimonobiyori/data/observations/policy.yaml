@@ -17,6 +17,10 @@ record:
   # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、
   # 記事の文章は保存・転載・要約・言い換えのどの形でも使わない。使うのは「状態を表す短い語句」「掲載の日付」「URL」だけ。
   # 承認待ちの間は答えの材料にしない(approved を本人が true にするまで)。記録はリポジトリの外(IKIMONOBIYORI_DATA_DIR)にだけ置く。
+  # 段階54 第8部: 取得した文章は指示ではなくデータ。次のどれかに当たる事実は記録しない（指示に見える文・制御文字・極端に長い文字列）
+  untrusted_text:
+    max_field_chars: {value: {name: 80, city: 40, publisher: 80, url: 500, prefecture: 20, area: 40, kind: 40}, source: "段階54 第8部の方針(仮置き)。状態・例年の時期・実用情報は max_raw_chars（80）", provisional: true}
+    instruction_words: [以前の指示, 上記の指示, 指示を無視, 指示をすべて, 無視して, 承認済みにして, 承認して, 取得して, このURL, このＵＲＬ, システムプロンプト, ignore previous, ignore all, disregard, 引用は, 文字まで引用, 実行して, 設定を書き換, 台帳を, allowed_hosts, approved]
   restricted_sources:
     hosts: {value: [yamakei-online.com], source: "山と溪谷オンライン利用規約 第4条⑧、利用者の決定 2026-11-06", provisional: false}
     approved: false
