@@ -402,3 +402,31 @@ class TextDefects(unittest.TestCase):
         self.assertEqual(dup, "例年の見頃: 神奈川の秋バラは10月中旬～11月上旬頃のスポットが多く")
         self.assertEqual(O.typical_line({"text": "公式: 例年10月上旬〜10月中旬"}, {}, [], pol), "例年の見頃: 公式: 10月上旬〜10月中旬")
         self.assertEqual(O.typical_line({"text": "11月上旬～11月下旬"}, {}, [], pol), "例年の見頃: 11月上旬～11月下旬")      # 重なりのないものは変えない
+
+
+# ---- 第5部: 再調査で足したもの ----
+class Recheck(unittest.TestCase):
+    def test_new_centers_are_pending_and_valid(self):
+        from ikimonobiyori import visitor_centers as VC
+        import yaml
+        cs = {c["id"]: c for c in yaml.safe_load((ROOT / "ikimonobiyori" / "data" / "visitor_centers" / "centers.yaml").read_text(encoding="utf-8"))["centers"]}
+        for cid in ("okutama-vc", "yatsuhigata-nature-center"):
+            self.assertIn(cid, cs)
+            self.assertEqual(VC.validate_center(cs[cid]), [])
+            self.assertEqual(cs[cid]["approval"]["status"], "pending")                    # 承認は本人。承認待ちは答えの材料にしない
+        self.assertTrue(cs["okutama-vc"]["terms"]["reprint_banned"])                       # 複製・転用の無断禁止（『転載』の語ではないが禁止として扱う）
+        self.assertEqual([c["id"] for c in VC.pending_centers() if c["id"] in ("okutama-vc", "yatsuhigata-nature-center")],
+                         ["okutama-vc", "yatsuhigata-nature-center"])
+        from datetime import date as _d
+        self.assertEqual(VC.approved_centers(_d(2026, 11, 7)), [])                           # 承認済みは0件のまま
+
+    def test_new_events_are_usable_with_year_and_weekday(self):
+        from datetime import date
+        from ikimonobiyori import festivals as FE
+        doc = FE.load()
+        self.assertEqual(FE.dropped(date(2026, 11, 7), doc), {})
+        sayama = FE.for_spot("obs-kouyou-0092", date(2026, 11, 7), doc)
+        self.assertEqual(sayama[0]["period_line"], "11/15（日）に開催（あと8日）")          # 1日だけの行事の書式
+        fuji = FE.for_spot("kouyou-0012", date(2026, 11, 14), doc)
+        self.assertEqual(fuji[0]["period_line"], "主催者が設定した期間: まつり期間中(11/7〜11/29)")
+        self.assertEqual(fuji[0]["lightup_line"], "ライトアップ: 日没〜21:00")             # 期間が書かれていないので日にちを足さない

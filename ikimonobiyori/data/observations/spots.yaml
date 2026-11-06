@@ -1202,3 +1202,16 @@ spots:
     pages:
       - {url: "http://www.saitama-shizen.info/today/index.html", publisher: 埼玉県自然学習センター, source_class: official}
     search: "北本自然観察公園 野鳥 バードウォッチング"
+  # 段階56 第5部: 狭山丘陵いきものふれあいの里センターの観察会（festivals.yaml）。所在地は埼玉県の公式ページ（所沢市上山口2090-3）で確認した。座標は確認できていないため付けない
+  - id: obs-kouyou-0092
+    subject: autumn_leaves
+    name: "狭山丘陵（湖畔への路）"
+    aliases: ["狭山丘陵いきものふれあいの里センター", "狭山湖畔"]
+    prefecture: 埼玉県
+    city: 所沢市
+    area: 埼玉
+    origin: festival
+    typical:
+    pages:
+      - {url: "https://www.pref.saitama.lg.jp/a0508/library-info/hureai0811-4-2.html", publisher: 埼玉県, source_class: official}
+    search: "狭山丘陵 狭山湖 冬紅葉 観察会"
