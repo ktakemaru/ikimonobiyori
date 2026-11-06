@@ -180,3 +180,9 @@ https://www.soleil-park.jp/blooming-info
 4. `ask inat-refresh` を含む野鳥の実通信の動作確認。
 5. 履歴に残る山と溪谷オンラインの記事の文章（`b4925dd`・`dafe512`）の扱い（段階54から継続。履歴の書き換えは本人の判断）。
 6. 以前に公開した高山植物の Artifact に山と溪谷オンラインのリンクが残っている可能性（作り直して差し替える）。
+
+## 全テストの再実行(追記)
+2026-11-07、stage55 の最後の commit(998adea)の状態で、手元で全テストを再実行した(`python -X utf8 -m unittest discover -s tests`)。
+結果: `Ran 1237 tests in 327.564s` / 最後の行 `OK`。失敗・エラーは 0 件。
+前回の全テストで落ちた `test_stage42` は、第8部の削除に合わせた期待値の変更(理由は docs/stage55-yamakei-removal.md)のあとで通ることを確認した。今回は直す対象がなく、コードもテストも変えていない。
+CI(Ubuntu・Windows)の結果は、push 後に確認が要る。
