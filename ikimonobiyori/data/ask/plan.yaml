@@ -1,0 +1,97 @@
+# 段階56: 答えの「計画」(ask plan。ikimonobiyori/answer_plan.py)の方針。点数の重み・区分・語はここに置く(CLAUDE.md 規則 1)。
+# 値はすべて暫定(provisional: true)。出典のある値ではなく、2026-11-07 の試用(来週末の紅葉)で選び方が人の判断に依存していたため、
+# 選び方を再現できる式にするための初期値。変えるときは docs/stage56-report.md の点数の式を更新する。
+schema: ikimonobiyori-answer-plan/1
+provisional: true
+
+# 対象日に対する見込みの区分(最も重い要素)。facts の relation(例年の窓と現況から observations.py が出す)と現況の段から決める
+outlook:
+  # 区分 → 点数。順位の並べ替えには rank を使う(大きいほど見込みが高い)
+  points: {in_peak: 40, toward: 34, late: 22, early: 8, unknown: 12, past: 0}
+  rank: {in_peak: 4, toward: 3, late: 2, unknown: 1, early: 0, past: -1}
+  labels: {in_peak: 見頃中の見込み, toward: 見頃に向かう見込み, late: 終盤の見込み, early: 見頃はまだ先の見込み, unknown: 見込みは不明, past: 見頃を過ぎている見込み}
+  # 言い切りにならない定型(検査の now_peak_claim に触れない)。unknown は見込みを書かない
+  phrases:
+    in_peak: 見頃が続いている可能性があります
+    toward: 見頃に向かう可能性があります
+    late: 終盤の可能性があります
+    early: 見頃はまだ先の可能性があります
+    past: 見頃を過ぎている可能性が高いです
+    unknown: null
+  # 現況がなく、例年の窓だけが根拠のとき(「続いている」と言わない)
+  phrases_typical_only:
+    in_peak: 例年の見頃の時期にあたります
+    toward: 例年の見頃が近づく時期です
+    late: 例年の見頃の終わりに近い時期です
+  # 例年の見頃の終わりまでこの日数以内なら「終盤」
+  late_days: 7
+  # 例年の窓がなく、現況の「見頃」だけが根拠のとき、その日付から対象日までこの日数を超えたら見込みは「不明」(古い現況で先の週を言わない)
+  state_only_max_gap_days: 14
+  # 例年の見頃の始まりまでこの日数以内なら「向かう」、それより先は「まだ先」
+  toward_days: 14
+
+# 現況の新しさ(現況の日付から今日までの日数)
+freshness:
+  by_age_days: [[3, 15], [7, 10], [14, 5]]
+  older: 2
+  undated: 3
+  no_current: 0
+
+# 距離の点数 = weight × max(0, 1 − 距離 / ref_km)。狙いによって重みを変える
+distance:
+  near: {weight: 20, ref_km: 80}
+  drive: {weight: 10, ref_km: 150}
+  trek: {weight: 10, ref_km: 150}
+  night: {weight: 12, ref_km: 100}
+  far: {weight: 4, ref_km: 250}
+  other: {weight: 0, ref_km: 250}
+  # 座標がない名所の距離の見積もり(都道府県の単位。見積もりであることを plan に残す)。ない都道府県は距離の点を付けず、距離の狙いに入れない
+  estimate_km_by_prefecture: {神奈川県: 40, 東京都: 40}
+
+bonus:
+  festival_active: 6       # 対象日がまつり・行事の期間内(現況の代わりにはしない)
+  lightup_active: 6        # 対象日がライトアップの期間内
+  practical: 2             # 読めた公式の実用情報がある
+  source_official: 3       # 現況の出どころが公式
+  source_secondary: 2      # 現況の出どころが紹介サイトなど(公式でないことを理由に落とさない)
+
+# 狙い(節)。priority の順に最初に当てはまるものを、その名所の狙いにする
+aims:
+  order: [near, drive, trek, far, night]       # 節を並べる順
+  labels: {near: 近場で手軽に, drive: ドライブ・足を延ばして, trek: 歩いて楽しむ, far: 絶景・遠出, night: 夜・ライトアップ}
+  near_max_km: 50
+  far_min_km: 100
+  # 歩く・山歩き: 標高(座標つきの名所)か名前
+  trek_min_elevation_m: 600
+  trek_name_re: "(山|岳|峠|尾根)(\\(.*\\))?$|^丹沢|山頂"
+  # 夜・ライトアップ: 対象日にライトアップがあり、現況の見込みが次のとき(現況が取れている名所は、その名所の狙いの節に入れる)
+  night_outlooks: [unknown, early]
+  section_max: 3
+  min_sections_for_headings: 2
+  # 日帰りの上限(これより遠い名所は計画に入れない)
+  day_trip_max_km: 180
+
+selection:
+  picks: 3
+  # 今回のおすすめは、まずこの狙いの各1位から(あれば)選び、足りなければほかの節の1位、節の2位以降の順
+  pick_aims: [near, trek, far]
+  # 節に入れる点数の下限。下回る名所は「現況なし」「現況が古い」で外す
+  min_score: 25
+
+# 不採用の理由コード(内部用。答えには出さない)
+reasons:
+  past_expected: 過ぎている見込み
+  too_far: 距離が遠い(狙いに合わない)
+  no_current: 現況なし
+  stale_current: 現況が古い
+  same_aim_has_better: 同じ狙いに上位がある
+  same_area: 重複(同じ地域)
+  duplicate_spot: 重複(同じ名所)
+  pending_source_only: 承認待ちの情報源のみ
+  out_of_range: 範囲外
+  closed_that_day: 対象日が休み
+  no_aim: 狙いが決まらない(距離が分からない)
+
+# 同じ名所の別の書き方をまとめる(頭の地域名を取る)
+duplicate:
+  strip_prefixes: [箱根, 丹沢, 奥日光]

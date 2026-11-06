@@ -7,6 +7,7 @@ biyori-hub の concierge_skill/ask.py(段階H8〜H10)が行っていた生き物
   python -X utf8 -m ikimonobiyori.ask inat-refresh --out-dir DIR [--now ISO]     (計測フックの下だけ。呼ぶのは biyori-hub など計測フックを持つ側)
   python -X utf8 -m ikimonobiyori.ask record --out-dir DIR --batch reads.json
   python -X utf8 -m ikimonobiyori.ask facts --out-dir DIR [--fetch-log fetch_log.json]   (対象・地域・日は prepare の値を使う)
+  python -X utf8 -m ikimonobiyori.ask plan --out-dir DIR [--subject S] [--explain 名所] [--override 名所 --reason 理由 [--replace 計画の名所]]   (段階56。facts のあと、答えを書く前に)
   python -X utf8 -m ikimonobiyori.ask verify --out-dir DIR --text answer.txt [--gazetteer names.json ...]
 
 作業フォルダ(--out-dir。省くと IKIMONOBIYORI_DATA_DIR の下の ask/<日時>)に plan.json・records.json・facts.json・check.json・
@@ -21,6 +22,7 @@ from pathlib import Path
 
 import yaml
 
+from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
 from . import observations as O
@@ -460,6 +462,24 @@ class Flow:
         self.call("page", ok=chk["ok"], parks=len(shown))
         return doc
 
+    # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
+    def plan(self, subject=None, override=None, reason=None, replace=None):
+        facts_doc = self._load("facts.json", None)
+        if facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        subs = list(facts_doc["subjects"])
+        sj = subject or (subs[0] if len(subs) == 1 else None)
+        if sj is None:
+            raise ValueError(f"対象が複数ある。--subject で選ぶ: {subs}")
+        old = self._load("answer_plan.json", None)
+        keep = (old or {}).get("overrides") if old and old.get("subject") == sj else []
+        doc = AP.build(facts_doc, sj, overrides=keep)
+        if override:
+            AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
+        self._save("answer_plan.json", doc)
+        self.call("plan", subject=sj, picks=len(doc["picks"]), sections=len(doc["sections"]), overrides=len(doc["overrides"]))
+        return doc
+
     # 4. 検査
     def verify(self, text, gazetteer=(), reply=False):
         facts_doc = self._load("facts.json", None)
@@ -473,7 +493,7 @@ class Flow:
             (self.workdir / "final_reply.txt").write_text(final, encoding="utf-8")
             self.call("verify", reply=True, ok=r["ok"], errors=len(V.report_lines(r)))
             return r, final
-        r = V.check(text, facts_doc, gazetteer=gaz)
+        r = V.check(text, facts_doc, gazetteer=gaz, plan=self._load("answer_plan.json", None))
         self._save("check.json", r)
         final = text if r["ok"] else V.strip(text, r)
         (self.workdir / "final.txt").write_text(final, encoding="utf-8")
@@ -530,6 +550,13 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", required=True)
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
+    p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--subject", choices=O.load_policy()["subjects"])
+    p.add_argument("--explain", help="名所の順位・点数の内訳・不採用の理由を見る")
+    p.add_argument("--override", help="計画にない名所を答えに足す(--reason が要る)")
+    p.add_argument("--reason")
+    p.add_argument("--replace", help="--override で差し替える計画の名所")
     p = sub.add_parser("verify")
     p.add_argument("--out-dir")
     p.add_argument("--text", required=True)
@@ -578,6 +605,10 @@ def main(argv=None, http_get=None):
             out = flow.record(a.batch)
             _out(out)
             return 1 if out.get("rejected") else 0
+        if a.step == "plan":
+            doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace)
+            _out(AP.explain(doc, a.explain) if a.explain else doc)
+            return 0
         if a.step == "photos":
             _out(flow.photos())
             return 0

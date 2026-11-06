@@ -14,6 +14,7 @@ from datetime import date
 
 import yaml
 
+from . import answer_plan as AP
 from . import ask_verify as V
 from .paths import DATA_FILES_DIR
 
@@ -44,6 +45,13 @@ def build_facts(case):
                "events": c.get("events", []), "reason_labels": [], "history": []}
         if c.get("festivals"):
             out["festivals"] = c["festivals"]
+        if c.get("window"):                           # 段階56: 計画の見込みに使う例年の窓 [開始MM-DD, 終了MM-DD]
+            out["typical"] = [{"text": c.get("typ") or "例年", "start": c["window"][0], "end": c["window"][1], "url": "https://kouyou.example.com/t", "publisher": "試験サイト"}]
+        for k_src, k_dst in (("km", "distance_km"), ("rel", "relation"), ("elev", "elevation_m"), ("age", None)):
+            if c.get(k_src) is not None and k_dst:
+                out[k_dst] = c[k_src]
+        if cur and c.get("age") is not None:
+            cur["age_days"] = c["age"]
         return out
 
     subj = f["subject"]
@@ -115,7 +123,10 @@ def run_case(case, words, min_lead=0):
     if case.get("generate"):                      # コードが作る文は、聞き返しだけで終わらないなどの汎用の検査も通す
         errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in V.generic_check(text)["errors"] if e["code"] not in ("ask_back_only", "too_few_candidates")]
     if facts is not None:
-        r = V.check(text, facts, V.load_rules())
+        plan = None
+        if case.get("plan"):                          # 段階56: 計画を通す形。答えの①②③が計画のおすすめと合っていること
+            plan = AP.build(facts, case["facts"]["subject"], overrides=case.get("overrides"))
+        r = V.check(text, facts, V.load_rules(), plan=plan)
         for s in r["sentences"]:
             errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in s["errors"]]
         errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in r["answer_errors"]]
