@@ -67,8 +67,10 @@ centers:
   hours: 9:00〜16:30、休館は年末年始（12/29〜1/3）のみ
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 公式ブログ（Blogger）。【自然情報】の記事が日付つきで並ぶ
 - id: nishitanzawa-vc
   name: 県立西丹沢ビジターセンター
@@ -89,8 +91,10 @@ centers:
   hours: 8:30〜16:30（12月〜3月は16:00まで）、休館は月曜（祝日の場合は翌平日）と年末年始
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 公式ブログ（旧 西丹沢自然教室）
 - id: hakone-vc
   name: 箱根ビジターセンター
@@ -111,8 +115,10 @@ centers:
   hours: 9:00〜17:00（最終入館16:30）、休館は毎週月曜と12/29〜1/3。2026-12-01〜2027年1月中旬は大規模改修のため休館
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   season_end:
     last_issue: '2026-11-30'
     note: 2026-12-01 から改修で休館（情報の更新が止まる見込み）
@@ -136,8 +142,10 @@ centers:
   hours: null
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 公式トップは https://sancyokohama.sakura.ne.jp/（wbsj.org/sanctuary/yokohama/ から301。公式トップの更新情報 2026-11-05）。同じブログは公式の台帳（birds）に承認済みで既出
 - id: takao-vc
   name: 高尾ビジターセンター
@@ -159,8 +167,10 @@ centers:
   allowed_fields: [state, date, url, hours]        # 種名は使わない（段階56b。承認は変えない）
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入。種名は使わない条件(allowed_fields)
   notes: 旧 URL（ces-net.jp/takaovc/）は移転案内のみ。紅葉情報の記事（2026-10-30、『11/06更新』）と『近ごろの自然情報』（花・実・野鳥の種名。日付なし）がある。山と溪谷オンラインに載っていた情報の発信元はここ。この施設自身のサイトを使うため、山と溪谷オンラインの掲載は使わない
 - id: mitake-vc
   name: 御岳ビジターセンター
@@ -182,8 +192,10 @@ centers:
   allowed_fields: [state, date, url, hours]        # 種名は使わない（段階56b。承認は変えない）
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入。種名は使わない条件(allowed_fields)
   notes: 『御岳山の今』に紅葉・花・鳥・実が日付つき（2026.11.6 など）で載る。旧 URL は移転案内のみ
 - id: kitamoto-shizen-gakushu
   name: 埼玉県自然学習センター・北本自然観察公園
@@ -204,8 +216,10 @@ centers:
   hours: 9:00〜17:00、休館は月曜（祝日の場合は開館）・祝日の翌日・年末年始
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 事業ページ（event/event.html）の最終更新 2026-11-04。文字コードは CP932（宣言なし）。現在の読み取りの道具では状態の語・種名を正しく読めない。読むには、バイト列を CP932 で復号するコード（visitor_centers.decode_html）による取得が要り、これは Python のコードによる実通信なので、利用者がその場で認めたときだけ（CLAUDE.md 規則 6）
 - id: sayama-ikimono-fureai
   name: 狭山丘陵いきものふれあいの里センター
@@ -226,8 +240,10 @@ centers:
   hours: 9:00〜17:00、月曜定休（祝日・県民の日を除く）、祝日の翌日、年末年始（12/29〜1/3）
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
 - id: kiryu-shizen-kansatsu
   name: 桐生自然観察の森
   operator: 桐生市 都市整備部 公園緑地課
@@ -291,8 +307,10 @@ centers:
   hours: 2026-09-01〜11-30 毎日 9:00〜16:00
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   season_end:
     last_issue: '2026-11-30'
     note: 開館期間の終わり（開館 9/1〜11/30）
@@ -315,8 +333,10 @@ centers:
   hours: 4/1〜11/10 9:00〜17:00、11/11〜3/31 10:00〜16:00。休館は5〜11月無休、12〜4月は月曜、12/29〜1/3
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
 - id: nasu-kogen-vc
   name: 那須高原ビジターセンター
   operator: 那須平成の森フィールドセンター（プライバシーポリシーの原文）
@@ -358,8 +378,10 @@ centers:
   hours: 9:00〜16:30（5・7・8月は〜17:00）、休園は水曜（祝日の翌日、GW・お盆・年末年始は無休）
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階55 第3部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
 - id: shiobara-vc
   name: 塩原温泉ビジターセンター
   operator: 確認できず（トップが文字化けして原文を読めなかった）
@@ -448,6 +470,8 @@ centers:
   hours: 9:00〜17:00（入館は16:30まで）、休館日は月曜（祝休日の場合は次の平日）・12/28〜1/1
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階56 第5部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-07'
+    reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 『谷津干潟ブログ』の『自然情報』（304件）に渡り鳥の観察記録（例 10/6 エゾビタキ、10/1 ノビタキ）。最新は10/13で、11月分は未掲載。習志野市のトップが外部リンクで向いている別ホスト（seibu-la.co.jp）
