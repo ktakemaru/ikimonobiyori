@@ -15,3 +15,6 @@ line_exhibition: "{facility}の{kind}「{title}」: {start}〜{end}。"
 deadline: "申し込みの締め切りは{date}({weekday})"
 capacity: "定員{n}人"
 target: "対象は{target}"
+# 行事の答えの検査(facility_events.answer_errors)。施設・場所の名前とみなす語の終わり。答えに出る名前は、行事の台帳の施設名・場所にあるものだけ
+answer_check:
+  name_suffixes: [博物館, 美術館, 資料館, 科学館, ビジターセンター, 植物園, 動物園, 水族館]

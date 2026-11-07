@@ -9,7 +9,7 @@ from . import facility_events as FE
 from . import jma_normals as JN
 from . import knowledge as K
 from . import pdf_text as PT
-from .ask_verify import URL_RE, _n, load_rules, process_excuse_errors, question_errors
+from .ask_verify import URL_RE, _n, load_rules, process_excuse_errors, question_errors, term_errors
 
 
 def cfg():
@@ -141,6 +141,14 @@ def check(text, cards, rules=None):
         if any(x.rstrip("。") in text for x in r["facts"]) and r["source"].get("url") and r["source"]["url"] not in text:
             errs.append({"code": "knowledge_source_missing", "detail": r["title"]})
     return errs
+
+
+def check_event(text, today, events=None, rules=None):
+    """行事の答えの検査(意図が event のとき。知識カードの検査と名所の候補数の下限は当てない)。
+    台帳との照合(facility_events.answer_errors)+ 作業の事情・内部用語・答えの中の質問(既存の規則)。"""
+    rules = rules or load_rules()
+    return (FE.answer_errors(text, today, events) + process_excuse_errors(text, rules) + question_errors(text, rules)
+            + [{"code": e["code"], "detail": e["detail"]} for e in term_errors(text, rules)])
 
 
 def _normal_values():
