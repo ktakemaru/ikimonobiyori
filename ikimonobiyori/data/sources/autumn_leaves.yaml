@@ -276,7 +276,7 @@ sources:
       - {site: kouyou-0013, label: "紅葉情報"}
     readable: {status: ok, checked_on: "2026-11-07", robots: allows, observed_latest_update: "2026-11-05", note: "2026-11-07: HTTP 200 で本文を文字で読めた(最新の記事は「長瀞紅葉情報2026.11.5」。地点ごとの状態は「色づき進む」「まもなく見頃」などの語。凡例は 青葉→色づき始め(1～2分)→色づき進む(3～4分)→…→見頃(8～10分)→見頃終了→落葉)。robots.txt は全体に /wp-admin/・/wp-includes/ だけ拒否。2026-10-23 と段階14b は HTTP 503 だった"}
     terms: {status: no_prohibition_found, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項(本人が確認 2026-11-07): 利用・転載・複製・自動取得を禁じる記載なし"}
-    approval: {status: pending, reason: "読めていない(HTTP 503)。状態の書き方も未確認"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-07", reason: "承認(2026-11-07)。本人の指示による記入。免責事項を確認"}
 
   - id: showakinen-flower-information
     publisher: 国営昭和記念公園(昭和記念公園管理センター)
