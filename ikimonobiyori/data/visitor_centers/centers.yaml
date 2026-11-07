@@ -561,3 +561,89 @@ centers:
   hours: null
   checked_on: '2026-11-07'
   approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める。施設の個別ページは未確認(検索の要約で環境省が 2021 年に開設と確認)"}
+# 段階60 第4部(2026-11-07): 現在の公式ページで確かめた値だけ。空欄(null)は確かめられなかった項目
+- id: komine-vc
+  name: 小峰ビジターセンター
+  operator: 公益財団法人 東京都公園協会
+  operator_kind: 公益財団法人
+  prefecture: 東京都
+  site_url: https://www.tokyo-park.or.jp/nature/komine/
+  info_url: https://www.tokyo-park.or.jp/park/komine/news/nature/
+  frequency: null
+  format: html
+  last_update: '2026-10-25'
+  class: official
+  publications: [{title: ニュースレター, url: "https://www.tokyo-park.or.jp/park/komine/newsletter.html", latest: null}]
+  terms: {url: "https://www.tokyo-park.or.jp/sitepolicy/", reprint_banned: null, note: "サイトポリシーの本文は未確認。著作権の表示(東京都公園協会)あり"}
+  within_range: 未確認
+  hours: "9:00〜16:30(月曜定休。月曜祝日はその翌火曜日。夏休み期間を除く。年末年始 12/29〜1/3 休館)"
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。運営主体はサイトの表記(施設の指定管理の記載は未確認)"}
+- id: noro-hirogawara-ic
+  name: 野呂川広河原インフォメーションセンター
+  operator: 環境省
+  operator_kind: 国
+  prefecture: 山梨県
+  site_url: https://www.env.go.jp/park/minamialps/access/
+  info_url: null
+  frequency: null
+  format: null
+  last_update: null
+  class: official
+  publications: [{title: パンフレット, url: "https://www.env.go.jp/park/content/000109134.pdf", latest: null}]
+  terms: {url: "https://www.env.go.jp/mail.html", reprint_banned: false, note: "環境省の著作権・リンクについて(出典明示で利用可。段階59 の谷川岳と同じ)"}
+  within_range: 未確認
+  hours: "9:00〜17:00(季節により変更あり)。休館 11月中旬〜6月上旬"
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。自然情報のページは確認できず(施設の案内だけ)。運営主体は環境省のページの施設欄による"}
+- id: akanuma-ic
+  name: 赤沼自然情報センター
+  operator: 栃木県立日光自然博物館
+  operator_kind: 県
+  prefecture: 栃木県
+  site_url: http://www.nikko-nsm.co.jp/bus.html
+  info_url: https://blog.nikko-nsm.co.jp/cat_blog/低公害バス自然情報/
+  frequency: null
+  format: html
+  last_update: null
+  class: official
+  publications: []
+  terms: {url: null, reprint_banned: null, note: "転載の記載なし。著作権の表示(Nikko Natural Science Museum)あり"}
+  within_range: 未確認
+  hours: "展示スペース 9:00〜16:00。開館期間 4月25日〜11月30日(2026年)"
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。運営主体は日光自然博物館のサイトのページの表記による。自然情報のブログの最新日は未取得"}
+- id: kazawa-ic
+  name: 鹿沢インフォメーションセンター
+  operator: 環境省
+  operator_kind: 国
+  prefecture: 群馬県
+  site_url: https://www.env.go.jp/park/joshinetsu/access/index.html
+  info_url: null
+  frequency: null
+  format: null
+  last_update: null
+  class: official
+  publications: []
+  terms: {url: "http://www.env.go.jp/mail.html", reprint_banned: false, note: "環境省の著作権・リンクについて"}
+  within_range: 未確認
+  hours: "9:00〜17:00(5月〜10月)。無休(12月〜3月は金・土・日・祝のみ営業)"
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。自然情報のページは確認できず(関連リンク kazawa.jp は未取得)。運営主体は環境省のページの施設欄による"}
+- id: tanukiko-shizenjuku
+  name: 田貫湖ふれあい自然塾
+  operator: 環境省
+  operator_kind: 国
+  prefecture: 静岡県
+  site_url: https://www.tanuki-ko.gr.jp/
+  info_url: https://tanuki-ko.gr.jp/nature-season/
+  frequency: null
+  format: html
+  last_update: null
+  class: official
+  publications: [{title: 月間スケジュール, url: null, latest: 2026年12月}]
+  terms: {url: "https://tanuki-ko.gr.jp/contact/privacy/", reprint_banned: null, note: "転載の記載なし。All Rights Reserved の表示あり"}
+  within_range: 未確認
+  hours: null
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。サイトの表記は「環境省 田貫湖ふれあい自然塾」。開館情報 /facility/ と自然情報の日付は未取得"}
