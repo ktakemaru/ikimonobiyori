@@ -122,6 +122,14 @@ refine:
   # 近場で該当がないときは、距離の分かる候補を近い順にこの件数だけ残す
   nearest_fallback: 3
 
+# 段階57 第9部: 期間別の節の見出し(この形の行で節を始める)
+period_heading: "{days}のおすすめ"
+
+# 段階57 第9部: 答えの前の事前取得(ask refresh --plan)。計画の上位候補のうち、現況が対象日よりこの日数以上古いもの・現況がないものを読む
+refresh:
+  stale_days: 3
+  max_pages: 8
+
 # 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
 segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
 

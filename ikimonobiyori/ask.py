@@ -227,6 +227,7 @@ def _facts_subset(facts_doc, plan_doc):
     out = {k: v for k, v in facts_doc.items() if k != "subjects"}
     out["subjects"] = {s: {**v, "candidates": [c for c in v.get("candidates") or [] if c["name"] in names], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
                        for s, v in facts_doc["subjects"].items()}
+    out.pop("periods", None)
     return out
 
 
@@ -407,7 +408,7 @@ class Flow:
         return out
 
     # 3. 材料
-    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None):
+    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None, periods=None):
         origin = origin or self.policy["default_origin"]
         plan_doc = plan_doc if plan_doc is not None else self._load("plan.json", None)
         subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
@@ -430,6 +431,13 @@ class Flow:
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
                          "scope": self.policy["scope_line"].format(labels="・".join(labels[s] for s in subjects))},
                "inat_refresh": inat, "notes": self.notes}
+        if periods:                                       # 段階57 第9部: 期間ごとの材料(同じ記録から。通信しない)
+            doc["periods"] = []
+            for ds in periods:
+                psub = {s: O.facts(s, region=region, dates=ds, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
+                mark_stale_display(psub, self.policy)
+                doc["periods"].append({"dates": [d.isoformat() for d in ds], "subjects": psub})
+            doc["dates"] = [d.isoformat() for ds in periods for d in ds]
         from . import visitor_centers as VC               # 段階55 第5部: 承認済みのビジターセンター・自然観察施設の事実（なければキーごと出さない）
         vc = VC.fact_rows(self.now.date(), subjects=list(subjects), env=self.env)
         if vc:
@@ -645,6 +653,13 @@ class Flow:
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
         subs = list(facts_doc["subjects"])
+        if facts_doc.get("periods"):                                  # 段階57 第9部: 期間が 2 つ。期間ごとの計画
+            doc = AP.build_periods(facts_doc)
+            doc["offers"] = []
+            self._save("answer_plan.json", doc)
+            save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+            self.call("plan", subject="periods", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
+            return doc
         sj = subject or ("all" if len(subs) > 1 else subs[0])         # 対象が複数の質問(総合)は all
         old = self._load("answer_plan.json", None)
         keep = (old or {}).get("overrides") if old and old.get("subject") == sj else []
@@ -717,6 +732,7 @@ def main(argv=None, http_get=None):
         p.add_argument("--origin")
         p.add_argument("--now")
         if name == "facts":
+            p.add_argument("--periods", help="期間が 2 つの質問(「今週末か来週末」): 2026-11-07,2026-11-08;2026-11-14,2026-11-15")
             p.add_argument("--fetch-log", help="読んだ・読めなかったページ {read:[{url,publisher}], failed:[{url,reason}]}")
     p = sub.add_parser("inat-refresh")
     p.add_argument("--out-dir", required=True)
@@ -745,6 +761,9 @@ def main(argv=None, http_get=None):
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
     p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
+    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
     p = sub.add_parser("origin", help="質問の文から出発地を決める(追質問だけ前の出発地を引き継ぐ。段階57)")
     p.add_argument("--question", help="質問の文")
     p.add_argument("--follow-up", action="store_true", help="直前の質問の追質問(同じ話題の続き)のとき")
@@ -817,7 +836,11 @@ def main(argv=None, http_get=None):
                 _out(flow.prepare(subjects, region, dates, origin))
                 return 0
             log = json.loads(Path(a.fetch_log).read_text(encoding="utf-8")) if a.fetch_log else {}
-            _out(flow.facts(subjects, region, dates, origin, fetch_log=log))
+            periods = None
+            if a.periods:
+                periods = [[date.fromisoformat(x) for x in chunk.split(",")] for chunk in a.periods.split(";")]
+                dates = periods[0]
+            _out(flow.facts(subjects, region, dates, origin, fetch_log=log, periods=periods))
             return 0
         if a.step == "inat-refresh":
             out = flow.inat_refresh(http_get=http_get)
@@ -837,6 +860,14 @@ def main(argv=None, http_get=None):
                 print(str(ex), file=sys.stderr)
                 return 2
             _out(AP.explain(doc, a.explain) if a.explain else doc)
+            return 0
+        if a.step == "refresh":
+            facts_doc = flow._load("facts.json", None)
+            plan_doc = flow._load("answer_plan.json", None)
+            if not facts_doc or not plan_doc:
+                print("先に facts と plan を実行してください", file=sys.stderr)
+                return 2
+            _out({"pages": AP.refresh_targets(facts_doc, plan_doc, fetched_today(flow.now))})
             return 0
         if a.step == "photos":
             _out(flow.photos())

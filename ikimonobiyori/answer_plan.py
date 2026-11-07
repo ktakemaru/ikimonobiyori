@@ -359,6 +359,62 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
 
 
+# ---- 事前取得の対象(段階57 第9部) ----
+
+def refresh_targets(facts_doc, plan, seen=(), policy=None):
+    """計画の上位候補のうち、現況が古い・ないものの読むページ(同じ日に読んだページは除く。最大 max_pages)。取得はエージェントの道具で行う(このコードは通信しない)。"""
+    pol = policy or load_policy()
+    cfg = pol["refresh"]
+    first = _d(facts_doc["dates"][0])
+    subjects = facts_doc["subjects"]
+    out, used = [], set(seen)
+    names = [(p.get("subject") or plan.get("subject"), p["name"]) for p in plan.get("picks") or []]
+    names += [(plan.get("subject"), it["name"]) for s in plan.get("sections") or [] for it in s["items"]]
+    done = set()
+    for sj, name in names:
+        if (sj, name) in done or sj not in subjects:
+            continue
+        done.add((sj, name))
+        c = next((x for x in subjects[sj].get("candidates") or [] if x["name"] == name), None)
+        if not c:
+            continue
+        cur = c.get("current")
+        sd = (cur or {}).get("state_date")
+        stale = (not cur) or (sd is None) or (first - _d(sd)).days >= cfg["stale_days"]
+        if not stale:
+            continue
+        for pg in c.get("pages") or []:
+            u = pg.get("url")
+            if u and u not in used and len(out) < cfg["max_pages"]:
+                used.add(u)
+                out.append({"name": name, "subject": sj, "url": u, "publisher": pg.get("publisher"), "source_class": pg.get("source_class"),
+                            "reason": "no_current" if not cur else "stale", "current_date": sd})
+    return out
+
+
+# ---- 期間別の節(段階57 第9部) ----
+
+def period_heading(dates, pol):
+    """期間の見出し(「11/7・11/8」)。"""
+    return pol["period_heading"].format(days="・".join(f"{_d(x).month}/{_d(x).day}" for x in dates))
+
+
+def build_periods(facts_doc, overrides=None, policy=None):
+    """facts.json の periods(期間ごとの subjects)から、期間ごとの計画を作る。答えは期間別の節で、それぞれに今回のおすすめ。"""
+    pol = policy or load_policy()
+    segs, picks, ranking = [], [], []
+    for per in facts_doc["periods"]:
+        sub_doc = {**facts_doc, "subjects": per["subjects"], "dates": per["dates"]}
+        subs = list(per["subjects"])
+        pl = build_all(sub_doc, pol, overrides) if len(subs) > 1 else build(sub_doc, subs[0], pol, overrides)
+        segs.append({"heading": period_heading(per["dates"], pol), "key": per["dates"][0], "plan": pl})
+        picks += [dict(p, period=per["dates"][0]) for p in pl["picks"] if p["name"] not in {x["name"] for x in picks}]
+        ranking += pl["ranking"]
+    return {"schema": SCHEMA, "subject": "periods", "dates": facts_doc["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
+            "use_headings": False, "sections": [], "picks": picks, "ranking": ranking, "segments": segs, "overrides": list(overrides or []),
+            "origin_line": (facts_doc.get("lines") or {}).get("origin_line")}
+
+
 # ---- 対象別の節(段階57 第3部) ----
 
 def _heading_of(line):

@@ -250,6 +250,17 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
+def process_excuse_errors(text, rules):
+    """段階57 第9部: 作業の事情の文・「ご希望なら調べます」型。調べられるものは答えの前に調べる。"""
+    out = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        for p in rules.get("process_excuse_phrases") or []:
+            if p in s:
+                out.append({"code": "process_excuse", "detail": s.strip()[:40]})
+                break
+    return out
+
+
 def stage57_text_errors(text, facts, mat, rules):
     """段階57 第4部: 記号のまま・対象の日でない日の開園時間・観察の記録があるのに「見つかっていません」。答えの決まり(practical_rules)の印があるときだけ。"""
     if not (facts.get("lines") or {}).get("practical_rules"):
@@ -328,6 +339,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += stage57_text_errors(text, facts, mat, rules)
+    answer_errors += process_excuse_errors(text, rules)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
@@ -734,6 +746,7 @@ def generic_check(text, rules=None, offers=None):
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
+    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules)]
     errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):

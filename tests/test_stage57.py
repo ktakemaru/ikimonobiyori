@@ -404,6 +404,73 @@ def O_point(name):
     return origins.municipal_point(name)
 
 
+class Part9Procedure(unittest.TestCase):
+    def test_process_excuses_fail_both_checks(self):
+        for s in ("今回は新しく取りに行っていません。", "今日この会話で読んだ情報だけで答えます。", "ツールが横浜と東京としか扱えません。", "ご希望なら調べます。"):
+            self.assertEqual([e["code"] for e in V.process_excuse_errors(s, RULES)], ["process_excuse"], s)
+            self.assertFalse(V.generic_check("おすすめです。\n① あ\n② い\n③ う\n" + s)["ok"], s)
+
+    def periods_doc(self):
+        ks = koyo_subject()
+        ks2 = koyo_subject()
+        f = facts_doc({"autumn_leaves": ks}, dates=("2026-11-07", "2026-11-08", "2026-11-14", "2026-11-15"))
+        f["periods"] = [{"dates": ["2026-11-07", "2026-11-08"], "subjects": {"autumn_leaves": ks}}, {"dates": ["2026-11-14", "2026-11-15"], "subjects": {"autumn_leaves": ks2}}]
+        return f
+
+    def test_two_periods_answer_passes_and_needs_both(self):
+        from ikimonobiyori import answer_plan as AP
+        f = self.periods_doc()
+        plan = AP.build_periods(f)
+        self.assertEqual([s["heading"] for s in plan["segments"]], ["11/7・11/8のおすすめ", "11/14・11/15のおすすめ"])
+        lines = ["どちらの週末も楽しめそうです。"]
+        urls = set()
+        for s in plan["segments"]:
+            lines += ["", s["heading"], "今週は次の場所です。", "今回のおすすめ"]
+            for i, p in enumerate(s["plan"]["picks"]):
+                c = next(x for x in f["subjects"]["autumn_leaves"]["candidates"] if x["name"] == p["name"])
+                lines.append(f"{'①②③'[i]} {p['name']}: {c['current']['state']}(11/5時点、試験市)。例年の見頃は11月です。")
+                urls.add(c["current"]["url"])
+        lines += ["", "確かさの補足", "アクセスや混雑は出かける前に公式ページで確認してください。", "", "出典"] + sorted(urls)
+        text = "\n".join(lines) + "\n"
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], V.report_lines(r))
+        head2 = plan["segments"][1]["heading"]
+        a, b = text.split(head2)
+        b = "\n".join(l for l in b.splitlines() if not l.startswith("①"))     # 2 つ目の節のおすすめを 1 件抜く
+        codes = [(e["code"], e["detail"][:14]) for e in V.check(a + head2 + b, f, RULES, plan=plan)["answer_errors"]]
+        self.assertTrue(any(c == "plan_pick_missing" and d.startswith(head2[:6]) for c, d in codes), codes)
+
+    def test_refresh_targets_are_old_or_missing_and_capped(self):
+        from ikimonobiyori import answer_plan as AP
+        s = koyo_subject()
+        s["candidates"][0]["current"] = None
+        s["candidates"][1]["current"]["state_date"] = "2026-11-07"              # 新しい現況は読まない
+        s["candidates"][2]["current"]["state_date"] = "2026-11-01"
+        for i, c in enumerate(s["candidates"]):
+            c["pages"] = [{"url": f"https://a.example/{i}/{j}", "publisher": "試験市"} for j in range(10)]
+        f = facts_doc({"autumn_leaves": s})
+        plan = AP.build(f, "autumn_leaves")
+        got = AP.refresh_targets(f, plan)
+        self.assertEqual(len(got), AP.load_policy()["refresh"]["max_pages"])
+        self.assertNotIn("試験の山", {x["name"] for x in got})
+        self.assertNotIn("https://a.example/0/0", {x["url"] for x in AP.refresh_targets(f, plan, seen={"https://a.example/0/0"})})
+
+    def test_steps_are_written_outside_the_repository(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            f = ask.Flow(Path(d) / "w", now=datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9))), env=env)
+            f._save("facts.json", facts_doc({"autumn_leaves": koyo_subject()}))
+            before = sorted(str(p) for p in (ROOT / "ikimonobiyori").rglob("*.yaml"))
+            f.plan()
+            self.assertTrue(Path(d, "ask", "last_plan.json").is_file())
+            self.assertEqual(before, sorted(str(p) for p in (ROOT / "ikimonobiyori").rglob("*.yaml")))
+
+    def test_rule_is_in_the_instructions(self):
+        for name in ("CLAUDE.md", "AGENTS.md", ".claude/skills/ikimono-weekend/SKILL.md"):
+            t = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn("リポジトリのファイルを変更しない", t)
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
