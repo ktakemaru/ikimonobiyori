@@ -449,5 +449,46 @@ class Part9PendingGate(unittest.TestCase):
                 self.assertEqual(len(Path(O.log_path("autumn_leaves", env)).read_text(encoding="utf-8").splitlines()), 2)   # 記録は残る
 
 
+class Part8Fixes(unittest.TestCase):
+    """第8部の動作確認で見つけて直したもの。"""
+
+    def test_visitor_center_line_only_for_the_places_in_the_answer(self):
+        from ikimonobiyori import skeleton as SK
+        t = {"visitor_center_places": {"t-a": ["試験山"], "t-b": ["別の湖"]}}
+        facts = {"visitor_centers": [{"center": "t-a", "line": "Aセンター発信、11/6時点: 色づき始め", "url": "https://a.example.org/"},
+                                     {"center": "t-b", "line": "Bセンター発信、11/6時点: 見頃", "url": "https://b.example.org/"}]}
+        rows = SK.vc_lines(facts, [{"name": "試験山", "city": "試験市"}], t)
+        self.assertEqual([r["center"] for r in rows], ["t-a"])
+        self.assertEqual(SK.vc_lines(facts, [], t), [])
+        from ikimonobiyori import answer_plan as AP
+        self.assertIn("hakone-vc", AP.load_policy()["skeleton"]["visitor_center_places"])
+
+    def test_now_intent_includes_the_present_state_wording(self):
+        from ikimonobiyori import intent
+        self.assertEqual(intent.classify("高尾山の今の様子を教えて"), "now")
+        self.assertEqual(intent.classify("冬桜について教えて"), "knowledge")
+
+    def test_place_answer_check_skips_only_the_candidate_count(self):
+        from ikimonobiyori import answer_plan as AP
+        self.assertEqual(AP.load_policy()["place_answer"]["verify_skip"], ["too_few_candidates"])
+
+    def test_knowledge_polish_uses_the_knowledge_check(self):
+        from ikimonobiyori import ask
+        cards = [{"title": "試験の花とは", "category": "種の解説", "place": "試験の花", "facts": ["春に咲く"], "condition": {"months": [4]},
+                  "source": {"name": "試験サイト", "url": "https://example.org/hana", "checked_on": "2026-11-07"}, "confidence": "紹介",
+                  "rights": "紹介サイト", "usage": "x"}]
+        sk = "試験の花とは: 春に咲く(試験サイト)。\n\n出典\nhttps://example.org/hana\n"
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            from ikimonobiyori import knowledge as K
+            K.add(cards[0], env=env)
+            f = ask.Flow(d, now=NOW, env=env)
+            import unittest.mock
+            from ikimonobiyori import intent
+            with unittest.mock.patch.object(intent, "cards_for", return_value=cards):
+                use, final, fr, verrs = f.polish_check("試験の花は、春に咲きます(試験サイト)。\n\n出典\nhttps://example.org/hana\n", sk, generic=True, question="試験の花について教えて")
+            self.assertFalse(any("候補" in e for e in verrs))                    # 一覧の答えの「候補 3 件」の検査は当てない
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -176,6 +176,20 @@ skeleton:
   inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
+  # 段階60 第8部: 承認済み施設の発信(facts の visitor_centers)を、どの名所の答えに添えるか(施設 id → 地域の語)。名所の名前・市区町村・地域に語が含まれれば添える
+  visitor_center_places:
+    hakone-vc: [箱根]
+    takao-vc: [高尾山, 八王子市]
+    mitake-vc: [御岳山, 御岳渓谷]
+    hadano-vc: [秦野, 丹沢, 大山]
+    nishitanzawa-vc: [西丹沢, 山北町]
+    yokohama-shizen-kansatsu: [横浜自然観察の森]
+    kitamoto-shizen-gakushu: [北本]
+    sayama-ikimono-fureai: [狭山丘陵]
+    nikko-yumoto-vc: [奥日光, 湯ノ湖, 戦場ヶ原, 小田代原]
+    nikko-shizen-hakubutsukan: [奥日光, 中禅寺湖, 戦場ヶ原]
+    nasu-heisei-no-mori: [那須]
+    yatsuhigata-nature-center: [谷津干潟]
 
 # 段階58 第10部: 複数テーマの組み合わせ(ikimonobiyori/combo.py)
 combo:
@@ -277,3 +291,7 @@ polish:
     retry: 事実の一致検査に通りません。整えなおせるのはあと 1 回です
     fallback: 事実の一致検査に通らないため、骨組みのまま出します
     ok: 事実の一致検査に合格しました
+
+# 段階60 第8部: 場所の質問(「高尾山の今の様子を教えて」)の答えの検査(ask verify --place)。1 か所の答えなので、候補数の下限は当てない(ほかの検査はそのまま)
+place_answer:
+  verify_skip: [too_few_candidates]
