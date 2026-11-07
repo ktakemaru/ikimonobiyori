@@ -13,8 +13,10 @@ facilities:
     note: 'サイトポリシー: コンテンツは著作権の対象。引用等の著作権法上認められる範囲で自由に利用でき、出典を記載する。第三者に権利があるものがある。書籍への転載等の二次的利用は事前に問い合わせ。robots.txt は 404(自動取得の記載なし)。権利メモ: 事実のみ・出典記載・転載しない'
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち(段階61 第2部)。規約メモを見て、本人が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-08'
+    reason: 承認(2026-11-08)。本人の指示による記入。規約メモを確認。事実のみ・出典記載
 events:
 - facility: kanagawa-museum
   kind: 講座
