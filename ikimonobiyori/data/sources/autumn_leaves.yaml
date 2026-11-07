@@ -155,8 +155,8 @@ sources:
       date_basis: updated_date
       note: "ページの CSV(ファイル名は日付で変わる。例 koyo_1106.csv。ページのリンクから辿る)。列: エリア名・市町村名・スポット名・URL・画像・見頃・標高・備考・状況。行に日付はないのでページの更新日を使う"
     readable: {status: ok, checked_on: "2026-11-07", robots: no_file, observed_latest_update: "2026-11-06", note: "CSV 36 行を読めた(状況の語は 1 色づき前・2 色付き始め・3 見頃・4 色あせ始め)。ページの HTML の 6 区分はすべて「現在、情報がありません」"}
-    terms: {status: not_checked, url: "https://www.yamanashi-kankou.jp/about/term.html", note: "「このサイトについて」に転載・利用条件の本文はない。免責事項(/about/term.html)は未読。© 表示あり"}
-    approval: {status: pending, reason: "指示書 段階57 第11部。承認は本人が決める"}
+    terms: {status: no_prohibition_found, url: "https://www.yamanashi-kankou.jp/about/term.html", note: "免責事項(2026-11-07 確認): 利用・転載・複製・自動取得を禁じる記載なし。利用は利用者の責任・損害は負わない旨だけ。© 表示あり"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-07", reason: "承認(2026-11-07)。本人の指示による記入。免責事項を確認(利用・転載・複製・自動取得を禁じる記載なし)"}
 
   - id: tokyo-park-rikugien-news
     publisher: 東京都公園協会(六義園サービスセンター)
@@ -528,8 +528,8 @@ sources:
       date_basis: updated_date
       note: "地点ごとの更新日と「ひとこと」の文。「見頃」の列はアイコンだけで凡例の文字がないので、段階にしない"
     readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "読めた(地点ごとの更新日 2026/10/23〜11/5)。ページの種別は秩父市公式サイトの表記あり"}
-    terms: {status: not_checked, url: "https://navi.city.chichibu.lg.jp/legal/", note: "免責事項のページが利用条件に近い。中身は未確認"}
-    approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
+    terms: {status: no_prohibition_found, url: "https://navi.city.chichibu.lg.jp/legal/", note: "免責事項に転載・利用の条件の記載なし。著作権の表示(copyright Chichibu City)だけ(段階58 で確認)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-07", reason: "承認(2026-11-07)。本人の指示による記入"}
 
   - id: nagatoro-koyo-matsuri-2026
     publisher: (一社)長瀞町観光協会
@@ -539,8 +539,8 @@ sources:
     covers:
       - {name: 長瀞紅葉まつり2026, label: "長瀞紅葉まつり2026"}
     readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "ページの見出しは 11月1日～30日。ライトアップの語は同じページにない"}
-    terms: {status: not_checked, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項のページ。中身は未確認"}
-    approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
+    terms: {status: no_prohibition_found, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項(2026-11-07 確認): 利用・転載・複製・自動取得を禁じる記載なし。正確性・変更・障害の免責だけ。All Rights Reserved の表示あり"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-07", reason: "承認(2026-11-07)。本人の指示による記入。免責事項を確認(利用・転載・複製・自動取得を禁じる記載なし)"}
 
   - id: nikko-kankou-lightup-2026
     publisher: 日光市観光協会
