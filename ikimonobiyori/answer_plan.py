@@ -470,7 +470,7 @@ def default_periods(question, now, policy=None):
     pol = policy or load_policy()
     cfg = pol["dates_default"]
     q = question or ""
-    if any(w in q for w in cfg["date_words"]):
+    if any(w in q for w in cfg["date_words"]) or any(re.search(p, q) for p in cfg.get("date_patterns") or []):
         return {"periods": None, "defaulted": False}
     wk1 = S.next_weekend(now)
     if any(w in q for w in cfg["plan_words"]):

@@ -282,5 +282,45 @@ class SurveyCounts(unittest.TestCase):
         self.assertNotIn("この冬の飛来の記録", intent.compose("試験ドリは来ている?", cards=[explain_card()]))
 
 
+
+# ---- 第6部: ask dates の 2 期間・文章の整えの検査の穴 ----
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from ikimonobiyori import answer_plan as AP  # noqa: E402
+from ikimonobiyori import polish as PL  # noqa: E402
+
+SK = ("今週末は箱根の紅葉が見頃に向かう可能性があります。\n\n今回のおすすめ\n"
+      "①試験の渓谷: 11/5時点で公式は「見ごろ」。例年は11月上旬〜11月下旬。\n\n出典\nhttps://kankou.example.org/koyo\n")
+
+
+class Part6(unittest.TestCase):
+    WED = datetime(2026, 11, 4, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+
+    def test_plan_question_without_date_gets_two_weekends_even_with_hi_or_tsuki_in_names(self):
+        for q in ("日光で紅葉の名所を探しています", "休日に行ける花の名所を探しています", "月夜野の紅葉を探しています"):
+            g = AP.default_periods(q, self.WED)
+            self.assertTrue(g["defaulted"], q)
+            self.assertEqual(len(g["periods"]), 2, q)
+
+    def test_real_dates_still_count_as_dates(self):
+        for q in ("11月15日に行きたい", "11/15に行きたい", "土曜に行きたい", "11月中旬に行きたい", "週末に行きたい"):
+            self.assertFalse(AP.default_periods(q, self.WED)["defaulted"], q)
+
+    def test_polished_text_matching_the_skeleton_passes(self):
+        text = ("今週末は、箱根の紅葉が見頃に向かう可能性があります。\n\n今回のおすすめ\n"
+                "①試験の渓谷: 11/5時点で、公式は「見ごろ」です。例年は11月上旬〜11月下旬です。\n\n出典\nhttps://kankou.example.org/koyo\n")
+        self.assertTrue(PL.check(SK, text)["ok"], PL.check(SK, text)["errors"])
+
+    def test_added_sentence_without_any_skeleton_fact_is_rejected(self):
+        text = SK.replace("今回のおすすめ\n", "冬に向けて山の空気も澄んでいきます。\n今回のおすすめ\n")
+        self.assertIn("polish_unmapped_sentence", [e["code"] for e in PL.check(SK, text)["errors"]])
+
+    def test_comparative_causal_and_season_words_not_in_skeleton_are_rejected(self):
+        for add in ("横浜からいちばん近い", "紅葉の季節に咲く", "見ごろなので"):
+            text = SK.replace("①試験の渓谷: ", f"①試験の渓谷({add}): ")
+            self.assertIn("polish_caution_word", [e["code"] for e in PL.check(SK, text)["errors"]], add)
+        self.assertEqual(PL.caution_errors("いちばん近い", "いちばん近い"), [])          # 骨組みにある語は通す
+
+
 if __name__ == "__main__":
     unittest.main()
