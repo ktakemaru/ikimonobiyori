@@ -97,6 +97,9 @@ reasons:
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
 
+# 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
+segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+
 # 段階57 第2部: 直前の答えの計画の保存(ask page・追質問が引き継ぐ。IKIMONOBIYORI_DATA_DIR の下)
 last_plan:
   file: ask/last_plan.json

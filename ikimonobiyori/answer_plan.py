@@ -310,9 +310,49 @@ def build_all(facts_doc, policy=None, overrides=None):
         if len(picks) < n and it["name"] not in used:
             picks.append(it); used.add(it["name"])
     picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(picks, key=key))]
+    segs = [{"heading": pol["segment_headings"][sj], "key": sj, "subject": sj} for sj in subs]     # 段階57 第3部: 対象別の節(それぞれに今回のおすすめ)で答えるときの見出し
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
-            "use_headings": False, "subjects": subs, "sections": [], "picks": picks,
+            "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs,
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
+
+
+# ---- 対象別の節(段階57 第3部) ----
+
+def _heading_of(line):
+    return re.sub(r"^[#■◆▼【\s]+|[】\s:：]+$", "", line)
+
+
+def segment_plan(plan, seg):
+    """節の計画(対象別は subjects の対象、期間別は節が持つ計画)。"""
+    return seg.get("plan") or (plan.get("subjects") or {}).get(seg.get("subject"))
+
+
+def split_segments(text, plan):
+    """答えを対象別(期間別)の節に分ける。見出しの行が 2 つ以上あるときだけ → [{"seg", "plan", "text"}]。なければ None(節に分けない答え)。"""
+    segs = (plan or {}).get("segments") or []
+    if len(segs) < 2:
+        return None
+    by_head = {s["heading"]: s for s in segs}
+    lines = text.splitlines()
+    marks = [(i, by_head[_heading_of(l)]) for i, l in enumerate(lines) if _heading_of(l) in by_head]
+    if len(marks) < 2:
+        return None
+    out = []
+    for j, (i, s) in enumerate(marks):
+        end = marks[j + 1][0] if j + 1 < len(marks) else len(lines)
+        out.append({"seg": s, "plan": segment_plan(plan, s), "text": "\n".join(lines[i + 1:end])})
+    return out
+
+
+def lead_text(text, plan):
+    """最初の節の見出しの前(全体の冒頭)。"""
+    by_head = {s["heading"] for s in (plan or {}).get("segments") or []}
+    out = []
+    for l in text.splitlines():
+        if _heading_of(l) in by_head:
+            break
+        out.append(l)
+    return "\n".join(out)
 
 
 # ---- 上書き・説明 ----

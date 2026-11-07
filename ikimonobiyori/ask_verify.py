@@ -268,6 +268,8 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
         sents.append({"line": line, "text": s, "errors": check_sentence(s, mat)})
     answer_errors = []
     mentioned = []
+    segs = AP.split_segments(text, plan)                        # 段階57 第3部: 対象別(期間別)の節があれば、節ごとに数える
+    mat.seg_text = {s["seg"].get("subject"): _n(s["text"]) for s in segs if s["seg"].get("subject")} if segs else None
     for c in mat.region_candidates:
         if any(f in _n(text) for f in short_names(c["name"])) and c["name"] not in mentioned:
             mentioned.append(c["name"])
@@ -276,8 +278,9 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
         answer_errors.append({"code": "too_few_candidates", "detail": f"地域の候補 {len(mentioned)} 件(必要 {need} 件)"})
     bird_names = {f for c in mat.spots if c.get("_subject") == "birds" for f in short_names(c.get("name") or "")}
     only_birds = set((facts.get("subjects") or {})) == {"birds"}
-    for blk in candidate_blocks(text):                          # 評価表 R4: 各候補(①②…の段)に例年の見頃(または昨年の記録)。野鳥は「この時期に見られる鳥」
-        is_bird = only_birds or any(f in _n(blk) for f in bird_names)
+    blocks = [(b, s["seg"].get("subject") == "birds" or (s["seg"].get("subject") is None and None)) for s in segs for b in candidate_blocks(s["text"])] if segs else [(b, None) for b in candidate_blocks(text)]
+    for blk, seg_bird in blocks:                                # 評価表 R4: 各候補(①②…の段)に例年の見頃(または昨年の記録)。野鳥は「この時期に見られる鳥」
+        is_bird = seg_bird if seg_bird is not None else (only_birds or any(f in _n(blk) for f in bird_names))
         words = rules.get("birds_typical_words", []) if is_bird else rules["typical_words"]
         if not any(w in blk for w in words):
             answer_errors.append({"code": "no_season_birds_in_candidate" if is_bird else "no_typical_in_candidate", "detail": blk.splitlines()[0][:30]})
@@ -288,17 +291,21 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
-    answer_errors += stage51_errors(text, facts, mat, rules)
+    answer_errors += stage51_errors(text, facts, mat, rules, plan=plan, segs=segs)
     answer_errors += restricted_source_errors(facts)
-    if plan:                                                                 # 段階56: 答えの採用と計画の照合
+    if plan and segs:                                                        # 段階57 第3部: 節ごとに、計画の今回のおすすめと照合する
+        for s in segs:
+            answer_errors += [{**e, "detail": f"{s['seg']['heading']}: {e['detail']}"} for e in AP.plan_errors(s["text"], s["plan"], mat, candidate_blocks(s["text"]), short_names)]
+    elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
+    n_seg = len(segs) if segs else 1                             # 段階57 第3部: 節が複数の答えは、上限を節の数だけ広げる(1 節あたりの量は同じ)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
-        if text.count(w) > mx:
-            answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
-    if len(text) > rules["max_chars"]:
-        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars']} 字)"})
+        if text.count(w) > mx * n_seg:
+            answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx * n_seg} 回まで)"})
+    if len(text) > rules["max_chars"] * n_seg:
+        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars'] * n_seg} 字)"})
     ok = not answer_errors and all(not x["errors"] for x in sents)
     return {"ok": ok, "sentences": sents, "answer_errors": answer_errors, "candidates_mentioned": mentioned}
 
@@ -368,7 +375,47 @@ def section_headings():
     return set(AP.load_policy()["aims"]["labels"].values())
 
 
-def stage51_errors(text, facts, mat, rules):
+def lead_errors(lines, cfg, facts, mat, kind=""):
+    """② 冒頭と「今回のおすすめ」の照合(lines: 答え、または節の行)。→ [エラー], (冒頭, おすすめの文)。"""
+    errs = []
+    heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
+    if not heads:
+        return errs, ("", "")
+    h = heads[0]
+    picks = []
+    heads_ = section_headings()
+    rest_ = lines[h + 1:]
+    for j, l in enumerate(rest_):
+        if re.match(cfg["lead_pick_re"], l):
+            picks.append(l)
+        elif picks and l.strip() in heads_:                              # 段階56: 狙い別の節の見出しを挟んでも、おすすめの続きとして数える
+            continue
+        elif picks and not l.strip() and next((x.strip() for x in rest_[j + 1:] if x.strip()), "") in heads_:
+            continue
+        elif picks:
+            break
+    lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
+    if picks and lead.strip():
+        errs += lead_vs_picks(lead, kind + "\n" + pick_text if kind else pick_text, len(picks), cfg, facts, mat)
+    return errs, (lead, pick_text)
+
+
+def lead_vs_picks(lead, pick_text, n, cfg, facts, mat):
+    errs = []
+    for kw in cfg["lead_kind_words"]:
+        if kw in lead and kw not in pick_text:
+            errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{n}件にない"})
+    if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
+        if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
+            errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
+    for c in mat.region_candidates:
+        names = short_names(c["name"])
+        if any(f in lead for f in names) and not any(f in pick_text for f in names):
+            errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
+    return errs
+
+
+def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
     """段階51(2026-11-06 の試用で見つかった 5 点)。facts の lines.answer_rules が印と同じときだけ当てる（ask facts が付ける）。
     ① 作業の報告を答えに出さない ② 冒頭の要約と「今回のおすすめ」の食い違い ③ iNaturalist の傾向は公式ではない・傾向の範囲を書く
     ④ 本文で使った事実の出典を出典リストに出す ⑤ 見込みを言い切らない・公式の文を丸ごと転載しない。"""
@@ -382,33 +429,17 @@ def stage51_errors(text, facts, mat, rules):
         if any(p in s for p in cfg["work_report_phrases"]):
             errs.append({"code": "work_report", "detail": s.strip()[:40]})
     lines = text.splitlines()                                               # ② 冒頭とおすすめ
-    heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
-    if heads:
-        h = heads[0]
-        picks = []
-        heads_ = section_headings()
-        rest_ = lines[h + 1:]
-        for j, l in enumerate(rest_):
-            if re.match(cfg["lead_pick_re"], l):
-                picks.append(l)
-            elif picks and l.strip() in heads_:                              # 段階56: 狙い別の節の見出しを挟んでも、おすすめの続きとして数える
-                continue
-            elif picks and not l.strip() and next((x.strip() for x in rest_[j + 1:] if x.strip()), "") in heads_:
-                continue
-            elif picks:
-                break
-        lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
-        if picks and lead.strip():
-            for kw in cfg["lead_kind_words"]:
-                if kw in lead and kw not in pick_text:
-                    errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{len(picks)}件にない"})
-            if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
-                if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
-                    errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
-            for c in mat.region_candidates:
-                names = short_names(c["name"])
-                if any(f in lead for f in names) and not any(f in pick_text for f in names):
-                    errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
+    if segs:                                                                # 段階57 第3部: 節ごとの冒頭とおすすめ。全体の冒頭は全部のおすすめと照合する
+        union = []
+        for s in segs:
+            e, (_lead, pick_text) = lead_errors(s["text"].splitlines(), cfg, facts, mat, kind=s["seg"]["heading"])
+            errs += [{**x, "detail": f"{s['seg']['heading']}: {x['detail']}"} for x in e]
+            union.append(s["seg"]["heading"] + "\n" + pick_text)
+        top = AP.lead_text(text, plan)
+        if top.strip() and any(union):
+            errs += lead_vs_picks(top, "\n".join(union), sum(len(u.splitlines()) for u in union), cfg, facts, mat)
+    else:
+        errs += lead_errors(lines, cfg, facts, mat)[0]
     for s in lines:                                                          # ③ iNaturalist（かっこの中の「。」で文が切れるので、行ごとに見る）
         if cfg["inat_word"] in s:
             if cfg["inat_label"] not in s:
@@ -416,8 +447,8 @@ def stage51_errors(text, facts, mat, rules):
             if cfg["inat_trend"] in s and not any(w in s for w in cfg["inat_scope_words"]):
                 errs.append({"code": "inat_scope_missing", "detail": s.strip()[:40]})
     urls = {u.rstrip("/") for u in URL_RE.findall(text)}                    # ④ 出典
-    for c in mat.region_candidates:
-        if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat))):
+    for c in mentioned_cands(mat, norm):
+        if True:
             u = ((c.get("current") or {}).get("url") or "").rstrip("/")
             if u and u not in urls:
                 errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
@@ -476,7 +507,9 @@ def stage51_errors(text, facts, mat, rules):
 
 
 def mentioned_cands(mat, norm):
-    return [c for c in mat.region_candidates if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat)))]
+    """本文に出た候補。対象別の節の答えでは、その対象の節に出た候補だけ(同じ名所が紅葉と野鳥の両方にあっても取り違えない。段階57 第3部)。"""
+    seg = getattr(mat, "seg_text", None) or {}
+    return [c for c in mat.region_candidates if any(f in seg.get(c.get("_subject"), norm) for f in strict_names(c["name"], shared_prefixes(mat)))]
 
 
 def candidate_urls(c):

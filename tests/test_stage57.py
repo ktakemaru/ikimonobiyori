@@ -108,23 +108,90 @@ def facts_doc(subjects, dates=("2026-11-08",), now="2026-11-07T12:00:00+09:00", 
 
 
 def koyo_subject():
-    return {"subject": "autumn_leaves", "candidates": [spot("試験の園", 20, tree_species=["モミジ", "イチョウ"]), spot("試験の山", 60, elevation_m=800, tree_species=["ブナ"]),
-                                                     spot("試験の湖", 130, tree_species=[])], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+    return {"subject": "autumn_leaves", "candidates": [spot("試験の園", 20, city="園町", tree_species=["モミジ", "イチョウ"]), spot("試験の山", 60, city="山町", elevation_m=800, tree_species=["ブナ"]),
+                                                     spot("試験の湖", 130, city="湖町", tree_species=[])], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
 
 
 def flower_subject():
-    return {"subject": "flowers", "candidates": [spot("花の庭", 15, flower_kinds=["秋バラ"]), spot("花の丘", 70, flower_kinds=["コスモス"]), spot("花の里", 120, flower_kinds=["キク"])],
+    return {"subject": "flowers", "candidates": [spot("花の庭", 15, city="庭町", flower_kinds=["秋バラ"]), spot("花の丘", 70, city="丘町", flower_kinds=["コスモス"]), spot("花の里", 120, city="里町", flower_kinds=["キク"])],
             "avoid": [], "nearby_out_of_region": [], "alternatives": []}
 
 
 def bird_subject():
     birds = [{"name": "ジョウビタキ", "kind": "recent", "kind_label": "最近の記録", "why": "今季の記録があります。"}]
-    return {"subject": "birds", "candidates": [spot("鳥の池", 25, park_birds=birds), spot("鳥の沼", 65, park_birds=birds), spot("鳥の浜", 110, park_birds=birds)],
+    return {"subject": "birds", "candidates": [spot("鳥の池", 25, city="池町", park_birds=birds), spot("鳥の沼", 65, city="沼町", park_birds=birds), spot("鳥の浜", 110, city="浜町", park_birds=birds)],
             "avoid": [], "nearby_out_of_region": [], "alternatives": []}
 
 
 JPEG = b"\xff\xd8\xff" + b"0" * 64
 META = {"image_type": "jpeg", "attribution": "(c) 試験, some rights reserved (CC BY)", "license": "CC BY", "photo_page": "https://www.inaturalist.org/photos/1"}
+
+
+def pick_block(name, subject, facts):
+    c = next(x for x in facts["subjects"][subject]["candidates"] if x["name"] == name)
+    season = "この時期に見られる鳥はジョウビタキです" if subject == "birds" else "例年の見頃は11月です"
+    return f"① {name}: {c['current']['state']}(11/5時点、試験市)。{season}。"
+
+
+def segment_answer(facts, plan, drop=None, swap=None):
+    """合成の複数対象の答え(対象別の節。それぞれに今回のおすすめ)。"""
+    lines = ["今週末は、" + "や".join(s["heading"] for s in plan["segments"]) + "を楽しめそうです。"]
+    urls = []
+    for seg in plan["segments"]:
+        pl = plan["subjects"][seg["subject"]]
+        lines += ["", seg["heading"], f"{seg['heading']}は見頃が続いている可能性があります。", "今回のおすすめ"]
+        for p in pl["picks"]:
+            if p["name"] == drop:
+                continue
+            lines.append(pick_block(swap if swap and p["name"] == swap[0] else p["name"], seg["subject"], facts))
+            c = next(x for x in facts["subjects"][seg["subject"]]["candidates"] if x["name"] == p["name"])
+            urls.append(c["current"]["url"])
+    lines += ["", "確かさの補足", "アクセスや混雑は出かける前に公式ページで確認してください。", "", "出典"] + sorted(set(urls))
+    return "\n".join(lines) + "\n"
+
+
+class Part3MultiSubject(unittest.TestCase):
+    def facts(self, *keys):
+        make = {"autumn_leaves": koyo_subject, "flowers": flower_subject, "birds": bird_subject}
+        return facts_doc({k: make[k]() for k in keys})
+
+    def check(self, *keys, **kw):
+        from ikimonobiyori import answer_plan as AP
+        f = self.facts(*keys)
+        for s in f["subjects"].values():
+            for c in s["candidates"]:                                          # 実用情報なしの決まった一文で通す形
+                c["practical"] = []
+        plan = AP.build_all(f)
+        return V.check(segment_answer(f, plan, **kw), f, RULES, plan=plan)
+
+    def test_two_and_three_subjects_pass(self):
+        for keys in (("flowers", "birds"), ("autumn_leaves", "flowers"), ("autumn_leaves", "flowers", "birds")):
+            r = self.check(*keys)
+            self.assertTrue(r["ok"], (keys, V.report_lines(r)))
+
+    def test_a_missing_pick_is_found_per_subject(self):
+        r = self.check("flowers", "birds", drop="鳥の沼")
+        codes = [(e["code"], e["detail"]) for e in r["answer_errors"]]
+        self.assertTrue(any(c == "plan_pick_missing" and d.startswith("野鳥:") for c, d in codes), codes)
+
+    def test_a_section_lead_mismatch_is_found_per_subject(self):
+        from ikimonobiyori import answer_plan as AP
+        f = self.facts("flowers", "birds")
+        plan = AP.build_all(f)
+        text = segment_answer(f, plan).replace("花は見頃が続いている可能性があります。", "鳥の池も楽しめそうです。")
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(any(e["code"] == "lead_mismatch" and e["detail"].startswith("花:") for e in r["answer_errors"]), V.report_lines(r))
+
+    def test_same_spot_in_two_subjects_needs_only_its_own_source(self):
+        from ikimonobiyori import answer_plan as AP
+        f = self.facts("flowers", "birds")
+        plan = AP.build_all(f)
+        segs = AP.split_segments(segment_answer(f, plan), plan)
+        self.assertEqual([s["seg"]["heading"] for s in segs], ["花", "野鳥"])
+
+    def test_answer_without_headings_keeps_the_old_way(self):
+        from ikimonobiyori import answer_plan as AP
+        self.assertIsNone(AP.split_segments("花は\n① 花の庭\n", AP.build_all(self.facts("flowers", "birds"))))
 
 
 class Part2Page(unittest.TestCase):
