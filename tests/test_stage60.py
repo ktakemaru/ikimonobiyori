@@ -176,5 +176,60 @@ class Part2FactConsistency(unittest.TestCase):
             self.assertEqual(Path(d, "final.txt").read_text(encoding="utf-8"), SKELETON)
 
 
+
+class Part3NearFirst(unittest.TestCase):
+    """第3部: 近場の節は距離を優先し、今回のおすすめに近場を少なくとも 1 件。"""
+
+    def plan(self, cands):
+        import test_stage56 as T56
+        from ikimonobiyori import answer_plan as AP
+        return AP.build(T56.facts_of(cands), "autumn_leaves", AP.load_policy())
+
+    def cands(self):
+        import test_stage56 as T56
+        c = T56.cand
+        return [c("隣の県の公園", km=30, state="色づき始め", sdate="2026-11-06", age=1, typical=("11-01", "12-05"), prefecture="東京都"),
+                c("地元の森", km=8, state="色づき始め", sdate="2026-11-03", age=4, typical=("11-01", "12-05"), prefecture="埼玉県"),
+                c("歩く試験山", km=60, state="見頃", sdate="2026-11-05", age=2, typical=("11-01", "11-30"), elev=900),
+                c("遠い試験渓谷", km=140, state="見頃", sdate="2026-11-05", age=2, typical=("11-05", "11-25"), prefecture="栃木県"),
+                c("遠い試験の滝", km=120, state="見頃", sdate="2026-11-05", age=2, typical=("11-05", "11-25"), prefecture="茨城県", city="試験村")]
+
+    def test_near_section_is_ordered_by_distance_within_the_same_outlook(self):
+        p = self.plan(self.cands())
+        near = next(s for s in p["sections"] if s["aim"] == "near")
+        self.assertEqual([i["name"] for i in near["items"]][:2], ["地元の森", "隣の県の公園"])   # 点数・鮮度では隣の県が上だが、近い順
+
+    def test_at_least_one_pick_is_near(self):
+        p = self.plan(self.cands())
+        lim = 50
+        self.assertTrue(any(x["distance_km"] is not None and x["distance_km"] <= lim for x in p["picks"]))
+        self.assertIn("地元の森", [x["name"] for x in p["picks"]])
+
+    def test_near_guarantee_replaces_the_weakest_pick(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        far = lambda n, cl: {"name": n, "distance_km": 120, "has_current": True, "cluster": cl, "outlook": "in_peak", "score": 60, "current_date": "2026-11-05"}
+        near_it = {"name": "近い", "distance_km": 10, "has_current": True, "cluster": "c9", "outlook": "toward", "score": 40, "current_date": "2026-11-05"}
+        chosen = [far("A", "c1"), far("B", "c2"), dict(far("C", "c3"), outlook="toward", score=30)]
+        out = AP.ensure_near_pick(chosen, [{"aim": "near", "items": [near_it]}], pol)
+        self.assertEqual([x["name"] for x in out], ["A", "B", "近い"])             # いちばん弱い C と入れ替える
+        self.assertEqual(AP.ensure_near_pick(chosen, [], pol), chosen)            # 近場の候補がなければ変えない
+
+    def test_no_this_year_candidates_still_stay_out_of_the_picks(self):
+        import test_stage56 as T56
+        cs = self.cands() + [T56.cand("すぐ近くの公園", km=3, typical=("11-01", "12-05"), prefecture="埼玉県")]
+        p = self.plan(cs)
+        self.assertNotIn("すぐ近くの公園", [x["name"] for x in p["picks"]])       # 今年の情報がない候補は入れない(段階58 第3部のまま)
+
+
+    def test_origin_and_dates_run_without_a_work_folder(self):
+        import io
+        from contextlib import redirect_stdout
+        from ikimonobiyori import ask
+        for argv in (["origin", "--question", "大宮から紅葉を見に行きたい"], ["dates", "--question", "紅葉を見に行きたい"]):
+            with redirect_stdout(io.StringIO()):
+                self.assertEqual(ask.main(argv), 0, argv[0])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -935,7 +935,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
     a = ap.parse_args(argv)
     pol = load_policy()
-    out_dir = a.out_dir
+    out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
     if (a.step in ("page", "photos") or (a.step == "plan" and a.refine)) and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
         last = load_last_plan(_clock())
         if last is None:

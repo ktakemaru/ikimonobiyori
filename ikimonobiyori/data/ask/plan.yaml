@@ -68,6 +68,8 @@ aims:
   order: [near, drive, trek, far, night]       # 節を並べる順
   labels: {near: 近場で手軽に, drive: ドライブ・足を延ばして, trek: 歩いて楽しむ, far: 絶景・遠出, night: 夜・ライトアップ}
   near_max_km: 50
+  # 段階60 第3部: 近場の節の並び。distance は、見込みの区分が同じなら出発地に近い順(現況の有無・点数より距離を優先)
+  near_sort: distance
   far_min_km: 100
   # 歩く・山歩き: 標高(座標つきの名所)か名前
   trek_min_elevation_m: 600
@@ -101,6 +103,8 @@ selection:
   min_with_current: 2
   # 今回のおすすめは、まずこの狙いの各1位から(あれば)選び、足りなければほかの節の1位、節の2位以降の順
   pick_aims: [near, trek, far]
+  # 段階60 第3部: 近場の節に候補があるとき、今回のおすすめに入れる出発地から near_max_km 以内の候補の件数
+  min_near: 1
   # 節に入れる点数の下限。下回る名所は「現況なし」「現況が古い」で外す
   min_score: 25
 

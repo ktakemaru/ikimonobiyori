@@ -314,8 +314,13 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     ok = [r for r in rows if r["name"] not in status]
     order = pol["aims"]["order"]
     sections = []
+    near_by_distance = pol["aims"].get("near_sort") == "distance"
     for aim in order:
-        members = sorted([r for r in ok if r["aim"] == aim], key=lambda x: (-x["score"], x["name"]))
+        if aim == "near" and near_by_distance:            # 段階60 第3部: 近場の節は、見込みの区分が同じなら出発地に近い順(点数・根拠の強さより距離)
+            members = sorted([r for r in ok if r["aim"] == aim],
+                             key=lambda x: (-outlook_rank(x, pol), x["distance_km"] if x["distance_km"] is not None else float("inf"), -x["score"], x["name"]))
+        else:
+            members = sorted([r for r in ok if r["aim"] == aim], key=lambda x: (-x["score"], x["name"]))
         top = members[: pol["aims"]["section_max"]]
         for i, r in enumerate(members):
             if i >= len(top):
@@ -346,6 +351,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             break
         pool.remove(cand)
         chosen[chosen.index(out_)] = cand
+    chosen = ensure_near_pick(chosen, sections, pol)          # 段階60 第3部: 近場の候補があれば、今回のおすすめに少なくとも 1 件
     chosen_names = {i["name"] for i in chosen}
     for s in sections:
         for it in s["items"]:
@@ -377,6 +383,29 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
 
 
+def ensure_near_pick(chosen, sections, pol):
+    """今回のおすすめに、出発地から near_max_km 以内の候補が selection.min_near 件ない(近場の節に候補がある)とき、
+    近場の節の上から、いちばん順位の低いおすすめと入れ替える(同じ地域は重ねない。現況のある候補の件数は減らさない)。"""
+    want = pol["selection"].get("min_near") or 0
+    lim = pol["aims"]["near_max_km"]
+    is_near = lambda it: it.get("distance_km") is not None and it["distance_km"] <= lim
+    near = next((s["items"] for s in sections if s["aim"] == "near"), [])
+    chosen = list(chosen)
+    key = lambda it: rank_key(it, pol)
+    for cand in near:
+        if sum(1 for c in chosen if is_near(c)) >= want:
+            break
+        if cand in chosen or not is_near(cand):
+            continue
+        outs = sorted([c for c in chosen if not is_near(c) and (cand["has_current"] or not c["has_current"]
+                       or sum(1 for x in chosen if x["has_current"]) > pol["selection"]["min_with_current"])], key=key)
+        out_ = next((c for c in reversed(outs) if cand["cluster"] not in {x["cluster"] for x in chosen if x is not c}), None)
+        if out_ is None:
+            continue
+        chosen[chosen.index(out_)] = cand
+    return chosen
+
+
 def evidence_level(it, pol):
     """根拠の強さ: 2 = 今年の新しい現況 / 1 = 現況が古い(または日付なし) / 0 = 現況なし(例年の窓だけ)。"""
     if not it.get("has_current"):
@@ -385,12 +414,17 @@ def evidence_level(it, pol):
     return 2 if age is not None and age <= pol["evidence"]["fresh_max_age_days"] else 1
 
 
-def rank_key(it, pol):
-    """見込みの区分 → 根拠の強さ → 現況の日付の新しさ → 点数 → 名前(段階57 第12部)。"""
-    oo = pol["outlook"]
-    rank = oo["rank"][it["outlook"]]
+def outlook_rank(it, pol):
+    """見込みの区分の順位。現況がなく例年の窓だけの候補は typical_only_rank_cap までにする(段階57 第12部)。"""
+    rank = pol["outlook"]["rank"][it["outlook"]]
     if not it.get("has_state", it.get("has_current")):
         rank = min(rank, pol["evidence"]["typical_only_rank_cap"])
+    return rank
+
+
+def rank_key(it, pol):
+    """見込みの区分 → 根拠の強さ → 現況の日付の新しさ → 点数 → 名前(段階57 第12部)。"""
+    rank = outlook_rank(it, pol)
     return (-rank, -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
 
 
