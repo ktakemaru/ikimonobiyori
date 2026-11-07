@@ -85,5 +85,22 @@ class Part6Pdf(unittest.TestCase):
         self.assertRegex((ROOT / "requirements.txt").read_text(encoding="utf-8"), r"pdfminer\.six==\d+")
 
 
+class Part1Survey(unittest.TestCase):
+    OLD = ("env.go.jp/content/900509696.pdf", "env.go.jp/nature/ari_kata/shiryou/031010-7.pdf", "env.go.jp/nature/yasei/guide/pdf/VC.pdf")
+
+    def test_old_material_is_not_in_the_ledger(self):
+        raw = (ROOT / "ikimonobiyori" / "data" / "visitor_centers" / "centers.yaml").read_text(encoding="utf-8")
+        for u in self.OLD:
+            self.assertNotIn(u, raw)
+
+    def test_new_centers_are_pending_and_checked(self):
+        from ikimonobiyori import visitor_centers as VC
+        rows = {c["id"]: c for c in VC.load_centers()}
+        for i in ("urabandai-vc", "oze-fnd", "kamikochi-vc", "picchio", "tanigawa-ic"):
+            self.assertEqual(rows[i]["approval"]["status"], "pending", i)
+            self.assertEqual(rows[i]["checked_on"], "2026-11-07")
+            self.assertNotIn("approved_by", rows[i]["approval"])
+
+
 if __name__ == "__main__":
     unittest.main()
