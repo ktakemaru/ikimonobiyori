@@ -584,6 +584,21 @@ class Part11OfficialCsv(unittest.TestCase):
             self.assertEqual({r["name"] for r in rows}, {"試験の渓谷周辺", "試験の湖畔"})   # 承認後は HTML が空でも CSV の現況が使われる
             self.assertEqual(rows[0]["state_date"], "2026-11-06")
 
+    def test_ledger_approvals_of_2026_11_07(self):
+        """本人の指示(2026-11-07)で承認済みになった id と、承認していない id を明示して確かめる。"""
+        import yaml
+        auto = {s["id"]: s["approval"] for s in yaml.safe_load((ROOT / "ikimonobiyori/data/sources/autumn_leaves.yaml").read_text(encoding="utf-8"))["sources"]}
+        for i in ("chichibu-navi-koyo", "yamanashi-kankou-koyo-csv", "nagatoro-koyo-matsuri-2026"):
+            self.assertEqual((auto[i]["status"], auto[i]["approved_by"], auto[i]["approved_on"]), ("approved", "user", "2026-11-07"), i)
+            self.assertIn("本人の指示による記入", auto[i]["reason"])
+        self.assertEqual(auto["nagatoro-kanko-koyo"]["status"], "pending")          # 指示の対象外(既存の紅葉情報のページの項目)
+        wint = {s["id"]: s["approval"] for s in yaml.safe_load((ROOT / "ikimonobiyori/data/sources/wintering_birds.yaml").read_text(encoding="utf-8"))["sources"]}
+        self.assertEqual(wint["inzai-motono-hakucho"]["status"], "pending")
+        from ikimonobiyori import visitor_centers as VCm
+        vc = {c["id"]: c["approval"]["status"] for c in VCm.load_centers()}
+        for i in ("urabandai-vc", "oze-fnd", "kamikochi-vc", "picchio", "tanigawa-ic"):
+            self.assertEqual(vc[i], "pending", i)
+
 
 class Part12Ordering(unittest.TestCase):
     def koyo(self):
