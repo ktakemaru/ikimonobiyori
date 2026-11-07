@@ -172,6 +172,67 @@ def mark_stale_display(subj, policy):
                 cur["gap_days"] = days
 
 
+def _plan_cfg():
+    return AP.load_policy()["last_plan"]
+
+
+def last_plan_path(env=None):
+    return data_path(_plan_cfg()["file"], env)
+
+
+def _facts_subset(facts_doc, plan_doc):
+    """計画に載る名所の事実だけ(直前の答えの写し。使った事実と出典)。"""
+    names = {r["name"] for r in plan_doc.get("ranking") or [] if r.get("where") in ("pick", "section")} | {p["name"] for p in plan_doc.get("picks") or []}
+    out = {k: v for k, v in facts_doc.items() if k != "subjects"}
+    out["subjects"] = {s: {**v, "candidates": [c for c in v.get("candidates") or [] if c["name"] in names], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+                       for s, v in facts_doc["subjects"].items()}
+    return out
+
+
+def save_last_plan(workdir, facts_doc, plan_doc, now, env=None):
+    """直前の答えの計画を、データ置き場に保存する(有効期間は data/ask/plan.yaml の last_plan。リポジトリの外)。"""
+    p = last_plan_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    doc = {"schema": "ikimonobiyori-last-plan/1", "saved_at": now.isoformat(), "workdir": str(workdir), "subject": plan_doc.get("subject"),
+           "dates": plan_doc.get("dates"), "origin": plan_doc.get("origin"), "plan": plan_doc, "facts": _facts_subset(facts_doc, plan_doc), "answer": None}
+    p.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def update_last_plan_answer(workdir, text, env=None):
+    p = last_plan_path(env)
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if doc.get("workdir") == str(workdir):
+        doc["answer"] = text
+        p.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def load_last_plan(now, env=None):
+    """有効期間内の直前の計画。ない・古い・読めないときは None(別の内容を作らない)。"""
+    try:
+        doc = json.loads(last_plan_path(env).read_text(encoding="utf-8"))
+        saved = datetime.fromisoformat(doc["saved_at"])
+    except (OSError, ValueError, KeyError):
+        return None
+    if now < saved or now - saved > timedelta(hours=_plan_cfg()["valid_hours"]):
+        return None
+    return doc
+
+
+def restore_workdir(doc):
+    """直前の計画の作業フォルダ。消えていれば写しから作り直す。→ フォルダのパス。"""
+    wd = Path(doc["workdir"])
+    wd.mkdir(parents=True, exist_ok=True)
+    for name, key in (("facts.json", "facts"), ("answer_plan.json", "plan")):
+        if not (wd / name).exists():
+            (wd / name).write_text(json.dumps(doc[key], ensure_ascii=False, indent=1), encoding="utf-8")
+    if doc.get("answer") and not (wd / "final.txt").exists():
+        (wd / "final.txt").write_text(doc["answer"], encoding="utf-8")
+    return wd
+
+
 class PageUnsupported(Exception):
     """写真つきページに対応していない対象(段階57 第1部)。別のページを作らず、終了コード 2 で止める。"""
 
@@ -341,6 +402,8 @@ class Flow:
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
+        if list(facts_doc.get("subjects") or {}) != ["birds"]:         # 段階57 第2部: 紅葉・花・総合は、計画に載る種の写真を補う
+            return self.plan_photos(facts_doc, http_get, http_bytes)
         if http_get is None:
             why = "under_test" if livegate.under_test() else ("not_allowed" if netbudget.refusal() else None)
             if why:
@@ -433,6 +496,56 @@ class Flow:
         self.call("photos", requests=b.used, saved=len(rep_["saved"]), status=rep_["status"])
         return out
 
+    def plan_photos(self, facts_doc, http_get=None, http_bytes=None):
+        """計画に載る種のうち、写真のキャッシュにないものを、対象ごとに補う(確認なし。承認B。取れなければ名前だけの行)。"""
+        from . import guide_photos, plan_page
+        plan_doc = self._load("answer_plan.json", None)
+        if plan_doc is None:
+            raise ValueError("answer_plan.json がない(先に plan を実行する)")
+        out = {"ran": False, "subjects": {}}
+        for sj, names in plan_page.species_by_subject(facts_doc, plan_doc, self.policy["plan_page"]).items():
+            res = guide_photos.ensure_for_page(names, plan_page.SUBJECT_WORD[sj], http_get=http_get, http_bytes=http_bytes, env=self.env)
+            out["subjects"][sj] = {"names": names, "requests": (res or {}).get("requests"), "saved": (res or {}).get("saved"), "status": (res or {}).get("status")}
+            out["ran"] = out["ran"] or res is not None
+        self._save("photos.json", out)
+        self.call("photos", subjects=list(out["subjects"]))
+        return out
+
+    def plan_page(self, facts_doc, gazetteer=(), answer_path=None):
+        """紅葉・花・総合のページ: 直前の答えの計画から作る。計画がなければ作らない。"""
+        from . import guide, guide_page, guide_photos, plan_page
+        plan_doc = self._load("answer_plan.json", None)
+        if plan_doc is None:
+            raise PageUnsupported(OF.load()["messages"]["no_recent_plan"])
+        pol = guide.load_policy()
+        gp = pol["photos"]
+        table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
+
+        def photo_for(name):
+            row = table.get(name)
+            if not row:
+                return None
+            return guide_photos.load_photo(row["taxon_id"], self.env) if self.env else guide_photos.load_photo(row["taxon_id"])
+
+        def credit(meta):
+            return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
+        pp = self.policy["plan_page"]
+        ap = Path(answer_path) if answer_path else next((self.workdir / n for n in ("final.txt", "answer.txt") if (self.workdir / n).is_file()), None)
+        answer = ap.read_text(encoding="utf-8") if ap and ap.is_file() else None
+        html_text, lines, shown = plan_page.build(facts_doc, plan_doc, policy=pp, photo_for=photo_for, photo_credit=credit, now=self.now, answer=answer)
+        gaz = sorted(set(place_names()) | set(gazetteer))
+        chk = V.page_check(lines, facts_doc, gazetteer=gaz)
+        d0 = (facts_doc.get("dates") or [self.now.date().isoformat()])[0]
+        out = (guide_photos.page_dir(self.env) if self.env else guide_photos.page_dir()) / pp["file"].format(date=d0)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(html_text, encoding="utf-8", newline="\n")
+        line = pp["reply_line"].format(path=str(out.resolve()))
+        doc = {"path": str(out.resolve()), "line": line, "ok": chk["ok"], "errors": V.report_lines(chk),
+               "spots": {k: [{"name": n, "photo": x} for n, x in v] for k, v in shown.items()}}
+        self._save("page.json", doc)
+        self.call("page", ok=chk["ok"], spots=len(shown))
+        return doc
+
     # 3c. 写真つきの公園ページ(段階38)
     def page(self, gazetteer=(), answer_path=None):
         from . import guide, guide_photos, park_page
@@ -442,6 +555,8 @@ class Flow:
             raise ValueError("facts.json がない(先に facts を実行する)")
         if not OF.ask_subjects_supported(list(facts_doc.get("subjects") or {})):      # 段階57 第1部: 未対応の対象で、別のページ(野鳥)を黙って作らない
             raise PageUnsupported(OF.unsupported_theme_message())
+        if list(facts_doc["subjects"]) != ["birds"]:                  # 段階57 第2部: 紅葉・花・総合は直前の答えの計画から
+            return self.plan_page(facts_doc, gazetteer=gazetteer, answer_path=answer_path)
         gp = guide.load_policy()["photos"]
         table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
         pinfo = {x["name"]: x.get("taxon_id") for x in (self._load("photos.json", {}) or {}).get("species") or []}
@@ -469,12 +584,14 @@ class Flow:
         self.call("page", ok=chk["ok"], parks=len(shown))
         return doc
 
-    def offers_now(self, facts_doc):
+    def offers_now(self, facts_doc, plan_doc=None):
         """答えの末尾に付けてよい案内の一覧。写真の候補は、対象ごとの載せられる種名。"""
-        from . import park_page
-        pp = self.policy["park_page"]
+        from . import park_page, plan_page
         subs = list(facts_doc.get("subjects") or {})
-        has = any(c.get("park_birds") for c in park_page.parks(facts_doc, pp))
+        if subs == ["birds"]:
+            has = any(c.get("park_birds") for c in park_page.parks(facts_doc, self.policy["park_page"]))
+        else:
+            has = bool(plan_doc) and plan_page.has_photo_candidates(facts_doc, plan_doc, self.policy["plan_page"])
         return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has})
 
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
@@ -489,8 +606,9 @@ class Flow:
         doc = AP.build_all(facts_doc, overrides=keep) if sj == "all" else AP.build(facts_doc, sj, overrides=keep)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
-        doc["offers"] = self.offers_now(facts_doc)                    # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
+        doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
+        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)
         self.call("plan", subject=sj, picks=len(doc["picks"]), sections=len(doc["sections"]), overrides=len(doc["overrides"]))
         return doc
 
@@ -512,6 +630,7 @@ class Flow:
         self._save("check.json", r)
         final = text if r["ok"] else V.strip(text, r)
         (self.workdir / "final.txt").write_text(final, encoding="utf-8")
+        update_last_plan_answer(self.workdir, final, self.env)
         self.call("verify", ok=r["ok"], errors=len(V.report_lines(r)))
         return r, final
 
@@ -559,10 +678,10 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("record")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--batch", required=True)
-    p = sub.add_parser("photos", help="公園ごとの鳥の写真のうち、手元にないものを取りに行く(段階38。上限の範囲)")
-    p.add_argument("--out-dir", required=True)
-    p = sub.add_parser("page", help="公園ごとに見られる鳥の写真つきページ(段階38)")
-    p.add_argument("--out-dir", required=True)
+    p = sub.add_parser("photos", help="答えに載る種の写真のうち、手元にないものを取りに行く(段階38・57。上限の範囲)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画)")
+    p = sub.add_parser("page", help="直前の答えの写真つきページ(野鳥は公園ごと。紅葉・花・総合は計画から。段階38・57)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画。24時間より前・なければ作らない)")
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
@@ -585,6 +704,12 @@ def main(argv=None, http_get=None):
     a = ap.parse_args(argv)
     pol = load_policy()
     out_dir = a.out_dir
+    if a.step in ("page", "photos") and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
+        last = load_last_plan(_clock())
+        if last is None:
+            print(OF.load()["messages"]["no_recent_plan"], file=sys.stderr)
+            return 2
+        out_dir = str(restore_workdir(last))
     params = {}
     if out_dir and Path(out_dir, "params.json").exists():
         params = json.loads(Path(out_dir, "params.json").read_text(encoding="utf-8"))

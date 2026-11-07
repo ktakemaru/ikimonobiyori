@@ -122,6 +122,32 @@ answer_check:
 net:
   page_photos_commons_max_species: {value: 3, source: "仮置き(Commons は間隔が長いので、1 回の質問で探す種を少なくする)", provisional: true}
 
+# 段階57 第2部: 直前の答え(計画)から作る、紅葉・花・野鳥・総合の写真つきページ(ikimonobiyori/plan_page.py)
+plan_page:
+  file: "plan-{date}.html"
+  max_embed_bytes: {value: 2000000, source: "指示書 段階57 3-2。ページ全体は 2MB の目安。超える新しい写真は載せず名前だけの行に回す", provisional: true}
+  max_species_per_spot: {value: 4, source: "仮置き(段階57)。1 地点に載せる種の数", provisional: true}
+  # カタログの一般的な呼び名 → 写真の表の和名(代表の種)。表にない呼び名は写真なし
+  photo_aliases: {モミジ: イロハモミジ, 秋バラ: バラ, 菊: キク, 冬桜: フユザクラ, 十月桜: ジュウガツザクラ, ドウダンツツジ: ドウダンツツジ}
+  skip_names: [カエデ, 紅葉, 黄葉, 草紅葉]
+  csp: "default-src 'none'; img-src data:; style-src 'unsafe-inline'"
+  reply_line: "写真つきのページ: {path}"
+  text:
+    title: "{dates} {labels}のおすすめ"
+    conclusion: "{dates}のおすすめは、{names}です。"
+    picks_heading: 今回のおすすめ
+    subject_labels: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+    origin: "出発地: {origin}"
+    photo_note: "写真は種の代表写真で、その場所で撮られたものではありません。"
+    current: "今の状況: {state}({md}時点、{publisher})"
+    current_nodate: "今の状況: {state}({publisher})"
+    no_current: 今年の状況は確認できていません。
+    practical: "実用情報: {text}"
+    sources: "出典:"
+    no_photo_names: "写真が取れなかった種: {names}"
+    names_sep: "・"
+    footer: "写真提供: iNaturalist / Wikimedia Commons。"
+
 # 段階38(指示書 3-3): 公園ごとに見られる鳥の写真つきページ(ikimonobiyori/park_page.py)。置き場所は IKIMONOBIYORI_DATA_DIR の下の guide/pages/
 park_page:
   file: "birds-parks-{date}.html"

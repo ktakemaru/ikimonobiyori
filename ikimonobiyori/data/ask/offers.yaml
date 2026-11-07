@@ -13,9 +13,9 @@ page_support:
   # guide page --theme <語>(ガイド型): 語から決まるガイドのテーマがすべてここにあるときだけ作る
   guide_themes: [野鳥, 冬鳥, 花, 桜]
   # ask page(直前の答えのページ): facts の対象がすべてここにあるときだけ作る
-  ask_subjects: [birds]
+  ask_subjects: [birds, flowers, autumn_leaves]
   # 利用者に見せる呼び名の一覧(guide page --list-themes とエラーの文)
-  labels: [野鳥, 花, 桜, 野草]
+  labels: [野鳥, 花, 桜, 野草, 紅葉(直前の答えから), 総合(直前の答えから)]
 
 messages:
   unsupported_theme: "このテーマの写真つきページは未対応です。対応: {themes}"

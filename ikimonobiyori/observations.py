@@ -469,7 +469,12 @@ def _from_catalog(e, subject, policy=None):
             "area": t.get("area"), "point": e.get("point"), "elevation_m": (e.get("point") or {}).get("elevation_m"),
             "typical": _typical_from_catalog(e, policy), "events": _events_from_catalog(e),
             "pages": [{"url": s["url"], "publisher": s.get("title") or urlparse(s["url"]).hostname, "source_class": "official"} for s in e.get("sources") or []],
-            "flower_kinds": t.get("flower_kinds") or [], "from_catalog": True}
+            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True}
+
+
+def _tree_names(text):
+    """名所の一覧の樹種の欄(「モミジ・イチョウ」)→ 名前の一覧(段階57 第2部)。"""
+    return [x.strip() for x in re.split(r"[・、,]", text or "") if x.strip()]
 
 
 def _from_spot(s, policy, catalog_by_id):
@@ -483,7 +488,8 @@ def _from_spot(s, policy, catalog_by_id):
          "city": s.get("city"), "area": s.get("area"), "point": s.get("point"), "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
-         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area")}
+         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"),
+         "tree_species": _tree_names((s.get("trees") or {}).get("species") if isinstance(s.get("trees"), dict) else None)}
     pa = park_area(s, policy)                    # 段階38: 探鳥地ごとの範囲があれば、その範囲で集計する(半径10kmの区域をやめる)
     if pa:
         c["bird_area"] = pa["id"]
@@ -503,6 +509,7 @@ def _from_spot(s, policy, catalog_by_id):
         urls = {p["url"] for p in c["pages"]}
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
         c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
+        c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
     return c
 
 
@@ -1439,7 +1446,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
             "distance_km": dist, "reasons": reasons, "tier": tier, "evidence": ev_rank, "reference_count": len(pubs), "publishers": pubs,
             "avoid": avoid, "hours": c.get("hours"), "closed": c.get("closed"), "birds_note": c.get("birds_note"),
             "closed_on": closed_on(c, dates),
-            "flower_kinds": c.get("flower_kinds") or [], "pages": c.get("pages") or [], "_order": order_map.get(st, -1) if st else -1}
+            "flower_kinds": c.get("flower_kinds") or [], "tree_species": c.get("tree_species") or [], "pages": c.get("pages") or [], "_order": order_map.get(st, -1) if st else -1}
     if subject == "birds":
         out["season_birds"] = season_birds(c, rows, dates, policy)
         out["bird_area"] = c.get("bird_area")

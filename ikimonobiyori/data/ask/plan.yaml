@@ -97,6 +97,11 @@ reasons:
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
 
+# 段階57 第2部: 直前の答えの計画の保存(ask page・追質問が引き継ぐ。IKIMONOBIYORI_DATA_DIR の下)
+last_plan:
+  file: ask/last_plan.json
+  valid_hours: 24
+
 # 同じ名所の別の書き方をまとめる(頭の地域名を取る)
 duplicate:
   strip_prefixes: [箱根, 丹沢, 奥日光]

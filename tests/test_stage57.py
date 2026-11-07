@@ -3,7 +3,9 @@ import io
 import json
 import tempfile
 import unittest
+import unittest.mock
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import helpers as H  # noqa: F401  (通信禁止)
@@ -90,6 +92,144 @@ class Part1Offers(unittest.TestCase):
             t = (ROOT / f).read_text(encoding="utf-8")
             self.assertIn("できないことを提案しない", t, f)
             self.assertIn("手書きの HTML・図で代用しない", t, f)
+
+
+def spot(name, km=20, state="見頃", date_="2026-11-05", window=("11-01", "11-30"), city="試験町", **kw):
+    cur = {"state": state, "state_raw": state, "state_date": date_, "publisher": "試験市", "url": f"https://kouyou.example.org/{km}", "source_class": "official",
+           "freshness": "fresh", "age_days": 2, "read_at": "2026-11-07T09:00:00+09:00"} if state else None
+    return {"id": "t-" + name, "name": name, "city": city, "prefecture": "神奈川県", "current": cur, "current_unknown": cur is None, "distance_km": km,
+            "typical": [{"text": "例年11月", "start": window[0], "end": window[1], "url": "https://kouyou.example.org/t", "publisher": "試験市"}],
+            "typical_line": "例年の見頃: 11月", "events": [], "history": [], "reason_labels": [], "practical": [], "festivals": [], "relation": "in_peak", **kw}
+
+
+def facts_doc(subjects, dates=("2026-11-08",), now="2026-11-07T12:00:00+09:00", origin="横浜"):
+    return {"schema": "ikimono-ask-facts/1", "now": now, "dates": list(dates), "origin": origin, "region": "全範囲", "subjects": subjects,
+            "lines": {"answer_rules": "stage51", "practical_rules": True, "open_urls": None}, "summary_pages": [], "this_round": {}}
+
+
+def koyo_subject():
+    return {"subject": "autumn_leaves", "candidates": [spot("試験の園", 20, tree_species=["モミジ", "イチョウ"]), spot("試験の山", 60, elevation_m=800, tree_species=["ブナ"]),
+                                                     spot("試験の湖", 130, tree_species=[])], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+
+
+def flower_subject():
+    return {"subject": "flowers", "candidates": [spot("花の庭", 15, flower_kinds=["秋バラ"]), spot("花の丘", 70, flower_kinds=["コスモス"]), spot("花の里", 120, flower_kinds=["キク"])],
+            "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+
+
+def bird_subject():
+    birds = [{"name": "ジョウビタキ", "kind": "recent", "kind_label": "最近の記録", "why": "今季の記録があります。"}]
+    return {"subject": "birds", "candidates": [spot("鳥の池", 25, park_birds=birds), spot("鳥の沼", 65, park_birds=birds), spot("鳥の浜", 110, park_birds=birds)],
+            "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+
+
+JPEG = b"\xff\xd8\xff" + b"0" * 64
+META = {"image_type": "jpeg", "attribution": "(c) 試験, some rights reserved (CC BY)", "license": "CC BY", "photo_page": "https://www.inaturalist.org/photos/1"}
+
+
+class Part2Page(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+        self.wd = Path(self.tmp.name) / "work"
+        self.now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+
+    def flow(self, facts):
+        f = ask.Flow(self.wd, now=self.now, env=self.env)
+        f._save("facts.json", facts)
+        return f
+
+    def test_koyo_page_has_the_same_picks_and_sections_as_the_plan(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        plan = f.plan()
+        doc = f.page()
+        html = Path(doc["path"]).read_text(encoding="utf-8")
+        for p in plan["picks"]:
+            self.assertIn(p["name"], html)
+        for s in plan["sections"]:
+            self.assertIn(s["label"], html)
+        self.assertIn("紅葉", html)
+        self.assertNotIn("公園で見られる鳥", html)                               # 野鳥のページではない
+        self.assertNotIn("<svg", html)
+
+    def test_page_uses_tree_species_photos_not_spot_photos(self):
+        from ikimonobiyori import plan_page
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        plan = f.plan()
+        asked = []
+
+        def photo_for(name):
+            asked.append(name)
+            return (META, JPEG)
+        pp = ask.load_policy()["plan_page"]
+        html, _lines, shown = plan_page.build(f._load("facts.json", None), plan, policy=pp, photo_for=photo_for, photo_credit=lambda m: "c", now=self.now)
+        self.assertEqual(set(asked), {"イロハモミジ", "イチョウ", "ブナ"})         # 樹種だけ(地点の名前で写真を引かない)。モミジは代表の種に丸める
+        self.assertFalse({"試験の園", "試験の山", "試験の湖"} & set(asked))
+        self.assertNotIn("試験の湖", shown)                                       # 樹種が不明な地点は写真なし
+        self.assertIn("base64", html)
+
+    def test_flowers_and_birds_are_both_on_the_page(self):
+        f = self.flow(facts_doc({"flowers": flower_subject(), "birds": bird_subject()}))
+        f.plan()
+        html = Path(f.page()["path"]).read_text(encoding="utf-8")
+        self.assertIn("花の庭", html)
+        self.assertIn("鳥の池", html)
+        self.assertIn("<h2>花</h2>", html)
+        self.assertIn("<h2>野鳥</h2>", html)
+
+    def test_birds_only_stays_the_park_page(self):
+        f = self.flow(facts_doc({"birds": bird_subject()}))
+        f.plan()
+        self.assertIn("公園で見られる鳥", Path(f.page()["path"]).read_text(encoding="utf-8"))
+
+    def test_unknown_subject_makes_no_page(self):
+        f = self.flow(facts_doc({"fireflies": {"candidates": [spot("蛍の沢")]}}))
+        with self.assertRaises(ask.PageUnsupported):
+            f.page()
+
+    def test_no_plan_makes_no_page(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        with self.assertRaises(ask.PageUnsupported):
+            f.page()
+
+    def test_last_plan_is_saved_and_valid_for_24_hours(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        f.plan()
+        doc = ask.load_last_plan(self.now + timedelta(hours=23), self.env)
+        self.assertEqual(doc["subject"], "autumn_leaves")
+        self.assertTrue(Path(self.tmp.name, "ask", "last_plan.json").is_file())    # データ置き場
+        self.assertIsNone(ask.load_last_plan(self.now + timedelta(hours=25), self.env))
+        self.assertIsNone(ask.load_last_plan(self.now - timedelta(hours=1), self.env))
+
+    def test_restore_rebuilds_a_missing_workdir(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        f.plan()
+        doc = ask.load_last_plan(self.now, self.env)
+        (self.wd / "facts.json").unlink()
+        (self.wd / "answer_plan.json").unlink()
+        ask.restore_workdir(doc)
+        self.assertTrue((self.wd / "facts.json").is_file() and (self.wd / "answer_plan.json").is_file())
+
+    def test_no_recent_plan_message(self):
+        with tempfile.TemporaryDirectory() as d, unittest.mock.patch.dict("os.environ", {"IKIMONOBIYORI_DATA_DIR": d}):
+            rc, out, err = run(ask, ["page"])
+        self.assertEqual((rc, out), (2, ""))
+        self.assertIn("先に質問してください", err)
+
+    def test_offer_needs_a_photo_candidate(self):
+        s = koyo_subject()
+        for c in s["candidates"]:
+            c["tree_species"] = []
+        f = self.flow(facts_doc({"autumn_leaves": s}))
+        self.assertEqual(f.plan()["offers"], [])
+        f2 = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        self.assertEqual(OF.texts(f2.plan()["offers"]), [OFFER])
+
+    def test_facts_carry_tree_species_from_the_spot_list(self):
+        from ikimonobiyori import observations as O
+        c = O._from_spot({"id": "x", "subject": "autumn_leaves", "name": "x", "trees": {"species": "モミジ・イチョウ"}}, O.load_policy(), {})
+        self.assertEqual(c["tree_species"], ["モミジ", "イチョウ"])
 
 
 if __name__ == "__main__":
