@@ -1203,6 +1203,17 @@ spots:
       - {url: "http://www.saitama-shizen.info/today/index.html", publisher: 埼玉県自然学習センター, source_class: official}
     search: "北本自然観察公園 野鳥 バードウォッチング"
   # 段階56 第5部: 狭山丘陵いきものふれあいの里センターの観察会（festivals.yaml）。所在地は埼玉県の公式ページ（所沢市上山口2090-3）で確認した。座標は確認できていないため付けない
+  - id: obs-kouyou-0093
+    subject: autumn_leaves
+    name: "陣馬山"
+    prefecture: 神奈川県
+    city: 相模原市緑区
+    area: 陣馬・相模湖
+    typical:                              # 段階57 第4部(2026-11-07 に読んだ記載)
+      - {text: "11月中旬～11月下旬", publisher: YAMAP MAGAZINE, url: "https://yamap.com/magazine/19743", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/r811kouyou.html", publisher: 神奈川県, source_class: official}
+    search: "陣馬山 紅葉 色づき"
   - id: obs-kouyou-0092
     subject: autumn_leaves
     name: "狭山丘陵（湖畔への路）"

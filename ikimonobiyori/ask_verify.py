@@ -151,7 +151,7 @@ class Material:
         for s in spots:
             cur = s.get("current")
             if cur:
-                out += [cur.get("state") or "", cur.get("state_raw") or ""]
+                out += [cur.get("state") or "", cur.get("state_raw") or "", cur.get("display") or ""]
             for h in s.get("history") or []:
                 out += [h.get("state") or "", h.get("state_raw") or ""]
         return [_n(x) for x in out if x]
@@ -247,6 +247,29 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
+def stage57_text_errors(text, facts, mat, rules):
+    """段階57 第4部: 記号のまま・対象の日でない日の開園時間・観察の記録があるのに「見つかっていません」。答えの決まり(practical_rules)の印があるときだけ。"""
+    if not (facts.get("lines") or {}).get("practical_rules"):
+        return []
+    from . import observations as O
+    pol = O.load_policy()
+    errs = []
+    body = URL_RE.sub(" ", text)
+    for m in re.finditer(rules["bare_symbol_re"], body):
+        errs.append({"code": "state_symbol_raw", "detail": m.group(0)})
+    days = set()
+    for x in facts.get("dates") or []:
+        days.add((int(x[5:7]), int(x[8:10])))
+    for m in re.finditer(pol["practical_other_day"]["pattern"], _n(body).replace("~", "〜")):
+        if (int(m.group(1)), int(m.group(2))) not in days:
+            errs.append({"code": "practical_other_day", "detail": m.group(0)[:30]})
+    unknown = pol["birds"]["season_labels"]["unknown"]
+    for b in candidate_blocks(text):
+        if unknown in b and any((s.get("current") or s.get("latest_dated")) for s in mat.spots_in(b)):
+            errs.append({"code": "season_contradiction", "detail": b.splitlines()[0][:30]})
+    return errs
+
+
 def offer_errors(text, allowed, doc=None):
     """段階57 第1部: 提案らしい文は、案内の一覧(data/ask/offers.yaml)にあり条件を満たすものだけ。allowed: 今使ってよい案内の文。"""
     doc = doc or OF.load()
@@ -299,6 +322,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
+    answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
     n_seg = len(segs) if segs else 1                             # 段階57 第3部: 節が複数の答えは、上限を節の数だけ広げる(1 節あたりの量は同じ)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる

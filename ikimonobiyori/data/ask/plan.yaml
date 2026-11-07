@@ -97,6 +97,11 @@ reasons:
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
 
+# 段階57 第4部: 野鳥で、公式の観察の記録がない公園の扱い(大きく減点し、選ぶときは明記する)
+birds_no_current:
+  penalty: 15
+  note: 公式の最近の観察記録は確認できていません
+
 # 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
 segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
 

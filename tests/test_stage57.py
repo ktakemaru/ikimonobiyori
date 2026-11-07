@@ -5,7 +5,7 @@ import tempfile
 import unittest
 import unittest.mock
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import helpers as H  # noqa: F401  (通信禁止)
@@ -192,6 +192,76 @@ class Part3MultiSubject(unittest.TestCase):
     def test_answer_without_headings_keeps_the_old_way(self):
         from ikimonobiyori import answer_plan as AP
         self.assertIsNone(AP.split_segments("花は\n① 花の庭\n", AP.build_all(self.facts("flowers", "birds"))))
+
+
+class Part4Wording(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import observations as O
+        self.O = O
+        self.pol = O.load_policy()
+
+    def test_symbols_become_words_only_with_a_legend(self):
+        d = self.O.state_display
+        self.assertEqual(d("△", "日光市観光協会", self.pol), ("色づき始め", False))
+        self.assertEqual(d("◎", "日光市観光協会", self.pol), ("真っ盛り", False))
+        self.assertEqual(d("▼", "日光市観光協会", self.pol), ("色褪せ・落葉始め", False))
+        self.assertEqual(d("△", "どこかの観光協会", self.pol), (None, True))    # 凡例が読めていない記号は断定しない
+        self.assertEqual(d("◎ 真っ盛り", "どこか", self.pol), ("◎ 真っ盛り", False))
+        self.assertEqual(d("見ごろ", "どこか", self.pol), ("見ごろ", False))
+
+    def base_facts(self):
+        return facts_doc({"autumn_leaves": koyo_subject()})
+
+    def codes(self, text, f=None):
+        f = f or self.base_facts()
+        return [e["code"] for e in V.stage57_text_errors(text, f, V.Material(f, RULES), RULES)]
+
+    def test_check_rejects_bare_symbols(self):
+        self.assertIn("state_symbol_raw", self.codes("試験の園は「△」です。"))
+        self.assertNotIn("state_symbol_raw", self.codes("試験の園は「◎ 真っ盛り」です。"))
+
+    def test_other_day_hours_are_replaced_and_rejected(self):
+        d = [date(2026, 11, 8)]
+        items = [{"text": "11/6の有料エリア 9:30〜21:00"}, {"text": "11/8の有料エリア 9:30〜21:00"}, {"text": "開園 9:00〜16:30"}]
+        got = [x["text"] for x in self.O.practical_for_dates(items, d, self.pol)]
+        self.assertEqual(got, [self.pol["practical_other_day"]["replace"], items[1]["text"], items[2]["text"]])
+        self.assertIn("practical_other_day", self.codes("11/6の有料エリア 9:30〜21:00"))
+        self.assertNotIn("practical_other_day", self.codes("11/8の有料エリア 9:30〜21:00"))
+
+    def test_season_line_does_not_contradict_a_record(self):
+        lab = self.pol["birds"]["season_labels"]
+        line = self.O.season_line({"current": {"state_date": "2026-11-06", "publisher": "試験公園"}}, self.pol)
+        self.assertNotEqual(line, lab["unknown"])
+        self.assertIn("試験公園", line)
+        self.assertEqual(self.O.season_line({}, self.pol), lab["unknown"])
+        f = facts_doc({"birds": bird_subject()})
+        self.assertIn("season_contradiction", self.codes("① 鳥の池: " + lab["unknown"] + "。\n", f))
+
+    def test_bird_park_without_a_record_is_not_ranked_above_recorded_ones(self):
+        from ikimonobiyori import answer_plan as AP
+        s = bird_subject()
+        s["candidates"][0]["current"] = None                                   # いちばん近い公園だけ記録なし
+        s["candidates"][0]["current_unknown"] = True
+        plan = AP.build(facts_doc({"birds": s}), "birds")
+        names = [p["name"] for p in plan["picks"]]
+        self.assertTrue(names[0] != "鳥の池" and (("鳥の池" not in names) or names[-1] == "鳥の池"), names)
+        row = next(r for r in plan["ranking"] if r["name"] == "鳥の池")
+        self.assertLess(row["breakdown"]["no_official"], 0)
+        p = next((x for x in plan["picks"] if x["name"] == "鳥の池"), None)
+        if p:
+            self.assertEqual(p["note"], AP.load_policy()["birds_no_current"]["note"])
+
+    def test_pick_note_is_required_in_the_answer(self):
+        from ikimonobiyori import answer_plan as AP
+        plan = {"picks": [{"name": "鳥の池", "note": "公式の最近の観察記録は確認できていません"}], "ranking": [{"name": "鳥の池"}], "overrides": []}
+        errs = AP.plan_errors("", plan, None, ["① 鳥の池: この時期のカモ。"], V.short_names)
+        self.assertIn("pick_note_missing", [e["code"] for e in errs])
+        self.assertEqual(AP.plan_errors("", plan, None, ["① 鳥の池: 公式の最近の観察記録は確認できていません。"], V.short_names), [])
+
+    def test_jinba_has_a_typical_window_with_source(self):
+        c = next(x for x in self.O.all_candidates("autumn_leaves", self.pol) if x["name"] == "陣馬山")
+        t = c["typical"][0]
+        self.assertEqual((t["start"], t["end"], t["source_class"]), ("11-11", "11-30", "secondary"))
 
 
 class Part2Page(unittest.TestCase):

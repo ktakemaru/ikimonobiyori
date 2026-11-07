@@ -174,6 +174,8 @@ def score_candidate(c, dates, pol, subject=None):
         "practical": b["practical"] if c.get("practical") else 0,
         "source": src,
     }
+    if subject == "birds" and not cur:                       # 段階57 第4部: 公式の観察の記録がない公園は大きく減点する
+        parts["no_official"] = -pol["birds_no_current"]["penalty"]
     return {"outlook": out, "aim": aim, "distance_km": km, "distance_estimated": est, "score": round(sum(parts.values()), 1), "breakdown": parts,
             "festival_active": fest_on, "lightup_active": light_on}
 
@@ -271,7 +273,11 @@ def build(facts_doc, subject, policy=None, overrides=None):
         for it in s["items"]:
             if it["name"] not in chosen_names and any(it["cluster"] == ch["cluster"] and ch["aim"] != it["aim"] for ch in chosen):
                 it["same_area_as_pick"] = True
-    picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(chosen, key=key))]
+    if subject == "birds":                                   # 段階57 第4部: 記録のない公園を上位にしない。選ぶときは明記の文を添える
+        chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
+        picks = [dict(it, rank=i + 1, **({} if it["has_current"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
+    else:
+        picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(chosen, key=key))]
     ranking = []
     for r in sorted(rows, key=lambda x: (-x["score"], x["name"])):
         st = status.get(r["name"])
@@ -287,7 +293,7 @@ def build(facts_doc, subject, policy=None, overrides=None):
 
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
-            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"],
+            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "subject": r.get("subject"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
             "current_date": r["current_date"], "festivals": r["festivals"], "practical": r["practical"]}
@@ -420,4 +426,10 @@ def plan_errors(text, plan, mat, blocks, names_of):
         if n not in shown and n not in replaced:
             errs.append({"code": "plan_pick_missing", "detail": f"計画の今回のおすすめ「{n}」が答えの①②③にない"})
     errs += outlook_conflicts(text, plan, names_of)
+    for p in plan["picks"]:                                                  # 段階57 第4部: 明記の文が要るおすすめ
+        if not p.get("note"):
+            continue
+        blk = next((b for b in blocks if any(f in re.split(r"[:：]", b, maxsplit=1)[0] for f in names_of(p["name"]))), None)
+        if blk is not None and p["note"] not in blk:
+            errs.append({"code": "pick_note_missing", "detail": f"「{p['name']}」: {p['note']}"})
     return errs

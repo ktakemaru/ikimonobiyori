@@ -107,7 +107,7 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
         out = [f"<h3>{say(head)}</h3>"]
         pf = []
         cur = c.get("current")
-        if cur and cur.get("state_raw"):
+        if cur and cur.get("state_raw") and not cur.get("symbol_only"):
             when = _md(cur["state_date"]) if cur.get("state_date") else None
             pf.append(say(t["current"].format(state=cur.get("display") or cur["state_raw"], md=when, publisher=cur.get("publisher") or "") if when else
                           t["current_nodate"].format(state=cur.get("display") or cur["state_raw"], publisher=cur.get("publisher") or "")))
@@ -115,6 +115,8 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
             pf.append(say(t["no_current"]))
         if it.get("phrase"):
             pf.append(say(it["phrase"] + "。"))
+        if it.get("note"):
+            pf.append(say(it["note"] + "。"))
         for f in c.get("festivals") or []:                       # まつりの期間は現況と別の行
             if f.get("period_line"):
                 pf.append(say(f["period_line"]))

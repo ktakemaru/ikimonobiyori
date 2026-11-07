@@ -878,6 +878,10 @@ def season_line(f, policy):
     if pg:
         x = pg[0]
         return lab["page"].format(publisher=x.get("publisher") or "", text=x["text"])
+    cur = f.get("current")
+    if cur:                                                      # 段階57 第4部: 観察の記録があるのに「見つかっていません」と書かない
+        when = f"{_md(cur['state_date'])}の" if cur.get("state_date") else ""
+        return lab["with_current"].format(when=when, publisher=cur.get("publisher") or "")
     return lab["unknown"]
 
 
@@ -1418,6 +1422,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                    "publisher": cur.get("publisher") or cur.get("host"), "url": cur["url"], "source_class": cur["source_class"],
                    "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"],
                    "confidence_label": _confidence_label(cur)}
+        current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
     out = {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
@@ -1452,6 +1457,36 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         out["bird_area"] = c.get("bird_area")
         out["bird_range"] = c.get("bird_range")
         out["_rows"] = rows
+    return out
+
+
+def state_display(raw, publisher, policy):
+    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。語が続く記号(「◎ 真っ盛り」)は原文のまま。"""
+    cfg = policy.get("state_symbols") or {}
+    chars = cfg.get("chars") or ""
+    text = (raw or "").strip()
+    if not text or not any(ch in text for ch in chars):
+        return raw, False
+    if re.search(f"[{chars}][ 　]?[ぁ-んァ-ヶ一-龠]", text):
+        return raw, False
+    legend = next((m for p, m in (cfg.get("by_publisher") or {}).items() if p in (publisher or "")), None)
+    if not legend:
+        return None, True
+    for ch, word in legend.items():
+        text = text.replace(ch, word)
+    return (None, True) if any(ch in text for ch in chars) else (text, False)
+
+
+def practical_for_dates(items, dates, policy):
+    """段階57 第4部: 実用情報のうち、対象の日ではない日の開園時間を、当日は公式ページで確認する文に置き換える。"""
+    cfg = policy.get("practical_other_day") or {}
+    if not cfg:
+        return items
+    days = {(d.month, d.day) for d in dates}
+    out = []
+    for p in items:
+        m = re.search(cfg["pattern"], p.get("text") or "")
+        out.append({**p, "text": cfg["replace"]} if m and (int(m.group(1)), int(m.group(2))) not in days else p)
     return out
 
 
@@ -1520,7 +1555,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
         _today = now.date() if hasattr(now, "date") else now
         f["festivals"] = festivals_mod.for_spot(f["id"], _today)
-        f["practical"] = (f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today)      # 段階53 第4部: 読めた公式ページの実用情報
+        f["practical"] = practical_for_dates((f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today), dates, policy)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":
         inat_cache = {}
