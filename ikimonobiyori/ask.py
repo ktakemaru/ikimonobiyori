@@ -172,6 +172,46 @@ def mark_stale_display(subj, policy):
                 cur["gap_days"] = days
 
 
+def fetched_path(env=None):
+    return data_path("ask/fetched_urls.json", env)
+
+
+def fetched_today(now, env=None):
+    """今日すでに読んだページの URL(同じ日に繰り返し取得しない。段階57 第5部)。"""
+    try:
+        return set(json.loads(fetched_path(env).read_text(encoding="utf-8")).get(now.date().isoformat()) or [])
+    except (OSError, ValueError):
+        return set()
+
+
+def mark_fetched(urls, now, env=None):
+    p = fetched_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    day = now.date().isoformat()
+    p.write_text(json.dumps({day: sorted(fetched_today(now, env) | {u for u in urls if u})}, ensure_ascii=False, indent=0), encoding="utf-8")
+
+
+def drop_fetched(doc, seen):
+    """prepare の出力から、今日読んだページを除く。読むページがすべて今日読んだものの名所は、対象から外す(記録を使い回す)。"""
+    if not seen:
+        return doc
+    for pl in doc["subjects"].values():
+        pl["summary_pages"] = [p for p in pl.get("summary_pages") or [] if p.get("url") not in seen]
+        kept = []
+        for it in pl.get("items") or []:
+            pages = it.get("pages") or []
+            rest = [p for p in pages if p.get("url") not in seen]
+            if pages and not rest:
+                continue
+            kept.append({**it, "pages": rest})
+        pl["items"] = kept
+        pl["needs_fetch"] = bool(pl["items"]) or bool(pl["summary_pages"])
+    doc["summary_pages"] = [p for pl in doc["subjects"].values() for p in pl.get("summary_pages") or []]
+    doc["needs_fetch"] = any(pl.get("needs_fetch") for pl in doc["subjects"].values())
+    doc["already_read_today"] = sorted(seen)
+    return doc
+
+
 def _plan_cfg():
     return AP.load_policy()["last_plan"]
 
@@ -277,6 +317,7 @@ class Flow:
                "now": self.now.isoformat(), "out_dir": str(self.workdir),
                "summary_pages": [p for pl in plans.values() for p in pl.get("summary_pages") or []],
                "limits": next(iter(plans.values()))["limits"] if plans else None}
+        drop_fetched(doc, fetched_today(self.now, self.env))           # 段階57 第5部: 同じ日の同じページを読み直さない
         if "birds" in plans:
             doc["inat_refresh"] = self.inat_plan(plans["birds"].get("inat_refresh") or {})
         self._save("params.json", {"subjects": list(subjects), "region": region, "dates": [d.isoformat() for d in dates], "origin": origin,
@@ -359,6 +400,7 @@ class Flow:
                      "written": out.get("written"), "duplicates": out.get("duplicates"), "rejected": len(out.get("rejected") or []),
                      "by_url": out.get("by_url")})
         self._save("records.json", hist)
+        mark_fetched([u.get("url") for u in out.get("by_url") or []], self.clock(), self.env)
         self.call("record", submitted=len(batch), written=out.get("written"), duplicates=out.get("duplicates"),
                   rejected=len(out.get("rejected") or []))
         return out
@@ -370,6 +412,7 @@ class Flow:
         subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
         mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
+        mark_fetched([r.get("url") for r in (fetch_log or {}).get("read") or []], self.now, self.env)
         inat = (plan_doc or {}).get("inat_refresh")
         if inat and inat.get("reason") == "not_yet":   # 取り直しの対象があったが、計測フックの下で取り直していない(単体で聞いたとき)
             self.call("inat_refresh", skipped="no_measure_hook", areas=inat.get("areas"))
@@ -595,7 +638,7 @@ class Flow:
         return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has})
 
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
-    def plan(self, subject=None, override=None, reason=None, replace=None):
+    def plan(self, subject=None, override=None, reason=None, replace=None, refine=None):
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
@@ -603,7 +646,8 @@ class Flow:
         sj = subject or ("all" if len(subs) > 1 else subs[0])         # 対象が複数の質問(総合)は all
         old = self._load("answer_plan.json", None)
         keep = (old or {}).get("overrides") if old and old.get("subject") == sj else []
-        doc = AP.build_all(facts_doc, overrides=keep) if sj == "all" else AP.build(facts_doc, sj, overrides=keep)
+        refine = refine or (None if override is None else (old or {}).get("refine"))
+        doc = AP.build_all(facts_doc, overrides=keep, refine=refine) if sj == "all" else AP.build(facts_doc, sj, overrides=keep, refine=refine)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
         doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
@@ -685,7 +729,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
-    p.add_argument("--out-dir", required=True)
+    p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
+    p.add_argument("--refine", help="追質問の語(近場・山歩き・遠出・ライトアップなど)。同日の記録と計画だけで選び直す。通信しない(段階57)")
     p.add_argument("--subject", choices=list(O.load_policy()["subjects"]) + ["all"], help="省くと、対象が1つならそれ、複数なら all(総合)")
     p.add_argument("--explain", help="名所の順位・点数の内訳・不採用の理由を見る")
     p.add_argument("--override", help="計画にない名所を答えに足す(--reason が要る)")
@@ -704,7 +749,7 @@ def main(argv=None, http_get=None):
     a = ap.parse_args(argv)
     pol = load_policy()
     out_dir = a.out_dir
-    if a.step in ("page", "photos") and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
+    if (a.step in ("page", "photos") or (a.step == "plan" and a.refine)) and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
         last = load_last_plan(_clock())
         if last is None:
             print(OF.load()["messages"]["no_recent_plan"], file=sys.stderr)
@@ -763,7 +808,14 @@ def main(argv=None, http_get=None):
             _out(out)
             return 1 if out.get("rejected") else 0
         if a.step == "plan":
-            doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace)
+            if not a.out_dir and not a.refine:
+                print("--out-dir が要ります(--refine のときだけ省けます)", file=sys.stderr)
+                return 2
+            try:
+                doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace, refine=a.refine)
+            except ValueError as ex:
+                print(str(ex), file=sys.stderr)
+                return 2
             _out(AP.explain(doc, a.explain) if a.explain else doc)
             return 0
         if a.step == "photos":

@@ -96,11 +96,28 @@ reasons:
   out_of_range: 範囲外
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
+  refine_excluded: 追質問の条件に合わない
 
 # 段階57 第4部: 野鳥で、公式の観察の記録がない公園の扱い(大きく減点し、選ぶときは明記する)
 birds_no_current:
   penalty: 15
   note: 公式の最近の観察記録は確認できていません
+
+# 段階57 第5部: 追質問(「もっと近場で」「山歩きで」など)で計画を選び直す語 → 残す狙い。同日の記録と計画だけで選び直す(通信しない)
+refine:
+  words:
+    近場: {aims: [near]}
+    近く: {aims: [near]}
+    手軽: {aims: [near]}
+    山歩き: {aims: [trek]}
+    歩き: {aims: [trek]}
+    遠出: {aims: [far, drive]}
+    絶景: {aims: [far]}
+    ドライブ: {aims: [drive]}
+    ライトアップ: {lightup: true}
+    夜: {lightup: true}
+  # 近場で該当がないときは、距離の分かる候補を近い順にこの件数だけ残す
+  nearest_fallback: 3
 
 # 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
 segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}

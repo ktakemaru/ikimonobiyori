@@ -297,6 +297,8 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
         if any(f in _n(text) for f in short_names(c["name"])) and c["name"] not in mentioned:
             mentioned.append(c["name"])
     need = min(rules["min_candidates"], len(mat.region_candidates))
+    if plan and plan.get("refine"):                             # 段階57 第5部: 追質問で選び直した答えは、計画に残った件数まで
+        need = min(need, len(plan.get("picks") or []))
     if len(mentioned) < need:
         answer_errors.append({"code": "too_few_candidates", "detail": f"地域の候補 {len(mentioned)} 件(必要 {need} 件)"})
     bird_names = {f for c in mat.spots if c.get("_subject") == "birds" for f in short_names(c.get("name") or "")}

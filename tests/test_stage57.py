@@ -264,6 +264,63 @@ class Part4Wording(unittest.TestCase):
         self.assertEqual((t["start"], t["end"], t["source_class"]), ("11-11", "11-30", "secondary"))
 
 
+class Part5Refine(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+        self.now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+
+    def flow(self, facts):
+        f = ask.Flow(Path(self.tmp.name) / "w", now=self.now, env=self.env)
+        f._save("facts.json", facts)
+        return f
+
+    def test_near_keeps_only_near_and_updates_last_plan(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        first = f.plan()
+        self.assertGreater(len(first["picks"]), 1)
+        doc = f.plan(refine="もっと近場で")
+        self.assertEqual([p["name"] for p in doc["picks"]], ["試験の園"])
+        self.assertEqual(doc["refine"], "もっと近場で")
+        last = ask.load_last_plan(self.now, self.env)
+        self.assertEqual([p["name"] for p in last["plan"]["picks"]], ["試験の園"])
+        r = next(x for x in doc["ranking"] if x["name"] == "試験の湖")
+        self.assertEqual(r["reason"], "refine_excluded")
+
+    def test_trek_and_unknown_word(self):
+        f = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
+        self.assertEqual([p["name"] for p in f.plan(refine="山歩きで")["picks"]], ["試験の山"])
+        with self.assertRaises(ValueError):
+            f.plan(refine="おいしいものが食べたい")
+
+    def test_near_falls_back_to_the_nearest_when_none(self):
+        s = koyo_subject()
+        s["candidates"] = [c for c in s["candidates"] if c["name"] == "試験の湖"]
+        f = self.flow(facts_doc({"autumn_leaves": s}))
+        doc = f.plan(refine="近場")
+        self.assertTrue(doc["refine_relaxed"])
+        self.assertEqual([p["name"] for p in doc["picks"]], ["試験の湖"])
+
+    def test_refined_answer_with_fewer_picks_passes_the_candidate_count(self):
+        from ikimonobiyori import answer_plan as AP
+        f = facts_doc({"autumn_leaves": koyo_subject()})
+        plan = AP.build(f, "autumn_leaves", refine="近場")
+        r = V.check("① 試験の園: 例年の見頃です。\n", f, RULES, plan=plan)
+        self.assertNotIn("too_few_candidates", [e["code"] for e in r["answer_errors"]])
+
+    def test_same_day_pages_are_not_read_twice(self):
+        ask.mark_fetched(["https://a.example/1"], self.now, self.env)
+        self.assertEqual(ask.fetched_today(self.now, self.env), {"https://a.example/1"})
+        self.assertEqual(ask.fetched_today(self.now + timedelta(days=1), self.env), set())
+        doc = {"subjects": {"x": {"summary_pages": [{"url": "https://a.example/1"}], "items": [{"id": "a", "pages": [{"url": "https://a.example/1"}]},
+                                                                                              {"id": "b", "pages": [{"url": "https://a.example/2"}]}]}}}
+        ask.drop_fetched(doc, {"https://a.example/1"})
+        self.assertEqual([i["id"] for i in doc["subjects"]["x"]["items"]], ["b"])
+        self.assertEqual(doc["subjects"]["x"]["summary_pages"], [])
+        self.assertTrue(doc["needs_fetch"])
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

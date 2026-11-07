@@ -182,8 +182,36 @@ def score_candidate(c, dates, pol, subject=None):
 
 # ---- 計画 ----
 
-def build(facts_doc, subject, policy=None, overrides=None):
-    """facts.json の 1 対象(subjects.<subject>)から計画を作る。同じ入力なら同じ出力。"""
+def refine_rule(word, pol=None):
+    """追質問の語 → 選び直しの条件。語を含む表の項目(長い順)。ないときは ValueError(推測しない)。"""
+    pol = pol or load_policy()
+    words = pol["refine"]["words"]
+    hit = next((k for k in sorted(words, key=len, reverse=True) if k in (word or "")), None)
+    if hit is None:
+        raise ValueError(f"選び直しの条件が分からない: {word}(使える語: {'・'.join(words)})")
+    return words[hit]
+
+
+def _refine_reject(rows, status, rule, pol, reject):
+    """条件に合わない候補を外す。近場で 1 件もなければ、距離の分かる候補を近い順に残す。→ 緩めたか。"""
+    alive = [r for r in rows if r["name"] not in status]
+    if rule.get("lightup"):
+        keep = [r for r in alive if r.get("lightup_active")]
+    else:
+        keep = [r for r in alive if r["aim"] in rule["aims"]]
+    relaxed = False
+    if not keep and not rule.get("lightup") and "near" in (rule.get("aims") or []):
+        keep = sorted([r for r in alive if r["distance_km"] is not None], key=lambda r: (r["distance_km"], r["name"]))[: pol["refine"]["nearest_fallback"]]
+        relaxed = bool(keep)
+    names = {r["name"] for r in keep}
+    for r in alive:
+        if r["name"] not in names:
+            reject(r, "refine_excluded")
+    return relaxed
+
+
+def build(facts_doc, subject, policy=None, overrides=None, refine=None):
+    """facts.json の 1 対象(subjects.<subject>)から計画を作る。同じ入力なら同じ出力。refine: 追質問の語(段階57 第5部)。"""
     pol = policy or load_policy()
     sub = facts_doc["subjects"][subject]
     dates = [_d(x) for x in facts_doc["dates"]]
@@ -232,6 +260,7 @@ def build(facts_doc, subject, policy=None, overrides=None):
             reject(r, "no_aim")
         elif r["score"] < pol["selection"]["min_score"]:
             reject(r, "no_current" if not r["has_current"] else ("stale_current" if r["stale"] else "no_current"))
+    relaxed = _refine_reject(rows, status, refine_rule(refine, pol), pol, reject) if refine else False
     for c in sub.get("nearby_out_of_region") or []:
         rows.append({"id": c.get("id"), "name": c["name"], "score": 0, "outlook": "unknown", "aim": "other", "distance_km": c.get("distance_km"),
                      "distance_estimated": False, "breakdown": {}, "cluster": cluster_key(c), "has_current": bool(c.get("current")), "stale": False,
@@ -288,7 +317,8 @@ def build(facts_doc, subject, policy=None, overrides=None):
                         "reason": st["code"] if st else None, "reason_label": st["label"] if st else None, "reason_detail": {k: v for k, v in (st or {}).items() if k not in ("code", "label")}})
     return {"schema": SCHEMA, "subject": subject, "dates": [x.isoformat() for x in dates], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
             "use_headings": len(sections) >= pol["aims"]["min_sections_for_headings"],
-            "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or [])}
+            "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or []),
+            **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
 
 
 def _item(r, oo):
@@ -299,10 +329,10 @@ def _item(r, oo):
             "current_date": r["current_date"], "festivals": r["festivals"], "practical": r["practical"]}
 
 
-def build_all(facts_doc, policy=None, overrides=None):
+def build_all(facts_doc, policy=None, overrides=None, refine=None):
     """複数の対象(紅葉・花・野鳥)の質問(総合)。対象ごとの計画を作り、全体の今回のおすすめは各対象の1位から(足りなければ点数の高い順)。"""
     pol = policy or load_policy()
-    subs = {sj: build(facts_doc, sj, pol) for sj in facts_doc["subjects"]}
+    subs = {sj: build(facts_doc, sj, pol, refine=refine) for sj in facts_doc["subjects"]}
     oo = pol["outlook"]
     n = pol["selection"]["picks"]
     firsts = [dict(pl["picks"][0], subject=sj) for sj, pl in subs.items() if pl["picks"]]
@@ -318,7 +348,7 @@ def build_all(facts_doc, policy=None, overrides=None):
     picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(picks, key=key))]
     segs = [{"heading": pol["segment_headings"][sj], "key": sj, "subject": sj} for sj in subs]     # 段階57 第3部: 対象別の節(それぞれに今回のおすすめ)で答えるときの見出し
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
-            "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs,
+            "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs, **({"refine": refine} if refine else {}),
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
 
 
