@@ -221,5 +221,53 @@ class Part4GuideEye(unittest.TestCase):
         self.assertEqual([e["code"] for e in self.K.answer_errors(wrong, [c1])], ["guide_eye_not_from_card"])
 
 
+def sakura_cards():
+    S = {"name": "試験の研究所", "url": "https://kenkyu.example.org/s", "checked_on": "2026-11-07"}
+    return [card(title="冬桜とは", category="種の解説", place="冬桜", place_aliases=["フユザクラ"], facts=["秋から冬と春に二度咲く", "見頃は例年11月中旬〜12月上旬"], source=S, condition={"months": list(range(1, 13))}),
+            card(title="冬桜と寒桜の違い", category="種の解説", place="冬桜", place_aliases=["寒桜"], facts=["寒桜は1〜2月に咲く淡紅色の一重"], source=S, condition={"months": list(range(1, 13))}),
+            card(title="山桜", category="種の解説", place="ヤマザクラ", place_aliases=["山桜"], facts=["葉の展開と同時に咲く"], source=S, condition={"months": list(range(1, 13))}),
+            card(title="桜を守る", category="保全・マナー", place="冬桜", place_aliases=["桜"], facts=["枝を折らない"], source=S, condition={"months": list(range(1, 13))})]
+
+
+class Part7Intent(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import intent
+        self.I = intent
+
+    def test_classify(self):
+        for q, want in (("冬桜について教えて", "knowledge"), ("冬桜と寒桜の違いを教えて", "difference"), ("山桜とか豆桜というのもあるんだ", "chat"), ("今見られる桜ってある?", "now"),
+                        ("明日 紅葉を見に行きたい。おすすめある?", "plan"), ("カワセミはどこで見られる?", "place_time"), ("西沢渓谷の紅葉はどう?", "now")):
+            self.assertEqual(self.I.classify(q), want, q)
+
+    def test_knowledge_answer_leads_with_knowledge_and_passes(self):
+        cards = sakura_cards()
+        text = self.I.compose("冬桜について教えて", cards=cards)
+        self.assertTrue(text.startswith("冬桜とは:"), text)
+        self.assertIn("ガイドの目: 枝を折らない", text)
+        self.assertEqual(self.I.check(text, cards), [])
+        self.assertNotIn("？", text)
+
+    def test_shorter_word_inside_a_longer_one_is_not_a_topic(self):
+        self.assertEqual(self.I.topics("冬桜について教えて", sakura_cards()), ["冬桜"])
+
+    def test_no_card_returns_none(self):
+        self.assertIsNone(self.I.compose("知らない花について教えて", cards=sakura_cards()))
+
+    def test_check_finds_defects(self):
+        cards = sakura_cards()
+        for text, code in (("① 桜山公園\n② 別の公園\n", "knowledge_starts_with_list"), ("冬桜です。\n好みを1つ教えてください。\n", "question_in_answer"), ("冬桜です。ご希望なら調べます。\n", "process_excuse"),
+                           ("名所の一覧に入っていないのでお答えできません。\n", "knowledge_refused"), ("冬桜は7000本あります。\n", "knowledge_fact_not_in_card"), ("冬桜です。\nhttps://other.example/x\n", "knowledge_source_unused"),
+                           ("葉の展開と同時に咲く。\n", "knowledge_source_missing")):
+            self.assertIn(code, [e["code"] for e in self.I.check(text, cards)], text)
+
+    def test_cards_recorded_before_use(self):
+        from ikimonobiyori import knowledge as K
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            self.assertIsNone(self.I.compose("試験の花について教えて", env=env))
+            K.add(card(title="試験の花", category="種の解説", place="試験の花", facts=["春に咲く"]), env)
+            self.assertIn("春に咲く", self.I.compose("試験の花について教えて", env=env))
+
+
 if __name__ == "__main__":
     unittest.main()

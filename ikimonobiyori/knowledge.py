@@ -92,7 +92,7 @@ def search(env=None, place=None, category=None, month=None, text=None, cards=Non
 
 def place_match(card, place):
     names = [card.get("place") or ""] + list(card.get("place_aliases") or [])
-    return any(n and (n in place or place in n) for n in names)
+    return any(len(n) >= 2 and (n in place or place in n) for n in names)     # 1 文字の語(桜など)では当てない
 
 
 def select(places, month=None, cards=None, env=None, topics=()):

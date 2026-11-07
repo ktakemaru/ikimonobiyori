@@ -818,6 +818,11 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("intent", help="質問の意図の分類(知識・違い・雑談・場所と時期・今の状況・計画)。段階59")
+    p.add_argument("--question", required=True)
+    p = sub.add_parser("knowledge-answer", help="知識の質問の答えをカードから作り、検査する(段階59)。カードがなければ終了コード 3(先に調べて記録する)")
+    p.add_argument("--question", required=True)
+    p.add_argument("--month", type=int)
     p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show")
     p.add_argument("action", choices=["add", "list", "search", "show"])
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
@@ -875,6 +880,21 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "intent":
+        from . import intent
+        _out({"intent": intent.classify(a.question), "topics": intent.topics(a.question)})
+        return 0
+    if a.step == "knowledge-answer":
+        from . import intent
+        text = intent.compose(a.question, month=a.month)
+        if text is None:
+            print("カードがありません。公的・研究機関の解説を先に読み、事実を knowledge add で記録してください", file=sys.stderr)
+            return 3
+        errs = intent.check(text, intent.cards_for(a.question, month=a.month))
+        for e in errs:
+            print(f"NG  [{e['code']}] {e['detail']}", file=sys.stderr)
+        sys.stdout.write(text)
+        return 1 if errs else 0
     if a.step == "knowledge":
         from . import knowledge as K
         if a.action == "add":

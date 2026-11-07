@@ -20,6 +20,27 @@ cards:
   line: "ガイドの目: {year}{facts}({source})"
   year_prefix: "{year}年の記録では、"
   before_line: "{facts}({source})"
+# 段階59 第7部: 質問の意図の分類(ikimonobiyori/intent.py)。上から順に当てる
+intent:
+  order: [difference, chat, now, plan, knowledge, place_time]
+  default: plan
+  patterns:
+    difference: ["と.{1,12}の違い", "違いを", "見分け"]
+    chat: ["というのもあるんだ", "があるんだ", "^へえ", "なんだ[。!！]?$"]
+    now: ["今見られる", "今.*(見られ|咲いて|見頃)", "はどう[?？]?$", "今の状況", "状況は"]
+    plan: ["行きたい", "おすすめ", "探して"]
+    knowledge: ["について教えて", "とは", "って何", "どんな", "面白いもの", "教えて"]
+    place_time: ["どこで", "いつ", "どこ"]
+  max_cards: {knowledge: 4, difference: 4, chat: 2}
+  max_related: 2
+  related_heading: 関連して
+  sources_heading: 出典
+  secondary_note: 紹介サイトの記載を含みます(公式ではありません)。
+  section_order: [種の解説, 季節の仕組み, 見頃の流れ, 痕跡・暮らし, 出会い方・歩き方, シーズンの目安, 地形・地質・火山, 名前・歴史・文化, 夜・天気・自然現象, 保全・マナー, 安全]
+  guide_categories: [保全・マナー, 安全]
+  category_words: {"足元|痕跡|面白いもの": 痕跡・暮らし}
+  list_head_re: '^\s*([①-⑩]|\d+\.|- |## おすすめ|.*名所は)'
+  refuse_phrases: [名所の一覧に入っていない, 一覧に入っていないので, お答えできません, 調べてほしければ]
 pdf:
   vertical_min_run: 4        # この数以上、1 文字の行が続けば縦書きとして連結する(仮置き)
   image_only_max_jp: 10      # 日本語の文字がこれ未満なら「画像のみ」(仮置き)
