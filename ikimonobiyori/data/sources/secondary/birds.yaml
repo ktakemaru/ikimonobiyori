@@ -1,0 +1,20 @@
+# 野鳥の紹介サイト・参考の台帳(ikimono-status-sources-secondary/1)。段階61 第5部(2026-11-08)。
+# 公式の台帳(birds.yaml)とは別のファイル。承認待ちの情報源は答えの材料にしない(承認の判断と記入は本人)。
+schema: ikimono-status-sources-secondary/1
+subject: birds
+sources:
+  - id: bird-research-season-front
+    publisher: バードリサーチ(特定非営利活動法人。参加者の投稿の集計。公式ではない)
+    publisher_kind: portal_media
+    url: "https://www.bird-research.jp/?page_id=2209"
+    kind: reference_link
+    covers:
+    - {name: 季節前線ウォッチ(全国), label: 季節前線ウォッチ(春はツバメ・ウグイスなど、秋はジョウビタキ・ツグミ・モズなどの初認・初鳴き)}
+    notation:
+      style: none
+      map: {}
+      note: 参加者から送られた初認・初鳴きの日を地図に表示する調査。現況の段階ではなく、使うなら種名・初認日・地域の目安・URL だけを「参考」として
+    readable: {status: ok, checked_on: '2026-11-08', robots: no_file, note: robots.txt は 404}
+    terms: {status: not_checked, note: 著作権・利用条件のページが見つからなかった(プライバシーポリシーだけ。docs/sources-approval-61.md)}
+    approval: {status: pending, reason: 承認待ち(段階61 第5部)。利用条件が確かめられず、投稿の集計なので、本人の判断まで答えの材料にしない}
+    confidence_label: 紹介サイト(公式ではない)

@@ -1,0 +1,67 @@
+# 段階61 第2部: 博物館などの行事・展示の台帳。新しく足す施設はすべて承認待ち(approval.status: pending)。承認の判断・記入は本人が行う。
+# 項目は読めたものだけ(推測で補わない)。日付は公式ページの「日時」の記載(年つき・曜日つき)。weekday_text はページの曜日の書き方のまま。
+schema: ikimono-facility-events/1
+facilities:
+- id: kanagawa-museum
+  name: 神奈川県立生命の星・地球博物館
+  prefecture: 神奈川県
+  site_url: https://nh.kanagawa-museum.jp/
+  events_url: https://nh.kanagawa-museum.jp/event/
+  class: official
+  terms:
+    url: https://nh.kanagawa-museum.jp/sitepolicy/
+    note: 'サイトポリシー: コンテンツは著作権の対象。引用等の著作権法上認められる範囲で自由に利用でき、出典を記載する。第三者に権利があるものがある。書籍への転載等の二次的利用は事前に問い合わせ。robots.txt は 404(自動取得の記載なし)。権利メモ: 事実のみ・出典記載・転載しない'
+  checked_on: '2026-11-07'
+  approval:
+    status: pending
+    reason: 承認待ち(段階61 第2部)。規約メモを見て、本人が承認するまで答えの材料にしない
+events:
+- facility: kanagawa-museum
+  kind: 講座
+  title: バードウォッチング入門
+  topics: [野鳥]
+  date: '2026-12-05'
+  weekday_text: 土曜
+  time: 9時30分から16時
+  deadline: '2026-11-24'
+  deadline_weekday_text: 火曜
+  capacity: 15
+  target: 小学5年生から大学生
+  place: 当博物館(実習実験室)
+  url: https://nh.kanagawa-museum.jp/event/kouza20261205.html
+  checked_on: '2026-11-07'
+- facility: kanagawa-museum
+  kind: 観察会
+  title: 冬の地形地質観察会―西丹沢の地質と岩石―
+  topics: [地形・地質, 自然]
+  date: '2026-12-05'
+  weekday_text: 土曜
+  time: 10時30分から14時30分
+  deadline: '2026-11-24'
+  deadline_weekday_text: 火曜
+  capacity: 25
+  target: 中学生から成人
+  place: 中川川沿い(山北町)
+  note: 雨天・荒天中止
+  url: https://nh.kanagawa-museum.jp/event/kouza20261205-2.html
+  checked_on: '2026-11-07'
+- facility: kanagawa-museum
+  kind: 展示
+  title: しらべて分かった！里山にくらす動物たち
+  topics: [自然]
+  start: '2026-07-18'
+  end: '2026-11-08'
+  label: 特別展
+  url: https://nh.kanagawa-museum.jp/uploads/tobira124_2tanaka.pdf
+  source_note: 自然科学のとびら 第32巻3号(2026年9月15日発行)の記事の記載(開催期間 7月18日(土)〜11月8日(日))
+  checked_on: '2026-11-07'
+- facility: kanagawa-museum
+  kind: 展示
+  title: 森は動く
+  topics: [自然]
+  start: '2027-02-20'
+  end: '2027-05-09'
+  label: 企画展
+  url: https://nh.kanagawa-museum.jp/uploads/tobira124_2tanaka.pdf
+  source_note: 自然科学のとびら 第32巻3号(2026年9月15日発行)の記事の記載(2027年2月20日(土)〜5月9日(日))
+  checked_on: '2026-11-07'

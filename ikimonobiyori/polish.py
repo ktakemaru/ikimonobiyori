@@ -85,6 +85,7 @@ def check(skeleton, text, names=()):
         if added:
             errors.append({"code": "polish_added_fact", "kind": kind, "items": added,
                            "detail": msg["added"].format(kind=kinds[kind], items="・".join(added))})
+    errors += unmapped_errors(skeleton, text, sk, names, c) + caution_errors(skeleton, text, c)     # 段階61 第6部
     dropped_current = sorted({_md(*d.split("/")) for d in CURRENT_RE.findall(_n(skeleton))} - tx["date"])
     if dropped_current:
         errors.append({"code": "polish_dropped_fact", "kind": "current_date", "items": dropped_current,
@@ -106,6 +107,52 @@ def check(skeleton, text, names=()):
         errors.append({"code": "polish_dropped_fact", "kind": "source", "items": [c["sources_heading"]],
                        "detail": msg["dropped"].format(kind=kinds["source"], items=c["sources_heading"])})
     return {"ok": not errors, "errors": errors}
+
+
+SENT_SPLIT_RE = re.compile(r"[。!?！？\n]")
+STRIP_RE = re.compile(r"[\s、,・:：()（）「」『』【】\-—①-⑳]")
+
+
+def _bigrams(s):
+    s = STRIP_RE.sub("", _n(s))
+    return {s[i:i + 2] for i in range(len(s) - 1)}
+
+
+def unmapped_errors(skeleton, text, sk=None, names=(), c=None):
+    """段階61 第6部 (a): 整えた文章の各文を骨組みに割り当てる。2 字組の重なりが下限未満で、骨組みの事実も含まない文は不合格。
+    URL・出典の見出し・骨組みと同じ行・短いつなぎの文は対象外。"""
+    c = c or cfg()
+    sk = sk or extract(skeleton, names, c["min_name_chars"])
+    sk_grams = _bigrams(skeleton)
+    sk_lines = {_n(x).strip() for x in skeleton.splitlines()}
+    facts = {v for k, vs in sk.items() if k != "url" for v in vs}
+    bad = []
+    for line in text.splitlines():
+        if _n(line).strip() in sk_lines or URL_RE.search(line):
+            continue
+        for sent in SENT_SPLIT_RE.split(URL_RE.sub(" ", line)):
+            body = STRIP_RE.sub("", _n(sent))
+            if len(body) <= c["connector_max_chars"]:
+                continue
+            ex = extract(sent, names, c["min_name_chars"])
+            if any(v in facts for k, vs in ex.items() if k != "url" for v in vs):
+                continue
+            g = _bigrams(sent)
+            if g and len(g & sk_grams) / len(g) >= c["sentence_min_overlap"]:
+                continue
+            bad.append(sent.strip()[:30])
+    if not bad:
+        return []
+    return [{"code": "polish_unmapped_sentence", "kind": "sentence", "items": bad, "detail": c["messages"]["unmapped"].format(items=" / ".join(bad))}]
+
+
+def caution_errors(skeleton, text, c=None):
+    """段階61 第6部 (b): 比較・最上級・断定・因果・時期の要注意語は、骨組みに同じ語がなければ不合格。"""
+    c = c or cfg()
+    words = [w for w in c.get("caution_words") or [] if _count(text, w) > _count(skeleton, w)]
+    if not words:
+        return []
+    return [{"code": "polish_caution_word", "kind": "caution", "items": words, "detail": c["messages"]["caution"].format(items="・".join(words))}]
 
 
 def decide(state, skeleton_text, fact_ok, verify_ok):

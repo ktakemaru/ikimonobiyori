@@ -265,6 +265,10 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
         lines += _subject_part(facts["subjects"][plan["subject"]], plan, plan["subject"], t, max_quote, urls, mentioned, today)
     if len(flat) < load_rules()["min_candidates"]:
         lines += ["", t["few"].format(n=len(flat))]
+    from . import jma_normals as JN                                    # 段階61 第1部: 街の標本木の平年の目安(気象庁の観測値をもとに計算。山地の見頃とは別)
+    jn, jn_src = JN.skeleton_lines(list((facts.get("subjects") or {}).keys()), facts.get("origin"))
+    if jn:
+        lines += [""] + jn
     ny = _no_this_year(plan, facts, t, max_quote)
     if ny:
         lines += ["", t["no_this_year_heading"]] + ny
@@ -297,8 +301,8 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
         u = (c.get("current") or {}).get("url")
         if u:
             urls.add(u)
-    if urls:
-        lines += ["", t["sources_heading"]] + sorted(urls)
+    if urls or jn_src:
+        lines += ["", t["sources_heading"]] + ([jn_src] if jn_src else []) + sorted(urls)
     if opener:
         lines += ["", opener]
     for o in offers or []:

@@ -1,0 +1,76 @@
+# 段階61 第1部: 気象庁 生物季節観測の累年値から「平年の目安」(平均・最早・最遅)を計算する値と、答えの文(ikimonobiyori/jma_normals.py)。
+# 出典: 気象庁ホームページ「生物季節観測累年値」https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html
+# 利用条件: 公共データ利用規約(第1.0版)。出典を記載し、加工したことを記載する(国が作成したかのような表示をしない)。
+schema: ikimono-jma-normals-policy/1
+source:
+  name: 気象庁「生物季節観測累年値」
+  page: https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html
+  format_pdf: https://www.data.jma.go.jp/sakura/data/ruinenchi/format_ruinenchi.pdf
+  license: 公共データ利用規約(第1.0版) https://www.digital.go.jp/resources/open_data/public_data_license_v1.0
+encoding: cp932                    # フォーマットの PDF「文字コード：Shift_JIS」(2026-11-07 に本文を読んで確認)
+# 期間: 指示書 第1部 3「直近30年(可能なら1991〜2020年)」。気象庁の平年値と同じ 30 年
+period: {from: 1991, to: 2020}
+# データ点数の下限(これ未満の地点・種目は表に載せない)。理由: 30 年のうち 3 分の 1 未満では平均の目安として弱い。provisional
+min_points: 10
+# 統計に使うリマーク。フォーマットの PDF: 観測値のリマーク 6〜9(代替種目・正規種目の構内・付近)。3・4 は「統計には使用しない」
+stat_rm: ["6", "7", "8", "9"]
+# 旬の分け方(上旬 1〜10 日・中旬 11〜20 日・下旬 21 日〜。ハブのコンシェルの month_thirds と同じ)
+thirds: [{until: 10, label: 上旬}, {until: 20, label: 中旬}, {until: 31, label: 下旬}]
+# 地点: 出発地(横浜)からの範囲にある気象官署で、CSV の地点名で確認できたもの(2026-11-07 に取得した CSV。千葉県は銚子)
+stations:
+  - {station_no: "662", name: 東京}
+  - {station_no: "670", name: 横浜}
+  - {station_no: "626", name: 熊谷}
+  - {station_no: "648", name: 銚子}
+  - {station_no: "615", name: 宇都宮}
+  - {station_no: "624", name: 前橋}
+  - {station_no: "629", name: 水戸}
+  - {station_no: "638", name: 甲府}
+  - {station_no: "610", name: 長野}
+  - {station_no: "656", name: 静岡}
+# 種目。code は CSV のファイル名と 1 行目の番号、name は CSV の 1 行目の種目名(そのまま照合する)。
+# observing: ダウンロードのページで★(観測継続中)の印がある種目(2026-11-07 に読んだページのリンクの文字で確認)。
+# season と cross_year_months: 年界を越えた値は当年の欄に書かれる(フォーマットの PDF の注意事項)。秋の種目の 1〜3 月は翌年、春の種目の 10〜12 月は前年の日付
+# words: 質問の語。skip: この語を含む質問では当てない(冬桜などは別の種類)
+phenomena:
+  - {code: "015", key: kaede_koyo,    name: かえでの紅葉,     label: かえでの紅葉,   kind: plant,  observing: true,  season: autumn, cross_year_months: [1, 2, 3], words: [紅葉, もみじ, モミジ, かえで, カエデ], mountain_note: true}
+  - {code: "016", key: kaede_rakuyo,  name: かえでの落葉,     label: かえでの落葉,   kind: plant,  observing: true,  season: autumn, cross_year_months: [1, 2, 3], words: []}
+  - {code: "013", key: icho_koyo,     name: いちょうの黄葉,   label: いちょうの黄葉, kind: plant,  observing: true,  season: autumn, cross_year_months: [1, 2, 3], words: [紅葉, 黄葉, いちょう, イチョウ, 銀杏], mountain_note: true}
+  - {code: "014", key: icho_rakuyo,   name: いちょうの落葉,   label: いちょうの落葉, kind: plant,  observing: true,  season: autumn, cross_year_months: [1, 2, 3], words: []}
+  - {code: "004", key: sakura_kaika,  name: さくらの開花,     label: さくらの開花,   kind: plant,  observing: true,  season: spring, cross_year_months: [10, 11, 12], words: [桜, さくら, サクラ, 花見], skip: [冬桜, 十月桜, 寒桜, 河津桜, 寒緋桜, 早咲き, 秋桜]}
+  - {code: "005", key: sakura_mankai, name: さくらの満開,     label: さくらの満開,   kind: plant,  observing: true,  season: spring, cross_year_months: [10, 11, 12], words: [桜, さくら, サクラ, 花見], skip: [冬桜, 十月桜, 寒桜, 河津桜, 寒緋桜, 早咲き, 秋桜]}
+  - {code: "001", key: ume_kaika,     name: うめの開花,       label: うめの開花,     kind: plant,  observing: true,  season: spring, cross_year_months: [10, 11, 12], words: [梅, うめ, ウメ]}
+  - {code: "009", key: ajisai_kaika,  name: あじさいの開花,   label: あじさいの開花, kind: plant,  observing: true,  season: summer, cross_year_months: [], words: [あじさい, アジサイ, 紫陽花]}
+  - {code: "011", key: susuki_kaika,  name: すすきの開花,     label: すすきの開花,   kind: plant,  observing: true,  season: autumn, cross_year_months: [], words: [すすき, ススキ]}
+  - {code: "018", key: uguisu,        name: うぐいすの初鳴,   label: うぐいすの初鳴き, kind: animal, observing: false, season: spring, cross_year_months: [10, 11, 12], words: [うぐいす, ウグイス, 鶯]}
+  - {code: "019", key: tsubame,       name: つばめの初見,     label: つばめの初見,   kind: animal, observing: false, season: spring, cross_year_months: [10, 11, 12], words: [つばめ, ツバメ, 燕]}
+  - {code: "027", key: mozu,          name: もずの初鳴,       label: もずの初鳴き,   kind: animal, observing: false, season: autumn, cross_year_months: [], words: [もず, モズ]}
+  - {code: "106", key: sashiba,       name: さしば南下の初見, label: さしばの南下の初見, kind: animal, observing: false, season: autumn, cross_year_months: [], words: [さしば, サシバ]}
+  - {code: "024", key: hotaru,        name: ほたるの初見,     label: ほたるの初見,   kind: animal, observing: false, season: summer, cross_year_months: [], words: [ほたる, ホタル, 蛍]}
+  - {code: "099", key: kakko,         name: かっこうの初鳴,   label: かっこうの初鳴き, kind: animal, observing: false, season: summer, cross_year_months: [], words: [かっこう, カッコウ]}
+  - {code: "017", key: hibari,        name: ひばりの初鳴,     label: ひばりの初鳴き, kind: animal, observing: false, season: spring, cross_year_months: [10, 11, 12], words: [ひばり, ヒバリ]}
+  - {code: "026", key: higurashi,     name: ひぐらしの初鳴,   label: ひぐらしの初鳴き, kind: animal, observing: false, season: summer, cross_year_months: [], words: [ひぐらし, ヒグラシ]}
+# CSV の形(フォーマットの PDF と、2026-11-07 に取得した 17 ファイルで確認)。最後の年の rm の列名はファイルで「e」と「rm」の両方がある
+layout:
+  title_row: 0
+  header_row: 1
+  station_columns: [番号, 地点名]
+  summary_columns: [平年値, rm, 最早値, rm, 最早年, 最晩値, rm, 最晩年]
+  no_value: "0"
+# 答えで使うとき: 平年の目安の質問の語(種目の語と一緒に出たときだけ)
+ask_words: [平年, 例年, いつ頃, いつごろ, いつ, 鳴きはじめ, 鳴き始め, 初鳴, 初見, 時期]
+default_stations: [東京, 横浜]     # 質問に地点名がないときに出す地点(出発地の既定の横浜と、東京)
+max_lines: 4
+text:
+  heading: 街の標本木・観測の目安(気象庁)
+  observing: "{station}(気象庁の標本木。都市部の観測)の{label}は、平年は{phrase}ごろです({from}〜{to}年の平均、{points}年分。早い年は{earliest}、遅い年は{latest})。"
+  ended: "{station}の{label}は、気象庁の過去の観測({first}〜{last}年)では、{phrase}ごろでした({from}〜{to}年のうち{points}年分の平均。早い年は{earliest}、遅い年は{latest})。"
+  ended_note: この観測はすでに終わっていて、近年の記録はありません。
+  mountain_note: 都市部の標本木の観測で、山地の見頃とは別です。
+  source_line: "気象庁ホームページ(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)。平年の目安は、気象庁の観測値をもとに、イキモノビヨリが計算"
+  # 観測を終えた種目の行に、この語を書かない(検査器 ended_phenology_this_year)
+  forbidden_for_ended: [今年の, 今年は, 今シーズン]
+# 計画の答え(ask skeleton)の「例年の時期」に添える種目(対象 → 種目)。地点は出発地と同じ名前の地点、なければ skeleton_station(既定の出発地の横浜)
+skeleton_station: 横浜
+skeleton_subjects:
+  autumn_leaves: [kaede_koyo]
