@@ -250,6 +250,24 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
+def source_rule_errors(text, rules, blob=None):
+    """段階57 第10部: 使わない種類のホスト・語(本文にも出典にも)／事実にない電話番号／英語の出典の見出し。blob: 取得した事実の文字列(なければ番号はすべて不合格)。"""
+    from . import observations as O
+    pol = O.load_policy()
+    errs = []
+    low = text.lower()
+    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
+        if w.lower() in low:
+            errs.append({"code": "blocked_source", "detail": w})
+    for m in re.finditer(rules["phone_re"], _n(text)):
+        if blob is None or m.group(0) not in blob:
+            errs.append({"code": "phone_not_from_official", "detail": m.group(0)})
+    for line in text.splitlines():
+        if re.match(rules["english_sources_re"], line):
+            errs.append({"code": "sources_heading", "detail": line.strip()})
+    return errs
+
+
 def process_excuse_errors(text, rules):
     """段階57 第9部: 作業の事情の文・「ご希望なら調べます」型。調べられるものは答えの前に調べる。"""
     out = []
@@ -340,6 +358,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
+    answer_errors += source_rule_errors(text, rules, mat.blob)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
@@ -746,7 +765,7 @@ def generic_check(text, rules=None, offers=None):
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
-    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules)]
+    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules)]
     errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):

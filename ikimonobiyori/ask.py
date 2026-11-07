@@ -764,6 +764,11 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("place", help="場所を指定した質問: 名所の一覧との照合と、場所ごとの事実。一覧にない場所は検索語を返す(段階57。通信しない)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--question", help="質問の文(場所名を取り出す)")
+    p.add_argument("--name", action="append", default=[], help="場所名(複数可)")
+    p.add_argument("--subject", default="autumn_leaves")
     p = sub.add_parser("origin", help="質問の文から出発地を決める(追質問だけ前の出発地を引き継ぐ。段階57)")
     p.add_argument("--question", help="質問の文")
     p.add_argument("--follow-up", action="store_true", help="直前の質問の追質問(同じ話題の続き)のとき")
@@ -860,6 +865,16 @@ def main(argv=None, http_get=None):
                 print(str(ex), file=sys.stderr)
                 return 2
             _out(AP.explain(doc, a.explain) if a.explain else doc)
+            return 0
+        if a.step == "place":
+            from . import place_answer as PA
+            facts_doc = flow._load("facts.json", None)
+            if not facts_doc:
+                print("先に facts を実行してください", file=sys.stderr)
+                return 2
+            names = a.name or PA.extract_names(a.question)
+            res = PA.plan_for(names, a.subject, facts_doc)
+            _out({"found": [{"query": x["query"], "name": x["candidate"]["name"], "section": x["section"]} for x in res["found"]], "missing": res["missing"]})
             return 0
         if a.step == "refresh":
             facts_doc = flow._load("facts.json", None)

@@ -273,7 +273,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical")
+          "source_class", "species", "practical", "provisional_search", "source_id")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))

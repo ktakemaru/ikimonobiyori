@@ -471,6 +471,65 @@ class Part9Procedure(unittest.TestCase):
             self.assertIn("リポジトリのファイルを変更しない", t)
 
 
+class Part10Place(unittest.TestCase):
+    def test_extract_names(self):
+        from ikimonobiyori import place_answer as PA
+        self.assertEqual(PA.extract_names("西沢渓谷や大菩薩嶺の紅葉はどう?"), ["西沢渓谷", "大菩薩嶺"])
+        self.assertEqual(PA.extract_names("御岳昇仙峡の紅葉状況は?"), ["御岳昇仙峡"])
+
+    def test_match_does_not_mistake_similar_names(self):
+        from ikimonobiyori import place_answer as PA
+        cands = [{"name": "高尾山"}, {"name": "高尾の森"}, {"name": "箱根(芦ノ湖)"}, {"name": "箱根(湯本)"}, {"name": "西沢渓谷周辺"}]
+        self.assertEqual(PA.match("高尾山", cands)["name"], "高尾山")
+        self.assertEqual(PA.match("芦ノ湖", cands)["name"], "箱根(芦ノ湖)")
+        self.assertIsNone(PA.match("箱根", cands))                              # 2 件に当たる語は決めない
+        self.assertEqual(PA.match("西沢渓谷", cands)["name"], "西沢渓谷周辺")
+        self.assertIsNone(PA.match("大菩薩嶺", cands))
+
+    def test_filter_results_drops_blocked_and_reprints(self):
+        from ikimonobiyori import place_answer as PA
+        rows = [{"url": "https://tenki.jp/kouyou/3/", "title": "紅葉"},
+                {"url": "https://www.weathernews.jp/koyo/", "title": "紅葉"},
+                {"url": "https://www.japan-travel.example.com/autumn", "title": "Autumn leaves forecast 2026", "snippet": "Japan Weather Association says later"},
+                {"url": "https://www.city.yamanashi.yamanashi.lg.jp/x", "title": "西沢渓谷"},
+                {"url": "https://www.example.com/nishizawa", "title": "西沢渓谷の見どころ"}]
+        got = [r["url"] for r in PA.official_first(PA.filter_results(rows))]
+        self.assertEqual(got, ["https://www.city.yamanashi.yamanashi.lg.jp/x", "https://www.example.com/nishizawa"])
+
+    def test_check_rejects_blocked_sources_phones_and_english_heading(self):
+        f = facts_doc({"autumn_leaves": koyo_subject()})
+        f["subjects"]["autumn_leaves"]["candidates"][0]["practical"] = [{"text": "問い合わせ 0120-111-222", "url": "https://kouyou.example.org/20"}]
+        mat = V.Material(f, RULES)
+        codes = lambda t, blob=mat.blob: [e["code"] for e in V.source_rule_errors(t, RULES, blob)]
+        self.assertIn("blocked_source", codes("出典\nhttps://tenki.jp/kouyou/"))
+        self.assertIn("blocked_source", codes("日本気象協会の予想では遅れます。"))
+        self.assertIn("phone_not_from_official", codes("電話 0553-22-1111"))
+        self.assertEqual(codes("問い合わせ 0120-111-222"), [])
+        self.assertIn("phone_not_from_official", codes("問い合わせ 0120-111-222", None))
+        self.assertIn("sources_heading", codes("Sources:\nhttps://a.example"))
+        self.assertEqual(codes("出典\nhttps://a.example"), [])
+
+    def test_provisional_record_goes_to_the_data_dir(self):
+        from ikimonobiyori import place_answer as PA, observations as O
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            out = PA.record_provisional([{"subject": "autumn_leaves", "name": "試験の渓谷", "city": "試験市", "state": "色づき始め", "state_date": "2026-11-05",
+                                          "url": "https://www.city.example.lg.jp/k", "publisher": "試験市", "source_class": "official"}], env=env,
+                                        now=datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9))))
+            self.assertEqual(out["written"], 1)
+            self.assertTrue(O.log_path("autumn_leaves", env).is_file())
+            self.assertIn(Path(d).resolve(), O.log_path("autumn_leaves", env).resolve().parents)
+
+    def test_section_has_facts_only_and_no_phone_when_absent(self):
+        from ikimonobiyori import place_answer as PA
+        f = facts_doc({"autumn_leaves": koyo_subject()}, origin="大宮")
+        sec = PA.section(f["subjects"]["autumn_leaves"]["candidates"][0], f)
+        self.assertEqual(sec[0], "試験の園")
+        self.assertTrue(any("11/5時点" in x for x in sec))
+        self.assertTrue(any(x == "大宮から約20km" for x in sec))
+        self.assertFalse(any("-" in x and x[0] == "0" for x in sec))
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

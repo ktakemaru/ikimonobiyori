@@ -122,6 +122,24 @@ refine:
   # 近場で該当がないときは、距離の分かる候補を近い順にこの件数だけ残す
   nearest_fallback: 3
 
+# 段階57 第10部: 場所を指定した質問(ikimonobiyori/place_answer.py)
+place:
+  tail_re: '(の(紅葉|もみじ|黄葉|花|桜|野鳥|鳥|見頃|見ごろ|状況|様子).*|(は|って)(どう|どんな|いつ|いかが|教えて).*)$'
+  head_re: '^(今週末|来週末|明日|今日|今)[、の]?'
+  split_re: '[やと、・,]'
+  stop_words: [紅葉, 花, 野鳥, 鳥, おすすめ]
+  min_partial_chars: 3
+  max_pages: 8
+  public_suffixes: [.lg.jp, .go.jp, .pref.kanagawa.jp, .metro.tokyo.lg.jp, .yamanashi-kankou.jp, .or.jp]
+  forecast_reprint_words: [全国予測, 紅葉予想, 紅葉予測, 見頃予想, foliage forecast, autumn leaves forecast, 日本気象協会, Japan Weather Association, tenki.jp]
+  search_query: "{name} 紅葉 {year} 公式"
+  lines:
+    current: "今年の現況: {state}({md}時点、{publisher})"
+    current_nodate: "今年の現況: {state}({publisher})"
+    no_current: 今年の現況は確認できていません。
+    practical: "実用情報: {text}"
+    distance: "{origin}から約{km}km"
+
 # 段階57 第9部: 期間別の節の見出し(この形の行で節を始める)
 period_heading: "{days}のおすすめ"
 
