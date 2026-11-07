@@ -1,6 +1,8 @@
 """博物館などの行事・展示の台帳(段階61 第2部)。通信しない。台帳は data/facility_events/events.yaml、値と文は policy.yaml。
 行事は現況ではない(色づき・開花・飛来の状況の代わりにしない)。年つきの日付で、書かれた曜日が暦と合うものだけを使う。
 答えに出すのは、施設が承認(approval.status: approved)されているときだけ。承認待ちの施設の行事は出さない(承認は本人が行う)。"""
+import re
+import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -112,6 +114,117 @@ def lines_for(question, today, doc=None, pol=None, prefecture=None):
         out.append(line(e, fac, pol))
         urls.append(e["url"])
     return out, sorted(set(urls))
+
+
+_URL = re.compile(r"https?://[^\s)）」』、,]+")
+_DATE_Y = re.compile(r"(\d{4})年(\d{1,2})月(\d{1,2})日(?:\(([月火水木金土日])\))?")
+_DATE_NOY = re.compile(r"(?<![\d年])\d{1,2}月\d{1,2}日|(?<![\d/])\d{1,2}/\d{1,2}(?![\d/])")
+_TIME = re.compile(r"\d{1,2}時(?:\d{1,2}分)?")
+_SPLIT = r"[\s、。,:「」()]"
+
+
+def _nz(s):
+    return unicodedata.normalize("NFKC", str(s or ""))
+
+
+def _fmt_re(template, key, group):
+    """方針の文(「定員{n}人」)→ 値を取り出す正規表現。"""
+    return re.compile(re.escape(_nz(template)).replace(re.escape("{" + key + "}"), group))
+
+
+def _blob(e, fac):
+    vals = [fac.get("name")] + [v for k, v in e.items() if isinstance(v, (str, int)) and not isinstance(v, bool) and k != "url"]
+    vals += [_md_ja(e[k]) for k in ("date", "deadline", "start", "end") if e.get(k)]
+    return _nz(" ".join(str(v) for v in vals if v is not None))
+
+
+def _line_errors(line, e, pol):
+    errs = []
+    allowed = {e[k] for k in ("date", "deadline", "start", "end") if e.get(k)}
+    found = set()
+    for m in _DATE_Y.finditer(line):
+        iso = f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        found.add(iso)
+        if iso not in allowed:
+            errs.append({"code": "event_date_mismatch", "detail": f"{e['title']}: {m.group(0)}"})
+            continue
+        if m.group(4) and m.group(4) != _wd(iso, pol):
+            errs.append({"code": "event_weekday_mismatch", "detail": f"{e['title']}: {m.group(0)}(暦は{_wd(iso, pol)})"})
+        if not m.group(4) and iso in (e.get("date"), e.get("deadline")):
+            errs.append({"code": "event_weekday_missing", "detail": f"{e['title']}: {m.group(0)}"})
+    for m in _DATE_NOY.finditer(line):
+        errs.append({"code": "event_date_no_year", "detail": f"{e['title']}: {m.group(0)}"})
+    need = [e["start"], e["end"]] if e["kind"] == "展示" else [e["date"]]
+    for iso in need:
+        if iso not in found:
+            errs.append({"code": "event_date_missing", "detail": f"{e['title']}: {_md_ja(iso)}"})
+    times = set(_TIME.findall(_nz(e.get("time"))))
+    for tm in _TIME.findall(line):
+        if tm not in times:
+            errs.append({"code": "event_time_mismatch", "detail": f"{e['title']}: {tm}"})
+    for m in _fmt_re(pol["capacity"], "n", r"(\d+)").finditer(line):
+        if m.group(1) != str(e.get("capacity")):
+            errs.append({"code": "event_capacity_mismatch", "detail": f"{e['title']}: {m.group(0)}"})
+    for m in _fmt_re(pol["target"], "target", r"([^。、]+)").finditer(line):
+        if m.group(1) != _nz(e.get("target")):
+            errs.append({"code": "event_target_mismatch", "detail": f"{e['title']}: {m.group(0)}"})
+    return errs
+
+
+def answer_errors(text, today, doc=None, pol=None):
+    """行事の答えの検査(知識カードの検査の代わり)。→ [{"code", "detail"}]。
+    (a) 出る行事は台帳の承認済みの施設のもので、会期(開催日)が today 以降 (b) 日付は台帳と一致・年つき・曜日が暦と一致、時刻・定員・対象も台帳の値
+    (c) 出典の URL はその行事の URL (d) 台帳にない数字・行事の名前・施設の名前・URL がない。"""
+    pol = pol or policy()
+    doc = doc if doc is not None else load()
+    t = _nz(text)
+    body = _URL.sub(" ", t)
+    lines = body.splitlines()
+    facs = {f["id"]: f for f in doc.get("facilities") or []}
+    approved = _approved(doc)
+    errs, shown = [], []
+    for e in doc.get("events") or []:
+        rows = [ln for ln in lines if _nz(e.get("title")) in ln]
+        if not rows:
+            continue
+        fac = facs.get(e.get("facility")) or {}
+        if e.get("facility") not in approved:
+            errs.append({"code": "event_not_approved", "detail": e["title"]})
+            continue
+        if validate({"facilities": [fac], "events": [e]}, pol):
+            errs.append({"code": "event_invalid_in_ledger", "detail": e["title"]})
+            continue
+        if date.fromisoformat(e.get("end") or e["date"]) < today:
+            errs.append({"code": "event_past", "detail": e["title"]})
+            continue
+        shown.append((e, fac))
+        for ln in rows:
+            errs += _line_errors(ln, e, pol)
+    titles = {_nz(e.get("title")) for e in doc.get("events") or []}
+    for q in re.findall(r"「([^」]+)」", body):
+        if q not in titles:
+            errs.append({"code": "event_not_in_ledger", "detail": q})
+    if not shown:
+        if not errs:
+            errs.append({"code": "event_none", "detail": "台帳の行事が答えにない"})
+        return errs
+    blob = " ".join(_blob(e, fac) for e, fac in shown)
+    nums = set(re.findall(r"\d+", blob))
+    for n in sorted(set(re.findall(r"\d+", body)) - nums):
+        errs.append({"code": "event_fact_not_in_ledger", "detail": n})
+    names = {w for w in re.split(_SPLIT, blob) if w}
+    sfx = (pol.get("answer_check") or {}).get("name_suffixes") or []
+    if sfx:
+        for m in re.finditer(rf"[^\s、。,:「」()]*(?:{'|'.join(map(re.escape, sfx))})", body):
+            if not any(m.group(0).endswith(w) and any(w.endswith(s) for s in sfx) for w in names):
+                errs.append({"code": "event_fact_not_in_ledger", "detail": m.group(0)})
+    urls = set(_URL.findall(t))
+    own = {e["url"] for e, _ in shown}
+    for u in sorted(urls - own):
+        errs.append({"code": "event_source_unknown", "detail": u})
+    for u in sorted(own - urls):
+        errs.append({"code": "event_source_missing", "detail": u})
+    return errs
 
 
 def pending_facilities(doc=None):

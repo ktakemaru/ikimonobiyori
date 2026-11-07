@@ -774,9 +774,12 @@ class Flow:
         fr = PL.check(skeleton, text, polish_names(facts_doc))
         plan_doc = self._load("answer_plan.json", None)
         gaz = sorted(set(place_names()))
-        if generic and question:                     # 知識の答え: knowledge-answer と同じ検査(カードの事実・出典・型)
+        if generic and question:                     # 知識の答え: knowledge-answer と同じ検査(カードの事実・出典・型)。行事の答えは行事用の検査
             from . import intent
-            verrs = [e["detail"] for e in intent.check(text, intent.cards_for(question))]
+            if intent.classify(question) == "event":
+                verrs = [e["detail"] for e in intent.check_event(text, (self.now or _clock()).date())]
+            else:
+                verrs = [e["detail"] for e in intent.check(text, intent.cards_for(question))]
         elif generic:
             vr = V.generic_check(text)
             verrs = [e["detail"] for e in vr["errors"]]
@@ -892,6 +895,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--clarify", action="store_true", help="--generic のとき: 対象・場所・日付のどれも特定できず、答えの代わりに聞き返す 1 文(段階57 第13部)")
     p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask place の行で作った答え)。計画の照合と候補数の下限を当てない(段階60)")
+    p.add_argument("--question", help="--generic のとき: 質問の文。意図が行事(観察会・講座・展示)なら、行事用の検査(台帳との照合。候補数の下限は当てない)")
+    p.add_argument("--now", help="--generic --question の行事の検査: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
     p = sub.add_parser("polish-check", help="整えた文章と骨組みの事実の一致検査 + 通常の検査(段階60)。整えなおしは 1 回まで。通らなければ骨組みのまま final.txt に書く")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--text", required=True, help="整えた文章")
@@ -907,6 +912,7 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("knowledge-answer", help="知識の質問の答えをカードから作り、検査する(段階59)。カードがなければ終了コード 3(先に調べて記録する)")
     p.add_argument("--question", required=True)
     p.add_argument("--month", type=int)
+    p.add_argument("--now", help="行事の質問: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
     p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)")
     p.add_argument("action", choices=["add", "list", "search", "show", "backup"])
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
@@ -970,11 +976,15 @@ def main(argv=None, http_get=None):
         return 0
     if a.step == "knowledge-answer":
         from . import intent
-        text = intent.compose(a.question, month=a.month)
+        today = now.date() if now else date.today()
+        text = intent.compose(a.question, month=a.month, today=today)
         if text is None:
             print("カードがありません。公的・研究機関の解説を先に読み、事実を knowledge add で記録してください", file=sys.stderr)
             return 3
-        errs = intent.check(text, intent.cards_for(a.question, month=a.month))
+        if intent.classify(a.question) == "event":       # 行事の答えは行事用の検査(台帳との照合)。知識カードの検査は当てない
+            errs = intent.check_event(text, today)
+        else:
+            errs = intent.check(text, intent.cards_for(a.question, month=a.month))
         for e in errs:
             print(f"NG  [{e['code']}] {e['detail']}", file=sys.stderr)
         sys.stdout.write(text)
@@ -1041,6 +1051,22 @@ def main(argv=None, http_get=None):
             plan = json.loads(Path(a.out_dir, "answer_plan.json").read_text(encoding="utf-8"))
         print("\n".join(OF.unsupported_reply(a.what, plan.get("offers") or [])))
         return 0
+    if a.step == "verify" and a.generic and a.question and not a.clarify:
+        from . import intent
+        if intent.classify(a.question) == "event":       # 行事の答え: 行事用の検査(台帳との照合)。名所の候補数の下限は当てない
+            text = Path(a.text).read_text(encoding="utf-8")
+            today = now.date() if now else date.today()
+            errs = intent.check_event(text, today)
+            for e in errs:
+                print(f"NG  [{e['code']}] {e['detail']}", file=sys.stderr)
+            final = text
+            if errs:                                     # 通らなければ、台帳から作った答え(それも通らなければ 1 行)
+                made = intent.compose(a.question, today=today)
+                final = made if made and not intent.check_event(made, today) else AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+            fp = Path(a.text).with_name("final.txt")
+            fp.write_text(final, encoding="utf-8")
+            print(("合格: " if not errs else "不合格(台帳から作った答えを書きました): ") + str(fp))
+            return 1 if errs else 0
     if a.step == "verify" and a.generic:                 # 段階39 B-1: facts を持たない経路。出す前に必ず通す。落ちた行は利用者に見せない
         text = Path(a.text).read_text(encoding="utf-8")
         offers_ok = None

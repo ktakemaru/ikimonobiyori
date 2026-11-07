@@ -832,6 +832,28 @@ def generic_check(text, rules=None, offers=None, clarify=False):
         if n == 1 and len(q) == 1:
             return {"ok": True, "errors": [], "candidates": 0}
         return {"ok": False, "errors": [{"code": "clarify_not_one_sentence", "detail": "聞き返しは 1 文だけ", "line": 0}], "candidates": 0}
+    errs += term_errors(text, rules)
+    for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
+        if pat in text:
+            errs.append({"code": "typo", "detail": pat, "line": 0})
+    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules) + question_errors(text, rules) + quote_errors(text, rules)]
+    from . import jma_normals as JN                         # 段階61 第1部: 観測を終えた種目に「今年の」を書かない・出典と加工の行
+    errs += [{**e, "line": 0} for e in JN.answer_errors(text)]
+    errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
+    n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
+    if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):
+        asks = any(w in text for w in g["ask_words"])
+        errs.append({"code": "ask_back_only" if asks else "too_few_candidates",
+                     "detail": f"候補が {n_cand} 件(下限 {g['min_candidates']})。聞き返しだけで終えず、見つかった範囲の候補と出どころを出す" if asks else f"候補が {n_cand} 件(下限 {g['min_candidates']})"})
+    return {"ok": not errs, "errors": errs, "candidates": n_cand}
+
+
+def term_errors(text, rules=None):
+    """行ごとの作業・開発の言葉(dev_terms・internal_terms・reply_terms)・作業の経過の文(forbidden_phrases)・検査や記録の事情(process_phrases)。
+    generic_check と行事の答えの検査(intent.check_event)が使う。URL は検査から外す。"""
+    rules = rules or load_rules()
+    g = rules["generic"]
+    errs = []
     for i, line in enumerate(text.splitlines()):
         t = URL_RE.sub(" ", _n(line))
         for code, key in (("forbidden_phrase", "forbidden_phrases"), ("process_phrase", None)):
@@ -846,19 +868,7 @@ def generic_check(text, rules=None, offers=None, clarify=False):
         for term in rules.get("internal_terms") or []:
             if re.search(rf"(?<![A-Za-z0-9_]){re.escape(term)}(?![A-Za-z0-9_])" if term.isascii() else re.escape(term), t, flags=re.IGNORECASE):
                 errs.append({"code": "internal_term", "detail": term, "line": i + 1})
-    for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
-        if pat in text:
-            errs.append({"code": "typo", "detail": pat, "line": 0})
-    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules) + question_errors(text, rules) + quote_errors(text, rules)]
-    from . import jma_normals as JN                         # 段階61 第1部: 観測を終えた種目に「今年の」を書かない・出典と加工の行
-    errs += [{**e, "line": 0} for e in JN.answer_errors(text)]
-    errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
-    n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
-    if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):
-        asks = any(w in text for w in g["ask_words"])
-        errs.append({"code": "ask_back_only" if asks else "too_few_candidates",
-                     "detail": f"候補が {n_cand} 件(下限 {g['min_candidates']})。聞き返しだけで終えず、見つかった範囲の候補と出どころを出す" if asks else f"候補が {n_cand} 件(下限 {g['min_candidates']})"})
-    return {"ok": not errs, "errors": errs, "candidates": n_cand}
+    return errs
 
 
 def generic_strip(text, result):
