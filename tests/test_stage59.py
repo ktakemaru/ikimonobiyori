@@ -161,6 +161,15 @@ def facts_doc(cards, *spots, month="11"):
             "lines": {"answer_rules": "stage51", "practical_rules": True, "open_urls": None, "origin_line": "横浜からの距離で選びました。"}, "summary_pages": [], "this_round": {}}
 
 
+class Part5Skeleton(unittest.TestCase):
+    def test_old_display_of_the_named_publisher_is_written_as_reference(self):
+        from ikimonobiyori import skeleton as SK
+        cur = {"publisher": "箱根町観光協会", "state_date": "2026-11-03"}
+        self.assertTrue(SK._stale_display(cur, date(2026, 11, 7)))
+        self.assertFalse(SK._stale_display(cur, date(2026, 11, 5)))
+        self.assertFalse(SK._stale_display({"publisher": "試験市", "state_date": "2026-10-01"}, date(2026, 11, 7)))
+
+
 class Part4GuideEye(unittest.TestCase):
     def setUp(self):
         from ikimonobiyori import knowledge as K, answer_plan as AP, skeleton as SK, ask_verify as V

@@ -29,7 +29,15 @@ def _no_long_quote(line, max_chars):
     return re.sub(r"(?:では)?「([^」]+)」", rep, line).replace("()", "")
 
 
-def current_line(c, t, phr):
+def _stale_display(cur, today):
+    """古い表示が残ることのある発行元の状態は、今日から見て日付が離れていれば参考として書く(段階52 の規則を、同じ名所の別の記録にも当てる)。"""
+    cfg_ = load_rules()["stage51"]["stale_display"]
+    if not today or not cur.get("state_date") or not any(p in (cur.get("publisher") or "") for p in cfg_["publishers"]["value"]):
+        return False
+    return (today - date.fromisoformat(str(cur["state_date"])[:10])).days >= cfg_["min_gap_days"]["value"]
+
+
+def current_line(c, t, phr, today=None):
     """今の状況の文。第三者サイトの現況は採用理由にせず参考の 1 行にとどめる。記号だけで読めないものは断定しない。"""
     cur = c.get("current")
     if not AP.has_state_record(c) or not (cur.get("display") or cur.get("state_raw")):
@@ -40,7 +48,7 @@ def current_line(c, t, phr):
     who = cur.get("publisher") or ""
     if cur.get("source_class") == "secondary":
         return t["secondary"].format(state=state, md=when or "", publisher=who) if when else t["secondary_nodate"].format(state=state, publisher=who)
-    if cur.get("reference_only") and when:
+    if (cur.get("reference_only") or _stale_display(cur, today)) and when:
         return t["reference"].format(state=state, md=when, publisher=who)
     return t["current"].format(state=state, md=when, publisher=who) if when else t["current_nodate"].format(state=state, publisher=who)
 
@@ -63,7 +71,7 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
         head += f"({c['city']})"
     if p.get("distance_text"):
         head += f" {p['distance_text']}"
-    bits = [current_line(c, t, p)]
+    bits = [current_line(c, t, p, today)]
     bits.append(season_text(c, sj, t, max_quote))
     if p.get("phrase"):
         bits.append(p["phrase"])
