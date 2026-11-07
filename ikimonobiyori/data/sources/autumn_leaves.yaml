@@ -155,7 +155,7 @@ sources:
       date_basis: updated_date
       note: "ページの CSV(ファイル名は日付で変わる。例 koyo_1106.csv。ページのリンクから辿る)。列: エリア名・市町村名・スポット名・URL・画像・見頃・標高・備考・状況。行に日付はないのでページの更新日を使う"
     readable: {status: ok, checked_on: "2026-11-07", robots: no_file, observed_latest_update: "2026-11-06", note: "CSV 36 行を読めた(状況の語は 1 色づき前・2 色付き始め・3 見頃・4 色あせ始め)。ページの HTML の 6 区分はすべて「現在、情報がありません」"}
-    terms: {status: not_checked, url: "https://www.yamanashi-kankou.jp/about/term.html", note: "「このサイトについて」に転載・利用条件の本文はない。免責事項(/about/term.html)は未読。© 表示あり"}
+    terms: {status: no_prohibition_found, url: "https://www.yamanashi-kankou.jp/about/term.html", note: "免責事項(2026-11-07 確認): 利用・転載・複製・自動取得を禁じる記載なし。利用は利用者の責任・損害は負わない旨だけ。© 表示あり"}
     approval: {status: pending, reason: "指示書 段階57 第11部。承認は本人が決める"}
 
   - id: tokyo-park-rikugien-news
@@ -539,7 +539,7 @@ sources:
     covers:
       - {name: 長瀞紅葉まつり2026, label: "長瀞紅葉まつり2026"}
     readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "ページの見出しは 11月1日～30日。ライトアップの語は同じページにない"}
-    terms: {status: not_checked, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項のページ。中身は未確認"}
+    terms: {status: no_prohibition_found, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項(2026-11-07 確認): 利用・転載・複製・自動取得を禁じる記載なし。正確性・変更・障害の免責だけ。All Rights Reserved の表示あり"}
     approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
 
   - id: nikko-kankou-lightup-2026
