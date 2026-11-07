@@ -228,5 +228,32 @@ class Events(unittest.TestCase):
         self.assertEqual(V.question_errors(text, V.load_rules()), [])
 
 
+# ---- 第3部: 外来種のカード(知識の答え・ガイドの目) ----
+def ias_card(title="試験ガメ(外来種)", place="試験ガメ", aliases=("水辺", "外来種"), year=None):
+    return {"title": title, "category": "保全・マナー", "place": place, "place_aliases": list(aliases),
+            "facts": ["リスト第2版で防除推進外来種", "飼っている場合は野外に放さない"],
+            "condition": {"months": [], "year_dependent": bool(year), **({"year": year} if year else {})},
+            "source": {"name": "環境省", "title": "試験のリスト", "url": "https://env.example.go.jp/list.xlsx", "checked_on": "2026-11-08"},
+            "confidence": "公的資料", "rights": "確認済み: 公共データ利用規約", "usage": "ガイドの目"}
+
+
+class InvasiveCards(unittest.TestCase):
+    def test_named_species_card_is_main_text_not_only_a_guide_line(self):
+        text = intent.compose("試験ガメを見かけたら、どうすればいい?", cards=[ias_card()])
+        self.assertTrue(text.startswith("試験ガメ(外来種): リスト第2版で防除推進外来種"))
+        self.assertEqual(intent.check(text, [ias_card()]), [])
+
+    def test_unnamed_conservation_card_stays_a_guide_line(self):
+        cards = [ias_card(), {**ias_card(title="水辺の歩き方", place="水辺", aliases=()), "category": "出会い方・歩き方"}]
+        text = intent.compose("水辺について教えて", cards=cards)
+        self.assertIn("ガイドの目: ", text)
+        self.assertFalse(text.startswith("ガイドの目"))
+
+    def test_year_prefix_of_a_year_dependent_card_counts_as_card_fact(self):
+        card = ias_card(title="試験のリストのカテゴリ", place="試験リスト", aliases=("外来種",), year=2026)
+        text = intent.compose("外来種について教えて", cards=[ias_card(), card])
+        self.assertEqual([e for e in intent.check(text, [ias_card(), card]) if e["code"] == "knowledge_fact_not_in_card"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

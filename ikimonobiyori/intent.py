@@ -88,6 +88,9 @@ def compose(question, cards=None, env=None, month=None, today=None, events=None)
     limit = c["max_cards"][kind] if kind in c["max_cards"] else c["max_cards"]["knowledge"]
     use = rows[:limit]
     guide = [r for r in use if r.get("category") in c["guide_categories"]]
+    if len(guide) == len(use):                       # 段階61 第3部: 保全・安全のカードしかないときは、質問が名指しした種・場所のカードを本文に置く
+        named = set(topics(question, rows))
+        guide = [r for r in guide if r.get("place") not in named]
     main = [r for r in use if r not in guide]
     lines = list(normals) + ([""] if normals and main else [])
     for r in main:
@@ -119,7 +122,7 @@ def check(text, cards, rules=None):
     for w in c["refuse_phrases"]:
         if w in text:
             errs.append({"code": "knowledge_refused", "detail": w})
-    blob = _n("\n".join(" ".join(r["facts"]) + r["source"]["name"] for r in cards))
+    blob = _n("\n".join(" ".join(r["facts"]) + r["source"]["name"] + str((r.get("condition") or {}).get("year") or "") for r in cards))   # 年に依存する知識の年(ガイドの目の「○年の記録では」)もカードの事実
     for n in set(re.findall(r"\d[\d,.]*", URL_RE.sub(" ", _n(text)))):
         if n not in blob and n not in normal_blob:
             errs.append({"code": "knowledge_fact_not_in_card", "detail": n})
