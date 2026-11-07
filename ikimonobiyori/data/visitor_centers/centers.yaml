@@ -647,3 +647,19 @@ centers:
   hours: null
   checked_on: '2026-11-07'
   approval: {status: pending, reason: "段階60 第4部。承認は本人が決める。サイトの表記は「環境省 田貫湖ふれあい自然塾」。開館情報 /facility/ と自然情報の日付は未取得"}
+- id: miyagase-vc
+  name: 神奈川県立宮ヶ瀬ビジターセンター
+  operator: 未確認(知識カードの出典「県立ビジターセンター 自然公園だより(2010年1月)」は神奈川県公園協会のサイトに掲載)
+  operator_kind: 県立施設
+  prefecture: 神奈川県
+  site_url: https://kanagawa-park.or.jp/information/pdf/vcd/vcd1001.pdf
+  info_url: null
+  frequency: null
+  format: pdf
+  last_update: '2010-01'
+  class: official
+  terms: {url: null, reprint_banned: null, note: "施設の公式ページを確認できなかった(段階60・61)。神奈川県の宮ケ瀬湖周辺施設の指定管理のページ(2026-03-27 更新)にも施設名の記載がない。2016年に閉館して改装されたとする報道があるが、公式の記載では確かめていない"}
+  within_range: true
+  hours: null
+  checked_on: '2026-11-08'
+  approval: {status: pending, reason: "段階61 第8部(本人の確認 2026-11-08 で台帳に足すことのみ。承認ではない)。公式サイトと現在の運営を確認できないため、承認は本人が決める。承認されるまで、この施設のカード2枚は答えに出ない"}

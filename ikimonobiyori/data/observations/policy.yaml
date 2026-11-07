@@ -20,7 +20,7 @@ record:
   # 段階60 第9部: 承認待ちを隠す仕組みの統一。対象(記録の対象 → 隠す台帳の状態)。公式の台帳(data/sources/*.yaml)で、
   # 記録の URL に対応する項目がこの状態なら、公式としての記録は承認されるまで答えに出さない(記録は残る。承認されれば自動で出る)。
   # 紹介サイトなど(source_class secondary)は段階34 の方針どおり「公式ではありません」で出る。野鳥・冬鳥の現況の記録(status_log)は記録の時点で承認済みだけが通る
-  gated_ledgers: {autumn_leaves: [pending, revoked]}      # 花の台帳(承認待ち15件)は指示の対象外。広げるかは本人の判断
+  gated_ledgers: {autumn_leaves: [pending, revoked], flowers: [pending, revoked]}      # 段階61 第8部(本人の確認 2026-11-08): 花の台帳にも広げた
   gated_sources:
     - {url_re: 'yamanashi-kankou\.jp/special/documents/koyo_', ledger: autumn_leaves, source: yamanashi-kankou-koyo-csv}
   # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、

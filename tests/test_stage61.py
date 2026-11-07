@@ -322,5 +322,39 @@ class Part6(unittest.TestCase):
         self.assertEqual(PL.caution_errors("いちばん近い", "いちばん近い"), [])          # 骨組みにある語は通す
 
 
+
+# ---- 第8部: 花の台帳にも「承認まで隠す」・宮ヶ瀬ビジターセンター(承認待ち)・公的資料の権利メモ ----
+import unittest.mock  # noqa: E402
+
+from ikimonobiyori import knowledge as K  # noqa: E402
+from ikimonobiyori import observations as O  # noqa: E402
+from ikimonobiyori import visitor_centers as VC  # noqa: E402
+
+
+class Part8(unittest.TestCase):
+    def test_flowers_ledger_is_gated_like_autumn_leaves(self):
+        pol = O.load_policy()
+        self.assertEqual(pol["record"]["gated_ledgers"]["flowers"], pol["record"]["gated_ledgers"]["autumn_leaves"])
+        rows = [("garden.example.org", "/flowers/", "pending", "flowers", "t-g"), ("park.example.org", "/info/", "approved", "flowers", "t-p")]
+        with unittest.mock.patch.object(O, "_ledger_urls", return_value=rows):
+            off = {"url": "https://garden.example.org/flowers/1", "source_class": "official"}
+            self.assertTrue(O._ledger_gated(off, "flowers", pol))                                  # 承認待ちの公式の記録は隠す
+            self.assertFalse(O._ledger_gated(dict(off, source_class="secondary"), "flowers", pol))  # 紹介サイトなどは従来どおり
+            self.assertFalse(O._ledger_gated({"url": "https://park.example.org/info/2", "source_class": "official"}, "flowers", pol))
+            self.assertFalse(O._ledger_gated(off, "birds", pol))                                    # 野鳥は対象外のまま
+
+    def test_miyagase_center_is_pending_and_hides_its_cards(self):
+        cs = VC.load_centers()
+        c = next(x for x in cs if x["id"] == "miyagase-vc")
+        self.assertEqual(VC.validate_center(c), [])
+        self.assertEqual(c["approval"]["status"], "pending")
+        card = {"title": "試験", "category": "季節の仕組み", "place": "宮ヶ瀬", "facts": ["試験"], "condition": {}, "rights": "事実のみ",
+                "source": {"name": "神奈川県立宮ヶ瀬ビジターセンター", "url": "https://kanagawa-park.or.jp/x.pdf", "checked_on": "2026-11-08"},
+                "confidence": "施設の解説", "usage": "ガイドの目"}
+        self.assertEqual(K.usable(card, cs), (False, "facility_pending"))
+        approved = [dict(x, approval={"status": "approved"}) if x["id"] == "miyagase-vc" else x for x in cs]
+        self.assertTrue(K.usable(card, approved)[0])                                                # 承認されれば自動で出る
+
+
 if __name__ == "__main__":
     unittest.main()
