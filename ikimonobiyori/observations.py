@@ -585,6 +585,9 @@ def resolve(region_query, origin, policy, regions_doc=None):
     regions_doc = regions_doc or S.load_regions()
     if region_query in (policy.get("all_range_words") or []):       # 地域の指定がない質問: 登録済みの全範囲（出発地から片道の範囲内）
         home = policy["origin_home"].get(origin)
+        if home is None and origin:                              # 段階57 第8部
+            from . import origins
+            home = (origins.lookup(origin) or {}).get("prefecture")
         return {"name": policy["all_range_name"], "prefectures": [], "areas": [], "resolved": True, "all_range": True,
                 "unknown_distance_prefectures": [home] if home else []}
     if region_query:
@@ -682,7 +685,12 @@ def _event_hits(c, dates):
 def _distance(c, origin, cat_pol):
     p = c.get("point")
     if not p or p.get("lat") is None:
-        return None
+        if origin in catalog_mod.origin_names(cat_pol):         # 横浜・東京はこれまでどおり(座標のない名所は距離なし)
+            return None
+        from . import origins                                   # 段階57 第8部: 新しい出発地は、市区町村の代表点で測る
+        p = origins.municipal_point(c.get("city"))
+        if not p:
+            return None
     return catalog_mod.range_from(cat_pol, p, origin)["km"]
 
 

@@ -1,0 +1,36 @@
+# 段階57 第8部: 質問から取り出す出発地の座標の表(ikimonobiyori/origins.py)。座標は Wikidata の P625 を 2026-11-07 に読んだ値だけ(CC0)。推測で足さない。
+# 市区町村の代表点は data/guide/places.yaml(Wikidata)にあるものも使う。表にない出発地は Wikidata で確かめて ask origin --add で手元のキャッシュに足す。
+schema: ikimono-origins/1
+default: 横浜
+stop_words: [ここ, そこ, どこ, 今, いま, 今日, 明日, 来週, 今週, 今週末, 来週末, 週末, 朝, 昼, 夜, 午後, 午前, 自宅, 家, 近所, 近く, 早朝, 月, 日]
+# 新しい出発地で、座標のない名所が同じ都道府県のとき使う距離の見積もり(data/ask/plan.yaml の estimate_km_by_prefecture と同じ値)
+lines:
+  named: "{origin}からの距離で選びました。"
+  default: "{origin}からの距離で選びました。"
+  follow_up: "先ほどの{origin}のままです。"
+  unknown: "{name}の位置を特定できませんでした。{origin}からの距離で選びます。"
+origins:
+  - {name: 相模原, aliases: [相模原市], prefecture: 神奈川県, qid: Q209779, lat: 35.571416666666664, lon: 139.3731388888889}
+  - {name: 町田, aliases: [町田市, 町田駅], prefecture: 東京都, qid: Q210628, lat: 35.54666666666667, lon: 139.4386111111111}
+  - {name: 川越, aliases: [川越市, 川越駅], prefecture: 埼玉県, qid: Q319740, lat: 35.92513888888889, lon: 139.48577777777777}
+  - {name: 所沢, aliases: [所沢市, 所沢駅], prefecture: 埼玉県, qid: Q165857, lat: 35.799444444444, lon: 139.46888888889}
+  - {name: 越谷, aliases: [越谷市], prefecture: 埼玉県, qid: Q497952, lat: 35.89113888888889, lon: 139.79091666666667}
+  - {name: 柏, aliases: [柏市, 柏駅], prefecture: 千葉県, qid: Q319743, lat: 35.867583333333336, lon: 139.97575}
+  - {name: 宇都宮, aliases: [宇都宮市, 宇都宮駅], prefecture: 栃木県, qid: Q200589, lat: 36.55511111111111, lon: 139.88255555555557}
+  - {name: 高崎, aliases: [高崎市, 高崎駅], prefecture: 群馬県, qid: Q336438, lat: 36.32311111111111, lon: 139.0023611111111}
+  - {name: 前橋, aliases: [前橋市, 前橋駅], prefecture: 群馬県, qid: Q201613, lat: 36.3895, lon: 139.06344444444446}
+  - {name: つくば, aliases: [つくば市, つくば駅], prefecture: 茨城県, qid: Q273863, lat: 36.08347222222222, lon: 140.07644444444443}
+  - {name: 甲府, aliases: [甲府市, 甲府駅], prefecture: 山梨県, qid: Q201932, lat: 35.66213888888889, lon: 138.56822222222223}
+  - {name: 小田原, aliases: [小田原市, 小田原駅], prefecture: 神奈川県, qid: Q267258, lat: 35.26461111111111, lon: 139.15222222222224}
+  - {name: 厚木, aliases: [厚木市, 本厚木, 本厚木駅], prefecture: 神奈川県, qid: Q389711, lat: 35.44305555555555, lon: 139.3625}
+  - {name: 大宮, aliases: [大宮駅], prefecture: 埼玉県, qid: Q801692, lat: 35.906388888889, lon: 139.62388888889}
+  - {name: 浦和, aliases: [浦和駅], prefecture: 埼玉県, qid: Q652141, lat: 35.858480555556, lon: 139.65708611111}
+  - {name: 新宿, aliases: [新宿駅], prefecture: 東京都, qid: Q801447, lat: 35.69083333333333, lon: 139.70027777777779}
+  - {name: 渋谷, aliases: [渋谷駅], prefecture: 東京都, qid: Q428811, lat: 35.658513888889, lon: 139.70133055556}
+  - {name: 池袋, aliases: [池袋駅], prefecture: 東京都, qid: Q173919, lat: 35.730277777778, lon: 139.71138888889}
+  - {name: 品川, aliases: [品川駅], prefecture: 東京都, qid: Q801442, lat: 35.62861111111111, lon: 139.73916666666668}
+  - {name: 上野, aliases: [上野駅], prefecture: 東京都, qid: Q801551, lat: 35.713433333333, lon: 139.776725}
+  - {name: 秩父, aliases: [秩父市, 秩父駅], prefecture: 埼玉県, qid: Q647079, lat: 35.959722222222, lon: 138.93333333333}
+  - {name: 飯能, aliases: [飯能市, 飯能駅], prefecture: 埼玉県, qid: Q850472, lat: 35.855555555555554, lon: 139.32777777777778}
+  - {name: 青梅, aliases: [青梅市, 青梅駅], prefecture: 東京都, qid: Q237683, lat: 35.78797222222222, lon: 139.27583333333334}
+  - {name: 鎌倉, aliases: [鎌倉市, 鎌倉駅], prefecture: 神奈川県, qid: Q200267, lat: 35.31916666666667, lon: 139.54722222222222}

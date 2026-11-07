@@ -483,6 +483,42 @@ sources:
     terms: {status: no_prohibition_found, url: "https://www.pref.kanagawa.jp/master/sitepolicy.html", note: "サイトポリシー『著作権について』(番号なし, 2023-06-26 更新): 引用等の著作権法上認められた範囲で自由に利用でき、利用時は出典を記載する。自動取得の規定はない(2026-11-05)"}
     approval: {status: approved, approved_by: user, approved_on: "2026-11-05", reason: "指示書 docs/stage47-sources-instructions.md でホスト www.pref.kanagawa.jp を承認(2026-11-05)"}
 
+  # 段階57 第8部(2026-11-07): 大宮・埼玉方面の不足を埋める。紅葉の台帳の承認者は本人のみなので、承認待ち
+  - id: chichibu-navi-koyo
+    publisher: 秩父市(秩父観光なび)
+    publisher_kind: municipality
+    url: "https://navi.city.chichibu.lg.jp/p_flower/1553/"
+    kind: status_page
+    covers:
+      - {name: 中津峡, label: "中津峡"}
+      - {name: 滝川渓谷, label: "滝川渓谷"}
+      - {name: 三峰山周辺, label: "三峰山周辺"}
+      - {name: 大血川渓谷, label: "大血川渓谷"}
+      - {name: 浦山渓谷, label: "浦山渓谷"}
+      - {name: 秩父グリーンミューズパーク, label: "埼玉トヨペット秩父グリーンミューズパーク"}
+      - {name: 城峯山周辺, label: "城峯山周辺"}
+    notation:
+      style: word
+      map: {}
+      updated: per_item
+      year_shown: true
+      date_basis: updated_date
+      note: "地点ごとの更新日と「ひとこと」の文。「見頃」の列はアイコンだけで凡例の文字がないので、段階にしない"
+    readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "読めた(地点ごとの更新日 2026/10/23〜11/5)。ページの種別は秩父市公式サイトの表記あり"}
+    terms: {status: not_checked, url: "https://navi.city.chichibu.lg.jp/legal/", note: "免責事項のページが利用条件に近い。中身は未確認"}
+    approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
+
+  - id: nagatoro-koyo-matsuri-2026
+    publisher: (一社)長瀞町観光協会
+    publisher_kind: tourism_association
+    url: "https://nagatoro.gr.jp/2026/10/%E9%95%B7%E7%80%9E%E7%B4%85%E8%91%89%E3%81%BE%E3%81%A4%E3%82%8A2026"
+    kind: event_page
+    covers:
+      - {name: 長瀞紅葉まつり2026, label: "長瀞紅葉まつり2026"}
+    readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "ページの見出しは 11月1日～30日。ライトアップの語は同じページにない"}
+    terms: {status: not_checked, url: "https://www.nagatoro.gr.jp/menseki/", note: "免責事項のページ。中身は未確認"}
+    approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
+
   - id: nikko-kankou-lightup-2026
     publisher: 日光市観光協会
     publisher_kind: tourism_association

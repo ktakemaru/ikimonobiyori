@@ -26,6 +26,7 @@ from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
 from . import offers as OF
+from . import origins
 from . import observations as O
 from . import sources as S
 from .paths import DATA_FILES_DIR, PKG, data_dir, data_path
@@ -423,6 +424,7 @@ class Flow:
                "summary_pages": [p for pl in ((plan_doc or {}).get("subjects") or {}).values() for p in pl.get("summary_pages") or []],
                "this_round": rnd,
                "lines": {"fetch": fetch_line(rnd, self.now, self.policy),
+                         "origin_line": origins.line_for(origin),         # 段階57 第8部: 使った出発地の 1 文(答えに書く)
                          "practical_rules": True,                        # 段階52: 実用情報の決まり（出た候補の実用情報を書く／なければ決まった一文）を当てる印
                          "answer_rules": "stage51",                      # 段階51: 答えの検査の新しい決まりを当てる印（作業の報告を答えに出さない など）
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
@@ -743,6 +745,14 @@ def main(argv=None, http_get=None):
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
     p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
+    p = sub.add_parser("origin", help="質問の文から出発地を決める(追質問だけ前の出発地を引き継ぐ。段階57)")
+    p.add_argument("--question", help="質問の文")
+    p.add_argument("--follow-up", action="store_true", help="直前の質問の追質問(同じ話題の続き)のとき")
+    p.add_argument("--add", help="Wikidata で確かめた出発地を手元に足す(--lat --lon --qid)")
+    p.add_argument("--lat", type=float)
+    p.add_argument("--lon", type=float)
+    p.add_argument("--qid")
+    p.add_argument("--prefecture")
     p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
     p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
@@ -762,6 +772,16 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "origin":                               # 段階57 第8部
+        if a.add:
+            if a.lat is None or a.lon is None or not a.qid:
+                print("--lat --lon --qid が要ります", file=sys.stderr)
+                return 2
+            _out(origins.add_to_cache(a.add, a.lat, a.lon, a.qid, a.prefecture))
+            return 0
+        last = load_last_plan(_clock()) if a.follow_up else None
+        _out(origins.choose(a.question, a.follow_up, (last or {}).get("origin")))
+        return 0
     if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
         plan = {}
         if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():

@@ -127,6 +127,9 @@ class Material:
         self.thirds = {(int(m), t) for m, t in THIRD_RE.findall(self.blob)}
         self.months = {m for m, _ in self.dates} | {m for m, _ in self.thirds}
         self.numbers = set(NUM_RE.findall(self.blob))
+        for s in _spots(facts):                                  # 段階57 第8部: 距離の目安(約○km)は、コードが計算した値の丸め
+            if isinstance(s.get("distance_km"), (int, float)):
+                self.numbers.add(str(int(round(s["distance_km"]))))
         self.spots = _spots(facts)
         self.names = {}
         for s in self.spots:
@@ -325,6 +328,8 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += stage57_text_errors(text, facts, mat, rules)
+    if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
+        answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
     n_seg = len(segs) if segs else 1                             # 段階57 第3部: 節が複数の答えは、上限を節の数だけ広げる(1 節あたりの量は同じ)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる

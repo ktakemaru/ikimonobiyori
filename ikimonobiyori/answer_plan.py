@@ -33,6 +33,11 @@ def distance_of(c, pol):
     km = c.get("distance_km")
     if km is not None:
         return km, False
+    origin = c.get("_origin")
+    if origin and origin not in pol["distance"]["estimate_origins"]:     # 段階57 第8部: 新しい出発地
+        from . import origins
+        home = (origins.lookup(origin) or {}).get("prefecture")
+        return (pol["distance"]["same_prefecture_km"], True) if home and c.get("prefecture") == home else (None, False)
     est = (pol["distance"].get("estimate_km_by_prefecture") or {}).get(c.get("prefecture"))
     return (est, True) if est is not None else (None, False)
 
@@ -220,7 +225,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     rs = pol["reasons"]
     rows = []
     for c in cands:
-        r = score_candidate(dict(c, _today=facts_doc.get("now")), dates, pol, subject)
+        r = score_candidate(dict(c, _today=facts_doc.get("now"), _origin=facts_doc.get("origin")), dates, pol, subject)
         r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "current_state": (c.get("current") or {}).get("state"),
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
@@ -229,7 +234,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
     for c in sub.get("avoid") or []:                                     # facts が「避けたほうがよい」に分けたもの(見頃過ぎ)
-        r = score_candidate(dict(c, relation="after_peak"), dates, pol, subject)
+        r = score_candidate(dict(c, relation="after_peak", _origin=facts_doc.get("origin")), dates, pol, subject)
         r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "outlook": "past", "has_current": bool(c.get("current")),
                   "stale": False, "closed": False, "practical": [], "festivals": [], "current_state": (c.get("current") or {}).get("state"),
                   "current_date": (c.get("current") or {}).get("state_date")})
@@ -316,6 +321,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                         "current_state": r["current_state"], "current_date": r["current_date"], "where": where,
                         "reason": st["code"] if st else None, "reason_label": st["label"] if st else None, "reason_detail": {k: v for k, v in (st or {}).items() if k not in ("code", "label")}})
     return {"schema": SCHEMA, "subject": subject, "dates": [x.isoformat() for x in dates], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
+            "origin_line": (facts_doc.get("lines") or {}).get("origin_line"),
             "use_headings": len(sections) >= pol["aims"]["min_sections_for_headings"],
             "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or []),
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
@@ -326,6 +332,7 @@ def _item(r, oo):
             "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "subject": r.get("subject"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
+            "distance_text": f"約{int(round(r['distance_km']))}km" if r["distance_km"] is not None and not r["distance_estimated"] else None,
             "current_date": r["current_date"], "festivals": r["festivals"], "practical": r["practical"]}
 
 
@@ -456,6 +463,12 @@ def plan_errors(text, plan, mat, blocks, names_of):
         if n not in shown and n not in replaced:
             errs.append({"code": "plan_pick_missing", "detail": f"計画の今回のおすすめ「{n}」が答えの①②③にない"})
     errs += outlook_conflicts(text, plan, names_of)
+    origin = plan.get("origin")
+    if origin and origin not in load_policy()["distance"]["estimate_origins"]:     # 段階57 第8部: 新しい出発地は、各おすすめに距離の目安を添える
+        for p in plan["picks"]:
+            blk = next((b for b in blocks if any(f in re.split(r"[:：]", b, maxsplit=1)[0] for f in names_of(p["name"]))), None)
+            if blk is not None and p.get("distance_text") and p["distance_text"] not in blk:
+                errs.append({"code": "origin_km_missing", "detail": f"「{p['name']}」: {p['distance_text']}"})
     for p in plan["picks"]:                                                  # 段階57 第4部: 明記の文が要るおすすめ
         if not p.get("note"):
             continue

@@ -52,6 +52,9 @@ distance:
   other: {weight: 0, ref_km: 250}
   # 座標がない名所の距離の見積もり(都道府県の単位。見積もりであることを plan に残す)。ない都道府県は距離の点を付けず、距離の狙いに入れない
   estimate_km_by_prefecture: {神奈川県: 40, 東京都: 40}
+  # 段階57 第8部: 上の見積もりは横浜・東京から。ほかの出発地では、同じ都道府県の名所だけ same_prefecture_km を見積もりに使う
+  estimate_origins: [横浜, 東京]
+  same_prefecture_km: 40
 
 bonus:
   festival_active: 6       # 対象日がまつり・行事の期間内(現況の代わりにはしない)

@@ -1203,6 +1203,124 @@ spots:
       - {url: "http://www.saitama-shizen.info/today/index.html", publisher: 埼玉県自然学習センター, source_class: official}
     search: "北本自然観察公園 野鳥 バードウォッチング"
   # 段階56 第5部: 狭山丘陵いきものふれあいの里センターの観察会（festivals.yaml）。所在地は埼玉県の公式ページ（所沢市上山口2090-3）で確認した。座標は確認できていないため付けない
+  - id: obs-kouyou-0094
+    subject: autumn_leaves
+    name: "中津峡"
+    prefecture: 埼玉県
+    city: 秩父市
+    area: 埼玉
+    point: {lat: 35.959722222222, lon: 138.93333333333}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "10月下旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "中津峡 紅葉 色づき"
+  - id: obs-kouyou-0095
+    subject: autumn_leaves
+    name: "三峰山"
+    prefecture: 埼玉県
+    city: 秩父市
+    area: 埼玉
+    point: {lat: 35.959722222222, lon: 138.93333333333}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "10月下旬～11月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "三峰山 紅葉 色づき"
+  - id: obs-kouyou-0096
+    subject: autumn_leaves
+    name: "大血川渓谷"
+    prefecture: 埼玉県
+    city: 秩父市
+    area: 埼玉
+    point: {lat: 35.959722222222, lon: 138.93333333333}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "10月下旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大血川渓谷 紅葉 色づき"
+  - id: obs-kouyou-0097
+    subject: autumn_leaves
+    name: "秩父グリーンミューズパーク"
+    prefecture: 埼玉県
+    city: 秩父市
+    area: 埼玉
+    point: {lat: 35.959722222222, lon: 138.93333333333}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "10月下旬～11月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "秩父グリーンミューズパーク 紅葉 色づき"
+  - id: obs-kouyou-0098
+    subject: autumn_leaves
+    name: "国営武蔵丘陵森林公園"
+    prefecture: 埼玉県
+    city: 滑川町
+    area: 埼玉
+    point: {lat: 36.066, lon: 139.36097222222222}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "国営武蔵丘陵森林公園 紅葉 色づき"
+  - id: obs-kouyou-0099
+    subject: autumn_leaves
+    name: "名栗湖 有間渓谷"
+    prefecture: 埼玉県
+    city: 飯能市
+    area: 埼玉
+    point: {lat: 35.855555555555554, lon: 139.32777777777778}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "11月上旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "名栗湖 有間渓谷 紅葉 色づき"
+  - id: obs-kouyou-0100
+    subject: autumn_leaves
+    name: "鳥居観音"
+    prefecture: 埼玉県
+    city: 飯能市
+    area: 埼玉
+    point: {lat: 35.855555555555554, lon: 139.32777777777778}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "11月上旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "鳥居観音 紅葉 色づき"
+  - id: obs-kouyou-0101
+    subject: autumn_leaves
+    name: "メッツァ"
+    prefecture: 埼玉県
+    city: 飯能市
+    area: 埼玉
+    point: {lat: 35.855555555555554, lon: 139.32777777777778}          # 市町村の代表点(Wikidata。段階57 第8部)
+    typical:
+      - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "メッツァ 紅葉 色づき"
+  - id: obs-kouyou-0102
+    subject: autumn_leaves
+    name: "大宮公園"
+    prefecture: 埼玉県
+    city: さいたま市大宮区
+    area: 埼玉
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "大宮公園 紅葉 色づき"
+  - id: obs-kouyou-0103
+    subject: autumn_leaves
+    name: "別所沼公園"
+    prefecture: 埼玉県
+    city: さいたま市南区
+    area: 埼玉
+    typical:
+      - {text: "11月下旬～12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
+    pages:
+      - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+    search: "別所沼公園 紅葉 色づき"
   - id: obs-kouyou-0093
     subject: autumn_leaves
     name: "陣馬山"

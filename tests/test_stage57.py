@@ -329,6 +329,81 @@ class Part6Flows(unittest.TestCase):
         self.assertGreaterEqual(len(res), 4)
 
 
+class Part8Origin(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import origins
+        self.o = origins
+
+    def test_extract(self):
+        for q, want in (("今週末か来週末、大宮から紅葉を見に行きたい", "大宮"), ("新宿発で花を見たい", "新宿"), ("千葉から行ける紅葉", "千葉"), ("宇都宮駅から日帰りで", "宇都宮")):
+            self.assertEqual(self.o.extract(q), want, q)
+        self.assertIsNone(self.o.extract("富士山の周囲で紅葉のおすすめを教えて"))
+        self.assertIsNone(self.o.extract("明日から紅葉を見たい"))
+
+    def test_lookup_uses_only_the_tables(self):
+        self.assertAlmostEqual(self.o.lookup("大宮")["lat"], 35.906, places=2)
+        self.assertEqual(self.o.lookup("大宮駅")["name"], "大宮")
+        self.assertEqual(self.o.lookup("千葉")["prefecture"], "千葉県")           # 市区町村の代表点の表から
+        self.assertIsNone(self.o.lookup("ありえない町"))
+
+    def test_unknown_origin_is_one_sentence_with_the_default(self):
+        c = self.o.choose("ありえない町から紅葉を見たい")
+        self.assertEqual((c["origin"], c["source"]), ("横浜", "unknown"))
+        self.assertEqual(c["line"], "ありえない町の位置を特定できませんでした。横浜からの距離で選びます。")
+
+    def test_no_origin_is_yokohama(self):
+        self.assertEqual(self.o.choose("紅葉のおすすめを教えて")["origin"], "横浜")
+
+    def test_follow_up_keeps_and_new_question_resets(self):
+        c = self.o.choose("もっと近場で", follow_up=True, last_origin="大宮")
+        self.assertEqual((c["origin"], c["line"]), ("大宮", "先ほどの大宮のままです。"))
+        c = self.o.choose("富士山の周囲で紅葉のおすすめを教えて", follow_up=False, last_origin="大宮")
+        self.assertEqual((c["origin"], c["source"]), ("横浜", "default"))
+        self.assertIn("横浜", c["line"])
+
+    def test_distance_and_saitama_ranks_higher_from_omiya(self):
+        from ikimonobiyori import answer_plan as AP, catalog as C, observations as O
+        pol = C.load_policy()
+        pt = {"lat": 36.114805555555556, "lon": 139.10972222222222}              # 長瀞町
+        km_o, km_y = C.range_from(pol, pt, "大宮")["km"], C.range_from(pol, pt, "横浜")["km"]
+        self.assertLess(km_o, km_y)
+        self.assertEqual(O._distance({"city": "さいたま市南区"}, "大宮", pol), C.range_from(pol, O_point("さいたま市"), "大宮")["km"])
+        self.assertIsNone(O._distance({"city": "さいたま市南区"}, "横浜", pol))    # 横浜はこれまでどおり
+        def plan(origin):
+            cands = []
+            for name, p in (("埼玉の渓谷", pt), ("横浜の庭", {"lat": 35.45, "lon": 139.63})):
+                km = C.range_from(pol, p, origin)["km"]
+                cands.append(spot(name, km, city=name))
+            return AP.build(facts_doc({"autumn_leaves": {"candidates": cands}}, origin=origin), "autumn_leaves")
+        score = lambda pl, n: next(r["score"] for r in pl["ranking"] if r["name"] == n)
+        self.assertGreater(score(plan("大宮"), "埼玉の渓谷"), score(plan("横浜"), "埼玉の渓谷"))
+        self.assertEqual(next(p for p in plan("大宮")["picks"] if p["name"] == "埼玉の渓谷")["distance_text"], f"約{km_o}km")
+
+    def test_answer_must_state_origin_and_distance(self):
+        from ikimonobiyori import answer_plan as AP
+        f = facts_doc({"autumn_leaves": {"candidates": [spot("埼玉の渓谷", 45, city="渓町")]}}, origin="大宮")
+        f["lines"]["origin_line"] = "大宮からの距離で選びました。"
+        plan = AP.build(f, "autumn_leaves")
+        codes = [e["code"] for e in V.check("① 埼玉の渓谷: 例年の見頃は11月です。\n", f, RULES, plan=plan)["answer_errors"]]
+        self.assertIn("origin_missing", codes)
+        self.assertIn("origin_km_missing", codes)
+        codes = [e["code"] for e in V.check("大宮からの距離で選びました。\n① 埼玉の渓谷: 約45km。例年の見頃は11月です。\n", f, RULES, plan=plan)["answer_errors"]]
+        self.assertNotIn("origin_missing", codes)
+        self.assertNotIn("origin_km_missing", codes)
+
+    def test_cache_is_outside_the_repository(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            self.o.add_to_cache("試験町", 36.0, 139.0, "Q1", env=env)
+            self.assertEqual(self.o.lookup("試験町", env)["qid"], "Q1")
+            self.assertTrue(Path(d, "ask", "origins_cache.json").is_file())
+
+
+def O_point(name):
+    from ikimonobiyori import origins
+    return origins.municipal_point(name)
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
