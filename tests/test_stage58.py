@@ -135,5 +135,43 @@ class Part2Official(unittest.TestCase):
             self.assertEqual(O.read_records("autumn_leaves", env)[0]["notice"], "一部区域の閉鎖")
 
 
+class Part3ThisYear(unittest.TestCase):
+    def facts(self):
+        return facts_doc({"autumn_leaves": subject(spot("今年の園", 20, city="園町"), spot("奥秩父の渓谷", 90, state=None, city="秩父市"),
+                                                   spot("まつりの山", 60, state=None, city="山町", festivals=[{"name": "もみじまつり", "start": "2026-11-01", "end": "2026-11-30", "period_line": "主催者が設定した期間: まつり期間中(11/1〜11/30)"}]))})
+
+    def test_no_info_is_out_of_picks_and_in_the_other_list(self):
+        plan = AP.build(self.facts(), "autumn_leaves")
+        names = [p["name"] for p in plan["picks"]]
+        self.assertNotIn("奥秩父の渓谷", names)
+        self.assertIn("まつりの山", names)                                      # 今年の行事は今年の情報
+        self.assertEqual(plan["no_this_year"][0]["name"], "奥秩父の渓谷")
+        r = next(x for x in plan["ranking"] if x["name"] == "奥秩父の渓谷")
+        self.assertEqual(r["reason"], "no_this_year")
+        self.assertLess(r["breakdown"]["no_this_year"], 0)
+
+    def test_skeleton_lists_it_separately_and_passes(self):
+        f = self.facts()
+        plan = AP.build(f, "autumn_leaves")
+        text = SK.compose(f, plan)
+        self.assertIn("今年の情報が確認できていない候補", text)
+        self.assertIn("・奥秩父の渓谷: 例年の見頃: 11月(今年の情報は確認できていません)", text)
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], (text, V.report_lines(r)))
+
+    def test_old_year_only_basis_fails(self):
+        plan = AP.build(self.facts(), "autumn_leaves")
+        plan["picks"] = plan["picks"][:1]
+        errs = AP.plan_errors("", plan, None, [f"① {plan['picks'][0]['name']}: 2024年の記事では見頃でした。"], V.short_names)
+        self.assertIn("old_year_basis", [e["code"] for e in errs])
+        errs = AP.plan_errors("", plan, None, [f"① {plan['picks'][0]['name']}: 見頃(11/5時点)。2024年の記事では遅めでした。"], V.short_names)
+        self.assertNotIn("old_year_basis", [e["code"] for e in errs])
+
+    def test_last_year_record_is_not_this_year(self):
+        c = spot("古い記録の園", date_="2025-11-05")
+        self.assertFalse(AP.has_this_year(c, 2026))
+        self.assertTrue(AP.has_this_year(spot("新しい園"), 2026))
+
+
 if __name__ == "__main__":
     unittest.main()

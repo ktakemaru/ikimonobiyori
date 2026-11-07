@@ -163,6 +163,23 @@ def _flat_picks(plan):
     return list(plan.get("picks") or [])
 
 
+def _no_this_year(plan, facts, t, max_quote):
+    """別枠「今年の情報が確認できていない候補」(事実だけを 1 行ずつ)。"""
+    rows = list(plan.get("no_this_year") or [])
+    for s in plan.get("segments") or []:
+        rows += (s.get("plan") or (plan.get("subjects") or {}).get(s.get("subject")) or {}).get("no_this_year") or []
+    ty = AP.load_policy()["this_year"]
+    out, seen = [], set()
+    for r in rows:
+        if r["name"] in seen:
+            continue
+        seen.add(r["name"])
+        typ = _no_long_quote(r.get("typical_line") or "", max_quote)
+        known = typ and not typ.startswith(t["typical_unknown"])
+        out.append("・" + (ty["line"].format(name=r["name"], typical=typ) if known else ty["line_no_typical"].format(name=r["name"])))
+    return out[: ty["max_lines"]]
+
+
 def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
     """facts.json と計画 → 骨組みの答え(文字列)。"""
     t = cfg()
@@ -212,6 +229,9 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
         lines += _subject_part(facts["subjects"][plan["subject"]], plan, plan["subject"], t, max_quote, urls, mentioned)
     if len(flat) < load_rules()["min_candidates"]:
         lines += ["", t["few"].format(n=len(flat))]
+    ny = _no_this_year(plan, facts, t, max_quote)
+    if ny:
+        lines += ["", t["no_this_year_heading"]] + ny
     notices = OP.notice_lines(mentioned)
     if notices:
         lines += ["", t["before_heading"]] + [n["line"] for n in notices]

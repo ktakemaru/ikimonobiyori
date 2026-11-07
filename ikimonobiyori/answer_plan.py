@@ -161,6 +161,22 @@ def has_current(c):
     return cur.get("state") != O.load_policy()["unknown_state"]
 
 
+def has_this_year(c, year):
+    """今年(今のシーズン)の情報があるか: 状態が読める今年の日付の記録、または今年の行事。「例年の時期」だけでは数えない(段階58 第3部)。"""
+    cur = c.get("current")
+    if has_current(c):
+        d = cur.get("state_date")
+        if d is None or str(d)[:4] == str(year):
+            return True
+    for f in c.get("festivals") or []:
+        if str(f.get("start") or "")[:4] == str(year) or str(f.get("end") or "")[:4] == str(year):
+            return True
+    for e in c.get("events") or []:
+        if str(e.get("start") or "")[:4] == str(year):
+            return True
+    return bool(c.get("park_birds")) and any(b.get("kind") == "recent" for b in c["park_birds"])
+
+
 def score_candidate(c, dates, pol, subject=None):
     """1 候補の評価。点数・内訳・見込み・狙い・距離を返す(並べ替えと理由の記録に使う)。"""
     dates = [_d(x) for x in dates]
@@ -187,6 +203,8 @@ def score_candidate(c, dates, pol, subject=None):
         "practical": b["practical"] if c.get("practical") else 0,
         "source": src,
     }
+    if not has_this_year(c, dates[0].year):                   # 段階58 第3部
+        parts["no_this_year"] = -pol["this_year"]["penalty"]
     if subject == "birds" and not cur:                       # 段階57 第4部: 公式の観察の記録がない公園は大きく減点する
         parts["no_official"] = -pol["birds_no_current"]["penalty"]
     return {"outlook": out, "aim": aim, "distance_km": km, "distance_estimated": est, "score": round(sum(parts.values()), 1), "breakdown": parts,
@@ -238,7 +256,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
-                  "has_current": has_current(c), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
+                  "has_current": has_current(c), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
@@ -272,9 +290,15 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             reject(r, "closed_that_day")
         elif r["aim"] == "other":
             reject(r, "no_aim")
-        elif r["score"] < pol["selection"]["min_score"]:
+        elif r["score"] + (pol["this_year"]["penalty"] if r.get("this_year") is False else 0) < pol["selection"]["min_score"]:      # 今年の情報の減点は下で別に扱う
             reject(r, "no_current" if not r["has_current"] else ("stale_current" if r["stale"] else "no_current"))
     relaxed = _refine_reject(rows, status, refine_rule(refine, pol), pol, reject) if refine else False
+    no_year = []
+    if any(r.get("this_year") and r["name"] not in status for r in rows):  # 段階58 第3部: 今年の情報がない候補は今回のおすすめの対象から外す(別枠に 1 行)。今年の情報のある候補が 1 つもないときは例年の時期で答える(明記の文つき)
+        for r in rows:
+            if r.get("this_year") is False and (status.get(r["name"]) or {}).get("code") in (None, "no_current", "stale_current"):
+                status.setdefault(r["name"], {"code": "no_this_year", "label": rs["no_this_year"]})
+                no_year.append(r)
     for c in sub.get("nearby_out_of_region") or []:
         rows.append({"id": c.get("id"), "name": c["name"], "score": 0, "outlook": "unknown", "aim": "other", "distance_km": c.get("distance_km"),
                      "distance_estimated": False, "breakdown": {}, "cluster": cluster_key(c), "has_current": bool(c.get("current")), "stale": False,
@@ -343,6 +367,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             "origin_line": (facts_doc.get("lines") or {}).get("origin_line"),
             "use_headings": len(sections) >= pol["aims"]["min_sections_for_headings"],
             "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or []),
+            "no_this_year": [{"name": r["name"], "typical_line": r.get("typical_line")} for r in sorted(no_year, key=lambda x: (-x["score"], x["name"]))[: pol["this_year"]["max_lines"]]],
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
 
 
@@ -600,6 +625,11 @@ def plan_errors(text, plan, mat, blocks, names_of):
             blk = next((b for b in blocks if any(f in re.split(r"[:：]", b, maxsplit=1)[0] for f in names_of(p["name"]))), None)
             if blk is not None and p.get("distance_text") and p["distance_text"] not in blk:
                 errs.append({"code": "origin_km_missing", "detail": f"「{p['name']}」: {p['distance_text']}"})
+    this_y = str(plan.get("now") or "")[:4]
+    for b in blocks:                                                         # 段階58 第3部: 古い年の記事だけをおすすめの根拠にしない
+        years = re.findall(r"(20\d\d)年", b)
+        if years and this_y and all(y < this_y for y in years) and not re.search(r"\d{1,2}/\d{1,2}時点", b):
+            errs.append({"code": "old_year_basis", "detail": b.splitlines()[0][:30]})
     for p in plan["picks"]:                                                  # 段階57 第4部: 明記の文が要るおすすめ
         if not p.get("note"):
             continue

@@ -88,6 +88,13 @@ evidence:
   typical_only_rank_cap: 3
   note_ok_words: [確認できていません]
 
+# 段階58 第3部: 今年の情報(現況・行事)がない候補は大きく減点し、今回のおすすめの対象から外す(別枠に 1 行ずつ)
+this_year:
+  penalty: 30
+  max_lines: 3
+  line: "{name}: {typical}(今年の情報は確認できていません)"
+  line_no_typical: "{name}: 今年の情報は確認できていません"
+
 selection:
   picks: 3
   # 利用できるなら、今回のおすすめのうちこの件数は今年の現況がある候補にする
@@ -111,6 +118,7 @@ reasons:
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
   refine_excluded: 追質問の条件に合わない
+  no_this_year: 今年の情報がない
 
 # 段階57 第4部: 野鳥で、公式の観察の記録がない公園の扱い(大きく減点し、選ぶときは明記する)
 birds_no_current:
@@ -138,6 +146,7 @@ skeleton:
   picks_heading: 今回のおすすめ
   confidence_heading: 確かさの補足
   before_heading: 行く前に確認すること
+  no_this_year_heading: 今年の情報が確認できていない候補
   sources_heading: 出典
   lead_ok: 見頃が続いている可能性がある場所を選びました。
   lead_toward: 見頃に向かう可能性がある場所を選びました。
