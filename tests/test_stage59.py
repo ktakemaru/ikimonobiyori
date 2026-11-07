@@ -147,5 +147,70 @@ class Part2Cards(unittest.TestCase):
             self.assertNotIn(f.name, ("cards.jsonl", "publications.jsonl"), str(f))
 
 
+def spot(name, km=20, city="試験山", **kw):
+    cur = {"state": "見頃", "state_raw": "見頃", "state_date": "2026-11-05", "publisher": "試験市", "url": f"https://kouyou.example.org/{km}", "source_class": "official", "freshness": "fresh", "age_days": 2,
+           "read_at": "2026-11-07T09:00:00+09:00"}
+    return {"id": "t-" + name, "name": name, "city": city, "prefecture": "東京都", "current": cur, "current_unknown": False, "distance_km": km,
+            "typical": [{"text": "例年11月", "start": "11-01", "end": "11-30", "url": "https://kouyou.example.org/t", "publisher": "試験市", "source_class": "official"}], "typical_line": "例年の見頃: 11月",
+            "events": [], "history": [], "reason_labels": [], "practical": [], "festivals": [], "relation": "in_peak", **kw}
+
+
+def facts_doc(cards, *spots, month="11"):
+    return {"schema": "ikimono-ask-facts/1", "now": "2026-11-07T12:00:00+09:00", "dates": [f"2026-{month}-08"], "origin": "横浜", "region": "全範囲", "knowledge_cards": cards,
+            "subjects": {"autumn_leaves": {"subject": "autumn_leaves", "candidates": list(spots), "avoid": [], "nearby_out_of_region": [], "alternatives": []}},
+            "lines": {"answer_rules": "stage51", "practical_rules": True, "open_urls": None, "origin_line": "横浜からの距離で選びました。"}, "summary_pages": [], "this_round": {}}
+
+
+class Part4GuideEye(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import knowledge as K, answer_plan as AP, skeleton as SK, ask_verify as V
+        self.K, self.AP, self.SK, self.V = K, AP, SK, V
+        self.rules = V.load_rules()
+
+    def test_selection_by_place_season_and_priority(self):
+        cards = [card(), card(title="安全のカード", category="安全", facts=["クマに注意する"]), card(title="保全のカード", category="保全・マナー", facts=["登山道を外れない"]),
+                 card(title="別の山", place="別山", place_aliases=[]), card(title="春のカード", condition={"months": [4]})]
+        got = self.K.select(["試験山"], month=11, cards=cards)
+        self.assertEqual([c["title"] for c in got], ["安全のカード", "保全のカード"])        # 最大 2 枚。安全・保全が先
+        self.assertEqual(self.K.select(["遠い町"], month=11, cards=cards), [])
+
+    def test_eye_line_is_separate_with_source_and_passes(self):
+        c1 = card()
+        f = facts_doc([c1], spot("試験山の森", 40, city="試験山"))
+        plan = self.AP.build(f, "autumn_leaves")
+        text = self.SK.compose(f, plan, cards=[c1])
+        self.assertIn("ガイドの目: 高いところから順に色づく。見頃は約1か月続く(試験VC)", text)
+        eye_line = next(l for l in text.splitlines() if l.startswith("ガイドの目:"))
+        self.assertNotIn("11/5時点", eye_line)                                     # 現況と別の行
+        self.assertIn("https://vc.example.org/a.pdf", text)
+        r = self.V.check(text, f, self.rules, plan=plan)
+        self.assertTrue(r["ok"], (text, self.V.report_lines(r)))
+
+    def test_year_dependent_says_the_year(self):
+        c1 = card(condition={"year_dependent": True, "year": 2023, "months": [11]})
+        self.assertIn("2023年の記録では、", self.K.line_for(c1))
+
+    def test_safety_goes_to_before_you_go(self):
+        s = card(title="クマ", category="安全", facts=["朝夕はクマに注意する"])
+        eye, before, urls = self.K.split_lines([s])
+        self.assertEqual(eye, [])
+        self.assertEqual(before, ["朝夕はクマに注意する(試験VC)"])
+        self.assertEqual(urls, ["https://vc.example.org/a.pdf"])
+
+    def test_no_card_no_line_and_no_offer(self):
+        f = facts_doc([], spot("試験山の森", 40))
+        text = self.SK.compose(f, self.AP.build(f, "autumn_leaves"), cards=[])
+        self.assertNotIn("ガイドの目", text)
+
+    def test_check_rejects_invented_facts(self):
+        c1 = card()
+        errs = self.K.answer_errors("ガイドの目: 高いところから順に色づく。夜はライトアップされる(試験VC)\n", [c1])
+        self.assertEqual([e["code"] for e in errs], ["guide_eye_not_from_card"])
+        errs = self.K.answer_errors(self.K.line_for(c1) + "\n", [c1])
+        self.assertEqual(errs, [])
+        wrong = self.K.line_for(c1).replace("試験VC", "別の施設")
+        self.assertEqual([e["code"] for e in self.K.answer_errors(wrong, [c1])], ["guide_eye_not_from_card"])
+
+
 if __name__ == "__main__":
     unittest.main()

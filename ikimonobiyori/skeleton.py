@@ -6,6 +6,7 @@ import re
 from datetime import date
 
 from . import answer_plan as AP
+from . import knowledge as K
 from . import official_pages as OP
 from .ask_verify import Material, _n, load_rules, mentioned_cands
 
@@ -187,8 +188,8 @@ def _no_this_year(plan, facts, t, max_quote):
     return out[: ty["max_lines"]]
 
 
-def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
-    """facts.json と計画 → 骨組みの答え(文字列)。"""
+def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=None, places=(), env=None):
+    """facts.json と計画 → 骨組みの答え(文字列)。cards: 知識カード(省くとデータ置き場)。places: 質問の場所の語(ガイドの目の選び方に足す)。"""
     t = cfg()
     max_quote = load_rules()["stage51"]["max_quote_chars"]
     max_quote = max_quote["value"] if isinstance(max_quote, dict) else max_quote
@@ -252,9 +253,16 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
     if ny:
         lines += ["", t["no_this_year_heading"]] + ny
     notices = OP.notice_lines(mentioned)
-    if notices:
-        lines += ["", t["before_heading"]] + [n["line"] for n in notices]
+    month = int(str(facts["dates"][0])[5:7]) if facts.get("dates") else None
+    names = list(places) + [c.get("name") for c in mentioned if c.get("name")] + [c.get("city") for c in mentioned if c.get("city")]
+    chosen = K.select(names, month=month, cards=cards, env=env)
+    eye, before_k, card_urls = K.split_lines(chosen)
+    if eye:
+        lines += [""] + eye
+    if notices or before_k:
+        lines += ["", t["before_heading"]] + [n["line"] for n in notices] + before_k
         urls |= {n["url"] for n in notices if n.get("url")}
+    urls |= set(card_urls)
     conf = []
     if not any(c.get("practical") for c in mentioned):
         conf.append(load_rules()["stage51"]["practical_fallback"] + "。")

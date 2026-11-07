@@ -273,6 +273,14 @@ def source_rule_errors(text, rules, blob=None):
     return errs
 
 
+def knowledge_errors(text, facts):
+    """段階59 第4部: 「ガイドの目」の行は、カードの事実と出典のとおり。facts.knowledge_cards(テスト)がなければデータ置き場のカード。"""
+    if "ガイドの目:" not in text:
+        return []
+    from . import knowledge as K
+    return K.answer_errors(text, facts.get("knowledge_cards"))
+
+
 def subject_word_errors(text, facts, rules):
     """段階58 第10部: 鳥の答えに「咲き具合」「色づき」、花・紅葉の答えに「飛来」を書かない(対象別の定型文)。対象が 1 つの答えだけ。"""
     subs = list(facts.get("subjects") or {})
@@ -351,9 +359,21 @@ def offer_errors(text, allowed, doc=None):
     return errs
 
 
+def _with_cards(text, facts):
+    """答えに「ガイドの目」や知識の行があるとき、カードの事実・出典 URL を検査の材料に足す(カードが根拠)。"""
+    from . import knowledge as K
+    cards = facts.get("knowledge_cards")
+    rows = cards if cards is not None else K.load()
+    used = [r for r in rows if (K.line_for(r) in text) or (K.cfg()["before_line"].format(facts="。".join(x.rstrip("。") for x in r["facts"][: K.cfg()["max_facts_in_answer"]]), source=r["source"]["name"]) in text)]
+    if not used:
+        return facts
+    return {**facts, "knowledge_used": [{"facts": r["facts"], "source": r["source"], "line": K.line_for(r)} for r in used]}
+
+
 def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。offers: 今使ってよい案内の文(省くと計画のもの)。"""
     rules = rules or load_rules()
+    facts = _with_cards(text, facts)
     mat = Material(facts, rules, gazetteer)
     AP.add_target_dates(mat)                                    # 段階58 第7部: 見頃を狙う週(コードの計算)の日付は事実として通す
     sents = []
@@ -402,6 +422,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += question_errors(text, rules)
     answer_errors += not_tried_errors(text, facts)
     answer_errors += subject_word_errors(text, facts, rules) + quote_errors(text, rules)
+    answer_errors += knowledge_errors(text, facts)
     answer_errors += source_rule_errors(text, rules, mat.blob)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
@@ -589,6 +610,7 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
             allowed |= {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots}
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
         allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
+        allowed |= {(k["source"].get("url") or "").rstrip("/") for k in facts.get("knowledge_used") or []}                                   # 段階59: 知識カードの出典
         for u in sorted(urls - allowed - {""}):
             errs.append({"code": "source_unused", "detail": u[:60]})
     if (facts.get("lines") or {}).get("practical_rules"):                  # 段階53: まつりの期間は主催者が設定した日程。現況（色づき状況）とは別の行にする
