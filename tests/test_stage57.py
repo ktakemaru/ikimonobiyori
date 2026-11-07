@@ -591,7 +591,9 @@ class Part11OfficialCsv(unittest.TestCase):
         for i in ("chichibu-navi-koyo", "yamanashi-kankou-koyo-csv", "nagatoro-koyo-matsuri-2026"):
             self.assertEqual((auto[i]["status"], auto[i]["approved_by"], auto[i]["approved_on"]), ("approved", "user", "2026-11-07"), i)
             self.assertIn("本人の指示による記入", auto[i]["reason"])
-        self.assertEqual(auto["nagatoro-kanko-koyo"]["status"], "pending")          # 指示の対象外(既存の紅葉情報のページの項目)
+        a = auto["nagatoro-kanko-koyo"]                                              # 本人の指示(2026-11-07、段階60の前)で承認済みになった id
+        self.assertEqual((a["status"], a["approved_by"], a["approved_on"]), ("approved", "user", "2026-11-07"))
+        self.assertIn("本人の指示による記入", a["reason"])
         wint = {s["id"]: s["approval"] for s in yaml.safe_load((ROOT / "ikimonobiyori/data/sources/wintering_birds.yaml").read_text(encoding="utf-8"))["sources"]}
         self.assertEqual(wint["inzai-motono-hakucho"]["status"], "pending")
         from ikimonobiyori import visitor_centers as VCm
