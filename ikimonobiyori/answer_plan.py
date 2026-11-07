@@ -228,6 +228,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         r = score_candidate(dict(c, _today=facts_doc.get("now"), _origin=facts_doc.get("origin")), dates, pol, subject)
         r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "current_state": (c.get("current") or {}).get("state"),
                   "current_date": (c.get("current") or {}).get("state_date"),
+                  "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
                   "has_current": bool(c.get("current")), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
@@ -285,7 +286,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             sections.append({"aim": aim, "label": pol["aims"]["labels"][aim], "items": [_item(r, oo) for r in top]})
     # 全体の今回のおすすめ: 節の1位から、見込みの高い順(同じなら点数)。狙いと地域が重ならないように
     firsts = [s["items"][0] for s in sections]
-    key = lambda it: (-oo["rank"][it["outlook"]], -it["score"], it["name"])
+    key = lambda it: rank_key(it, pol)
     chosen, used_cl = [], set()
     by_aim = {it["aim"]: it for it in firsts}
     want = [by_aim[a] for a in pol["selection"]["pick_aims"] if a in by_aim]   # まず、近場・歩く・遠出の各1位(あれば)
@@ -297,6 +298,16 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         for it in sorted(rest, key=key):
             if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl:
                 chosen.append(it); used_cl.add(it["cluster"])
+    # 段階57 第12部: 利用できるなら、今回のおすすめの min_with_current 件は今年の現況がある候補にする(いちばん下の現況なしの候補から入れ替える)
+    pool = sorted([it for s in sections for it in s["items"] if it["has_current"] and it["name"] not in {c["name"] for c in chosen}], key=key)
+    while sum(1 for c in chosen if c["has_current"]) < pol["selection"]["min_with_current"] and pool and any(not c["has_current"] for c in chosen):
+        out_ = sorted([c for c in chosen if not c["has_current"]], key=key)[-1]
+        rest_cl = {c["cluster"] for c in chosen if c is not out_}
+        cand = next((p for p in pool if p["cluster"] not in rest_cl), None)
+        if cand is None:
+            break
+        pool.remove(cand)
+        chosen[chosen.index(out_)] = cand
     chosen_names = {i["name"] for i in chosen}
     for s in sections:
         for it in s["items"]:
@@ -311,7 +322,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
         picks = [dict(it, rank=i + 1, **({} if it["has_current"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
     else:
-        picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(chosen, key=key))]
+        picks = [dict(it, rank=i + 1, **({} if it["has_current"] else {"note": pol["evidence"]["no_current_note"]})) for i, it in enumerate(sorted(chosen, key=key))]
     ranking = []
     for r in sorted(rows, key=lambda x: (-x["score"], x["name"])):
         st = status.get(r["name"])
@@ -327,9 +338,24 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
 
 
+def evidence_level(it, pol):
+    """根拠の強さ: 2 = 今年の新しい現況 / 1 = 現況が古い(または日付なし) / 0 = 現況なし(例年の窓だけ)。"""
+    if not it.get("has_current"):
+        return 0
+    age = it.get("current_age_days")
+    return 2 if age is not None and age <= pol["evidence"]["fresh_max_age_days"] else 1
+
+
+def rank_key(it, pol):
+    """見込みの区分 → 根拠の強さ → 現況の日付の新しさ → 点数 → 名前(段階57 第12部)。"""
+    oo = pol["outlook"]
+    return (-oo["rank"][it["outlook"]], -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
+
+
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
             "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "subject": r.get("subject"),
+            "current_age_days": r.get("current_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
             "distance_text": f"約{int(round(r['distance_km']))}km" if r["distance_km"] is not None and not r["distance_estimated"] else None,
@@ -343,7 +369,7 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
     oo = pol["outlook"]
     n = pol["selection"]["picks"]
     firsts = [dict(pl["picks"][0], subject=sj) for sj, pl in subs.items() if pl["picks"]]
-    key = lambda it: (-oo["rank"][it["outlook"]], -it["score"], it["name"])
+    key = lambda it: rank_key(it, pol)
     picks, used = [], set()
     for it in sorted(firsts, key=key):
         if len(picks) < n and it["name"] not in used:
@@ -529,6 +555,7 @@ def plan_errors(text, plan, mat, blocks, names_of):
         if not p.get("note"):
             continue
         blk = next((b for b in blocks if any(f in re.split(r"[:：]", b, maxsplit=1)[0] for f in names_of(p["name"]))), None)
-        if blk is not None and p["note"] not in blk:
+        ok_words = [p["note"]] + load_policy()["evidence"]["note_ok_words"]
+        if blk is not None and not any(w in blk for w in ok_words):
             errs.append({"code": "pick_note_missing", "detail": f"「{p['name']}」: {p['note']}"})
     return errs

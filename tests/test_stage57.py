@@ -583,6 +583,64 @@ class Part11OfficialCsv(unittest.TestCase):
             self.assertEqual(rows[0]["state_date"], "2026-11-06")
 
 
+class Part12Ordering(unittest.TestCase):
+    def koyo(self):
+        s = {"candidates": [spot("高尾山", 40, state=None, city="八王子市", elevation_m=599, festivals=[{"name": "もみじまつり", "start": "2026-11-01", "end": "2026-11-30"}]),
+                            spot("昭和記念公園", 45, city="立川市", window=("11-05", "11-30"))]}
+        s["candidates"][1]["current"]["age_days"] = 2
+        return s
+
+    def test_takao_without_status_is_below_showa_with_status(self):
+        from ikimonobiyori import answer_plan as AP
+        f = facts_doc({"autumn_leaves": self.koyo()}, dates=("2026-11-14", "2026-11-15"))
+        plan = AP.build(f, "autumn_leaves")
+        names = [p["name"] for p in plan["picks"]]
+        self.assertLess(names.index("昭和記念公園"), names.index("高尾山"))
+
+    def test_outlook_rank_still_comes_first(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        peak = {"outlook": "in_peak", "has_current": False, "current_date": None, "score": 1, "name": "a"}
+        late = {"outlook": "late", "has_current": True, "current_date": "2026-11-05", "current_age_days": 1, "score": 90, "name": "b"}
+        self.assertLess(AP.rank_key(peak, pol), AP.rank_key(late, pol))
+
+    def test_newer_status_ranks_above_older(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        new = {"outlook": "in_peak", "has_current": True, "current_date": "2026-11-06", "current_age_days": 1, "score": 1, "name": "a"}
+        old = {"outlook": "in_peak", "has_current": True, "current_date": "2026-11-01", "current_age_days": 6, "score": 90, "name": "b"}
+        stale = {"outlook": "in_peak", "has_current": True, "current_date": "2026-10-01", "current_age_days": 37, "score": 99, "name": "c"}
+        self.assertEqual(sorted([stale, old, new], key=lambda x: AP.rank_key(x, pol))[0]["name"], "a")
+        self.assertEqual(sorted([stale, old, new], key=lambda x: AP.rank_key(x, pol))[-1]["name"], "c")
+
+    def test_two_of_three_picks_have_status_when_available(self):
+        from ikimonobiyori import answer_plan as AP
+        c = [spot("現況なしの園", 20, state=None, city="一町"), spot("現況なしの山", 60, state=None, city="二町", elevation_m=900), spot("現況なしの湖", 130, state=None, city="三町"),
+             spot("現況ありの園", 25, city="四町"), spot("現況ありの森", 70, city="五町"), spot("現況ありの浜", 125, city="六町")]
+        for x in c:
+            if x["current"]:
+                x["current"]["age_days"] = 2
+        plan = AP.build(facts_doc({"autumn_leaves": {"candidates": c}}), "autumn_leaves")
+        self.assertGreaterEqual(sum(1 for p in plan["picks"] if p["has_current"]), 2)
+
+    def test_pick_without_status_needs_the_note(self):
+        from ikimonobiyori import answer_plan as AP
+        f = facts_doc({"autumn_leaves": {"candidates": [spot("高尾山", 40, state=None, city="八王子市", elevation_m=900)]}})
+        plan = AP.build(f, "autumn_leaves")
+        note = plan["picks"][0]["note"]
+        self.assertEqual(note, AP.load_policy()["evidence"]["no_current_note"])
+        self.assertEqual([e["code"] for e in AP.plan_errors("", plan, None, ["① 高尾山: 例年の見頃です。"], V.short_names)], ["pick_note_missing"])
+        self.assertEqual(AP.plan_errors("", plan, None, [f"① 高尾山: {note}。"], V.short_names), [])
+
+    def test_festival_does_not_replace_status(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        self.assertGreater(pol["bonus"]["festival_active"], 0)
+        p = AP.build(facts_doc({"autumn_leaves": self.koyo()}), "autumn_leaves")
+        takao = next(r for r in p["ranking"] if r["name"] == "高尾山")
+        self.assertIsNone(takao["current_state"])                              # まつりがあっても現況にはならない
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
