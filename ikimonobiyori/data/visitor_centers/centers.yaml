@@ -1,4 +1,4 @@
-# ビジターセンター・自然観察施設の台帳（段階55）。新しく足す施設の情報源はすべて承認待ち（approval.status: pending）。承認は本人が行う。
+# ビジターセンター・自然観察施設の台帳（段階55）。新しく足す施設の情報源はすべて承認待ち（approval.status: pending）。承認の判断は本人が行う（記入は本人の指示文で明示された施設だけ。docs/operations.md §2-0・§2-3）。
 # 項目: id / name / operator（運営主体）/ operator_kind / site_url（施設の公式サイト）/ info_url（最新の自然情報のページ）/ frequency（更新頻度）/ format / season_end（更新が止まる施設の今シーズン最後の日付）/
 #       terms {url, reprint_banned, note}（規約・ポリシーのページと、転載・自動取得に関する記載の要約）/ within_range（横浜から直線250km前後か）/ prefecture / class / approval。
 # 使うのは日付・状態の語（30字以内）・種名（1施設1日付10種まで）・URL・開館時間と休館日だけ。記事・お便りの文章は使わない。
