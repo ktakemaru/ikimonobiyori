@@ -303,5 +303,96 @@ class Part5SiteWalk(unittest.TestCase):
             self.assertNotIn("import " + w, src)
 
 
+class FakeGit:
+    """git の呼び出しの代わり(実際の git も子プロセスも動かさない)。"""
+
+    def __init__(self, remote="origin\thttps://github.com/ktakemaru/ikimonobiyori-knowledge.git (fetch)\n", staged_changes=True):
+        self.calls, self.remote, self.staged = [], remote, staged_changes
+
+    def __call__(self, args, **kw):
+        import types
+        self.calls.append(args)
+        sub = args[3]
+        out, rc = "", 0
+        if sub == "remote":
+            out = self.remote
+        elif sub == "diff":
+            rc = 1 if self.staged else 0
+        return types.SimpleNamespace(returncode=rc, stdout=out, stderr="")
+
+    def subs(self):
+        return [a[3] for a in self.calls]
+
+
+class Part7KnowledgeBackup(unittest.TestCase):
+    """第7部: ask knowledge backup(commit だけ。push しない)。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+        self.repo = Path(self.tmp.name) / "knowledge"
+        self.repo.mkdir()
+
+    def make_repo(self):
+        (self.repo / ".git").mkdir()
+        (self.repo / ".gitignore").write_text("*\n!.gitignore\n!cards.jsonl\n!publications.jsonl\n", encoding="utf-8")
+        (self.repo / "cards.jsonl").write_text('{"title": "試験"}\n', encoding="utf-8")
+        (self.repo / "publications.jsonl").write_text('{"url": "https://example.org/a.pdf"}\n', encoding="utf-8")
+        (self.repo / "photo.jpg").write_text("x", encoding="utf-8")
+        (self.repo / "README.md").write_text("x", encoding="utf-8")          # 許可の一覧(.gitignore)にない
+
+    def backup(self, git):
+        from datetime import date as D
+        from ikimonobiyori import knowledge_backup as KB
+        return KB.backup(env=self.env, run=git, today=D(2026, 11, 7))
+
+    def test_commits_only_when_there_are_changes(self):
+        self.make_repo()
+        git = FakeGit()
+        rc, lines = self.backup(git)
+        self.assertEqual(rc, 0)
+        self.assertIn("commit", git.subs())
+        commit = next(a for a in git.calls if a[3] == "commit")
+        self.assertIn("知識カードのバックアップ（2026-11-07）", commit)
+        self.assertIn("push は本人", lines[-1])
+        git = FakeGit(staged_changes=False)
+        rc, lines = self.backup(git)
+        self.assertNotIn("commit", git.subs())
+        self.assertEqual(lines[-1], "変更はありません")
+
+    def test_stops_when_the_remote_is_not_the_private_repository(self):
+        self.make_repo()
+        for remote in ("origin\thttps://github.com/ktakemaru/ikimonobiyori.git (fetch)\n", ""):
+            git = FakeGit(remote=remote)
+            rc, lines = self.backup(git)
+            self.assertEqual(rc, 2)
+            self.assertEqual(git.subs(), ["remote"])                              # add も commit もしない
+            self.assertIn("リモートが想定外", lines[0])
+
+    def test_only_allowed_files_are_added(self):
+        self.make_repo()
+        (self.repo / "publications.jsonl").write_text('{"note": "C:\\\\Users\\\\someone\\\\x.pdf"}\n', encoding="utf-8")
+        git = FakeGit()
+        rc, lines = self.backup(git)
+        add = next(a for a in git.calls if a[3] == "add")
+        self.assertEqual(add[add.index("--") + 1:], [".gitignore", "cards.jsonl"])  # 写真・README(許可外)・絶対パスを含むファイルは add しない
+        self.assertIn("publications.jsonl", lines[0])
+
+    def test_never_pushes_and_never_creates_a_repository(self):
+        git = FakeGit()
+        rc, lines = self.backup(git)
+        self.assertEqual((rc, git.calls), (2, []))                               # リポジトリがなければ何もしない
+        self.assertIn("バックアップの設定がありません", lines[0])
+        self.assertFalse((self.repo / ".git").exists())
+        self.make_repo()
+        git = FakeGit()
+        self.backup(git)
+        self.assertNotIn("push", git.subs())
+        src = (Path(__file__).resolve().parent.parent / "ikimonobiyori" / "knowledge_backup.py").read_text(encoding="utf-8")
+        self.assertNotIn('"push"', src)
+        self.assertNotIn("shell=True", src)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -892,8 +892,8 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("knowledge-answer", help="知識の質問の答えをカードから作り、検査する(段階59)。カードがなければ終了コード 3(先に調べて記録する)")
     p.add_argument("--question", required=True)
     p.add_argument("--month", type=int)
-    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show")
-    p.add_argument("action", choices=["add", "list", "search", "show"])
+    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)")
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup"])
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
     p.add_argument("--place")
     p.add_argument("--category")
@@ -966,6 +966,12 @@ def main(argv=None, http_get=None):
         return 1 if errs else 0
     if a.step == "knowledge":
         from . import knowledge as K
+        if a.action == "backup":                         # 段階60 第7部
+            from . import knowledge_backup as KB
+            rc, lines = KB.backup()
+            for line in lines:
+                print(line)
+            return rc
         if a.action == "add":
             doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
             bad = 0

@@ -71,6 +71,12 @@ Claude Code は commit までを行う。push・PR・マージは自分で行う
 5. 承認しても、答えに出るのは、季節内（`season_end`。シーズンは9月区切り）で、14日以内の発信だけ（`visitor_centers.py`・`data/visitor_centers/policy.yaml`・`season.py`）。
 6. 承認の記入は、ほかの変更と別の commit にする（§2-0）。commit、push、PR、CI、マージは §1-2。
 
+## 2-4. 知識カードのバックアップ（段階60 第7部）
+知識カード・発行物台帳は、データ置き場（`%LOCALAPPDATA%\ikimonobiyori\knowledge\`）にあり、公開リポジトリには入れない。そのフォルダは非公開リポジトリ `ikimonobiyori-knowledge` の作業ツリー。
+1. **commit は自動**: `python -X utf8 -m ikimonobiyori.ask knowledge backup`。`cards.jsonl`・`publications.jsonl` など（`.gitignore` の許可の一覧にあり、方針 `backup.allowed_files` にあるものだけ）の変更を add して、「知識カードのバックアップ（日付）」で commit する。変更がなければ何もしない。カードを追加・変更した作業の最後に実行する。
+2. **push は本人**: 表示「commit しました。push は本人が行ってください」のあと、本人が `cd %LOCALAPPDATA%\ikimonobiyori\knowledge` → `git push` を行う。コマンドは push しない。
+3. 安全装置: knowledge フォルダに git のリポジトリがなければ「バックアップの設定がありません」で終わる（リポジトリを作らない）。リモートが `ikimonobiyori-knowledge` 以外（公開の `ikimonobiyori` など）を指していたら、何もせず警告して終わる。手元の絶対パス・トークンらしい文字列を含むファイルは add しない（方針 `backup.forbidden_content_re`）。写真・キャッシュ・作業フォルダ（`site_walk/` など）は許可の一覧にないので add されない。
+
 ## 3. 規則の一覧（決定の日付つき）
 | 規則 | 決定 |
 |---|---|
