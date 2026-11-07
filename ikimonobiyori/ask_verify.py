@@ -363,7 +363,7 @@ def _with_cards(text, facts):
     """答えに「ガイドの目」や知識の行があるとき、カードの事実・出典 URL を検査の材料に足す(カードが根拠)。"""
     from . import knowledge as K
     cards = facts.get("knowledge_cards")
-    rows = cards if cards is not None else K.load()
+    rows = cards if cards is not None else K.load_shown()
     used = [r for r in rows if (K.line_for(r) in text) or (K.cfg()["before_line"].format(facts="。".join(x.rstrip("。") for x in r["facts"][: K.cfg()["max_facts_in_answer"]]), source=r["source"]["name"]) in text)]
     if not used:
         return facts

@@ -394,5 +394,60 @@ class Part7KnowledgeBackup(unittest.TestCase):
         self.assertNotIn("shell=True", src)
 
 
+class Part9PendingGate(unittest.TestCase):
+    """第9部: 承認待ちの扱いの統一(知識カード・現況の台帳)。"""
+
+    CENTERS = [{"id": "t-ok", "name": "試験の承認済みセンター", "approval": {"status": "approved"}},
+               {"id": "t-wait", "name": "試験の承認待ちセンター", "approval": {"status": "pending"}}]
+
+    def card(self, name, conf, rights="事実のみ"):
+        return {"title": name + "の知識", "category": "安全", "place": "試験山", "facts": ["試験の事実"], "condition": {"months": [11]},
+                "source": {"name": name, "url": "https://example.org/x", "checked_on": "2026-11-07"}, "confidence": conf, "rights": rights, "usage": "x"}
+
+    def test_cards_of_pending_facilities_are_not_shown_until_approved(self):
+        from ikimonobiyori import knowledge as K
+        self.assertEqual(K.usable(self.card("試験の承認待ちセンター", "施設の解説"), self.CENTERS), (False, "facility_pending"))
+        self.assertEqual(K.usable(self.card("試験の承認済みセンター", "施設の観察記録"), self.CENTERS), (True, None))
+        self.assertEqual(K.usable(self.card("台帳にないセンター", "施設の発信"), self.CENTERS), (True, "facility_not_in_ledger"))   # 台帳にない施設は従来どおり
+        approved = [dict(c, approval={"status": "approved"}) for c in self.CENTERS]
+        self.assertTrue(K.usable(self.card("試験の承認待ちセンター", "施設の解説"), approved)[0])   # 承認されれば自動で出る
+
+    def test_public_cards_need_confirmed_rights(self):
+        from ikimonobiyori import knowledge as K
+        self.assertEqual(K.usable(self.card("試験県", "公的資料", "利用条件は未確認。事実のみ"), self.CENTERS), (False, "rights_unconfirmed"))
+        self.assertTrue(K.usable(self.card("試験県", "公的資料", "確認済み: 出典明示で利用可"), self.CENTERS)[0])
+        self.assertTrue(K.usable(self.card("試験サイト", "紹介", "紹介サイト。公式ではない"), self.CENTERS)[0])   # 紹介は段階34 の方針どおり
+
+    def test_load_shown_filters_the_store(self):
+        from ikimonobiyori import knowledge as K
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            for c in (self.card("試験の承認待ちセンター", "施設の解説"), self.card("試験の承認済みセンター", "施設の解説")):
+                K.add(c, env=env)
+            self.assertEqual([c["source"]["name"] for c in K.load_shown(env, self.CENTERS)], ["試験の承認済みセンター"])
+            self.assertEqual(len(K.load(env)), 2)                                   # 記録は残る
+
+    def test_pending_official_ledger_records_are_hidden_but_secondary_and_unknown_stay(self):
+        import unittest.mock
+        rows = [("park.example.org", "/news/", "pending", "autumn_leaves", "t-p"),
+                ("kanko.example.org", "/koyo/", "approved", "autumn_leaves", "t-a"),
+                ("kanko.example.org", "/old/", "pending", "autumn_leaves", "t-o")]
+        with unittest.mock.patch.object(O, "_ledger_urls", return_value=rows):
+            self.assertEqual(O.ledger_status_of("https://www.park.example.org/"), "pending")    # パスが合わなくても、そのホストが承認待ちだけなら承認待ち
+            self.assertEqual(O.ledger_status_of("https://kanko.example.org/koyo/2026/"), "approved")
+            self.assertEqual(O.ledger_status_of("https://kanko.example.org/old/1"), "pending")
+            self.assertEqual(O.ledger_status_of("https://kanko.example.org/top"), "approved")   # 承認済みの項目のあるホストの別ページ
+            self.assertIsNone(O.ledger_status_of("https://other.example.net/"))
+            off = {"url": "https://park.example.org/news/1", "source_class": "official"}
+            self.assertTrue(O._ledger_gated(off, "autumn_leaves", P))
+            self.assertFalse(O._ledger_gated(dict(off, source_class="secondary"), "autumn_leaves", P))   # 紹介サイトなどは段階34 のまま
+            self.assertFalse(O._ledger_gated({"url": "https://other.example.net/", "source_class": "official"}, "autumn_leaves", P))
+            with tempfile.TemporaryDirectory() as d:
+                env = {"IKIMONOBIYORI_DATA_DIR": d}
+                O.record([dict(rec("試験の公園"), url="https://park.example.org/news/1"), rec("試験の湖")], env=env, now=NOW)
+                self.assertEqual([r["name"] for r in O.read_records("autumn_leaves", env)], ["試験の湖"])   # 承認待ちは答えの材料にしない
+                self.assertEqual(len(Path(O.log_path("autumn_leaves", env)).read_text(encoding="utf-8").splitlines()), 2)   # 記録は残る
+
+
 if __name__ == "__main__":
     unittest.main()

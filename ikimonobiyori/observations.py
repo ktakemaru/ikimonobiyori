@@ -21,7 +21,7 @@ import sys
 import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import yaml
 
@@ -194,6 +194,55 @@ def _gated_unusable(r, policy):
         if re.search(g["url_re"], r.get("url") or "") and not _source_approved(g["ledger"], g["source"]):
             return True
     return False
+
+
+_LEDGER_URLS = {}
+
+
+def _ledger_urls():
+    """公式の台帳(data/sources/*.yaml)の情報源の (ホスト, パス, 承認の状態, 台帳, id)。紹介サイトの台帳(secondary/)は含めない。"""
+    if not _LEDGER_URLS:
+        rows = []
+        for f in sorted((DATA_FILES_DIR / "sources").glob("*.yaml")):
+            if f.name == "policy.yaml":
+                continue
+            doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            for s in doc.get("sources") or []:
+                u = urlparse(s.get("url") or "")
+                if u.hostname:
+                    rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), f.stem, s.get("id")))
+        _LEDGER_URLS["rows"] = rows
+    return _LEDGER_URLS["rows"]
+
+
+def _bare_host(h):
+    h = (h or "").lower()
+    return h[4:] if h.startswith("www.") else h
+
+
+def ledger_status_of(url):
+    """記録の URL に対応する公式の台帳の項目の承認の状態(段階60 第9部)。
+    同じホストで、パスがいちばん長く一致する項目の状態。パスが一致しなくても、そのホストの項目がすべて承認待ちなら承認待ち。
+    台帳にないホストは None(段階34: 台帳にないページも読んで記録してよい)。"""
+    u = urlparse(url or "")
+    host, path = _bare_host(u.hostname), unquote(u.path or "/")
+    rows = [r for r in _ledger_urls() if r[0] == host]
+    if not rows:
+        return None
+    hits = sorted([r for r in rows if path.startswith(r[1].rstrip("/") or "/")], key=lambda r: -len(r[1]))
+    if hits:
+        return hits[0][2]
+    return "approved" if any(r[2] == "approved" for r in rows) else "pending"
+
+
+def _ledger_gated(r, subject, policy):
+    """段階60 第9部: 公式の台帳で承認待ちの情報源の、公式としての記録は、承認されるまで答えの材料にしない(記録は残る)。
+    紹介サイトなど(source_class secondary)は段階34 の方針どおり使う。対象の台帳は方針 record.gated_ledgers。"""
+    if subject not in ((policy["record"].get("gated_ledgers") or {})):
+        return False
+    if r.get("source_class") != "official":
+        return False
+    return ledger_status_of(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
 
 
 def restricted_cfg(host, policy):
@@ -394,6 +443,7 @@ def read_records(subject, env=None, policy=None):
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ
+    rows = [r for r in rows if not _ledger_gated(r, subject, policy)]   # 段階60 第9部: 台帳で承認待ちの公式の情報源(同じ形で統一)
     rows = [r for r in rows if not _sns_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]    # 段階58 第4部
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)

@@ -12,6 +12,12 @@ cards:
   max_fact_chars: 60
   max_sentences: 1
   max_shown: 2               # 答えに出す枚数
+  # 段階60 第9部: 答えに出す条件。施設の確度のカードは出典の施設が施設台帳で approved のとき、公的資料は権利メモが「確認済み」で始まるときだけ。
+  # 紹介(紹介サイト)は段階34 の方針どおり「公式ではありません」を添えて出す(この条件の対象外)
+  gate:
+    facility_confidences: [施設の観察記録, 施設の解説, 施設の発信]
+    public_confidences: [公的資料, 研究機関の解説]
+    rights_confirmed_prefix: 確認済み
   max_facts_in_answer: 3
   # 分類の優先(安全と保全・マナーは、該当するとき先に)
   category_priority: [安全, 保全・マナー, 見頃の流れ, 季節の仕組み, 出会い方・歩き方, シーズンの目安, 痕跡・暮らし, 種の解説, 地形・地質・火山, 名前・歴史・文化, 夜・天気・自然現象]
