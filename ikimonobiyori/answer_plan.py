@@ -452,6 +452,44 @@ def build_periods(facts_doc, overrides=None, policy=None):
             "origin_line": (facts_doc.get("lines") or {}).get("origin_line")}
 
 
+# ---- エリア別の節(段階58 第1部・第9部) ----
+
+def build_areas(facts_doc, area_rows, subject, policy=None, overrides=None):
+    """エリアごとの計画。各エリアのおすすめは picks_per_area 件まで。全体の今回のおすすめは、エリアが分散するように選ぶ。"""
+    from . import areas as AR
+    pol = policy or load_policy()
+    n_each = pol["areas"]["picks_per_area"]
+    sub = facts_doc["subjects"][subject]
+    segs, ranking, overall = [], [], []
+    for a in area_rows:
+        members = AR.members(a, sub.get("candidates") or [])
+        doc = {**facts_doc, "subjects": {subject: {**sub, "candidates": members, "avoid": [], "nearby_out_of_region": []}}}
+        pl = build(doc, subject, pol, overrides)
+        pl["picks"] = [dict(p, rank=i + 1) for i, p in enumerate(pl["picks"][:n_each])]
+        segs.append({"heading": a["name"], "key": a["name"], "plan": pl, "area": a["name"]})
+        ranking += pl["ranking"]
+    key = lambda it: rank_key(it, pol)
+    firsts = sorted([s["plan"]["picks"][0] for s in segs if s["plan"]["picks"]], key=key)
+    seen = set()
+    for it in firsts:
+        if it["name"] not in seen and len(overall) < pol["selection"]["picks"]:
+            overall.append(it)
+            seen.add(it["name"])
+    for s in segs:
+        for it in s["plan"]["picks"][1:]:
+            if it["name"] not in seen and len(overall) < pol["selection"]["picks"]:
+                overall.append(it)
+                seen.add(it["name"])
+    return {"schema": SCHEMA, "subject": "areas", "area_subject": subject, "dates": facts_doc["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
+            "use_headings": False, "sections": [], "picks": [dict(p, rank=i + 1) for i, p in enumerate(overall)], "ranking": ranking, "segments": segs, "overrides": list(overrides or []),
+            "area_names": [a["name"] for a in area_rows], "origin_line": (facts_doc.get("lines") or {}).get("origin_line")}
+
+
+def area_errors(text, plan):
+    """質問に挙がったエリアは、どれも漏らさず触れる(段階58 第9部)。"""
+    return [{"code": "area_missing", "detail": n} for n in plan.get("area_names") or [] if n not in text]
+
+
 # ---- 対象別の節(段階57 第3部) ----
 
 def _heading_of(line):

@@ -142,6 +142,7 @@ skeleton:
   lead_toward: 見頃に向かう可能性がある場所を選びました。
   lead_mixed: 現況が確認できている場所と、できていない場所があります。
   lead_none: この条件で今年の情報が確認できた候補はありません。
+  area_none: "{name}は、今年の情報が確認できていません。"
   lead_no_current: 今年の状況は確認できていません。例年の時期とまつりの日程から選びました。
   dates: "対象の日は{days}です。"
   dates_default: "日付の指定がなかったので、{days}で探しました。"
@@ -160,6 +161,10 @@ skeleton:
   inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
+
+# 段階58 第1部: エリアの質問。各エリアのおすすめの件数(指示書 第9部: 各エリア 1〜2 件)
+areas:
+  picks_per_area: 2
 
 # 段階57 第10部: 場所を指定した質問(ikimonobiyori/place_answer.py)
 place:

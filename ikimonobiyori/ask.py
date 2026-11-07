@@ -648,6 +648,23 @@ class Flow:
         return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has})
 
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
+    def area_plan(self, names, subject=None):
+        """エリアごとの計画(段階58 第1部)。辞書にない名前は lines.area_unknown に 1 文で残す。"""
+        from . import areas as AR
+        facts_doc = self._load("facts.json", None)
+        if facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        subs = list(facts_doc["subjects"])
+        sj = subject or subs[0]
+        d = AR.describe(names)
+        doc = AP.build_areas(facts_doc, d["found"], sj)
+        doc["area_unknown"] = d["unknown"]
+        doc["offers"] = []
+        self._save("answer_plan.json", doc)
+        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+        self.call("plan", subject="areas", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
+        return doc
+
     def plan(self, subject=None, override=None, reason=None, replace=None, refine=None):
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
@@ -748,6 +765,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
+    p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
+    p.add_argument("--area-question", help="質問の文からエリアを取り出して計画を作る(段階58)")
     p.add_argument("--refine", help="追質問の語(近場・山歩き・遠出・ライトアップなど)。同日の記録と計画だけで選び直す。通信しない(段階57)")
     p.add_argument("--subject", choices=list(O.load_policy()["subjects"]) + ["all"], help="省くと、対象が1つならそれ、複数なら all(総合)")
     p.add_argument("--explain", help="名所の順位・点数の内訳・不採用の理由を見る")
@@ -865,6 +884,11 @@ def main(argv=None, http_get=None):
             if not a.out_dir and not a.refine:
                 print("--out-dir が要ります(--refine のときだけ省けます)", file=sys.stderr)
                 return 2
+            if a.area or a.area_question:
+                from . import areas as AR
+                doc = flow.area_plan(a.area or AR.from_question(a.area_question), a.subject)
+                _out(AP.explain(doc, a.explain) if a.explain else doc)
+                return 0
             try:
                 doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace, refine=a.refine)
             except ValueError as ex:

@@ -362,6 +362,9 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     if plan and segs:                                                        # 段階57 第3部: 節ごとに、計画の今回のおすすめと照合する
         for s in segs:
             answer_errors += [{**e, "detail": f"{s['seg']['heading']}: {e['detail']}"} for e in AP.plan_errors(s["text"], s["plan"], mat, candidate_blocks(s["text"]), short_names)]
+    elif plan and plan.get("subject") == "areas":                            # 段階58: エリアが 1 つだけの答え
+        for seg in plan["segments"]:
+            answer_errors += AP.plan_errors(text, seg["plan"], mat, candidate_blocks(text), short_names)
     elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
@@ -372,6 +375,8 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
     answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
+    if plan:
+        answer_errors += AP.area_errors(text, plan)
     n_seg = len(segs) if segs else 1                             # 段階57 第3部: 節が複数の答えは、上限を節の数だけ広げる(1 節あたりの量は同じ)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx * n_seg:

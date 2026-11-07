@@ -1,0 +1,29 @@
+# 段階58 第1部: エリア名の質問(「秩父・長瀞のエリア」「飯能あたり」)の辞書(ikimonobiyori/areas.py)。通信しない。
+# 中心の座標は市町村の代表点(Wikidata の P625 を 2026-11-07 に読んだ値)。半径は「このエリアとして挙げてよい範囲」の仮置き(provisional)。
+# 含む市区町村(cities)に一致する名所、または中心から半径の内の名所を、エリアの名所とする。同名の別地域は取り違えない(not_same に注記)。
+schema: ikimono-areas/1
+provisional_radius: true
+areas:
+  - {name: 秩父, aliases: [奥秩父, 秩父市], cities: [秩父市, 小鹿野町, 横瀬町, 皆野町], center: {lat: 35.959722222222, lon: 138.93333333333}, radius_km: 25, qid: Q647079}
+  - {name: 長瀞, aliases: [長瀞町], cities: [長瀞町], center: {lat: 36.114805555555556, lon: 139.10972222222222}, radius_km: 10, qid: Q1345299}
+  - {name: 飯能, aliases: [飯能市, 奥武蔵], cities: [飯能市], center: {lat: 35.855555555555554, lon: 139.32777777777778}, radius_km: 15, qid: Q850472}
+  - {name: 奥多摩, aliases: [奥多摩町], cities: [奥多摩町, 青梅市], center: {lat: 35.809555555555555, lon: 139.09619444444445}, radius_km: 20, qid: Q598626}
+  - {name: 高尾, aliases: [高尾山, 八王子], cities: [八王子市], center: {lat: 35.67, lon: 139.32}, radius_km: 12, qid: Q208863, not_same: "福岡・岐阜などの高尾は対象外"}
+  - {name: 箱根, aliases: [箱根町], cities: [箱根町], center: {lat: 35.23236111111111, lon: 139.10694444444445}, radius_km: 12, qid: Q671040}
+  - {name: 日光, aliases: [奥日光, 日光市, 鬼怒川], cities: [日光市], center: {lat: 36.719833333333334, lon: 139.69816666666668}, radius_km: 30, qid: Q235753}
+  - {name: 富士五湖, aliases: [富士山周辺, 富士山, 河口湖, 山中湖, 富士山麓], cities: [富士河口湖町, 山中湖村, 富士吉田市, 鳴沢村, 忍野村], center: {lat: 35.49725, lon: 138.75494444444445}, radius_km: 25, qid: Q1004231}
+  - {name: 大菩薩嶺, aliases: [大菩薩, 上日川峠], cities: [甲州市], center: {lat: 35.70433333333333, lon: 138.72941666666668}, radius_km: 15, qid: Q248723}
+  - {name: 西沢渓谷, aliases: [西沢], cities: [山梨市], center: {lat: 35.693444444444445, lon: 138.6868888888889}, radius_km: 15, qid: Q840610}
+  - {name: 軽井沢, aliases: [軽井沢町], cities: [軽井沢町], center: {lat: 36.348416666666665, lon: 138.59702777777778}, radius_km: 12, qid: Q1012064, not_same: "千葉の軽井沢(地名)は対象外"}
+  - {name: 鎌倉, aliases: [鎌倉市], cities: [鎌倉市], center: {lat: 35.31916666666667, lon: 139.54722222222222}, radius_km: 8, qid: Q200267}
+  - {name: みなかみ, aliases: [水上, 谷川岳], cities: [みなかみ町], center: {lat: 36.678555555555555, lon: 138.9991388888889}, radius_km: 20, qid: Q1345518}
+  - {name: 那須, aliases: [那須町, 那須高原], cities: [那須町], center: {lat: 37.01975, lon: 140.12097222222224}, radius_km: 20, qid: Q636416}
+  - {name: 大月, aliases: [大月市], cities: [大月市], center: {lat: 35.61055555555556, lon: 138.94}, radius_km: 12, qid: Q386508}
+# 質問の形
+question_re: '([^、。\s]+?)(?:の)?(?:エリア|あたり|周辺|方面)'
+split_re: '[、・,〜～]|など'
+stop_words: [ここ, この, その, 近く, 紅葉, 花, 野鳥, 今週末, 来週末, 明日, 今日]
+lines:
+  unknown: "{name}のエリアの範囲を特定できませんでした。"
+  near: "近い名前のエリアは{names}です。"
+  no_spot: "{name}: 今年の情報が確認できた候補はありません。"

@@ -179,7 +179,19 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
     lines += list(extra_lines)
     urls, mentioned = set(), []
     segs = plan.get("segments") or []
-    if segs and segs[0].get("plan"):                                   # 期間別
+    if plan.get("subject") == "areas":                                 # エリア別(段階58)。候補のないエリアも 1 行書く
+        sj = plan["area_subject"]
+        for line in plan.get("area_unknown") or []:
+            lines.append(line)
+        for s in segs:
+            pl = s["plan"]
+            lines += ["", s["heading"]]
+            if pl["picks"]:
+                lines.append(lead_for(pl["picks"], t))
+                lines += _subject_part(facts["subjects"][sj], pl, sj, t, max_quote, urls, mentioned)
+            else:
+                lines.append(t["area_none"].format(name=s["heading"]))
+    elif segs and segs[0].get("plan"):                                 # 期間別
         for s, per in zip(segs, facts.get("periods") or []):
             pl = s["plan"]
             sj = pl.get("subject")
