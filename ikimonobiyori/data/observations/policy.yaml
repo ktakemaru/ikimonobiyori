@@ -14,6 +14,9 @@ record:
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)
+  gated_sources:
+    - {url_re: 'yamanashi-kankou\.jp/special/documents/koyo_', ledger: autumn_leaves, source: yamanashi-kankou-koyo-csv}
   # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、
   # 記事の文章は保存・転載・要約・言い換えのどの形でも使わない。使うのは「状態を表す短い語句」「掲載の日付」「URL」だけ。
   # 承認待ちの間は答えの材料にしない(approved を本人が true にするまで)。記録はリポジトリの外(IKIMONOBIYORI_DATA_DIR)にだけ置く。

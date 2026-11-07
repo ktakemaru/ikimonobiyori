@@ -764,6 +764,11 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("import-csv", help="公式の機械可読データの本文を記録にする(段階57。山梨県の紅葉状況 CSV。承認されるまで答えには出ない。本文は保存しない)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--csv", required=True, help="読んだ CSV の本文のファイル")
+    p.add_argument("--csv-url", required=True, help="ページのリンクから辿った CSV の URL")
+    p.add_argument("--updated", required=True, help="ページの更新日 YYYY-MM-DD")
     p = sub.add_parser("place", help="場所を指定した質問: 名所の一覧との照合と、場所ごとの事実。一覧にない場所は検索語を返す(段階57。通信しない)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--question", help="質問の文(場所名を取り出す)")
@@ -866,6 +871,19 @@ def main(argv=None, http_get=None):
                 return 2
             _out(AP.explain(doc, a.explain) if a.explain else doc)
             return 0
+        if a.step == "import-csv":
+            from . import official_csv as CSV
+            cfg = pol["official_csv"]["yamanashi"]
+            recs = CSV.to_records(CSV.parse(Path(a.csv).read_text(encoding="utf-8")), csv_url=a.csv_url, updated=a.updated,
+                                  prefecture=cfg["prefecture"], publisher=cfg["publisher"], label=cfg["label"])
+            for r in recs:
+                if r["name"] in cfg["spot_map"]:
+                    r["spot"] = cfg["spot_map"][r["name"]]
+            bp = Path(out_dir) / "reads_csv.json"
+            bp.write_text(json.dumps(recs, ensure_ascii=False), encoding="utf-8")
+            out = flow.record(bp)
+            _out({k: out.get(k) for k in ("written", "duplicates")} | {"rejected": len(out.get("rejected") or []), "submitted": len(recs)})
+            return 1 if out.get("rejected") else 0
         if a.step == "place":
             from . import place_answer as PA
             facts_doc = flow._load("facts.json", None)

@@ -1203,6 +1203,130 @@ spots:
       - {url: "http://www.saitama-shizen.info/today/index.html", publisher: 埼玉県自然学習センター, source_class: official}
     search: "北本自然観察公園 野鳥 バードウォッチング"
   # 段階56 第5部: 狭山丘陵いきものふれあいの里センターの観察会（festivals.yaml）。所在地は埼玉県の公式ページ（所沢市上山口2090-3）で確認した。座標は確認できていないため付けない
+  - id: obs-kouyou-0104
+    subject: autumn_leaves
+    name: "西沢渓谷周辺"
+    aliases: [西沢渓谷]
+    prefecture: 山梨県
+    city: 山梨市
+    area: 山梨
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.693444444444445, lon: 138.6868888888889}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "西沢渓谷周辺 紅葉 2026 公式"
+  - id: obs-kouyou-0105
+    subject: autumn_leaves
+    name: "上日川峠(大菩薩周辺)"
+    aliases: [上日川峠, 大菩薩, 大菩薩嶺]
+    prefecture: 山梨県
+    city: 甲州市
+    area: 山梨
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.70433333333333, lon: 138.72941666666668}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "上日川峠(大菩薩周辺) 紅葉 2026 公式"
+  - id: obs-kouyou-0106
+    subject: autumn_leaves
+    name: "恵林寺周辺"
+    aliases: [恵林寺]
+    prefecture: 山梨県
+    city: 甲州市
+    area: 山梨
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.70433333333333, lon: 138.72941666666668}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "恵林寺周辺 紅葉 2026 公式"
+  - id: obs-kouyou-0107
+    subject: autumn_leaves
+    name: "日川渓谷竜門峡"
+    aliases: [竜門峡]
+    prefecture: 山梨県
+    city: 甲州市
+    area: 山梨
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.70433333333333, lon: 138.72941666666668}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "日川渓谷竜門峡 紅葉 2026 公式"
+  - id: obs-kouyou-0108
+    subject: autumn_leaves
+    name: "もみじトンネル"
+    prefecture: 山梨県
+    city: 富士河口湖町
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.49725, lon: 138.75494444444445}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "もみじトンネル 紅葉 2026 公式"
+  - id: obs-kouyou-0109
+    subject: autumn_leaves
+    name: "紅葉台"
+    prefecture: 山梨県
+    city: 鳴沢村
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    typical:
+    pages:
+    search: "紅葉台 紅葉 2026 公式"
+  - id: obs-kouyou-0110
+    subject: autumn_leaves
+    name: "富士山5合目"
+    prefecture: 山梨県
+    city: 富士吉田市
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    typical:
+    pages:
+    search: "富士山5合目 紅葉 2026 公式"
+  - id: obs-kouyou-0111
+    subject: autumn_leaves
+    name: "ふじさんミュージアムパーク"
+    prefecture: 山梨県
+    city: 富士吉田市
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    typical:
+    pages:
+    search: "ふじさんミュージアムパーク 紅葉 2026 公式"
+  - id: obs-kouyou-0112
+    subject: autumn_leaves
+    name: "道の駅富士吉田周辺"
+    aliases: [道の駅富士吉田]
+    prefecture: 山梨県
+    city: 富士吉田市
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    typical:
+    pages:
+    search: "道の駅富士吉田周辺 紅葉 2026 公式"
+  - id: obs-kouyou-0113
+    subject: autumn_leaves
+    name: "山中湖文学の森周辺"
+    aliases: [山中湖文学の森]
+    prefecture: 山梨県
+    city: 山中湖村
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.4105, lon: 138.86094444444444}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "山中湖文学の森周辺 紅葉 2026 公式"
+  - id: obs-kouyou-0114
+    subject: autumn_leaves
+    name: "旭日丘湖畔緑地公園"
+    aliases: [山中湖]
+    prefecture: 山梨県
+    city: 山中湖村
+    area: 富士五湖
+    origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.4105, lon: 138.86094444444444}          # 市町村の代表点(Wikidata)
+    typical:
+    pages:
+    search: "旭日丘湖畔緑地公園 紅葉 2026 公式"
   - id: obs-kouyou-0094
     subject: autumn_leaves
     name: "中津峡"

@@ -530,6 +530,59 @@ class Part10Place(unittest.TestCase):
         self.assertFalse(any("-" in x and x[0] == "0" for x in sec))
 
 
+CSV_TEXT = """エリア名,市町村名,スポット名,URL,,見頃,標高,備考,状況
+石和・勝沼・西沢渓谷,山梨市,試験の渓谷周辺,https://example.org/a,a.jpg,10月中旬～11月上旬,1100m,,3: 見頃
+富士山・富士五湖,試験村,試験の湖畔　しけんのこはん,https://example.org/b,b.jpg,10月下旬～11月上旬,981m,【紅葉まつり】10/30～11/15,2: 色付き始め
+富士山・富士五湖,試験村,試験の森（ライブカメラ）,https://example.org/c,c.jpg,,900m,,
+,,,,,,,,
+"""
+HTML = '<p>更新日：2026年11月6日</p><p>現在、情報がありません</p><a href="/special/documents/koyo_1106.csv">koyo_1106（CSV：7KB）</a>'
+
+
+class Part11OfficialCsv(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import official_csv as C
+        self.C = C
+
+    def test_page_link_and_update_date(self):
+        self.assertEqual(self.C.find_csv_link(HTML, "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"), "https://www.yamanashi-kankou.jp/special/documents/koyo_1106.csv")
+        self.assertEqual(self.C.page_updated(HTML), "2026-11-06")
+        self.assertIsNone(self.C.find_csv_link("<p>現在、情報がありません</p>", "https://a.example/"))
+
+    def test_parse_uses_csv_words_and_page_date(self):
+        rows = self.C.parse(CSV_TEXT)
+        self.assertEqual([r["name"] for r in rows], ["試験の渓谷周辺", "試験の湖畔", "試験の森"])
+        self.assertEqual(rows[0]["state"], "見頃")
+        self.assertEqual(rows[1]["state"], "色付き始め")
+        recs = self.C.to_records(rows, csv_url="https://www.yamanashi-kankou.jp/special/documents/koyo_1106.csv", updated="2026-11-06", prefecture="山梨県", publisher="試験", label="山梨県観光サイト{md}更新")
+        self.assertEqual(len(recs), 2)                                         # 状態のない行は除く
+        self.assertEqual(recs[0]["state_date"], "2026-11-06")
+        self.assertEqual(recs[0]["state_date_text"], "山梨県観光サイト11/6更新")
+
+    def test_festival_note_is_separate_from_typical(self):
+        rows = self.C.parse(CSV_TEXT)
+        self.assertEqual(self.C.festivals_of(rows[1], 2026), [{"name": "試験の湖畔 紅葉まつり", "start": "2026-10-30", "end": "2026-11-15"}])
+        self.assertNotIn("10/30", rows[1]["typical"])
+
+    def test_wrong_shape_stops(self):
+        with self.assertRaises(ValueError):
+            self.C.parse("名前,状態\na,b\n")
+
+    def test_records_are_hidden_until_the_source_is_approved(self):
+        from ikimonobiyori import observations as O
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            recs = self.C.to_records(self.C.parse(CSV_TEXT), csv_url="https://www.yamanashi-kankou.jp/special/documents/koyo_1106.csv", updated="2026-11-06",
+                                     prefecture="山梨県", publisher="試験", label="山梨県観光サイト{md}更新")
+            now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+            self.assertEqual(O.record(recs, env=env, now=now)["written"], 2)
+            self.assertEqual(O.read_records("autumn_leaves", env), [])          # 承認待ち: 答えの材料にしない(記録は残る)
+            with unittest.mock.patch.object(O, "_source_approved", return_value=True):
+                rows = O.read_records("autumn_leaves", env)
+            self.assertEqual({r["name"] for r in rows}, {"試験の渓谷周辺", "試験の湖畔"})   # 承認後は HTML が空でも CSV の現況が使われる
+            self.assertEqual(rows[0]["state_date"], "2026-11-06")
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

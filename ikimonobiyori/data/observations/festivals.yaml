@@ -6,6 +6,23 @@
 # - 取得は 2026-11-06 に web-fetch で行った。指示書(docs/stage53-festivals-photos-instructions.md)の調査値と食い違った点は notes に書いた(取得結果を優先)。
 schema: ikimono-festivals/1
 festivals:
+  - id: yamanakako-yuyake-koyo-2026
+    name: 山中湖 夕焼けの渚・紅葉まつり2026
+    spots: [obs-kouyou-0114]
+    organizer: (一社)山中湖観光協会
+    organizer_class: secondary
+    organizer_note: "2026年の期間は紹介記事(近畿日本ツーリスト系 Tripa)で確認した。山中湖観光協会の公式ページ(https://lake-yamanakako.com/spot/10352)は例年の時期だけで、今年の日付がない"
+    start: '2026-10-30'
+    end: '2026-11-15'
+    lightup: {start: '2026-10-30', end: '2026-11-15', hours: "16:30〜20:30", where: 旭日丘湖畔緑地公園, note: "毎日"}
+    venue: 旭日丘湖畔緑地公園(山梨県南都留郡山中湖村平野506-296)
+    contact: null
+    url: "https://www.nta.co.jp/media/tripa/articles/EIXxu"
+    publisher: Tripa
+    published: '2026-10-29'
+    taken_on: '2026-11-07'
+    raw: ["2026年10月30日（金）〜11月15日（日）"]
+    notes: "問い合わせ先の番号は紹介記事にないので持たない"
   - id: nagatoro-koyo-2026
     name: 長瀞紅葉まつり2026
     spots: [kouyou-0013]

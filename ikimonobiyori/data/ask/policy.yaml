@@ -130,6 +130,14 @@ answer_check:
 net:
   page_photos_commons_max_species: {value: 3, source: "仮置き(Commons は間隔が長いので、1 回の質問で探す種を少なくする)", provisional: true}
 
+# 段階57 第11部: 公式の機械可読データの取り込み(ikimonobiyori/official_csv.py)
+official_csv:
+  yamanashi:
+    prefecture: 山梨県
+    publisher: やまなし観光推進機構(山梨県公式観光情報)
+    label: "山梨県観光サイト{md}更新"
+    spot_map: {御岳昇仙峡: kouyou-0011, もみじ回廊: kouyou-0012}      # 名所カタログに同じ場所があるスポット
+
 # 段階57 第2部: 直前の答え(計画)から作る、紅葉・花・野鳥・総合の写真つきページ(ikimonobiyori/plan_page.py)
 plan_page:
   file: "plan-{date}.html"

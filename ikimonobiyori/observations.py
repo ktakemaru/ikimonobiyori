@@ -171,6 +171,24 @@ def _reprint_of_blocked(r, policy):
     return any(w in text for w in words)
 
 
+_LEDGER = {}
+
+
+def _source_approved(ledger, source_id):
+    if ledger not in _LEDGER:
+        doc = yaml.safe_load((DATA_FILES_DIR / "sources" / f"{ledger}.yaml").read_text(encoding="utf-8")) or {}
+        _LEDGER[ledger] = {s["id"]: (s.get("approval") or {}).get("status") for s in doc.get("sources") or []}
+    return _LEDGER[ledger].get(source_id) == "approved"
+
+
+def _gated_unusable(r, policy):
+    """段階57 第11部: 台帳で承認待ちの公式データの記録か(承認されるまで答えの材料にしない)。"""
+    for g in policy["record"].get("gated_sources") or []:
+        if re.search(g["url_re"], r.get("url") or "") and not _source_approved(g["ledger"], g["source"]):
+            return True
+    return False
+
+
 def restricted_cfg(host, policy):
     """段階54: 山と溪谷オンラインなど、使い方を限るホストの設定（該当しなければ None）。"""
     cfg = (policy["record"].get("restricted_sources") or {})
@@ -364,6 +382,7 @@ def read_records(subject, env=None, policy=None):
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
+    rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)

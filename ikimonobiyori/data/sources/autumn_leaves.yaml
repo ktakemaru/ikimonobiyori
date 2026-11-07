@@ -135,6 +135,29 @@ sources:
     terms: {status: no_prohibition_found, note: "「このサイトについて」に引用・要約・転載・自動取得の規定なし。© 表示だけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-10-23"}
 
+  # 段階57 第11部(2026-11-07): 上のページの CSV。ページの HTML は「現在、情報がありません」でも CSV に現況がある。紅葉の台帳の承認者は本人のみなので、承認待ち
+  - id: yamanashi-kankou-koyo-csv
+    publisher: やまなし観光推進機構(富士の国やまなし観光ネット。山梨県公式観光情報)
+    publisher_kind: prefecture_tourism
+    url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html"
+    kind: status_page
+    covers:
+      - {name: 西沢渓谷周辺, label: "西沢渓谷周辺"}
+      - {name: 上日川峠(大菩薩周辺), label: "上日川峠(大菩薩周辺)"}
+      - {name: 御岳昇仙峡, label: "御岳昇仙峡"}
+      - {name: もみじ回廊, label: "もみじ回廊"}
+      - {name: 旭日丘湖畔緑地公園, label: "旭日丘湖畔緑地公園"}
+    notation:
+      style: word
+      map: {"色づき前": not_yet, "色付き始め": starting, "見頃": good, "色あせ始め": fading}
+      updated: per_page
+      year_shown: true
+      date_basis: updated_date
+      note: "ページの CSV(ファイル名は日付で変わる。例 koyo_1106.csv。ページのリンクから辿る)。列: エリア名・市町村名・スポット名・URL・画像・見頃・標高・備考・状況。行に日付はないのでページの更新日を使う"
+    readable: {status: ok, checked_on: "2026-11-07", robots: no_file, observed_latest_update: "2026-11-06", note: "CSV 36 行を読めた(状況の語は 1 色づき前・2 色付き始め・3 見頃・4 色あせ始め)。ページの HTML の 6 区分はすべて「現在、情報がありません」"}
+    terms: {status: not_checked, url: "https://www.yamanashi-kankou.jp/about/term.html", note: "「このサイトについて」に転載・利用条件の本文はない。免責事項(/about/term.html)は未読。© 表示あり"}
+    approval: {status: pending, reason: "指示書 段階57 第11部。承認は本人が決める"}
+
   - id: tokyo-park-rikugien-news
     publisher: 東京都公園協会(六義園サービスセンター)
     publisher_kind: park_manager
