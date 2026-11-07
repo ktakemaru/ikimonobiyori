@@ -173,6 +173,14 @@ skeleton:
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
 
+# 段階58 第10部: 複数テーマの組み合わせ(ikimonobiyori/combo.py)
+combo:
+  max_km: 20
+  max_pairs: 5
+  none_line: "同じ場所、または近く(約{km}km以内)では確認できていません。"
+  same_line: "{name}: 同じ場所で楽しめます。"
+  near_line: "{a}と{b}: 約{km}km。"
+
 # 段階58 第9部: 日付の既定。計画段階の語で日付の指定がなければ、今週末と来週末の両方。出力の dates に使う
 dates_default:
   plan_words: [探しています, 探してる, 行きたい, 計画, 考えています]

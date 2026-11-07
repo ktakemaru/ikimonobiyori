@@ -380,5 +380,87 @@ class Part9Skeleton(unittest.TestCase):
         self.assertEqual(ask.minimal_answer("x", f, plan, r), "今は答えを用意できません。\n")
 
 
+class Part10Subjects(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import guide
+        self.g = guide
+        self.P = guide.load_policy()
+
+    def test_state_note_by_subject(self):
+        found = {"recommend": [{"name": "x"}]}
+        self.assertIn("飛来", self.g.state_note(found, self.P, {"冬鳥"}))
+        self.assertNotIn("咲き具合", self.g.state_note(found, self.P, {"冬鳥"}))
+        self.assertIn("咲き具合", self.g.state_note(found, self.P, {"花"}, strict=True))
+        self.assertNotIn("色づき", self.g.state_note(found, self.P, {"花"}, strict=True))
+        self.assertIn("色づき", self.g.state_note(found, self.P, {"紅葉"}))
+        self.assertIn("開花", self.g.state_note(found, self.P, {"野草"}))
+
+    def test_birds_answer_with_flower_words_fails(self):
+        f = facts_doc({"birds": {"candidates": []}})
+        self.assertEqual([e["code"] for e in V.subject_word_errors("今年の咲き具合は分かりません。", f, RULES)], ["subject_wrong_word"])
+        f = facts_doc({"flowers": {"candidates": []}})
+        self.assertEqual([e["code"] for e in V.subject_word_errors("今年の飛来は分かりません。", f, RULES)], ["subject_wrong_word"])
+        self.assertEqual(V.subject_word_errors("今年の咲き具合は分かりません。", f, RULES), [])
+
+    def test_brief_answer_has_at_most_five(self):
+        from datetime import date as D
+        words = {"themes": ["冬鳥", "野鳥"]}
+        entries = self.g.build()[0]
+        found = self.g.find(entries, themes={"野鳥", "冬鳥"}, kinds=[], on=D(2026, 11, 8), policy=self.P)
+        text = self.g.render_brief(found, self.P, on=D(2026, 11, 8), themes={"野鳥", "冬鳥"})
+        rows = [l for l in text.splitlines() if l.startswith(("①", "②", "③", "- ")) and "の観察では" not in l]
+        self.assertLessEqual(len(rows), 5)
+        self.assertNotIn("参照数", text)
+        self.assertNotIn("出どころの区分", text)
+        self.assertNotIn("咲き具合", text)
+        self.assertEqual(V.question_errors(text, RULES), [])
+
+    def test_process_phrases(self):
+        for s in ("今回は簡易な読み取りです。", "コードの文面なので、変えていません。", "コマンドの出力を一字一句そのまま出す決まりなのに、まとめていました。", "リポジトリには手を入れていません。", "出し直します。"):
+            self.assertIn("process_excuse", [e["code"] for e in V.process_excuse_errors(s, RULES)], s)
+
+    def test_bird_status_up_to_ten_and_no_excuse_in_answer_line(self):
+        names = [f"種{i}" for i in range(15)]
+        got = self.g.bird_status_line("2026年11月6日の野鳥公園", date(2026, 11, 7), count="38種", species=names, for_answer=True)
+        self.assertIn("種9", got["line"])
+        self.assertNotIn("種10", got["line"])
+        self.assertNotIn("簡易な読み取り", got["line"])
+        got = self.g.bird_status_line("2026年11月6日の野鳥公園", date(2026, 11, 7), count="38種", for_answer=True)
+        self.assertIn("（38種）", got["line"])
+        self.assertNotIn("種名", got["line"])
+
+    def test_arrival_line(self):
+        self.assertEqual(self.g.arrival_line([], self.P), "今年の飛来の記録は読めていません。")
+        line = self.g.arrival_line([{"name": "本埜", "kind": "first", "date": "2026-10-25"}, {"name": "千波湖", "kind": "count", "date": "2026-11-03", "text": "12羽"}], self.P)
+        self.assertIn("本埜 初飛来(10/25)", line)
+        self.assertIn("千波湖 飛来数 12羽(11/3)", line)
+
+
+class Part10Combo(unittest.TestCase):
+    A = [{"name": "昭和記念公園", "point": {"lat": 35.71, "lon": 139.40}}, {"name": "菅生沼", "point": {"lat": 36.0, "lon": 139.95}}]
+    B = [{"name": "昭和記念公園(花)", "point": {"lat": 35.71, "lon": 139.40}}, {"name": "近くの花畑", "point": {"lat": 36.05, "lon": 139.95}}, {"name": "城峯公園", "point": {"lat": 36.15, "lon": 139.05}}]
+
+    def test_same_and_near_only(self):
+        from ikimonobiyori import combo
+        got = combo.find("x", "y", self.A, self.B)
+        self.assertEqual(got["same"], ["昭和記念公園"])
+        self.assertEqual([p["b"] for p in got["near"]], ["近くの花畑"])
+        self.assertTrue(all(p["km"] <= 20 for p in got["near"]))
+        self.assertNotIn("城峯公園", str(got))                                   # 70km 以上離れた組み合わせは出さない
+        self.assertIn("近くの花畑", " ".join(combo.lines(got)))
+
+    def test_none_line(self):
+        from ikimonobiyori import combo
+        got = combo.find("x", "y", [self.A[1]], [self.B[2]])
+        self.assertEqual(combo.lines(got), ["同じ場所、または近く(約20km以内)では確認できていません。"])
+
+
+class Part10Quote(unittest.TestCase):
+    def test_two_long_quotes_fail(self):
+        t = "「紅葉の名所として知られている公園です」と「秋には美しい景色が広がっています」。"
+        self.assertEqual([e["code"] for e in V.quote_errors(t, RULES)], ["quote_repeated"])
+        self.assertEqual(V.quote_errors("「◎ 真っ盛り」と「見ごろ」です。", RULES), [])
+
+
 if __name__ == "__main__":
     unittest.main()

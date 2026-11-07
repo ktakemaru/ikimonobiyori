@@ -243,6 +243,13 @@ bird_status:
     unconfirmed: "東京港野鳥公園の最新の観察記録は確かめられませんでした。（簡易な読み取り。取得日 {fm}月{fd}日）"
     unread: "東京港野鳥公園の最新の観察記録は読めませんでした。"
   parts: {count: "（{text}）", species: "。種名: {text}"}
+  max_species: {value: 10, source: "指示書 段階58 第10部 4(承認済みの施設の条件と同じ)", provisional: false}
+  # 段階58 第10部: 答えに書く行(作業の事情を書かない)。guide bird-status の出力はこちら
+  answer_lines:
+    fresh: "東京港野鳥公園の最新の観察記録: {m}月{d}日{count}{species}。"
+    old: "東京港野鳥公園の最新の記事は{m}月{d}日です{count}{species}。"
+    unconfirmed: "東京港野鳥公園の最新の観察記録は確かめられませんでした。"
+    unread: "東京港野鳥公園の最新の観察記録は読めませんでした。"
 
 # テーマごとの既定の時期(段階27 フェーズB。ユーザー承認 2026-10-30)。表示してよい例年の時期(独立した出どころ 2 件以上の窓)が無い名所に使う。ここにないテーマ(冬鳥・桜・花・ホタル・紅葉)には使わない
 season_default_by_theme:
@@ -283,6 +290,29 @@ answer:
     alt_max: {value: 3, source: "仮置き(段階39)。代わりの目的に挙げる数", provisional: true}
     few_max: {value: 2, source: "仮置き(段階39)。おすすめがこの件数以下のとき、少ないと書く", provisional: true}
   state_note: "今年の咲き具合・色づきの日付つきの記録は読めていません。以下は例年の時期の目安です。"
+  state_note_keep_themes: [花, 桜]
+  # 段階58 第10部: 対象別の定型文(テーマが分かるとき)
+  state_note_by_theme:
+    花: "今年の咲き具合の日付つきの記録は読めていません。以下は例年の時期の目安です。"
+    桜: "今年の咲き具合の日付つきの記録は読めていません。以下は例年の時期の目安です。"
+    紅葉: "今年の色づきの日付つきの記録は読めていません。以下は例年の時期の目安です。"
+    野鳥: "今年の飛来・観察の日付つきの記録は読めていません。以下は例年の時期の目安です。"
+    冬鳥: "今年の飛来・観察の日付つきの記録は読めていません。以下は例年の時期の目安です。"
+    野草: "今年の開花の日付つきの記録は読めていません。以下は例年の時期の目安です。"
+  arrival:
+    heading: "飛来状況: "
+    none: 今年の飛来の記録は読めていません。
+    first: "{name} 初飛来({md})"
+    count: "{name} 飛来数 {text}({md})"
+  # 段階58 第10部: 短い答え(guide find --brief)。一覧は最大 list_max 件、今回のおすすめは picks 件、残りは「ほか○件」
+  brief:
+    picks: 3
+    list_max: 5
+    picks_heading: 今回のおすすめ
+    list_heading: ほかの候補
+    more: "ほか{n}件"
+    confidence: "公式の発信と紹介サイトの情報を合わせています。お出かけの前に公式ページで確認してください。"
+    no_official: "紹介サイトの情報からまとめています(公式ではありません)。"
   sources: {heading: 出典, per_place: {value: 1, source: "仮置き(段階39)。名所ごとに出す出典 URL の数", provisional: true}, max: {value: 5, source: "仮置き(段階39)。出典 URL の全体の数", provisional: true}}
   place: "{i}. **{name}**({where})"
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端", user: "あなたが行った場所", why_in_season: "対象の日は例年の時期に入っています"}

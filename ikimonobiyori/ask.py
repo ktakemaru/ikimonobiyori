@@ -818,6 +818,9 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("combo", help="複数テーマの組み合わせ(同じ地点・近くだけ。段階58)")
+    p.add_argument("--a", required=True, help="対象(autumn_leaves・flowers・birds・wintering_birds)")
+    p.add_argument("--b", required=True)
     p = sub.add_parser("skeleton", help="計画から答えの骨組みを作る(冒頭・日付・出発地・今回のおすすめ・節・確かさ・出典。段階58)。事実を足さず変えずに言い回しだけ整える")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--defaulted-date", action="store_true", help="日付の指定がなかった質問(冒頭に 1 文を入れる)")
@@ -864,6 +867,11 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "combo":
+        from . import combo
+        res = combo.find(a.a, a.b)
+        _out({**res, "lines": combo.lines(res)})
+        return 0
     if a.step == "dates":
         got = AP.default_periods(a.question, _clock())
         _out({"defaulted": got["defaulted"], "periods": [[d.isoformat() for d in ds] for ds in got["periods"]] if got["periods"] else None})

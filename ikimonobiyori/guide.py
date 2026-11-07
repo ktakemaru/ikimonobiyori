@@ -1104,7 +1104,7 @@ def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range
     anyrow = any(sec["rows"] for sec in sections)
     return {"origin_line": origin_line, "sections": sections, "notes_heading": a["headings"]["notes"], "notes": notes,
             "legend": rc["legend"] if anyrow else None, "conclusion": conclusion_line(found, policy, on), "timeline": timeline_lines(found, policy, on),
-            "state_note": state_note(found, policy), "avoid": avoid_lines(found, policy), "sources": source_lines(found, policy)}
+            "state_note": state_note(found, policy, themes), "avoid": avoid_lines(found, policy), "sources": source_lines(found, policy)}
 
 
 def conclusion_line(found, policy, on):
@@ -1120,10 +1120,15 @@ def conclusion_line(found, policy, on):
     return c["none"].format(when=when)
 
 
-def state_note(found, policy):
+def state_note(found, policy, themes=None, strict=False):
     """今の咲き具合・色づきの日付つきの記録が、おすすめの名所にひとつもないときの 1 文（段階39 R3: 今の状態を言い切らず、例年の時期の目安だと書く）。"""
     rec = found.get("recommend") or []
     if rec and not any(e.get("latest_status") for e in rec):
+        by = policy["answer"].get("state_note_by_theme") or {}
+        keep = policy["answer"].get("state_note_keep_themes") or []
+        for th in sorted(themes or []):                         # 段階58 第10部: 対象別の定型文(鳥の答えに「咲き具合」を出さない)。花・桜の全文の答えは、既存の文のまま(既存テストの期待値を変えない)
+            if th in by and (strict or th not in keep):
+                return by[th]
         return policy["answer"]["state_note"]
     return None
 
@@ -1220,6 +1225,50 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
     return "\n".join(lines) + "\n"
 
 
+def render_brief(found, policy, origin_line=None, on=None, themes=None):
+    """段階58 第10部: 長い一覧を出さない短い答え。今回のおすすめ 3 件、ほかの候補は合わせて最大 5 件まで(名所・種または見どころ・例年の時期・距離の目安)、残りは「ほか○件」。
+    「参照数」「出どころの区分」の羅列は出さず、確かさは 1 文で書く。"""
+    parts = answer_parts(found, policy, origin_line, themes, False, on=on)
+    b = policy["answer"]["brief"]
+    rows = [r for sec in parts["sections"] if sec["key"] == "recommend" for r in sec["rows"]]
+    other = [r for sec in parts["sections"] if sec["key"] != "recommend" for r in sec["rows"]]
+    lines = [origin_line, ""] if origin_line else []
+    lines.append(parts["conclusion"])
+    note = state_note(found, policy, themes, strict=True)
+    if note:
+        lines.append(note)
+
+    def row(r, mark):
+        f = r["fields"]
+        bits = [r["name"] + (f"({r['where']})" if r.get("where") else "")]
+        if f.get("kinds"):
+            bits.append("・".join(f["kinds"]))
+        if f.get("season"):
+            bits.append(policy["answer"]["bits"]["season"].format(text=f["season"]))
+        d = f.get("distance")
+        if d:
+            bits.append(policy["answer"]["bits"]["distance"].format(origin=d["origin"], km=d["km"]))
+        return f"{mark} " + "、".join(bits)
+    picks = rows[: val(b["picks"])]
+    rest = rows[val(b["picks"]):] + other
+    if picks:
+        lines += ["", b["picks_heading"]] + [row(r, "①②③"[i]) for i, r in enumerate(picks)]
+    room = max(0, val(b["list_max"]) - len(picks))
+    if rest and room:
+        lines += ["", b["list_heading"]] + [row(r, "-") for r in rest[:room]]
+    if len(rest) > room:
+        lines.append(b["more"].format(n=len(rest) - room))
+    lines += ["", b["confidence"]]
+    if parts["notes"]:
+        lines += [""] + [f"- {n}" for n in parts["notes"]]
+    if parts.get("sources"):
+        lines += ["", f"## {policy['answer']['sources']['heading']}"] + parts["sources"]
+    offer = _page_offer_lines(parts, themes)
+    if offer:
+        lines += [""] + offer
+    return "\n".join(lines) + "\n"
+
+
 def _page_offer_lines(parts, themes):
     """ガイド型の答えの末尾の案内。テーマが対応済みで、おすすめの欄に写真の候補(表示してよい種名)があるときだけ。"""
     from . import offers
@@ -1227,13 +1276,13 @@ def _page_offer_lines(parts, themes):
     return offers.texts(offers.available({"subject_supported": offers.guide_themes_supported(themes), "plan": True, "photo_candidates": has}))
 
 
-def bird_status_line(title, today, *, count=None, species=None, unread=False, policy=None):
+def bird_status_line(title, today, *, count=None, species=None, unread=False, policy=None, for_answer=False):
     """野鳥の現況(東京港野鳥公園のレンジャーブログ。要約の道具で読んだ結果)→ 答えの前に付ける 1 行(段階27 フェーズC)。
     title は最新の記事の題名「YYYY年M月D日の野鳥公園」。日付は題名からだけ取る。題名に日付がない・取得日(today)より未来なら使わない(確かめられなかった)。
     today からの日数が max_age_days より多ければ「最新の記事は○月○日です」。count は「30種」など書かれたとおり、species は種名の並び(書かれたとおり)。段階の語・多い少ないは推測しない。"""
     policy = policy or load_policy()
     cfg = policy["bird_status"]
-    lines, parts = cfg["lines"], cfg["parts"]
+    lines, parts = (cfg["answer_lines"] if for_answer else cfg["lines"]), cfg["parts"]
     if unread:
         return {"state": "unread", "line": lines["unread"], "observed": None}
     m = re.search(cfg["title_re"], title or "")
@@ -1247,10 +1296,23 @@ def bird_status_line(title, today, *, count=None, species=None, unread=False, po
     if d > today:
         return {"state": "unconfirmed", "line": lines["unconfirmed"].format(**fm), "observed": None}
     state = "old" if (today - d).days > val(cfg["max_age_days"]) else "fresh"
-    names = [str(x).strip() for x in (species or []) if str(x).strip()]
+    names = [str(x).strip() for x in (species or []) if str(x).strip()][: val(cfg["max_species"])]
     line = lines[state].format(m=d.month, d=d.day, count=parts["count"].format(text=count.strip()) if count and count.strip() else "",
                               species=parts["species"].format(text="・".join(names)) if names else "", **fm)
     return {"state": state, "line": line, "observed": d.isoformat()}
+
+
+def arrival_line(rows, policy=None):
+    """段階58 第10部 5: 野鳥の答えの「飛来状況」の欄。rows: 確認できた公式の発信 [{name, kind: first|count, date, text}]。なければ決まった一文。"""
+    policy = policy or load_policy()
+    t = policy["answer"]["arrival"]
+    if not rows:
+        return t["none"]
+    parts = []
+    for r in rows:
+        d = date.fromisoformat(r["date"])
+        parts.append(t[r["kind"]].format(name=r["name"], md=f"{d.month}/{d.day}", text=r.get("text") or ""))
+    return t["heading"] + "・".join(parts)
 
 
 def forbidden_in_answer(text, policy):
@@ -1475,6 +1537,7 @@ def main(argv=None, http_get=None, http_bytes=None):
     f.add_argument("--region", help="地域の呼び名(方針 region_municipalities か data/regions.yaml の都道府県)")
     f.add_argument("--name", action="append", help="名所の名前(名指しの質問)")
     f.add_argument("--origin", help="出発地(data/catalog/policy.yaml の range_limit.origins。省略すると横浜)")
+    f.add_argument("--brief", action="store_true", help="--text のとき: 短い答え(今回のおすすめ 3 件、一覧は最大 5 件。段階58)")
     f.add_argument("--committed-only", action="store_true")
     f.add_argument("--text", action="store_true", help="JSON ではなく、コードが組み立てたガイド型の答えの文を出す(参照数と凡例つき。段階24)")
     for name in ("reject", "approve", "visited"):
@@ -1620,7 +1683,8 @@ def main(argv=None, http_get=None, http_bytes=None):
                    municipalities=munis, names=a.name, policy=policy, origin=a.origin)
         origin, line = origin_line_for(a.origin)
         if a.text:
-            text = render_answer(got, policy, origin_line=line, on=date.fromisoformat(a.date) if a.date else None, themes=themes, show_out_of_range=bool(a.name))
+            text = (render_brief(got, policy, origin_line=line, on=date.fromisoformat(a.date) if a.date else None, themes=themes) if a.brief else
+                    render_answer(got, policy, origin_line=line, on=date.fromisoformat(a.date) if a.date else None, themes=themes, show_out_of_range=bool(a.name)))
             bad = forbidden_in_answer(text, policy)
             if bad:
                 print(f"答えに内部用語が出ている: {bad}", file=sys.stderr)
@@ -1657,7 +1721,7 @@ def main(argv=None, http_get=None, http_bytes=None):
             return 1
         return 0
     if a.cmd == "bird-status":
-        got = bird_status_line(a.title, clock_now().date(), count=a.count, species=a.species, unread=a.unread, policy=policy)
+        got = bird_status_line(a.title, clock_now().date(), count=a.count, species=a.species, unread=a.unread, policy=policy, for_answer=True)
         print(got["line"])
         return 0
     if a.cmd == "future-records":
