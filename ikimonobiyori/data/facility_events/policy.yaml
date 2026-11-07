@@ -10,6 +10,9 @@ topic_words:
   地形・地質: [地形, 地質, 岩石, 石, 火山]
   自然: [自然, 生き物, 里山]
 regions: {神奈川: [神奈川県]}
+# 段階62 第1部 2: 範囲の限界の文の「いつ」(質問の語 → 文の語。どれもなければ default)。文は ask/policy.yaml の scope_limit_lines
+when_words: [今日, 明日, 今週末, 来週末, 今月, 来月]
+when_default: これから
 line_event: "{facility}の{kind}「{title}」: {date}({weekday}){time}。{place}{extra}"
 line_exhibition: "{facility}の{kind}「{title}」: {start}〜{end}。"
 deadline: "申し込みの締め切りは{date}({weekday})"

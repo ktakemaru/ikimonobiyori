@@ -251,6 +251,22 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
+def internal_word_errors(text, rules=None):
+    """段階62 第1部: 内部用語・作業の事情の語(rules["internal_words"])。答えの本文と、出典以外の文だけを数える
+    (URL と、見出し「出典」の行より後ろは数えない)。→ [{code, detail, line}]"""
+    rules = rules or load_rules()
+    pats = rules.get("internal_words") or []
+    out = []
+    for i, line in enumerate(text.splitlines()):
+        if re.fullmatch(r"\s*[#*\s]*出典\s*[:：]?\s*[*]*\s*", line):
+            break
+        t = URL_RE.sub(" ", _n(line))
+        for pat in pats:
+            if re.search(pat, t, flags=re.IGNORECASE):
+                out.append({"code": "internal_word", "detail": pat, "line": i + 1})
+    return out
+
+
 def source_rule_errors(text, rules, blob=None):
     """段階57 第10部: 使わない種類のホスト・語(本文にも出典にも)／事実にない電話番号／英語の出典の見出し。blob: 取得した事実の文字列(なければ番号はすべて不合格)。"""
     from . import observations as O
@@ -423,6 +439,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
+    answer_errors += internal_word_errors(text, rules)      # 段階62 第1部
     answer_errors += question_errors(text, rules)
     answer_errors += not_tried_errors(text, facts)
     answer_errors += subject_word_errors(text, facts, rules) + quote_errors(text, rules)
@@ -833,6 +850,7 @@ def generic_check(text, rules=None, offers=None, clarify=False):
             return {"ok": True, "errors": [], "candidates": 0}
         return {"ok": False, "errors": [{"code": "clarify_not_one_sentence", "detail": "聞き返しは 1 文だけ", "line": 0}], "candidates": 0}
     errs += term_errors(text, rules)
+    errs += internal_word_errors(text, rules)                 # 段階62 第1部
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
