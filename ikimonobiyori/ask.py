@@ -818,6 +818,14 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show")
+    p.add_argument("action", choices=["add", "list", "search", "show"])
+    p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
+    p.add_argument("--place")
+    p.add_argument("--category")
+    p.add_argument("--month", type=int)
+    p.add_argument("--text")
+    p.add_argument("--title")
     p = sub.add_parser("combo", help="複数テーマの組み合わせ(同じ地点・近くだけ。段階58)")
     p.add_argument("--a", required=True, help="対象(autumn_leaves・flowers・birds・wintering_birds)")
     p.add_argument("--b", required=True)
@@ -867,6 +875,25 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "knowledge":
+        from . import knowledge as K
+        if a.action == "add":
+            doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
+            bad = 0
+            for card in doc if isinstance(doc, list) else [doc]:
+                try:
+                    K.add(card)
+                except ValueError as ex:
+                    bad += 1
+                    print(f"{card.get('title')}: {ex}", file=sys.stderr)
+            return 1 if bad else 0
+        rows = K.search(place=a.place, category=a.category, month=a.month, text=a.text) if a.action == "search" else K.load()
+        if a.action == "show":
+            rows = [r for r in rows if r["title"] == a.title]
+            _out(rows)
+            return 0 if rows else 2
+        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]} for r in rows])
+        return 0
     if a.step == "combo":
         from . import combo
         res = combo.find(a.a, a.b)

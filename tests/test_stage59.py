@@ -102,5 +102,50 @@ class Part1Survey(unittest.TestCase):
             self.assertNotIn("approved_by", rows[i]["approval"])
 
 
+def card(**kw):
+    base = {"title": "試験の紅葉は標高でずれる", "category": "季節の仕組み", "place": "試験山", "place_aliases": ["試験の森"], "facts": ["高いところから順に色づく", "見頃は約1か月続く"],
+            "condition": {"months": [10, 11], "year_dependent": False}, "source": {"name": "試験VC", "title": "季刊誌", "url": "https://vc.example.org/a.pdf", "checked_on": "2026-11-07", "page": 2},
+            "confidence": "施設の観察記録", "rights": "無断転載不可。事実のみ", "usage": "ガイドの目として1行"}
+    base.update(kw)
+    return base
+
+
+class Part2Cards(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import knowledge as K
+        self.K = K
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+
+    def test_valid_card(self):
+        self.assertEqual(self.K.validate(card()), [])
+
+    def test_limits(self):
+        self.assertTrue(self.K.validate(card(facts=["a"] * 6)))
+        self.assertTrue(self.K.validate(card(facts=["あ" * 61])))
+        self.assertTrue(self.K.validate(card(facts=["「原文の文です」"])))                 # 引用符で原文を残さない
+        self.assertTrue(self.K.validate(card(facts=["文です。二つめの文です。三つめ。"])))   # 原文のような文
+        self.assertTrue(self.K.validate(card(source={"name": "x"})))                        # 出典が必須
+        self.assertTrue(self.K.validate(card(confidence=None)))
+        self.assertTrue(self.K.validate(card(condition={"year_dependent": True})))          # 年に依存する事実には年
+        self.assertEqual(self.K.validate(card(condition={"year_dependent": True, "year": 2023})), [])
+
+    def test_add_search_and_store_outside_the_repository(self):
+        self.K.add(card(), self.env)
+        self.K.add(card(title="別のカード", category="安全", facts=["クマに注意する"], condition={"months": [6]}), self.env)
+        self.assertEqual(len(self.K.load(self.env)), 2)
+        self.assertEqual([r["title"] for r in self.K.search(self.env, category="安全")], ["別のカード"])
+        self.assertEqual([r["title"] for r in self.K.search(self.env, month=11)], ["試験の紅葉は標高でずれる"])
+        self.assertEqual(len(self.K.search(self.env, place="試験の森")), 2)
+        self.assertIn(Path(self.tmp.name).resolve(), self.K.path(self.env).resolve().parents)
+        with self.assertRaises(ValueError):
+            self.K.add(card(facts=["あ" * 61]), self.env)
+
+    def test_no_real_cards_in_the_repository(self):
+        for f in (ROOT / "ikimonobiyori" / "data").rglob("*"):
+            self.assertNotIn(f.name, ("cards.jsonl", "publications.jsonl"), str(f))
+
+
 if __name__ == "__main__":
     unittest.main()
