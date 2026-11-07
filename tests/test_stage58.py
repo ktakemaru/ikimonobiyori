@@ -462,5 +462,28 @@ class Part10Quote(unittest.TestCase):
         self.assertEqual(V.quote_errors("「◎ 真っ盛り」と「見ごろ」です。", RULES), [])
 
 
+class Part8Flow(unittest.TestCase):
+    def test_facts_keep_the_point_for_area_membership(self):
+        from ikimonobiyori import observations as O
+        s = {"id": "x", "subject": "autumn_leaves", "name": "長瀞の試験", "point": {"lat": 36.09, "lon": 139.11}, "typical": []}
+        pol = O.load_policy()
+        f = O.facts("autumn_leaves", region="全範囲", dates=[date(2026, 11, 8)], now=NOW, env={"IKIMONOBIYORI_DATA_DIR": tempfile.mkdtemp()}, spots_doc={"spots": [s]}, catalogs={"autumn_leaves": {"entries": []}, "flowers": {"entries": []}}, with_alternatives=False)
+        c = next(x for x in f["candidates"] + f["avoid"] if x["name"] == "長瀞の試験")
+        self.assertEqual(AR.members(AR.resolve("長瀞"), [c])[0]["name"], "長瀞の試験")
+        self.assertEqual(O.normalize("autumn_leaves", "月の石もみじ公園 色づき進む", pol), "色づき始め")
+
+    def test_periods_by_area_compose_and_pass(self):
+        s = lambda: subject(spot("中津峡", 90, city="秩父市"), spot("宝登山", 80, city="長瀞町"))
+        f = facts_doc({"autumn_leaves": s()}, dates=("2026-11-07", "2026-11-08", "2026-11-14", "2026-11-15"))
+        f["periods"] = [{"dates": ["2026-11-07", "2026-11-08"], "subjects": {"autumn_leaves": s()}}, {"dates": ["2026-11-14", "2026-11-15"], "subjects": {"autumn_leaves": s()}}]
+        areas = [AR.resolve("秩父"), AR.resolve("長瀞"), AR.resolve("飯能")]
+        plan = AP.build_periods(f, area_rows=areas)
+        text = SK.compose(f, plan, defaulted_date=True)
+        for w in ("11/7・11/8のおすすめ", "11/14・11/15のおすすめ", "秩父", "長瀞", "飯能は、今年の情報が確認できていません。"):
+            self.assertIn(w, text)
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], (text, V.report_lines(r)))
+
+
 if __name__ == "__main__":
     unittest.main()

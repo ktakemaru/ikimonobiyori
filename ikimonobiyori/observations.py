@@ -1462,7 +1462,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                    "confidence_label": _confidence_label(cur)}
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
-    out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
+    out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "point": c.get("point"), "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),

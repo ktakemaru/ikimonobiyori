@@ -7,6 +7,18 @@
 schema: ikimono-status-sources/1
 subject: wintering_birds
 sources:
+  # 段階58 第10部(2026-11-07): 白鳥の飛来状況の公式の発信を探した。確認できたのはこの 1 件(ページの中身は未読)。承認は本人が決める
+  - id: inzai-motono-hakucho
+    publisher: 印西市立本埜第二小学校(本埜白鳥の郷のページ)
+    publisher_kind: municipality
+    url: "https://motono-e.inzai.ed.jp/hakucho"
+    kind: status_page
+    covers:
+      - {name: 本埜白鳥の郷, label: "本埜白鳥の郷"}
+    notation: {style: word, map: {}, updated: per_page, note: "検索の要約で飛来状況のページとして確認した。書き方は未確認"}
+    readable: {status: unconfirmed, checked_on: "2026-11-07", note: "検索結果に出た。ページは未読"}
+    terms: {status: not_checked, note: "未確認"}
+    approval: {status: pending, reason: "指示書 段階58 第10部。承認は本人が決める"}
   - id: agano-hyoko-monthly
     publisher: 阿賀野市(公園管理事務所)
     publisher_kind: municipality

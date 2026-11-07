@@ -43,7 +43,9 @@ def _rows_of(plan):
     if subject == "periods":
         for s in plan["segments"]:
             pl = s["plan"]
-            if pl.get("subject") == "all":
+            if pl.get("subject") == "areas":
+                out += [(pl["area_subject"], p["name"]) for x in pl["segments"] for p in x["plan"]["picks"]]
+            elif pl.get("subject") == "all":
                 out += [(sj, p["name"]) for sj, sp in pl["subjects"].items() for p in sp["picks"]]
             else:
                 out += [(pl["subject"], p["name"]) for p in pl["picks"]]

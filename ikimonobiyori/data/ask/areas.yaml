@@ -4,7 +4,7 @@
 schema: ikimono-areas/1
 provisional_radius: true
 areas:
-  - {name: 秩父, aliases: [奥秩父, 秩父市], cities: [秩父市, 小鹿野町, 横瀬町, 皆野町], center: {lat: 35.959722222222, lon: 138.93333333333}, radius_km: 25, qid: Q647079}
+  - {name: 秩父, aliases: [奥秩父, 秩父市], cities: [秩父市, 小鹿野町, 横瀬町, 皆野町], center: {lat: 35.959722222222, lon: 138.93333333333}, radius_km: 20, qid: Q647079}
   - {name: 長瀞, aliases: [長瀞町], cities: [長瀞町], center: {lat: 36.114805555555556, lon: 139.10972222222222}, radius_km: 10, qid: Q1345299}
   - {name: 飯能, aliases: [飯能市, 奥武蔵], cities: [飯能市], center: {lat: 35.855555555555554, lon: 139.32777777777778}, radius_km: 15, qid: Q850472}
   - {name: 奥多摩, aliases: [奥多摩町], cities: [奥多摩町, 青梅市], center: {lat: 35.809555555555555, lon: 139.09619444444445}, radius_km: 20, qid: Q598626}

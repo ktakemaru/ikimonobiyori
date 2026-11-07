@@ -689,7 +689,7 @@ class Flow:
         subs = list(facts_doc["subjects"])
         sj = subject or subs[0]
         d = AR.describe(names)
-        doc = AP.build_areas(facts_doc, d["found"], sj)
+        doc = AP.build_periods(facts_doc, area_rows=d["found"]) if facts_doc.get("periods") else AP.build_areas(facts_doc, d["found"], sj)
         doc["area_unknown"] = d["unknown"]
         doc["offers"] = []
         self._save("answer_plan.json", doc)

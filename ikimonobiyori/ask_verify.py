@@ -539,7 +539,11 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
     lines = text.splitlines()                                               # ② 冒頭とおすすめ
     if segs:                                                                # 段階57 第3部: 節ごとの冒頭とおすすめ。全体の冒頭は全部のおすすめと照合する
         union = []
-        for s in segs:
+        flat = []
+        for s in segs:                                                       # 段階58: 期間の中のエリア別の節も、エリアごとに照合する
+            sub_ = AP.split_segments(s["text"], s["plan"]) if (s.get("plan") or {}).get("subject") == "areas" else None
+            flat += sub_ or [s]
+        for s in flat:
             e, (_lead, pick_text) = lead_errors(s["text"].splitlines(), cfg, facts, mat, kind=s["seg"]["heading"])
             errs += [{**x, "detail": f"{s['seg']['heading']}: {x['detail']}"} for x in e]
             union.append(s["seg"]["heading"] + "\n" + pick_text)

@@ -529,20 +529,23 @@ def period_heading(dates, pol):
     return pol["period_heading"].format(days="・".join(f"{_d(x).month}/{_d(x).day}" for x in dates))
 
 
-def build_periods(facts_doc, overrides=None, policy=None):
+def build_periods(facts_doc, overrides=None, policy=None, area_rows=None):
     """facts.json の periods(期間ごとの subjects)から、期間ごとの計画を作る。答えは期間別の節で、それぞれに今回のおすすめ。"""
     pol = policy or load_policy()
     segs, picks, ranking = [], [], []
     for per in facts_doc["periods"]:
         sub_doc = {**facts_doc, "subjects": per["subjects"], "dates": per["dates"]}
         subs = list(per["subjects"])
-        pl = build_all(sub_doc, pol, overrides) if len(subs) > 1 else build(sub_doc, subs[0], pol, overrides)
+        if area_rows:                                                    # 段階58 第9部: 期間ごとの、エリア別の計画
+            pl = build_areas(sub_doc, area_rows, subs[0], pol, overrides)
+        else:
+            pl = build_all(sub_doc, pol, overrides) if len(subs) > 1 else build(sub_doc, subs[0], pol, overrides)
         segs.append({"heading": period_heading(per["dates"], pol), "key": per["dates"][0], "plan": pl})
         picks += [dict(p, period=per["dates"][0]) for p in pl["picks"] if p["name"] not in {x["name"] for x in picks}]
         ranking += pl["ranking"]
     return {"schema": SCHEMA, "subject": "periods", "dates": facts_doc["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
             "use_headings": False, "sections": [], "picks": picks, "ranking": ranking, "segments": segs, "overrides": list(overrides or []),
-            "origin_line": (facts_doc.get("lines") or {}).get("origin_line")}
+            "origin_line": (facts_doc.get("lines") or {}).get("origin_line"), **({"area_names": [a["name"] for a in area_rows]} if area_rows else {})}
 
 
 # ---- エリア別の節(段階58 第1部・第9部) ----
@@ -670,6 +673,8 @@ def plan_errors(text, plan, mat, blocks, names_of):
     """答えの ①②③ の段が、計画の「今回のおすすめ」と合っているか。計画にない名所は、理由の記録(overrides)がなければ不合格。
     names_of(name) → その名所の短い呼び名の一覧。"""
     errs = []
+    if plan.get("subject") == "areas":                                       # エリア別の計画: 各エリアのおすすめ全部
+        plan = {**plan, "picks": [p for s in plan["segments"] for p in s["plan"]["picks"]]}
     cands = [r["name"] for r in plan["ranking"]]
     over = {o["name"]: o for o in plan.get("overrides") or []}
     pick_names = [p["name"] for p in plan["picks"]]

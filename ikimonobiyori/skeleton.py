@@ -7,7 +7,7 @@ from datetime import date
 
 from . import answer_plan as AP
 from . import official_pages as OP
-from .ask_verify import candidate_urls, load_rules
+from .ask_verify import Material, _n, load_rules, mentioned_cands
 
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
 
@@ -163,7 +163,10 @@ def dates_line(facts, t, defaulted=False):
 
 def _flat_picks(plan):
     if plan.get("segments") and plan["segments"][0].get("plan"):
-        return [p for s in plan["segments"] for p in s["plan"]["picks"]]
+        out = []
+        for s in plan["segments"]:
+            out += _flat_picks(s["plan"]) if s["plan"].get("subject") == "areas" else s["plan"]["picks"]
+        return out
     return list(plan.get("picks") or [])
 
 
@@ -218,7 +221,18 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
         for s, per in zip(segs, facts.get("periods") or []):
             pl = s["plan"]
             sj = pl.get("subject")
-            lines += ["", s["heading"], lead_for(pl.get("picks") or [], t)]
+            lines += ["", s["heading"]]
+            if sj == "areas":
+                sj2 = pl["area_subject"]
+                for x in pl["segments"]:
+                    lines += ["", x["heading"]]
+                    if x["plan"]["picks"]:
+                        lines.append(lead_for(x["plan"]["picks"], t))
+                        lines += _subject_part(per["subjects"][sj2], x["plan"], sj2, t, max_quote, urls, mentioned, today)
+                    else:
+                        lines.append(t["area_none"].format(name=x["heading"]))
+                continue
+            lines.append(lead_for(pl.get("picks") or [], t))
             if sj == "all":
                 for ss in pl["segments"]:
                     lines += _subject_part(per["subjects"][ss["subject"]], pl["subjects"][ss["subject"]], ss["subject"], t, max_quote, urls, mentioned, today)
@@ -249,6 +263,12 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
     if conf:
         lines += ["", t["confidence_heading"]] + conf
     opener = (facts.get("lines") or {}).get("open_urls")
+    # 本文に名前が出た候補(節の見出しのエリア名など)の出どころも入れる(出典の漏れを作らない)
+    mat = Material(facts, load_rules())
+    for c in mentioned_cands(mat, _n("\n".join(lines))):
+        u = (c.get("current") or {}).get("url")
+        if u:
+            urls.add(u)
     if urls:
         lines += ["", t["sources_heading"]] + sorted(urls)
     if opener:
