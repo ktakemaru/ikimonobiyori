@@ -213,6 +213,34 @@ def drop_fetched(doc, seen):
     return doc
 
 
+def record_first_check(workdir, result, now, env=None):
+    """段階58 第9部: 答えを作るたびに、初回の検査の不合格数を記録する(同じ作業フォルダの 2 回目以降は記録しない)。"""
+    marker = Path(workdir) / "first_check.done"
+    if marker.exists():
+        return
+    marker.write_text("1", encoding="utf-8")
+    p = data_path(AP.load_policy()["first_check_file"], env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    codes = sorted({e["code"] for s in result["sentences"] for e in s["errors"]} | {e["code"] for e in result["answer_errors"]})
+    with p.open("a", encoding="utf-8") as fp:
+        fp.write(json.dumps({"at": now.isoformat(), "errors": len(V.report_lines(result)), "codes": codes}, ensure_ascii=False) + "\n")
+
+
+def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
+    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。作れなければ 1 行。
+    計画のない古い経路(facts だけの検査)は、これまでどおり通らない文を除く。"""
+    if not plan_doc:
+        return V.strip(text, result)
+    from . import skeleton as SK
+    try:
+        alt = SK.compose(facts_doc, plan_doc)
+        if V.check(alt, facts_doc, gazetteer=gazetteer, plan=plan_doc)["ok"]:
+            return alt
+    except (KeyError, ValueError, TypeError):
+        pass
+    return AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+
+
 def _plan_cfg():
     return AP.load_policy()["last_plan"]
 
@@ -708,9 +736,11 @@ class Flow:
             (self.workdir / "final_reply.txt").write_text(final, encoding="utf-8")
             self.call("verify", reply=True, ok=r["ok"], errors=len(V.report_lines(r)))
             return r, final
-        r = V.check(text, facts_doc, gazetteer=gaz, plan=self._load("answer_plan.json", None))
+        plan_doc = self._load("answer_plan.json", None)
+        r = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
         self._save("check.json", r)
-        final = text if r["ok"] else V.strip(text, r)
+        record_first_check(self.workdir, r, self.now, self.env)
+        final = text if r["ok"] else minimal_answer(text, facts_doc, plan_doc, r, gaz)
         (self.workdir / "final.txt").write_text(final, encoding="utf-8")
         update_last_plan_answer(self.workdir, final, self.env)
         self.call("verify", ok=r["ok"], errors=len(V.report_lines(r)))
@@ -788,6 +818,11 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("skeleton", help="計画から答えの骨組みを作る(冒頭・日付・出発地・今回のおすすめ・節・確かさ・出典。段階58)。事実を足さず変えずに言い回しだけ整える")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--defaulted-date", action="store_true", help="日付の指定がなかった質問(冒頭に 1 文を入れる)")
+    p = sub.add_parser("dates", help="質問の文から日付の既定を決める(今週末、計画段階の質問は今週末と来週末。段階58)")
+    p.add_argument("--question", required=True)
     p = sub.add_parser("place-alias", help="確かめた場所の別名を手元に足す(段階58。次回から使う)")
     p.add_argument("--add", required=True, help="別名")
     p.add_argument("--official", required=True, help="正式名称")
@@ -829,6 +864,10 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "dates":
+        got = AP.default_periods(a.question, _clock())
+        _out({"defaulted": got["defaulted"], "periods": [[d.isoformat() for d in ds] for ds in got["periods"]] if got["periods"] else None})
+        return 0
     if a.step == "place-alias":
         from . import place_answer as PA
         PA.add_alias(a.add, a.official)
@@ -938,6 +977,15 @@ def main(argv=None, http_get=None):
             names = a.name or PA.extract_names(a.question)
             res = PA.plan_for(names, a.subject, facts_doc)
             _out({"found": [{"query": x["query"], "name": x["candidate"]["name"], "section": x["section"]} for x in res["found"]], "missing": res["missing"]})
+            return 0
+        if a.step == "skeleton":
+            from . import skeleton as SK
+            facts_doc = flow._load("facts.json", None)
+            plan_doc = flow._load("answer_plan.json", None)
+            if not facts_doc or not plan_doc:
+                print("先に facts と plan を実行してください", file=sys.stderr)
+                return 2
+            sys.stdout.write(SK.compose(facts_doc, plan_doc, OF.texts(plan_doc.get("offers")), defaulted_date=a.defaulted_date))
             return 0
         if a.step == "refresh":
             facts_doc = flow._load("facts.json", None)

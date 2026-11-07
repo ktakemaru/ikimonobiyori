@@ -156,15 +156,21 @@ def cluster_key(c):
 def has_current(c):
     """今年の現況として使えるか。状態が読めない記録(「記載なし」など)・記号だけの記録は現況に数えない(段階57 第7部)。"""
     cur = c.get("current")
-    if not cur or cur.get("symbol_only"):
+    if not cur or cur.get("symbol_only") or cur.get("source_class") == "secondary":      # 段階58 第9部: 紹介サイトの現況は採用理由にしない(現況なしとして扱い、参考の 1 行にする)
         return False
     return cur.get("state") != O.load_policy()["unknown_state"]
+
+
+def has_state_record(c):
+    """状態が読める記録があるか(公式・紹介サイトを問わない)。今年の情報の有無に使う。"""
+    cur = c.get("current")
+    return bool(cur) and not cur.get("symbol_only") and cur.get("state") != O.load_policy()["unknown_state"]
 
 
 def has_this_year(c, year):
     """今年(今のシーズン)の情報があるか: 状態が読める今年の日付の記録、または今年の行事。「例年の時期」だけでは数えない(段階58 第3部)。"""
     cur = c.get("current")
-    if has_current(c):
+    if has_state_record(c):
         d = cur.get("state_date")
         if d is None or str(d)[:4] == str(year):
             return True
@@ -256,7 +262,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
-                  "has_current": has_current(c), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
+                  "has_current": has_current(c), "has_state": has_state_record(c), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
@@ -352,9 +358,9 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                 it["same_area_as_pick"] = True
     if subject == "birds":                                   # 段階57 第4部: 記録のない公園を上位にしない。選ぶときは明記の文を添える
         chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
-        picks = [dict(it, rank=i + 1, **({} if it["has_current"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
+        picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
     else:
-        picks = [dict(it, rank=i + 1, **({} if it["has_current"] else {"note": pol["evidence"]["no_current_note"]})) for i, it in enumerate(sorted(chosen, key=key))]
+        picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["evidence"]["no_current_note"]})) for i, it in enumerate(sorted(chosen, key=key))]
     ranking = []
     for r in sorted(rows, key=lambda x: (-x["score"], x["name"])):
         st = status.get(r["name"])
@@ -383,14 +389,14 @@ def rank_key(it, pol):
     """見込みの区分 → 根拠の強さ → 現況の日付の新しさ → 点数 → 名前(段階57 第12部)。"""
     oo = pol["outlook"]
     rank = oo["rank"][it["outlook"]]
-    if not it.get("has_current"):
+    if not it.get("has_state", it.get("has_current")):
         rank = min(rank, pol["evidence"]["typical_only_rank_cap"])
     return (-rank, -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
 
 
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
-            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "subject": r.get("subject"),
+            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "subject": r.get("subject"),
             "current_age_days": r.get("current_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
@@ -419,6 +425,24 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
             "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs, **({"refine": refine} if refine else {}),
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
+
+
+# ---- 日付の既定(段階58 第9部) ----
+
+def default_periods(question, now, policy=None):
+    """質問の文に日付の指定がないときの期間。→ {"periods": [[今週末], [来週末]] か [[今週末]], "defaulted": 真偽}。
+    指定があるときは defaulted=False(呼び出し側の日付を使う)。今日が土日なら今日と明日。計画段階の質問(「探しています」)は両方。"""
+    from . import sources as S
+    pol = policy or load_policy()
+    cfg = pol["dates_default"]
+    q = question or ""
+    if any(w in q for w in cfg["date_words"]):
+        return {"periods": None, "defaulted": False}
+    wk1 = S.next_weekend(now)
+    if any(w in q for w in cfg["plan_words"]):
+        wk2 = [wk1[-1] + timedelta(days=6), wk1[-1] + timedelta(days=7)]
+        return {"periods": [wk1, wk2], "defaulted": True}
+    return {"periods": [wk1], "defaulted": True}
 
 
 # ---- 見頃を狙う週(段階58 第7部) ----

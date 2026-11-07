@@ -31,7 +31,7 @@ def _no_long_quote(line, max_chars):
 def current_line(c, t, phr):
     """今の状況の文。第三者サイトの現況は採用理由にせず参考の 1 行にとどめる。記号だけで読めないものは断定しない。"""
     cur = c.get("current")
-    if not AP.has_current(c) or not (cur.get("display") or cur.get("state_raw")):
+    if not AP.has_state_record(c) or not (cur.get("display") or cur.get("state_raw")):
         return t["no_current_fest"] if c.get("festivals") else t["no_current"]
     state = cur.get("display") or cur["state_raw"]
     state = re.sub(r"[。\s]+$", "", state)

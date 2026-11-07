@@ -287,5 +287,98 @@ class Part7TargetWeek(unittest.TestCase):
         self.assertIsNone(AP.target_week_line(c, date(2026, 11, 7)))
 
 
+class Part9Skeleton(unittest.TestCase):
+    def test_multi_area_split(self):
+        names = AR.from_question("大菩薩嶺・西沢渓谷、秩父～長瀞～飯能、富士山周辺などで紅葉のおすすめを探しています。")
+        self.assertEqual(names, ["大菩薩嶺", "西沢渓谷", "秩父", "長瀞", "飯能", "富士山"])
+
+    def test_every_area_must_appear(self):
+        plan = {"area_names": ["秩父", "飯能"]}
+        self.assertEqual(AP.area_errors("秩父は見頃です。", plan), [{"code": "area_missing", "detail": "飯能"}])
+
+    def test_default_dates(self):
+        sat = datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+        wed = datetime(2026, 11, 4, 12, 0, tzinfo=timezone(timedelta(hours=9)))
+        g = AP.default_periods("箱根の紅葉のおすすめは", sat)
+        self.assertTrue(g["defaulted"])
+        self.assertEqual(g["periods"], [[date(2026, 11, 7), date(2026, 11, 8)]])          # 土日なら今日と明日
+        self.assertEqual(AP.default_periods("箱根の紅葉のおすすめは", wed)["periods"], [[date(2026, 11, 7), date(2026, 11, 8)]])
+        two = AP.default_periods("紅葉のおすすめを探しています", wed)
+        self.assertEqual(two["periods"][1], [date(2026, 11, 14), date(2026, 11, 15)])
+        self.assertFalse(AP.default_periods("明日の紅葉", wed)["defaulted"])
+
+    def test_date_sentence_in_the_lead(self):
+        f = facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"))})
+        text = SK.compose(f, AP.build(f, "autumn_leaves"), defaulted_date=True)
+        self.assertIn("日付の指定がなかったので、11/8で探しました。", text)
+        self.assertIn("横浜からの距離で選びました。", text)
+
+    def test_lead_matches_the_weakest_pick(self):
+        t = AP.load_policy()["skeleton"]
+        self.assertEqual(SK.lead_for([{"has_current": True, "outlook": "in_peak"}, {"has_current": False, "outlook": "in_peak"}], t), t["lead_mixed"])
+        self.assertEqual(SK.lead_for([{"has_current": False, "outlook": "in_peak"}], t), t["lead_no_current"])
+        f = facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"), spot("三峰", 120, state=None, city="小鹿野町"))})
+        plan = AP.build(f, "autumn_leaves")
+        r = V.check("今週末は真っ盛りです。\n今回のおすすめ\n① 中津峡: 見頃が続いている可能性があります。例年の見頃は11月です。\n", f, RULES, plan=plan)
+        self.assertIn("lead_too_assertive", [e["code"] for e in r["answer_errors"]])
+
+    def test_third_party_status_is_not_a_reason(self):
+        c = spot("紹介の渓谷", 60, city="渓町", source_class="secondary")
+        self.assertFalse(AP.has_current(c))
+        self.assertTrue(AP.has_this_year(c, 2026))
+        off = spot("公式の園", 90, city="園町")
+        off["current"]["age_days"] = 2
+        f = facts_doc({"autumn_leaves": subject(c, off)})
+        plan = AP.build(f, "autumn_leaves")
+        self.assertEqual(plan["picks"][0]["name"], "公式の園")
+        text = SK.compose(f, plan)
+        self.assertIn("紹介サイトでは見頃とされています", text)
+        self.assertIn("公式ではありません", text)
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], (text, V.report_lines(r)))
+
+    def test_ten_failure_types_do_not_appear_in_the_skeleton(self):
+        c1 = spot("甲の渓谷", 40, city="甲町", practical=[{"text": "開園 9:00〜17:00", "url": "https://www.city.a.lg.jp/p"}])
+        c2 = spot("乙の山", 70, state=None, city="乙町", elevation_m=900, festivals=[{"name": "まつり", "start": "2026-11-01", "end": "2026-11-30", "period_line": "主催者が設定した期間: まつり期間中(11/1〜11/30)", "url": "https://www.city.b.lg.jp/f"}])
+        c3 = spot("丙の湖", 130, city="丙町", source_class="secondary")
+        c3["typical"] = []
+        c3["typical_line"] = None
+        c3["typical_unknown"] = True
+        f = facts_doc({"autumn_leaves": subject(c1, c2, c3)})
+        plan = AP.build(f, "autumn_leaves")
+        text = SK.compose(f, plan)
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], (text, V.report_lines(r)))
+        self.assertIn("例年の時期は分かりません", text)
+
+    def test_few_candidates_line_passes(self):
+        f = facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"), spot("横瀬の滝", 92, city="横瀬町"))})
+        plan = AP.build(f, "autumn_leaves")
+        text = SK.compose(f, plan)
+        self.assertIn(f"今年の情報が確認できた候補は{len(plan['picks'])}件です。", text)
+        self.assertTrue(V.check(text, f, RULES, plan=plan)["ok"], text)
+
+    def test_failed_answer_becomes_minimal_not_stripped(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            fl = ask.Flow(Path(d) / "w", now=NOW, env=env)
+            fl._save("facts.json", facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"), spot("横瀬の滝", 92, city="横瀬町"))}))
+            fl.plan()
+            r, final = fl.verify("中津峡は12/31に見頃です。根拠のない文です。\n")
+            self.assertFalse(r["ok"])
+            self.assertNotIn("根拠のない文", final)
+            self.assertIn("今回のおすすめ", final)
+            self.assertTrue(Path(d, "ask", "first_check.jsonl").is_file())
+            rows = Path(d, "ask", "first_check.jsonl").read_text(encoding="utf-8").splitlines()
+            fl.verify("もう一度書いた文です。\n")
+            self.assertEqual(len(Path(d, "ask", "first_check.jsonl").read_text(encoding="utf-8").splitlines()), len(rows))   # 初回だけ記録
+
+    def test_cannot_answer_line(self):
+        f = facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"))})
+        plan = {"subject": "unknown-shape", "picks": []}
+        r = {"sentences": [], "answer_errors": []}
+        self.assertEqual(ask.minimal_answer("x", f, plan, r), "今は答えを用意できません。\n")
+
+
 if __name__ == "__main__":
     unittest.main()
