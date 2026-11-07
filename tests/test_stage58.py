@@ -233,5 +233,33 @@ class Part5Compare(unittest.TestCase):
         self.assertIn("compare_table", [o["id"] for o in f.plan()["offers"]])         # 2 件目で履歴が 2 件
 
 
+class Part6Names(unittest.TestCase):
+    def setUp(self):
+        from ikimonobiyori import place_answer as PA
+        self.PA = PA
+        self.c = spot("トーベ・ヤンソンあけぼの子どもの森公園", 50, city="飯能市")
+
+    def test_variants_resolve_and_official_name_is_shown_once(self):
+        f = facts_doc({"autumn_leaves": subject(self.c)})
+        for q in ("トーベヤンソンあけぼの子ども森林公園", "トーベ・ヤンソンあけぼの子ども森林公園"):
+            res = self.PA.plan_for([q], "autumn_leaves", f)
+            self.assertEqual(res["found"][0]["candidate"]["name"], self.c["name"], q)
+            self.assertEqual(res["found"][0]["section"][0], f"{self.c['name']}(正式名称は{self.c['name']}です)")
+        res = self.PA.plan_for([self.c["name"]], "autumn_leaves", f)
+        self.assertEqual(res["found"][0]["section"][0], self.c["name"])         # 同じならそのまま
+
+    def test_unknown_is_not_guessed(self):
+        f = facts_doc({"autumn_leaves": subject(self.c, spot("あけぼの山農業公園", 60, city="柏市"))})
+        self.assertEqual(self.PA.plan_for(["ありえない森"], "autumn_leaves", f)["found"], [])
+        self.assertEqual(self.PA.match("あけぼの", f["subjects"]["autumn_leaves"]["candidates"]), None)   # 2 件に当たる語は決めない
+
+    def test_learned_alias_is_used_next_time(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            self.PA.add_alias("森の公園", "試験の森公園", env)
+            self.assertEqual(self.PA.official_name("森の公園", env), "試験の森公園")
+            self.assertTrue(Path(d, "ask", "place_aliases.json").is_file())
+
+
 if __name__ == "__main__":
     unittest.main()

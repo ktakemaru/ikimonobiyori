@@ -788,6 +788,9 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("place-alias", help="確かめた場所の別名を手元に足す(段階58。次回から使う)")
+    p.add_argument("--add", required=True, help="別名")
+    p.add_argument("--official", required=True, help="正式名称")
     p = sub.add_parser("compare", help="ここまでの候補の比較表をコードで作る(履歴の計画が 2 件以上のとき。段階58)")
     p = sub.add_parser("import-csv", help="公式の機械可読データの本文を記録にする(段階57。山梨県の紅葉状況 CSV。承認されるまで答えには出ない。本文は保存しない)")
     p.add_argument("--out-dir", required=True)
@@ -826,6 +829,10 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "place-alias":
+        from . import place_answer as PA
+        PA.add_alias(a.add, a.official)
+        return 0
     if a.step == "compare":                              # 段階58 第5部: 履歴がなければ作らない
         from . import compare
         text, urls = compare.table(_clock())

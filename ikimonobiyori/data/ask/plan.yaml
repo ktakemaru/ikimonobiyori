@@ -211,6 +211,7 @@ place:
   forecast_reprint_words: [全国予測, 紅葉予想, 紅葉予測, 見頃予想, foliage forecast, autumn leaves forecast, 日本気象協会, Japan Weather Association, tenki.jp]
   search_query: "{name} 紅葉 {year} 公式"
   lines:
+    official: "{name}(正式名称は{name}です)"
     current: "今年の現況: {state}({md}時点、{publisher})"
     current_nodate: "今年の現況: {state}({publisher})"
     no_current: 今年の現況は確認できていません。

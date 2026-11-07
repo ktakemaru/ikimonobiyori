@@ -1203,6 +1203,17 @@ spots:
       - {url: "http://www.saitama-shizen.info/today/index.html", publisher: 埼玉県自然学習センター, source_class: official}
     search: "北本自然観察公園 野鳥 バードウォッチング"
   # 段階56 第5部: 狭山丘陵いきものふれあいの里センターの観察会（festivals.yaml）。所在地は埼玉県の公式ページ（所沢市上山口2090-3）で確認した。座標は確認できていないため付けない
+  - id: obs-kouyou-0115
+    subject: autumn_leaves
+    name: "トーベ・ヤンソンあけぼの子どもの森公園"
+    aliases: [あけぼの子どもの森公園]
+    prefecture: 埼玉県
+    city: 飯能市
+    area: 埼玉
+    point: {lat: 35.855555555555554, lon: 139.32777777777778}          # 市の代表点(Wikidata)
+    typical:
+    pages:
+    search: "トーベ・ヤンソンあけぼの子どもの森公園 お知らせ 2026 公式"
   - id: obs-kouyou-0104
     subject: autumn_leaves
     name: "西沢渓谷周辺"

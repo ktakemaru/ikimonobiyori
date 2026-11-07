@@ -4,12 +4,17 @@
 - 名所の一覧にある場所: 場所ごとの事実(今年の現況・例年の見頃・見込み・行事・実用情報・距離)を返す。
 - ない場所: 読むべき公式ページの探し方(検索語)と、使わないホストを除いた検索結果の絞り込み。読めた事実は「仮」として記録する。
 値・語は data/ask/plan.yaml の place。"""
+import json
 import re
+from pathlib import Path
 from urllib.parse import urlparse
+
+import yaml
 
 from . import answer_plan as AP
 from . import ask_verify as V
 from . import observations as O
+from .paths import DATA_FILES_DIR, data_path
 
 
 def cfg():
@@ -29,8 +34,48 @@ def extract_names(question):
     return out
 
 
+def _key(x):
+    return re.sub(r"[・\s]", "", x or "")
+
+
 def _norm(x):
     return V._n(x or "").replace(" ", "")
+
+
+ALIAS_PATH = DATA_FILES_DIR / "ask" / "place_aliases.yaml"
+ALIAS_CACHE = "ask/place_aliases.json"
+
+
+def alias_table(env=None):
+    table = dict((yaml.safe_load(ALIAS_PATH.read_text(encoding="utf-8")) or {}).get("aliases") or {})
+    try:
+        table.update(json.loads(Path(data_path(ALIAS_CACHE, env)).read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    return table
+
+
+def add_alias(alias, official, env=None):
+    """確かめた別名をデータ置き場に足す(次回から使う)。"""
+    p = Path(data_path(ALIAS_CACHE, env))
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        doc = {}
+    doc[alias] = official
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(doc, ensure_ascii=False, indent=0), encoding="utf-8")
+
+
+def official_name(name, env=None):
+    """別名 → 正式名称(「・」「の」の有無の違いを無視して引く)。ないときは入力のまま。"""
+    table = alias_table(env)
+    key = lambda s: re.sub(r"[・\s]", "", s)
+    k = key(name or "")
+    for a, o in table.items():
+        if key(a) == k:
+            return o
+    return name
 
 
 def match(name, cands):
@@ -91,9 +136,12 @@ def plan_for(names, subject, facts_doc):
     cands = (facts_doc["subjects"].get(subject) or {}).get("candidates") or []
     found, missing = [], []
     for n in names:
-        c = match(n, cands)
+        c = match(official_name(n), cands) or match(n, cands)
         if c:
-            found.append({"query": n, "candidate": c, "section": section(c, facts_doc)})
+            sec = section(c, facts_doc)
+            if _key(n) != _key(c["name"]) and _key(official_name(n)) == _key(c["name"]):   # 段階58 第6部: 入力と正式名称が違うときは 1 回だけ示す
+                sec[0] = cfg()["lines"]["official"].format(name=c["name"])
+            found.append({"query": n, "candidate": c, "section": sec})
         else:
             missing.append({"query": n, "search": cfg()["search_query"].format(name=n, year=str(facts_doc["now"])[:4])})
     return {"found": found, "missing": missing}
@@ -104,7 +152,7 @@ def section(c, facts_doc):
     t = cfg()["lines"]
     out = [c["name"]]
     cur = c.get("current")
-    if cur and not cur.get("symbol_only"):
+    if AP.has_current(c):
         when = O._md(cur["state_date"]) if cur.get("state_date") else None
         state = cur.get("display") or cur.get("state_raw")
         out.append(t["current"].format(state=state, md=when, publisher=cur.get("publisher") or "") if when else t["current_nodate"].format(state=state, publisher=cur.get("publisher") or ""))
