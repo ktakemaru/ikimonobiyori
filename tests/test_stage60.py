@@ -231,5 +231,77 @@ class Part3NearFirst(unittest.TestCase):
                 self.assertEqual(ask.main(argv), 0, argv[0])
 
 
+class Part5SiteWalk(unittest.TestCase):
+    """第5部: サイトの辿り(通信しない。ページの中身は合成)。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+
+    def walk(self):
+        from ikimonobiyori import site_walk as SW
+        return SW, SW.start("t-vc", "https://vc.example.org/", extra_hosts=["docs.example.org"], env=self.env)
+
+    def test_depth_limit(self):
+        SW, st = self.walk()
+        url = "https://vc.example.org/"
+        for d in range(1, 6):
+            nxt = f"https://vc.example.org/dayori{d}/"
+            SW.add_page(st, url, [{"href": nxt, "text": "自然公園だより"}])
+            url = nxt
+        depths = [q["depth"] for q in st["queue"]] + [v["depth"] for v in st["visited"].values()]
+        self.assertEqual(max(depths), SW.cfg()["max_depth"])                  # 深さ 3 より先は拾わない
+        self.assertEqual(SW.cfg()["max_depth"], 3)
+
+    def test_stays_on_the_same_site(self):
+        SW, st = self.walk()
+        SW.add_page(st, "https://vc.example.org/", [{"href": "https://other.example.net/dayori/", "text": "だより"},
+                                                    {"href": "https://docs.example.org/kankou/", "text": "刊行物"},
+                                                    {"href": "/about/", "text": "施設の案内"}])
+        urls = [q["url"] for q in st["queue"]]
+        self.assertEqual(urls, ["https://docs.example.org/kankou/"])         # 外部へは出ない・優先語のない内部リンクも辿らない
+
+    def test_robots_disallow_is_respected(self):
+        SW, st = self.walk()
+        SW.set_robots(st, "User-agent: *\nDisallow: /private/\nSitemap: https://vc.example.org/sitemap.xml\nUser-agent: badbot\nDisallow: /\n")
+        self.assertEqual(st["disallow"], ["/private/"])
+        SW.add_page(st, "https://vc.example.org/", [{"href": "/private/dayori/", "text": "だより"}, {"href": "/news/dayori/", "text": "だより"}])
+        urls = [q["url"] for q in SW.next_urls(st)]
+        self.assertNotIn("https://vc.example.org/private/dayori/", urls)
+        self.assertIn("https://vc.example.org/news/dayori/", urls)
+        self.assertIn("https://vc.example.org/sitemap.xml", urls)            # robots.txt のサイトマップも使う
+        SW.add_sitemap(st, "<urlset><url><loc>https://vc.example.org/archive/2026/</loc></url><url><loc>https://vc.example.org/pdf/vcd26aki.pdf</loc></url></urlset>")
+        self.assertIn("https://vc.example.org/pdf/vcd26aki.pdf", [p["url"] for p in st["pdfs"]])
+
+    def test_pdf_detection_and_latest_issue_needs_a_year(self):
+        from ikimonobiyori import pdf_text as PT
+        SW, st = self.walk()
+        self.assertTrue(SW.is_pdf("https://vc.example.org/a/b.PDF"))
+        self.assertTrue(SW.is_pdf("https://vc.example.org/file.pdf?v=2"))
+        self.assertFalse(SW.is_pdf("https://vc.example.org/pdf/list.html"))
+        SW.add_page(st, "https://vc.example.org/", [{"href": "/d/no10.pdf", "text": "だより 第10号"},
+                                                    {"href": "/d/2026_10.pdf", "text": "だより 秋号"},
+                                                    {"href": "/d/r7.pdf", "text": "令和7年3月号"},
+                                                    {"href": "https://other.example.net/x.pdf", "text": "外部"}])
+        rows = SW.record_pdfs(st, env=self.env, taken_on="2026-11-07")
+        self.assertEqual(len(rows), 3)                                           # 外部の PDF は記録しない
+        self.assertEqual({r["published"] for r in rows}, {None, "2026-10", "2025-03"})
+        self.assertEqual(PT.latest_issue(rows)["url"], "https://vc.example.org/d/2026_10.pdf")   # 年の分からない号は最新にしない
+        self.assertEqual(SW.record_pdfs(st, env=self.env), [])                   # 同じ URL は足さない
+        s = SW.summary(st, env=self.env)
+        self.assertEqual((s["pdfs"], s["pdfs_read"]), (3, 0))
+
+    def test_pager_links_stay_at_the_same_depth(self):
+        SW, st = self.walk()
+        SW.add_page(st, "https://vc.example.org/", [{"href": "/news/page/2/", "text": "次へ"}])
+        self.assertEqual(st["queue"][0]["depth"], 0)
+
+    def test_the_module_does_not_import_network_libraries(self):
+        src = (Path(__file__).resolve().parent.parent / "ikimonobiyori" / "site_walk.py").read_text(encoding="utf-8")
+        for w in ("requests", "urllib.request", "http.client", "socket"):
+            self.assertNotIn("import " + w, src)
+
+
 if __name__ == "__main__":
     unittest.main()

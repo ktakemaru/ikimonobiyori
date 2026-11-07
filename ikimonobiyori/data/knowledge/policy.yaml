@@ -47,3 +47,12 @@ pdf:
   ok_min_jp: 200             # これ以上なら「読めた」、未満は「一部」(仮置き)
   max_pages: 40              # 方法 c で読むページの上限(仮置き)
   unread_label: PDF 未読
+# 段階60 第5部: サイト構造の辿り(ikimonobiyori/site_walk.py。通信しない。ページはエージェントの道具で読み、見つけたリンクを渡す)
+site_walk:
+  max_depth: 3                # 開始ページを 0 として、この深さまで(指示書 第5部 1)
+  max_pages: 30               # 1 施設あたりに辿るページの上限(仮置き。第5部の取得の上限 150 回を施設で分けるため)
+  dir: knowledge/site_walk    # IKIMONOBIYORI_DATA_DIR の下(辿った状態。本文は保存しない)
+  priority_words: [ダウンロード, 刊行物, 季刊誌, 広報, だより, お便り, 便り, 自然情報, 観察記録, レンジャーニュース, セルフガイド, 資料, アーカイブ, バックナンバー, ニュースレター, 通信]
+  pager_words: [次へ, 次のページ, 前へ, もっと見る, "»", "›"]
+  pager_url_re: '(/page/\d+/?$|[?&](page|paged|p)=\d+)'
+  pdf_url_re: '\.pdf($|[?#])'
