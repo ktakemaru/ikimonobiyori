@@ -1269,6 +1269,7 @@ spots:
     city: 鳴沢村
     area: 富士五湖
     origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.48136111111111, lon: 138.70644444444446}          # 市町村の代表点(Wikidata)
     typical:
     pages:
     search: "紅葉台 紅葉 2026 公式"
@@ -1279,6 +1280,7 @@ spots:
     city: 富士吉田市
     area: 富士五湖
     origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.48752777777778, lon: 138.80775}          # 市町村の代表点(Wikidata)
     typical:
     pages:
     search: "富士山5合目 紅葉 2026 公式"
@@ -1289,6 +1291,7 @@ spots:
     city: 富士吉田市
     area: 富士五湖
     origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.48752777777778, lon: 138.80775}          # 市町村の代表点(Wikidata)
     typical:
     pages:
     search: "ふじさんミュージアムパーク 紅葉 2026 公式"
@@ -1300,6 +1303,7 @@ spots:
     city: 富士吉田市
     area: 富士五湖
     origin: official_csv                  # 段階57 第11部: 山梨県の紅葉状況 CSV の地点。現況と見頃は CSV の記録から(承認後に使う)
+    point: {lat: 35.48752777777778, lon: 138.80775}          # 市町村の代表点(Wikidata)
     typical:
     pages:
     search: "道の駅富士吉田周辺 紅葉 2026 公式"

@@ -1451,7 +1451,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                    "confidence_label": _confidence_label(cur)}
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
-    out = {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
+    out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
@@ -1494,9 +1494,13 @@ def state_display(raw, publisher, policy):
     text = (raw or "").strip()
     if not text or not any(ch in text for ch in chars):
         return raw, False
-    if re.search(f"[{chars}][ 　]?[ぁ-んァ-ヶ一-龠]", text):
-        return raw, False
     legend = next((m for p, m in (cfg.get("by_publisher") or {}).items() if p in (publisher or "")), None)
+    m = re.search(f"([{chars}])[ 　]?([ぁ-んァ-ヶ一-龠].*)$", text)
+    if m:                                                        # 語が続く記号: 凡例があれば語に直す。なければ原文のまま(「◎ 真っ盛り」)
+        if not legend or m.group(1) not in legend:
+            return raw, False
+        word, rest = legend[m.group(1)], m.group(2)
+        return (rest if word in rest or word[:2] in rest else f"{word} {rest}"), False
     if not legend:
         return None, True
     for ch, word in legend.items():

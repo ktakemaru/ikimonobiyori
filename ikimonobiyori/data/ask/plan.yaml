@@ -84,6 +84,8 @@ evidence:
   fresh_max_age_days: 14
   # 現況のない候補を今回のおすすめに入れるとき、その候補に書く文(検査器が確かめる)
   no_current_note: 今年の状況は確認できていません
+  # 現況がなく例年の窓だけが根拠の候補は、並びの区分をこの順位までにする(高尾山のように、現況のある「見頃に向かう」候補より前に出さない)
+  typical_only_rank_cap: 3
   note_ok_words: [確認できていません]
 
 selection:
@@ -130,6 +132,34 @@ refine:
     夜: {lightup: true}
   # 近場で該当がないときは、距離の分かる候補を近い順にこの件数だけ残す
   nearest_fallback: 3
+
+# 段階58 第9部: 答えの骨組み(ikimonobiyori/skeleton.py)の決まり文
+skeleton:
+  picks_heading: 今回のおすすめ
+  confidence_heading: 確かさの補足
+  sources_heading: 出典
+  lead_ok: 見頃が続いている可能性がある場所を選びました。
+  lead_toward: 見頃に向かう可能性がある場所を選びました。
+  lead_mixed: 現況が確認できている場所と、できていない場所があります。
+  lead_none: この条件で今年の情報が確認できた候補はありません。
+  lead_no_current: 今年の状況は確認できていません。例年の時期とまつりの日程から選びました。
+  dates: "対象の日は{days}です。"
+  dates_default: "日付の指定がなかったので、{days}で探しました。"
+  current: "今の状況は{state}({md}時点、{publisher})"
+  current_nodate: "今の状況は{state}({publisher})"
+  secondary: "紹介サイトでは{state}とされています({md}時点、{publisher}。公式ではありません)"
+  secondary_nodate: "紹介サイトでは{state}とされています({publisher}。公式ではありません)"
+  reference: "{md}時点の参考: {state}({publisher})"
+  no_current: 今年の状況は確認できていません
+  no_current_fest: 色づき状況は確認できていません
+  typical_unknown: 例年の時期は分かりません
+  birds: "この時期に見られる鳥は{names}です"
+  birds_unknown: この時期に見られる鳥の記録は見つかっていません
+  max_birds: 5
+  not_official: 公式ではありません
+  inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
+  few: "この地域で今年の情報が確認できた候補は{n}件です。"
+  secondary_note: 紹介サイトの情報は公式の発表ではありません。
 
 # 段階57 第10部: 場所を指定した質問(ikimonobiyori/place_answer.py)
 place:

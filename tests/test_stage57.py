@@ -208,6 +208,7 @@ class Part4Wording(unittest.TestCase):
         self.assertEqual(d("△", "どこかの観光協会", self.pol), (None, True))    # 凡例が読めていない記号は断定しない
         self.assertEqual(d("◎ 真っ盛り", "どこか", self.pol), ("◎ 真っ盛り", False))
         self.assertEqual(d("見ごろ", "どこか", self.pol), ("見ごろ", False))
+        self.assertEqual(d("◯ 山内地区全体見ごろ始まりました", "日光市観光協会", self.pol), ("山内地区全体見ごろ始まりました", False))
 
     def base_facts(self):
         return facts_doc({"autumn_leaves": koyo_subject()})
@@ -672,6 +673,32 @@ class Part13NoQuestions(unittest.TestCase):
     def test_clarify_exception(self):
         self.assertTrue(V.generic_check("どの場所のことでしょうか。", clarify=True)["ok"])
         self.assertFalse(V.generic_check("おすすめです。\nどの場所のことでしょうか。", clarify=True)["ok"])
+
+
+class Part7Skeleton(unittest.TestCase):
+    """動作確認で見つけた点(合成データ)。「記載なし」は現況に数えない。骨組みは初回の検査に通る。"""
+    def test_unreadable_state_is_not_current(self):
+        from ikimonobiyori import answer_plan as AP
+        c = spot("試験の園", 20)
+        self.assertTrue(AP.has_current(c))
+        from ikimonobiyori import observations as O
+        c["current"]["state"] = O.load_policy()["unknown_state"]
+        self.assertFalse(AP.has_current(c))
+        c = spot("試験の園", 20)
+        c["current"]["symbol_only"] = True
+        self.assertFalse(AP.has_current(c))
+        self.assertFalse(AP.has_current(spot("試験の園", 20, state=None)))
+
+    def test_skeleton_passes_first_check(self):
+        from ikimonobiyori import answer_plan as AP, skeleton as SK
+        cases = [{"autumn_leaves": koyo_subject()}, {"flowers": flower_subject(), "birds": bird_subject()}]
+        for subs in cases:
+            f = facts_doc(subs)
+            f["lines"]["origin_line"] = "横浜からの距離で選びました。"
+            plan = AP.build_all(f) if len(subs) > 1 else AP.build(f, next(iter(subs)))
+            text = SK.compose(f, plan)
+            r = V.check(text, f, RULES, plan=plan)
+            self.assertTrue(r["ok"], (text, V.report_lines(r)))
 
 
 class Part2Page(unittest.TestCase):

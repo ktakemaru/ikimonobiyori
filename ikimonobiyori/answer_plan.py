@@ -153,6 +153,14 @@ def cluster_key(c):
     return c.get("city") or c.get("area") or c.get("name")
 
 
+def has_current(c):
+    """今年の現況として使えるか。状態が読めない記録(「記載なし」など)・記号だけの記録は現況に数えない(段階57 第7部)。"""
+    cur = c.get("current")
+    if not cur or cur.get("symbol_only"):
+        return False
+    return cur.get("state") != O.load_policy()["unknown_state"]
+
+
 def score_candidate(c, dates, pol, subject=None):
     """1 候補の評価。点数・内訳・見込み・狙い・距離を返す(並べ替えと理由の記録に使う)。"""
     dates = [_d(x) for x in dates]
@@ -230,7 +238,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
-                  "has_current": bool(c.get("current")), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
+                  "has_current": has_current(c), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
@@ -349,7 +357,10 @@ def evidence_level(it, pol):
 def rank_key(it, pol):
     """見込みの区分 → 根拠の強さ → 現況の日付の新しさ → 点数 → 名前(段階57 第12部)。"""
     oo = pol["outlook"]
-    return (-oo["rank"][it["outlook"]], -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
+    rank = oo["rank"][it["outlook"]]
+    if not it.get("has_current"):
+        rank = min(rank, pol["evidence"]["typical_only_rank_cap"])
+    return (-rank, -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
 
 
 def _item(r, oo):
