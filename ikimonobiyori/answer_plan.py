@@ -7,7 +7,7 @@
   python -X utf8 -m ikimonobiyori.ask plan --out-dir DIR [--subject S] [--explain 名所] [--override 名所 --reason 理由 [--replace 計画の名所]]
 """
 import re
-from datetime import date
+from datetime import date, timedelta
 
 import yaml
 
@@ -419,6 +419,50 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
             "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs, **({"refine": refine} if refine else {}),
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
+
+
+# ---- 見頃を狙う週(段階58 第7部) ----
+
+def target_weekend(typ, today):
+    """例年の見頃の窓のまん中を含む週末(まん中に近い土曜)。→ (土, 日) か None。窓がない・もう過ぎているときは None。"""
+    if not typ or not typ.get("start") or not typ.get("end"):
+        return None
+    s, e = O.window_dates(typ["start"], typ["end"], today)
+    mid = s + (e - s) / 2
+    sat = mid + timedelta(days=(5 - mid.weekday()) % 7)
+    prev = sat - timedelta(days=7)
+    if abs((mid - prev).days) < abs((sat - mid).days) and prev >= s:
+        sat = prev
+    if sat < today:
+        return None
+    return sat, sat + timedelta(days=1)
+
+
+def add_target_dates(mat):
+    """検査の材料に、見頃を狙う週の日付を足す(例年の見頃の窓からコードが計算した値)。"""
+    now = mat.facts.get("now")
+    if not now:
+        return
+    today = _d(now)
+    for c in mat.region_candidates:
+        typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end") and not t.get("event_derived")), None)
+        w = target_weekend(typ, today)
+        if w:
+            mat.dates |= {(w[0].month, w[0].day), (w[1].month, w[1].day)}
+
+
+def target_week_line(c, today, pol=None):
+    """現況がない・古い地点の「見頃を狙うなら○週末」(根拠のラベルと、今年の現況が分からないことを同じ行に書く。言い切らない)。"""
+    pol = pol or load_policy()
+    if has_current(c) and (c["current"].get("age_days") or 0) <= pol["evidence"]["fresh_max_age_days"]:
+        return None
+    typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end") and not t.get("event_derived")), None)
+    w = target_weekend(typ, today)
+    if not w:
+        return None
+    t = pol["target_week"]
+    label = t["class_official"] if typ.get("source_class") == "official" else t["class_secondary"]
+    return t["line"].format(s=f"{w[0].month}/{w[0].day}", e=f"{w[1].month}/{w[1].day}", publisher=typ.get("publisher") or "", label=label)
 
 
 # ---- 事前取得の対象(段階57 第9部) ----

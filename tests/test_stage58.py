@@ -261,5 +261,31 @@ class Part6Names(unittest.TestCase):
             self.assertTrue(Path(d, "ask", "place_aliases.json").is_file())
 
 
+class Part7TargetWeek(unittest.TestCase):
+    def test_weekend_of_the_middle_of_the_window(self):
+        w = AP.target_weekend({"start": "11-11", "end": "11-30"}, date(2026, 11, 7))
+        self.assertEqual(w, (date(2026, 11, 21), date(2026, 11, 22)))
+        self.assertIsNone(AP.target_weekend({"start": "10-01", "end": "10-20"}, date(2026, 11, 7)))
+        self.assertIsNone(AP.target_weekend(None, date(2026, 11, 7)))
+
+    def test_line_has_label_and_uncertainty_and_only_when_no_recent_status(self):
+        c = spot("試験の山", state=None, window=("11-11", "11-30"))
+        line = AP.target_week_line(c, date(2026, 11, 7))
+        self.assertIn("11/21〜11/22", line)
+        self.assertIn("例年の見頃(試験市、公式)から", line)
+        self.assertIn("今年の現況は分かりません", line)
+        fresh = spot("試験の園", window=("11-11", "11-30"))
+        fresh["current"]["age_days"] = 2
+        self.assertIsNone(AP.target_week_line(fresh, date(2026, 11, 7)))
+        old = spot("古い園", window=("11-11", "11-30"))
+        old["current"]["age_days"] = 30
+        self.assertIsNotNone(AP.target_week_line(old, date(2026, 11, 7)))
+
+    def test_no_typical_no_line(self):
+        c = spot("試験の山", state=None)
+        c["typical"] = []
+        self.assertIsNone(AP.target_week_line(c, date(2026, 11, 7)))
+
+
 if __name__ == "__main__":
     unittest.main()

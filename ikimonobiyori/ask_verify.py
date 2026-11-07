@@ -340,6 +340,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。offers: 今使ってよい案内の文(省くと計画のもの)。"""
     rules = rules or load_rules()
     mat = Material(facts, rules, gazetteer)
+    AP.add_target_dates(mat)                                    # 段階58 第7部: 見頃を狙う週(コードの計算)の日付は事実として通す
     sents = []
     for line, s in split_sentences(text):
         sents.append({"line": line, "text": s, "errors": check_sentence(s, mat)})

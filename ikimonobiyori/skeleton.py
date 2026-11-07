@@ -56,7 +56,7 @@ def season_text(c, sj, t, max_quote):
     return _no_long_quote(c.get("typical_line") or t["typical_unknown"], max_quote)
 
 
-def pick_block(p, i, c, sj, t, max_quote):
+def pick_block(p, i, c, sj, t, max_quote, today=None):
     head = f"{CIRCLED[i]} {p['name']}"
     if c.get("city"):
         head += f"({c['city']})"
@@ -78,6 +78,10 @@ def pick_block(p, i, c, sj, t, max_quote):
             lines.append(f"・{f['period_line']}")
     if c.get("practical"):
         lines.append(f"・{c['practical'][0]['text']}")
+    if today and sj != "birds":
+        tw = AP.target_week_line(c, today)
+        if tw:
+            lines.append(f"・{tw}")
     return lines
 
 
@@ -107,7 +111,7 @@ def _used_urls(c, sj):
     return out
 
 
-def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned):
+def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned, today=None):
     cands = {c["name"]: c for c in facts_subject.get("candidates") or []}
     out = [t["picks_heading"]]
     picks = pl.get("picks") or []
@@ -122,7 +126,7 @@ def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned):
             for n in names:
                 used.append(n)
                 c = cands.get(n) or {"name": n}
-                out += pick_block(by_name[n], len(used) - 1, c, sj, t, max_quote)
+                out += pick_block(by_name[n], len(used) - 1, c, sj, t, max_quote, today)
                 urls |= _used_urls(c, sj)
                 mentioned.append(c)
     for p in picks:
@@ -130,7 +134,7 @@ def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned):
             continue
         used.append(p["name"])
         c = cands.get(p["name"]) or {"name": p["name"]}
-        out += pick_block(p, len(used) - 1, c, sj, t, max_quote)
+        out += pick_block(p, len(used) - 1, c, sj, t, max_quote, today)
         urls |= _used_urls(c, sj)
         mentioned.append(c)
     return out
@@ -197,6 +201,7 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
     lines += list(extra_lines)
     urls, mentioned = set(), []
     segs = plan.get("segments") or []
+    today = date.fromisoformat(str(facts.get("now"))[:10]) if facts.get("now") else None
     if plan.get("subject") == "areas":                                 # エリア別(段階58)。候補のないエリアも 1 行書く
         sj = plan["area_subject"]
         for line in plan.get("area_unknown") or []:
@@ -206,7 +211,7 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
             lines += ["", s["heading"]]
             if pl["picks"]:
                 lines.append(lead_for(pl["picks"], t))
-                lines += _subject_part(facts["subjects"][sj], pl, sj, t, max_quote, urls, mentioned)
+                lines += _subject_part(facts["subjects"][sj], pl, sj, t, max_quote, urls, mentioned, today)
             else:
                 lines.append(t["area_none"].format(name=s["heading"]))
     elif segs and segs[0].get("plan"):                                 # 期間別
@@ -216,17 +221,17 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
             lines += ["", s["heading"], lead_for(pl.get("picks") or [], t)]
             if sj == "all":
                 for ss in pl["segments"]:
-                    lines += _subject_part(per["subjects"][ss["subject"]], pl["subjects"][ss["subject"]], ss["subject"], t, max_quote, urls, mentioned)
+                    lines += _subject_part(per["subjects"][ss["subject"]], pl["subjects"][ss["subject"]], ss["subject"], t, max_quote, urls, mentioned, today)
             else:
-                lines += _subject_part(per["subjects"][sj], pl, sj, t, max_quote, urls, mentioned)
+                lines += _subject_part(per["subjects"][sj], pl, sj, t, max_quote, urls, mentioned, today)
     elif segs:                                                         # 対象別
         for s in segs:
             pl = plan["subjects"][s["subject"]]
             lines += ["", s["heading"], lead_for(pl.get("picks") or [], t)]
-            lines += _subject_part(facts["subjects"][s["subject"]], pl, s["subject"], t, max_quote, urls, mentioned)
+            lines += _subject_part(facts["subjects"][s["subject"]], pl, s["subject"], t, max_quote, urls, mentioned, today)
     else:
         lines.append("")
-        lines += _subject_part(facts["subjects"][plan["subject"]], plan, plan["subject"], t, max_quote, urls, mentioned)
+        lines += _subject_part(facts["subjects"][plan["subject"]], plan, plan["subject"], t, max_quote, urls, mentioned, today)
     if len(flat) < load_rules()["min_candidates"]:
         lines += ["", t["few"].format(n=len(flat))]
     ny = _no_this_year(plan, facts, t, max_quote)

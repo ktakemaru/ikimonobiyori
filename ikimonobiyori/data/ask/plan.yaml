@@ -172,6 +172,12 @@ skeleton:
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
 
+# 段階58 第7部: 見頃を狙う週(例年の見頃の窓のまん中に近い週末)。確認できた例年の見頃だけから計算する
+target_week:
+  line: "見頃を狙うなら{s}〜{e}の週末が目安です(例年の見頃({publisher}、{label})から。今年の現況は分かりません)"
+  class_official: 公式
+  class_secondary: 公式ではありません
+
 # 段階58 第5部: 会話の比較表(ikimonobiyori/compare.py)。履歴はデータ置き場
 compare:
   file: ask/plan_history.json
