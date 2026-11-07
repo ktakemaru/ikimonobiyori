@@ -577,7 +577,8 @@ class Part11OfficialCsv(unittest.TestCase):
                                      prefecture="山梨県", publisher="試験", label="山梨県観光サイト{md}更新")
             now = datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
             self.assertEqual(O.record(recs, env=env, now=now)["written"], 2)
-            self.assertEqual(O.read_records("autumn_leaves", env), [])          # 承認待ち: 答えの材料にしない(記録は残る)
+            with unittest.mock.patch.object(O, "_source_approved", return_value=False):
+                self.assertEqual(O.read_records("autumn_leaves", env), [])      # 承認待ち: 答えの材料にしない(記録は残る)。台帳の今の状態によらず確かめる
             with unittest.mock.patch.object(O, "_source_approved", return_value=True):
                 rows = O.read_records("autumn_leaves", env)
             self.assertEqual({r["name"] for r in rows}, {"試験の渓谷周辺", "試験の湖畔"})   # 承認後は HTML が空でも CSV の現況が使われる
