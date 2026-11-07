@@ -15,6 +15,7 @@ from pathlib import Path
 import yaml
 
 from . import answer_plan as AP
+from . import offers as OF
 from .paths import DATA_FILES_DIR
 
 CONFIG = DATA_FILES_DIR / "ask" / "policy.yaml"
@@ -246,8 +247,20 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
-def check(text, facts, rules=None, gazetteer=(), plan=None):
-    """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。"""
+def offer_errors(text, allowed, doc=None):
+    """段階57 第1部: 提案らしい文は、案内の一覧(data/ask/offers.yaml)にあり条件を満たすものだけ。allowed: 今使ってよい案内の文。"""
+    doc = doc or OF.load()
+    ok = {_n(a).strip() for a in allowed or []}
+    errs = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        t = _n(s).strip()
+        if t not in ok and any(_n(p) in t for p in doc["offer_phrases"]):
+            errs.append({"code": "offer_not_allowed", "detail": s.strip()[:40]})
+    return errs
+
+
+def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
+    """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。offers: 今使ってよい案内の文(省くと計画のもの)。"""
     rules = rules or load_rules()
     mat = Material(facts, rules, gazetteer)
     sents = []
@@ -280,6 +293,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None):
     if plan:                                                                 # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
+    answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx:
             answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
@@ -592,7 +606,7 @@ def load_facts(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def reply_check(text, facts, rules=None, gazetteer=(), page_line=None):
+def reply_check(text, facts, rules=None, gazetteer=(), page_line=None, offers=None):
     """段階38(指示書 3-4): 利用者への返事の全文の検査。答えの検査(check)に加えて、答えの本文の外に付け足した
     作業・開発の説明(reply_terms)を落とす。ページの場所の 1 行(page_line。ask page が書いた行と同じもの)だけは検査から外す。"""
     rules = rules or load_rules()
@@ -603,7 +617,7 @@ def reply_check(text, facts, rules=None, gazetteer=(), page_line=None):
             continue
         kept.append(line)
     body = "\n".join(kept) + ("\n" if text.endswith("\n") else "")
-    r = check(body, facts, rules, gazetteer)
+    r = check(body, facts, rules, gazetteer, offers=offers)
     for x in r["sentences"]:
         t = URL_RE.sub(" ", _n(x["text"]))
         for pat in rules.get("reply_terms") or []:
@@ -631,7 +645,7 @@ def page_check(lines, facts, rules=None, gazetteer=()):
     return {"ok": all(not x["errors"] for x in sents), "sentences": sents, "answer_errors": []}
 
 
-def generic_check(text, rules=None):
+def generic_check(text, rules=None, offers=None):
     """段階39 B-1: facts を持たない経路(桜・梅などの guide find の出力、検索だけで答える経路、ページ)の答えの検査。
     すべての経路が、出す前にこれか check を通す。落とすもの: 作業・開発の言葉(dev_terms・internal_terms・reply_terms)、作業の経過の文(forbidden_phrases)、
     検査・記録の事情(process_phrases)、聞き返しだけで終わる答え(候補が min_candidates 件未満で、お答えできない旨もない)。
@@ -656,6 +670,7 @@ def generic_check(text, rules=None):
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
+    errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):
         asks = any(w in text for w in g["ask_words"])

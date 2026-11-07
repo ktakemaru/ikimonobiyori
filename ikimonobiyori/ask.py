@@ -25,6 +25,7 @@ import yaml
 from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
+from . import offers as OF
 from . import observations as O
 from . import sources as S
 from .paths import DATA_FILES_DIR, PKG, data_dir, data_path
@@ -169,6 +170,10 @@ def mark_stale_display(subj, policy):
             if days >= gap:
                 cur["reference_only"] = True
                 cur["gap_days"] = days
+
+
+class PageUnsupported(Exception):
+    """写真つきページに対応していない対象(段階57 第1部)。別のページを作らず、終了コード 2 で止める。"""
 
 
 class Flow:
@@ -435,6 +440,8 @@ class Flow:
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
+        if not OF.ask_subjects_supported(list(facts_doc.get("subjects") or {})):      # 段階57 第1部: 未対応の対象で、別のページ(野鳥)を黙って作らない
+            raise PageUnsupported(OF.unsupported_theme_message())
         gp = guide.load_policy()["photos"]
         table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
         pinfo = {x["name"]: x.get("taxon_id") for x in (self._load("photos.json", {}) or {}).get("species") or []}
@@ -462,6 +469,14 @@ class Flow:
         self.call("page", ok=chk["ok"], parks=len(shown))
         return doc
 
+    def offers_now(self, facts_doc):
+        """答えの末尾に付けてよい案内の一覧。写真の候補は、対象ごとの載せられる種名。"""
+        from . import park_page
+        pp = self.policy["park_page"]
+        subs = list(facts_doc.get("subjects") or {})
+        has = any(c.get("park_birds") for c in park_page.parks(facts_doc, pp))
+        return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has})
+
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
     def plan(self, subject=None, override=None, reason=None, replace=None):
         facts_doc = self._load("facts.json", None)
@@ -474,6 +489,7 @@ class Flow:
         doc = AP.build_all(facts_doc, overrides=keep) if sj == "all" else AP.build(facts_doc, sj, overrides=keep)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
+        doc["offers"] = self.offers_now(facts_doc)                    # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
         self.call("plan", subject=sj, picks=len(doc["picks"]), sections=len(doc["sections"]), overrides=len(doc["overrides"]))
         return doc
@@ -485,7 +501,8 @@ class Flow:
             raise ValueError("facts.json がない(先に facts を実行する)")
         gaz = sorted(set(place_names()) | set(gazetteer))
         if reply:                                     # 段階38: 利用者への返事の全文(答えの本文 + ページの場所の 1 行)
-            r = V.reply_check(text, facts_doc, gazetteer=gaz, page_line=(self._load("page.json", {}) or {}).get("line"))
+            r = V.reply_check(text, facts_doc, gazetteer=gaz, page_line=(self._load("page.json", {}) or {}).get("line"),
+                              offers=OF.texts((self._load("answer_plan.json", None) or {}).get("offers")))
             self._save("check_reply.json", r)
             final = text if r["ok"] else V.strip(r["checked_text"], r)
             (self.workdir / "final_reply.txt").write_text(final, encoding="utf-8")
@@ -561,6 +578,10 @@ def main(argv=None, http_get=None):
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(桜・梅などの guide find の出力・検索だけの答え)の検査。--out-dir は不要(段階39 B-1)")
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
+    p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
+    p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
+    p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
+    p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
     a = ap.parse_args(argv)
     pol = load_policy()
     out_dir = a.out_dir
@@ -571,9 +592,22 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
+        plan = {}
+        if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():
+            plan = json.loads(Path(a.out_dir, "answer_plan.json").read_text(encoding="utf-8"))
+        print("\n".join(OF.unsupported_reply(a.what, plan.get("offers") or [])))
+        return 0
     if a.step == "verify" and a.generic:                 # 段階39 B-1: facts を持たない経路。出す前に必ず通す。落ちた行は利用者に見せない
         text = Path(a.text).read_text(encoding="utf-8")
-        r = V.generic_check(text)
+        offers_ok = None
+        if a.theme:
+            from . import guide as _G
+            _pol = _G.load_policy()
+            _themes, _ = _G.themes_for_words([a.theme], _pol)
+            wf = a.theme in (_pol.get("wildflower") or {}).get("words", [])
+            offers_ok = OF.all_texts() if wf or OF.guide_themes_supported(_themes) else []
+        r = V.generic_check(text, offers=offers_ok)
         for e in r["errors"]:
             print(f"NG  [{e['code']}] {e.get('line') or '(全体)'}: {e['detail']}", file=sys.stderr)
         final = text if r["ok"] else V.generic_strip(text, r)
@@ -611,7 +645,11 @@ def main(argv=None, http_get=None):
             _out(flow.photos())
             return 0
         if a.step == "page":
-            doc = flow.page(answer_path=a.answer)
+            try:
+                doc = flow.page(answer_path=a.answer)
+            except PageUnsupported as ex:
+                print(str(ex), file=sys.stderr)
+                return 2
             for line in doc["errors"]:
                 print(line, file=sys.stderr)
             print(doc["line"])

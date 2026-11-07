@@ -1214,9 +1214,19 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
         lines += ["", f"## {policy['answer']['avoid']['heading']}"] + [f"- {x}" for x in parts["avoid"]]
     if parts.get("sources"):
         lines += ["", f"## {policy['answer']['sources']['heading']}"] + parts["sources"]
+    offer = _page_offer_lines(parts, themes)                    # 段階57 第1部: できることだけを案内する(一覧 data/ask/offers.yaml。写真の候補がなければ出さない)
+    if offer:
+        lines += [""] + offer
     if any(sec["rows"] for sec in parts["sections"]):
         lines += ["", parts["next_question"]]
     return "\n".join(lines) + "\n"
+
+
+def _page_offer_lines(parts, themes):
+    """ガイド型の答えの末尾の案内。テーマが対応済みで、おすすめの欄に写真の候補(表示してよい種名)があるときだけ。"""
+    from . import offers
+    has = any(k.get("shown") for sec in parts["sections"] if sec["key"] == "recommend" for r in sec["rows"] for k in r["entry"]["kinds"])
+    return offers.texts(offers.available({"subject_supported": offers.guide_themes_supported(themes), "plan": True, "photo_candidates": has}))
 
 
 def bird_status_line(title, today, *, count=None, species=None, unread=False, policy=None):
@@ -1442,7 +1452,8 @@ def main(argv=None, http_get=None, http_bytes=None):
     pp.add_argument("--theme", default="野鳥", help="野鳥・花・野草")
     pp.add_argument("--all", action="store_true", help="一覧の全部が終わるまで、実行の間に間隔をあけて繰り返す")
     pg = sub.add_parser("page", help="野鳥の案内を写真つきの単独の HTML ページにする(guide find --text と同じ選び方・同じ文。通信しない。段階29)")
-    pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。既定は野鳥)")
+    pg.add_argument("--theme", default="野鳥", help="質問の言葉(方針の words。省略すると野鳥。対応していない語はエラーで止まる。段階57)")
+    pg.add_argument("--list-themes", action="store_true", help="写真つきページに対応しているテーマの一覧を出す(段階57)")
     pg.add_argument("--from", dest="origin", help="出発地(横浜・東京。省略すると横浜)")
     pg.add_argument("--date", help="対象の日(YYYY-MM-DD。省略すると今日)")
     pg.add_argument("--area", help="野草・高山植物のページ（--theme 野草 など）の山域名")
@@ -1541,6 +1552,10 @@ def main(argv=None, http_get=None, http_bytes=None):
     if a.cmd == "places-fetch":
         return _places_fetch(a, http_get)
     if a.cmd == "page":
+        if a.list_themes:
+            from . import offers
+            print(offers.theme_list())
+            return 0
         if a.area or a.site or a.theme in (load_policy().get("wildflower") or {}).get("words", []):     # 段階41: 野草・高山植物も写真つきページ
             from . import wildflower_page
             return wildflower_page.page_cmd(a)

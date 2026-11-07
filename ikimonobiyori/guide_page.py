@@ -305,6 +305,10 @@ def page_cmd(a, now=None):
     if themes is None:
         print(f"言い換えの表にない言葉(推測で結びつけない): {kinds}", file=sys.stderr)
         return 1
+    from . import offers
+    if not offers.guide_themes_supported(themes):               # 段階57 第1部: 未対応のテーマで、別のページを黙って作らない
+        print(offers.unsupported_theme_message(), file=sys.stderr)
+        return 2
     now = now or guide.clock_now()
     on = date.fromisoformat(a.date) if a.date else now.date()
     entries = guide.build()[0]
@@ -325,11 +329,11 @@ def page_cmd(a, now=None):
         row = table.get(name)
         return guide_photos.load_photo(row["taxon_id"]) if row else None
 
-    out = Path(a.out) if a.out else guide_photos.page_dir() / ph["page_file"]
+    over = (ph["html"].get("by_theme") or {}).get(guide_photos.photo_theme_for(a.theme, policy))
+    out = Path(a.out) if a.out else guide_photos.page_dir() / ((over or {}).get("page_file") or ph["page_file"])    # 段階57: 花のページを野鳥のファイル名で作らない
     if not out_path_ok(out):
         print("書き込み先は IKIMONOBIYORI_DATA_DIR の下かリポジトリの外だけです(リポジトリの追跡ファイルを実行で変えません)", file=sys.stderr)
         return 2
-    over = (ph["html"].get("by_theme") or {}).get(guide_photos.photo_theme_for(a.theme, policy))
     page = build_page(parts, policy=policy, now=now, kind_notes=found.get("kind_notes") or [], photo_for=photo_for,
                       retired_urls=set(guide.load_retired(policy)["urls"]), in_table=lambda n: n in table, h_over=over)
     out.parent.mkdir(parents=True, exist_ok=True)

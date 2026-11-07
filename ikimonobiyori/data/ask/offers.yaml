@@ -1,0 +1,26 @@
+# 段階57 第1部(本人の指摘 2026-11-07): 「できないことを提案しない」。答えの末尾に付ける案内は、この一覧から、条件を満たすものだけをコードが組み立てる
+# (ikimonobiyori/offers.py)。エージェントが自由な文で提案を書き足さない(検査器 offer_not_allowed が落とす)。文は質問の形にしない(段階57 第13部)。
+schema: ikimono-ask-offers/1
+
+offers:
+  - id: photo_page
+    text: 写真つきのページにもできます。
+    # 条件: 対象が対応済み(page_support)・直前の計画がある・載せる写真の候補(種名)が 1 つ以上ある
+    requires: [subject_supported, plan, photo_candidates]
+
+# 写真つきページに対応しているテーマ・対象(1 か所。guide page --list-themes で見られる)
+page_support:
+  # guide page --theme <語>(ガイド型): 語から決まるガイドのテーマがすべてここにあるときだけ作る
+  guide_themes: [野鳥, 冬鳥, 花, 桜]
+  # ask page(直前の答えのページ): facts の対象がすべてここにあるときだけ作る
+  ask_subjects: [birds]
+  # 利用者に見せる呼び名の一覧(guide page --list-themes とエラーの文)
+  labels: [野鳥, 花, 桜, 野草]
+
+messages:
+  unsupported_theme: "このテーマの写真つきページは未対応です。対応: {themes}"
+  unsupported_reply: "今は{what}には対応していません。"
+  no_recent_plan: "先に質問してください（直前の答えがないか、24時間より前のものです）。"
+
+# 提案らしい文の語(検査器)。一覧にない・条件を満たさない文にこれらがあれば不合格
+offer_phrases: [しましょうか, にもできます, お作りします, 公開できます, 作れます, Artifact にします, Artifactにします]

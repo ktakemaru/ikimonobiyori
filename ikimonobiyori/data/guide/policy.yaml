@@ -409,6 +409,7 @@ photos:
     # 段階39: 花・桜・野草のページ（鳥以外）。題名・見出し・文を花向けにする。鳥のページは上の値のまま
     by_theme:
       花:
+        page_file: flower-guide.html
         title: 花の案内
         headings: {birds: いま見たい花, birds_out: 例年の時期の外の花, birds_unknown: ほかに見られる花(時期は未確認), places: おすすめの名所}
         row_birds: "見られる花: {text}"
