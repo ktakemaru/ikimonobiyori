@@ -255,5 +255,32 @@ class InvasiveCards(unittest.TestCase):
         self.assertEqual([e for e in intent.check(text, [ias_card(), card]) if e["code"] == "knowledge_fact_not_in_card"], [])
 
 
+# ---- 第4部: 調査の数の目安(年つき)と、この冬の記録ではないことの 1 文 ----
+def count_card(year=2026):
+    return {"title": "試験ドリの飛来数の目安", "category": "シーズンの目安", "place": "試験ドリ", "place_aliases": [],
+            "facts": [f"{year}年1月の全国調査で、試験県は1,234羽"], "condition": {"months": [], "year_dependent": True, "year": year},
+            "source": {"name": "環境省生物多様性センター", "title": "試験の調査", "url": "https://biodic.example.go.jp/r7.xlsx", "checked_on": "2026-11-08"},
+            "confidence": "公的資料", "rights": "確認済み: 公共データ利用規約", "usage": "知識"}
+
+
+def explain_card():
+    return {**count_card(), "title": "試験ドリの調査とは", "category": "季節の仕組み", "facts": ["毎年1月に数える調査"],
+            "condition": {"months": [], "year_dependent": False}, "source": {**count_card()["source"], "url": "https://biodic.example.go.jp/top.html"}}
+
+
+class SurveyCounts(unittest.TestCase):
+    def test_count_question_puts_the_count_first_and_says_it_is_not_this_winter(self):
+        cards = [count_card(), explain_card()]
+        text = intent.compose("試験ドリは、どのくらい来ている?", cards=cards)
+        self.assertTrue(text.startswith("試験ドリの飛来数の目安"))
+        self.assertIn("2026年の調査の数で、この冬の飛来の記録は確認できていません。", text)
+        self.assertEqual(intent.check(text, cards), [])
+        self.assertFalse(text.rstrip().endswith("?"))
+
+    def test_no_note_without_now_words_or_without_dated_count_cards(self):
+        self.assertNotIn("この冬の飛来の記録", intent.compose("試験ドリについて教えて", cards=[count_card(), explain_card()]))
+        self.assertNotIn("この冬の飛来の記録", intent.compose("試験ドリは来ている?", cards=[explain_card()]))
+
+
 if __name__ == "__main__":
     unittest.main()

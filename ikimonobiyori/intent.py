@@ -58,6 +58,9 @@ def cards_for(question, cards=None, env=None, month=None):
     if jc:
         hits = [r for r in hits if r not in jc]
     order = {k: i for i, k in enumerate(c["section_order"])}
+    for pat, cat in (c.get("category_first") or {}).items():
+        if re.search(pat, question or ""):
+            order = {**order, cat: -1}
     uniq, seen = [], set()
     for r in jc:
         if r["title"] not in seen:
@@ -104,6 +107,10 @@ def compose(question, cards=None, env=None, month=None, today=None, events=None)
         urls += [r["source"]["url"] for r in related if r["source"].get("url")]
     if any(r.get("confidence") == "紹介" for r in use + related):
         lines += ["", c["secondary_note"]]
+    years = sorted({(r.get("condition") or {}).get("year") for r in use if (r.get("condition") or {}).get("year_dependent")
+                    and r.get("category") in (c.get("past_note_categories") or [])} - {None})
+    if years and c.get("now_words") and any(w in (question or "") for w in c["now_words"]):    # 段階61 第4部: 年つきの調査の数は今年の現況ではない
+        lines += ["", c["past_season_note"].format(year=years[-1])]
     if normal_src:                                   # 出典の行に同じ URL があるので、URL だけの行は重ねない
         urls = [u for u in urls if u not in normal_src]
     lines += ["", c["sources_heading"]] + ([normal_src] if normal_src else []) + sorted(set(urls))
