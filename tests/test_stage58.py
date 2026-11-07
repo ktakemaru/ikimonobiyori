@@ -192,5 +192,46 @@ class Part4SnsAndExcuses(unittest.TestCase):
             self.assertIn("process_excuse", [e["code"] for e in V.process_excuse_errors(s, RULES)], s)
 
 
+class Part5Compare(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+
+    def plan(self, *names):
+        f = facts_doc({"autumn_leaves": subject(*[spot(n, 20 + i * 40, city=f"町{i}") for i, n in enumerate(names)])})
+        return f, AP.build(f, "autumn_leaves")
+
+    def test_needs_two_plans_and_uses_latest_values(self):
+        from ikimonobiyori import compare as CP
+        f, plan = self.plan("河口湖", "長瀞")
+        CP.remember(plan, NOW, self.env)
+        self.assertEqual(CP.table(NOW, self.env), (None, []))
+        self.assertFalse(CP.can_compare(NOW, self.env))
+        CP.remember(self.plan("飯能")[1], NOW + timedelta(hours=1), self.env)
+        self.assertTrue(CP.can_compare(NOW + timedelta(hours=1), self.env))
+        latest = {"candidates": [spot("河口湖", 80, state="色づき始め", date_="2026-11-07", city="町0"), spot("長瀞", 90, city="町1"), spot("飯能", 50, state=None, city="町2")], "avoid": []}
+        text, urls = CP.table(NOW + timedelta(hours=1), self.env, facts_fn=lambda sj, ds: latest)
+        self.assertIn("| 河口湖 | 色づき始め(11/7時点) |", text)                     # 計画の時点の値ではなく最新の値
+        self.assertIn("| 飯能 | 確認できていません |", text)
+        self.assertTrue(urls)
+
+    def test_history_is_capped_and_expires(self):
+        from ikimonobiyori import compare as CP
+        for i in range(7):
+            CP.remember(self.plan(f"場所{i}")[1], NOW + timedelta(minutes=i), self.env)
+        self.assertEqual(len(CP.load_history(NOW + timedelta(minutes=7), self.env)), 5)
+        self.assertEqual(CP.load_history(NOW + timedelta(hours=30), self.env), [])
+
+    def test_offer_only_with_history(self):
+        from ikimonobiyori import offers as OF
+        self.assertEqual([o["id"] for o in OF.available({"compare_history": False})], [])
+        self.assertEqual([o["id"] for o in OF.available({"compare_history": True})], ["compare_table"])
+        f = ask.Flow(Path(self.tmp.name) / "w", now=NOW, env=self.env)
+        f._save("facts.json", self.plan("河口湖", "長瀞")[0])
+        self.assertNotIn("compare_table", [o["id"] for o in f.plan()["offers"]])     # 1 件目はまだ履歴がない
+        self.assertIn("compare_table", [o["id"] for o in f.plan()["offers"]])         # 2 件目で履歴が 2 件
+
+
 if __name__ == "__main__":
     unittest.main()

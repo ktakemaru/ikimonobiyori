@@ -233,6 +233,8 @@ def _facts_subset(facts_doc, plan_doc):
 
 def save_last_plan(workdir, facts_doc, plan_doc, now, env=None):
     """直前の答えの計画を、データ置き場に保存する(有効期間は data/ask/plan.yaml の last_plan。リポジトリの外)。"""
+    from . import compare
+    compare.remember(plan_doc, now, env)                               # 段階58 第5部: 比較表の履歴
     p = last_plan_path(env)
     p.parent.mkdir(parents=True, exist_ok=True)
     doc = {"schema": "ikimonobiyori-last-plan/1", "saved_at": now.isoformat(), "workdir": str(workdir), "subject": plan_doc.get("subject"),
@@ -645,7 +647,9 @@ class Flow:
             has = any(c.get("park_birds") for c in park_page.parks(facts_doc, self.policy["park_page"]))
         else:
             has = bool(plan_doc) and plan_page.has_photo_candidates(facts_doc, plan_doc, self.policy["plan_page"])
-        return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has})
+        from . import compare
+        return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has,
+                             "compare_history": compare.can_compare(self.now, self.env, pending=1)})
 
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
     def area_plan(self, names, subject=None):
@@ -784,6 +788,7 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("compare", help="ここまでの候補の比較表をコードで作る(履歴の計画が 2 件以上のとき。段階58)")
     p = sub.add_parser("import-csv", help="公式の機械可読データの本文を記録にする(段階57。山梨県の紅葉状況 CSV。承認されるまで答えには出ない。本文は保存しない)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--csv", required=True, help="読んだ CSV の本文のファイル")
@@ -821,6 +826,14 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "compare":                              # 段階58 第5部: 履歴がなければ作らない
+        from . import compare
+        text, urls = compare.table(_clock())
+        if text is None:
+            print(OF.load()["messages"]["no_recent_plan"], file=sys.stderr)
+            return 2
+        print(text + ("\n" + AP.load_policy()["compare"]["sources_heading"] + "\n" + "\n".join(urls) if urls else ""))
+        return 0
     if a.step == "origin":                               # 段階57 第8部
         if a.add:
             if a.lat is None or a.lon is None or not a.qid:

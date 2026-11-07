@@ -8,6 +8,11 @@ offers:
     # 条件: 対象が対応済み(page_support)・直前の計画がある・載せる写真の候補(種名)が 1 つ以上ある
     requires: [subject_supported, plan, photo_candidates]
 
+  - id: compare_table
+    text: ここまでの候補は表にして比べられます。
+    # 条件: 履歴の計画が 2 件以上ある
+    requires: [compare_history]
+
 # 写真つきページに対応しているテーマ・対象(1 か所。guide page --list-themes で見られる)
 page_support:
   # guide page --theme <語>(ガイド型): 語から決まるガイドのテーマがすべてここにあるときだけ作る

@@ -172,6 +172,17 @@ skeleton:
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
 
+# 段階58 第5部: 会話の比較表(ikimonobiyori/compare.py)。履歴はデータ置き場
+compare:
+  file: ask/plan_history.json
+  max_plans: 5
+  valid_hours: 24
+  min_plans: 2
+  headers: [場所, 今の状況と日付, 例年の見頃, 対象日の見込み]
+  no_current: 確認できていません
+  no_typical: 例年の時期は分かりません
+  sources_heading: 出典
+
 # 段階58 第2部: 公式ページの読み方(ikimonobiyori/official_pages.py)
 official_pages:
   suffixes: [.lg.jp, .go.jp, .pref.kanagawa.jp, .metro.tokyo.lg.jp]

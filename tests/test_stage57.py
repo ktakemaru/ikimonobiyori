@@ -798,7 +798,7 @@ class Part2Page(unittest.TestCase):
         f = self.flow(facts_doc({"autumn_leaves": s}))
         self.assertEqual(f.plan()["offers"], [])
         f2 = self.flow(facts_doc({"autumn_leaves": koyo_subject()}))
-        self.assertEqual(OF.texts(f2.plan()["offers"]), [OFFER])
+        self.assertIn(OFFER, OF.texts(f2.plan()["offers"]))
 
     def test_facts_carry_tree_species_from_the_spot_list(self):
         from ikimonobiyori import observations as O
