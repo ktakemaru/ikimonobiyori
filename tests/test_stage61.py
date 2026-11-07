@@ -195,8 +195,15 @@ class Events(unittest.TestCase):
     def test_repository_ledger_is_valid_and_pending(self):
         doc = FE.load()
         self.assertEqual(FE.validate(doc), [])
-        self.assertIn("神奈川県立生命の星・地球博物館", FE.pending_facilities(doc))
-        self.assertEqual(FE.lines_for("神奈川で、野鳥や地形の観察会はある?", self.TODAY, doc), ([], []))     # 承認待ちは出さない
+        status = {f["id"]: (f.get("approval") or {}).get("status") for f in doc["facilities"]}
+        self.assertEqual({i for i, s in status.items() if s == "approved"}, {"kanagawa-museum"})   # 本人の承認(2026-11-08)
+        self.assertEqual({i for i, s in status.items() if s != "approved"}, set())                 # この台帳にほかの施設はない(足すときは承認待ち)
+        self.assertEqual(FE.pending_facilities(doc), [])
+        ls, urls = FE.lines_for("神奈川で、野鳥や地形の観察会はある?", self.TODAY, doc)                # 承認済みの施設の行事だけを出す
+        self.assertEqual(len(ls), 2)
+        self.assertIn("「バードウォッチング入門」: 2026年12月5日(土)", ls[0])
+        self.assertIn("「冬の地形地質観察会―西丹沢の地質と岩石―」: 2026年12月5日(土)", ls[1])
+        self.assertEqual(urls, ["https://nh.kanagawa-museum.jp/event/kouza20261205-2.html", "https://nh.kanagawa-museum.jp/event/kouza20261205.html"])
 
     def test_approved_event_line_has_year_weekday_deadline_and_capacity(self):
         ls, urls = FE.lines_for("神奈川で、野鳥の観察会はある?", self.TODAY, event_doc("approved"))
