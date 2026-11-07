@@ -228,11 +228,11 @@ class AnswerText(unittest.TestCase):
         self.assertIn("丙梅林などは、今日は例年の時期の外で、咲いていない見込みです。代わりに、甲梅林がよいです。", text)
         self.assertIn("今日おすすめにできる名所は1件でした。", text)
         self.assertIn("https://example.org/a", text.split("## 出典")[1])
-        self.assertTrue(text.rstrip().endswith("好みを1つ教えてください。近さと、見られる種類のどちらを優先しますか。"))
+        self.assertNotIn("好みを1つ", text)                                               # 段階57 第13部: 末尾に質問が出ない
 
     def test_the_next_question_is_only_one_and_last(self):
         text = self.render(self.found(recommend=[entry("甲梅林")]))
-        self.assertEqual(text.count("好みを1つ教えてください"), 1)
+        self.assertEqual(text.count("好みを1つ教えてください"), 0)                        # 段階57 第13部: 末尾に質問が出ない
 
     def test_nothing_recommended_has_no_question_line(self):
         self.assertNotIn("好みを1つ", self.render(self.found()))

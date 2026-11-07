@@ -268,6 +268,15 @@ def source_rule_errors(text, rules, blob=None):
     return errs
 
 
+def question_errors(text, rules):
+    """段階57 第13部: 好み・優先・選択を尋ねる文を答えに入れない。例外(答えの代わりの聞き返しだけ)は generic_check(clarify=True)。"""
+    out = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        if re.search(rules["ask_sentence_re"], _n(s).strip()):
+            out.append({"code": "question_in_answer", "detail": s.strip()[:40]})
+    return out
+
+
 def process_excuse_errors(text, rules):
     """段階57 第9部: 作業の事情の文・「ご希望なら調べます」型。調べられるものは答えの前に調べる。"""
     out = []
@@ -358,6 +367,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += visitor_center_errors(text, facts)
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
+    answer_errors += question_errors(text, rules)
     answer_errors += source_rule_errors(text, rules, mat.blob)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
@@ -740,7 +750,7 @@ def page_check(lines, facts, rules=None, gazetteer=()):
     return {"ok": all(not x["errors"] for x in sents), "sentences": sents, "answer_errors": []}
 
 
-def generic_check(text, rules=None, offers=None):
+def generic_check(text, rules=None, offers=None, clarify=False):
     """段階39 B-1: facts を持たない経路(桜・梅などの guide find の出力、検索だけで答える経路、ページ)の答えの検査。
     すべての経路が、出す前にこれか check を通す。落とすもの: 作業・開発の言葉(dev_terms・internal_terms・reply_terms)、作業の経過の文(forbidden_phrases)、
     検査・記録の事情(process_phrases)、聞き返しだけで終わる答え(候補が min_candidates 件未満で、お答えできない旨もない)。
@@ -748,6 +758,12 @@ def generic_check(text, rules=None, offers=None):
     rules = rules or load_rules()
     g = rules["generic"]
     errs = []
+    if clarify:                                             # 段階57 第13部の例外: 対象・場所・日付のいずれも特定できず、答えの代わりに聞き返す 1 文だけ
+        n = len([l for l in text.splitlines() if l.strip()])
+        q = question_errors(text, rules)
+        if n == 1 and len(q) == 1:
+            return {"ok": True, "errors": [], "candidates": 0}
+        return {"ok": False, "errors": [{"code": "clarify_not_one_sentence", "detail": "聞き返しは 1 文だけ", "line": 0}], "candidates": 0}
     for i, line in enumerate(text.splitlines()):
         t = URL_RE.sub(" ", _n(line))
         for code, key in (("forbidden_phrase", "forbidden_phrases"), ("process_phrase", None)):
@@ -765,7 +781,7 @@ def generic_check(text, rules=None, offers=None):
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
-    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules)]
+    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules) + question_errors(text, rules)]
     errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):

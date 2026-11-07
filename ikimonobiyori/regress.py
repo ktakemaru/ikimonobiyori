@@ -187,7 +187,7 @@ def compose_answer(facts, plan):
             season = "この時期に見られる鳥は" + "・".join(b["name"] for b in c.get("park_birds") or []) + "です" if sj == "birds" else "例年の見頃は11月です"
             phrase = f"{p['phrase']}。" if p.get("phrase") else ""
             note = f"{p['note']}。" if p.get("note") else ""
-            out.append(f"{chr(0x2460 + i)} {p['name']}: {cur['display']}(11/5時点、{cur['publisher']})。{season}。{phrase}{note}")
+            out.append(f"{chr(0x2460 + i)} {p['name']}: {cur.get('display') or cur['state_raw']}(11/5時点、{cur['publisher']})。{season}。{phrase}{note}")
             urls.append(cur["url"])
         return out
     if len(subs) > 1:

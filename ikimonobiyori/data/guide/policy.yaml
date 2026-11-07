@@ -284,7 +284,6 @@ answer:
     few_max: {value: 2, source: "仮置き(段階39)。おすすめがこの件数以下のとき、少ないと書く", provisional: true}
   state_note: "今年の咲き具合・色づきの日付つきの記録は読めていません。以下は例年の時期の目安です。"
   sources: {heading: 出典, per_place: {value: 1, source: "仮置き(段階39)。名所ごとに出す出典 URL の数", provisional: true}, max: {value: 5, source: "仮置き(段階39)。出典 URL の全体の数", provisional: true}}
-  next_question: "好みを1つ教えてください。近さと、見られる種類のどちらを優先しますか。"
   place: "{i}. **{name}**({where})"
   bits: {season: "例年の時期: {text}", kinds: "種類: {text}", tier: "{label}", classes: "出どころの区分: {text}", distance: "{origin}から約{km} km", edge: "範囲の端", user: "あなたが行った場所", why_in_season: "対象の日は例年の時期に入っています"}
   reference_item: "- {name}({where})"
@@ -417,7 +416,6 @@ photos:
         no_photo_names: "写真が取れなかった花: {names}"
     max_embed_bytes: {value: 2000000, source: "ユーザー指示(段階39 A-6)。ページに埋め込む写真の合計（base64 後）の目安。超える新しい写真は載せず名前だけの行に回す", provisional: true}
     no_photo_names: "写真が取れなかった鳥: {names}"            # 段階39 A-7: 写真のない種は枠を出さず名前だけ
-    next_question: "ほかの日や出発地でも調べられます。日にちと出発地を教えてください。"      # 段階39 P3: 次の質問は末尾に 1 つだけ
     others: "そのほか: {names}"
     others_sep: "、"
     season_unknown: "時期: 例年の時期を確かめられていない"
@@ -489,7 +487,6 @@ wildflower:
     read_on: "{d}に確認"
     caution: "注意: {text}"
     protected_line: "保護が必要な種のため、場所が分かる写真は出していません。"
-    next_question: "ほかの月や山域でも調べられます。次は、どの山域や月を詳しく知りたいですか？"
     title_overview: "高山植物と山野草の例年の見ごろ"
     title_alpine: "高山植物（高山・亜高山・高原）の例年の見ごろ"
     heading_alpine: 高山の花（地点で見ごろが違います）
@@ -511,8 +508,6 @@ wildflower:
     zukan_more: "（続き）"
     zukan_part: "{label}（{n}ページ目）"
     zukan_lead: "データのある山域・地点の花を、{label}に咲き始める順に並べた図鑑です（{count}種）。ほかの季節は上の案内から開けます。"
-    next_question_zukan: "高山の花と山麓の野草のどちらを先に見たいですか？"
-    next_question_overview: "高山の花と山麓の野草のどちらを詳しく知りたいですか？ 山域や月が決まっていれば教えてください。"
   zukan:                                                  # 図鑑の形のページの分け方
     clean_glob: "wildflower-zukan-*.html"
     alpine_label: "高山の花"

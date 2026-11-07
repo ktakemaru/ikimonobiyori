@@ -760,6 +760,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(桜・梅などの guide find の出力・検索だけの答え)の検査。--out-dir は不要(段階39 B-1)")
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
+    p.add_argument("--clarify", action="store_true", help="--generic のとき: 対象・場所・日付のどれも特定できず、答えの代わりに聞き返す 1 文(段階57 第13部)")
     p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
@@ -826,7 +827,7 @@ def main(argv=None, http_get=None):
             _themes, _ = _G.themes_for_words([a.theme], _pol)
             wf = a.theme in (_pol.get("wildflower") or {}).get("words", [])
             offers_ok = OF.all_texts() if wf or OF.guide_themes_supported(_themes) else []
-        r = V.generic_check(text, offers=offers_ok)
+        r = V.generic_check(text, offers=offers_ok, clarify=a.clarify)
         for e in r["errors"]:
             print(f"NG  [{e['code']}] {e.get('line') or '(全体)'}: {e['detail']}", file=sys.stderr)
         final = text if r["ok"] else V.generic_strip(text, r)

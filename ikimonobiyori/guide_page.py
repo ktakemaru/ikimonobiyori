@@ -281,7 +281,6 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
             items.append(f'<li>{esc(line)} ({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')   # 閉じた状態(open なし)
     body.append(f'<p class="note">{esc(h["credit"])}</p>')
-    body.append(f'<p class="lead">{esc(h["next_question"])}</p>')
     return ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             f'<meta http-equiv="Content-Security-Policy" content="{esc(h["csp"])}">\n'

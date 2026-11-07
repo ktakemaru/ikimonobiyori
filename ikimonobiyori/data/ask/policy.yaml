@@ -113,6 +113,8 @@ answer_check:
       publishers: {value: [箱根町観光協会], source: "過去の確認(古い表示が残ることがある。指示書 段階52 第3部)", provisional: false}
       min_gap_days: {value: 3, source: "指示書 段階52 第3部(取得日と状態の日付が3日以上離れる)", provisional: false}
     max_quote_chars: {value: 20, source: "利用者の指示(2026-11-06): 公式の文を丸ごと転載せず、状態の見出し(「◎ 真っ盛り」など)は原文のまま、それ以外は短くまとめる。20 字は仮置き", provisional: true}
+  # 段階57 第13部: 好み・優先・選択を尋ねる文(答えの末尾にも途中にも入れない)。「確認してください」のような案内は質問ではない
+  ask_sentence_re: '(好み|優先|どちら|どれが|ご希望|教えてください|教えて下さい).*(ください|下さい|か[。?？]?$|[?？])|(ですか|ますか|でしょうか)[。?？]?\s*$|[?？]\s*$'
   # 段階57 第10部: 電話番号の形。取得した事実にある番号だけ書ける。出典の見出しは日本語
   extra_blocked_words: [日本気象協会]
   phone_re: '0\d{1,4}-\d{1,4}-\d{3,4}'
@@ -199,7 +201,6 @@ park_page:
     names_sep: "、"
     avoid_heading: 避けたほうがよい場所
     avoid_old: "{name}: 最新の記録が{year}年と古く、今の様子は分かりません。"
-    next_question: "ほかの日や出発地でも調べられます。日にちと出発地を教えてください。"
     credit: "写真: {author}・{license}"
     photo_link: 写真のページ(iNaturalist)
     photo_link_commons: ファイルのページ(Wikimedia Commons)

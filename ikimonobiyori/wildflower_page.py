@@ -88,7 +88,7 @@ def build(r, *, policy, now, photo_for):
             items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} '
                          f'({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')
-    body.append(f'<p class="note">{esc(h["credit"])}</p><p class="lead">{esc(w["next_question"])}</p>')
+    body.append(f'<p class="note">{esc(h["credit"])}</p>')
     title = w["title"].format(place=place, month=r["month"])
     return page_html(title, body, h, pool)
 
@@ -145,13 +145,13 @@ def build_overview(r, *, policy, now, photo_for):
         return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span><span class="credit">{esc(state_text(meta, policy))}</span>{links(e)}</li>'
     kind = r.get("kind")
     if kind == "mountain":
-        title, question = w["title_mountain"].format(place=r["area"]), w["next_question"]
+        title = w["title_mountain"].format(place=r["area"])
     elif kind == "zukan":
-        title, question = r["title"], w["next_question_zukan"]
+        title = r["title"]
     elif r.get("focus") == "alpine":
-        title, question = w["title_alpine"], w["next_question_overview"]
+        title = w["title_alpine"]
     else:
-        title, question = w["title_overview"], w["next_question_overview"]
+        title = w["title_overview"]
     body = [f'<h1>{esc(title)}</h1>', f'<p class="lead">{esc(r["conclusion"])}</p>', f'<p class="meta">{esc(guide_page.created_text(now, h))}</p>']
     if r.get("nav"):
         body.append(r["nav"])
@@ -225,7 +225,7 @@ def build_overview(r, *, policy, now, photo_for):
             items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} {esc(state_text(meta, policy))} '
                          f'({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')
-    body.append(f'<p class="note">{esc(h["credit"])}</p><p class="lead">{esc(question)}</p>')
+    body.append(f'<p class="note">{esc(h["credit"])}</p>')
     return page_html(title, body, h, pool)
 
 

@@ -1104,7 +1104,7 @@ def answer_parts(found, policy, origin_line=None, themes=None, show_out_of_range
     anyrow = any(sec["rows"] for sec in sections)
     return {"origin_line": origin_line, "sections": sections, "notes_heading": a["headings"]["notes"], "notes": notes,
             "legend": rc["legend"] if anyrow else None, "conclusion": conclusion_line(found, policy, on), "timeline": timeline_lines(found, policy, on),
-            "state_note": state_note(found, policy), "avoid": avoid_lines(found, policy), "sources": source_lines(found, policy), "next_question": a["next_question"]}
+            "state_note": state_note(found, policy), "avoid": avoid_lines(found, policy), "sources": source_lines(found, policy)}
 
 
 def conclusion_line(found, policy, on):
@@ -1217,8 +1217,6 @@ def render_answer(found, policy, origin_line=None, on=None, themes=None, show_ou
     offer = _page_offer_lines(parts, themes)                    # 段階57 第1部: できることだけを案内する(一覧 data/ask/offers.yaml。写真の候補がなければ出さない)
     if offer:
         lines += [""] + offer
-    if any(sec["rows"] for sec in parts["sections"]):
-        lines += ["", parts["next_question"]]
     return "\n".join(lines) + "\n"
 
 

@@ -641,6 +641,39 @@ class Part12Ordering(unittest.TestCase):
         self.assertIsNone(takao["current_state"])                              # まつりがあっても現況にはならない
 
 
+class Part13NoQuestions(unittest.TestCase):
+    def test_question_sentences_fail(self):
+        for s in ("好みを1つ教えてください。", "近さと、見られる種類のどちらを優先しますか。", "花と野鳥のどちらを先に見に行きたいですか?", "冬桜と紅葉を重視しますか。", "いかがでしょうか。"):
+            self.assertEqual([e["code"] for e in V.question_errors(s, RULES)], ["question_in_answer"], s)
+
+    def test_statements_pass(self):
+        for s in ("アクセスや混雑は出かける前に公式ページで確認してください。", OFFER, "連絡先は公式ページで確認してください。", "例年の見頃は11月です。"):
+            self.assertEqual(V.question_errors(s, RULES), [], s)
+
+    def test_answer_types_have_no_tail_question(self):
+        from ikimonobiyori import wildflower, wildflower_species as WS, regress
+        texts = [wildflower.overview(date_="2026-07-15", area="丹沢")["text"], WS.species_answer("チングルマ", month=7)["text"]]
+        P = guide.load_policy()
+        for t in texts:
+            self.assertEqual(V.question_errors(t, RULES), [], t[-60:])
+        self.assertNotIn("next_question", P["answer"])
+        f = facts_doc({"autumn_leaves": koyo_subject()})
+        from ikimonobiyori import answer_plan as AP
+        plan = AP.build(f, "autumn_leaves")
+        self.assertEqual(V.question_errors(regress.compose_answer(f, plan), RULES), [])
+        self.assertEqual(regress.run_flows()[0]["ok"], True)
+
+    def test_check_fails_an_answer_with_a_tail_question(self):
+        f = facts_doc({"autumn_leaves": koyo_subject()})
+        r = V.check("試験の園です。\n近さと見どころのどちらを優先しますか。\n", f, RULES)
+        self.assertIn("question_in_answer", [e["code"] for e in r["answer_errors"]])
+        self.assertFalse(V.generic_check("おすすめです。\n① あ\n② い\n③ う\n好みを教えてください。")["ok"])
+
+    def test_clarify_exception(self):
+        self.assertTrue(V.generic_check("どの場所のことでしょうか。", clarify=True)["ok"])
+        self.assertFalse(V.generic_check("おすすめです。\nどの場所のことでしょうか。", clarify=True)["ok"])
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
