@@ -1,6 +1,7 @@
 """段階60(指示書 docs/stage60-followup-instructions.md)。通信しない。合成データだけ。"""
 import tempfile
 import unittest
+from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 
 import helpers as H  # noqa: F401  (通信禁止)
@@ -94,6 +95,85 @@ class Part1NameMerge(unittest.TestCase):
     def test_merge_rule_values_are_in_the_policy(self):
         self.assertEqual(CFG["max_km"], 0.3)
         self.assertGreaterEqual(CFG["min"], 3)
+
+
+SKELETON = """見頃に向かう可能性がある場所を選びました。
+対象の日は11/7(土)・11/8(日)です。
+今回のおすすめ
+① 試験の湖 約42km: 今の状況は色づきはじめ(11/6時点、試験の観光協会)。例年の見頃: 11月中旬。見頃に向かう可能性があります。
+② 試験の峠 約58km: 紹介サイトでは見頃とされています(11/5時点、試験サイト。公式ではありません)。見頃が続いている可能性があります。
+
+出典
+https://kankou.example.org/koyo
+https://kouyou.example.com/list
+"""
+
+POLISHED = """見頃に向かう可能性がある場所を選びました。
+対象の日は11/7(土)・11/8(日)です。
+今回のおすすめ
+① まずは試験の湖(約42km)。今の状況は色づきはじめで(11/6時点、試験の観光協会)、例年の見頃は11月中旬です。見頃に向かう可能性があります。
+② 足を延ばすなら試験の峠(約58km)。紹介サイトでは見頃とされています(11/5時点、試験サイト。公式ではありません)。見頃が続いている可能性があります。
+
+出典
+https://kankou.example.org/koyo
+https://kouyou.example.com/list
+"""
+
+NAMES = ["試験の湖", "試験の峠", "試験の滝", "カエデ", "イチョウ", "試験の観光協会"]
+
+
+class Part2FactConsistency(unittest.TestCase):
+    """第2部: 整えた文章と骨組みの事実の一致検査。"""
+
+    def codes(self, text):
+        from ikimonobiyori import polish as PL
+        return [(e["code"], e["kind"]) for e in PL.check(SKELETON, text, NAMES)["errors"]]
+
+    def test_polished_text_with_the_same_facts_passes(self):
+        self.assertEqual(self.codes(POLISHED), [])
+
+    def test_added_facts_fail(self):
+        for extra, kind in (("12/1にまつりがあります。", "date"), ("駐車場は200台です。", "number"),
+                            ("イチョウも見られます。", "name"), ("詳しくは https://other.example.net/ を。", "url"),
+                            ("約3kmの散策路があります。", "km"), ("9:00に開きます。", "time"), ("12月上旬まで続きます。", "month")):
+            text = POLISHED.replace("出典\n", extra + "\n出典\n")
+            self.assertIn(("polish_added_fact", kind), self.codes(text), extra)
+
+    def test_added_facility_name_fails(self):
+        self.assertIn(("polish_added_fact", "name"), self.codes(POLISHED.replace("足を延ばすなら", "試験の滝の帰りに")))
+
+    def test_dropped_important_facts_fail(self):
+        cases = {"current_date": POLISHED.replace("(11/6時点、試験の観光協会)", "(試験の観光協会)"),
+                 "phrase": POLISHED.replace("見頃が続いている可能性があります。", "見頃です。"),
+                 "certainty": POLISHED.replace("。公式ではありません", ""),
+                 "source": POLISHED.replace("https://kouyou.example.com/list\n", "")}
+        for kind, text in cases.items():
+            self.assertIn(("polish_dropped_fact", kind), self.codes(text), kind)
+
+    def test_rewrite_limit_is_one(self):
+        from ikimonobiyori import polish as PL
+        use, st = PL.decide(None, SKELETON, False, True)
+        self.assertEqual((use, st["attempts"]), ("retry", 1))
+        use, st = PL.decide(st, SKELETON, False, True)
+        self.assertEqual(use, "skeleton")                                         # 2 回目も通らなければ骨組みのまま
+        use, st = PL.decide(st, SKELETON + "x", True, True)
+        self.assertEqual((use, st["attempts"]), ("polished", 1))                 # 骨組みが変われば数え直す
+        use, _ = PL.decide({"skeleton": SKELETON, "attempts": 1}, SKELETON, True, False)
+        self.assertEqual(use, "skeleton")                                         # 通常の検査に落ちても同じ
+        self.assertEqual(PL.cfg()["max_rewrites"], 1)
+
+    def test_flow_falls_back_to_the_skeleton_after_one_rewrite(self):
+        from ikimonobiyori import ask
+        with tempfile.TemporaryDirectory() as d:
+            f = ask.Flow(d, now=NOW, env={"IKIMONOBIYORI_DATA_DIR": d})
+            bad = POLISHED.replace("(11/6時点、試験の観光協会)", "(試験の観光協会)")
+            use, final, fr, _ = f.polish_check(bad, SKELETON, generic=True)
+            self.assertEqual((use, final), ("retry", None))
+            self.assertFalse(fr["ok"])
+            use, final, _, _ = f.polish_check(bad, SKELETON, generic=True)
+            self.assertEqual(use, "skeleton")
+            self.assertEqual(final, SKELETON)                                     # 通らない文を除いた版ではなく、骨組みのまま
+            self.assertEqual(Path(d, "final.txt").read_text(encoding="utf-8"), SKELETON)
 
 
 if __name__ == "__main__":

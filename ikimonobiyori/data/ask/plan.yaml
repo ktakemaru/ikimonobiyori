@@ -258,3 +258,18 @@ last_plan:
 # 同じ名所の別の書き方をまとめる(頭の地域名を取る)
 duplicate:
   strip_prefixes: [箱根, 丹沢, 奥日光]
+
+# 段階60 第2部: 骨組み → 文章の整え(エージェント)→ 検査 → 事実の一致検査(ikimonobiyori/polish.py。ask polish-check)
+polish:
+  max_rewrites: 1                      # 整えなおしは 1 回まで(指示書 第2部 4)。通らなければ骨組みのまま出す
+  min_name_chars: 2                    # 名前の照合に使う最短の字数
+  sources_heading: 出典
+  # 骨組みにあれば、整えた文章にも残す語(確かさの補足。言い切りを強めない)
+  required_words: [公式ではありません, 確認できていません, 時点の参考, 可能性]
+  kinds: {url: URL, date: 日付, weekday: 曜日, time: 時刻, km: 距離, month: 月, year: 年, number: 数値, name: 名前, current_date: 現況の日付, phrase: 見込みの言い回し, certainty: 確かさの補足, source: 出典}
+  messages:
+    added: "骨組みにない{kind}があります: {items}"
+    dropped: "骨組みの{kind}が落ちています: {items}"
+    retry: 事実の一致検査に通りません。整えなおせるのはあと 1 回です
+    fallback: 事実の一致検査に通らないため、骨組みのまま出します
+    ok: 事実の一致検査に合格しました
