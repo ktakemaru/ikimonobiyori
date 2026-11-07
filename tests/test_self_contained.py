@@ -15,7 +15,7 @@ from helpers import ROOT
 from ikimonobiyori import livegate, paths
 
 PKG = ROOT / "ikimonobiyori"
-ALLOWED_TOP = {"ikimonobiyori", "yaml", "jsonschema", "requests"}
+ALLOWED_TOP = {"ikimonobiyori", "yaml", "jsonschema", "requests", "pdfminer"}   # pdfminer.six は本人の承認 2026-11-07(段階59)
 OUTSIDE_WORDS = {"agents", "hub", "vendor", "adapters", "tests", "snapshots", "schemas/biyori"}
 # パッケージの外を指してよいのは、この2行だけ(未設定のときの書き込み先の既定、スクリプトとして起動されたときの import のため)
 ALLOWED_OUTSIDE = {("paths.py", 'LEGACY_DATA_DIR = PKG.parent / "runtime" / "ikimonobiyori"'),

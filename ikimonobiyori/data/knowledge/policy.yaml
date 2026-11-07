@@ -1,0 +1,9 @@
+# 段階59: PDF の読み取り・発行物台帳・知識カード(ikimonobiyori/pdf_text.py・knowledge.py)の値。値はここに置く(CLAUDE.md 規則 1)。
+schema: ikimono-knowledge-policy/1
+publications_file: knowledge/publications.jsonl
+pdf:
+  vertical_min_run: 4        # この数以上、1 文字の行が続けば縦書きとして連結する(仮置き)
+  image_only_max_jp: 10      # 日本語の文字がこれ未満なら「画像のみ」(仮置き)
+  ok_min_jp: 200             # これ以上なら「読めた」、未満は「一部」(仮置き)
+  max_pages: 40              # 方法 c で読むページの上限(仮置き)
+  unread_label: PDF 未読
