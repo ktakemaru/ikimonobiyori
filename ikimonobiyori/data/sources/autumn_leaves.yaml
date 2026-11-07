@@ -528,7 +528,7 @@ sources:
       date_basis: updated_date
       note: "地点ごとの更新日と「ひとこと」の文。「見頃」の列はアイコンだけで凡例の文字がないので、段階にしない"
     readable: {status: ok, checked_on: "2026-11-07", robots: unknown, note: "読めた(地点ごとの更新日 2026/10/23〜11/5)。ページの種別は秩父市公式サイトの表記あり"}
-    terms: {status: not_checked, url: "https://navi.city.chichibu.lg.jp/legal/", note: "免責事項のページが利用条件に近い。中身は未確認"}
+    terms: {status: no_prohibition_found, url: "https://navi.city.chichibu.lg.jp/legal/", note: "免責事項に転載・利用の条件の記載なし。著作権の表示(copyright Chichibu City)だけ(段階58 で確認)"}
     approval: {status: pending, reason: "指示書 段階57 第8部。承認は本人が決める"}
 
   - id: nagatoro-koyo-matsuri-2026
