@@ -6,6 +6,7 @@ import re
 from datetime import date
 
 from . import answer_plan as AP
+from . import official_pages as OP
 from .ask_verify import candidate_urls, load_rules
 
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
@@ -211,6 +212,10 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=()):
         lines += _subject_part(facts["subjects"][plan["subject"]], plan, plan["subject"], t, max_quote, urls, mentioned)
     if len(flat) < load_rules()["min_candidates"]:
         lines += ["", t["few"].format(n=len(flat))]
+    notices = OP.notice_lines(mentioned)
+    if notices:
+        lines += ["", t["before_heading"]] + [n["line"] for n in notices]
+        urls |= {n["url"] for n in notices if n.get("url")}
     conf = []
     if not any(c.get("practical") for c in mentioned):
         conf.append(load_rules()["stage51"]["practical_fallback"] + "。")

@@ -291,7 +291,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical", "provisional_search", "source_id")
+          "source_class", "species", "practical", "provisional_search", "source_id", "notice")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -343,6 +343,8 @@ def make_record(rec, policy, read_at):
     mx = _v(policy["record"]["max_raw_chars"])
     out = {k: rec.get(k) for k in FIELDS if rec.get(k) is not None}
     out["state"] = str(rec["state"])[:mx]
+    if out.get("notice"):                        # 段階58 第2部: 開園日・閉鎖・規制などのお知らせ(短くまとめた語。公式のページのときだけ答えに使う)
+        out["notice"] = str(out["notice"])[:mx]
     if out.get("practical"):                     # 段階52: 読めた公式ページの実用情報(アクセス・駐車場・運行・開園時間の変更など)の短い原文
         out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
@@ -1472,6 +1474,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                                               for t in c.get("typical") or [] if t.get("event_derived")]},
             "practical": [{"text": r["practical"], "publisher": r.get("publisher"), "url": r["url"], "state_date": r.get("state_date")}
                           for r in rows if r.get("practical") and r.get("source_class") == "official"][:2],
+            "notices": [{"text": r["notice"], "date": r.get("state_date"), "url": r["url"], "publisher": r.get("publisher")} for r in rows
+                        if r.get("notice") and r.get("source_class") == "official"][:2],
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],

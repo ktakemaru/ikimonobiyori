@@ -137,6 +137,7 @@ refine:
 skeleton:
   picks_heading: 今回のおすすめ
   confidence_heading: 確かさの補足
+  before_heading: 行く前に確認すること
   sources_heading: 出典
   lead_ok: 見頃が続いている可能性がある場所を選びました。
   lead_toward: 見頃に向かう可能性がある場所を選びました。
@@ -161,6 +162,18 @@ skeleton:
   inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
+
+# 段階58 第2部: 公式ページの読み方(ikimonobiyori/official_pages.py)
+official_pages:
+  suffixes: [.lg.jp, .go.jp, .pref.kanagawa.jp, .metro.tokyo.lg.jp]
+  host_words: [kankou, kanko, -kanko, tourism, visitor, park, koen, park.or.jp]
+  excluded_hosts: [koyo.walkerplus.com, walkerplus.com, rurubu.jp, jorudan.co.jp, iko-yo.net, enjoytokyo.jp]
+  follow_words: [お知らせ, 紅葉情報, 紅葉, イベント, 開園, 開館, 休園, 休館, 新着, 最新]
+  notice_words: [開園日, 開館日, 変更, 閉鎖, 通行止め, 規制, 休園, 休館, 工事]
+  max_pages: 6
+  notice_line: "{name}: {text}({md}時点の公式のお知らせ)"
+  not_tried_phrases: [中身は読めていません, 公式ページを確認できていません]
+  not_read_phrase: 公式ページを確認できていません
 
 # 段階58 第1部: エリアの質問。各エリアのおすすめの件数(指示書 第9部: 各エリア 1〜2 件)
 areas:

@@ -81,5 +81,59 @@ class Part1Area(unittest.TestCase):
         self.assertIn("area_missing", codes)
 
 
+class Part2Official(unittest.TestCase):
+    def test_official_url_is_read_and_one_level_followed(self):
+        from ikimonobiyori import official_pages as OP
+        calls = []
+
+        def reader(u):
+            calls.append(u)
+            if u.endswith("/top"):
+                return {"status": 200, "html": "x", "links": [{"url": "https://www.city.hanno.lg.jp/news", "text": "お知らせ"}, {"url": "https://www.city.hanno.lg.jp/a", "text": "市長の部屋"},
+                                                              {"url": "https://other.example/x", "text": "紅葉情報"}]}
+            return {"status": 200, "html": "y", "links": [{"url": "https://www.city.hanno.lg.jp/deep", "text": "お知らせ"}]}
+        rows = [{"url": "https://www.city.hanno.lg.jp/top"}, {"url": "https://koyo.walkerplus.com/x"}, {"url": "https://tenki.jp/x"}]
+        res = OP.read_all(rows, reader)
+        self.assertEqual(calls, ["https://www.city.hanno.lg.jp/top", "https://www.city.hanno.lg.jp/news"])     # 1 階層だけ
+        self.assertEqual(res["failed"], [])
+
+    def test_cap_and_failure_is_not_retried(self):
+        from ikimonobiyori import official_pages as OP
+        calls = []
+
+        def reader(u):
+            calls.append(u)
+            return {"status": 404}
+        rows = [{"url": f"https://www.city.x{i}.lg.jp/"} for i in range(9)]
+        res = OP.read_all(rows, reader)
+        self.assertEqual(len(calls), AP.load_policy()["official_pages"]["max_pages"])
+        self.assertEqual(res["read"], [])
+        self.assertEqual(res["failed"][0]["reason"], "HTTP 404")
+
+    def test_not_tried_wording_needs_a_real_failure(self):
+        f = facts_doc({"autumn_leaves": subject(spot("中津峡"))})
+        self.assertEqual([e["code"] for e in V.not_tried_errors("お知らせの中身は読めていません。", f)], ["official_not_tried"])
+        f["fetch"] = {"failed": [{"url": "https://www.city.x.lg.jp/", "reason": "HTTP 403"}]}
+        self.assertEqual(V.not_tried_errors("公式ページを確認できていません。", f), [])
+
+    def test_notice_appears_before_you_go(self):
+        c = spot("あけぼの公園", 50, city="飯能市", notices=[{"text": "開園日等の変更(試行)", "date": "2026-11-01", "url": "https://www.city.hanno.lg.jp/news"}])
+        f = facts_doc({"autumn_leaves": subject(c)})
+        plan = AP.build(f, "autumn_leaves")
+        text = SK.compose(f, plan)
+        self.assertIn("行く前に確認すること", text)
+        self.assertIn("あけぼの公園: 開園日等の変更(試行)(11/1時点の公式のお知らせ)", text)
+        self.assertIn("https://www.city.hanno.lg.jp/news", text)
+        r = V.check(text, f, RULES, plan=plan)
+        self.assertTrue(r["ok"], (text, V.report_lines(r)))
+
+    def test_notice_is_recorded_only_from_official_pages(self):
+        from ikimonobiyori import observations as O
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            O.record([{"subject": "autumn_leaves", "name": "試験の森", "state": "状態の記載なし", "notice": "一部区域の閉鎖", "state_date": "2026-11-01", "url": "https://www.city.x.lg.jp/n", "publisher": "試験市", "source_class": "official"}], env=env, now=NOW)
+            self.assertEqual(O.read_records("autumn_leaves", env)[0]["notice"], "一部区域の閉鎖")
+
+
 if __name__ == "__main__":
     unittest.main()

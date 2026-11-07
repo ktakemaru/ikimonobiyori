@@ -268,6 +268,14 @@ def source_rule_errors(text, rules, blob=None):
     return errs
 
 
+def not_tried_errors(text, facts):
+    """段階58 第2部: 取得を試みる前に「読めていません」と書かない。この回の読めなかったページ(fetch.failed)があるときだけ書ける。"""
+    if (facts.get("fetch") or {}).get("failed"):
+        return []
+    phrases = AP.load_policy()["official_pages"]["not_tried_phrases"]
+    return [{"code": "official_not_tried", "detail": p} for p in phrases if p in text]
+
+
 def question_errors(text, rules):
     """段階57 第13部: 好み・優先・選択を尋ねる文を答えに入れない。例外(答えの代わりの聞き返しだけ)は generic_check(clarify=True)。"""
     out = []
@@ -371,6 +379,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
     answer_errors += question_errors(text, rules)
+    answer_errors += not_tried_errors(text, facts)
     answer_errors += source_rule_errors(text, rules, mat.blob)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
@@ -594,7 +603,7 @@ def candidate_urls(c):
     out = set()
     for k in ("current",):
         out.add(((c.get(k) or {}).get("url") or "").rstrip("/"))
-    for k in ("history", "typical", "typical_from_records", "practical", "events", "festivals"):
+    for k in ("history", "typical", "typical_from_records", "practical", "events", "festivals", "notices"):
         out |= {((x or {}).get("url") or "").rstrip("/") for x in c.get(k) or [] if isinstance(x, dict)}
     return out - {""}
 
