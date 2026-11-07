@@ -10,7 +10,7 @@ import helpers as H  # noqa: F401  (通信禁止)
 
 from ikimonobiyori import ask_verify as AV
 from ikimonobiyori import visitor_centers as V
-from test_stage55 import APPR, VP, center, report
+from test_stage55 import APPR, APPROVED_IDS, VP, center, report
 
 ROOT = Path(__file__).resolve().parent.parent
 TODAY = date(2026, 11, 7)
@@ -33,10 +33,21 @@ class LedgerSetting(unittest.TestCase):
                 self.assertEqual(V.allowed_fields(c, VP), VP["fields"], i)
                 self.assertFalse(V.restricted(c, VP), i)
 
-    def test_approvals_are_untouched(self):
+    def test_approvals_are_only_the_twelve_the_user_approved(self):
+        # 承認は本人が行う。本人が指示した12施設だけが approved（approved_by: user・approved_on あり）で、ほかは承認待ちのまま approved_by がない
         for c in V.load_centers():
-            self.assertEqual(c["approval"]["status"], "pending", c["id"])            # 承認は本人が行う
-            self.assertNotIn("approved_by", c["approval"], c["id"])
+            if c["id"] in APPROVED_IDS:
+                self.assertEqual(c["approval"]["status"], "approved", c["id"])
+                self.assertEqual(c["approval"]["approved_by"], "user", c["id"])
+                self.assertRegex(str(c["approval"]["approved_on"]), r"^\d{4}-\d{2}-\d{2}$", c["id"])
+                self.assertIn("本人の指示による記入", c["approval"]["reason"], c["id"])
+            else:
+                self.assertEqual(c["approval"]["status"], "pending", c["id"])
+                self.assertNotIn("approved_by", c["approval"], c["id"])
+        cs = {c["id"]: c for c in V.load_centers()}
+        for i in ("takao-vc", "mitake-vc"):                                          # 承認しても種名は使わない条件
+            self.assertNotIn("species", V.allowed_fields(cs[i], VP), i)
+            self.assertIn("種名は使わない条件(allowed_fields)", cs[i]["approval"]["reason"], i)
 
     def test_validation_of_allowed_fields(self):
         self.assertEqual(V.validate_center(center(allowed_fields=["state", "date", "url"]), VP), [])
