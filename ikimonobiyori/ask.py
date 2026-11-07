@@ -723,7 +723,7 @@ class Flow:
         return doc
 
     # 4. 検査
-    def verify(self, text, gazetteer=(), reply=False):
+    def verify(self, text, gazetteer=(), reply=False, place=False):
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
@@ -737,7 +737,11 @@ class Flow:
             self.call("verify", reply=True, ok=r["ok"], errors=len(V.report_lines(r)))
             return r, final
         plan_doc = self._load("answer_plan.json", None)
-        r = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
+        if place:                                   # 段階60 第8部: 場所の質問(ask place の行で作った 1 か所の答え)。計画の照合と候補数の下限は当てない
+            r = self._place_check(text, facts_doc, gaz)
+            plan_doc = None
+        else:
+            r = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
         self._save("check.json", r)
         record_first_check(self.workdir, r, self.now, self.env)
         final = text if r["ok"] else minimal_answer(text, facts_doc, plan_doc, r, gaz)
@@ -745,6 +749,78 @@ class Flow:
         update_last_plan_answer(self.workdir, final, self.env)
         self.call("verify", ok=r["ok"], errors=len(V.report_lines(r)))
         return r, final
+
+
+    # 5. 事実の一致検査(段階60 第2部)
+    def _place_check(self, text, facts_doc, gaz):
+        r = V.check(text, facts_doc, gazetteer=gaz, plan=None)
+        skip = set(AP.load_policy()["place_answer"]["verify_skip"])
+        r["answer_errors"] = [e for e in r["answer_errors"] if e["code"] not in skip]
+        r["ok"] = not r["answer_errors"] and all(not x["errors"] for x in r["sentences"])
+        return r
+
+    def polish_check(self, text, skeleton=None, generic=False, question=None, place=False):
+        """整えた文章を、骨組みとの事実の一致検査と通常の検査に通す。整えなおしは 1 回まで。通らなければ骨組みのまま出す。
+        戻り値 (use, final, fact_result, verify_errors)。use は polished・retry・skeleton。"""
+        from . import polish as PL
+        if skeleton is None:
+            sp = self.workdir / "skeleton.txt"
+            if not sp.exists():
+                raise ValueError("skeleton.txt がない(先に skeleton を実行する)")
+            skeleton = sp.read_text(encoding="utf-8")
+        facts_doc = None if generic else self._load("facts.json", None)
+        if not generic and facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        fr = PL.check(skeleton, text, polish_names(facts_doc))
+        plan_doc = self._load("answer_plan.json", None)
+        gaz = sorted(set(place_names()))
+        if generic and question:                     # 知識の答え: knowledge-answer と同じ検査(カードの事実・出典・型)
+            from . import intent
+            verrs = [e["detail"] for e in intent.check(text, intent.cards_for(question))]
+        elif generic:
+            vr = V.generic_check(text)
+            verrs = [e["detail"] for e in vr["errors"]]
+        elif place:
+            verrs = V.report_lines(self._place_check(text, facts_doc, gaz))
+        else:
+            vr = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
+            verrs = V.report_lines(vr)
+        use, state = PL.decide(self._load("polish.json", None), skeleton, fr["ok"], not verrs)
+        self._save("polish.json", state)
+        self._save("check_polish.json", {"fact": fr, "verify_errors": verrs, "use": use, "attempts": state["attempts"]})
+        final = None
+        if use == "polished":
+            final = text
+        elif use == "skeleton":
+            if generic or (self._place_check(skeleton, facts_doc, gaz) if place else V.check(skeleton, facts_doc, gazetteer=gaz, plan=plan_doc))["ok"]:
+                final = skeleton
+            else:
+                final = minimal_answer(skeleton, facts_doc, plan_doc, V.check(skeleton, facts_doc, gazetteer=gaz, plan=plan_doc), gaz)
+        if final is not None:
+            (self.workdir / "final.txt").write_text(final, encoding="utf-8")
+            if not generic:
+                update_last_plan_answer(self.workdir, final, self.env)
+        self.call("polish-check", use=use, attempts=state["attempts"], fact_errors=len(fr["errors"]), verify_errors=len(verrs))
+        return use, final, fr, verrs
+
+
+def polish_names(facts_doc=None):
+    """事実の一致検査で照合する名前: 名所・市区町村・地域、鳥の和名、野草の種名、施設名、その答えの候補・樹種・花の種類。"""
+    names = set(place_names()) | set(O.known_bird_names())
+    try:
+        sp = yaml.safe_load((DATA_FILES_DIR / "guide" / "wildflower_species.yaml").read_text(encoding="utf-8")) or {}
+        names |= {x["name"] for x in sp.get("species") or [] if x.get("name")}
+    except OSError:
+        pass
+    try:
+        from . import visitor_centers as VC
+        names |= {c["name"] for c in VC.load_centers() if c.get("name")}
+    except (OSError, KeyError):
+        pass
+    for sj in ((facts_doc or {}).get("subjects") or {}).values():
+        for c in sj.get("candidates") or []:
+            names |= {n for n in [c.get("name"), *(c.get("aliases") or []), *(c.get("tree_species") or []), *(c.get("flower_kinds") or [])] if n}
+    return sorted(names)
 
 
 def run(params, *, workdir, fetcher=None, now=None, env=None, clock=None, obs_kw=None):
@@ -815,6 +891,14 @@ def main(argv=None, http_get=None):
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
     p.add_argument("--clarify", action="store_true", help="--generic のとき: 対象・場所・日付のどれも特定できず、答えの代わりに聞き返す 1 文(段階57 第13部)")
     p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
+    p.add_argument("--place", action="store_true", help="場所の質問の答え(ask place の行で作った答え)。計画の照合と候補数の下限を当てない(段階60)")
+    p = sub.add_parser("polish-check", help="整えた文章と骨組みの事実の一致検査 + 通常の検査(段階60)。整えなおしは 1 回まで。通らなければ骨組みのまま final.txt に書く")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--text", required=True, help="整えた文章")
+    p.add_argument("--skeleton", help="骨組みのファイル(省くと作業フォルダの skeleton.txt)")
+    p.add_argument("--generic", action="store_true", help="facts を持たない経路(知識の答え・guide find の出力など)")
+    p.add_argument("--question", help="--generic のとき: 知識の答えの質問の文(ガイドの目がカードの事実のままかも確かめる)")
+    p.add_argument("--place", action="store_true", help="場所の質問の答え(ask verify --place と同じ検査)")
     p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
@@ -823,8 +907,8 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("knowledge-answer", help="知識の質問の答えをカードから作り、検査する(段階59)。カードがなければ終了コード 3(先に調べて記録する)")
     p.add_argument("--question", required=True)
     p.add_argument("--month", type=int)
-    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show")
-    p.add_argument("action", choices=["add", "list", "search", "show"])
+    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)")
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup"])
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
     p.add_argument("--place")
     p.add_argument("--category")
@@ -866,7 +950,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
     a = ap.parse_args(argv)
     pol = load_policy()
-    out_dir = a.out_dir
+    out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
     if (a.step in ("page", "photos") or (a.step == "plan" and a.refine)) and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
         last = load_last_plan(_clock())
         if last is None:
@@ -897,6 +981,12 @@ def main(argv=None, http_get=None):
         return 1 if errs else 0
     if a.step == "knowledge":
         from . import knowledge as K
+        if a.action == "backup":                         # 段階60 第7部
+            from . import knowledge_backup as KB
+            rc, lines = KB.backup()
+            for line in lines:
+                print(line)
+            return rc
         if a.action == "add":
             doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
             bad = 0
@@ -1040,7 +1130,9 @@ def main(argv=None, http_get=None):
             if not facts_doc or not plan_doc:
                 print("先に facts と plan を実行してください", file=sys.stderr)
                 return 2
-            sys.stdout.write(SK.compose(facts_doc, plan_doc, OF.texts(plan_doc.get("offers")), defaulted_date=a.defaulted_date))
+            text = SK.compose(facts_doc, plan_doc, OF.texts(plan_doc.get("offers")), defaulted_date=a.defaulted_date)
+            (Path(out_dir) / "skeleton.txt").write_text(text, encoding="utf-8")       # 段階60 第2部: 事実の一致検査の基準
+            sys.stdout.write(text)
             return 0
         if a.step == "refresh":
             facts_doc = flow._load("facts.json", None)
@@ -1069,9 +1161,26 @@ def main(argv=None, http_get=None):
                     import webbrowser
                     webbrowser.open(Path(doc["path"]).as_uri())
             return 0 if doc["ok"] else 1
+        if a.step == "polish-check":
+            from . import polish as PL
+            msg = PL.cfg()["messages"]
+            sk = Path(a.skeleton).read_text(encoding="utf-8") if a.skeleton else None
+            use, final, fr, verrs = flow.polish_check(Path(a.text).read_text(encoding="utf-8"), sk, generic=a.generic, question=a.question, place=a.place)
+            for e in fr["errors"]:
+                print(f"NG  [{e['code']}] {e['detail']}", file=sys.stderr)
+            for e in verrs:
+                print(f"NG  [verify] {e}", file=sys.stderr)
+            if use == "polished":
+                print(msg["ok"] + ": " + str(Path(out_dir) / "final.txt"))
+                return 0
+            if use == "retry":
+                print(msg["retry"])
+                return 1
+            print(msg["fallback"] + ": " + str(Path(out_dir) / "final.txt"))
+            return 3
         if a.step == "verify":
             gaz = [n for g in a.gazetteer for n in load_gazetteer_file(g)]
-            r, _final = flow.verify(Path(a.text).read_text(encoding="utf-8"), gaz, reply=a.reply)
+            r, _final = flow.verify(Path(a.text).read_text(encoding="utf-8"), gaz, reply=a.reply, place=a.place)
             for line in V.report_lines(r):
                 print(line, file=sys.stderr)
             name = "final_reply.txt" if a.reply else "final.txt"

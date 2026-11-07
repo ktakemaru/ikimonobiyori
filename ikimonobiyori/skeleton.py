@@ -196,6 +196,14 @@ def _no_this_year(plan, facts, t, max_quote):
     return out[: ty["max_lines"]]
 
 
+def vc_lines(facts, mentioned, t):
+    """facts の visitor_centers(承認済み・季節内・14日以内。コードが選んだもの)のうち、答えに出た名所の地域に当たる施設だけ。
+    施設 → 地域の語は方針 skeleton.visitor_center_places(名所の名前・市区町村・地域のどれかに語が含まれれば当たり)。"""
+    places = t.get("visitor_center_places") or {}
+    words = " ".join(str(c.get(k) or "") for c in mentioned for k in ("name", "city", "area"))
+    return [r for r in facts.get("visitor_centers") or [] if any(w in words for w in places.get(r.get("center")) or [])]
+
+
 def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=None, places=(), env=None):
     """facts.json と計画 → 骨組みの答え(文字列)。cards: 知識カード(省くとデータ置き場)。places: 質問の場所の語(ガイドの目の選び方に足す)。"""
     t = cfg()
@@ -265,10 +273,14 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     names = list(places) + [c.get("name") for c in mentioned if c.get("name")] + [c.get("city") for c in mentioned if c.get("city")]
     chosen = K.select(names, month=month, cards=cards, env=env)
     eye, before_k, card_urls = K.split_lines(chosen)
+    vc = vc_lines(facts, mentioned, t)                                # 段階60 第8部: 質問の場所の承認済み施設の発信(段階55 の 1 行)
+    if vc:
+        lines += [""] + [x for row in vc for x in (row["line"], row.get("hours_line")) if x]
+        urls |= {row["url"] for row in vc if row.get("url")}
     if eye:
         lines += [""] + eye
     if notices or before_k:
-        lines += ["", t["before_heading"]] + [n["line"] for n in notices] + before_k
+        lines += ["", t["before_heading"]] + list(dict.fromkeys([n["line"] for n in notices] + before_k))   # 期間別で同じ名所が 2 回出ても 1 行
         urls |= {n["url"] for n in notices if n.get("url")}
     urls |= set(card_urls)
     conf = []

@@ -69,6 +69,38 @@ def load(env=None):
     return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
+def _centers():
+    from . import visitor_centers as VC
+    return VC.load_centers()
+
+
+def usable(card, centers=None):
+    """段階60 第9部: 答えに出してよいカードか → (可否, 理由)。
+    確度が施設のもの(施設の観察記録・解説・発信)は、出典の施設が施設台帳で承認待ち・取り消しなら出さない(台帳にない施設は従来どおり)。
+    公的資料・研究機関の解説は、権利メモが確認済みのときだけ。紹介(紹介サイト。公式ではないと明記して出す)はこれまでどおり。"""
+    g = cfg()["gate"]
+    conf = card.get("confidence")
+    name = (card.get("source") or {}).get("name") or ""
+    if conf in g["facility_confidences"]:
+        cs = _centers() if centers is None else centers
+        hit = next((c for c in cs if name and (name == c["name"] or name in c["name"])), None)
+        if hit is None:
+            return True, "facility_not_in_ledger"          # 施設台帳にない施設は従来どおり(段階59 のテストの前提。台帳に足せば承認まで隠れる)
+        if (hit.get("approval") or {}).get("status") != "approved":
+            return False, "facility_pending"
+        return True, None
+    if conf in g["public_confidences"]:
+        if not str(card.get("rights") or "").startswith(g["rights_confirmed_prefix"]):
+            return False, "rights_unconfirmed"
+    return True, None
+
+
+def load_shown(env=None, centers=None):
+    """答えに出してよいカードだけ(承認されれば自動で出る)。"""
+    cs = _centers() if centers is None else centers
+    return [r for r in load(env) if usable(r, cs)[0]]
+
+
 def _months(card):
     return set((card.get("condition") or {}).get("months") or [])
 
@@ -98,7 +130,7 @@ def place_match(card, place):
 def select(places, month=None, cards=None, env=None, topics=()):
     """答えに添える「ガイドの目」の候補(最大 max_shown 枚)。場所の一致が必須、季節の一致、分類の優先(安全・保全マナーを先に)でコードが決める。"""
     c = cfg()
-    rows = cards if cards is not None else load(env)
+    rows = cards if cards is not None else load_shown(env)
     pri = {k: i for i, k in enumerate(c["category_priority"])}
     hits = []
     for r in rows:
@@ -136,7 +168,7 @@ def answer_errors(text, cards, env=None):
     """検査: 「ガイドの目」の行の事実がカードと一致するか、出典が合っているか、原文のような長い文でないか。"""
     c = cfg()
     errs = []
-    rows = cards if cards is not None else load(env)
+    rows = cards if cards is not None else load_shown(env)
     allowed = [line_for(r) for r in rows]
     for line in text.splitlines():
         s = line.strip()

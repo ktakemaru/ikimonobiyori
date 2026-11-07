@@ -12,6 +12,12 @@ cards:
   max_fact_chars: 60
   max_sentences: 1
   max_shown: 2               # 答えに出す枚数
+  # 段階60 第9部: 答えに出す条件。施設の確度のカードは出典の施設が施設台帳で approved のとき、公的資料は権利メモが「確認済み」で始まるときだけ。
+  # 紹介(紹介サイト)は段階34 の方針どおり「公式ではありません」を添えて出す(この条件の対象外)
+  gate:
+    facility_confidences: [施設の観察記録, 施設の解説, 施設の発信]
+    public_confidences: [公的資料, 研究機関の解説]
+    rights_confirmed_prefix: 確認済み
   max_facts_in_answer: 3
   # 分類の優先(安全と保全・マナーは、該当するとき先に)
   category_priority: [安全, 保全・マナー, 見頃の流れ, 季節の仕組み, 出会い方・歩き方, シーズンの目安, 痕跡・暮らし, 種の解説, 地形・地質・火山, 名前・歴史・文化, 夜・天気・自然現象]
@@ -27,7 +33,7 @@ intent:
   patterns:
     difference: ["と.{1,12}の違い", "違いを", "見分け"]
     chat: ["というのもあるんだ", "があるんだ", "^へえ", "なんだ[。!！]?$"]
-    now: ["今見られる", "今.*(見られ|咲いて|見頃)", "はどう[?？]?$", "今の状況", "状況は"]
+    now: ["今見られる", "今.*(見られ|咲いて|見頃)", "はどう[?？]?$", "今の状況", "状況は", "今の様子"]
     plan: ["行きたい", "おすすめ", "探して"]
     knowledge: ["について教えて", "とは", "って何", "どんな", "面白いもの", "教えて"]
     place_time: ["どこで", "いつ", "どこ"]
@@ -47,3 +53,27 @@ pdf:
   ok_min_jp: 200             # これ以上なら「読めた」、未満は「一部」(仮置き)
   max_pages: 40              # 方法 c で読むページの上限(仮置き)
   unread_label: PDF 未読
+# 段階60 第7部: 知識カードのバックアップ(ikimonobiyori/knowledge_backup.py。ask knowledge backup)。commit だけ。push は本人
+backup:
+  dir: knowledge                       # IKIMONOBIYORI_DATA_DIR の下(非公開リポジトリ ikimonobiyori-knowledge の作業ツリー)
+  allowed_remote_re: '^(https://github\.com/|git@github\.com:)ktakemaru/ikimonobiyori-knowledge(\.git)?$'
+  # add してよいファイル(このうち .gitignore の許可の一覧(! の行)にあるものだけ)
+  allowed_files: [cards.jsonl, publications.jsonl, README.md, .gitignore, .gitattributes]
+  # この形の文字列を含むファイルは add しない(手元の絶対パス・トークン)
+  forbidden_content_re: '([A-Za-z]:[\\/]+Users[\\/]|/home/[a-z]|ghp_[A-Za-z0-9]{20,}|github_pat_|xox[bp]-|AKIA[0-9A-Z]{16})'
+  commit_message: "知識カードのバックアップ（{date}）"
+  messages:
+    no_repo: バックアップの設定がありません(knowledge フォルダに git のリポジトリがありません)
+    bad_remote: "リモートが想定外のため、何もしませんでした: {remote}"
+    no_change: 変更はありません
+    skipped: "add しなかったファイル: {files}"
+    done: commit しました。push は本人が行ってください
+# 段階60 第5部: サイト構造の辿り(ikimonobiyori/site_walk.py。通信しない。ページはエージェントの道具で読み、見つけたリンクを渡す)
+site_walk:
+  max_depth: 3                # 開始ページを 0 として、この深さまで(指示書 第5部 1)
+  max_pages: 30               # 1 施設あたりに辿るページの上限(仮置き。第5部の取得の上限 150 回を施設で分けるため)
+  dir: knowledge/site_walk    # IKIMONOBIYORI_DATA_DIR の下(辿った状態。本文は保存しない)
+  priority_words: [ダウンロード, 刊行物, 季刊誌, 広報, だより, お便り, 便り, 自然情報, 観察記録, レンジャーニュース, セルフガイド, 資料, アーカイブ, バックナンバー, ニュースレター, 通信]
+  pager_words: [次へ, 次のページ, 前へ, もっと見る, "»", "›"]
+  pager_url_re: '(/page/\d+/?$|[?&](page|paged|p)=\d+)'
+  pdf_url_re: '\.pdf($|[?#])'

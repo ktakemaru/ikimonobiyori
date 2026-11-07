@@ -42,17 +42,12 @@ def _norm(x):
     return V._n(x or "").replace(" ", "")
 
 
-ALIAS_PATH = DATA_FILES_DIR / "ask" / "place_aliases.yaml"
-ALIAS_CACHE = "ask/place_aliases.json"
+ALIAS_PATH = O.PLACE_ALIAS_PATH
+ALIAS_CACHE = O.PLACE_ALIAS_LOCAL
 
 
 def alias_table(env=None):
-    table = dict((yaml.safe_load(ALIAS_PATH.read_text(encoding="utf-8")) or {}).get("aliases") or {})
-    try:
-        table.update(json.loads(Path(data_path(ALIAS_CACHE, env)).read_text(encoding="utf-8")))
-    except (OSError, ValueError):
-        pass
-    return table
+    return O.place_alias_table(env)
 
 
 def add_alias(alias, official, env=None):

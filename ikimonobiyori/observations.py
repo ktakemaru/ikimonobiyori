@@ -15,12 +15,13 @@
 import argparse
 import calendar
 import json
+import math
 import re
 import sys
 import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import yaml
 
@@ -193,6 +194,55 @@ def _gated_unusable(r, policy):
         if re.search(g["url_re"], r.get("url") or "") and not _source_approved(g["ledger"], g["source"]):
             return True
     return False
+
+
+_LEDGER_URLS = {}
+
+
+def _ledger_urls():
+    """公式の台帳(data/sources/*.yaml)の情報源の (ホスト, パス, 承認の状態, 台帳, id)。紹介サイトの台帳(secondary/)は含めない。"""
+    if not _LEDGER_URLS:
+        rows = []
+        for f in sorted((DATA_FILES_DIR / "sources").glob("*.yaml")):
+            if f.name == "policy.yaml":
+                continue
+            doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            for s in doc.get("sources") or []:
+                u = urlparse(s.get("url") or "")
+                if u.hostname:
+                    rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), f.stem, s.get("id")))
+        _LEDGER_URLS["rows"] = rows
+    return _LEDGER_URLS["rows"]
+
+
+def _bare_host(h):
+    h = (h or "").lower()
+    return h[4:] if h.startswith("www.") else h
+
+
+def ledger_status_of(url):
+    """記録の URL に対応する公式の台帳の項目の承認の状態(段階60 第9部)。
+    同じホストで、パスがいちばん長く一致する項目の状態。パスが一致しなくても、そのホストの項目がすべて承認待ちなら承認待ち。
+    台帳にないホストは None(段階34: 台帳にないページも読んで記録してよい)。"""
+    u = urlparse(url or "")
+    host, path = _bare_host(u.hostname), unquote(u.path or "/")
+    rows = [r for r in _ledger_urls() if r[0] == host]
+    if not rows:
+        return None
+    hits = sorted([r for r in rows if path.startswith(r[1].rstrip("/") or "/")], key=lambda r: -len(r[1]))
+    if hits:
+        return hits[0][2]
+    return "approved" if any(r[2] == "approved" for r in rows) else "pending"
+
+
+def _ledger_gated(r, subject, policy):
+    """段階60 第9部: 公式の台帳で承認待ちの情報源の、公式としての記録は、承認されるまで答えの材料にしない(記録は残る)。
+    紹介サイトなど(source_class secondary)は段階34 の方針どおり使う。対象の台帳は方針 record.gated_ledgers。"""
+    if subject not in ((policy["record"].get("gated_ledgers") or {})):
+        return False
+    if r.get("source_class") != "official":
+        return False
+    return ledger_status_of(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
 
 
 def restricted_cfg(host, policy):
@@ -393,6 +443,7 @@ def read_records(subject, env=None, policy=None):
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ
+    rows = [r for r in rows if not _ledger_gated(r, subject, policy)]   # 段階60 第9部: 台帳で承認待ちの公式の情報源(同じ形で統一)
     rows = [r for r in rows if not _sns_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]    # 段階58 第4部
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
@@ -529,6 +580,7 @@ def _from_spot(s, policy, catalog_by_id):
     if ref:
         cat = _from_catalog(ref, s["subject"], policy)
         c["catalog_ref"] = ref["id"]
+        c["catalog_name"] = ref["name"]
         c["aliases"] = c["aliases"] + [ref["name"]]
         c["point"] = cat["point"]
         c["elevation_m"] = c["elevation_m"] if c["elevation_m"] is not None else cat["elevation_m"]
@@ -558,19 +610,151 @@ def all_candidates(subject, policy=None, spots_doc=None, catalogs=None):
     out = [_from_spot(s, policy, by_id) for s in spots_doc.get("spots") or [] if s["subject"] == subject]
     used = {c.get("catalog_ref") for c in out}
     out += [_from_catalog(e, subject, policy) for e in cat_entries if e["id"] not in used]
-    return out
+    return merge_candidates(out, policy)
 
 
-def match_record(rec, cands):
+def match_record(rec, cands, policy=None, alias_keys=None):
+    """記録 → 候補。名所の id → 名前・別名の一致 → 別名辞書 → 名寄せ(段階60 第1部。当たりが 1 つのときだけ)。"""
     if rec.get("spot"):
         for c in cands:
             if rec["spot"] in (c["id"], c.get("catalog_ref")):
                 return c
     k = _key(rec.get("name"))
+    if not k:
+        return None
     for c in cands:
-        if k and k in [_key(n) for n in [c["name"], *(c.get("aliases") or [])]]:
+        if k in _name_keys(c):
             return c
+    alias_keys = place_alias_keys() if alias_keys is None else alias_keys
+    off = alias_keys.get(k)
+    if off:
+        hits = [c for c in cands if off in _name_keys(c)]
+        if len(hits) == 1:
+            return hits[0]
+    cfg = merge_cfg(policy)
+    hits = [c for c in cands if _city_ok(rec.get("city"), c.get("city"))
+            and any(name_contained(rec.get("name"), n, cfg) for n in (c["name"], c.get("catalog_name")) if n)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def _name_keys(c):
+    return [_key(n) for n in [c["name"], *(c.get("aliases") or [])]]
+
+
+def assign_records(recs, cands, policy=None, env=None):
+    """記録を候補に 1 回ずつ割り当てる(候補 id → 記録の一覧、どの候補にも当たらない記録の一覧)。"""
+    alias_keys = place_alias_keys(env)
+    by_c = {c["id"]: [] for c in cands}
+    rest = []
+    for r in recs:
+        c = match_record(r, cands, policy, alias_keys)
+        (by_c[c["id"]] if c else rest).append(r)
+    return by_c, rest
+
+
+# ---- 名寄せ(段階60 第1部。値は方針の merge) ----
+
+PLACE_ALIAS_PATH = DATA_FILES_DIR / "ask" / "place_aliases.yaml"
+PLACE_ALIAS_LOCAL = "ask/place_aliases.json"
+
+
+def place_alias_table(env=None):
+    """別名辞書(リポジトリの辞書 + 手元で確かめて足した分)。別名 → 正式名称。"""
+    table = dict((yaml.safe_load(PLACE_ALIAS_PATH.read_text(encoding="utf-8")) or {}).get("aliases") or {})
+    try:
+        table.update(json.loads(Path(data_path(PLACE_ALIAS_LOCAL, env)).read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    return table
+
+
+def place_alias_keys(env=None):
+    return {_key(a): _key(o) for a, o in place_alias_table(env).items() if _key(a) and _key(o)}
+
+
+def merge_cfg(policy=None):
+    m = (policy or load_policy()).get("merge") or {}
+    return {"max_km": _v(m.get("max_km")), "min": _v(m.get("min_key_chars")), "seps": list(m.get("list_separators") or [])}
+
+
+def _city_ok(a, b):
+    """市区町村が食い違わない(どちらかが空・同じ・一方が他方を含む「立川市・昭島市」)。"""
+    return not a or not b or a in b or b in a
+
+
+def name_contained(short, long_, cfg):
+    """短い名前(照合用の形)が長い名前に含まれる(「仙石原(長安寺)」→「箱根 仙石原(長安寺)」)。
+    長い名前が複数の地点を並べたもの(「中禅寺湖・華厳滝」)のときは含めない(一部の地点だけの名前と取り違えない)。"""
+    ks, kl = _key(short), _key(long_)
+    if not ks or not kl or ks == kl or len(ks) < cfg["min"] or len(ks) > len(kl) or ks not in kl:
+        return False
+    seps = cfg["seps"]
+    if seps:
+        parts = [p for p in re.split("|".join(re.escape(x) for x in seps), unicodedata.normalize("NFKC", long_ or "")) if _key(p)]
+        if len(parts) >= 2:
+            return False
+    return True
+
+
+def same_place(a, b, cfg):
+    """2 つの名前が同じ名所の表記ゆれか(どちら向きでも)。"""
+    return _key(a) == _key(b) or name_contained(a, b, cfg) or name_contained(b, a, cfg)
+
+
+def _point(c):
+    p = c.get("point")
+    if isinstance(p, dict) and p.get("lat") is not None and p.get("lon") is not None:
+        return p["lat"], p["lon"]
     return None
+
+
+def _km(a, b):
+    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371.0 * math.asin(math.sqrt(h))
+
+
+def merge_candidates(cands, policy=None, env=None):
+    """同じ名所が 2 つの候補になっているもの(別名辞書で同じ正式名称、または座標が近く名前が似ている)を 1 つにする。
+    先の候補を残し、後の候補の名前と別名を別名に回す(データは消さない。merged に後の候補の id を残す)。"""
+    cfg = merge_cfg(policy)
+    alias_keys = place_alias_keys(env)
+    off = lambda n: alias_keys.get(_key(n), _key(n))
+    out = []
+    for c in cands:
+        host = None
+        for k in out:
+            if k["subject"] != c["subject"]:
+                continue
+            pk, pc = _point(k), _point(c)
+            near = bool(pk and pc and _km(pk, pc) <= cfg["max_km"])
+            if off(k["name"]) == off(c["name"]) or (near and _city_ok(k.get("city"), c.get("city")) and same_place(k["name"], c["name"], cfg)):
+                host = k
+                break
+        if host is None:
+            out.append(c)
+            continue
+        host["aliases"] = list(dict.fromkeys([*(host.get("aliases") or []), c["name"], *(c.get("aliases") or [])]))
+        host.setdefault("merged", []).append(c["id"])
+        for key in ("pages", "events", "typical"):
+            have = list(host.get(key) or [])
+            host[key] = have + [x for x in c.get(key) or [] if x not in have]
+    return out
+
+
+def merge_extras(rows, cfg):
+    """どの候補にも当たらない記録を、名前の表記ゆれをまとめて名所ごとにする(「宮ノ下」と「箱根 宮ノ下」)。"""
+    groups = []
+    for r in rows:
+        g = next((g for g in groups if _city_ok(r.get("city"), g["city"]) and any(same_place(r.get("name"), n, cfg) for n in g["names"])), None)
+        if g is None:
+            groups.append({"name": r.get("name"), "names": [r.get("name")], "city": r.get("city"), "rows": [r]})
+            continue
+        g["rows"].append(r)
+        if r.get("name") not in g["names"]:
+            g["names"].append(r.get("name"))
+        g["city"] = g["city"] or r.get("city")
+    return groups
 
 
 # ---- 新しさ ----
@@ -649,12 +833,13 @@ def plan(subject, *, region=None, dates, now, origin=None, env=None, policy=None
     origin = origin or cat_pol["range_limit"]["default_origin"]
     reg = resolve(region, origin, policy)
     max_km = cat_pol["range_limit"]["max_km"]
-    cands = [c for c in all_candidates(subject, policy, spots_doc, catalogs) if in_region(c, reg, _distance(c, origin, cat_pol), max_km)]
-    recs = read_records(subject, env, policy)
+    every = all_candidates(subject, policy, spots_doc, catalogs)
+    cands = [c for c in every if in_region(c, reg, _distance(c, origin, cat_pol), max_km)]
+    by_c, _ = assign_records(read_records(subject, env, policy), every, policy, env)
     today = now.date()
     items, fresh = [], []
     for c in cands:
-        rows = [r for r in recs if match_record(r, [c])]
+        rows = by_c[c["id"]]
         b = best_record(rows)
         fr = freshness(b, today, subject, policy)
         if fr["class"] == "fresh":
@@ -1551,19 +1736,16 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     reg = resolve(region, origin, policy)
     today = now.date()
     cands = all_candidates(subject, policy, spots_doc, catalogs)
-    recs = read_records(subject, env, policy)
-    by_c = {c["id"]: [] for c in cands}
+    by_c, rest = assign_records(read_records(subject, env, policy), cands, policy, env)
     extra = {}
-    for r in recs:
-        c = match_record(r, cands)
-        if c:
-            by_c[c["id"]].append(r)
-        else:                                   # 一覧にない名所の記録もカタログ外として残す
-            k = _key(r.get("name"))
-            extra.setdefault(k, {"id": "extra-" + k, "subject": subject, "name": r.get("name"), "city": r.get("city"),
+    for g in merge_extras(rest, merge_cfg(policy)):   # 一覧にない名所の記録もカタログ外として残す(表記ゆれは 1 つにまとめる)
+        k = _key(g["name"])
+        x = extra.setdefault(k, {"id": "extra-" + k, "subject": subject, "name": g["name"], "city": g["city"],
+                                 "aliases": [n for n in g["names"] if n != g["name"]],
                                  "prefecture": None, "area": None,
-                                 "typical": [], "events": [], "pages": [], "outside_list": True, "rows": []})["rows"].append(r)
-            x = extra[k]
+                                 "typical": [], "events": [], "pages": [], "outside_list": True, "rows": []})
+        x["rows"] += g["rows"]
+        for r in g["rows"]:
             x["prefecture"] = x["prefecture"] or r.get("prefecture")
             x["area"] = x["area"] or r.get("area")
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]

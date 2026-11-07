@@ -26,7 +26,7 @@ def classify(question):
 
 def topics(question, cards=None, env=None):
     """質問に出る語のうち、カードの場所・別名に当たるもの(長い語から)。"""
-    rows = cards if cards is not None else K.load(env)
+    rows = cards if cards is not None else K.load_shown(env)
     words = set()
     for r in rows:
         words.add(r.get("place") or "")
@@ -40,7 +40,7 @@ def topics(question, cards=None, env=None):
 def cards_for(question, cards=None, env=None, month=None):
     """質問に合うカード。語が当たらないときは、質問の型の語で分類を引く(「足元に面白いもの」→ 痕跡・暮らし)。"""
     c = cfg()
-    rows = cards if cards is not None else K.load(env)
+    rows = cards if cards is not None else K.load_shown(env)
     tp = topics(question, rows)
     hits = [r for r in rows if any(K.place_match(r, t) for t in tp)]
     if not hits:
