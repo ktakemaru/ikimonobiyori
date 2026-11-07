@@ -35,6 +35,17 @@ def load_centers(path=None):
     return doc.get("centers") or []
 
 
+def allowed_fields(c, policy=None):
+    """施設ごとの『使う項目』。台帳に allowed_fields がなければ全項目（既存の挙動）。"""
+    p = policy or load_policy()
+    af = c.get("allowed_fields")
+    return list(p["fields"]) if af is None else list(af)
+
+
+def restricted(c, policy=None):
+    return set(allowed_fields(c, policy)) != set((policy or load_policy())["fields"])
+
+
 def _is_url(u):
     p = urlparse(u or "")
     return p.scheme in ("http", "https") and bool(p.hostname)
@@ -67,6 +78,14 @@ def validate_center(c, policy=None):
     h = urlparse(c.get("info_url") or c.get("site_url") or "").hostname or ""
     if any(h == b or h.endswith("." + b) for b in p["excluded_hosts"]):
         errs.append("対象外のホスト（SNS・第三者サイト・読まない対象）")
+    if c.get("allowed_fields") is not None:
+        af = c["allowed_fields"]
+        if not isinstance(af, list) or any(x not in p["fields"] for x in af):
+            errs.append(f"allowed_fields は {p['fields']} の一部の配列")
+        else:
+            for k in p["required_fields"]:
+                if k not in af:
+                    errs.append(f"allowed_fields に {k} が要る（1行に必ず付く項目）")
     se = c.get("season_end")
     if se is not None:
         try:
@@ -167,8 +186,9 @@ def report_line(c, rep, policy=None):
     p = policy or load_policy()
     d = date.fromisoformat(str(rep["date"]))
     head = p["line"]["head"].format(center=c["name"], month=d.month, day=d.day)
-    body = rep.get("state") or ""
-    if rep.get("species"):
+    af = allowed_fields(c, p)
+    body = (rep.get("state") or "") if "state" in af else ""                 # 段階56b: 施設ごとの使う項目だけで作る
+    if rep.get("species") and "species" in af:
         sep = p["line"]["species_sep"]
         sp = sep.join(rep["species"])
         body = f"{body}{p['line']['species_open']}{sp}{p['line']['species_close']}" if body else sp
@@ -176,6 +196,17 @@ def report_line(c, rep, policy=None):
 
 
 # ---- 第5部: 読んだ事実の記録と、答えの材料 ----
+
+def decode_html(raw, declared=None, fallbacks=("utf-8", "cp932")):
+    """文字コードの宣言がないページのバイト列を、宣言 → UTF-8（厳密）→ CP932 の順で読む。→ (本文, 使った文字コード)。
+    読めなければ ValueError（読めたことにしない）。台帳の encoding（例 cp932）は、このコードで読む側が使う。"""
+    for enc in ([declared] if declared else []) + list(fallbacks):
+        try:
+            return raw.decode(enc), enc
+        except (UnicodeDecodeError, LookupError):
+            continue
+    raise ValueError("文字コードを判定できない")
+
 
 def reports_path(env=None, policy=None):
     p = policy or load_policy()
@@ -197,6 +228,11 @@ def record_reports(batch, env=None, policy=None, centers=None):
         errs = validate_report(rep, p)
         if rep.get("center") not in ids:
             errs.append("center が台帳にない")
+        else:
+            af = allowed_fields(next(c for c in centers if c["id"] == rep["center"]), p)         # 段階56b: この施設で使わない項目は記録しない
+            for k, v in rep.items():
+                if v is not None and k in p["field_of"] and p["field_of"][k] not in af:
+                    errs.append(f"{k} はこの施設では使わない項目（allowed_fields）")
         if errs:
             rejected.append({"index": i, "errors": errs})
             continue
@@ -246,7 +282,14 @@ def fact_rows(today, subjects=None, env=None, policy=None, centers=None, reports
         if not cand:
             continue
         r = max(cand, key=lambda x: str(x["date"]))
-        rows.append({"center": c["id"], "name": c["name"], "operator": c["operator"], "class": c["class"], "date": str(r["date"]),
-                     "line": report_line(c, r, p), "url": r["url"], "hours": c.get("hours"),
-                     "hours_line": p["facts"]["hours_label"].format(hours=c["hours"]) if c.get("hours") else None})
+        af = allowed_fields(c, p)
+        hours = c.get("hours") if "hours" in af else None
+        row = {"center": c["id"], "name": c["name"], "operator": c["operator"], "class": c["class"], "date": str(r["date"]),
+               "line": report_line(c, r, p), "url": r["url"], "hours": hours,
+               "hours_line": p["facts"]["hours_label"].format(hours=hours) if hours else None}
+        if restricted(c, p):                                              # 段階56b: 使う項目を絞った施設だけ印を付ける（検査器が、除いた項目が答えに出たら落とす）
+            row["allowed_fields"] = af
+            row["withheld_species"] = list(r.get("species") or []) if "species" not in af else []
+            row["withheld_hours"] = c.get("hours") if "hours" not in af else None
+        rows.append(row)
     return rows

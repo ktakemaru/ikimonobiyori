@@ -315,6 +315,19 @@ def visitor_center_errors(text, facts):
     for n in sorted(names - allowed):
         if n + "発信" in text:
             errs.append({"code": "visitor_center_not_approved", "detail": f"{n}は承認済みで季節内の施設ではない"})
+    for r in facts.get("visitor_centers") or []:                          # 段階56b: 施設ごとの使う項目。除いた項目が答えに出たら落とす
+        if not r.get("allowed_fields") or not r.get("name"):
+            continue
+        for line in text.splitlines():
+            if r["name"] + "発信" not in line:
+                continue
+            body = re.sub(r"\(https?://[^)]*\)|https?://\S+", "", line)
+            if "species" not in r["allowed_fields"]:
+                leaked = [s for s in r.get("withheld_species") or [] if s and s in body]
+                if leaked or re.search(r"発信、\d+/\d+時点[:：][^。]*?[（(][^）)]+[）)]", body):
+                    errs.append({"code": "visitor_center_field_not_allowed", "detail": f"{r['name']}: 種名は使わない施設（{('・'.join(leaked) or '括弧の種名')}）"})
+        if "hours" not in r["allowed_fields"] and r.get("withheld_hours") and r["withheld_hours"] in text:
+            errs.append({"code": "visitor_center_field_not_allowed", "detail": f"{r['name']}: 開館時間・休館日は使わない施設"})
     for m in re.finditer(r"([^\s、。「」（）()]{2,24}?(?:ビジターセンター|自然観察の森|自然観察公園|自然学習センター))発信", text):
         if m.group(1) not in allowed and m.group(1) not in names:
             errs.append({"code": "visitor_center_not_approved", "detail": f"{m.group(1)}は台帳にない施設"})
