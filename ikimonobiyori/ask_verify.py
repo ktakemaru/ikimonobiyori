@@ -365,9 +365,13 @@ def _with_cards(text, facts):
     cards = facts.get("knowledge_cards")
     rows = cards if cards is not None else K.load_shown()
     used = [r for r in rows if (K.line_for(r) in text) or (K.cfg()["before_line"].format(facts="。".join(x.rstrip("。") for x in r["facts"][: K.cfg()["max_facts_in_answer"]]), source=r["source"]["name"]) in text)]
+    from . import jma_normals as JN                             # 段階61 第1部: 平年の目安の行(気象庁の観測値をもとに計算)も根拠に足す
+    jn = JN.used_in(text)
+    if jn:
+        used = used + [{"title": "", "facts": jn, "source": {"name": JN.policy()["source"]["name"], "url": JN.policy()["source"]["page"]}}]
     if not used:
         return facts
-    return {**facts, "knowledge_used": [{"facts": r["facts"], "source": r["source"], "line": K.line_for(r)} for r in used]}
+    return {**facts, "knowledge_used": [{"facts": r["facts"], "source": r["source"], "line": K.line_for(r) if r.get("title") else ""} for r in used]}
 
 
 def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
@@ -423,6 +427,8 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     answer_errors += not_tried_errors(text, facts)
     answer_errors += subject_word_errors(text, facts, rules) + quote_errors(text, rules)
     answer_errors += knowledge_errors(text, facts)
+    from . import jma_normals as JN
+    answer_errors += JN.answer_errors(text)
     answer_errors += source_rule_errors(text, rules, mat.blob)
     if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
         answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
@@ -844,6 +850,8 @@ def generic_check(text, rules=None, offers=None, clarify=False):
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
     errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules) + question_errors(text, rules) + quote_errors(text, rules)]
+    from . import jma_normals as JN                         # 段階61 第1部: 観測を終えた種目に「今年の」を書かない・出典と加工の行
+    errs += [{**e, "line": 0} for e in JN.answer_errors(text)]
     errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):

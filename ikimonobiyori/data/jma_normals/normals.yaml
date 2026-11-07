@@ -1,0 +1,2499 @@
+# 段階61 第1部: 気象庁の生物季節観測の平年の目安(ikimonobiyori.jma_normals build が作る。手で書き換えない)
+# 出典: 気象庁「生物季節観測累年値」(https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html)、取得日 2026-11-07
+# 加工: 気象庁の観測値をもとに、イキモノビヨリが平均等を計算(公共データ利用規約 第1.0版。気象庁が作成したものではない)
+schema: ikimono-jma-normals/1
+source:
+  name: 気象庁「生物季節観測累年値」
+  url: https://www.data.jma.go.jp/sakura/data/download_ruinenchi.html
+  retrieved_on: '2026-11-07'
+  license: 公共データ利用規約(第1.0版) https://www.digital.go.jp/resources/open_data/public_data_license_v1.0
+processing: 気象庁「生物季節観測累年値」をもとに、イキモノビヨリが平均等を計算(加工)。地点・種目ごとに 1991〜2020年の観測日(統計に使うリマークのものだけ)の平均・最早・最遅を、年を付けない月日で示す。観測期間とデータ点数を併記。気象庁が作成した値(平年値)ではない
+period:
+  from: 1991
+  to: 2020
+entries:
+- station: 東京
+  station_no: '662'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 11-28
+  mean_phrase: 11月下旬
+  earliest: 11-15
+  latest: 12-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 12-14
+  mean_phrase: 12月中旬
+  earliest: 12-03
+  latest: 12-27
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1956
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 12-01
+  mean_phrase: 12月上旬
+  earliest: 11-20
+  latest: 12-11
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 12-12
+  mean_phrase: 12月中旬
+  earliest: 12-04
+  latest: 12-27
+  period:
+    from: 1999
+    to: 2020
+  points: 17
+  observed_years:
+    first: 1999
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 11-20
+  mean_phrase: 11月中旬
+  earliest: 11-02
+  latest: 12-07
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 12-08
+  mean_phrase: 12月上旬
+  earliest: 11-27
+  latest: 12-19
+  period:
+    from: 1991
+    to: 2015
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 11-20
+  mean_phrase: 11月中旬
+  earliest: 11-15
+  latest: 11-27
+  period:
+    from: 1991
+    to: 2011
+  points: 21
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 11-29
+  mean_phrase: 11月下旬
+  earliest: 11-18
+  latest: 12-07
+  period:
+    from: 1991
+    to: 2020
+  points: 27
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 11-12
+  mean_phrase: 11月中旬
+  earliest: 11-01
+  latest: 11-21
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: kaede_koyo
+  name: かえでの紅葉
+  label: かえでの紅葉
+  kind: plant
+  observing: true
+  mean: 12-05
+  mean_phrase: 12月上旬
+  earliest: 11-22
+  latest: 12-17
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-13
+  mean_phrase: 12月中旬
+  earliest: 12-01
+  latest: 12-29
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-27
+  mean_phrase: 12月下旬
+  earliest: 12-09
+  latest: 01-11
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1956
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-15
+  mean_phrase: 12月中旬
+  earliest: 12-05
+  latest: 12-27
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2024
+- station: 銚子
+  station_no: '648'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-27
+  mean_phrase: 12月下旬
+  earliest: 12-12
+  latest: 01-22
+  period:
+    from: 1999
+    to: 2020
+  points: 21
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-03
+  mean_phrase: 12月上旬
+  earliest: 11-14
+  latest: 12-23
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-22
+  mean_phrase: 12月下旬
+  earliest: 12-08
+  latest: 01-13
+  period:
+    from: 1991
+    to: 2015
+  points: 24
+  observed_years:
+    first: 1953
+    last: 2023
+- station: 水戸
+  station_no: '629'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-07
+  mean_phrase: 12月上旬
+  earliest: 11-27
+  latest: 12-19
+  period:
+    from: 1991
+    to: 2011
+  points: 21
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-18
+  mean_phrase: 12月中旬
+  earliest: 12-03
+  latest: 01-27
+  period:
+    from: 1991
+    to: 2020
+  points: 27
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 11-29
+  mean_phrase: 11月下旬
+  earliest: 11-22
+  latest: 12-10
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: kaede_rakuyo
+  name: かえでの落葉
+  label: かえでの落葉
+  kind: plant
+  observing: true
+  mean: 12-21
+  mean_phrase: 12月下旬
+  earliest: 12-05
+  latest: 01-12
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-23
+  mean_phrase: 11月下旬
+  earliest: 11-07
+  latest: 11-30
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-30
+  mean_phrase: 11月下旬
+  earliest: 11-17
+  latest: 12-10
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1969
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-28
+  mean_phrase: 11月下旬
+  earliest: 11-19
+  latest: 12-16
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-30
+  mean_phrase: 11月下旬
+  earliest: 10-28
+  latest: 12-14
+  period:
+    from: 1991
+    to: 2020
+  points: 17
+  observed_years:
+    first: 1955
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-29
+  mean_phrase: 11月下旬
+  earliest: 11-14
+  latest: 12-11
+  period:
+    from: 1991
+    to: 2019
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-27
+  mean_phrase: 11月下旬
+  earliest: 11-18
+  latest: 12-07
+  period:
+    from: 1991
+    to: 2015
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-21
+  mean_phrase: 11月下旬
+  earliest: 11-12
+  latest: 12-02
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-17
+  mean_phrase: 11月中旬
+  earliest: 11-02
+  latest: 12-02
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-10
+  mean_phrase: 11月上旬
+  earliest: 11-02
+  latest: 11-24
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: icho_koyo
+  name: いちょうの黄葉
+  label: いちょうの黄葉
+  kind: plant
+  observing: true
+  mean: 11-25
+  mean_phrase: 11月下旬
+  earliest: 11-06
+  latest: 12-10
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-03
+  mean_phrase: 12月上旬
+  earliest: 11-24
+  latest: 12-14
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-12
+  mean_phrase: 12月中旬
+  earliest: 12-01
+  latest: 12-24
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1966
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-09
+  mean_phrase: 12月上旬
+  earliest: 11-26
+  latest: 12-19
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-12
+  mean_phrase: 12月中旬
+  earliest: 11-11
+  latest: 01-01
+  period:
+    from: 1991
+    to: 2020
+  points: 24
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-07
+  mean_phrase: 12月上旬
+  earliest: 11-20
+  latest: 12-20
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-09
+  mean_phrase: 12月上旬
+  earliest: 11-27
+  latest: 12-25
+  period:
+    from: 1991
+    to: 2015
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-04
+  mean_phrase: 12月上旬
+  earliest: 11-25
+  latest: 12-15
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-02
+  mean_phrase: 12月上旬
+  earliest: 11-19
+  latest: 12-13
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 11-22
+  mean_phrase: 11月下旬
+  earliest: 11-13
+  latest: 12-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: icho_rakuyo
+  name: いちょうの落葉
+  label: いちょうの落葉
+  kind: plant
+  observing: true
+  mean: 12-08
+  mean_phrase: 12月上旬
+  earliest: 11-16
+  latest: 12-31
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1981
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-24
+  mean_phrase: 3月下旬
+  earliest: 03-14
+  latest: 03-31
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-25
+  mean_phrase: 3月下旬
+  earliest: 03-15
+  latest: 04-02
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-27
+  mean_phrase: 3月下旬
+  earliest: 03-17
+  latest: 04-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-30
+  mean_phrase: 3月下旬
+  earliest: 03-19
+  latest: 04-07
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-30
+  mean_phrase: 3月下旬
+  earliest: 03-18
+  latest: 04-08
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-29
+  mean_phrase: 3月下旬
+  earliest: 03-19
+  latest: 04-08
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-30
+  mean_phrase: 3月下旬
+  earliest: 03-20
+  latest: 04-07
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-25
+  mean_phrase: 3月下旬
+  earliest: 03-17
+  latest: 04-01
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 04-11
+  mean_phrase: 4月中旬
+  earliest: 04-02
+  latest: 04-23
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: sakura_kaika
+  name: さくらの開花
+  label: さくらの開花
+  kind: plant
+  observing: true
+  mean: 03-24
+  mean_phrase: 3月下旬
+  earliest: 03-15
+  latest: 04-02
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 03-31
+  mean_phrase: 3月下旬
+  earliest: 03-21
+  latest: 04-08
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-01
+  mean_phrase: 4月上旬
+  earliest: 03-22
+  latest: 04-09
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-03
+  mean_phrase: 4月上旬
+  earliest: 03-22
+  latest: 04-10
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-06
+  mean_phrase: 4月上旬
+  earliest: 03-28
+  latest: 04-14
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-06
+  mean_phrase: 4月上旬
+  earliest: 03-25
+  latest: 04-15
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-05
+  mean_phrase: 4月上旬
+  earliest: 03-26
+  latest: 04-12
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-06
+  mean_phrase: 4月上旬
+  earliest: 03-28
+  latest: 04-14
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-02
+  mean_phrase: 4月上旬
+  earliest: 03-22
+  latest: 04-09
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-16
+  mean_phrase: 4月中旬
+  earliest: 04-05
+  latest: 04-26
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: sakura_mankai
+  name: さくらの満開
+  label: さくらの満開
+  kind: plant
+  observing: true
+  mean: 04-02
+  mean_phrase: 4月上旬
+  earliest: 03-22
+  latest: 04-12
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 01-22
+  mean_phrase: 1月下旬
+  earliest: 01-08
+  latest: 02-10
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-01
+  mean_phrase: 2月上旬
+  earliest: 01-17
+  latest: 03-01
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1958
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-12
+  mean_phrase: 2月中旬
+  earliest: 01-27
+  latest: 03-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 01-20
+  mean_phrase: 1月中旬
+  earliest: 01-03
+  latest: 02-08
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-10
+  mean_phrase: 2月上旬
+  earliest: 01-19
+  latest: 03-06
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-06
+  mean_phrase: 2月上旬
+  earliest: 01-19
+  latest: 02-28
+  period:
+    from: 1991
+    to: 2016
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-03
+  mean_phrase: 2月上旬
+  earliest: 12-15
+  latest: 03-14
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 02-24
+  mean_phrase: 2月下旬
+  earliest: 02-08
+  latest: 03-11
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 03-18
+  mean_phrase: 3月中旬
+  earliest: 02-23
+  latest: 04-07
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: ume_kaika
+  name: うめの開花
+  label: うめの開花
+  kind: plant
+  observing: true
+  mean: 01-17
+  mean_phrase: 1月中旬
+  earliest: 01-03
+  latest: 02-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-05
+  mean_phrase: 6月上旬
+  earliest: 05-11
+  latest: 06-16
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-12
+  mean_phrase: 6月中旬
+  earliest: 06-03
+  latest: 06-21
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1980
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-16
+  mean_phrase: 6月中旬
+  earliest: 06-08
+  latest: 06-27
+  period:
+    from: 1991
+    to: 2020
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-14
+  mean_phrase: 6月中旬
+  earliest: 05-28
+  latest: 06-28
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-22
+  mean_phrase: 6月下旬
+  earliest: 06-08
+  latest: 07-12
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1983
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-16
+  mean_phrase: 6月中旬
+  earliest: 06-05
+  latest: 06-23
+  period:
+    from: 1991
+    to: 2015
+  points: 24
+  observed_years:
+    first: 1979
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-20
+  mean_phrase: 6月中旬
+  earliest: 06-09
+  latest: 07-02
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1980
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-22
+  mean_phrase: 6月下旬
+  earliest: 06-09
+  latest: 07-08
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1983
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-29
+  mean_phrase: 6月下旬
+  earliest: 06-19
+  latest: 07-13
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1984
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: ajisai_kaika
+  name: あじさいの開花
+  label: あじさいの開花
+  kind: plant
+  observing: true
+  mean: 06-13
+  mean_phrase: 6月中旬
+  earliest: 06-01
+  latest: 06-21
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1980
+    last: 2025
+- station: 東京
+  station_no: '662'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-13
+  mean_phrase: 9月中旬
+  earliest: 08-27
+  latest: 10-05
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-17
+  mean_phrase: 9月中旬
+  earliest: 08-21
+  latest: 10-09
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1966
+    last: 2025
+- station: 熊谷
+  station_no: '626'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-19
+  mean_phrase: 9月中旬
+  earliest: 08-24
+  latest: 10-07
+  period:
+    from: 1991
+    to: 2020
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 銚子
+  station_no: '648'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 10-08
+  mean_phrase: 10月上旬
+  earliest: 09-05
+  latest: 11-02
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 08-26
+  mean_phrase: 8月下旬
+  earliest: 08-13
+  latest: 09-15
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 前橋
+  station_no: '624'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-01
+  mean_phrase: 9月上旬
+  earliest: 08-09
+  latest: 09-25
+  period:
+    from: 1991
+    to: 2020
+  points: 21
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 水戸
+  station_no: '629'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-04
+  mean_phrase: 9月上旬
+  earliest: 08-22
+  latest: 09-20
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 甲府
+  station_no: '638'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 08-24
+  mean_phrase: 8月下旬
+  earliest: 08-02
+  latest: 09-10
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1954
+    last: 2025
+- station: 長野
+  station_no: '610'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 08-18
+  mean_phrase: 8月中旬
+  earliest: 08-07
+  latest: 08-30
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2025
+- station: 静岡
+  station_no: '656'
+  phenomenon: susuki_kaika
+  name: すすきの開花
+  label: すすきの開花
+  kind: plant
+  observing: true
+  mean: 09-25
+  mean_phrase: 9月下旬
+  earliest: 09-01
+  latest: 10-12
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1964
+    last: 2025
+- station: 横浜
+  station_no: '670'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-18
+  mean_phrase: 3月中旬
+  earliest: 03-02
+  latest: 04-11
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 熊谷
+  station_no: '626'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-06
+  mean_phrase: 3月上旬
+  earliest: 02-13
+  latest: 03-27
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 銚子
+  station_no: '648'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 02-28
+  mean_phrase: 2月下旬
+  earliest: 02-03
+  latest: 03-17
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-11
+  mean_phrase: 3月中旬
+  earliest: 02-25
+  latest: 03-21
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 前橋
+  station_no: '624'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-11
+  mean_phrase: 3月中旬
+  earliest: 01-22
+  latest: 04-16
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 水戸
+  station_no: '629'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-11
+  mean_phrase: 3月中旬
+  earliest: 02-27
+  latest: 03-23
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 甲府
+  station_no: '638'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-13
+  mean_phrase: 3月中旬
+  earliest: 02-21
+  latest: 03-28
+  period:
+    from: 1992
+    to: 2019
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2019
+- station: 長野
+  station_no: '610'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-23
+  mean_phrase: 3月下旬
+  earliest: 02-26
+  latest: 04-07
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 静岡
+  station_no: '656'
+  phenomenon: uguisu
+  name: うぐいすの初鳴
+  label: うぐいすの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-13
+  mean_phrase: 3月中旬
+  earliest: 02-19
+  latest: 03-29
+  period:
+    from: 1991
+    to: 2020
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 東京
+  station_no: '662'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-11
+  mean_phrase: 4月中旬
+  earliest: 03-26
+  latest: 04-29
+  period:
+    from: 1991
+    to: 2020
+  points: 19
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 横浜
+  station_no: '670'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-12
+  mean_phrase: 4月中旬
+  earliest: 03-24
+  latest: 05-04
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 熊谷
+  station_no: '626'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-03
+  mean_phrase: 4月上旬
+  earliest: 03-17
+  latest: 04-27
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 銚子
+  station_no: '648'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-01
+  mean_phrase: 4月上旬
+  earliest: 03-11
+  latest: 04-18
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-05
+  mean_phrase: 4月上旬
+  earliest: 03-22
+  latest: 04-22
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 前橋
+  station_no: '624'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-04
+  mean_phrase: 4月上旬
+  earliest: 03-19
+  latest: 04-17
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 水戸
+  station_no: '629'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-07
+  mean_phrase: 4月上旬
+  earliest: 03-24
+  latest: 04-30
+  period:
+    from: 1991
+    to: 2020
+  points: 29
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 甲府
+  station_no: '638'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-01
+  mean_phrase: 4月上旬
+  earliest: 03-15
+  latest: 04-13
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 長野
+  station_no: '610'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-09
+  mean_phrase: 4月上旬
+  earliest: 03-23
+  latest: 04-24
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 静岡
+  station_no: '656'
+  phenomenon: tsubame
+  name: つばめの初見
+  label: つばめの初見
+  kind: animal
+  observing: false
+  mean: 04-03
+  mean_phrase: 4月上旬
+  earliest: 03-23
+  latest: 04-18
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 横浜
+  station_no: '670'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 10-11
+  mean_phrase: 10月中旬
+  earliest: 09-22
+  latest: 11-04
+  period:
+    from: 1991
+    to: 2015
+  points: 20
+  observed_years:
+    first: 1953
+    last: 2015
+- station: 熊谷
+  station_no: '626'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 09-28
+  mean_phrase: 9月下旬
+  earliest: 09-06
+  latest: 10-27
+  period:
+    from: 1991
+    to: 2020
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 銚子
+  station_no: '648'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 09-25
+  mean_phrase: 9月下旬
+  earliest: 09-05
+  latest: 10-12
+  period:
+    from: 1991
+    to: 2020
+  points: 27
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 09-15
+  mean_phrase: 9月中旬
+  earliest: 09-01
+  latest: 10-06
+  period:
+    from: 1991
+    to: 2019
+  points: 17
+  observed_years:
+    first: 1953
+    last: 2019
+- station: 前橋
+  station_no: '624'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 10-11
+  mean_phrase: 10月中旬
+  earliest: 09-13
+  latest: 11-29
+  period:
+    from: 1991
+    to: 2015
+  points: 14
+  observed_years:
+    first: 1953
+    last: 2015
+- station: 水戸
+  station_no: '629'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 09-20
+  mean_phrase: 9月中旬
+  earliest: 08-10
+  latest: 10-22
+  period:
+    from: 1991
+    to: 2020
+  points: 24
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 甲府
+  station_no: '638'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 09-20
+  mean_phrase: 9月中旬
+  earliest: 09-04
+  latest: 10-21
+  period:
+    from: 1991
+    to: 2020
+  points: 27
+  observed_years:
+    first: 1960
+    last: 2020
+- station: 静岡
+  station_no: '656'
+  phenomenon: mozu
+  name: もずの初鳴
+  label: もずの初鳴き
+  kind: animal
+  observing: false
+  mean: 10-06
+  mean_phrase: 10月上旬
+  earliest: 09-21
+  latest: 10-28
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1957
+    last: 2020
+- station: 銚子
+  station_no: '648'
+  phenomenon: hotaru
+  name: ほたるの初見
+  label: ほたるの初見
+  kind: animal
+  observing: false
+  mean: 07-01
+  mean_phrase: 7月上旬
+  earliest: 06-20
+  latest: 07-13
+  period:
+    from: 1991
+    to: 2002
+  points: 12
+  observed_years:
+    first: 1954
+    last: 2002
+- station: 水戸
+  station_no: '629'
+  phenomenon: hotaru
+  name: ほたるの初見
+  label: ほたるの初見
+  kind: animal
+  observing: false
+  mean: 06-07
+  mean_phrase: 6月上旬
+  earliest: 05-30
+  latest: 06-14
+  period:
+    from: 1991
+    to: 2003
+  points: 10
+  observed_years:
+    first: 1953
+    last: 2003
+- station: 甲府
+  station_no: '638'
+  phenomenon: hotaru
+  name: ほたるの初見
+  label: ほたるの初見
+  kind: animal
+  observing: false
+  mean: 06-03
+  mean_phrase: 6月上旬
+  earliest: 05-17
+  latest: 06-20
+  period:
+    from: 1991
+    to: 2020
+  points: 25
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 長野
+  station_no: '610'
+  phenomenon: hotaru
+  name: ほたるの初見
+  label: ほたるの初見
+  kind: animal
+  observing: false
+  mean: 06-25
+  mean_phrase: 6月下旬
+  earliest: 06-16
+  latest: 07-06
+  period:
+    from: 1991
+    to: 2020
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: kakko
+  name: かっこうの初鳴
+  label: かっこうの初鳴き
+  kind: animal
+  observing: false
+  mean: 05-21
+  mean_phrase: 5月下旬
+  earliest: 05-13
+  latest: 06-02
+  period:
+    from: 1991
+    to: 2019
+  points: 29
+  observed_years:
+    first: 1954
+    last: 2019
+- station: 前橋
+  station_no: '624'
+  phenomenon: kakko
+  name: かっこうの初鳴
+  label: かっこうの初鳴き
+  kind: animal
+  observing: false
+  mean: 05-23
+  mean_phrase: 5月下旬
+  earliest: 05-13
+  latest: 06-11
+  period:
+    from: 1991
+    to: 2001
+  points: 11
+  observed_years:
+    first: 1953
+    last: 2001
+- station: 長野
+  station_no: '610'
+  phenomenon: kakko
+  name: かっこうの初鳴
+  label: かっこうの初鳴き
+  kind: animal
+  observing: false
+  mean: 05-21
+  mean_phrase: 5月下旬
+  earliest: 04-28
+  latest: 06-01
+  period:
+    from: 1991
+    to: 2020
+  points: 26
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 横浜
+  station_no: '670'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-28
+  mean_phrase: 3月下旬
+  earliest: 03-11
+  latest: 04-19
+  period:
+    from: 1995
+    to: 2020
+  points: 15
+  observed_years:
+    first: 1974
+    last: 2020
+- station: 熊谷
+  station_no: '626'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 02-19
+  mean_phrase: 2月中旬
+  earliest: 02-03
+  latest: 03-04
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 銚子
+  station_no: '648'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-05
+  mean_phrase: 3月上旬
+  earliest: 02-07
+  latest: 03-30
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-05
+  mean_phrase: 3月上旬
+  earliest: 02-02
+  latest: 04-07
+  period:
+    from: 1991
+    to: 2019
+  points: 22
+  observed_years:
+    first: 1953
+    last: 2019
+- station: 前橋
+  station_no: '624'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 02-21
+  mean_phrase: 2月下旬
+  earliest: 01-22
+  latest: 03-19
+  period:
+    from: 1991
+    to: 2016
+  points: 19
+  observed_years:
+    first: 1953
+    last: 2016
+- station: 水戸
+  station_no: '629'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-07
+  mean_phrase: 3月上旬
+  earliest: 02-16
+  latest: 03-31
+  period:
+    from: 1991
+    to: 2008
+  points: 17
+  observed_years:
+    first: 1953
+    last: 2008
+- station: 甲府
+  station_no: '638'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-26
+  mean_phrase: 3月下旬
+  earliest: 02-28
+  latest: 04-17
+  period:
+    from: 1991
+    to: 2017
+  points: 11
+  observed_years:
+    first: 1953
+    last: 2017
+- station: 長野
+  station_no: '610'
+  phenomenon: hibari
+  name: ひばりの初鳴
+  label: ひばりの初鳴き
+  kind: animal
+  observing: false
+  mean: 03-25
+  mean_phrase: 3月下旬
+  earliest: 03-05
+  latest: 04-12
+  period:
+    from: 1992
+    to: 2006
+  points: 10
+  observed_years:
+    first: 1953
+    last: 2006
+- station: 横浜
+  station_no: '670'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 07-24
+  mean_phrase: 7月下旬
+  earliest: 07-14
+  latest: 08-04
+  period:
+    from: 1994
+    to: 2020
+  points: 27
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 熊谷
+  station_no: '626'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 08-01
+  mean_phrase: 8月上旬
+  earliest: 07-14
+  latest: 08-27
+  period:
+    from: 1991
+    to: 2016
+  points: 17
+  observed_years:
+    first: 1953
+    last: 2016
+- station: 宇都宮
+  station_no: '615'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 07-13
+  mean_phrase: 7月中旬
+  earliest: 06-24
+  latest: 08-05
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 水戸
+  station_no: '629'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 07-17
+  mean_phrase: 7月中旬
+  earliest: 06-29
+  latest: 08-06
+  period:
+    from: 1991
+    to: 2020
+  points: 28
+  observed_years:
+    first: 1953
+    last: 2020
+- station: 甲府
+  station_no: '638'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 07-24
+  mean_phrase: 7月下旬
+  earliest: 06-30
+  latest: 08-22
+  period:
+    from: 1991
+    to: 2017
+  points: 22
+  observed_years:
+    first: 1953
+    last: 2017
+- station: 長野
+  station_no: '610'
+  phenomenon: higurashi
+  name: ひぐらしの初鳴
+  label: ひぐらしの初鳴き
+  kind: animal
+  observing: false
+  mean: 07-11
+  mean_phrase: 7月中旬
+  earliest: 07-02
+  latest: 07-24
+  period:
+    from: 1991
+    to: 2020
+  points: 30
+  observed_years:
+    first: 1953
+    last: 2020
+missing: []

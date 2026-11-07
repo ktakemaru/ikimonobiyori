@@ -1,0 +1,176 @@
+"""段階61: 外部の公的・研究機関の知識・データの取り込み。通信なし・合成データ。
+第1部: 気象庁 生物季節観測の平年の目安(ikimonobiyori/jma_normals.py)。"""
+import copy
+import tempfile
+import unittest
+from pathlib import Path
+
+import helpers as H  # noqa: F401  (通信禁止)
+
+from ikimonobiyori import ask_verify as V
+from ikimonobiyori import intent
+from ikimonobiyori import jma_normals as JN
+from ikimonobiyori.fetch import ParseError
+
+POL = JN.policy()
+LAYOUT = POL["layout"]
+PHEN = {p["key"]: p for p in POL["phenomena"]}
+
+
+def synthetic(code, name, rows, years, last_rm="e"):
+    """合成の累年値 CSV(cp932 のバイト列)。rows = [(番号, 地点名, {年: (値, rm)}), ...]。"""
+    hdr = ["番号", "地点名"]
+    for i, y in enumerate(years):
+        hdr += [str(y), last_rm if i == len(years) - 1 else "rm"]
+    hdr += LAYOUT["summary_columns"]
+    lines = [",".join([str(int(code)), name] + [""] * (len(hdr) - 2)), ",".join(hdr)]
+    for no, nm, vals in rows:
+        flat = []
+        for y in years:
+            flat += list(vals.get(y, ("0", "0")))
+        lines.append(",".join([no, nm] + flat + ["0"] * len(LAYOUT["summary_columns"])))
+    return ("\r\n".join(lines) + "\r\n").encode("cp932")
+
+
+def small_policy(**over):
+    """点数の下限を小さくした方針(合成データの年数で計算できるように)。"""
+    p = copy.deepcopy(POL)
+    p.update(over)
+    return p
+
+
+YEARS = list(range(1989, 2024))
+
+
+class Compute(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def write(self, code, data):
+        (self.dir / f"{code}.csv").write_bytes(data)
+
+    def test_mean_earliest_latest_within_period_only(self):
+        # 東京: 1991〜2020 年に 11/20・11/30・12/10 の 3 年(平均 11/30)。期間の外(1990・2021)は使わない
+        self.write("015", synthetic("015", "かえでの紅葉", [("662", "東京　　", {1990: ("1101", "8"), 1991: ("1120", "8"), 2000: ("1130", "8"),
+                                                                                  2020: ("1210", "8"), 2021: ("1231", "8")})], YEARS))
+        doc = JN.build(self.dir, "2026-11-07", small_policy(min_points=3))
+        e = next(x for x in doc["entries"] if x["phenomenon"] == "kaede_koyo")
+        self.assertEqual((e["mean"], e["mean_phrase"], e["earliest"], e["latest"], e["points"]), ("11-30", "11月下旬", "11-20", "12-10", 3))
+        self.assertEqual(e["period"], {"from": 1991, "to": 2020})
+        self.assertEqual(e["observed_years"], {"first": 1990, "last": 2021})
+
+    def test_cross_year_values_average_across_new_year(self):
+        # 秋の種目の 1 月の値は翌年の日付: 12/26 と 1/5 の平均は 12/31(5 月や 6 月にならない)
+        self.write("016", synthetic("016", "かえでの落葉", [("662", "東京　　", {1995: ("1226", "8"), 1996: ("105", "8")})], YEARS))
+        doc = JN.build(self.dir, "2026-11-07", small_policy(min_points=2))
+        e = next(x for x in doc["entries"] if x["phenomenon"] == "kaede_rakuyo")
+        self.assertEqual((e["mean"], e["earliest"], e["latest"]), ("12-31", "12-26", "01-05"))
+
+    def test_remark_3_4_and_too_few_points_are_not_used(self):
+        self.write("004", synthetic("004", "さくらの開花", [("662", "東京　　", {1991: ("325", "3"), 1992: ("320", "8")})], YEARS))
+        doc = JN.build(self.dir, "2026-11-07", small_policy(min_points=2))
+        self.assertFalse([x for x in doc["entries"] if x["phenomenon"] == "sakura_kaika"])      # 統計に使わない rm 3 を除くと 1 年だけ
+        doc = JN.build(self.dir, "2026-11-07", small_policy(min_points=1))
+        e = next(x for x in doc["entries"] if x["phenomenon"] == "sakura_kaika")
+        self.assertEqual((e["mean"], e["points"]), ("03-20", 1))
+
+    def test_unexpected_shape_stops(self):
+        self.write("015", synthetic("015", "ちがう種目", [("662", "東京", {1991: ("1120", "8")})], YEARS))
+        with self.assertRaises(ParseError):
+            JN.build(self.dir, "2026-11-07")
+
+    def test_source_and_processing_are_stated(self):
+        doc = JN.build(self.dir, "2026-11-07")
+        self.assertEqual(doc["source"]["url"], POL["source"]["page"])
+        self.assertEqual(doc["source"]["retrieved_on"], "2026-11-07")
+        self.assertIn("イキモノビヨリが平均等を計算", doc["processing"])
+        self.assertIn("気象庁が作成した値(平年値)ではない", doc["processing"])
+        self.assertEqual(len(doc["missing"]), len(POL["phenomena"]))         # ファイルがなければ推測で補わない
+        out = self.dir / "n.yaml"
+        JN.dump(doc, out)
+        head = out.read_text(encoding="utf-8").splitlines()[:3]
+        self.assertTrue(any("出典" in h and POL["source"]["page"] in h for h in head))
+        self.assertTrue(any("加工" in h and "イキモノビヨリが平均等を計算" in h for h in head))
+
+    def test_repository_table_has_source_and_processing(self):
+        text = JN.NORMALS_PATH.read_text(encoding="utf-8")
+        self.assertIn("出典: 気象庁「生物季節観測累年値」", text)
+        self.assertIn("イキモノビヨリが平均等を計算", text)
+        doc = JN.load()
+        self.assertTrue(doc["entries"])
+        self.assertTrue(all(e["period"]["from"] >= POL["period"]["from"] and e["period"]["to"] <= POL["period"]["to"] for e in doc["entries"]))
+
+
+def entry(**kw):
+    e = {"station": "東京", "station_no": "662", "phenomenon": "kaede_koyo", "name": "かえでの紅葉", "label": "かえでの紅葉", "kind": "plant",
+         "observing": True, "mean": "11-28", "mean_phrase": "11月下旬", "earliest": "11-15", "latest": "12-04",
+         "period": {"from": 1991, "to": 2020}, "points": 30, "observed_years": {"first": 1953, "last": 2025}}
+    e.update(kw)
+    return e
+
+
+DOC = {"entries": [entry(), entry(station="横浜", station_no="670", mean_phrase="12月中旬"),
+                   entry(phenomenon="uguisu", name="うぐいすの初鳴", label="うぐいすの初鳴き", kind="animal", observing=False, station="横浜",
+                         mean_phrase="3月中旬", earliest="03-02", latest="04-11", points=28, observed_years={"first": 1953, "last": 2020})]}
+
+
+class Lines(unittest.TestCase):
+    def test_observing_line_states_period_points_city_tree_and_mountain_note(self):
+        ls, src = JN.lines_for("東京の紅葉は、平年はいつ頃?", DOC)
+        self.assertEqual(len(ls), 1)
+        self.assertIn("東京(気象庁の標本木。都市部の観測)のかえでの紅葉は、平年は11月下旬ごろです", ls[0])
+        self.assertIn("1991〜2020年の平均、30年分", ls[0])
+        self.assertIn("山地の見頃とは別です", ls[0])
+        self.assertEqual(src, POL["text"]["source_line"])
+        self.assertIn("イキモノビヨリが計算", src)
+
+    def test_ended_phenomenon_states_observation_period_and_no_this_year(self):
+        ls, _ = JN.lines_for("ウグイスは、いつ頃から鳴きはじめる?", DOC)
+        self.assertEqual(len(ls), 1)
+        self.assertIn("気象庁の過去の観測(1953〜2020年)", ls[0])
+        self.assertNotIn("今年の", ls[0])
+        self.assertEqual(JN.answer_errors("\n".join(ls) + "\n" + POL["text"]["source_line"]), [])
+
+    def test_this_year_on_ended_phenomenon_is_rejected(self):
+        bad = "横浜のうぐいすの初鳴きは、気象庁の過去の観測(1953〜2020年)では、今年の初鳴きは3月中旬ごろでした。\n" + POL["text"]["source_line"]
+        self.assertIn("ended_phenology_this_year", [e["code"] for e in JN.answer_errors(bad)])
+        self.assertIn("ended_phenology_this_year", [e["code"] for e in V.generic_check(bad)["errors"]])
+
+    def test_source_line_is_required(self):
+        ls, _ = JN.lines_for("東京の紅葉は、平年はいつ頃?", DOC)
+        self.assertIn("jma_normal_source_missing", [e["code"] for e in JN.answer_errors(ls[0])])
+
+    def test_no_match_without_question_words_or_with_other_kinds(self):
+        self.assertEqual(JN.match("冬桜について教えて"), [])
+        self.assertEqual(JN.match("十月桜はいつ頃?"), [])              # 冬に咲く桜は、さくら(そめいよしの)の観測に当てない
+        self.assertEqual(JN.match("紅葉のおすすめは"), [])            # 平年・いつ頃などの語がない
+        self.assertIn("sakura_kaika", JN.match("横浜の桜は平年いつ頃咲く?"))
+        self.assertEqual(JN.stations_in("ウグイスはいつ頃?"), POL["default_stations"])
+
+    def test_skeleton_lines_use_origin_station(self):
+        ls, src = JN.skeleton_lines(["autumn_leaves"], "東京", DOC)
+        self.assertTrue(ls and ls[0].startswith("東京("))
+        ls, _ = JN.skeleton_lines(["autumn_leaves"], "大宮", DOC)        # 地点にない出発地は既定の地点
+        self.assertTrue(ls[0].startswith(POL["skeleton_station"] + "("))
+        self.assertEqual(JN.skeleton_lines(["birds"], "東京", DOC), ([], None))
+
+    def test_knowledge_answer_puts_normals_first_with_source(self):
+        orig = JN.load
+        JN.load = lambda path=None: DOC
+        try:
+            self.assertEqual(intent.classify("東京の紅葉は、平年はいつ頃?"), "normal")
+            text = intent.compose("東京の紅葉は、平年はいつ頃?", cards=[])
+            self.assertTrue(text.startswith("東京(気象庁の標本木。都市部の観測)"))
+            self.assertIn("出典\n" + POL["text"]["source_line"], text)
+            self.assertEqual(intent.check(text, []), [])
+            self.assertFalse(text.rstrip().endswith("?"))
+        finally:
+            JN.load = orig
+
+
+if __name__ == "__main__":
+    unittest.main()
