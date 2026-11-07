@@ -321,6 +321,14 @@ class Part5Refine(unittest.TestCase):
         self.assertTrue(doc["needs_fetch"])
 
 
+class Part6Flows(unittest.TestCase):
+    def test_conversation_flows(self):
+        from ikimonobiyori import regress
+        res = regress.run_flows()
+        self.assertEqual([r for r in res if not r["ok"]], [])
+        self.assertGreaterEqual(len(res), 4)
+
+
 class Part2Page(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

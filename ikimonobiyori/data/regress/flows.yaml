@@ -1,0 +1,37 @@
+# 段階57 第6部: 連続した会話のシナリオ(合成データ。実在の名所の状態ではない)。regress.run_flows が通しで確かめる(通信しない。書き込みは一時フォルダだけ)。
+# 各段: answer = 計画を作り、答えを組み立てて検査に通す / page = 直前の答えのページを作り、採用・節が同じことを確かめる / refine = 追質問で選び直す
+schema: ikimono-regress-flows/1
+subjects:
+  autumn_leaves:
+    - {name: 試験の園, city: 園町, km: 20, trees: [モミジ]}
+    - {name: 試験の山, city: 山町, km: 60, elev: 800, trees: [ブナ]}
+    - {name: 試験の湖, city: 湖町, km: 130, trees: [イチョウ]}
+  flowers:
+    - {name: 花の庭, city: 庭町, km: 15, flowers: [秋バラ]}
+    - {name: 花の丘, city: 丘町, km: 70, flowers: [コスモス]}
+    - {name: 花の里, city: 里町, km: 120, flowers: [キク]}
+  birds:
+    - {name: 鳥の池, city: 池町, km: 25, birds: [ジョウビタキ]}
+    - {name: 鳥の沼, city: 沼町, km: 65, birds: [ジョウビタキ]}
+    - {name: 鳥の浜, city: 浜町, km: 110, birds: [ジョウビタキ]}
+flows:
+  - id: koyo-page-near
+    question: 「明日、紅葉を見に行きたい」→「写真つきのページにして」→「もっと近場で」
+    subjects: [autumn_leaves]
+    dates: ["2026-11-08"]
+    steps: [{do: answer}, {do: page}, {do: refine, word: もっと近場で}, {do: answer}]
+  - id: flowers-birds-page
+    question: 「明日楽しめる花や野鳥を写真付きページで紹介して」
+    subjects: [flowers, birds]
+    dates: ["2026-11-08"]
+    steps: [{do: answer}, {do: page}]
+  - id: next-weekend-trek
+    question: 「来週末の紅葉」→「山歩きで」
+    subjects: [autumn_leaves]
+    dates: ["2026-11-14", "2026-11-15"]
+    steps: [{do: answer}, {do: refine, word: 山歩きで}, {do: answer}]
+  - id: unsupported-makes-no-page
+    question: 未対応の対象で別のページが作られない
+    subjects: [fireflies]
+    dates: ["2026-11-08"]
+    steps: [{do: unsupported_page}]
