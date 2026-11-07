@@ -223,7 +223,6 @@ def build(facts, *, policy, photo_for, author_re, commons_source_id, now, care=(
     if care:
         body.append(f'<h2>{say(t["care_heading"])}</h2><ul class="park-facts">' + "".join(f"<li>{say(m)}</li>" for m in care) + "</ul>")
     body.append(f'<p class="note">{say(t["footer"])}</p>')
-    body.append(f'<p class="lead">{say(t["next_question"])}</p>')
     page = ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
             f'<meta http-equiv="Content-Security-Policy" content="{esc(policy["csp"])}">\n'

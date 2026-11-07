@@ -52,6 +52,9 @@ distance:
   other: {weight: 0, ref_km: 250}
   # 座標がない名所の距離の見積もり(都道府県の単位。見積もりであることを plan に残す)。ない都道府県は距離の点を付けず、距離の狙いに入れない
   estimate_km_by_prefecture: {神奈川県: 40, 東京都: 40}
+  # 段階57 第8部: 上の見積もりは横浜・東京から。ほかの出発地では、同じ都道府県の名所だけ same_prefecture_km を見積もりに使う
+  estimate_origins: [横浜, 東京]
+  same_prefecture_km: 40
 
 bonus:
   festival_active: 6       # 対象日がまつり・行事の期間内(現況の代わりにはしない)
@@ -76,8 +79,26 @@ aims:
   # 日帰りの上限(これより遠い名所は計画に入れない)
   day_trip_max_km: 180
 
+# 段階57 第12部: 同じ見込みの区分の中での根拠の強さ。今年の現況がある(日付が新しいほど上)→ 現況が古い → 例年の窓だけ(現況なし)の順。区分そのものの優先は変えない
+evidence:
+  fresh_max_age_days: 14
+  # 現況のない候補を今回のおすすめに入れるとき、その候補に書く文(検査器が確かめる)
+  no_current_note: 今年の状況は確認できていません
+  # 現況がなく例年の窓だけが根拠の候補は、並びの区分をこの順位までにする(高尾山のように、現況のある「見頃に向かう」候補より前に出さない)
+  typical_only_rank_cap: 3
+  note_ok_words: [確認できていません, 紹介サイトでは]
+
+# 段階58 第3部: 今年の情報(現況・行事)がない候補は大きく減点し、今回のおすすめの対象から外す(別枠に 1 行ずつ)
+this_year:
+  penalty: 30
+  max_lines: 3
+  line: "{name}: {typical}(今年の情報は確認できていません)"
+  line_no_typical: "{name}: 今年の情報は確認できていません"
+
 selection:
   picks: 3
+  # 利用できるなら、今回のおすすめのうちこの件数は今年の現況がある候補にする
+  min_with_current: 2
   # 今回のおすすめは、まずこの狙いの各1位から(あれば)選び、足りなければほかの節の1位、節の2位以降の順
   pick_aims: [near, trek, far]
   # 節に入れる点数の下限。下回る名所は「現況なし」「現況が古い」で外す
@@ -96,6 +117,143 @@ reasons:
   out_of_range: 範囲外
   closed_that_day: 対象日が休み
   no_aim: 狙いが決まらない(距離が分からない)
+  refine_excluded: 追質問の条件に合わない
+  no_this_year: 今年の情報がない
+
+# 段階57 第4部: 野鳥で、公式の観察の記録がない公園の扱い(大きく減点し、選ぶときは明記する)
+birds_no_current:
+  penalty: 15
+  note: 公式の最近の観察記録は確認できていません
+
+# 段階57 第5部: 追質問(「もっと近場で」「山歩きで」など)で計画を選び直す語 → 残す狙い。同日の記録と計画だけで選び直す(通信しない)
+refine:
+  words:
+    近場: {aims: [near]}
+    近く: {aims: [near]}
+    手軽: {aims: [near]}
+    山歩き: {aims: [trek]}
+    歩き: {aims: [trek]}
+    遠出: {aims: [far, drive]}
+    絶景: {aims: [far]}
+    ドライブ: {aims: [drive]}
+    ライトアップ: {lightup: true}
+    夜: {lightup: true}
+  # 近場で該当がないときは、距離の分かる候補を近い順にこの件数だけ残す
+  nearest_fallback: 3
+
+# 段階58 第9部: 答えの骨組み(ikimonobiyori/skeleton.py)の決まり文
+skeleton:
+  picks_heading: 今回のおすすめ
+  confidence_heading: 確かさの補足
+  before_heading: 行く前に確認すること
+  no_this_year_heading: 今年の情報が確認できていない候補
+  sources_heading: 出典
+  lead_ok: 見頃が続いている可能性がある場所を選びました。
+  lead_toward: 見頃に向かう可能性がある場所を選びました。
+  lead_mixed: 現況が確認できている場所と、できていない場所があります。
+  cannot_answer: 今は答えを用意できません。
+  lead_none: この条件で今年の情報が確認できた候補はありません。
+  area_none: "{name}は、今年の情報が確認できていません。"
+  lead_no_current: 今年の状況は確認できていません。例年の時期とまつりの日程から選びました。
+  dates: "対象の日は{days}です。"
+  dates_default: "日付の指定がなかったので、{days}で探しました。"
+  current: "今の状況は{state}({md}時点、{publisher})"
+  current_nodate: "今の状況は{state}({publisher})"
+  secondary: "紹介サイトでは{state}とされています({md}時点、{publisher}。公式ではありません)"
+  secondary_nodate: "紹介サイトでは{state}とされています({publisher}。公式ではありません)"
+  reference: "{md}時点の参考: {state}({publisher})"
+  no_current: 今年の状況は確認できていません
+  no_current_fest: 色づき状況は確認できていません
+  typical_unknown: 例年の時期は分かりません
+  birds: "この時期に見られる鳥は{names}です"
+  birds_unknown: この時期に見られる鳥の記録は見つかっていません
+  max_birds: 5
+  not_official: 公式ではありません
+  inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
+  few: "この地域で今年の情報が確認できた候補は{n}件です。"
+  secondary_note: 紹介サイトの情報は公式の発表ではありません。
+
+# 段階58 第10部: 複数テーマの組み合わせ(ikimonobiyori/combo.py)
+combo:
+  max_km: 20
+  max_pairs: 5
+  none_line: "同じ場所、または近く(約{km}km以内)では確認できていません。"
+  same_line: "{name}: 同じ場所で楽しめます。"
+  near_line: "{a}と{b}: 約{km}km。"
+
+# 段階58 第9部: 日付の既定。計画段階の語で日付の指定がなければ、今週末と来週末の両方。出力の dates に使う
+dates_default:
+  plan_words: [探しています, 探してる, 行きたい, 計画, 考えています]
+  date_words: [今日, 明日, 明後日, 今週末, 来週末, 今週, 来週, 週末, 月, 日, /]
+first_check_file: ask/first_check.jsonl
+
+# 段階58 第7部: 見頃を狙う週(例年の見頃の窓のまん中に近い週末)。確認できた例年の見頃だけから計算する
+target_week:
+  line: "見頃を狙うなら{s}〜{e}の週末が目安です(例年の見頃({publisher}、{label})から。今年の現況は分かりません)"
+  class_official: 公式
+  class_secondary: 公式ではありません
+
+# 段階58 第5部: 会話の比較表(ikimonobiyori/compare.py)。履歴はデータ置き場
+compare:
+  file: ask/plan_history.json
+  max_plans: 5
+  valid_hours: 24
+  min_plans: 2
+  headers: [場所, 今の状況と日付, 例年の見頃, 対象日の見込み]
+  no_current: 確認できていません
+  no_typical: 例年の時期は分かりません
+  sources_heading: 出典
+
+# 段階58 第2部: 公式ページの読み方(ikimonobiyori/official_pages.py)
+official_pages:
+  suffixes: [.lg.jp, .go.jp, .pref.kanagawa.jp, .metro.tokyo.lg.jp]
+  host_words: [kankou, kanko, -kanko, tourism, visitor, park, koen, park.or.jp]
+  excluded_hosts: [koyo.walkerplus.com, walkerplus.com, rurubu.jp, jorudan.co.jp, iko-yo.net, enjoytokyo.jp]
+  follow_words: [お知らせ, 紅葉情報, 紅葉, イベント, 開園, 開館, 休園, 休館, 新着, 最新]
+  notice_words: [開園日, 開館日, 変更, 閉鎖, 通行止め, 規制, 休園, 休館, 工事]
+  max_pages: 6
+  notice_line: "{name}: {text}({md}時点の公式のお知らせ)"
+  not_tried_phrases: [中身は読めていません, 公式ページを確認できていません]
+  not_read_phrase: 公式ページを確認できていません
+
+# 段階58 第1部: エリアの質問。各エリアのおすすめの件数(指示書 第9部: 各エリア 1〜2 件)
+areas:
+  picks_per_area: 2
+
+# 段階57 第10部: 場所を指定した質問(ikimonobiyori/place_answer.py)
+place:
+  tail_re: '(の(紅葉|もみじ|黄葉|花|桜|野鳥|鳥|見頃|見ごろ|状況|様子).*|(は|って)(どう|どんな|いつ|いかが|教えて).*)$'
+  head_re: '^(今週末|来週末|明日|今日|今)[、の]?'
+  split_re: '[やと、・,]'
+  stop_words: [紅葉, 花, 野鳥, 鳥, おすすめ]
+  min_partial_chars: 3
+  max_pages: 8
+  public_suffixes: [.lg.jp, .go.jp, .pref.kanagawa.jp, .metro.tokyo.lg.jp, .yamanashi-kankou.jp, .or.jp]
+  forecast_reprint_words: [全国予測, 紅葉予想, 紅葉予測, 見頃予想, foliage forecast, autumn leaves forecast, 日本気象協会, Japan Weather Association, tenki.jp]
+  search_query: "{name} 紅葉 {year} 公式"
+  lines:
+    official: "{name}(正式名称は{name}です)"
+    current: "今年の現況: {state}({md}時点、{publisher})"
+    current_nodate: "今年の現況: {state}({publisher})"
+    no_current: 今年の現況は確認できていません。
+    practical: "実用情報: {text}"
+    distance: "{origin}から約{km}km"
+
+# 段階57 第9部: 期間別の節の見出し(この形の行で節を始める)
+period_heading: "{days}のおすすめ"
+
+# 段階57 第9部: 答えの前の事前取得(ask refresh --plan)。計画の上位候補のうち、現況が対象日よりこの日数以上古いもの・現況がないものを読む
+refresh:
+  stale_days: 3
+  max_pages: 8
+
+# 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
+segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+
+# 段階57 第2部: 直前の答えの計画の保存(ask page・追質問が引き継ぐ。IKIMONOBIYORI_DATA_DIR の下)
+last_plan:
+  file: ask/last_plan.json
+  valid_hours: 24
 
 # 同じ名所の別の書き方をまとめる(頭の地域名を取る)
 duplicate:

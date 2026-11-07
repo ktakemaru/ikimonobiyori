@@ -1,0 +1,49 @@
+# 段階59: PDF の読み取り・発行物台帳・知識カード(ikimonobiyori/pdf_text.py・knowledge.py)の値。値はここに置く(CLAUDE.md 規則 1)。
+schema: ikimono-knowledge-policy/1
+publications_file: knowledge/publications.jsonl
+# 知識カード(段階59 第2部)。本体はリポジトリの外。出典の規約が厳しい施設のカードも、事実のみ・自分の言葉・出典明記
+cards:
+  file: knowledge/cards.jsonl
+  required: [title, category, place, facts, condition, source, confidence, rights, usage]
+  source_required: [name, url, checked_on]
+  categories: [季節の仕組み, 見頃の流れ, 出会い方・歩き方, 痕跡・暮らし, 地形・地質・火山, 保全・マナー, 安全, 名前・歴史・文化, 夜・天気・自然現象, シーズンの目安, 種の解説]
+  confidences: [施設の観察記録, 公的資料, 施設の解説, 施設の発信, 研究機関の解説, 紹介]
+  max_facts: 5
+  max_fact_chars: 60
+  max_sentences: 1
+  max_shown: 2               # 答えに出す枚数
+  max_facts_in_answer: 3
+  # 分類の優先(安全と保全・マナーは、該当するとき先に)
+  category_priority: [安全, 保全・マナー, 見頃の流れ, 季節の仕組み, 出会い方・歩き方, シーズンの目安, 痕跡・暮らし, 種の解説, 地形・地質・火山, 名前・歴史・文化, 夜・天気・自然現象]
+  before_categories: [安全]
+  line_prefix: "ガイドの目:"
+  line: "ガイドの目: {year}{facts}({source})"
+  year_prefix: "{year}年の記録では、"
+  before_line: "{facts}({source})"
+# 段階59 第7部: 質問の意図の分類(ikimonobiyori/intent.py)。上から順に当てる
+intent:
+  order: [difference, chat, now, plan, knowledge, place_time]
+  default: plan
+  patterns:
+    difference: ["と.{1,12}の違い", "違いを", "見分け"]
+    chat: ["というのもあるんだ", "があるんだ", "^へえ", "なんだ[。!！]?$"]
+    now: ["今見られる", "今.*(見られ|咲いて|見頃)", "はどう[?？]?$", "今の状況", "状況は"]
+    plan: ["行きたい", "おすすめ", "探して"]
+    knowledge: ["について教えて", "とは", "って何", "どんな", "面白いもの", "教えて"]
+    place_time: ["どこで", "いつ", "どこ"]
+  max_cards: {knowledge: 4, difference: 4, chat: 2}
+  max_related: 2
+  related_heading: 関連して
+  sources_heading: 出典
+  secondary_note: 紹介サイトの記載を含みます(公式ではありません)。
+  section_order: [種の解説, 季節の仕組み, 見頃の流れ, 痕跡・暮らし, 出会い方・歩き方, シーズンの目安, 地形・地質・火山, 名前・歴史・文化, 夜・天気・自然現象, 保全・マナー, 安全]
+  guide_categories: [保全・マナー, 安全]
+  category_words: {"足元|痕跡|面白いもの": 痕跡・暮らし}
+  list_head_re: '^\s*([①-⑩]|\d+\.|- |## おすすめ|.*名所は)'
+  refuse_phrases: [名所の一覧に入っていない, 一覧に入っていないので, お答えできません, 調べてほしければ]
+pdf:
+  vertical_min_run: 4        # この数以上、1 文字の行が続けば縦書きとして連結する(仮置き)
+  image_only_max_jp: 10      # 日本語の文字がこれ未満なら「画像のみ」(仮置き)
+  ok_min_jp: 200             # これ以上なら「読めた」、未満は「一部」(仮置き)
+  max_pages: 40              # 方法 c で読むページの上限(仮置き)
+  unread_label: PDF 未読

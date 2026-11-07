@@ -11,3 +11,8 @@ charset-normalizer==3.5.2
 idna==3.20
 requests==2.34.2
 urllib3==2.8.0
+# 段階59(本人の承認 2026-11-07): PDF の本文の抽出。MIT ライセンス。Python だけで動く
+pdfminer.six==20260107
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.12

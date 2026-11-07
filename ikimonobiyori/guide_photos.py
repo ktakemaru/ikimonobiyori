@@ -766,6 +766,8 @@ def photo_theme_for(word, policy=None):
     if word in (policy.get("wildflower") or {}).get("words", []):      # 段階41: 野草・高山植物
         return "野草"
     themes, _kinds = guide.themes_for_words([word], policy)
+    if themes and "紅葉" in themes:                                     # 段階57: 紅葉は樹種の写真(photos.themes の 紅葉)。花の表に入れない
+        return "紅葉"
     return "野鳥" if themes and themes & {"野鳥", "冬鳥"} else "花"
 
 

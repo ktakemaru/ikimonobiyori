@@ -70,9 +70,7 @@ class Overview(unittest.TestCase):
         self.assertNotIn("<svg", html)
         self.assertNotIn("<script", html)
         self.assertEqual(html.rstrip().count("？"), html.count("？"))
-        self.assertIn(self.p["wildflower"]["page"]["next_question_overview"], html)
-        self.assertTrue(html.index(self.p["wildflower"]["page"]["next_question_overview"]) > html.index("注意"))
-        self.assertEqual(sum(1 for l in t if l.endswith("？") or "？" in l), 1)   # 好みの質問は 1 つだけ
+        self.assertEqual(sum(1 for l in t if l.endswith("？") or "？" in l), 0)   # 段階57 第13部: 末尾に質問が出ない
         self.assertEqual(P.self_check(html), [])
 
     def test_single_site_page_leads_with_the_conclusion_only(self):
@@ -81,7 +79,7 @@ class Overview(unittest.TestCase):
         t = [l.strip() for l in text_of(html).split("\n") if l.strip()]
         self.assertEqual(t[2], r["conclusion"])
         self.assertNotIn("花は採らず", r["conclusion"])
-        self.assertIn(self.p["wildflower"]["page"]["next_question"], html)
+        self.assertNotIn("？", html)                                                       # 段階57 第13部: 末尾に質問が出ない
 
 
 class NoWorkTalk(unittest.TestCase):

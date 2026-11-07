@@ -25,6 +25,8 @@ import yaml
 from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
+from . import offers as OF
+from . import origins
 from . import observations as O
 from . import sources as S
 from .paths import DATA_FILES_DIR, PKG, data_dir, data_path
@@ -171,6 +173,142 @@ def mark_stale_display(subj, policy):
                 cur["gap_days"] = days
 
 
+def fetched_path(env=None):
+    return data_path("ask/fetched_urls.json", env)
+
+
+def fetched_today(now, env=None):
+    """今日すでに読んだページの URL(同じ日に繰り返し取得しない。段階57 第5部)。"""
+    try:
+        return set(json.loads(fetched_path(env).read_text(encoding="utf-8")).get(now.date().isoformat()) or [])
+    except (OSError, ValueError):
+        return set()
+
+
+def mark_fetched(urls, now, env=None):
+    p = fetched_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    day = now.date().isoformat()
+    p.write_text(json.dumps({day: sorted(fetched_today(now, env) | {u for u in urls if u})}, ensure_ascii=False, indent=0), encoding="utf-8")
+
+
+def drop_fetched(doc, seen):
+    """prepare の出力から、今日読んだページを除く。読むページがすべて今日読んだものの名所は、対象から外す(記録を使い回す)。"""
+    if not seen:
+        return doc
+    for pl in doc["subjects"].values():
+        pl["summary_pages"] = [p for p in pl.get("summary_pages") or [] if p.get("url") not in seen]
+        kept = []
+        for it in pl.get("items") or []:
+            pages = it.get("pages") or []
+            rest = [p for p in pages if p.get("url") not in seen]
+            if pages and not rest:
+                continue
+            kept.append({**it, "pages": rest})
+        pl["items"] = kept
+        pl["needs_fetch"] = bool(pl["items"]) or bool(pl["summary_pages"])
+    doc["summary_pages"] = [p for pl in doc["subjects"].values() for p in pl.get("summary_pages") or []]
+    doc["needs_fetch"] = any(pl.get("needs_fetch") for pl in doc["subjects"].values())
+    doc["already_read_today"] = sorted(seen)
+    return doc
+
+
+def record_first_check(workdir, result, now, env=None):
+    """段階58 第9部: 答えを作るたびに、初回の検査の不合格数を記録する(同じ作業フォルダの 2 回目以降は記録しない)。"""
+    marker = Path(workdir) / "first_check.done"
+    if marker.exists():
+        return
+    marker.write_text("1", encoding="utf-8")
+    p = data_path(AP.load_policy()["first_check_file"], env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    codes = sorted({e["code"] for s in result["sentences"] for e in s["errors"]} | {e["code"] for e in result["answer_errors"]})
+    with p.open("a", encoding="utf-8") as fp:
+        fp.write(json.dumps({"at": now.isoformat(), "errors": len(V.report_lines(result)), "codes": codes}, ensure_ascii=False) + "\n")
+
+
+def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
+    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。作れなければ 1 行。
+    計画のない古い経路(facts だけの検査)は、これまでどおり通らない文を除く。"""
+    if not plan_doc:
+        return V.strip(text, result)
+    from . import skeleton as SK
+    try:
+        alt = SK.compose(facts_doc, plan_doc)
+        if V.check(alt, facts_doc, gazetteer=gazetteer, plan=plan_doc)["ok"]:
+            return alt
+    except (KeyError, ValueError, TypeError):
+        pass
+    return AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+
+
+def _plan_cfg():
+    return AP.load_policy()["last_plan"]
+
+
+def last_plan_path(env=None):
+    return data_path(_plan_cfg()["file"], env)
+
+
+def _facts_subset(facts_doc, plan_doc):
+    """計画に載る名所の事実だけ(直前の答えの写し。使った事実と出典)。"""
+    names = {r["name"] for r in plan_doc.get("ranking") or [] if r.get("where") in ("pick", "section")} | {p["name"] for p in plan_doc.get("picks") or []}
+    out = {k: v for k, v in facts_doc.items() if k != "subjects"}
+    out["subjects"] = {s: {**v, "candidates": [c for c in v.get("candidates") or [] if c["name"] in names], "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+                       for s, v in facts_doc["subjects"].items()}
+    out.pop("periods", None)
+    return out
+
+
+def save_last_plan(workdir, facts_doc, plan_doc, now, env=None):
+    """直前の答えの計画を、データ置き場に保存する(有効期間は data/ask/plan.yaml の last_plan。リポジトリの外)。"""
+    from . import compare
+    compare.remember(plan_doc, now, env)                               # 段階58 第5部: 比較表の履歴
+    p = last_plan_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    doc = {"schema": "ikimonobiyori-last-plan/1", "saved_at": now.isoformat(), "workdir": str(workdir), "subject": plan_doc.get("subject"),
+           "dates": plan_doc.get("dates"), "origin": plan_doc.get("origin"), "plan": plan_doc, "facts": _facts_subset(facts_doc, plan_doc), "answer": None}
+    p.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def update_last_plan_answer(workdir, text, env=None):
+    p = last_plan_path(env)
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    if doc.get("workdir") == str(workdir):
+        doc["answer"] = text
+        p.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def load_last_plan(now, env=None):
+    """有効期間内の直前の計画。ない・古い・読めないときは None(別の内容を作らない)。"""
+    try:
+        doc = json.loads(last_plan_path(env).read_text(encoding="utf-8"))
+        saved = datetime.fromisoformat(doc["saved_at"])
+    except (OSError, ValueError, KeyError):
+        return None
+    if now < saved or now - saved > timedelta(hours=_plan_cfg()["valid_hours"]):
+        return None
+    return doc
+
+
+def restore_workdir(doc):
+    """直前の計画の作業フォルダ。消えていれば写しから作り直す。→ フォルダのパス。"""
+    wd = Path(doc["workdir"])
+    wd.mkdir(parents=True, exist_ok=True)
+    for name, key in (("facts.json", "facts"), ("answer_plan.json", "plan")):
+        if not (wd / name).exists():
+            (wd / name).write_text(json.dumps(doc[key], ensure_ascii=False, indent=1), encoding="utf-8")
+    if doc.get("answer") and not (wd / "final.txt").exists():
+        (wd / "final.txt").write_text(doc["answer"], encoding="utf-8")
+    return wd
+
+
+class PageUnsupported(Exception):
+    """写真つきページに対応していない対象(段階57 第1部)。別のページを作らず、終了コード 2 で止める。"""
+
+
 class Flow:
     """1 回の質問の手順。作業フォルダの calls.json に、手順ごとの呼び出しを順に追記する(別のコマンドで呼ばれても同じ質問の記録に足す)。"""
 
@@ -211,6 +349,7 @@ class Flow:
                "now": self.now.isoformat(), "out_dir": str(self.workdir),
                "summary_pages": [p for pl in plans.values() for p in pl.get("summary_pages") or []],
                "limits": next(iter(plans.values()))["limits"] if plans else None}
+        drop_fetched(doc, fetched_today(self.now, self.env))           # 段階57 第5部: 同じ日の同じページを読み直さない
         if "birds" in plans:
             doc["inat_refresh"] = self.inat_plan(plans["birds"].get("inat_refresh") or {})
         self._save("params.json", {"subjects": list(subjects), "region": region, "dates": [d.isoformat() for d in dates], "origin": origin,
@@ -293,17 +432,19 @@ class Flow:
                      "written": out.get("written"), "duplicates": out.get("duplicates"), "rejected": len(out.get("rejected") or []),
                      "by_url": out.get("by_url")})
         self._save("records.json", hist)
+        mark_fetched([u.get("url") for u in out.get("by_url") or []], self.clock(), self.env)
         self.call("record", submitted=len(batch), written=out.get("written"), duplicates=out.get("duplicates"),
                   rejected=len(out.get("rejected") or []))
         return out
 
     # 3. 材料
-    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None):
+    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None, periods=None):
         origin = origin or self.policy["default_origin"]
         plan_doc = plan_doc if plan_doc is not None else self._load("plan.json", None)
         subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
         mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
+        mark_fetched([r.get("url") for r in (fetch_log or {}).get("read") or []], self.now, self.env)
         inat = (plan_doc or {}).get("inat_refresh")
         if inat and inat.get("reason") == "not_yet":   # 取り直しの対象があったが、計測フックの下で取り直していない(単体で聞いたとき)
             self.call("inat_refresh", skipped="no_measure_hook", areas=inat.get("areas"))
@@ -314,11 +455,19 @@ class Flow:
                "summary_pages": [p for pl in ((plan_doc or {}).get("subjects") or {}).values() for p in pl.get("summary_pages") or []],
                "this_round": rnd,
                "lines": {"fetch": fetch_line(rnd, self.now, self.policy),
+                         "origin_line": origins.line_for(origin),         # 段階57 第8部: 使った出発地の 1 文(答えに書く)
                          "practical_rules": True,                        # 段階52: 実用情報の決まり（出た候補の実用情報を書く／なければ決まった一文）を当てる印
                          "answer_rules": "stage51",                      # 段階51: 答えの検査の新しい決まりを当てる印（作業の報告を答えに出さない など）
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
                          "scope": self.policy["scope_line"].format(labels="・".join(labels[s] for s in subjects))},
                "inat_refresh": inat, "notes": self.notes}
+        if periods:                                       # 段階57 第9部: 期間ごとの材料(同じ記録から。通信しない)
+            doc["periods"] = []
+            for ds in periods:
+                psub = {s: O.facts(s, region=region, dates=ds, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
+                mark_stale_display(psub, self.policy)
+                doc["periods"].append({"dates": [d.isoformat() for d in ds], "subjects": psub})
+            doc["dates"] = [d.isoformat() for ds in periods for d in ds]
         from . import visitor_centers as VC               # 段階55 第5部: 承認済みのビジターセンター・自然観察施設の事実（なければキーごと出さない）
         vc = VC.fact_rows(self.now.date(), subjects=list(subjects), env=self.env)
         if vc:
@@ -336,6 +485,8 @@ class Flow:
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
+        if list(facts_doc.get("subjects") or {}) != ["birds"]:         # 段階57 第2部: 紅葉・花・総合は、計画に載る種の写真を補う
+            return self.plan_photos(facts_doc, http_get, http_bytes)
         if http_get is None:
             why = "under_test" if livegate.under_test() else ("not_allowed" if netbudget.refusal() else None)
             if why:
@@ -428,6 +579,56 @@ class Flow:
         self.call("photos", requests=b.used, saved=len(rep_["saved"]), status=rep_["status"])
         return out
 
+    def plan_photos(self, facts_doc, http_get=None, http_bytes=None):
+        """計画に載る種のうち、写真のキャッシュにないものを、対象ごとに補う(確認なし。承認B。取れなければ名前だけの行)。"""
+        from . import guide_photos, plan_page
+        plan_doc = self._load("answer_plan.json", None)
+        if plan_doc is None:
+            raise ValueError("answer_plan.json がない(先に plan を実行する)")
+        out = {"ran": False, "subjects": {}}
+        for sj, names in plan_page.species_by_subject(facts_doc, plan_doc, self.policy["plan_page"]).items():
+            res = guide_photos.ensure_for_page(names, plan_page.SUBJECT_WORD[sj], http_get=http_get, http_bytes=http_bytes, env=self.env)
+            out["subjects"][sj] = {"names": names, "requests": (res or {}).get("requests"), "saved": (res or {}).get("saved"), "status": (res or {}).get("status")}
+            out["ran"] = out["ran"] or res is not None
+        self._save("photos.json", out)
+        self.call("photos", subjects=list(out["subjects"]))
+        return out
+
+    def plan_page(self, facts_doc, gazetteer=(), answer_path=None):
+        """紅葉・花・総合のページ: 直前の答えの計画から作る。計画がなければ作らない。"""
+        from . import guide, guide_page, guide_photos, plan_page
+        plan_doc = self._load("answer_plan.json", None)
+        if plan_doc is None:
+            raise PageUnsupported(OF.load()["messages"]["no_recent_plan"])
+        pol = guide.load_policy()
+        gp = pol["photos"]
+        table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
+
+        def photo_for(name):
+            row = table.get(name)
+            if not row:
+                return None
+            return guide_photos.load_photo(row["taxon_id"], self.env) if self.env else guide_photos.load_photo(row["taxon_id"])
+
+        def credit(meta):
+            return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
+        pp = self.policy["plan_page"]
+        ap = Path(answer_path) if answer_path else next((self.workdir / n for n in ("final.txt", "answer.txt") if (self.workdir / n).is_file()), None)
+        answer = ap.read_text(encoding="utf-8") if ap and ap.is_file() else None
+        html_text, lines, shown = plan_page.build(facts_doc, plan_doc, policy=pp, photo_for=photo_for, photo_credit=credit, now=self.now, answer=answer)
+        gaz = sorted(set(place_names()) | set(gazetteer))
+        chk = V.page_check(lines, facts_doc, gazetteer=gaz)
+        d0 = (facts_doc.get("dates") or [self.now.date().isoformat()])[0]
+        out = (guide_photos.page_dir(self.env) if self.env else guide_photos.page_dir()) / pp["file"].format(date=d0)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(html_text, encoding="utf-8", newline="\n")
+        line = pp["reply_line"].format(path=str(out.resolve()))
+        doc = {"path": str(out.resolve()), "line": line, "ok": chk["ok"], "errors": V.report_lines(chk),
+               "spots": {k: [{"name": n, "photo": x} for n, x in v] for k, v in shown.items()}}
+        self._save("page.json", doc)
+        self.call("page", ok=chk["ok"], spots=len(shown))
+        return doc
+
     # 3c. 写真つきの公園ページ(段階38)
     def page(self, gazetteer=(), answer_path=None):
         from . import guide, guide_photos, park_page
@@ -435,6 +636,10 @@ class Flow:
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
+        if not OF.ask_subjects_supported(list(facts_doc.get("subjects") or {})):      # 段階57 第1部: 未対応の対象で、別のページ(野鳥)を黙って作らない
+            raise PageUnsupported(OF.unsupported_theme_message())
+        if list(facts_doc["subjects"]) != ["birds"]:                  # 段階57 第2部: 紅葉・花・総合は直前の答えの計画から
+            return self.plan_page(facts_doc, gazetteer=gazetteer, answer_path=answer_path)
         gp = guide.load_policy()["photos"]
         table = guide_photos.load_table(self.env) if self.env else guide_photos.load_table()
         pinfo = {x["name"]: x.get("taxon_id") for x in (self._load("photos.json", {}) or {}).get("species") or []}
@@ -462,19 +667,58 @@ class Flow:
         self.call("page", ok=chk["ok"], parks=len(shown))
         return doc
 
+    def offers_now(self, facts_doc, plan_doc=None):
+        """答えの末尾に付けてよい案内の一覧。写真の候補は、対象ごとの載せられる種名。"""
+        from . import park_page, plan_page
+        subs = list(facts_doc.get("subjects") or {})
+        if subs == ["birds"]:
+            has = any(c.get("park_birds") for c in park_page.parks(facts_doc, self.policy["park_page"]))
+        else:
+            has = bool(plan_doc) and plan_page.has_photo_candidates(facts_doc, plan_doc, self.policy["plan_page"])
+        from . import compare
+        return OF.available({"subject_supported": OF.ask_subjects_supported(subs), "plan": True, "photo_candidates": has,
+                             "compare_history": compare.can_compare(self.now, self.env, pending=1)})
+
     # 3d. 答えの計画(段階56)。facts.json から、狙い別の節・今回のおすすめ・不採用の理由をコードで決める
-    def plan(self, subject=None, override=None, reason=None, replace=None):
+    def area_plan(self, names, subject=None):
+        """エリアごとの計画(段階58 第1部)。辞書にない名前は lines.area_unknown に 1 文で残す。"""
+        from . import areas as AR
         facts_doc = self._load("facts.json", None)
         if facts_doc is None:
             raise ValueError("facts.json がない(先に facts を実行する)")
         subs = list(facts_doc["subjects"])
+        sj = subject or subs[0]
+        d = AR.describe(names)
+        doc = AP.build_periods(facts_doc, area_rows=d["found"]) if facts_doc.get("periods") else AP.build_areas(facts_doc, d["found"], sj)
+        doc["area_unknown"] = d["unknown"]
+        doc["offers"] = []
+        self._save("answer_plan.json", doc)
+        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+        self.call("plan", subject="areas", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
+        return doc
+
+    def plan(self, subject=None, override=None, reason=None, replace=None, refine=None):
+        facts_doc = self._load("facts.json", None)
+        if facts_doc is None:
+            raise ValueError("facts.json がない(先に facts を実行する)")
+        subs = list(facts_doc["subjects"])
+        if facts_doc.get("periods"):                                  # 段階57 第9部: 期間が 2 つ。期間ごとの計画
+            doc = AP.build_periods(facts_doc)
+            doc["offers"] = []
+            self._save("answer_plan.json", doc)
+            save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+            self.call("plan", subject="periods", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
+            return doc
         sj = subject or ("all" if len(subs) > 1 else subs[0])         # 対象が複数の質問(総合)は all
         old = self._load("answer_plan.json", None)
         keep = (old or {}).get("overrides") if old and old.get("subject") == sj else []
-        doc = AP.build_all(facts_doc, overrides=keep) if sj == "all" else AP.build(facts_doc, sj, overrides=keep)
+        refine = refine or (None if override is None else (old or {}).get("refine"))
+        doc = AP.build_all(facts_doc, overrides=keep, refine=refine) if sj == "all" else AP.build(facts_doc, sj, overrides=keep, refine=refine)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
+        doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
+        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)
         self.call("plan", subject=sj, picks=len(doc["picks"]), sections=len(doc["sections"]), overrides=len(doc["overrides"]))
         return doc
 
@@ -485,16 +729,20 @@ class Flow:
             raise ValueError("facts.json がない(先に facts を実行する)")
         gaz = sorted(set(place_names()) | set(gazetteer))
         if reply:                                     # 段階38: 利用者への返事の全文(答えの本文 + ページの場所の 1 行)
-            r = V.reply_check(text, facts_doc, gazetteer=gaz, page_line=(self._load("page.json", {}) or {}).get("line"))
+            r = V.reply_check(text, facts_doc, gazetteer=gaz, page_line=(self._load("page.json", {}) or {}).get("line"),
+                              offers=OF.texts((self._load("answer_plan.json", None) or {}).get("offers")))
             self._save("check_reply.json", r)
             final = text if r["ok"] else V.strip(r["checked_text"], r)
             (self.workdir / "final_reply.txt").write_text(final, encoding="utf-8")
             self.call("verify", reply=True, ok=r["ok"], errors=len(V.report_lines(r)))
             return r, final
-        r = V.check(text, facts_doc, gazetteer=gaz, plan=self._load("answer_plan.json", None))
+        plan_doc = self._load("answer_plan.json", None)
+        r = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
         self._save("check.json", r)
-        final = text if r["ok"] else V.strip(text, r)
+        record_first_check(self.workdir, r, self.now, self.env)
+        final = text if r["ok"] else minimal_answer(text, facts_doc, plan_doc, r, gaz)
         (self.workdir / "final.txt").write_text(final, encoding="utf-8")
+        update_last_plan_answer(self.workdir, final, self.env)
         self.call("verify", ok=r["ok"], errors=len(V.report_lines(r)))
         return r, final
 
@@ -535,6 +783,7 @@ def main(argv=None, http_get=None):
         p.add_argument("--origin")
         p.add_argument("--now")
         if name == "facts":
+            p.add_argument("--periods", help="期間が 2 つの質問(「今週末か来週末」): 2026-11-07,2026-11-08;2026-11-14,2026-11-15")
             p.add_argument("--fetch-log", help="読んだ・読めなかったページ {read:[{url,publisher}], failed:[{url,reason}]}")
     p = sub.add_parser("inat-refresh")
     p.add_argument("--out-dir", required=True)
@@ -542,14 +791,17 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("record")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--batch", required=True)
-    p = sub.add_parser("photos", help="公園ごとの鳥の写真のうち、手元にないものを取りに行く(段階38。上限の範囲)")
-    p.add_argument("--out-dir", required=True)
-    p = sub.add_parser("page", help="公園ごとに見られる鳥の写真つきページ(段階38)")
-    p.add_argument("--out-dir", required=True)
+    p = sub.add_parser("photos", help="答えに載る種の写真のうち、手元にないものを取りに行く(段階38・57。上限の範囲)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画)")
+    p = sub.add_parser("page", help="直前の答えの写真つきページ(野鳥は公園ごと。紅葉・花・総合は計画から。段階38・57)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画。24時間より前・なければ作らない)")
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
-    p.add_argument("--out-dir", required=True)
+    p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
+    p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
+    p.add_argument("--area-question", help="質問の文からエリアを取り出して計画を作る(段階58)")
+    p.add_argument("--refine", help="追質問の語(近場・山歩き・遠出・ライトアップなど)。同日の記録と計画だけで選び直す。通信しない(段階57)")
     p.add_argument("--subject", choices=list(O.load_policy()["subjects"]) + ["all"], help="省くと、対象が1つならそれ、複数なら all(総合)")
     p.add_argument("--explain", help="名所の順位・点数の内訳・不採用の理由を見る")
     p.add_argument("--override", help="計画にない名所を答えに足す(--reason が要る)")
@@ -561,9 +813,66 @@ def main(argv=None, http_get=None):
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(桜・梅などの guide find の出力・検索だけの答え)の検査。--out-dir は不要(段階39 B-1)")
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
+    p.add_argument("--clarify", action="store_true", help="--generic のとき: 対象・場所・日付のどれも特定できず、答えの代わりに聞き返す 1 文(段階57 第13部)")
+    p.add_argument("--theme", help="--generic のとき: 答えのテーマの語。写真つきページに未対応のテーマなら、案内の文を不合格にする(段階57)")
+    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
+    p = sub.add_parser("intent", help="質問の意図の分類(知識・違い・雑談・場所と時期・今の状況・計画)。段階59")
+    p.add_argument("--question", required=True)
+    p = sub.add_parser("knowledge-answer", help="知識の質問の答えをカードから作り、検査する(段階59)。カードがなければ終了コード 3(先に調べて記録する)")
+    p.add_argument("--question", required=True)
+    p.add_argument("--month", type=int)
+    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show")
+    p.add_argument("action", choices=["add", "list", "search", "show"])
+    p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
+    p.add_argument("--place")
+    p.add_argument("--category")
+    p.add_argument("--month", type=int)
+    p.add_argument("--text")
+    p.add_argument("--title")
+    p = sub.add_parser("combo", help="複数テーマの組み合わせ(同じ地点・近くだけ。段階58)")
+    p.add_argument("--a", required=True, help="対象(autumn_leaves・flowers・birds・wintering_birds)")
+    p.add_argument("--b", required=True)
+    p = sub.add_parser("skeleton", help="計画から答えの骨組みを作る(冒頭・日付・出発地・今回のおすすめ・節・確かさ・出典。段階58)。事実を足さず変えずに言い回しだけ整える")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--defaulted-date", action="store_true", help="日付の指定がなかった質問(冒頭に 1 文を入れる)")
+    p = sub.add_parser("dates", help="質問の文から日付の既定を決める(今週末、計画段階の質問は今週末と来週末。段階58)")
+    p.add_argument("--question", required=True)
+    p = sub.add_parser("place-alias", help="確かめた場所の別名を手元に足す(段階58。次回から使う)")
+    p.add_argument("--add", required=True, help="別名")
+    p.add_argument("--official", required=True, help="正式名称")
+    p = sub.add_parser("compare", help="ここまでの候補の比較表をコードで作る(履歴の計画が 2 件以上のとき。段階58)")
+    p = sub.add_parser("import-csv", help="公式の機械可読データの本文を記録にする(段階57。山梨県の紅葉状況 CSV。承認されるまで答えには出ない。本文は保存しない)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--csv", required=True, help="読んだ CSV の本文のファイル")
+    p.add_argument("--csv-url", required=True, help="ページのリンクから辿った CSV の URL")
+    p.add_argument("--updated", required=True, help="ページの更新日 YYYY-MM-DD")
+    p = sub.add_parser("place", help="場所を指定した質問: 名所の一覧との照合と、場所ごとの事実。一覧にない場所は検索語を返す(段階57。通信しない)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--question", help="質問の文(場所名を取り出す)")
+    p.add_argument("--name", action="append", default=[], help="場所名(複数可)")
+    p.add_argument("--subject", default="autumn_leaves")
+    p = sub.add_parser("origin", help="質問の文から出発地を決める(追質問だけ前の出発地を引き継ぐ。段階57)")
+    p.add_argument("--question", help="質問の文")
+    p.add_argument("--follow-up", action="store_true", help="直前の質問の追質問(同じ話題の続き)のとき")
+    p.add_argument("--add", help="Wikidata で確かめた出発地を手元に足す(--lat --lon --qid)")
+    p.add_argument("--lat", type=float)
+    p.add_argument("--lon", type=float)
+    p.add_argument("--qid")
+    p.add_argument("--prefecture")
+    p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
+    p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
+    p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
     a = ap.parse_args(argv)
     pol = load_policy()
     out_dir = a.out_dir
+    if (a.step in ("page", "photos") or (a.step == "plan" and a.refine)) and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
+        last = load_last_plan(_clock())
+        if last is None:
+            print(OF.load()["messages"]["no_recent_plan"], file=sys.stderr)
+            return 2
+        out_dir = str(restore_workdir(last))
     params = {}
     if out_dir and Path(out_dir, "params.json").exists():
         params = json.loads(Path(out_dir, "params.json").read_text(encoding="utf-8"))
@@ -571,9 +880,87 @@ def main(argv=None, http_get=None):
     if out_dir is None:
         t = now or _clock()
         out_dir = str(data_path(pol["work_dir"]) / t.strftime("%Y%m%d-%H%M%S"))
+    if a.step == "intent":
+        from . import intent
+        _out({"intent": intent.classify(a.question), "topics": intent.topics(a.question)})
+        return 0
+    if a.step == "knowledge-answer":
+        from . import intent
+        text = intent.compose(a.question, month=a.month)
+        if text is None:
+            print("カードがありません。公的・研究機関の解説を先に読み、事実を knowledge add で記録してください", file=sys.stderr)
+            return 3
+        errs = intent.check(text, intent.cards_for(a.question, month=a.month))
+        for e in errs:
+            print(f"NG  [{e['code']}] {e['detail']}", file=sys.stderr)
+        sys.stdout.write(text)
+        return 1 if errs else 0
+    if a.step == "knowledge":
+        from . import knowledge as K
+        if a.action == "add":
+            doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
+            bad = 0
+            for card in doc if isinstance(doc, list) else [doc]:
+                try:
+                    K.add(card)
+                except ValueError as ex:
+                    bad += 1
+                    print(f"{card.get('title')}: {ex}", file=sys.stderr)
+            return 1 if bad else 0
+        rows = K.search(place=a.place, category=a.category, month=a.month, text=a.text) if a.action == "search" else K.load()
+        if a.action == "show":
+            rows = [r for r in rows if r["title"] == a.title]
+            _out(rows)
+            return 0 if rows else 2
+        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]} for r in rows])
+        return 0
+    if a.step == "combo":
+        from . import combo
+        res = combo.find(a.a, a.b)
+        _out({**res, "lines": combo.lines(res)})
+        return 0
+    if a.step == "dates":
+        got = AP.default_periods(a.question, _clock())
+        _out({"defaulted": got["defaulted"], "periods": [[d.isoformat() for d in ds] for ds in got["periods"]] if got["periods"] else None})
+        return 0
+    if a.step == "place-alias":
+        from . import place_answer as PA
+        PA.add_alias(a.add, a.official)
+        return 0
+    if a.step == "compare":                              # 段階58 第5部: 履歴がなければ作らない
+        from . import compare
+        text, urls = compare.table(_clock())
+        if text is None:
+            print(OF.load()["messages"]["no_recent_plan"], file=sys.stderr)
+            return 2
+        print(text + ("\n" + AP.load_policy()["compare"]["sources_heading"] + "\n" + "\n".join(urls) if urls else ""))
+        return 0
+    if a.step == "origin":                               # 段階57 第8部
+        if a.add:
+            if a.lat is None or a.lon is None or not a.qid:
+                print("--lat --lon --qid が要ります", file=sys.stderr)
+                return 2
+            _out(origins.add_to_cache(a.add, a.lat, a.lon, a.qid, a.prefecture))
+            return 0
+        last = load_last_plan(_clock()) if a.follow_up else None
+        _out(origins.choose(a.question, a.follow_up, (last or {}).get("origin")))
+        return 0
+    if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
+        plan = {}
+        if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():
+            plan = json.loads(Path(a.out_dir, "answer_plan.json").read_text(encoding="utf-8"))
+        print("\n".join(OF.unsupported_reply(a.what, plan.get("offers") or [])))
+        return 0
     if a.step == "verify" and a.generic:                 # 段階39 B-1: facts を持たない経路。出す前に必ず通す。落ちた行は利用者に見せない
         text = Path(a.text).read_text(encoding="utf-8")
-        r = V.generic_check(text)
+        offers_ok = None
+        if a.theme:
+            from . import guide as _G
+            _pol = _G.load_policy()
+            _themes, _ = _G.themes_for_words([a.theme], _pol)
+            wf = a.theme in (_pol.get("wildflower") or {}).get("words", [])
+            offers_ok = OF.all_texts() if wf or OF.guide_themes_supported(_themes) else []
+        r = V.generic_check(text, offers=offers_ok, clarify=a.clarify)
         for e in r["errors"]:
             print(f"NG  [{e['code']}] {e.get('line') or '(全体)'}: {e['detail']}", file=sys.stderr)
         final = text if r["ok"] else V.generic_strip(text, r)
@@ -593,7 +980,11 @@ def main(argv=None, http_get=None):
                 _out(flow.prepare(subjects, region, dates, origin))
                 return 0
             log = json.loads(Path(a.fetch_log).read_text(encoding="utf-8")) if a.fetch_log else {}
-            _out(flow.facts(subjects, region, dates, origin, fetch_log=log))
+            periods = None
+            if a.periods:
+                periods = [[date.fromisoformat(x) for x in chunk.split(",")] for chunk in a.periods.split(";")]
+                dates = periods[0]
+            _out(flow.facts(subjects, region, dates, origin, fetch_log=log, periods=periods))
             return 0
         if a.step == "inat-refresh":
             out = flow.inat_refresh(http_get=http_get)
@@ -604,14 +995,70 @@ def main(argv=None, http_get=None):
             _out(out)
             return 1 if out.get("rejected") else 0
         if a.step == "plan":
-            doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace)
+            if not a.out_dir and not a.refine:
+                print("--out-dir が要ります(--refine のときだけ省けます)", file=sys.stderr)
+                return 2
+            if a.area or a.area_question:
+                from . import areas as AR
+                doc = flow.area_plan(a.area or AR.from_question(a.area_question), a.subject)
+                _out(AP.explain(doc, a.explain) if a.explain else doc)
+                return 0
+            try:
+                doc = flow.plan(subject=a.subject, override=a.override, reason=a.reason, replace=a.replace, refine=a.refine)
+            except ValueError as ex:
+                print(str(ex), file=sys.stderr)
+                return 2
             _out(AP.explain(doc, a.explain) if a.explain else doc)
+            return 0
+        if a.step == "import-csv":
+            from . import official_csv as CSV
+            cfg = pol["official_csv"]["yamanashi"]
+            recs = CSV.to_records(CSV.parse(Path(a.csv).read_text(encoding="utf-8")), csv_url=a.csv_url, updated=a.updated,
+                                  prefecture=cfg["prefecture"], publisher=cfg["publisher"], label=cfg["label"])
+            for r in recs:
+                if r["name"] in cfg["spot_map"]:
+                    r["spot"] = cfg["spot_map"][r["name"]]
+            bp = Path(out_dir) / "reads_csv.json"
+            bp.write_text(json.dumps(recs, ensure_ascii=False), encoding="utf-8")
+            out = flow.record(bp)
+            _out({k: out.get(k) for k in ("written", "duplicates")} | {"rejected": len(out.get("rejected") or []), "submitted": len(recs)})
+            return 1 if out.get("rejected") else 0
+        if a.step == "place":
+            from . import place_answer as PA
+            facts_doc = flow._load("facts.json", None)
+            if not facts_doc:
+                print("先に facts を実行してください", file=sys.stderr)
+                return 2
+            names = a.name or PA.extract_names(a.question)
+            res = PA.plan_for(names, a.subject, facts_doc)
+            _out({"found": [{"query": x["query"], "name": x["candidate"]["name"], "section": x["section"]} for x in res["found"]], "missing": res["missing"]})
+            return 0
+        if a.step == "skeleton":
+            from . import skeleton as SK
+            facts_doc = flow._load("facts.json", None)
+            plan_doc = flow._load("answer_plan.json", None)
+            if not facts_doc or not plan_doc:
+                print("先に facts と plan を実行してください", file=sys.stderr)
+                return 2
+            sys.stdout.write(SK.compose(facts_doc, plan_doc, OF.texts(plan_doc.get("offers")), defaulted_date=a.defaulted_date))
+            return 0
+        if a.step == "refresh":
+            facts_doc = flow._load("facts.json", None)
+            plan_doc = flow._load("answer_plan.json", None)
+            if not facts_doc or not plan_doc:
+                print("先に facts と plan を実行してください", file=sys.stderr)
+                return 2
+            _out({"pages": AP.refresh_targets(facts_doc, plan_doc, fetched_today(flow.now))})
             return 0
         if a.step == "photos":
             _out(flow.photos())
             return 0
         if a.step == "page":
-            doc = flow.page(answer_path=a.answer)
+            try:
+                doc = flow.page(answer_path=a.answer)
+            except PageUnsupported as ex:
+                print(str(ex), file=sys.stderr)
+                return 2
             for line in doc["errors"]:
                 print(line, file=sys.stderr)
             print(doc["line"])

@@ -475,3 +475,89 @@ centers:
     approved_on: '2026-11-07'
     reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
   notes: 『谷津干潟ブログ』の『自然情報』（304件）に渡り鳥の観察記録（例 10/6 エゾビタキ、10/1 ノビタキ）。最新は10/13で、11月分は未掲載。習志野市のトップが外部リンクで向いている別ホスト（seibu-la.co.jp）
+# 段階59 第1部(2026-11-07): 公式サイトで確かめた項目だけを足した。確認できない項目は null(推測しない)。承認は本人が決める。古い資料(環境省の一覧 PDF)の値は入れていない
+- id: urabandai-vc
+  name: 裏磐梯ビジターセンター
+  operator: 記載なし
+  operator_kind: 不明
+  prefecture: 福島県
+  site_url: https://urabandai-vc.jp/
+  info_url: https://urabandai-vc.jp/nature/
+  frequency: null
+  format: html
+  last_update: '2026-11-06'
+  class: official
+  publications: [{title: 裏磐梯だより, url: "https://urabandai-vc.jp/nature/report/", format: null}]
+  terms: {url: null, reprint_banned: null, note: "利用条件のページは確認できず。全権利留保の表示あり"}
+  within_range: 未確認
+  hours: null
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める"}
+- id: oze-fnd
+  name: 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団）
+  operator: 公益財団法人 尾瀬保護財団
+  operator_kind: 公益財団法人
+  prefecture: 群馬県
+  site_url: https://www.oze-fnd.or.jp/
+  info_url: https://oze-fnd.or.jp/archives/category/if/
+  frequency: null
+  format: html
+  last_update: '2026-10-31'
+  class: official
+  publications: [{title: 尾瀬情報, url: "https://oze-fnd.or.jp/archives/category/if/", format: html}, {title: 資料ダウンロード, url: "https://oze-fnd.or.jp/ozc/dl/", format: null}]
+  terms: {url: "https://oze-fnd.or.jp/sitepolicy/", reprint_banned: true, note: "転載禁止の明示あり(「無断転載を禁じます」)。リンクは原則自由"}
+  within_range: 未確認
+  hours: 10/31 をもって山の鼻・尾瀬沼ビジターセンターは閉館(2026 年シーズン)
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める"}
+- id: kamikochi-vc
+  name: 上高地ビジターセンター
+  operator: 環境省
+  operator_kind: 国
+  prefecture: 長野県
+  site_url: https://www.kamikochi-vc.or.jp/
+  info_url: https://www.kamikochi-vc.or.jp/whats-new/nature-updates
+  frequency: null
+  format: html
+  last_update: null
+  class: official
+  publications: []
+  terms: {url: "https://www.kamikochi-vc.or.jp/copyrights", reprint_banned: false, note: "出所明示で引用・転載可、商用は要連絡"}
+  within_range: 未確認
+  hours: 4月下旬〜11月15日(上高地開山期間無休)
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める"}
+- id: picchio
+  name: ピッキオ（軽井沢野鳥の森）
+  operator: ピッキオ
+  operator_kind: 不明
+  prefecture: 長野県
+  site_url: https://picchio.co.jp/
+  info_url: https://picchio.co.jp/archives/blog-cat/natureinfo
+  frequency: null
+  format: html
+  last_update: '2026-10-24'
+  class: official
+  publications: []
+  terms: {url: null, reprint_banned: null, note: "転載の記載は確認できず"}
+  within_range: 未確認
+  hours: null
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める"}
+- id: tanigawa-ic
+  name: 谷川岳インフォメーションセンター
+  operator: 環境省
+  operator_kind: 国
+  prefecture: 群馬県
+  site_url: https://www.env.go.jp/park/joshinetsu/
+  info_url: null
+  frequency: null
+  format: null
+  last_update: null
+  class: official
+  publications: []
+  terms: {url: "https://www.env.go.jp/mail.html", reprint_banned: false, note: "出典明示で利用可(PDL1.0)"}
+  within_range: 未確認
+  hours: null
+  checked_on: '2026-11-07'
+  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める。施設の個別ページは未確認(検索の要約で環境省が 2021 年に開設と確認)"}

@@ -11,10 +11,12 @@ import json
 import re
 import unicodedata
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 
 from . import answer_plan as AP
+from . import offers as OF
 from .paths import DATA_FILES_DIR
 
 CONFIG = DATA_FILES_DIR / "ask" / "policy.yaml"
@@ -126,6 +128,9 @@ class Material:
         self.thirds = {(int(m), t) for m, t in THIRD_RE.findall(self.blob)}
         self.months = {m for m, _ in self.dates} | {m for m, _ in self.thirds}
         self.numbers = set(NUM_RE.findall(self.blob))
+        for s in _spots(facts):                                  # 段階57 第8部: 距離の目安(約○km)は、コードが計算した値の丸め
+            if isinstance(s.get("distance_km"), (int, float)):
+                self.numbers.add(str(int(round(s["distance_km"]))))
         self.spots = _spots(facts)
         self.names = {}
         for s in self.spots:
@@ -150,7 +155,7 @@ class Material:
         for s in spots:
             cur = s.get("current")
             if cur:
-                out += [cur.get("state") or "", cur.get("state_raw") or ""]
+                out += [cur.get("state") or "", cur.get("state_raw") or "", cur.get("display") or ""]
             for h in s.get("history") or []:
                 out += [h.get("state") or "", h.get("state_raw") or ""]
         return [_n(x) for x in out if x]
@@ -246,25 +251,151 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
-def check(text, facts, rules=None, gazetteer=(), plan=None):
-    """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。"""
+def source_rule_errors(text, rules, blob=None):
+    """段階57 第10部: 使わない種類のホスト・語(本文にも出典にも)／事実にない電話番号／英語の出典の見出し。blob: 取得した事実の文字列(なければ番号はすべて不合格)。"""
+    from . import observations as O
+    pol = O.load_policy()
+    errs = []
+    low = text.lower()
+    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
+        if w.lower() in low:
+            errs.append({"code": "blocked_source", "detail": w})
+    for m in re.finditer(rules["phone_re"], _n(text)):
+        if blob is None or m.group(0) not in blob:
+            errs.append({"code": "phone_not_from_official", "detail": m.group(0)})
+    for u in URL_RE.findall(text):                              # 段階58 第4部: SNS は出典に使わない
+        host = (urlsplit(u).hostname or "").lower()
+        if any(host == s or host.endswith("." + s) for s in rules.get("sns_hosts") or []):
+            errs.append({"code": "sns_source", "detail": host})
+    for line in text.splitlines():
+        if re.match(rules["english_sources_re"], line):
+            errs.append({"code": "sources_heading", "detail": line.strip()})
+    return errs
+
+
+def knowledge_errors(text, facts):
+    """段階59 第4部: 「ガイドの目」の行は、カードの事実と出典のとおり。facts.knowledge_cards(テスト)がなければデータ置き場のカード。"""
+    if "ガイドの目:" not in text:
+        return []
+    from . import knowledge as K
+    return K.answer_errors(text, facts.get("knowledge_cards"))
+
+
+def subject_word_errors(text, facts, rules):
+    """段階58 第10部: 鳥の答えに「咲き具合」「色づき」、花・紅葉の答えに「飛来」を書かない(対象別の定型文)。対象が 1 つの答えだけ。"""
+    subs = list(facts.get("subjects") or {})
+    if len(subs) != 1:
+        return []
+    return [{"code": "subject_wrong_word", "detail": w} for w in (rules.get("subject_wrong_words") or {}).get(subs[0], []) if w in text]
+
+
+def quote_errors(text, rules):
+    """段階58 第10部: 引用符で長い原文を写さない(長い引用は 1 か所まで)。"""
+    mn, mx = val_of(rules["long_quote_min"]), val_of(rules["max_long_quotes"])
+    long_q = [q for q in re.findall(r"「([^」]+)」", URL_RE.sub(" ", text)) if len(q) >= mn]
+    return [{"code": "quote_repeated", "detail": long_q[0][:20]}] if len(long_q) > mx else []
+
+
+def not_tried_errors(text, facts):
+    """段階58 第2部: 取得を試みる前に「読めていません」と書かない。この回の読めなかったページ(fetch.failed)があるときだけ書ける。"""
+    if (facts.get("fetch") or {}).get("failed"):
+        return []
+    phrases = AP.load_policy()["official_pages"]["not_tried_phrases"]
+    return [{"code": "official_not_tried", "detail": p} for p in phrases if p in text]
+
+
+def question_errors(text, rules):
+    """段階57 第13部: 好み・優先・選択を尋ねる文を答えに入れない。例外(答えの代わりの聞き返しだけ)は generic_check(clarify=True)。"""
+    out = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        if re.search(rules["ask_sentence_re"], _n(s).strip()):
+            out.append({"code": "question_in_answer", "detail": s.strip()[:40]})
+    return out
+
+
+def process_excuse_errors(text, rules):
+    """段階57 第9部: 作業の事情の文・「ご希望なら調べます」型。調べられるものは答えの前に調べる。"""
+    out = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        for p in rules.get("process_excuse_phrases") or []:
+            if p in s:
+                out.append({"code": "process_excuse", "detail": s.strip()[:40]})
+                break
+    return out
+
+
+def stage57_text_errors(text, facts, mat, rules):
+    """段階57 第4部: 記号のまま・対象の日でない日の開園時間・観察の記録があるのに「見つかっていません」。答えの決まり(practical_rules)の印があるときだけ。"""
+    if not (facts.get("lines") or {}).get("practical_rules"):
+        return []
+    from . import observations as O
+    pol = O.load_policy()
+    errs = []
+    body = URL_RE.sub(" ", text)
+    for m in re.finditer(rules["bare_symbol_re"], body):
+        errs.append({"code": "state_symbol_raw", "detail": m.group(0)})
+    days = set()
+    for x in facts.get("dates") or []:
+        days.add((int(x[5:7]), int(x[8:10])))
+    for m in re.finditer(pol["practical_other_day"]["pattern"], _n(body).replace("~", "〜")):
+        if (int(m.group(1)), int(m.group(2))) not in days:
+            errs.append({"code": "practical_other_day", "detail": m.group(0)[:30]})
+    unknown = pol["birds"]["season_labels"]["unknown"]
+    for b in candidate_blocks(text):
+        if unknown in b and any((s.get("current") or s.get("latest_dated")) for s in mat.spots_in(b)):
+            errs.append({"code": "season_contradiction", "detail": b.splitlines()[0][:30]})
+    return errs
+
+
+def offer_errors(text, allowed, doc=None):
+    """段階57 第1部: 提案らしい文は、案内の一覧(data/ask/offers.yaml)にあり条件を満たすものだけ。allowed: 今使ってよい案内の文。"""
+    doc = doc or OF.load()
+    ok = {_n(a).strip() for a in allowed or []}
+    errs = []
+    for _i, s in split_sentences(URL_RE.sub(" ", text)):
+        t = _n(s).strip()
+        if t not in ok and any(_n(p) in t for p in doc["offer_phrases"]):
+            errs.append({"code": "offer_not_allowed", "detail": s.strip()[:40]})
+    return errs
+
+
+def _with_cards(text, facts):
+    """答えに「ガイドの目」や知識の行があるとき、カードの事実・出典 URL を検査の材料に足す(カードが根拠)。"""
+    from . import knowledge as K
+    cards = facts.get("knowledge_cards")
+    rows = cards if cards is not None else K.load()
+    used = [r for r in rows if (K.line_for(r) in text) or (K.cfg()["before_line"].format(facts="。".join(x.rstrip("。") for x in r["facts"][: K.cfg()["max_facts_in_answer"]]), source=r["source"]["name"]) in text)]
+    if not used:
+        return facts
+    return {**facts, "knowledge_used": [{"facts": r["facts"], "source": r["source"], "line": K.line_for(r)} for r in used]}
+
+
+def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
+    """→ {ok, sentences: [{line, text, errors}], answer_errors: [...], candidates_mentioned}。offers: 今使ってよい案内の文(省くと計画のもの)。"""
     rules = rules or load_rules()
+    facts = _with_cards(text, facts)
     mat = Material(facts, rules, gazetteer)
+    AP.add_target_dates(mat)                                    # 段階58 第7部: 見頃を狙う週(コードの計算)の日付は事実として通す
     sents = []
     for line, s in split_sentences(text):
         sents.append({"line": line, "text": s, "errors": check_sentence(s, mat)})
     answer_errors = []
     mentioned = []
+    segs = AP.split_segments(text, plan)                        # 段階57 第3部: 対象別(期間別)の節があれば、節ごとに数える
+    mat.seg_text = {s["seg"].get("subject"): _n(s["text"]) for s in segs if s["seg"].get("subject")} if segs else None
     for c in mat.region_candidates:
         if any(f in _n(text) for f in short_names(c["name"])) and c["name"] not in mentioned:
             mentioned.append(c["name"])
     need = min(rules["min_candidates"], len(mat.region_candidates))
+    if plan:                                                    # 段階57 第5部・段階58 第9部: 計画に残った(利用できる)件数まで
+        need = min(need, len(plan.get("picks") or []))
     if len(mentioned) < need:
         answer_errors.append({"code": "too_few_candidates", "detail": f"地域の候補 {len(mentioned)} 件(必要 {need} 件)"})
     bird_names = {f for c in mat.spots if c.get("_subject") == "birds" for f in short_names(c.get("name") or "")}
     only_birds = set((facts.get("subjects") or {})) == {"birds"}
-    for blk in candidate_blocks(text):                          # 評価表 R4: 各候補(①②…の段)に例年の見頃(または昨年の記録)。野鳥は「この時期に見られる鳥」
-        is_bird = only_birds or any(f in _n(blk) for f in bird_names)
+    blocks = [(b, s["seg"].get("subject") == "birds" or (s["seg"].get("subject") is None and None)) for s in segs for b in candidate_blocks(s["text"])] if segs else [(b, None) for b in candidate_blocks(text)]
+    for blk, seg_bird in blocks:                                # 評価表 R4: 各候補(①②…の段)に例年の見頃(または昨年の記録)。野鳥は「この時期に見られる鳥」
+        is_bird = seg_bird if seg_bird is not None else (only_birds or any(f in _n(blk) for f in bird_names))
         words = rules.get("birds_typical_words", []) if is_bird else rules["typical_words"]
         if not any(w in blk for w in words):
             answer_errors.append({"code": "no_season_birds_in_candidate" if is_bird else "no_typical_in_candidate", "detail": blk.splitlines()[0][:30]})
@@ -275,16 +406,35 @@ def check(text, facts, rules=None, gazetteer=(), plan=None):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
-    answer_errors += stage51_errors(text, facts, mat, rules)
+    answer_errors += stage51_errors(text, facts, mat, rules, plan=plan, segs=segs)
     answer_errors += restricted_source_errors(facts)
-    if plan:                                                                 # 段階56: 答えの採用と計画の照合
+    if plan and segs:                                                        # 段階57 第3部: 節ごとに、計画の今回のおすすめと照合する
+        for s in segs:
+            answer_errors += [{**e, "detail": f"{s['seg']['heading']}: {e['detail']}"} for e in AP.plan_errors(s["text"], s["plan"], mat, candidate_blocks(s["text"]), short_names)]
+    elif plan and plan.get("subject") == "areas":                            # 段階58: エリアが 1 つだけの答え
+        for seg in plan["segments"]:
+            answer_errors += AP.plan_errors(text, seg["plan"], mat, candidate_blocks(text), short_names)
+    elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
+    answer_errors += stage57_text_errors(text, facts, mat, rules)
+    answer_errors += process_excuse_errors(text, rules)
+    answer_errors += question_errors(text, rules)
+    answer_errors += not_tried_errors(text, facts)
+    answer_errors += subject_word_errors(text, facts, rules) + quote_errors(text, rules)
+    answer_errors += knowledge_errors(text, facts)
+    answer_errors += source_rule_errors(text, rules, mat.blob)
+    if (facts.get("lines") or {}).get("origin_line") and facts.get("origin") and facts["origin"] not in text:     # 段階57 第8部: 使った出発地を書く
+        answer_errors.append({"code": "origin_missing", "detail": facts["lines"]["origin_line"]})
+    answer_errors += offer_errors(text, offers if offers is not None else OF.texts((plan or {}).get("offers")))
+    if plan:
+        answer_errors += AP.area_errors(text, plan)
+    n_seg = len(segs) if segs else 1                             # 段階57 第3部: 節が複数の答えは、上限を節の数だけ広げる(1 節あたりの量は同じ)
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
-        if text.count(w) > mx:
-            answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx} 回まで)"})
-    if len(text) > rules["max_chars"]:
-        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars']} 字)"})
+        if text.count(w) > mx * n_seg:
+            answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx * n_seg} 回まで)"})
+    if len(text) > rules["max_chars"] * n_seg:
+        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars'] * n_seg} 字)"})
     ok = not answer_errors and all(not x["errors"] for x in sents)
     return {"ok": ok, "sentences": sents, "answer_errors": answer_errors, "candidates_mentioned": mentioned}
 
@@ -354,7 +504,47 @@ def section_headings():
     return set(AP.load_policy()["aims"]["labels"].values())
 
 
-def stage51_errors(text, facts, mat, rules):
+def lead_errors(lines, cfg, facts, mat, kind=""):
+    """② 冒頭と「今回のおすすめ」の照合(lines: 答え、または節の行)。→ [エラー], (冒頭, おすすめの文)。"""
+    errs = []
+    heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
+    if not heads:
+        return errs, ("", "")
+    h = heads[0]
+    picks = []
+    heads_ = section_headings()
+    rest_ = lines[h + 1:]
+    for j, l in enumerate(rest_):
+        if re.match(cfg["lead_pick_re"], l):
+            picks.append(l)
+        elif picks and l.strip() in heads_:                              # 段階56: 狙い別の節の見出しを挟んでも、おすすめの続きとして数える
+            continue
+        elif picks and not l.strip() and next((x.strip() for x in rest_[j + 1:] if x.strip()), "") in heads_:
+            continue
+        elif picks:
+            break
+    lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
+    if picks and lead.strip():
+        errs += lead_vs_picks(lead, kind + "\n" + pick_text if kind else pick_text, len(picks), cfg, facts, mat)
+    return errs, (lead, pick_text)
+
+
+def lead_vs_picks(lead, pick_text, n, cfg, facts, mat):
+    errs = []
+    for kw in cfg["lead_kind_words"]:
+        if kw in lead and kw not in pick_text:
+            errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{n}件にない"})
+    if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
+        if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
+            errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
+    for c in mat.region_candidates:
+        names = short_names(c["name"])
+        if any(f in lead for f in names) and not any(f in pick_text for f in names):
+            errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
+    return errs
+
+
+def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
     """段階51(2026-11-06 の試用で見つかった 5 点)。facts の lines.answer_rules が印と同じときだけ当てる（ask facts が付ける）。
     ① 作業の報告を答えに出さない ② 冒頭の要約と「今回のおすすめ」の食い違い ③ iNaturalist の傾向は公式ではない・傾向の範囲を書く
     ④ 本文で使った事実の出典を出典リストに出す ⑤ 見込みを言い切らない・公式の文を丸ごと転載しない。"""
@@ -368,33 +558,21 @@ def stage51_errors(text, facts, mat, rules):
         if any(p in s for p in cfg["work_report_phrases"]):
             errs.append({"code": "work_report", "detail": s.strip()[:40]})
     lines = text.splitlines()                                               # ② 冒頭とおすすめ
-    heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
-    if heads:
-        h = heads[0]
-        picks = []
-        heads_ = section_headings()
-        rest_ = lines[h + 1:]
-        for j, l in enumerate(rest_):
-            if re.match(cfg["lead_pick_re"], l):
-                picks.append(l)
-            elif picks and l.strip() in heads_:                              # 段階56: 狙い別の節の見出しを挟んでも、おすすめの続きとして数える
-                continue
-            elif picks and not l.strip() and next((x.strip() for x in rest_[j + 1:] if x.strip()), "") in heads_:
-                continue
-            elif picks:
-                break
-        lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
-        if picks and lead.strip():
-            for kw in cfg["lead_kind_words"]:
-                if kw in lead and kw not in pick_text:
-                    errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{len(picks)}件にない"})
-            if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
-                if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
-                    errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
-            for c in mat.region_candidates:
-                names = short_names(c["name"])
-                if any(f in lead for f in names) and not any(f in pick_text for f in names):
-                    errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
+    if segs:                                                                # 段階57 第3部: 節ごとの冒頭とおすすめ。全体の冒頭は全部のおすすめと照合する
+        union = []
+        flat = []
+        for s in segs:                                                       # 段階58: 期間の中のエリア別の節も、エリアごとに照合する
+            sub_ = AP.split_segments(s["text"], s["plan"]) if (s.get("plan") or {}).get("subject") == "areas" else None
+            flat += sub_ or [s]
+        for s in flat:
+            e, (_lead, pick_text) = lead_errors(s["text"].splitlines(), cfg, facts, mat, kind=s["seg"]["heading"])
+            errs += [{**x, "detail": f"{s['seg']['heading']}: {x['detail']}"} for x in e]
+            union.append(s["seg"]["heading"] + "\n" + pick_text)
+        top = AP.lead_text(text, plan)
+        if top.strip() and any(union):
+            errs += lead_vs_picks(top, "\n".join(union), sum(len(u.splitlines()) for u in union), cfg, facts, mat)
+    else:
+        errs += lead_errors(lines, cfg, facts, mat)[0]
     for s in lines:                                                          # ③ iNaturalist（かっこの中の「。」で文が切れるので、行ごとに見る）
         if cfg["inat_word"] in s:
             if cfg["inat_label"] not in s:
@@ -402,8 +580,8 @@ def stage51_errors(text, facts, mat, rules):
             if cfg["inat_trend"] in s and not any(w in s for w in cfg["inat_scope_words"]):
                 errs.append({"code": "inat_scope_missing", "detail": s.strip()[:40]})
     urls = {u.rstrip("/") for u in URL_RE.findall(text)}                    # ④ 出典
-    for c in mat.region_candidates:
-        if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat))):
+    for c in mentioned_cands(mat, norm):
+        if True:
             u = ((c.get("current") or {}).get("url") or "").rstrip("/")
             if u and u not in urls:
                 errs.append({"code": "source_missing", "detail": f"{c['name']}: {u}"})
@@ -432,6 +610,7 @@ def stage51_errors(text, facts, mat, rules):
             allowed |= {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots}
         allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
         allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
+        allowed |= {(k["source"].get("url") or "").rstrip("/") for k in facts.get("knowledge_used") or []}                                   # 段階59: 知識カードの出典
         for u in sorted(urls - allowed - {""}):
             errs.append({"code": "source_unused", "detail": u[:60]})
     if (facts.get("lines") or {}).get("practical_rules"):                  # 段階53: まつりの期間は主催者が設定した日程。現況（色づき状況）とは別の行にする
@@ -462,7 +641,9 @@ def stage51_errors(text, facts, mat, rules):
 
 
 def mentioned_cands(mat, norm):
-    return [c for c in mat.region_candidates if any(f in norm for f in strict_names(c["name"], shared_prefixes(mat)))]
+    """本文に出た候補。対象別の節の答えでは、その対象の節に出た候補だけ(同じ名所が紅葉と野鳥の両方にあっても取り違えない。段階57 第3部)。"""
+    seg = getattr(mat, "seg_text", None) or {}
+    return [c for c in mat.region_candidates if any(f in seg.get(c.get("_subject"), norm) for f in strict_names(c["name"], shared_prefixes(mat)))]
 
 
 def candidate_urls(c):
@@ -470,7 +651,7 @@ def candidate_urls(c):
     out = set()
     for k in ("current",):
         out.add(((c.get(k) or {}).get("url") or "").rstrip("/"))
-    for k in ("history", "typical", "typical_from_records", "practical", "events", "festivals"):
+    for k in ("history", "typical", "typical_from_records", "practical", "events", "festivals", "notices"):
         out |= {((x or {}).get("url") or "").rstrip("/") for x in c.get(k) or [] if isinstance(x, dict)}
     return out - {""}
 
@@ -592,7 +773,7 @@ def load_facts(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def reply_check(text, facts, rules=None, gazetteer=(), page_line=None):
+def reply_check(text, facts, rules=None, gazetteer=(), page_line=None, offers=None):
     """段階38(指示書 3-4): 利用者への返事の全文の検査。答えの検査(check)に加えて、答えの本文の外に付け足した
     作業・開発の説明(reply_terms)を落とす。ページの場所の 1 行(page_line。ask page が書いた行と同じもの)だけは検査から外す。"""
     rules = rules or load_rules()
@@ -603,7 +784,7 @@ def reply_check(text, facts, rules=None, gazetteer=(), page_line=None):
             continue
         kept.append(line)
     body = "\n".join(kept) + ("\n" if text.endswith("\n") else "")
-    r = check(body, facts, rules, gazetteer)
+    r = check(body, facts, rules, gazetteer, offers=offers)
     for x in r["sentences"]:
         t = URL_RE.sub(" ", _n(x["text"]))
         for pat in rules.get("reply_terms") or []:
@@ -631,7 +812,7 @@ def page_check(lines, facts, rules=None, gazetteer=()):
     return {"ok": all(not x["errors"] for x in sents), "sentences": sents, "answer_errors": []}
 
 
-def generic_check(text, rules=None):
+def generic_check(text, rules=None, offers=None, clarify=False):
     """段階39 B-1: facts を持たない経路(桜・梅などの guide find の出力、検索だけで答える経路、ページ)の答えの検査。
     すべての経路が、出す前にこれか check を通す。落とすもの: 作業・開発の言葉(dev_terms・internal_terms・reply_terms)、作業の経過の文(forbidden_phrases)、
     検査・記録の事情(process_phrases)、聞き返しだけで終わる答え(候補が min_candidates 件未満で、お答えできない旨もない)。
@@ -639,6 +820,12 @@ def generic_check(text, rules=None):
     rules = rules or load_rules()
     g = rules["generic"]
     errs = []
+    if clarify:                                             # 段階57 第13部の例外: 対象・場所・日付のいずれも特定できず、答えの代わりに聞き返す 1 文だけ
+        n = len([l for l in text.splitlines() if l.strip()])
+        q = question_errors(text, rules)
+        if n == 1 and len(q) == 1:
+            return {"ok": True, "errors": [], "candidates": 0}
+        return {"ok": False, "errors": [{"code": "clarify_not_one_sentence", "detail": "聞き返しは 1 文だけ", "line": 0}], "candidates": 0}
     for i, line in enumerate(text.splitlines()):
         t = URL_RE.sub(" ", _n(line))
         for code, key in (("forbidden_phrase", "forbidden_phrases"), ("process_phrase", None)):
@@ -656,6 +843,8 @@ def generic_check(text, rules=None):
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})
+    errs += [{**e, "line": 0} for e in process_excuse_errors(text, rules) + source_rule_errors(text, rules) + question_errors(text, rules) + quote_errors(text, rules)]
+    errs += [{**e, "line": 0} for e in offer_errors(text, OF.all_texts() if offers is None else offers)]      # 段階57 第1部: 一覧にない提案の文(テーマが分かるときは条件も見る)
     n_cand = sum(1 for line in text.splitlines() if any(re.search(m, line) for m in g["candidate_markers"]))
     if n_cand < g["min_candidates"] and not any(w in text for w in g["unanswerable_ok"]):
         asks = any(w in text for w in g["ask_words"])

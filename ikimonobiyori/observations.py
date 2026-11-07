@@ -157,6 +157,12 @@ def _blocked_host(host, policy):
     return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
 
 
+def _sns_host(host, policy):
+    """段階58 第4部: SNS のホストか。"""
+    host = (host or "").lower()
+    return any(host == s or host.endswith("." + s) for s in policy["record"].get("sns_hosts") or [])
+
+
 def _restricted_unusable(r, policy):
     cfg = restricted_cfg(r.get("host") or urlparse(r.get("url") or "").hostname, policy)
     if not cfg:
@@ -169,6 +175,24 @@ def _reprint_of_blocked(r, policy):
     words = [w.lower() for w in _v(policy.get("not_read_words") or {"value": []})]
     text = " ".join(str(r.get(k) or "") for k in ("state", "typical", "publisher", "url", "forecast")).lower()
     return any(w in text for w in words)
+
+
+_LEDGER = {}
+
+
+def _source_approved(ledger, source_id):
+    if ledger not in _LEDGER:
+        doc = yaml.safe_load((DATA_FILES_DIR / "sources" / f"{ledger}.yaml").read_text(encoding="utf-8")) or {}
+        _LEDGER[ledger] = {s["id"]: (s.get("approval") or {}).get("status") for s in doc.get("sources") or []}
+    return _LEDGER[ledger].get(source_id) == "approved"
+
+
+def _gated_unusable(r, policy):
+    """段階57 第11部: 台帳で承認待ちの公式データの記録か(承認されるまで答えの材料にしない)。"""
+    for g in policy["record"].get("gated_sources") or []:
+        if re.search(g["url_re"], r.get("url") or "") and not _source_approved(g["ledger"], g["source"]):
+            return True
+    return False
 
 
 def restricted_cfg(host, policy):
@@ -246,6 +270,8 @@ def validate(rec, policy):
         errs.append("url は http(s) の URL")
     if u.hostname and _blocked_host(u.hostname, policy):
         errs.append("このホストは読まない対象(利用規約)")
+    if u.hostname and _sns_host(u.hostname, policy):
+        errs.append("SNS の投稿は事実の根拠に使わない")
     if isinstance(rec, dict) and _reprint_of_blocked(rec, policy):
         errs.append("ウェザーニュース由来の事実は使わない(転載を含む)")
     for k in ("state_date",):
@@ -273,7 +299,7 @@ def validate(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical")
+          "source_class", "species", "practical", "provisional_search", "source_id", "notice")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -325,6 +351,8 @@ def make_record(rec, policy, read_at):
     mx = _v(policy["record"]["max_raw_chars"])
     out = {k: rec.get(k) for k in FIELDS if rec.get(k) is not None}
     out["state"] = str(rec["state"])[:mx]
+    if out.get("notice"):                        # 段階58 第2部: 開園日・閉鎖・規制などのお知らせ(短くまとめた語。公式のページのときだけ答えに使う)
+        out["notice"] = str(out["notice"])[:mx]
     if out.get("practical"):                     # 段階52: 読めた公式ページの実用情報(アクセス・駐車場・運行・開園時間の変更など)の短い原文
         out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
@@ -364,6 +392,8 @@ def read_records(subject, env=None, policy=None):
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
+    rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ
+    rows = [r for r in rows if not _sns_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]    # 段階58 第4部
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
@@ -469,7 +499,12 @@ def _from_catalog(e, subject, policy=None):
             "area": t.get("area"), "point": e.get("point"), "elevation_m": (e.get("point") or {}).get("elevation_m"),
             "typical": _typical_from_catalog(e, policy), "events": _events_from_catalog(e),
             "pages": [{"url": s["url"], "publisher": s.get("title") or urlparse(s["url"]).hostname, "source_class": "official"} for s in e.get("sources") or []],
-            "flower_kinds": t.get("flower_kinds") or [], "from_catalog": True}
+            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True}
+
+
+def _tree_names(text):
+    """名所の一覧の樹種の欄(「モミジ・イチョウ」)→ 名前の一覧(段階57 第2部)。"""
+    return [x.strip() for x in re.split(r"[・、,]", text or "") if x.strip()]
 
 
 def _from_spot(s, policy, catalog_by_id):
@@ -483,7 +518,8 @@ def _from_spot(s, policy, catalog_by_id):
          "city": s.get("city"), "area": s.get("area"), "point": s.get("point"), "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
-         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area")}
+         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"),
+         "tree_species": _tree_names((s.get("trees") or {}).get("species") if isinstance(s.get("trees"), dict) else None)}
     pa = park_area(s, policy)                    # 段階38: 探鳥地ごとの範囲があれば、その範囲で集計する(半径10kmの区域をやめる)
     if pa:
         c["bird_area"] = pa["id"]
@@ -503,6 +539,7 @@ def _from_spot(s, policy, catalog_by_id):
         urls = {p["url"] for p in c["pages"]}
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
         c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
+        c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
     return c
 
 
@@ -578,6 +615,9 @@ def resolve(region_query, origin, policy, regions_doc=None):
     regions_doc = regions_doc or S.load_regions()
     if region_query in (policy.get("all_range_words") or []):       # 地域の指定がない質問: 登録済みの全範囲（出発地から片道の範囲内）
         home = policy["origin_home"].get(origin)
+        if home is None and origin:                              # 段階57 第8部
+            from . import origins
+            home = (origins.lookup(origin) or {}).get("prefecture")
         return {"name": policy["all_range_name"], "prefectures": [], "areas": [], "resolved": True, "all_range": True,
                 "unknown_distance_prefectures": [home] if home else []}
     if region_query:
@@ -675,7 +715,12 @@ def _event_hits(c, dates):
 def _distance(c, origin, cat_pol):
     p = c.get("point")
     if not p or p.get("lat") is None:
-        return None
+        if origin in catalog_mod.origin_names(cat_pol):         # 横浜・東京はこれまでどおり(座標のない名所は距離なし)
+            return None
+        from . import origins                                   # 段階57 第8部: 新しい出発地は、市区町村の代表点で測る
+        p = origins.municipal_point(c.get("city"))
+        if not p:
+            return None
     return catalog_mod.range_from(cat_pol, p, origin)["km"]
 
 
@@ -871,6 +916,10 @@ def season_line(f, policy):
     if pg:
         x = pg[0]
         return lab["page"].format(publisher=x.get("publisher") or "", text=x["text"])
+    cur = f.get("current")
+    if cur:                                                      # 段階57 第4部: 観察の記録があるのに「見つかっていません」と書かない
+        when = f"{_md(cur['state_date'])}の" if cur.get("state_date") else ""
+        return lab["with_current"].format(when=when, publisher=cur.get("publisher") or "")
     return lab["unknown"]
 
 
@@ -1411,8 +1460,9 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                    "publisher": cur.get("publisher") or cur.get("host"), "url": cur["url"], "source_class": cur["source_class"],
                    "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"],
                    "confidence_label": _confidence_label(cur)}
+        current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
-    out = {"id": c["id"], "name": c["name"], "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
+    out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "point": c.get("point"), "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
@@ -1433,18 +1483,54 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
                                               for t in c.get("typical") or [] if t.get("event_derived")]},
             "practical": [{"text": r["practical"], "publisher": r.get("publisher"), "url": r["url"], "state_date": r.get("state_date")}
                           for r in rows if r.get("practical") and r.get("source_class") == "official"][:2],
+            "notices": [{"text": r["notice"], "date": r.get("state_date"), "url": r["url"], "publisher": r.get("publisher")} for r in rows
+                        if r.get("notice") and r.get("source_class") == "official"][:2],
             "typical_from_records": [{"text": r["typical"], "publisher": r.get("publisher"), "url": r["url"], "source_class": r["source_class"],
                                       "read_at": r["read_at"]} for r in rows if r.get("typical")],
             "events": evs, "relation": rel, "relation_label": policy["relation_labels"][rel],
             "distance_km": dist, "reasons": reasons, "tier": tier, "evidence": ev_rank, "reference_count": len(pubs), "publishers": pubs,
             "avoid": avoid, "hours": c.get("hours"), "closed": c.get("closed"), "birds_note": c.get("birds_note"),
             "closed_on": closed_on(c, dates),
-            "flower_kinds": c.get("flower_kinds") or [], "pages": c.get("pages") or [], "_order": order_map.get(st, -1) if st else -1}
+            "flower_kinds": c.get("flower_kinds") or [], "tree_species": c.get("tree_species") or [], "pages": c.get("pages") or [], "_order": order_map.get(st, -1) if st else -1}
     if subject == "birds":
         out["season_birds"] = season_birds(c, rows, dates, policy)
         out["bird_area"] = c.get("bird_area")
         out["bird_range"] = c.get("bird_range")
         out["_rows"] = rows
+    return out
+
+
+def state_display(raw, publisher, policy):
+    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。語が続く記号(「◎ 真っ盛り」)は原文のまま。"""
+    cfg = policy.get("state_symbols") or {}
+    chars = cfg.get("chars") or ""
+    text = (raw or "").strip()
+    if not text or not any(ch in text for ch in chars):
+        return raw, False
+    legend = next((m for p, m in (cfg.get("by_publisher") or {}).items() if p in (publisher or "")), None)
+    m = re.search(f"([{chars}])[ 　]?([ぁ-んァ-ヶ一-龠].*)$", text)
+    if m:                                                        # 語が続く記号: 凡例があれば語に直す。なければ原文のまま(「◎ 真っ盛り」)
+        if not legend or m.group(1) not in legend:
+            return raw, False
+        word, rest = legend[m.group(1)], m.group(2)
+        return (rest if word in rest or word[:2] in rest else f"{word} {rest}"), False
+    if not legend:
+        return None, True
+    for ch, word in legend.items():
+        text = text.replace(ch, word)
+    return (None, True) if any(ch in text for ch in chars) else (text, False)
+
+
+def practical_for_dates(items, dates, policy):
+    """段階57 第4部: 実用情報のうち、対象の日ではない日の開園時間を、当日は公式ページで確認する文に置き換える。"""
+    cfg = policy.get("practical_other_day") or {}
+    if not cfg:
+        return items
+    days = {(d.month, d.day) for d in dates}
+    out = []
+    for p in items:
+        m = re.search(cfg["pattern"], p.get("text") or "")
+        out.append({**p, "text": cfg["replace"]} if m and (int(m.group(1)), int(m.group(2))) not in days else p)
     return out
 
 
@@ -1513,7 +1599,7 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
         _today = now.date() if hasattr(now, "date") else now
         f["festivals"] = festivals_mod.for_spot(f["id"], _today)
-        f["practical"] = (f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today)      # 段階53 第4部: 読めた公式ページの実用情報
+        f["practical"] = practical_for_dates((f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today), dates, policy)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":
         inat_cache = {}

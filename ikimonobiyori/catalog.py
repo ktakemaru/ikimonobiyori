@@ -81,9 +81,15 @@ def origin_names(policy):
 def resolve_origin(policy, origin=None):
     """出発地の名前(省略すると方針の default_origin)。方針の origins にない名前は ValueError(推測しない)。"""
     name = origin or policy["range_limit"]["default_origin"]
-    if name not in origin_names(policy):
+    if name not in origin_names(policy) and _extra_origin(name) is None:
         raise ValueError(f"出発地 {name} は {origin_names(policy)} のどれでもない")
     return name
+
+
+def _extra_origin(name):
+    """段階57 第8部: 質問から取り出した出発地の表(data/ask/origins.yaml)。"""
+    from . import origins
+    return origins.lookup(name)
 
 
 def range_from(policy, pt, origin=None):
@@ -91,7 +97,7 @@ def range_from(policy, pt, origin=None):
     max_km より先は範囲の外、edge_min_km 以上 max_km 以下は範囲の端。"""
     rl = policy["range_limit"]
     name = resolve_origin(policy, origin)
-    o = next(x for x in rl["origins"] if x["name"] == name)
+    o = next((x for x in rl["origins"] if x["name"] == name), None) or _extra_origin(name)
     km = distance_km(pt["lat"], pt["lon"], o["lat"], o["lon"], rl["earth_radius_km"])
     edge = rl["edge_min_km"]["value"] if isinstance(rl["edge_min_km"], dict) else rl["edge_min_km"]
     status = "out_of_range" if km > rl["max_km"] else "edge" if km >= edge else "in_range"

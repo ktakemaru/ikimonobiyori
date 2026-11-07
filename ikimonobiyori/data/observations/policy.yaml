@@ -14,6 +14,11 @@ record:
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  # 段階58 第4部: SNS の投稿を事実の根拠にしない(記録しない。過去の記録も答えの材料にしない)
+  sns_hosts: [x.com, twitter.com, facebook.com, instagram.com, youtube.com, youtu.be, tiktok.com, threads.net]
+  # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)
+  gated_sources:
+    - {url_re: 'yamanashi-kankou\.jp/special/documents/koyo_', ledger: autumn_leaves, source: yamanashi-kankou-koyo-csv}
   # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、
   # 記事の文章は保存・転載・要約・言い換えのどの形でも使わない。使うのは「状態を表す短い語句」「掲載の日付」「URL」だけ。
   # 承認待ちの間は答えの材料にしない(approved を本人が true にするまで)。記録はリポジトリの外(IKIMONOBIYORI_DATA_DIR)にだけ置く。
@@ -90,6 +95,8 @@ states:
       - [色づき始め, 色づき始め]
       - [色付き始め, 色づき始め]
       - [色づきはじめ, 色づき始め]
+      - [まもなく見頃, 色づき始め]      # 段階58: 長瀞町観光協会の書き方(2026-11-05 の記事)
+      - [色づき進, 色づき始め]          # 段階58: 同上
       - [そろそろ見ごろ, 色づき始め]
       - [そろそろ見頃, 色づき始め]
       - [見頃近し, 色づき始め]
@@ -214,6 +221,16 @@ typical_labels:
   unknown_with_last_year: "例年の時期は分かりません({year}年{md}の記録({publisher})では「{text}」)"
   unknown: "例年の時期は分かりません"
 
+# 段階57 第4部: 状態の記号を語にする(ページ上の凡例が出どころ)。凡例が読めていない発行元の記号は、そのまま出さず状態を断定しない
+state_symbols:
+  chars: "✕×△〇◯○◎▼"
+  by_publisher:
+    日光市観光協会: {"✕": まだ, "×": まだ, "△": 色づき始め, "〇": 見ごろ, "◯": 見ごろ, "○": 見ごろ, "◎": 真っ盛り, "▼": 色褪せ・落葉始め}
+# 段階57 第4部: 対象の日ではない日の開園時間(「11/6の有料エリア 9:30〜21:00」)を出さない。通常の開園時間・休園日は出してよい
+practical_other_day:
+  pattern: '(\d{1,2})/(\d{1,2})の[^。]{0,16}?\d{1,2}:\d{2}'
+  replace: 当日の開園情報は公式ページで確認してください
+
 # 段階35(穴2): 野鳥は「例年の見頃」ではなく「この時期に見られる鳥」で書く
 birds:
   # 前の年の観察の記録を「この時期」とみなす幅(対象の日の前後の日数)
@@ -229,6 +246,8 @@ birds:
     past_record: "この時期に見られる鳥: {year}年{md}の記録({publisher})では「{text}」"
     page: "この時期に見られる鳥: {publisher}の紹介では「{text}」"
     unknown: "この時期に見られる鳥の記録は見つかっていません"
+    # 段階57 第4部: 公園の観察の記録があるのに「見つかっていません」と書かない
+    with_current: "この時期に見られる鳥: {when}{publisher}の観察の記録があります"
 
 # 段階36(利用者の決定 2026-11-01。指示書 biyori-hub/docs/stageH10-instructions.md 決定2): 野鳥の iNaturalist の集計の取り直し
 # 区域の集計が max_age_days より古いか、対象の日が前回の集計の期間(中心の日の前後 window_weeks 週。プロファイル)から外れたら、質問のときに取り直す。

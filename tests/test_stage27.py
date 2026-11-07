@@ -79,8 +79,7 @@ class WholeAnswerFromCode(unittest.TestCase):
         text = guide.render_answer(found, P, themes=themes)
         legend = P["reference_count"]["legend"]
         self.assertEqual(text.count(legend), 1)
-        self.assertTrue(text.rstrip().endswith(P["answer"]["next_question"]))             # 段階39 B-3: 凡例のあとに出典・好みの質問が続く（質問が最後）
-        self.assertLess(text.index(legend), text.index(P["answer"]["next_question"]))
+        self.assertNotIn("好みを1つ", text)                                               # 段階57 第13部: 末尾に質問が出ない
         notes = text.split(f"## {P['answer']['headings']['notes']}\n", 1)[1].split("\n\n", 1)[0].splitlines()
         self.assertEqual(len(notes), 2)                                   # 野鳥と冬鳥の 1 行ずつ(注意は 2 行まで)
         self.assertEqual(guide.forbidden_in_answer(text, P), [])
