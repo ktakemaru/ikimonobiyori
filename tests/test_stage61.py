@@ -172,5 +172,61 @@ class Lines(unittest.TestCase):
             JN.load = orig
 
 
+
+# ---- 第2部: 博物館などの行事・展示の台帳(ikimonobiyori/facility_events.py) ----
+from datetime import date  # noqa: E402
+
+from ikimonobiyori import facility_events as FE  # noqa: E402
+
+
+def event_doc(status="pending", **ev):
+    e = {"facility": "test-museum", "kind": "講座", "title": "試験の野鳥講座", "topics": ["野鳥"], "date": "2026-12-05", "weekday_text": "土曜",
+         "time": "9時30分から16時", "deadline": "2026-11-24", "deadline_weekday_text": "火曜", "capacity": 15, "place": "試験の博物館",
+         "url": "https://museum.example.org/event/1.html"}
+    e.update(ev)
+    return {"facilities": [{"id": "test-museum", "name": "試験の博物館", "prefecture": "神奈川県", "approval": {"status": status}}],
+            "events": [e, {"facility": "test-museum", "kind": "展示", "label": "特別展", "title": "試験の展示", "topics": ["自然"],
+                           "start": "2026-07-18", "end": "2026-11-08", "url": "https://museum.example.org/ex.html"}]}
+
+
+class Events(unittest.TestCase):
+    TODAY = date(2026, 11, 8)
+
+    def test_repository_ledger_is_valid_and_pending(self):
+        doc = FE.load()
+        self.assertEqual(FE.validate(doc), [])
+        self.assertIn("神奈川県立生命の星・地球博物館", FE.pending_facilities(doc))
+        self.assertEqual(FE.lines_for("神奈川で、野鳥や地形の観察会はある?", self.TODAY, doc), ([], []))     # 承認待ちは出さない
+
+    def test_approved_event_line_has_year_weekday_deadline_and_capacity(self):
+        ls, urls = FE.lines_for("神奈川で、野鳥の観察会はある?", self.TODAY, event_doc("approved"))
+        self.assertEqual(len(ls), 1)
+        self.assertIn("2026年12月5日(土)", ls[0])
+        self.assertIn("申し込みの締め切りは2026年11月24日(火)", ls[0])
+        self.assertIn("定員15人", ls[0])
+        self.assertEqual(urls, ["https://museum.example.org/event/1.html"])
+
+    def test_weekday_mismatch_and_missing_year_are_rejected(self):
+        self.assertTrue(FE.validate(event_doc(weekday_text="日曜")))
+        self.assertTrue(FE.validate(event_doc(date="12-05")))
+        self.assertEqual(FE.lines_for("野鳥の観察会はある?", self.TODAY, event_doc("approved", weekday_text="日曜")), ([], []))
+
+    def test_past_events_and_other_topics_are_not_shown(self):
+        self.assertEqual(FE.lines_for("野鳥の観察会はある?", date(2026, 12, 6), event_doc("approved"))[0], [])
+        ls, _ = FE.lines_for("自然の展示はある?", self.TODAY, event_doc("approved"))
+        self.assertEqual(ls, ["試験の博物館の特別展「試験の展示」: 2026年7月18日〜2026年11月8日。"])         # 会期を年つきで(現況ではない)
+        self.assertEqual(FE.lines_for("自然の展示はある?", date(2026, 11, 9), event_doc("approved"))[0], [])
+        self.assertEqual(FE.match("紅葉のおすすめは?"), [])
+
+    def test_event_question_answer_uses_only_approved_events(self):
+        q = "神奈川で、野鳥の観察会はある?"
+        self.assertEqual(intent.classify(q), "event")
+        self.assertIsNone(intent.compose(q, cards=[], today=self.TODAY, events=event_doc("pending")))
+        text = intent.compose(q, cards=[], today=self.TODAY, events=event_doc("approved"))
+        self.assertTrue(text.startswith("試験の博物館の講座"))
+        self.assertIn("出典\nhttps://museum.example.org/event/1.html", text)
+        self.assertEqual(V.question_errors(text, V.load_rules()), [])
+
+
 if __name__ == "__main__":
     unittest.main()

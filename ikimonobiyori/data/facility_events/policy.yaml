@@ -1,0 +1,17 @@
+# 段階61 第2部: 博物館などの行事・展示の台帳(events.yaml)の方針(ikimonobiyori/facility_events.py)。値と文はここに置く。
+# 行事は現況ではない。年つきの日付と、書かれた曜日が暦と合うものだけを使う。承認(approval.status: approved)の施設の行事だけを答えに出す(承認は本人が行う)
+schema: ikimono-facility-events-policy/1
+kinds: [講座, 観察会, 展示]
+weekdays: [月, 火, 水, 木, 金, 土, 日]
+# 質問の語 → 行事の話題(events の topics と照らす)
+ask_words: [観察会, 講座, イベント, 催し, 行事, 展示, 特別展, 企画展, 勉強会]
+topic_words:
+  野鳥: [野鳥, 鳥, バードウォッチング, 探鳥]
+  地形・地質: [地形, 地質, 岩石, 石, 火山]
+  自然: [自然, 生き物, 里山]
+regions: {神奈川: [神奈川県]}
+line_event: "{facility}の{kind}「{title}」: {date}({weekday}){time}。{place}{extra}"
+line_exhibition: "{facility}の{kind}「{title}」: {start}〜{end}。"
+deadline: "申し込みの締め切りは{date}({weekday})"
+capacity: "定員{n}人"
+target: "対象は{target}"

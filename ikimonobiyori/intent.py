@@ -5,6 +5,7 @@
 語は data/knowledge/policy.yaml の intent。カードがないときは、先に調べて記録してから答える(「調べます」と書かない)。"""
 import re
 
+from . import facility_events as FE
 from . import jma_normals as JN
 from . import knowledge as K
 from . import pdf_text as PT
@@ -21,6 +22,8 @@ def classify(question):
     q = question or ""
     if JN.match(q):                                  # 段階61 第1部: 平年の目安の質問(「東京の紅葉は、平年はいつ頃?」)は知識の答えの型
         return "normal"
+    if FE.match(q):                                  # 段階61 第2部: 観察会・講座・展示の質問(行事の台帳。承認済みの施設だけ)
+        return "event"
     for name in c["order"]:
         if any(re.search(p, q) for p in c["patterns"][name]):
             return name
@@ -67,10 +70,17 @@ def cards_for(question, cards=None, env=None, month=None):
     return uniq
 
 
-def compose(question, cards=None, env=None, month=None):
-    """知識の答え(カードの事実と出典だけ)。カードがなければ None(先に調べて記録する)。"""
+def compose(question, cards=None, env=None, month=None, today=None, events=None):
+    """知識の答え(カードの事実と出典だけ)。カードがなければ None(先に調べて記録する)。
+    行事の質問は、承認済みの施設の行事の行だけ(なければ None)。today は行事の日付と比べる日(省くと今日)。"""
     c = cfg()
     kind = classify(question)
+    if kind == "event":
+        from datetime import date as _date
+        ev, ev_urls = FE.lines_for(question, today or _date.today(), events)
+        if not ev:
+            return None
+        return "\n".join(ev + ["", c["sources_heading"]] + ev_urls) + "\n"
     rows = cards_for(question, cards, env, month)
     normals, normal_src = JN.lines_for(question)     # 段階61 第1部: 気象庁の標本木・観測の平年の目安(カードとは別。出典と加工の明記つき)
     if not rows and not normals:
