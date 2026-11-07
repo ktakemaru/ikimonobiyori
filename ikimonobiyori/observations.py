@@ -807,11 +807,62 @@ def resolve(region_query, origin, policy, regions_doc=None):
     if region_query:
         r = S.resolve_region(region_query, regions_doc)
         if r is None:
+            multi = resolve_multi(region_query, policy, regions_doc)
+            if multi:
+                return multi
             return {"name": region_query, "prefectures": [], "areas": [], "resolved": False}
         m = r.get("match") or {}
         return {"name": r["name"], "prefectures": m.get("prefectures") or [], "areas": m.get("areas") or [], "resolved": True}
     pref = policy["origin_home"].get(origin)
     return {"name": pref, "prefectures": [pref] if pref else [], "areas": [], "resolved": bool(pref), "from_origin": True}
+
+
+def resolve_multi(region_query, policy, regions_doc=None):
+    """段階62 第2部: 「東京か神奈川」「神奈川・埼玉」→ 都県の OR の地域 {name, prefectures, areas, parts}。どれかの部分が地域の呼び名に
+    一致しなければ None(推測しない)。部分が 1 つだけのときも None。"""
+    cfg = policy.get("multi_region") or {}
+    if not cfg:
+        return None
+    regions_doc = regions_doc or S.load_regions()
+    q = re.sub(cfg["strip_suffix_re"], "", (region_query or "").strip())
+    names = [re.sub(cfg["strip_suffix_re"], "", x.strip()) for x in re.split(cfg["split_re"], q)]
+    names = [x for x in names if x]
+    if len(names) < 2:
+        return None
+    parts = []
+    for n in names:
+        r = S.resolve_region(n, regions_doc)
+        if r is None:
+            return None
+        m = r.get("match") or {}
+        if r["name"] not in {p["name"] for p in parts}:
+            parts.append({"name": r["name"], "query": n, "prefectures": m.get("prefectures") or [], "areas": m.get("areas") or []})
+    prefs = [x for p in parts for x in p["prefectures"]]
+    areas = [x for p in parts for x in p["areas"]]
+    return {"name": cfg["name_sep"].join(p["query"] for p in parts), "prefectures": list(dict.fromkeys(prefs)), "areas": list(dict.fromkeys(areas)),
+            "resolved": True, "parts": parts}
+
+
+def known_prefectures(regions_doc=None):
+    """地域の一覧に出てくる都道府県の名前(記録の市区町村・発行元から都県を読むため)。"""
+    regions_doc = regions_doc or S.load_regions()
+    out = []
+    for r in regions_doc.get("regions") or []:
+        for p in (r.get("match") or {}).get("prefectures") or []:
+            if p not in out:
+                out.append(p)
+    return out
+
+
+def prefecture_from_text(*texts, known=None):
+    """段階62 第2部: 記録の市区町村(「神奈川県」「神奈川県山北町」)や発行元(「神奈川県」)が都県の名前で始まれば、その都県。なければ None。"""
+    known = known if known is not None else known_prefectures()
+    for t in texts:
+        t = (t or "").strip()
+        for p in known:
+            if t.startswith(p):
+                return p
+    return None
 
 
 def in_region(c, region, km=None, max_km=None):
@@ -1748,10 +1799,12 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
         for r in g["rows"]:
             x["prefecture"] = x["prefecture"] or r.get("prefecture")
             x["area"] = x["area"] or r.get("area")
+        if x["prefecture"] is None:                            # 段階62 第2部: 記録の市区町村・発行元が都県の名前で始まれば、その都県(東京の計画に神奈川の山が入った不具合)
+            x["prefecture"] = prefecture_from_text(g["city"], *[r.get("city") for r in g["rows"]], *[r.get("publisher") for r in g["rows"]])
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
     for x in extra.values():
-        if x["prefecture"] is None and x["area"] is None and reg["prefectures"] and not reg["areas"]:
-            x["prefecture"] = reg["prefectures"][0]         # 都道府県だけの地域で、記録に場所の手がかりがないとき(従来どおり)
+        if x["prefecture"] is None and x["area"] is None and len(reg["prefectures"]) == 1 and not reg["areas"]:
+            x["prefecture"] = reg["prefectures"][0]         # 都道府県 1 つだけの地域で、記録に場所の手がかりがないとき(従来どおり。複数の都県では、どれか分からないので入れない)
         f = fact_for(x, x["rows"], dates, today, subject, policy, origin, cat_pol)
         f["outside_list"] = True
         all_f.append(f)

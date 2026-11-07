@@ -215,6 +215,12 @@ origin_home: {横浜: 神奈川県, 東京: 東京都}
 # 地域を指定しない質問（ask の既定。利用者の決定 2026-11-04）: 都道府県に縛らず、出発地から片道の範囲内（catalog の range_limit）の登録済みの名所すべて
 all_range_words: [全範囲, 登録済みの全範囲]
 all_range_name: 登録済みの全範囲（出発地から片道250km前後）
+# 段階62 第2部: 複数の都県の指定(「東京か神奈川で」「東京と神奈川」「神奈川・埼玉」)を都県の OR として受け付ける。
+# 全体で 1 つの地域にならないときだけ、区切りで分けて、どの部分も地域の呼び名に一致するときに使う(推測で近いものを選ばない)。
+multi_region:
+  split_re: '[・、,/／]|か|と|や|または|および'
+  strip_suffix_re: '(で|あたり|周辺|方面|の中|内)$'
+  name_sep: ・
 
 # 答えに出さない内部用語(facts の文の自己検査)
 forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary, official]

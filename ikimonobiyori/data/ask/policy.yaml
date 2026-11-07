@@ -190,6 +190,7 @@ plan_page:
   reply_line: "写真つきのページ: {path}"
   text:
     title: "{dates} {labels}のおすすめ"
+    title_region: "{dates} {region}の{labels}のおすすめ"            # 段階62 第2部: 題名に地域・日付・テーマ(ページが複数でも区別できる)
     conclusion: "{dates}のおすすめは、{names}です。"
     picks_heading: 今回のおすすめ
     subject_labels: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}

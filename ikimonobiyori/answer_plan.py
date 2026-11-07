@@ -461,6 +461,46 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
 
 
+# ---- 複数の都県の指定(段階62 第2部) ----
+
+def _all_picks(plan):
+    """計画のすべての採用(全体・対象別・期間別・エリア別)→ 名所の名前の一覧(重複なし)。"""
+    out = [p["name"] for p in plan.get("picks") or []]
+    for sub in (plan.get("subjects") or {}).values():
+        out += [p["name"] for p in sub.get("picks") or []]
+    for seg in plan.get("segments") or []:
+        if seg.get("plan"):
+            out += _all_picks(seg["plan"])
+    return list(dict.fromkeys(out))
+
+
+def attach_region_parts(plan, facts_doc, policy=None):
+    """「東京か神奈川で」のような都県の OR の質問 → plan["region_parts"] = [{name, prefectures, picks}](地域ごとの節)。
+    答えは地域の名前に漏らさず触れる(area_names に足す。検査器 area_missing)。地域が 1 つのときは何もしない。"""
+    from . import observations as O
+    q = facts_doc.get("region")
+    multi = O.resolve_multi(q, O.load_policy()) if q else None
+    if not multi:
+        return plan
+    pref_of = {}
+    for sub in (facts_doc.get("subjects") or {}).values():
+        for c in sub.get("candidates") or []:
+            pref_of.setdefault(c["name"], c.get("prefecture"))
+    for per in facts_doc.get("periods") or []:
+        for sub in (per.get("subjects") or {}).values():
+            for c in sub.get("candidates") or []:
+                pref_of.setdefault(c["name"], c.get("prefecture"))
+    names = _all_picks(plan)
+    parts = []
+    for part in multi["parts"]:
+        mine = [n for n in names if pref_of.get(n) in part["prefectures"]]
+        parts.append({"name": part["query"], "prefectures": part["prefectures"], "picks": mine})
+    plan["region_parts"] = parts
+    plan["region_name"] = multi["name"]
+    plan["area_names"] = list(dict.fromkeys(list(plan.get("area_names") or []) + [p["name"] for p in parts]))
+    return plan
+
+
 # ---- 日付の既定(段階58 第9部) ----
 
 def default_periods(question, now, policy=None):

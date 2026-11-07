@@ -219,6 +219,9 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     if ol:
         lines.append(ol)
     lines += list(extra_lines)
+    for rp in plan.get("region_parts") or []:                          # 段階62 第2部: 地域ごとの行(候補がない地域も書く)
+        lines.append(t["region_part"].format(name=rp["name"], names=t["region_names_sep"].join(rp["picks"])) if rp["picks"]
+                     else t["region_part_few"].format(name=rp["name"], n=0))
     urls, mentioned = set(), []
     segs = plan.get("segments") or []
     today = date.fromisoformat(str(facts.get("now"))[:10]) if facts.get("now") else None

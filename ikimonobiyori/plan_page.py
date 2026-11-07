@@ -74,6 +74,17 @@ def _md(iso):
     return f"{d.month}/{d.day}"
 
 
+def _region_label(facts):
+    """段階62 第2部: ページの題名の地域(質問の地域。登録済みの全範囲のときは出さない)。"""
+    from . import observations as O
+    r = facts.get("region")
+    pol = O.load_policy()
+    if not r or r in (pol.get("all_range_words") or []) or r == pol.get("all_range_name"):
+        return None
+    reg = O.resolve(r, facts.get("origin"), pol)
+    return reg["name"] if reg.get("resolved") else None
+
+
 def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
     """→ (HTML, 検査用の文の一覧, 載せた種 {名所: [(種名, 写真あり)]})。photo_for(和名) → (メタ, バイト列) か None。
     photo_credit(メタ) → 表示の文字列(撮影者・ライセンス・学名・状態)。"""
@@ -88,7 +99,8 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
     subs = plan_subjects(plan)
     labels = "・".join(t["subject_labels"][sj] for sj, _ in subs)
     pool = PhotoPool(_v(policy["max_embed_bytes"]))
-    title = t["title"].format(dates=dtxt, labels=labels)
+    region = plan.get("region_name") or _region_label(facts)
+    title = t["title_region"].format(dates=dtxt, region=region, labels=labels) if region and t.get("title_region") else t["title"].format(dates=dtxt, labels=labels)
     body = [f"<h1>{say(title)}</h1>"]
     picks = plan.get("picks") or []
     lead = _lead_of(answer, t["picks_heading"]) or t["conclusion"].format(dates=dtxt, names=t["names_sep"].join(p["name"] for p in picks))

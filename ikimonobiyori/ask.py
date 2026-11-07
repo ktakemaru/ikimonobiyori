@@ -705,6 +705,7 @@ class Flow:
         if facts_doc.get("periods"):                                  # 段階57 第9部: 期間が 2 つ。期間ごとの計画
             doc = AP.build_periods(facts_doc)
             doc["offers"] = []
+            AP.attach_region_parts(doc, facts_doc)                       # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
             self._save("answer_plan.json", doc)
             save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
             self.call("plan", subject="periods", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
@@ -716,6 +717,7 @@ class Flow:
         doc = AP.build_all(facts_doc, overrides=keep, refine=refine) if sj == "all" else AP.build(facts_doc, sj, overrides=keep, refine=refine)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
+        AP.attach_region_parts(doc, facts_doc)                           # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
         doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
         save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)

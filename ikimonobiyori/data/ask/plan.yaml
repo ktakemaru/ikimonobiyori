@@ -175,6 +175,10 @@ skeleton:
   not_official: 公式ではありません
   inat_scope: 公園そのものでなく周辺の半径の範囲の傾向です
   few: "この地域で今年の情報が確認できた候補は{n}件です。"
+  # 段階62 第2部: 複数の都県の指定(「東京か神奈川で」)の、地域ごとの行。候補がない地域も 1 行書く
+  region_part: "{name}の候補は、{names}です。"
+  region_part_few: "{name}で今年の情報が確認できた候補は{n}件です。"
+  region_names_sep: 、
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
   # 段階60 第8部: 承認済み施設の発信(facts の visitor_centers)を、どの名所の答えに添えるか(施設 id → 地域の語)。名所の名前・市区町村・地域に語が含まれれば添える
   visitor_center_places:
