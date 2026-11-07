@@ -106,6 +106,10 @@ from ikimonobiyori import visitor_centers as V  # noqa: E402
 
 VP = V.load_policy()
 
+# 2026-11-07 に本人が承認した12施設（本人の指示による記入。docs/operations.md §2-0・§2-3）。これ以外は承認待ちのまま
+APPROVED_IDS = frozenset({"kitamoto-shizen-gakushu", "nikko-shizen-hakubutsukan", "yokohama-shizen-kansatsu", "sayama-ikimono-fureai", "hadano-vc",
+                          "nishitanzawa-vc", "yatsuhigata-nature-center", "nasu-heisei-no-mori", "hakone-vc", "nikko-yumoto-vc", "takao-vc", "mitake-vc"})
+
 
 def center(**kw):
     c = {"id": "vc-test", "name": "試験自然観察センター", "operator": "試験財団", "operator_kind": "財団", "site_url": "https://nature.example.org/",
@@ -127,8 +131,8 @@ class VisitorCenterLedger(unittest.TestCase):
 
     def test_valid_center_passes_and_ledger_starts_pending(self):
         self.assertEqual(V.validate_center(center(), VP), [])
-        for c in V.load_centers():                              # 新しく足す施設はすべて承認待ち（承認は本人）
-            self.assertEqual(c["approval"]["status"], "pending", c["id"])
+        for c in V.load_centers():                              # 承認済みは本人が承認した12施設だけ。ほかの施設は承認待ち（承認は本人）
+            self.assertEqual(c["approval"]["status"], "approved" if c["id"] in APPROVED_IDS else "pending", c["id"])
 
     def test_every_center_in_the_ledger_is_valid_pending_and_unused(self):
         cs = V.load_centers()
@@ -137,9 +141,16 @@ class VisitorCenterLedger(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
         for c in cs:
             self.assertEqual(V.validate_center(c, VP), [], c["id"])
-            self.assertEqual(c["approval"]["status"], "pending", c["id"])
-            self.assertFalse(V.usable_center(c, self.TODAY, VP)[0], c["id"])
-        self.assertEqual(V.approved_centers(self.TODAY), [])
+            if c["id"] in APPROVED_IDS:                                    # 承認済み: approved_by は user、approved_on がある。季節内なので使える
+                self.assertEqual(c["approval"]["status"], "approved", c["id"])
+                self.assertEqual(c["approval"]["approved_by"], "user", c["id"])
+                self.assertTrue(c["approval"]["approved_on"], c["id"])
+                self.assertTrue(V.usable_center(c, self.TODAY, VP)[0], c["id"])
+            else:                                                          # それ以外は承認待ちのまま・approved_by なし・使えない
+                self.assertEqual(c["approval"]["status"], "pending", c["id"])
+                self.assertNotIn("approved_by", c["approval"], c["id"])
+                self.assertFalse(V.usable_center(c, self.TODAY, VP)[0], c["id"])
+        self.assertEqual({c["id"] for c in V.approved_centers(self.TODAY)}, set(APPROVED_IDS))
         self.assertTrue(next(c for c in cs if c["id"] == "yashima-vc")["terms"]["reprint_banned"])
         self.assertEqual(V.season_open(next(c for c in cs if c["id"] == "yashima-vc"), self.TODAY), (False, "ended"))
 

@@ -410,15 +410,17 @@ class Recheck(unittest.TestCase):
         from ikimonobiyori import visitor_centers as VC
         import yaml
         cs = {c["id"]: c for c in yaml.safe_load((ROOT / "ikimonobiyori" / "data" / "visitor_centers" / "centers.yaml").read_text(encoding="utf-8"))["centers"]}
+        from test_stage55 import APPROVED_IDS
         for cid in ("okutama-vc", "yatsuhigata-nature-center"):
             self.assertIn(cid, cs)
             self.assertEqual(VC.validate_center(cs[cid]), [])
-            self.assertEqual(cs[cid]["approval"]["status"], "pending")                    # 承認は本人。承認待ちは答えの材料にしない
+            # 谷津干潟は本人が承認した12施設に入る（approved_by: user）。奥多摩は承認待ちのまま。承認待ちは答えの材料にしない
+            self.assertEqual(cs[cid]["approval"]["status"], "approved" if cid in APPROVED_IDS else "pending")
+            self.assertEqual("approved_by" in cs[cid]["approval"], cid in APPROVED_IDS)
         self.assertTrue(cs["okutama-vc"]["terms"]["reprint_banned"])                       # 複製・転用の無断禁止（『転載』の語ではないが禁止として扱う）
-        self.assertEqual([c["id"] for c in VC.pending_centers() if c["id"] in ("okutama-vc", "yatsuhigata-nature-center")],
-                         ["okutama-vc", "yatsuhigata-nature-center"])
+        self.assertEqual([c["id"] for c in VC.pending_centers() if c["id"] in ("okutama-vc", "yatsuhigata-nature-center")], ["okutama-vc"])
         from datetime import date as _d
-        self.assertEqual(VC.approved_centers(_d(2026, 11, 7)), [])                           # 承認済みは0件のまま
+        self.assertEqual({c["id"] for c in VC.approved_centers(_d(2026, 11, 7))}, set(APPROVED_IDS))      # 承認済みは本人が承認した12施設だけ
 
     def test_new_events_are_usable_with_year_and_weekday(self):
         from datetime import date
@@ -442,7 +444,8 @@ class ApprovalList(unittest.TestCase):
             line = next((l for l in doc.splitlines() if l.startswith("| " + c["name"] + " |")), None)
             self.assertIsNotNone(line, c["name"])
             self.assertTrue(any(f"**{r}**" in line for r in ("承認してよい", "要判断", "保留")), c["name"])
-            self.assertEqual(c["approval"]["status"], "pending")
+            from test_stage55 import APPROVED_IDS
+            self.assertEqual(c["approval"]["status"], "approved" if c["id"] in APPROVED_IDS else "pending")
 
     def test_the_list_has_no_yamakei_url_and_keeps_the_user_decision(self):
         doc = (ROOT / "docs" / "sources-approval.md").read_text(encoding="utf-8")
