@@ -173,5 +173,24 @@ class Part3ThisYear(unittest.TestCase):
         self.assertTrue(AP.has_this_year(spot("新しい園"), 2026))
 
 
+class Part4SnsAndExcuses(unittest.TestCase):
+    def test_sns_sources_fail(self):
+        for u in ("https://x.com/park/status/1", "https://www.instagram.com/p/1", "https://www.facebook.com/x", "https://www.youtube.com/watch?v=1", "https://twitter.com/a"):
+            self.assertIn("sns_source", [e["code"] for e in V.source_rule_errors("出典\n" + u, RULES, "")], u)
+        self.assertEqual(V.source_rule_errors("出典\nhttps://www.city.hanno.lg.jp/x", RULES, ""), [])
+
+    def test_sns_records_are_rejected(self):
+        from ikimonobiyori import observations as O
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            out = O.record([{"subject": "autumn_leaves", "name": "試験の森", "state": "見頃", "url": "https://x.com/park/status/1", "publisher": "公式X", "source_class": "official"}], env=env, now=NOW)
+            self.assertEqual(out["written"], 0)
+            self.assertTrue(out["rejected"])
+
+    def test_process_excuses_fail(self):
+        for s in ("このプロジェクトの方針で使っていません。", "ウェザーニュースを外して検索しました。", "検索結果だけで答えます。", "ファイルは変更せず答えます。", "そのページには触れていません。"):
+            self.assertIn("process_excuse", [e["code"] for e in V.process_excuse_errors(s, RULES)], s)
+
+
 if __name__ == "__main__":
     unittest.main()

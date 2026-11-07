@@ -157,6 +157,12 @@ def _blocked_host(host, policy):
     return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
 
 
+def _sns_host(host, policy):
+    """段階58 第4部: SNS のホストか。"""
+    host = (host or "").lower()
+    return any(host == s or host.endswith("." + s) for s in policy["record"].get("sns_hosts") or [])
+
+
 def _restricted_unusable(r, policy):
     cfg = restricted_cfg(r.get("host") or urlparse(r.get("url") or "").hostname, policy)
     if not cfg:
@@ -264,6 +270,8 @@ def validate(rec, policy):
         errs.append("url は http(s) の URL")
     if u.hostname and _blocked_host(u.hostname, policy):
         errs.append("このホストは読まない対象(利用規約)")
+    if u.hostname and _sns_host(u.hostname, policy):
+        errs.append("SNS の投稿は事実の根拠に使わない")
     if isinstance(rec, dict) and _reprint_of_blocked(rec, policy):
         errs.append("ウェザーニュース由来の事実は使わない(転載を含む)")
     for k in ("state_date",):
@@ -385,6 +393,7 @@ def read_records(subject, env=None, policy=None):
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ
+    rows = [r for r in rows if not _sns_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]    # 段階58 第4部
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)

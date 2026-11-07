@@ -11,6 +11,7 @@ import json
 import re
 import unicodedata
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -262,6 +263,10 @@ def source_rule_errors(text, rules, blob=None):
     for m in re.finditer(rules["phone_re"], _n(text)):
         if blob is None or m.group(0) not in blob:
             errs.append({"code": "phone_not_from_official", "detail": m.group(0)})
+    for u in URL_RE.findall(text):                              # 段階58 第4部: SNS は出典に使わない
+        host = (urlsplit(u).hostname or "").lower()
+        if any(host == s or host.endswith("." + s) for s in rules.get("sns_hosts") or []):
+            errs.append({"code": "sns_source", "detail": host})
     for line in text.splitlines():
         if re.match(rules["english_sources_re"], line):
             errs.append({"code": "sources_heading", "detail": line.strip()})
