@@ -340,5 +340,44 @@ class Part5RecordManners(unittest.TestCase):
             self.assertIn("4月下旬〜5月上旬", r["text"])
 
 
+QUESTIONS_2026_11_08 = [
+    ("藤が有名な場所と時期を教えて", "season_place"),
+    ("ニッコウキスゲはいつどこへ行けばいい?", "season_place"),
+    ("スズランの見頃と場所を教えて", "season_place"),
+    ("来週末、大宮から行きやすい場所でおすすめある?", "plan"),
+    ("冬から春にかけてみられる桜について教えて", "knowledge"),
+    ("神奈川県内で菜の花や桜が楽しめる場所を教えて", "season_place"),
+    ("彼岸花の群生地と時期を教えて", "season_place"),
+    ("カワセミが見られる場所と時期を紹介して", "season_place"),
+    ("今の時期、見るべき花と見られる場所を教えて", "plan"),
+]
+
+
+class Part8FixedQuestions(unittest.TestCase):
+    """第8部 4: 本人の会話(2026-11-08)の質問を、固定の質問として回帰に入れる(空の記録の一時フォルダ・通信なし)。"""
+
+    def test_each_question_gets_a_clean_answer_from_ask_answer(self):
+        import tempfile
+        from datetime import datetime
+        from ikimonobiyori import answer_run as R
+        now = datetime.fromisoformat("2026-11-08T20:00:00+09:00")
+        rules = AV.load_rules()
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            for q, route in QUESTIONS_2026_11_08:
+                res = R.run(q, now=now, env=env)
+                text = res["text"]
+                self.assertEqual(res["route"], route, q)
+                self.assertTrue(text.strip(), q)
+                self.assertEqual(AV.question_errors(text, rules), [], q)                  # 末尾・途中に質問がない
+                self.assertEqual(AV.internal_word_errors(text, rules), [], q)             # 内部用語がない
+                for w in ("定評", "出どころの区分", "参照数", "記録しました", "検索の結果をもとに", "ask answer", "よければ", "一覧にし直せます"):
+                    self.assertNotIn(w, text, q)
+                self.assertNotIn("北海道", text, q)                                        # 範囲の外が出ない
+                if q.startswith("神奈川県内"):
+                    for pref in ("千葉県", "静岡県", "東京都"):
+                        self.assertNotIn(pref, text, q)                                    # 都県の外が出ない
+
+
 if __name__ == "__main__":
     unittest.main()
