@@ -353,3 +353,41 @@ cases:
       ③ 試験の温泉(近場で手軽に): 紅葉は例年の見頃が11月中旬～12月上旬で、見頃に向かう可能性があります。
       アクセスや混雑は出かける前に公式ページで確認してください。
       https://kouyou.example.com/k
+  # ---- 段階62: 会話の試用(2026-11-08)の固定の質問 ----
+  - id: s62-event-kanagawa
+    question: 神奈川で、野鳥や地形の観察会はある?
+    expect: ok
+    generate: {kind: event, today: '2026-11-08'}
+  - id: s62-sources
+    question: 台帳にはどのくらいの登録があるの?
+    expect: ok
+    generate: {kind: sources}
+  - id: s62-tokyo-or-kanagawa
+    question: 今週末のおすすめを教えて。東京か神奈川で。
+    expect: ok
+    generate: {kind: skeleton}
+    expect_not_in_aim: {near: [檜洞丸(西丹沢)]}
+    expect_not_in_plan: [試験の埼玉の庭]
+    facts:
+      subject: autumn_leaves
+      now: '2026-11-07T09:00:00+09:00'
+      dates: ['2026-11-07', '2026-11-08']
+      region: 東京か神奈川
+      candidates:
+        - {name: 檜洞丸(西丹沢), city: 山北町, pref: 神奈川県, state: 見頃, date: '2026-11-06', cls: official, window: ['10-20', '11-20'], km: 40, rel: in_peak, age: 1, typ: 10月下旬～11月中旬}
+        - {name: 試験の都の庭, city: 試験区, pref: 東京都, kind: park, state: 色づき始め, date: '2026-11-06', cls: official, window: ['11-10', '12-05'], km: 30, rel: before_peak, age: 1, typ: 11月中旬～12月上旬}
+        - {name: 試験の県の湖, city: 試験町, pref: 神奈川県, kind: park, state: 色づき始め, date: '2026-11-06', cls: official, window: ['11-01', '11-30'], km: 60, rel: in_peak, age: 1, typ: 11月上旬～11月下旬}
+  - id: s62-support-range-today
+    question: イキモノビヨリのサポート範囲で、今日のおすすめを教えて
+    expect: ok
+    generate: {kind: skeleton}
+    expect_in_plan: [試験の道の駅]
+    facts:
+      subject: autumn_leaves
+      now: '2026-11-08T09:00:00+09:00'
+      dates: ['2026-11-08']
+      region: 全範囲
+      candidates:
+        - {name: 試験の道の駅, city: 試験市, pref: 山梨県, kind: park, state: 色づき始め, date: '2026-11-06', cls: official, window: ['10-01', '10-31'], km: 74, rel: after_peak, age: 2, typ: 10月上旬～10月下旬}
+        - {name: 試験の古い山, city: 試験村, pref: 神奈川県, state: 見頃, date: '2026-10-28', cls: official, window: ['10-20', '11-20'], km: 40, rel: in_peak, age: 11, typ: 10月下旬～11月中旬}
+        - {name: 試験の公園, city: 試験区, pref: 東京都, kind: park, state: 色づき始め, date: '2026-11-07', cls: official, window: ['11-10', '12-05'], km: 25, rel: before_peak, age: 1, typ: 11月中旬～12月上旬}
