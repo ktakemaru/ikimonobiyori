@@ -108,7 +108,8 @@ VP = V.load_policy()
 
 # 2026-11-07 に本人が承認した12施設（本人の指示による記入。docs/operations.md §2-0・§2-3）。これ以外は承認待ちのまま
 APPROVED_IDS = frozenset({"kitamoto-shizen-gakushu", "nikko-shizen-hakubutsukan", "yokohama-shizen-kansatsu", "sayama-ikimono-fureai", "hadano-vc",
-                          "nishitanzawa-vc", "yatsuhigata-nature-center", "nasu-heisei-no-mori", "hakone-vc", "nikko-yumoto-vc", "takao-vc", "mitake-vc"})
+                          "nishitanzawa-vc", "yatsuhigata-nature-center", "nasu-heisei-no-mori", "hakone-vc", "nikko-yumoto-vc", "takao-vc", "mitake-vc"}
+                         | {"okutama-vc", "oze-fnd"})     # 段階67: 本人の承認(2026-11-09。指示書の承認欄 E)
 
 
 def center(**kw):

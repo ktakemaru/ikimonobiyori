@@ -290,7 +290,7 @@ sources:
       - {site: kouyou-0024, label: "花・紅葉の見頃情報"}
     readable: {status: ok, checked_on: "2026-11-05", robots: allows, observed_latest_update: "2026-11-03", note: "段階47(2026-11-05): トップページ https://www.showakinen-koen.jp/ に『見頃情報』が日付つきで出る(例: 日本庭園・カエデ類 色づき始め(11/3)、カナール・イチョウ 色づき途中(11/3))。/flower-information/ は花だよりの一覧で状態の語はない。robots.txt は /wp-admin/ などだけ拒否。10/23 は HTTP 504 だった"}
     terms: {status: no_prohibition_found, url: "https://www.showakinen-koen.jp/about/", note: "『掲載データ・写真について』: 記事・写真の無断転載を禁じる。自動取得の規定はない(2026-11-05)。状態の語と日付の短い事実を出典つきで示すだけ"}
-    approval: {status: pending, reason: "通信先 www.showakinen-koen.jp は段階47の承認ホストの一覧にない。記録は出所の区分 official で残るが、台帳の承認はユーザーの見直しを待つ"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-09", reason: "承認(2026-11-09)。本人の指示による記入（チャットで『A〜Gは推奨どおり』2026-11-09）。通信先 www.showakinen-koen.jp も公式の扱い。条件: 状態の語(30字以内)・日付・URL だけ(「無断転載を禁じます」の記載があるため)"}
 
   - id: siobara-kankou
     publisher: 塩原温泉観光協会

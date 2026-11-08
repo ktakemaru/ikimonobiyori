@@ -7,8 +7,8 @@
 
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
-| 施設（visitor_centers/centers.yaml） | 12 | 19 | 0 |
-| 現況の情報源（sources/） | 42 | 32 | 3 |
+| 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
+| 現況の情報源（sources/） | 44 | 30 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
 | 名所カタログ（catalog/） | 96 | 14 | 2 |
 
@@ -22,7 +22,7 @@
 
 ## 1. 承認待ち
 
-### 1-A. ビジターセンター・自然観察施設（承認待ち 19件）
+### 1-A. ビジターセンター・自然観察施設（承認待ち 17件）
 承認の手順: 台帳の `approval.status` を `approved` にし、`approved_by` に承認した人を書く（docs/operations.md §2-2）。
 
 | 施設 | 運営主体 | 最新情報のページ | 更新頻度 | 形式 | 規約メモ（転載禁止の明示の有無） | 範囲内 | 承認した場合に使う内容 | 推奨と理由 |
@@ -34,9 +34,7 @@
 | 那須高原ビジターセンター | 那須平成の森フィールドセンター（プライバシーポリシーの原文） | https://nasu-vc.jp/nature/ | 随時（ページの記載） | html | 転載禁止の明示なし。プライバシーポリシーのみ（著作権ページは未確認）。転載禁止の明示なし。robots.txt 未確認 | はい | 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 4〜11月 8:30〜17:30、休館は水曜（祝日の場合は翌日。紅葉期などは開館） | **保留**: 最新が 2026-05-09 で更新が古い。次の更新があれば見直し |
 | 塩原温泉ビジターセンター | 確認できず（トップが文字化けして原文を読めなかった） | http://www.siobara.or.jp/vc/ | 不明（更新日 2026-11-06） | html | 転載禁止の明示なし。規約ページのリンクは見当たらず。フッターは Copyrights (C) 2023 のみ。ページが Shift_JIS 系で文字化けし、確認できていない項目が多い。robots.txt 未確認 | はい | 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30（休館の曜日は確認できず）、12/29〜1/3 休館 | **保留**: ページが文字化けして運営主体・規約を読めていない。確認できてから |
 | 八島ビジターセンター（霧ヶ峰） | 町立（ページの記載。町名の文字はページ上で確認できず） | https://shimosuwaonsen.jp/yashima/category/weekly/ | 週1回（2026年は9/4〜10/30の毎週） | html | **転載禁止の明示あり**。転載禁止の明示あり（指示書の調査: PDF に『無断転載を禁ずる』。今回は PDF 本文が読めず確認できていない）。サイトのポリシーページは個人情報の取り扱いのみ。robots.txt は /wp-admin/ のみ拒否 | はい | 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 開館 4月下旬〜11月上旬 9:30〜16:30、期間中無休。2026年の営業は 11/3 に終了 | **保留**: 今期は 10/30 で終了（冬季閉鎖）。転載禁止の明示あり（PDF）。来季（4月下旬）に再判断 |
-| 奥多摩ビジターセンター | 株式会社自然教育研究センター（CES）（指定管理者） | https://okutamavc.ces-net.jp/info | 約週1回（2026-09-09〜11-06 の8件） | html | **転載禁止の明示あり**。転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可 | はい | 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料 | **保留**: お知らせはイベント・登山道・クマ情報が中心で、紅葉・花・鳥の状態の語が読めない。複製・転用の無断禁止の明示あり |
 | 裏磐梯ビジターセンター | 記載なし | https://urabandai-vc.jp/nature/ | 未確認 | html | 利用条件のページ確認できず(段階59 第1部) |  |  | **保留**: 範囲内か未確認 |
-| 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団） | 公益財団法人 尾瀬保護財団 | https://oze-fnd.or.jp/archives/category/if/ | 未確認 | html | **無断転載を禁じます** |  |  | **要判断**: 事実のみの扱いでよいか |
 | 上高地ビジターセンター | 環境省 | https://www.kamikochi-vc.or.jp/whats-new/nature-updates | 未確認 | html | 出所明示で引用・転載可、商用は要連絡 |  |  | **要判断**: 範囲内か未確認 |
 | ピッキオ（軽井沢野鳥の森） | ピッキオ | https://picchio.co.jp/archives/blog-cat/natureinfo | 未確認 | html | 転載の記載は確認できず |  |  | **保留**: 規約未確認 |
 | 谷川岳インフォメーションセンター | 環境省 | 個別ページ未確認 | 未確認 | 未確認 | 出典明示で利用可(PDL1.0) |  |  | **保留**: 個別ページ未確認 |
@@ -47,21 +45,19 @@
 | 田貫湖ふれあい自然塾 | 環境省(サイトの表記) | https://tanuki-ko.gr.jp/nature-season/ | 未確認 | html | 転載の記載なし。All Rights Reserved |  |  | **保留**: 自然情報の日付が未確認 |
 | 神奈川県立宮ヶ瀬ビジターセンター | 未確認(カードの出典の自然公園だより(2010年1月)は神奈川県公園協会のサイトに掲載) | なし(公式の施設ページを確認できなかった) | 未確認 | pdf | 規約のページなし(公式の施設ページが見つからない)。県の宮ケ瀬湖周辺施設の指定管理のページ(2026-03-27 更新)にも施設名がない | はい | カード2枚(シモバシラ)の事実と出典だけ | **保留**: 段階61 第8部で台帳に承認待ちで追加。公式サイトと現在の運営(2016年に閉館して改装されたとする報道がある。公式では未確認)を確かめられない |
 
-### 1-B. 現況の情報源の台帳（承認待ち 32件）
+### 1-B. 現況の情報源の台帳（承認待ち 30件）
 承認の有無にかかわらず読んで記録してよい（段階34。区分は『公式ではない』などで出る）。承認は、台帳上の『公式の現況』扱いにするかどうかの判断。
 
 | 台帳 | 情報源 | 発行元の種類 | 最新情報のページ | 形式 | 読めた状態（確認日） | 推奨と理由 |
 |---|---|---|---|---|---|---|
 | autumn_leaves.yaml | 東京都公園協会(紅葉を見に行こう!)（tokyo-park-kouyou-special） | park_manager | https://www.tokyo-park.or.jp/special/kouyou/index.html | status_page | ok（2026-11-05） | **要判断**: ユーザーの承認待ち(段階50)。条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)は満たすが、今は前シーズンの最終版で今年の現況がない。通信先 www.tokyo-park.or.jp は段階47で承認済み。今シ… |
 | autumn_leaves.yaml | 川根本町まちづくり観光協会（okuooi-koyo） | tourism_association | https://okuooi.gr.jp/pickup/page.php?id=3 | status_page | partial（2026-10-23） | **保留**: 状態が画像で、エージェントが読めない(読めたとは言えない) |
-| autumn_leaves.yaml | 国営昭和記念公園(昭和記念公園管理センター)（showakinen-flower-information） | park_manager | https://www.showakinen-koen.jp/flower-information/ | status_page | ok（2026-11-05） | **要判断**: 通信先 www.showakinen-koen.jp は段階47の承認ホストの一覧にない。記録は出所の区分 official で残るが、台帳の承認はユーザーの見直しを待つ |
 | autumn_leaves.yaml | 塩原温泉観光協会（siobara-kankou） | tourism_association | https://www.siobara.or.jp/ | status_page | unconfirmed（2026-10-23） | **保留**: メンテナンス中で読めていない。現況のページがあるかも未確認 |
 | autumn_leaves.yaml | 秩父観光協会（chichibu-kanko-kouyou） | tourism_association | https://www.chichibuji.gr.jp/event/kouyou/ | forecast_page | ok（2026-10-23） | **要判断**: robots.txt で AI エージェントによる取得を拒む意思が読み取れる(この道具は名指しされていないが安全側)。今年の状況もない |
 | autumn_leaves.yaml | 伊勢原市（isehara-oyama-koyo） | municipality | https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/ | forecast_page | ok（2026-10-23） | **保留**: 2024 年公開の古いページで、今年の状態・日程がない(ライトアップ「11月下旬ごろ」だけ)。現況の情報源にせず、例年の時期の参考として人が開く URL にとどめる(ユーザーの見直し 2026-10-23) |
 | autumn_leaves.yaml | 八方尾根索道事業者協議会(白馬八方尾根)（happo-one-news-green） | facility_operator | https://www.happo-one.jp/news-green/ | status_page | ok（2026-10-23） | **要判断**: 状態の決まった語がなく段階が付けられない。人が開く URL として扱う(段階16 の見直し 2026-10-23) |
 | birds.yaml | 谷津干潟自然観察センター(習志野市の施設)（yatsu-higata-center） | park_manager | https://www.seibu-la.co.jp/yatsuhigata/ | status_page | unconfirmed（2026-10-24） | **保留**: 読めなかった(HTTP 503)。利用条件も未確認。人が開く URL として扱う。次に読めたら条件を確かめる |
 | birds.yaml | 我孫子市(鳥の博物館)（abiko-bird-museum-toridayori） | municipality | https://www.city.abiko.chiba.jp/bird-mus/info2/shupambutsu/toridayori.html | status_page | partial（2026-10-24） | **要判断**: 状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う |
-| flowers.yaml | 国営昭和記念公園(昭和管理センター)（showakinen-flower-information-flowers） | park_manager | https://www.showakinen-koen.jp/flower-information/ | status_page | unconfirmed（2026-10-24） | **保留**: 読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う |
 | flowers.yaml | 京成バラ園芸株式会社(京成バラ園)（keisei-rose-garden） | facility_operator | https://www.keiseirose.co.jp/garden/ | status_page | ok（2026-10-24） | **要判断**: 利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う |
 | flowers.yaml | 横浜市(ガーデンネックレス横浜)（gardennecklace-yamate） | municipality | https://gardennecklace.city.yokohama.lg.jp/ | reference_link | unconfirmed（2026-10-31） | **保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない |
 | flowers.yaml | 横浜市西区役所（yokohama-nishi-hana） | municipality | https://www.city.yokohama.lg.jp/nishi/shokai/kanko/spot/hana.html | reference_link | unconfirmed（2026-10-31） | **保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない |
@@ -108,7 +104,7 @@
 
 承認した人: user = 本人、claude_code_provisional = 段階の指示で Claude Code が仮に承認したもの（本人の見直しの対象）。
 
-### 2-A. ビジターセンター・自然観察施設（承認済み 12件）
+### 2-A. ビジターセンター・自然観察施設（承認済み 14件）
 
 | 施設 | id | 承認した人・日 | 最新情報のページ | 規約メモ | 承認前の推奨 |
 |---|---|---|---|---|---|
@@ -123,9 +119,11 @@
 | 日光湯元ビジターセンター | nikko-yumoto-vc | user（2026-11-07） | http://www.nikkoyumoto-vc.com/new/nature_l.html | 転載禁止の明示なし。規約ページのリンクなし。フッターは All rights reserved のみ。転載禁止の明示なし。robots.txt 未確認 | **保留**: 開館は 9/1〜11/30。シーズン終了後は使えない（コードが季節外を除く）。来季に再判断 |
 | 栃木県立日光自然博物館 | nikko-shizen-hakubutsukan | user（2026-11-07） | https://blog.nikko-nsm.co.jp/blog/ | 転載禁止の明示なし。個人情報保護方針のみ（著作権の記載なし）。フッターは All Rights Reserved のみ。robots.txt 未確認 | **承認してよい**: 県立。最新 2026-11-06。転載禁止の明示なし |
 | 那須平成の森 | nasu-heisei-no-mori | user（2026-11-07） | https://nasuheisei-f.jp/nature/ | 転載禁止の明示なし。プライバシーポリシーのみ。フッターは Copyright の表示のみ。転載禁止の明示なし。robots.txt 未確認 | **承認してよい**: 最新 2026-10-23。転載禁止の明示なし |
+| 奥多摩ビジターセンター | okutama-vc | user（2026-11-09） | https://okutamavc.ces-net.jp/info | **転載禁止の明示あり**。転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可 | **保留**: お知らせはイベント・登山道・クマ情報が中心で、紅葉・花・鳥の状態の語が読めない。複製・転用の無断禁止の明示あり |
 | 谷津干潟自然観察センター | yatsuhigata-nature-center | user（2026-11-07） | https://www.seibu-la.co.jp/yatsuhigata/blog/ | 転載禁止の明示なし。利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可 | **承認してよい**: 指定管理者の公式。『自然情報』に渡り鳥の観察記録。転載禁止の明示なし。最新は 10/13 で11月分はまだない |
+| 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団） | oze-fnd | user（2026-11-09） | https://oze-fnd.or.jp/archives/category/if/ | **無断転載を禁じます** | **要判断**: 事実のみの扱いでよいか |
 
-### 2-B. 現況の情報源の台帳（承認済み 42件）
+### 2-B. 現況の情報源の台帳（承認済み 44件）
 
 | 台帳 | 情報源（id） | 承認した人・日 | 最新情報のページ |
 |---|---|---|---|
@@ -138,6 +136,7 @@
 | autumn_leaves.yaml | 東京都公園協会(六義園サービスセンター)（tokyo-park-rikugien-news） | user（2026-10-23） | https://www.tokyo-park.or.jp/park/rikugien/news/index.html |
 | autumn_leaves.yaml | 国民公園協会 新宿御苑（fng-shinjuku-seasonal） | user（2026-10-23） | https://fng.or.jp/shinjuku/ |
 | autumn_leaves.yaml | 長瀞町観光協会（nagatoro-kanko-koyo） | user（2026-11-07） | https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/ |
+| autumn_leaves.yaml | 国営昭和記念公園(昭和記念公園管理センター)（showakinen-flower-information） | user（2026-11-09） | https://www.showakinen-koen.jp/flower-information/ |
 | autumn_leaves.yaml | 東京都公園協会(六義園サービスセンター)（tokyo-park-rikugien-lightup） | user（2026-10-23） | https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html |
 | autumn_leaves.yaml | 長谷寺(鎌倉)（hasedera-lightup） | user（2026-10-23） | https://www.hasedera.jp/2026/10/23900/ |
 | autumn_leaves.yaml | つくば観光コンベンション協会（ttca-autumn-tsukuba） | user（2026-10-23） | https://ttca.jp/autumnmttsukuba/ |
@@ -158,6 +157,7 @@
 | flowers.yaml | 国営ひたち海浜公園(ひたち公園管理センター)（hitachi-flower-info） | claude_code_provisional（2026-10-24） | https://www.hitachikaihin.jp/flower-plant/flower-info/ |
 | flowers.yaml | 東京都公園協会(旧古河庭園サービスセンター)（tokyo-park-kyufurukawa-news） | claude_code_provisional（2026-10-24） | https://www.tokyo-park.or.jp/park/kyu-furukawa/news/index.html |
 | flowers.yaml | 東京都公園協会(神代植物公園サービスセンター)（tokyo-park-jindai-news） | claude_code_provisional（2026-10-24） | https://www.tokyo-park.or.jp/park/jindai/news/index.html |
+| flowers.yaml | 国営昭和記念公園(昭和管理センター)（showakinen-flower-information-flowers） | user（2026-11-09） | https://www.showakinen-koen.jp/flower-information/ |
 | flowers.yaml | 神奈川県立花と緑のふれあいセンター 花菜ガーデン（kana-garden-news） | user（2026-11-08） | https://kana-garden.com/ |
 | flowers.yaml | 公益社団法人神奈川県観光協会(観光かながわNOW)（kanagawa-kankou-kana-rose） | claude_code_provisional（2026-10-31） | https://www.kanagawa-kankou.or.jp/event/7882 |
 | flowers.yaml | 小田原フラワーガーデンパートナーズ(代表企業 横浜緑地株式会社)（kanagawaparks-odawarafg） | claude_code_provisional（2026-10-31） | https://www.kanagawaparks.com/odawarafg/ |

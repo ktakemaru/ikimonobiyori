@@ -23,7 +23,7 @@ class LedgerSetting(unittest.TestCase):
     def test_only_takao_and_mitake_are_restricted_and_without_species(self):
         cs = {c["id"]: c for c in V.load_centers()}
         restricted = {i for i, c in cs.items() if c.get("allowed_fields") is not None}
-        self.assertEqual(restricted, {"takao-vc", "mitake-vc"})
+        self.assertEqual(restricted, {"takao-vc", "mitake-vc", "okutama-vc", "oze-fnd"})     # 段階67: 奥多摩・尾瀬保護財団も同じ条件(本人の承認 2026-11-09。承認欄 E)
         for i in restricted:
             self.assertEqual(V.allowed_fields(cs[i], VP), ["state", "date", "url", "hours"])      # 状態の語・日付・URL・開館時間のみ
             self.assertNotIn("species", V.allowed_fields(cs[i], VP))
@@ -48,6 +48,10 @@ class LedgerSetting(unittest.TestCase):
         for i in ("takao-vc", "mitake-vc"):                                          # 承認しても種名は使わない条件
             self.assertNotIn("species", V.allowed_fields(cs[i], VP), i)
             self.assertIn("種名は使わない条件(allowed_fields)", cs[i]["approval"]["reason"], i)
+        for i in ("okutama-vc", "oze-fnd"):                                          # 段階67(承認欄 E): 同じ条件で承認
+            self.assertNotIn("species", V.allowed_fields(cs[i], VP), i)
+            self.assertIn("種名は使わない(allowed_fields)", cs[i]["approval"]["reason"], i)
+            self.assertEqual(cs[i]["approval"]["approved_on"], "2026-11-09", i)
 
     def test_validation_of_allowed_fields(self):
         self.assertEqual(V.validate_center(center(allowed_fields=["state", "date", "url"]), VP), [])

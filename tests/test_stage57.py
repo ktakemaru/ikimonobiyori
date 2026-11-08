@@ -599,8 +599,9 @@ class Part11OfficialCsv(unittest.TestCase):
         self.assertEqual(wint["inzai-motono-hakucho"]["status"], "pending")
         from ikimonobiyori import visitor_centers as VCm
         vc = {c["id"]: c["approval"]["status"] for c in VCm.load_centers()}
-        for i in ("urabandai-vc", "oze-fnd", "kamikochi-vc", "picchio", "tanigawa-ic"):
+        for i in ("urabandai-vc", "kamikochi-vc", "picchio", "tanigawa-ic"):
             self.assertEqual(vc[i], "pending", i)
+        self.assertEqual(vc["oze-fnd"], "approved")                                  # 段階67: 本人の承認(2026-11-09。承認欄 E)
 
 
 class Part12Ordering(unittest.TestCase):

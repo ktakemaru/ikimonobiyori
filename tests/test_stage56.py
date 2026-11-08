@@ -418,7 +418,9 @@ class Recheck(unittest.TestCase):
             self.assertEqual(cs[cid]["approval"]["status"], "approved" if cid in APPROVED_IDS else "pending")
             self.assertEqual("approved_by" in cs[cid]["approval"], cid in APPROVED_IDS)
         self.assertTrue(cs["okutama-vc"]["terms"]["reprint_banned"])                       # 複製・転用の無断禁止（『転載』の語ではないが禁止として扱う）
-        self.assertEqual([c["id"] for c in VC.pending_centers() if c["id"] in ("okutama-vc", "yatsuhigata-nature-center")], ["okutama-vc"])
+        # 段階67: 奥多摩も本人の承認(2026-11-09。承認欄 E)で承認済み。承認待ちの一覧に入らないことを id で確かめる
+        self.assertEqual([c["id"] for c in VC.pending_centers() if c["id"] in ("okutama-vc", "yatsuhigata-nature-center")], [])
+        self.assertEqual((cs["okutama-vc"]["approval"]["approved_by"], cs["okutama-vc"]["approval"]["approved_on"]), ("user", "2026-11-09"))
         from datetime import date as _d
         self.assertEqual({c["id"] for c in VC.approved_centers(_d(2026, 11, 7))}, set(APPROVED_IDS))      # 承認済みは本人が承認した12施設だけ
 

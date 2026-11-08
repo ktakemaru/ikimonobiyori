@@ -198,6 +198,7 @@ centers:
     frequency: 未確認
     form: html
     terms: '**無断転載を禁じます**'
+    use: 状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名は使わない）。知識カードは事実だけ・自分の言葉・出典明記
     recommendation: '**要判断**: 事実のみの扱いでよいか'
   kamikochi-vc:
     operator: 環境省
@@ -271,7 +272,7 @@ centers:
     form: html
     terms: '**転載禁止の明示あり**。転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可'
     in_range: はい
-    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料'
+    use: '状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名は使わない）。記事や文章は使わない。知識カードは事実だけ・自分の言葉・出典明記。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料'
     recommendation: '**保留**: お知らせはイベント・登山道・クマ情報が中心で、紅葉・花・鳥の状態の語が読めない。複製・転用の無断禁止の明示あり'
   gyotoku-ainest:
     operator: 市川市 環境部 自然環境課
@@ -311,7 +312,7 @@ sources:
     recommendation: '**保留**: 読めていない(HTTP 503)。状態の書き方も未確認'
     read_state: unconfirmed（2026-10-23）
   showakinen-flower-information:
-    recommendation: '**要判断**: 通信先 www.showakinen-koen.jp は段階47の承認ホストの一覧にない。記録は出所の区分 official で残るが、台帳の承認はユーザーの見直しを待つ'
+    recommendation: '**承認済み**(本人の承認 2026-11-09。承認欄 B。通信先 www.showakinen-koen.jp も公式の扱い。状態の語(30字以内)・日付・URL だけ。approved_by: user)'
     read_state: ok（2026-11-05）
   siobara-kankou:
     recommendation: '**保留**: メンテナンス中で読めていない。現況のページがあるかも未確認'
@@ -332,8 +333,8 @@ sources:
     recommendation: '**要判断**: 状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う'
     read_state: partial（2026-10-24）
   showakinen-flower-information-flowers:
-    recommendation: '**保留**: 読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う'
-    read_state: unconfirmed（2026-10-24）
+    recommendation: '**承認済み**(本人の承認 2026-11-09。承認欄 B。状態の語(30字以内)・日付・URL だけ。approved_by: user)'
+    read_state: ok（2026-11-09）
   keisei-rose-garden:
     recommendation: '**要判断**: 利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う'
     read_state: ok（2026-10-24）

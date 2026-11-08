@@ -96,10 +96,12 @@ class Part1Survey(unittest.TestCase):
     def test_new_centers_are_pending_and_checked(self):
         from ikimonobiyori import visitor_centers as VC
         rows = {c["id"]: c for c in VC.load_centers()}
-        for i in ("urabandai-vc", "oze-fnd", "kamikochi-vc", "picchio", "tanigawa-ic"):
+        for i in ("urabandai-vc", "kamikochi-vc", "picchio", "tanigawa-ic"):
             self.assertEqual(rows[i]["approval"]["status"], "pending", i)
             self.assertEqual(rows[i]["checked_on"], "2026-11-07")
             self.assertNotIn("approved_by", rows[i]["approval"])
+        oz = rows["oze-fnd"]                                                         # 段階67: 本人の承認(2026-11-09。承認欄 E)
+        self.assertEqual((oz["approval"]["status"], oz["approval"]["approved_by"], oz["approval"]["approved_on"], oz["checked_on"]), ("approved", "user", "2026-11-09", "2026-11-07"))
 
 
 def card(**kw):

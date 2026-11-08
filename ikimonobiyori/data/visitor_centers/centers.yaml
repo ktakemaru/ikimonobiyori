@@ -446,10 +446,13 @@ centers:
     note: '転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可'
   within_range: true
   hours: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料
+  allowed_fields: [state, date, url, hours]        # 種名は使わない（段階67。本人の条件 2026-11-09。高尾・御岳と同じ）
   checked_on: '2026-11-07'
   approval:
-    status: pending
-    reason: 承認待ち（段階56 第5部）。規約メモを見て、利用者が承認するまで答えの材料にしない
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-09'
+    reason: 承認(2026-11-09)。本人の指示による記入（チャットで『A〜Gは推奨どおり』2026-11-09）。条件は高尾・御岳と同じ（現況は状態の語・日付・URL・開館時間だけで種名は使わない(allowed_fields)。知識カードは事実だけ・自分の言葉・出典明記）
   notes: お知らせの中身はイベント・登山道情報・ツキノワグマが中心で、紅葉・花・鳥の現況（状態の語）が読める専用ページは確認できなかった。段階55で404だった tokyo-park.or.jp/nature/okutama/ ではなく、東京都公園協会の一覧（tokyo-park.or.jp/park/okutama/）から指定管理者の公式サイトに辿れた
 - id: yatsuhigata-nature-center
   name: 谷津干潟自然観察センター
@@ -508,8 +511,13 @@ centers:
   terms: {url: "https://oze-fnd.or.jp/sitepolicy/", reprint_banned: true, note: "転載禁止の明示あり(「無断転載を禁じます」)。リンクは原則自由"}
   within_range: 未確認
   hours: 10/31 をもって山の鼻・尾瀬沼ビジターセンターは閉館(2026 年シーズン)
+  allowed_fields: [state, date, url, hours]        # 種名は使わない（段階67。本人の条件 2026-11-09。高尾・御岳と同じ）
   checked_on: '2026-11-07'
-  approval: {status: pending, reason: "指示書 段階59 第1部。承認は本人が決める"}
+  approval:
+    status: approved
+    approved_by: user
+    approved_on: '2026-11-09'
+    reason: 承認(2026-11-09)。本人の指示による記入（チャットで『A〜Gは推奨どおり』2026-11-09）。条件は高尾・御岳と同じ（現況は状態の語・日付・URL・開館時間だけで種名は使わない(allowed_fields)。知識カードは事実だけ・自分の言葉・出典明記）
 - id: kamikochi-vc
   name: 上高地ビジターセンター
   operator: 環境省
