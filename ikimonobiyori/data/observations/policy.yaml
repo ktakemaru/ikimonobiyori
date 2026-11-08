@@ -12,6 +12,19 @@ record:
   max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
   source_classes: [official, secondary]
   required: [url, state, source_class]
+  # 段階64 第5部: 取得の作法の検査(記録の入口)。
+  # basis: 事実の読み方。page = ページの本文を読んだ / search_summary = 検索結果の要約だけ(記録しない)。
+  # 種(kind)と例年の時期(typical)の記録(時期と場所の答えの材料)は、本文を読んだ印(basis: page)が要る
+  basis_values: [page, search_summary]
+  basis_rejected: [search_summary]
+  basis_required_with: [kind, typical]
+  # 強い事実(災害・閉鎖・規制・休園・火事・通行止め・料金)は、公式ページで確かめたものだけ記録する(紹介サイトだけなら記録しない)
+  strong_fact_words: [災害, 閉鎖, 規制, 休園, 閉園, 火事, 火災, 山火事, 焼け, 通行止め, 立入禁止, 立ち入り禁止, 料金, 有料]
+  strong_fact_fields: [state, notice, practical, typical]
+  # 範囲: 次の都県(全域が横浜・東京から 250km 前後に収まる。data/ask/season_place.yaml の unknown_distance_prefectures と同じ考え方)の外の記録は、
+  # 市区町村の代表点で範囲の内と確かめられたときだけ記録する(福島県・新潟県・北海道など)
+  range_check:
+    prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 長野県, 静岡県]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
   # 段階62 第9部: 本人が不採用と決めた情報源のホスト(バードリサーチ。2026-11-08)。読まない・記録できない・答えと知識カードの出典に使わない

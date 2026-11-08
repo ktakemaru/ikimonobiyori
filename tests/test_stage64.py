@@ -288,5 +288,57 @@ class Part4KnowledgePagePlace(unittest.TestCase):
             self.assertEqual(P.load_last(now, env)["route"], "season_place")
 
 
+class Part5RecordManners(unittest.TestCase):
+    """第5部: カタログにないものを取得して記録するときの作法(記録の入口の検査)。"""
+
+    BASE = {"subject": "flowers", "name": "試験の公園", "url": "https://example.org/a", "state": "見頃", "source_class": "secondary"}
+
+    def errs(self, **extra):
+        from ikimonobiyori import observations as O
+        return O.validate({**self.BASE, **extra}, O.load_policy())
+
+    def test_search_summary_only_is_rejected(self):
+        self.assertTrue(self.errs(basis="search_summary"))
+        self.assertTrue(self.errs(kind="藤", typical="4月下旬〜5月上旬"))            # 本文を読んだ印がない
+        self.assertEqual(self.errs(kind="藤", typical="4月下旬〜5月上旬", basis="page"), [])
+
+    def test_out_of_range_is_rejected(self):
+        self.assertTrue(self.errs(prefecture="北海道", city="試験町"))
+        self.assertEqual(self.errs(prefecture="神奈川県", city="試験町"), [])
+
+    def test_strong_facts_need_an_official_page(self):
+        self.assertTrue(self.errs(notice="山火事で群生地の多くが焼けた"))
+        self.assertTrue(self.errs(notice="台風の被害で閉鎖中"))
+        self.assertEqual(self.errs(notice="山火事で群生地の多くが焼けた", source_class="official"), [])
+
+    def test_event_with_wrong_weekday_is_rejected(self):
+        ev = {"name": "試験の菊花展", "start": "2025-10-29", "end": "2025-11-19", "weekdays": ["木", "木"]}
+        self.assertTrue(self.errs(event=ev))
+        self.assertEqual(self.errs(event=dict(ev, start="2026-10-29", end="2026-11-19")), [])
+
+    def test_skill_says_the_answer_is_only_the_ask_answer_output(self):
+        from pathlib import Path
+        s = (Path(__file__).resolve().parent.parent / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("**答えの本文は `ask answer` の出力だけ**", s)
+        self.assertIn("名所の記録が足りません", s)
+        self.assertIn("`basis: page`", s)
+        self.assertLessEqual(len(s.encode("utf-8")), 15000)
+
+    def test_season_place_uses_a_recorded_spot(self):
+        import tempfile
+        from datetime import date, datetime
+        from ikimonobiyori import observations as O
+        from ikimonobiyori import season_place as SP
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            rec = {"subject": "flowers", "name": "試験の藤棚公園", "prefecture": "神奈川県", "city": "試験市", "kind": "藤", "typical": "4月下旬〜5月上旬",
+                   "state": "例年の見頃", "url": "https://park.example.org/fuji", "publisher": "試験市", "source_class": "official", "basis": "page"}
+            out = O.record([rec], now=datetime.fromisoformat("2026-11-08T12:00:00+09:00"), env=env)
+            self.assertTrue(out["written"])
+            r = SP.compose("藤が有名な場所と時期を教えて", today=date(2026, 11, 8), origin="横浜", env=env)
+            self.assertIn("試験の藤棚公園", [x["name"] for x in r["spots"]])
+            self.assertIn("4月下旬〜5月上旬", r["text"])
+
+
 if __name__ == "__main__":
     unittest.main()
