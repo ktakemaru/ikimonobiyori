@@ -53,6 +53,8 @@ def outlook_of(c, d, pol, subject=None):
     cur = c.get("current") or {}
     st = cur.get("state")
     rel = c.get("relation")
+    if rel == "after_peak" and st in (o.get("after_window_current") or {}) and _fresh_official(cur, d, o):
+        return o["after_window_current"][st]                  # 段階62 第4部: 公式の新しい現況を、例年の時期より優先する
     if c.get("avoid") == "past" or rel == "after_peak" or st == "見頃過ぎ":
         return "past"
     typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end")), None)
@@ -63,6 +65,8 @@ def outlook_of(c, d, pol, subject=None):
         if d < s:
             return "toward" if (s - d).days <= o["toward_days"] else "early"
         if (e - d).days <= o["late_days"]:
+            if st in ("色づき始め", "見頃前") and _fresh_official(cur, d, o):     # 段階62 第4部: 公式の新しい「色づき始め」を「終盤」にしない
+                return o["after_window_current"][st]
             return "late"
         if st in ("色づき始め", "見頃前"):
             return "toward"
@@ -73,6 +77,12 @@ def outlook_of(c, d, pol, subject=None):
     if st == "見頃" and rel == "in_peak":
         return "in_peak" if _gap_ok(cur, d, o) else "unknown"
     return "unknown"
+
+
+def _fresh_official(cur, d, o):
+    """段階62 第4部: 公式の現況で、状態の日付が対象日の after_window_max_gap_days 日以内か。"""
+    sd = cur.get("state_date")
+    return bool(o.get("after_window_max_gap_days")) and cur.get("source_class") == "official" and bool(sd) and 0 <= (d - _d(sd)).days <= o["after_window_max_gap_days"]
 
 
 def _gap_ok(cur, d, o):

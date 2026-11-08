@@ -11,6 +11,10 @@ outlook:
   rank: {in_peak: 4, toward: 3, late: 2, unknown: 1, early: 0, past: -1}
   labels: {in_peak: 見頃中の見込み, toward: 見頃に向かう見込み, late: 終盤の見込み, early: 見頃はまだ先の見込み, unknown: 見込みは不明, past: 見頃を過ぎている見込み}
   # 言い切りにならない定型(検査の now_peak_claim に触れない)。unknown は見込みを書かない
+  # 段階62 第4部: 例年の時期を過ぎていても、公式の新しい現況(対象日の after_window_max_gap_days 日以内。新しさの区分「新しい」の3日と同じ)が次の状態なら、「過ぎている見込み」にしない
+  # (山梨県の CSV で 11/6「色づき始め」の道の駅富士吉田周辺が、例年の時期 10月上旬〜下旬を過ぎたため外れていた)
+  after_window_current: {色づき始め: toward, 見頃前: toward, 見頃: late}
+  after_window_max_gap_days: 3
   phrases:
     in_peak: 見頃が続いている可能性があります
     toward: 見頃に向かう可能性があります
