@@ -303,7 +303,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
                   "target_age_days": _target_age(c, dates[0], facts_doc.get("now")),
-                  "has_current": has_current(c), "has_state": has_state_record(c) or (subject == "birds" and bool(c.get("vc_report"))), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
+                  "has_current": has_current(c), "has_state": has_state_record(c) or (subject == "birds" and bool(c.get("vc_report"))), "this_year": has_this_year(c, dates[0].year),
+                  "has_window": any(t.get("start") and t.get("end") and not t.get("event_derived") for t in c.get("typical") or []), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
@@ -436,6 +437,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
 
 def _fillable(it, pol):
     """段階64 第1部: 今回のおすすめに入れてよいか。「遠出」以外の狙いで fill_max_km より遠い候補は、今年の現況があるときだけ。"""
+    if it.get("subject") == "autumn_leaves" and not it.get("has_state") and not it.get("has_window", True):
+        return False                                     # 段階67 第3部 1: 紅葉の現況も例年の窓もない候補(行事だけの候補)は今回のおすすめに入れない
     lim = pol["selection"].get("fill_max_km")
     if it.get("subject") == "birds" and pol["selection"].get("birds_fill_max_km") is not None:     # 段階67 第3部 7
         lim = pol["selection"]["birds_fill_max_km"]
@@ -529,7 +532,7 @@ def weaken(it, pol):
 
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
-            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "subject": r.get("subject"),
+            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "has_window": r.get("has_window", True), "subject": r.get("subject"),
             "current_age_days": r.get("current_age_days"), "target_age_days": r.get("target_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],

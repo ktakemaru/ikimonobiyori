@@ -131,8 +131,8 @@ def _used_urls(c, sj):
 
 def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned, today=None):
     cands = {c["name"]: c for c in facts_subject.get("candidates") or []}
-    out = [t["picks_heading"]]
     picks = pl.get("picks") or []
+    out = [t["picks_heading"]] if picks else []                            # 段階67 第3部 6: 候補のない「今回のおすすめ」の見出しは出さない
     by_name = {p["name"]: p for p in picks}
     used = []
     if pl.get("use_headings"):

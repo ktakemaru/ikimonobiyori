@@ -1509,6 +1509,8 @@ entries:
     sources:
       - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", title: "越生町観光協会 越生梅林(園内 約1,000本・35種類)", checked_on: '2026-11-09'}
       - {url: "https://www.town.ogose.saitama.jp/kankonavi/hana/2653.html", title: "越生町 越生観光ナビ 梅", checked_on: '2026-11-09'}
+    annual_events:   # 段階67 第3部 8: 公式ページの「毎年」の行事の期間(例年の見頃ではない。段階65 第2部で本文を読んだ)
+      - {name: 梅まつり, text: 毎年2月中旬〜3月中旬, source_url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", publisher: 越生町観光協会, checked_on: '2026-11-09'}
     note: "園内に約1,000本・35種類。「毎年2月中旬から3月中旬にかけて」は梅まつりの説明文で行事の期間なので、例年の時期(flower_windows)に入れない。令和8年の梅まつりは 2/14(土)〜3/15(日)。2027年は未確認"
   - id: hana-0051
     name: 偕楽園
@@ -1528,6 +1530,8 @@ entries:
       source: Claude Code が付けた(段階65 第2部。偕楽園の公式サイトの梅図鑑の本文。座標は未確認)
     sources:
       - {url: "https://ibaraki-kairakuen.jp/zukan/", title: "偕楽園 梅図鑑(約100品種・3000本)", checked_on: '2026-11-09'}
+    annual_events:   # 段階67 第3部 8: 公式ページの「毎年」の行事の期間(例年の見頃ではない。段階65 第2部で本文を読んだ)
+      - {name: 水戸の梅まつり, text: 毎年2月中旬〜3月下旬, source_url: "https://ibaraki-kairakuen.jp/zukan/", publisher: 偕楽園, checked_on: '2026-11-09'}
     note: "約100品種・3000本。「水戸の梅まつりが毎年2月中旬～3月下旬に開催」は行事の期間なので例年の時期に入れない。2027年の日程は未確認"
   - id: hana-0052
     name: 曽我梅林

@@ -183,7 +183,8 @@ class Part6Fixes(unittest.TestCase):
         t = SK.cfg()
         f = self._facts("茨城・栃木")
         self.assertEqual(SK.asked_prefectures(f), {"栃木県"})
-        self.assertEqual(SK.avoid_lines(f, t)[0][0], "・試験の沢: 色褪せ・落葉始め 10/23現在、終わりです。(10/23時点、日光市観光協会)")
+        # 段階67 第3部 3(指示書が「色褪せ・落葉始め 終わりです。」の二重の言い方を崩れとして挙げた): 凡例の語 1 つと短い状態の語にする
+        self.assertEqual(SK.avoid_lines(f, t)[0][0], "・試験の沢: 色褪せ・落葉始め（終わり）(10/23時点、日光市観光協会)")
         self.assertEqual(len(SK.vc_lines(f, [{"name": "試験の公園"}], t, SK.asked_prefectures(f))), 1)    # 地域の承認済みの施設の発信
         self.assertEqual(SK.vc_lines(f, [{"name": "試験の公園"}], t), [])                                  # 地域の指定がなければ名所の地域だけ
         g = self._facts("全範囲")

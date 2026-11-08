@@ -24,7 +24,8 @@ line:
   head: "{center}発信、{month}/{day}時点: "
   # 段階62 第5部: 答えでは、状態の語と種名を別の文にする(「色づき始めの草木の葉（ジョウビタキ）」の形にしない)。種名には何の種名かを添える
   sentence_state: "{center}は、{month}/{day}時点で「{state}」と発信しています。"
-  sentence_date_only: "{center}は、{month}/{day}時点の発信があります。"
+  # 段階67 第3部 6: 状態の語も種名もない発信は、中身のない文(「○○は、11/6時点の発信があります。」)にせず、施設の名前だけ(開館時間はその下の行)
+  sentence_date_only: "{center}"
   sentence_species: "同じ発信に、{names}の名があります。"
   sentence_species_rest: "、ほか{n}種"
   species_item: "{name}({kind})"

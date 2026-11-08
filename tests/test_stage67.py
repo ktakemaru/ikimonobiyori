@@ -182,5 +182,117 @@ class Part3FestivalTargetsAndNames(unittest.TestCase):
         self.assertNotIn("・主催者が設定した期間: あと12日で開始(11/21〜11/23)", lines)
 
 
+class Part3WordsNotSymbolsOrOriginalText(unittest.TestCase):
+    """段階65 の動作確認で出た実際の行(2026-11-09 の茨城・栃木・大宮の答え)。凡例の語 1 つと短い状態の語(30字以内)だけにする。"""
+
+    def setUp(self):
+        from ikimonobiyori import observations as O
+        self.O, self.pol = O, O.load_policy()
+
+    def d(self, raw):
+        return self.O.state_display(raw, "日光市観光協会", self.pol)[0]
+
+    def test_actual_lines_of_the_answers(self):
+        self.assertEqual(self.d("◯ 山内地区全体見ごろ"), "山内地区全体見ごろ")
+        self.assertEqual(self.d("◎ ５割程度の色付き"), "真っ盛り（５割程度の色付き）")
+        self.assertEqual(self.d("▼ 色褪せ・落葉始め 終わりです。"), "色褪せ・落葉始め（終わり）")
+        out = self.d("◎ 真っ盛り ５割程度の色付きです。緑色が残っていてコントラストが綺麗です")
+        self.assertNotIn("コントラスト", out)
+        self.assertNotIn("緑色が残って", out)
+
+    def test_no_symbol_no_date_and_at_most_30_chars(self):
+        for raw in ("◎ 11/3現在 黄色やオレンジに染まる山肌が美しいです。落葉も始まっているのでお早目に。", "△ 11/3現在 色づきはじめました。護摩堂横見ごろ始まりました。",
+                    "▼ 11/3現在 終わりです。", "園内見ごろの花: ススキ・ノギク・ツワブキ・チャノキ・イソギク・サザンカ・ほかにもたくさん"):
+            out = self.O.state_display(raw, "日光市観光協会", self.pol)[0]
+            self.assertTrue(out, raw)
+            self.assertLessEqual(len(out), 30, out)
+            self.assertFalse(any(ch in out for ch in "◎◯○〇△▼✕×"), out)
+            self.assertNotIn("11/3現在", out)
+            self.assertNotIn("お早目に", out)
+        self.assertEqual(self.d("◎ 11/3現在 黄色やオレンジに染まる山肌が美しいです。"), "真っ盛り")      # 状態の語でない原文は写さない
+
+    def test_avoid_lines_use_the_same_words(self):
+        from ikimonobiyori import skeleton as SK
+        facts = {"subjects": {"autumn_leaves": {"avoid": [{"name": "試験の沢", "current": {"state_raw": "▼ 色褪せ・落葉始め 終わりです。", "state_date": "2026-11-03",
+                                                                                     "publisher": "日光市観光協会", "source_class": "official", "url": "https://x.example.jp/"}}]}}}
+        self.assertEqual(SK.avoid_lines(facts, SK.cfg())[0][0], "・試験の沢: 色褪せ・落葉始め（終わり）(11/3時点、日光市観光協会)")
+
+
+class Part3NoWorkMemos(unittest.TestCase):
+    def test_catalog_window_note_memo_is_not_the_answer_text(self):
+        from ikimonobiyori import observations as O
+        tw = {"start": "11-01", "end": "11-20", "note": "茨城県(観光いばらき): 11月上旬〜中旬。大子町観光協会のページには例年の時期の記載がない"}
+        self.assertEqual(O.window_note_text(tw), "茨城県(観光いばらき): 11月上旬〜中旬")
+        self.assertEqual(O.window_note_text({"start": "11-01", "end": "11-20", "note": "公式ページに例年の記載なし(試験)"}), "11/1〜11/20")
+        self.assertEqual(O.window_note_text({"start": "11-01", "end": "03-15", "note": "公式: 11月初旬ごろから3月中旬ごろまで観察できる(初旬は上旬として 01 にした)"}),
+                         "公式: 11月初旬ごろから3月中旬ごろまで観察できる")
+
+    def test_verifier_rejects_the_memo_sentence(self):
+        import re
+        from ikimonobiyori import ask_verify as V
+        words = V.load_rules()["stage51"]["internal_words"] if "internal_words" in V.load_rules().get("stage51", {}) else None
+        if words is None:
+            from ikimonobiyori.yamlcache import load
+            from pathlib import Path
+            words = load(Path(V.__file__).parent / "data" / "ask" / "policy.yaml")
+            words = next(v["internal_words"] for v in words.values() if isinstance(v, dict) and "internal_words" in v)
+        bad = "・例年の見頃: 茨城県(観光いばらき): 11月上旬〜中旬。大子町観光協会のページにはの時期の記載がない"
+        self.assertTrue(any(re.search(w, bad) for w in words))
+        self.assertFalse(any(re.search(w, "・例年の見頃: 11月上旬〜中旬(茨城県)") for w in words))
+
+
+class Part3NoEmptyLines(unittest.TestCase):
+    def test_a_report_without_state_is_the_facility_name_only(self):
+        from datetime import date
+        from ikimonobiyori import visitor_centers as V
+        c = {"name": "日光自然博物館"}
+        self.assertEqual(V.report_sentences(c, {"date": "2026-11-06", "state": None, "species": []}), ["日光自然博物館"])
+
+    def test_no_picks_heading_without_picks(self):
+        from ikimonobiyori import skeleton as SK
+        out = SK._subject_part({"candidates": []}, {"picks": []}, "flowers", SK.cfg(), 40, set(), [])
+        self.assertNotIn(SK.cfg()["picks_heading"], out)
+
+    def test_autumn_candidate_with_only_an_event_is_not_a_pick(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        it = {"subject": "autumn_leaves", "has_current": False, "has_state": False, "has_window": False, "distance_km": 6, "aim": "near"}
+        self.assertFalse(AP._fillable(it, pol))
+        self.assertTrue(AP._fillable(dict(it, has_window=True), pol))
+        self.assertTrue(AP._fillable(dict(it, subject="flowers"), pol))
+
+    def test_far_bird_park_without_a_record_does_not_fill_the_picks(self):
+        from ikimonobiyori import answer_plan as AP
+        pol = AP.load_policy()
+        self.assertFalse(AP._fillable({"subject": "birds", "has_current": False, "distance_km": 67, "aim": "trek"}, pol))
+        self.assertTrue(AP._fillable({"subject": "birds", "has_current": False, "distance_km": 16, "aim": "near"}, pol))
+
+
+class Part3UmeFamousSpots(unittest.TestCase):
+    def test_unknown_window_spots_come_after_known_ones_up_to_five(self):
+        from ikimonobiyori import season_place as SP
+        rows = [{"name": f"既知{i}", "km": 10 + i, "start": "02-01", "end": "02-28", "season": "2月", "prefecture": "東京都", "from": "catalog"} for i in range(3)]
+        rows += [{"name": f"不明{i}", "km": 5 + i, "start": None, "end": None, "season": None, "prefecture": "東京都", "from": "guide"} for i in range(6)]
+        rows += [{"name": "梅林", "km": 120, "start": None, "end": None, "season": None, "prefecture": "茨城県", "from": "catalog",
+                  "annual_events": [{"name": "梅まつり", "text": "毎年2月中旬〜3月下旬", "publisher": "試験園", "source_url": "https://x.example.jp/"}]}]
+        got, _ = SP.select(rows, "横浜")
+        names = [r["name"] for r in got]
+        self.assertEqual(names[:3], ["既知0", "既知1", "既知2"])
+        self.assertEqual(names[3], "梅林")                                # 名所カタログ・毎年の行事のある名所を先に
+        self.assertEqual(len(names), 3 + 5)
+
+    def test_kairakuen_ogose_soga_are_in_the_ume_answer(self):
+        from ikimonobiyori import answer_run as AR
+        import tempfile
+        from datetime import datetime, timezone, timedelta
+        with tempfile.TemporaryDirectory() as d:
+            res = AR.run("梅の名所と時期を教えて", now=datetime(2026, 11, 9, 7, 0, tzinfo=timezone(timedelta(hours=9))), workdir=__import__("pathlib").Path(d) / "w")
+        text = res["text"] if isinstance(res, dict) else str(res)
+        for n in ("偕楽園", "越生梅林", "曽我梅林"):
+            self.assertIn(n, text)
+        self.assertIn("梅まつりは毎年2月中旬〜3月中旬(越生町観光協会)", text)
+        self.assertNotIn("2027年", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -192,7 +192,8 @@ def gather(sp, origin, c=None, env=None):
             "url": w["source_url"] if w else ((e.get("sources") or [{}])[0].get("url")),
             "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
             "publisher": _publisher(w["source_url"], e) if w else "",
-            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"]})
+            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
+            "annual_events": list(e.get("annual_events") or [])})
     for e in _guide_entries():
         kinds = [k["kind"] for k in e.get("kinds") or [] if _matches(k.get("kind"), match, sp, c)]
         if not kinds:
@@ -271,7 +272,13 @@ def select(rows, origin, prefectures=None, c=None, by_distance=False):
     def sk(r):
         km = r["km"] if r["km"] is not None else 9999
         return (km, r["name"]) if by_distance else (r["start"] is None, r["start"] or "", km, r["name"])
-    return sorted(keep, key=sk)[: c["max_items"]], out
+    if by_distance:
+        return sorted(keep, key=sk)[: c["max_items"]], out
+    # 段階67 第3部 8: 時期が分かる名所のあとに、時期が分からない名所を最大 max_unknown_items 件(名所カタログ・毎年の行事のある名所を先に)
+    known = sorted([r for r in keep if r["start"] and r["season"]], key=sk)[: c["max_items"]]
+    unknown = sorted([r for r in keep if not (r["start"] and r["season"])],
+                     key=lambda r: (r.get("from") != "catalog", not r.get("annual_events"), r["km"] if r["km"] is not None else 9999, r["name"]))
+    return known + unknown[: c.get("max_unknown_items", c["max_items"])], out
 
 
 # ---- 文 ----
@@ -346,6 +353,11 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
                 for a, b in (t.get("bird_label") or {}).items():
                     ln = ln.replace(a, b)
             lines.append(ln)
+            if not r["season"]:
+                for ev in r.get("annual_events") or []:              # 段階67 第3部 8: 公式の「毎年」の行事の期間(例年の見頃ではない。年を書かない)
+                    lines.append(t["annual_event"].format(name=ev["name"], text=ev["text"], publisher=ev["publisher"]))
+                    if ev.get("source_url") and ev["source_url"] not in urls:
+                        urls.append(ev["source_url"])
             if r["kinds"]:
                 lines.append(t["kinds"].format(kinds="・".join(r["kinds"])))
             if r.get("care"):

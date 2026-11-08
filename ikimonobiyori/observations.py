@@ -595,6 +595,19 @@ def event_derived(w, events, policy=None, name=None):
     return any(x in (w.get("note") or "") for x in words)
 
 
+def window_note_text(tw, policy=None):
+    """段階67 第3部 5: 名所カタログの例年の窓の文。備考(note)は最初の文だけ使い、作業のメモ(「記載がない」「確認」「承認」など)なら使わず月日の文にする。"""
+    md = f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}"
+    note = re.split(r"[。\n]", str(tw.get("note") or ""), maxsplit=1)[0].strip()
+    memo = ((policy or load_policy()).get("typical") or {}).get("note_memo_re")
+    paren_memo = ((policy or load_policy()).get("typical") or {}).get("note_paren_memo_re")
+    if paren_memo:                                         # 括弧の中の作業のメモ(「(初旬は上旬として 01 にした)」)は外す
+        note = re.sub(r"[(（][^()（）]*(" + paren_memo + r")[^()（）]*[)）]", "", note).strip()
+    if not note or (memo and re.search(memo, note)):
+        return md
+    return note
+
+
 def _pub_name(url, e):
     """段階67 第1部 4: 発行元は名前(「二宮町」)。ドメインを答えに出さない。分からなければ None。"""
     from . import publisher as P
@@ -628,7 +641,7 @@ def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
     if tw:
-        out.append({"text": tw.get("note") or f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}",
+        out.append({"text": window_note_text(tw, policy),
                     "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": _pub_name(tw.get("source_url"), e),
                     "year": None, "source_class": "official", "publisher_official": _pub_official(tw.get("source_url"))})
     for w in e.get("flower_windows") or []:
@@ -1848,8 +1861,52 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     return out
 
 
+def short_state(text, policy, word=None):
+    """段階67 第3部 3・4: 状態の原文 → 短い状態の語(30字以内)。日付の言い方を除き、最初の文だけにし、「です」「ます」を外す。
+    word(凡例の語)があれば「凡例の語 1 つ」と短い語の組(同じ語を含むなら短い語だけ)。長すぎれば凡例の語だけ(なければ None)。"""
+    c = policy.get("short_state") or {}
+    if not c:
+        return text
+    mx = _v(c["max_chars"])
+    t = re.sub(c["date_re"], "", str(text or "")).strip(" 　、")
+    t = re.split("[" + c["clause_end"] + r"\n]", t, maxsplit=1)[0].strip(" 　、")
+    t = re.sub(r"[ 　]{2,}", " ", t)
+    if word:
+        rest = t[len(word):].strip(" 　、") if t.startswith(word) else t
+        rest = re.sub(c["tail_re"], "", rest).strip(" 　、")            # 凡例の語に添える語は「です」「ます」を外す
+        if not rest or rest == word:
+            return word
+        if not t.startswith(word) and (word in t or word[:2] in t):
+            return t if len(t) <= mx else word
+        unknown = policy["unknown_state"]
+        is_state = any(normalize(sj, rest, policy) != unknown for sj in ("autumn_leaves", "flowers")) or re.search(c["degree_re"], rest)
+        if not is_state:                                   # 状態の語でない原文(「山肌が美しい」)は写さない。凡例の語だけ
+            return word
+        out = c["pair"].format(word=word, rest=rest)
+        return out if len(out) <= mx else word
+    if not t:
+        return None
+    if len(t) <= mx:
+        return t
+    cut = max((i for i, ch in enumerate(t[:mx]) if ch in c.get("list_sep", "、・,")), default=-1)     # 列挙は区切りの前まで
+    return t[:cut] if cut > 0 else None
+
+
 def state_display(raw, publisher, policy):
-    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。語が続く記号(「◎ 真っ盛り」)は原文のまま。"""
+    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。
+    段階67 第3部 3・4: 凡例の語 1 つと短い状態の語(30字以内)にする(記号・日付・2文目以降の原文は出さない)。"""
+    disp, sym = _state_display(raw, publisher, policy)
+    if sym or disp is None:
+        return disp, sym
+    legend_word = getattr(_state_display, "_word", None)
+    short = short_state(disp, policy, legend_word)
+    if short is None:
+        return None, True
+    return short, False
+
+
+def _state_display(raw, publisher, policy):
+    _state_display._word = None
     cfg = policy.get("state_symbols") or {}
     chars = cfg.get("chars") or ""
     text = (raw or "").strip()
@@ -1861,9 +1918,13 @@ def state_display(raw, publisher, policy):
         if not legend or m.group(1) not in legend:
             return raw, False
         word, rest = legend[m.group(1)], m.group(2)
-        return (rest if word in rest or word[:2] in rest else f"{word} {rest}"), False
+        _state_display._word = word
+        return rest, False
     if not legend:
         return None, True
+    if text[:1] in legend and not any(ch in text[1:] for ch in chars):        # 段階67: 先頭の記号 1 つは凡例の語にして、残りを短い語に
+        _state_display._word = legend[text[0]]
+        return text[1:].strip(" 　"), False
     for ch, word in legend.items():
         text = text.replace(ch, word)
     return (None, True) if any(ch in text for ch in chars) else (text, False)
