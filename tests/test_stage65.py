@@ -161,5 +161,55 @@ class Part4Highlights(unittest.TestCase):
         self.assertIn("試験の鳥", [c["title"] for c in g["cards"]])
 
 
+class Part6Fixes(unittest.TestCase):
+    """第6部: 会話の練習(11/9)の修正。"""
+
+    def test_legend_symbols_are_read_for_the_publisher(self):
+        from ikimonobiyori import observations as O
+        n = lambda t, pub="日光市観光協会(日光旅ナビ)": O.normalize_with_legend("autumn_leaves", t, pub)
+        self.assertEqual(n("▼ 10/23現在、終わりです。"), "見頃過ぎ")                      # 六方沢の型
+        self.assertEqual(n("◎ ５割程度の色付きです。"), "見頃")                           # 足尾 銀山平の型(凡例の「真っ盛り」)
+        self.assertEqual(n("◎ ５割程度の色付きです。", pub="凡例のない発行元"), O.load_policy()["unknown_state"])   # 凡例のない記号は断定しない
+        self.assertEqual(n("11/3現在 終わりです。", pub="凡例のない発行元"), "見頃過ぎ")
+
+    def _facts(self, region):
+        avoid = [{"name": "試験の沢", "prefecture": "栃木県", "current": {"state": "見頃過ぎ", "state_raw": "▼ 10/23現在、終わりです。", "state_date": "2026-10-23",
+                                                                        "publisher": "日光市観光協会", "source_class": "official", "url": "https://example.org/s"}}]
+        return {"region": region, "subjects": {"autumn_leaves": {"candidates": [{"name": "試験の公園", "prefecture": "栃木県"}], "avoid": avoid}},
+                "visitor_centers": [{"center": "nikko-yumoto-vc", "line": "x", "sentences": ["試験の発信。"], "url": "https://example.org/vc"}]}
+
+    def test_avoid_and_facilities_only_when_a_region_was_asked(self):
+        from ikimonobiyori import skeleton as SK
+        t = SK.cfg()
+        f = self._facts("茨城・栃木")
+        self.assertEqual(SK.asked_prefectures(f), {"栃木県"})
+        self.assertEqual(SK.avoid_lines(f, t)[0][0], "・試験の沢: 色褪せ・落葉始め 10/23現在、終わりです。(10/23時点、日光市観光協会)")
+        self.assertEqual(len(SK.vc_lines(f, [{"name": "試験の公園"}], t, SK.asked_prefectures(f))), 1)    # 地域の承認済みの施設の発信
+        self.assertEqual(SK.vc_lines(f, [{"name": "試験の公園"}], t), [])                                  # 地域の指定がなければ名所の地域だけ
+        g = self._facts("全範囲")
+        self.assertEqual(SK.asked_prefectures(g), set())
+
+    def test_refresh_prefers_a_page_that_covers_many_candidates(self):
+        from datetime import datetime
+        from ikimonobiyori import answer_plan as AP2
+        now = datetime.fromisoformat("2026-11-09T10:00:00+09:00")
+        big = "https://example.org/list"
+        cands = [{"name": f"試験の名所{i}", "current": None, "pages": [{"url": f"https://example.org/p{i}", "source_class": "official"}]
+                  + ([{"url": big, "source_class": "official"}] if i >= 2 else [])} for i in range(6)]
+        f = {"now": now.isoformat(), "subjects": {"autumn_leaves": {"candidates": cands}}}
+        plan = {"subject": "autumn_leaves", "picks": [{"name": c["name"], "subject": "autumn_leaves"} for c in cands]}
+        from unittest import mock
+        from ikimonobiyori import page_cache as PC
+        with mock.patch.object(PC, "page_kind", return_value="status"):
+            got = AP2.refresh_targets(f, plan, reads={}, now=now)
+        self.assertEqual(got[0]["url"], big)
+        self.assertLessEqual(len(got), AP2.load_policy()["refresh"]["max_pages"])
+
+    def test_skill_says_no_work_talk_around_the_answer(self):
+        s = (H.ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("前後に添える文にも書かない", s)
+        self.assertIn("公開後の説明は題名と何のページか 1 文だけ", s)
+
+
 if __name__ == "__main__":
     unittest.main()

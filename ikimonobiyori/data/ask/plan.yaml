@@ -175,6 +175,10 @@ skeleton:
   picks_heading: 今回のおすすめ
   confidence_heading: 確かさの補足
   before_heading: 行く前に確認すること
+  # 段階65 第6部 2: 地域を指定した質問で、公式の現況が見頃過ぎ・終わりの名所(facts の avoid)を別の欄に事実だけ書く(最大 avoid_max_lines 行)
+  avoid_heading: 避けたほうがよい場所
+  avoid_line: "・{name}: {state}({md}時点、{publisher})"
+  avoid_max_lines: 5
   no_this_year_heading: 今年の情報が確認できていない候補
   sources_heading: 出典
   lead_ok: 見頃が続いている可能性がある場所を選びました。

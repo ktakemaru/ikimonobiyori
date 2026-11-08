@@ -713,14 +713,22 @@ def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None,
                 continue
             if PC.is_fresh(u, kind, now, reads, pol):
                 continue
-            if len(out) >= cfg["max_pages"]:
-                return out
             used.add(u)
             t = reads.get(u)
             out.append({"name": name, "subject": sj, "url": u, "publisher": pg.get("publisher"), "source_class": pg.get("source_class"),
                         "kind": kind, "reason": "no_current" if not cur else "expired", "current_date": (cur or {}).get("state_date"),
-                        "last_read": t.isoformat() if t else None})
-    return out
+                        "last_read": t.isoformat() if t else None,
+                        "covers": _page_covers(u, subjects)})
+    # 段階65 第6部 3: 1 ページで今回の候補を多くまとめて更新できるページ(日光市観光協会の紅葉状況など)を先に(同数なら今回のおすすめの順)
+    out = sorted(out, key=lambda x: -x["covers"])
+    return out[: cfg["max_pages"]]
+
+
+def _page_covers(url, subjects):
+    """段階65 第6部 3: そのページを情報源に持つ今回の候補(facts の候補)の数。"""
+    u = (url or "").rstrip("/")
+    return sum(1 for sub in subjects.values() for c in sub.get("candidates") or []
+               if any((pg.get("url") or "").rstrip("/") == u for pg in c.get("pages") or []))
 
 
 # ---- 期間別の節(段階57 第9部) ----
