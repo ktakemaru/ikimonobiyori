@@ -844,6 +844,8 @@ def plan_errors(text, plan, mat, blocks, names_of):
     cands = [r["name"] for r in plan["ranking"]]
     over = {o["name"]: o for o in plan.get("overrides") or []}
     pick_names = [p["name"] for p in plan["picks"]]
+    if plan.get("subjects"):                                                 # 段階63a: 総合(対象別)の計画は、対象ごとのおすすめも計画の採用(骨組みは対象ごとに書く。期間別の節の中も同じ)
+        pick_names = _all_picks(plan)
     replaced = {o["replace"] for o in over.values() if o.get("replace")}
     shown = []
     for b in blocks:

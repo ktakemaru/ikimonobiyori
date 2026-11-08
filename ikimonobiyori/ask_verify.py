@@ -415,6 +415,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     facts = _with_cards(text, facts)
     mat = Material(facts, rules, gazetteer)
     AP.add_target_dates(mat)                                    # 段階58 第7部: 見頃を狙う週(コードの計算)の日付は事実として通す
+    mat.planned_picks = set(AP._all_picks(plan)) if plan else set()      # 段階63a: 冒頭の文と今回のおすすめの照合は、計画の採用を正とする
     sents = []
     for line, s in split_sentences(text):
         sents.append({"line": line, "text": s, "errors": check_sentence(s, mat)})
@@ -581,7 +582,7 @@ def section_headings():
     return set(AP.load_policy()["aims"]["labels"].values())
 
 
-def lead_errors(lines, cfg, facts, mat, kind=""):
+def lead_errors(lines, cfg, facts, mat, kind="", planned=None):
     """② 冒頭と「今回のおすすめ」の照合(lines: 答え、または節の行)。→ [エラー], (冒頭, おすすめの文)。"""
     errs = []
     heads = [i for i, l in enumerate(lines) if cfg["lead_heading"] in l]
@@ -602,11 +603,11 @@ def lead_errors(lines, cfg, facts, mat, kind=""):
             break
     lead, pick_text = "\n".join(lines[:h]), "\n".join(picks)
     if picks and lead.strip():
-        errs += lead_vs_picks(lead, kind + "\n" + pick_text if kind else pick_text, len(picks), cfg, facts, mat)
+        errs += lead_vs_picks(lead, kind + "\n" + pick_text if kind else pick_text, len(picks), cfg, facts, mat, planned)
     return errs, (lead, pick_text)
 
 
-def lead_vs_picks(lead, pick_text, n, cfg, facts, mat):
+def lead_vs_picks(lead, pick_text, n, cfg, facts, mat, planned=None):
     errs = []
     for kw in cfg["lead_kind_words"]:
         if kw in lead and kw not in pick_text:
@@ -614,9 +615,11 @@ def lead_vs_picks(lead, pick_text, n, cfg, facts, mat):
     if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
         if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
             errs.append({"code": "lead_too_assertive", "detail": lead.strip().splitlines()[-1][:40]})
+    planned = (getattr(mat, "planned_picks", None) or set()) if planned is None else planned     # 節の冒頭は、その節の計画の採用だけ
+    shared = shared_prefixes(mat)
     for c in mat.region_candidates:
-        names = short_names(c["name"])
-        if any(f in lead for f in names) and not any(f in pick_text for f in names):
+        names = strict_names(c["name"], shared)              # 段階63a: 共通の地域名(「箱根(芦ノ湖)」の「箱根」)で別の名所を取り違えない
+        if any(f in lead for f in names) and not any(f in pick_text for f in names) and c["name"] not in planned:   # 計画の今回のおすすめにある名所は、段の読み取りに関わらず一致とする
             errs.append({"code": "lead_mismatch", "detail": f"冒頭の「{c['name']}」が今回のおすすめにない"})
     return errs
 
@@ -642,7 +645,8 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
             sub_ = AP.split_segments(s["text"], s["plan"]) if (s.get("plan") or {}).get("subject") == "areas" else None
             flat += sub_ or [s]
         for s in flat:
-            e, (_lead, pick_text) = lead_errors(s["text"].splitlines(), cfg, facts, mat, kind=s["seg"]["heading"])
+            e, (_lead, pick_text) = lead_errors(s["text"].splitlines(), cfg, facts, mat, kind=s["seg"]["heading"],
+                                                planned=set(AP._all_picks(s["plan"])) if s.get("plan") else set())
             errs += [{**x, "detail": f"{s['seg']['heading']}: {x['detail']}"} for x in e]
             union.append(s["seg"]["heading"] + "\n" + pick_text)
         top = AP.lead_text(text, plan)
@@ -680,25 +684,20 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
                     errs.append({"code": "stale_state_asserted", "detail": f"{c['name']}: {s.strip()[:30]}"})
                     break
     if (facts.get("lines") or {}).get("practical_rules"):                  # 段階52: 出典リストは本文で使った事実の出どころだけ
-        allowed = set()
-        for c in mentioned_cands(mat, norm):
-            allowed |= candidate_urls(c)
-        if cfg["inat_word"] in text:
-            allowed |= {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots}
-        allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
-        allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
-        allowed |= {(k["source"].get("url") or "").rstrip("/") for k in facts.get("knowledge_used") or []}                                   # 段階59: 知識カードの出典
+        allowed = _allowed_sources(text, facts, mat, cfg, norm)            # 段階63a: 骨組みの出典と同じ対応表(source_map)
         for u in sorted(urls - allowed - {""}):
             errs.append({"code": "source_unused", "detail": u[:60]})
     if (facts.get("lines") or {}).get("practical_rules"):                  # 段階53: まつりの期間は主催者が設定した日程。現況（色づき状況）とは別の行にする
+        tail = AP.load_policy()["official_pages"]["notice_line"].split("{md}")[-1]
+        blk_lines = [l for l in lines if not l.rstrip().endswith(tail)]   # 段階63a(衝突2): 「行く前に確認すること」のお知らせの行(骨組みの決まった形)は対象外
         for c in mentioned_cands(mat, norm):
             if not c.get("festivals"):
                 continue
-            for s in lines:
+            for s in blk_lines:
                 if any(w in s for w in ("主催者が設定した期間", "まつり期間中")) and any(w in s for w in cfg["festival_state_words"]):
                     errs.append({"code": "festival_mixed_with_state", "detail": s.strip()[:40]})
                     break
-            if not c.get("current") and cfg["festival_no_state"] not in text:
+            if not c.get("current") and cfg["festival_no_state"] not in text and AP.load_policy()["skeleton"]["no_current"] not in text:   # 段階63a: 花・野鳥は「今年の状況は確認できていません」
                 errs.append({"code": "festival_no_state_missing", "detail": c["name"]})
     # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
     mentioned = mentioned_cands(mat, norm)
@@ -715,6 +714,47 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
             if len(q) > val_of(cfg["max_quote_chars"]):
                 errs.append({"code": "long_quote", "detail": q[:30]})
     return errs
+
+
+def _inat_urls(mat):
+    return {(((c.get("inat") or {}).get("source_url") or (c.get("inat") or {}).get("site_url")) or "").rstrip("/") for c in mat.spots} - {""}
+
+
+def _required_sources(text, mat, cfg, norm):
+    """本文に出た事実の出典として、出典の一覧に要る URL(本文に出た候補の今の状態のページ、iNaturalist の傾向を書いたら iNaturalist のサイト)。"""
+    req = {((c.get("current") or {}).get("url") or "").rstrip("/") for c in mentioned_cands(mat, norm)} - {""}
+    if cfg["inat_word"] in text:
+        site = _inat_urls(mat)
+        if site:
+            req.add(sorted(site)[0])
+    return req
+
+
+def _allowed_sources(text, facts, mat, cfg, norm):
+    """出典の一覧に載せてよい URL(本文で使った事実の出どころ)。"""
+    allowed = set()
+    for c in mentioned_cands(mat, norm):
+        allowed |= candidate_urls(c)
+    if cfg["inat_word"] in text:
+        allowed |= _inat_urls(mat)
+    allowed |= {u.rstrip("/") for u in ((facts.get("lines") or {}).get("open_urls") or "").split() if u.startswith("http")}
+    allowed |= {(r.get("url") or "").rstrip("/") for r in facts.get("visitor_centers") or [] if r.get("name") and r["name"] in text}      # 段階55: 本文に書いた施設の発信の URL
+    allowed |= {(k["source"].get("url") or "").rstrip("/") for k in facts.get("knowledge_used") or []}                                   # 段階59: 知識カードの出典
+    return allowed - {""}
+
+
+def source_map(body, facts, plan=None, rules=None):
+    """段階63a(衝突1・3): 「本文の事実 → 出典」の対応表。骨組みの出典(skeleton.py)・出典の作り直し(answer_gates.py)・
+    検査器の source_unused / source_missing が、すべてこれを使う。body は出典の欄より前の本文。→ {"allowed", "required"}(URL の末尾の / は除く)。"""
+    rules = rules or load_rules()
+    cfg = rules["stage51"]
+    facts = _with_cards(body, facts)
+    mat = Material(facts, rules)
+    segs = AP.split_segments(body, plan)
+    mat.seg_text = {x["seg"].get("subject"): _n(x["text"]) for x in segs if x["seg"].get("subject")} if segs else None
+    norm = _n(body)
+    req = _required_sources(body, mat, cfg, norm)
+    return {"required": req, "allowed": _allowed_sources(body, facts, mat, cfg, norm) | req}
 
 
 def mentioned_cands(mat, norm):

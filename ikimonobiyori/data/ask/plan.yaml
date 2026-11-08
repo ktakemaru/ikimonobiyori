@@ -343,6 +343,10 @@ answer_run:
   max_rewrites: 1                      # 整える工程の作り直しは最大 1 回(段階63a 第1部 3)
   # 質問の語 → 答える対象(ask の対象)。ガイドの言葉の表(data/guide/policy.yaml の words)のテーマから決める
   subject_by_theme: {紅葉: autumn_leaves, 花: flowers, 野鳥: birds, 冬鳥: birds}
+  # 知識の言い方(「教えて」)でも、地域・日付の指定か、この語があれば、場所・時期の答え(計画)にする(「神奈川と東京で紅葉の見ごろを教えて」)。
+  # ただし knowledge_words(「について」「とは」など)があれば知識の答え
+  plan_words: [見ごろ, 見頃, おすすめ, お出かけ, 出かけ, 行きたい, 咲いて, 色づき, 見られる, 見に行]
+  knowledge_words: [について, とは, って何, どんな, 違い]
   # ask の対象がないテーマ(現況の記録がない)は、ガイド型の答え(guide find --text --brief)
   guide_only_themes: [桜, ホタル]
   # 最低限の答え(段階63a 第1部 2-4: 確認できた範囲・確認できなかったこと・確認の方法)。事実は facts の値だけ

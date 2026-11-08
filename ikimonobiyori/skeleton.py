@@ -8,7 +8,7 @@ from datetime import date
 from . import answer_plan as AP
 from . import knowledge as K
 from . import official_pages as OP
-from .ask_verify import Material, _n, load_rules, mentioned_cands
+from .ask_verify import load_rules, source_map
 
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
 
@@ -37,11 +37,12 @@ def _stale_display(cur, today):
     return (today - date.fromisoformat(str(cur["state_date"])[:10])).days >= cfg_["min_gap_days"]["value"]
 
 
-def current_line(c, t, phr, today=None):
-    """今の状況の文。第三者サイトの現況は採用理由にせず参考の 1 行にとどめる。記号だけで読めないものは断定しない。"""
+def current_line(c, t, phr, today=None, sj=None):
+    """今の状況の文。第三者サイトの現況は採用理由にせず参考の 1 行にとどめる。記号だけで読めないものは断定しない。
+    段階63a: まつりのある候補の「色づき状況は確認できていません」は紅葉だけ(花・野鳥に「色づき」を書かない。段階58 第10部の対象別の定型文)。"""
     cur = c.get("current")
     if not AP.has_state_record(c) or not (cur.get("display") or cur.get("state_raw")):
-        return t["no_current_fest"] if c.get("festivals") else t["no_current"]
+        return t["no_current_fest"] if c.get("festivals") and sj in (None, "autumn_leaves") else t["no_current"]
     state = cur.get("display") or cur["state_raw"]
     state = re.sub(r"[。\s]+$", "", state)
     when = _md(cur["state_date"]) if cur.get("state_date") else None
@@ -71,7 +72,7 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
         head += f"({c['city']})"
     if p.get("distance_text"):
         head += f" {p['distance_text']}"
-    bits = [current_line(c, t, p, today)]
+    bits = [current_line(c, t, p, today, sj)]
     if p.get("old_record_note"):                                     # 段階62 第3部: 対象日の数日前の記録
         bits.append(p["old_record_note"])
     bits.append(season_text(c, sj, t, max_quote))
@@ -300,12 +301,12 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     if conf:
         lines += ["", t["confidence_heading"]] + conf
     opener = (facts.get("lines") or {}).get("open_urls")
-    # 本文に名前が出た候補(節の見出しのエリア名など)の出どころも入れる(出典の漏れを作らない)
-    mat = Material(facts, load_rules())
-    for c in mentioned_cands(mat, _n("\n".join(lines))):
-        u = (c.get("current") or {}).get("url")
-        if u:
-            urls.add(u)
+    # 段階63a(衝突1): 出典は「本文の事実 → 出典」の対応表(検査器と同じ source_map)から決める。本文に出た候補の今の状態のページは足し、
+    # 対応表にない URL(今年の情報が確認できていない候補の欄に名前だけ出た候補の現況のページなど)は載せない
+    m = source_map("\n".join(lines) + "\n", facts, plan)
+    urls = {u for u in urls if u.rstrip("/") in m["allowed"]}
+    have = {u.rstrip("/") for u in urls}
+    urls |= {u for u in m["required"] if u not in have}
     if urls or jn_src:
         lines += ["", t["sources_heading"]] + ([jn_src] if jn_src else []) + sorted(urls)
     if opener:

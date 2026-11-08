@@ -144,5 +144,136 @@ class MinimalAnswer(unittest.TestCase):
         self.assertEqual([p["name"] for p in plan["picks"]], ["a", "b"])        # 元の計画は変えない
 
 
+def spot(name, km=20, state="見頃", date_="2026-11-07", city="試験町", subject="autumn_leaves", **kw):
+    cur = {"state": state, "state_raw": state, "display": state, "state_date": date_, "publisher": "試験市", "url": f"https://kouyou.example.org/{name}",
+           "source_class": "official", "freshness": "fresh", "age_days": 1, "read_at": "2026-11-07T09:00:00+09:00"} if state else None
+    return {"id": "t-" + name, "name": name, "city": city, "prefecture": "神奈川県", "current": cur, "current_unknown": cur is None, "distance_km": km,
+            "typical": [{"text": "例年11月", "start": "11-01", "end": "11-30", "url": "https://kouyou.example.org/t", "publisher": "試験市", "source_class": "official"}],
+            "typical_line": "例年の見頃: 11月", "events": [], "history": [], "reason_labels": [], "practical": [], "festivals": [], "relation": "in_peak",
+            "subject": subject, **kw}
+
+
+def facts_doc(subjects, dates=("2026-11-08",)):
+    return {"schema": "ikimono-ask-facts/1", "now": NOW.isoformat(), "dates": list(dates), "origin": "横浜", "region": "全範囲", "subjects": subjects,
+            "lines": {"answer_rules": "stage51", "practical_rules": True, "open_urls": None, "origin_line": "横浜からの距離で選びました。"},
+            "summary_pages": [], "this_round": {}}
+
+
+def subj(sj, *cands):
+    return {"subject": sj, "candidates": list(cands), "avoid": [], "nearby_out_of_region": [], "alternatives": []}
+
+
+class FourGates(unittest.TestCase):
+    """第2部: 必須の検査は 4 つ。品質・表現は自動修正か警告。"""
+
+    def test_every_check_id_in_the_code_is_classified(self):
+        from ikimonobiyori import answer_gates as AG
+        c = AG.contract()
+        known = {x for g in AG.GATES for x in c["gates"][g]["codes"]} | set(c["warn"]["codes"]) | {x for k in ("delete_sentence", "rebuild_sources", "reduce_candidates")
+                                                                                                    for x in c["autofix"][k]}
+        found = set()
+        for f in ("ask_verify", "answer_plan", "polish", "intent", "knowledge", "jma_normals", "facility_events"):
+            found |= set(re.findall(r'"code":\s*"([a-z_]+)"', (ROOT / "ikimonobiyori" / f"{f}.py").read_text(encoding="utf-8")))
+        found |= {"no_typical_in_candidate", "process_phrase"}                     # 条件式で作る ID
+        found -= {"no_this_year", "out_of_range"}                                  # 計画の不採用の理由(検査ではない)
+        self.assertEqual(sorted(found - known), [])
+
+    def test_warnings_do_not_block(self):
+        from ikimonobiyori import answer_gates as AG
+        for code in ("too_few_candidates", "fetch_skipped", "practical_missing", "plan_pick_missing", "repeated_phrase"):
+            self.assertEqual(AG.gate_of(code), "warn", code)
+        for code, g in (("unknown_date", "fact"), ("closed_not_stated", "safety"), ("lead_mismatch", "consistency"), ("question_in_answer", "output")):
+            self.assertEqual(AG.gate_of(code), g)
+        self.assertEqual(AG.gate_of("a_new_check_nobody_classified"), "fact")       # 分類のない ID は事実の検査(緩めない)
+
+    def test_sources_follow_the_same_map_as_the_checker(self):
+        """衝突1: 「今年の情報が確認できていない候補」の欄に名前だけ出た候補の現況のページを、出典に載せない。"""
+        from ikimonobiyori import skeleton as SK
+        a, b = spot("試験の谷"), spot("試験の丘")
+        b["current"]["url"] = "https://intro.example.org/oka"
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", a, b), "birds": subj("birds", spot("鳥の沼", subject="birds"))})
+        plan = AP.build_all(f)
+        plan["no_this_year"] = [{"name": "試験の丘", "typical_line": "例年の見頃: 11月"}]
+        for s in plan.get("subjects", {}).values():
+            s["picks"] = [p for p in s["picks"] if p["name"] != "試験の丘"]
+        plan["picks"] = [p for p in plan["picks"] if p["name"] != "試験の丘"]
+        text = SK.compose(f, plan)
+        self.assertIn("試験の丘", text)
+        self.assertNotIn("https://intro.example.org/oka", text)
+        codes = [e["code"] for e in V.check(text, f, plan=plan)["answer_errors"]]
+        self.assertNotIn("source_unused", codes)
+        self.assertNotIn("source_missing", codes)
+
+    def test_rebuild_sources_adds_missing_and_removes_unused(self):
+        from ikimonobiyori import answer_gates as AG
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷"))})
+        plan = AP.build(f, "autumn_leaves")
+        text = "見頃です。\n今回のおすすめ\n① 試験の谷: 今の状況は見頃(11/7時点、試験市)。例年の見頃: 11月。\n\n出典\nhttps://unused.example.org/x\n"
+        fixed, how = AG.rebuild_sources(text, f, plan)
+        self.assertIn("https://kouyou.example.org/試験の谷", fixed)
+        self.assertNotIn("unused.example.org", fixed)
+        codes = [e["code"] for e in V.check(fixed, f, plan=plan)["answer_errors"]]
+        self.assertNotIn("source_unused", codes)
+        self.assertNotIn("source_missing", codes)
+
+    def test_notice_line_with_a_festival_word_is_not_a_mix(self):
+        """衝突2: 「行く前に確認すること」のお知らせの行(○/○時点の公式のお知らせ)は、まつりと現況を混ぜた行として数えない。"""
+        c = spot("試験の花園", subject="flowers", festivals=[{"name": "コスモスまつり", "url": "https://kouyou.example.org/f", "period_line": "主催者が設定した期間: まつり期間中(11/1〜11/30)"}])
+        f = facts_doc({"flowers": subj("flowers", c)})
+        text = ("① 試験の花園: 今の状況は見頃(11/7時点、試験市)。例年の見頃: 11月。\n\n行く前に確認すること\n"
+                "試験の花園: コスモスまつり期間中の無料バスを運行(11/6時点の公式のお知らせ)\n")
+        self.assertNotIn("festival_mixed_with_state", [e["code"] for e in V.check(text, f)["answer_errors"]])
+        bad = "① 試験の花園: 主催者が設定した期間: まつり期間中(11/1〜11/30)で、11/7時点で見頃です。\n"
+        self.assertIn("festival_mixed_with_state", [e["code"] for e in V.check(bad, f)["answer_errors"]])
+
+    def test_birds_festival_candidate_without_state_has_no_koyo_word(self):
+        """衝突7: 野鳥の候補に「色づき状況」と書かない。「今年の状況は確認できていません」で未確認を示せる。"""
+        from ikimonobiyori import skeleton as SK
+        c = spot("鳥の森", state=None, subject="birds", festivals=[{"name": "森の行事", "url": "https://kouyou.example.org/m", "period_line": "主催者が設定した期間: あと3日で開始(11/11〜11/12)"}])
+        line = SK.current_line(c, AP.load_policy()["skeleton"], {}, None, "birds")
+        self.assertNotIn("色づき", line)
+        f = facts_doc({"birds": subj("birds", c)})
+        text = f"① 鳥の森: {line}。\n"
+        self.assertNotIn("festival_no_state_missing", [e["code"] for e in V.check(text, f)["answer_errors"]])
+
+    def test_autofix_deletes_internal_and_question_sentences(self):
+        from ikimonobiyori import answer_gates as AG
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷"))})
+        plan = AP.build(f, "autumn_leaves")
+        text = ("見頃に向かう可能性があります。骨組みの文を出し直します。\n今回のおすすめ\n① 試験の谷: 今の状況は見頃(11/7時点、試験市)。例年の見頃: 11月。\n"
+                "どちらにしますか?\n")
+        fixed, how = AG.delete_bad_sentences(text, f, plan)
+        self.assertNotIn("骨組み", fixed)
+        self.assertNotIn("どちらにしますか", fixed)
+        self.assertIn("① 試験の谷", fixed)
+        self.assertEqual(len(how), 2)
+
+    def test_length_limit_grows_with_segments_and_regions(self):
+        from ikimonobiyori import answer_gates as AG
+        L = AG.contract()["length"]
+        self.assertEqual(AG.length_limit({"segments": []}), L["base"])
+        self.assertEqual(AG.length_limit({"segments": [{}, {}, {}]}), L["base"] + 2 * L["per_segment"])
+        self.assertEqual(AG.length_limit({"segments": [], "region_parts": [{}, {}]}), L["base"] + L["per_region"])
+
+    def test_too_long_is_not_a_gate(self):
+        from ikimonobiyori import answer_gates as AG
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷"))})
+        plan = AP.build(f, "autumn_leaves")
+        from ikimonobiyori import skeleton as SK
+        text = SK.compose(f, plan) + ("補足の文です。" * 400) + "\n"
+        ev = AG.evaluate(text, f, plan)
+        self.assertNotIn("too_long", [e["code"] for g in AG.GATES for e in ev["gates"][g]])
+        self.assertIn("too_long", [e["code"] for e in ev["warnings"]])
+
+    def test_lead_does_not_confuse_spots_with_a_shared_area_name(self):
+        a, b = spot("箱根(芦ノ湖)"), spot("箱根 仙石原(長安寺)")
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", a, b)})
+        plan = AP.build(f, "autumn_leaves")
+        plan["picks"] = [p for p in plan["picks"] if p["name"] == "箱根 仙石原(長安寺)"]
+        text = "箱根 仙石原(長安寺)は見頃の可能性があります。\n今回のおすすめ\n① 箱根 仙石原(長安寺): 今の状況は見頃(11/7時点、試験市)。例年の見頃: 11月。\n"
+        details = [e["detail"] for e in V.check(text, f, plan=plan)["answer_errors"] if e["code"] == "lead_mismatch"]
+        self.assertFalse(any("芦ノ湖" in d for d in details), details)
+
+
 if __name__ == "__main__":
     unittest.main()

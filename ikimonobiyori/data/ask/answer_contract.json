@@ -1,0 +1,63 @@
+{
+  "schema": "ikimonobiyori-answer-contract/1",
+  "note": "答えの仕様の定義(段階63a 第2部・第6部)。答えの形・必須の4つの検査・自動修正・警告・字数の上限・フォールバックの順を、この1か所に書く。骨組みを作るコード(skeleton.py・answer_run.py)と検査のコード(answer_gates.py)の両方がこれを読む。docs/answer-checks.md はこのファイルから作る(python -X utf8 -m ikimonobiyori.answer_gates doc)。検査のID は ask_verify.py・answer_plan.py・polish.py・intent.py・knowledge.py・jma_normals.py・facility_events.py の code。ここにない ID は事実の検査として扱う(合否に使う。新しい検査を足すときは、先にここで分類する)。",
+  "gates": {
+    "fact": {
+      "label": "事実の照合",
+      "what": "本文の日付・数値・場所名・出典が、骨組みの事実(facts)と一致する。観察の日と情報を取った日を混同しない。使わない情報源を使わない",
+      "codes": ["unknown_url", "unknown_date", "unknown_period", "unknown_number", "unknown_place", "unknown_state", "state_symbol_raw",
+                "blocked_source", "sns_source", "phone_not_from_official", "date_range", "old_year_basis", "restricted_source",
+                "visitor_center_not_approved", "visitor_center_field_not_allowed", "guide_eye_not_from_card", "ended_phenology_this_year",
+                "jma_normal_source_missing", "source_missing", "knowledge_fact_not_in_card", "knowledge_source_missing",
+                "polish_added_fact", "polish_dropped_fact", "polish_unmapped_sentence",
+                "event_date_mismatch", "event_weekday_mismatch", "event_weekday_missing", "event_date_no_year", "event_date_missing",
+                "event_time_mismatch", "event_capacity_mismatch", "event_target_mismatch", "event_not_approved", "event_invalid_in_ledger",
+                "event_not_in_ledger", "event_fact_not_in_ledger", "event_source_unknown", "event_source_missing"]
+    },
+    "safety": {
+      "label": "安全",
+      "what": "危険な案内がない。立入禁止・利用制限・閉館・休園を無視していない。不確かなことを断定していない",
+      "codes": ["unsupported_peak_claim", "old_record_as_now", "assertive_forecast", "lead_too_assertive", "stale_state_asserted",
+                "closed_not_stated", "practical_other_day", "polish_caution_word"]
+    },
+    "consistency": {
+      "label": "整合",
+      "what": "同じ答えの中で、日付・場所・おすすめが食い違わない(冒頭の文と「今回のおすすめ」の一致など)",
+      "codes": ["lead_mismatch", "plan_unplanned_spot", "outlook_conflict", "season_contradiction", "festival_mixed_with_state", "event_past"]
+    },
+    "output": {
+      "label": "出力可能",
+      "what": "空でない。形が壊れていない。未確認のことを未確認と書けている。利用者に質問していない",
+      "codes": ["empty_answer", "question_in_answer", "pick_note_missing", "festival_no_state_missing", "area_missing", "inat_unlabeled",
+                "inat_scope_missing", "knowledge_refused", "ask_back_only", "event_none"]
+    }
+  },
+  "autofix": {
+    "note": "コードが直してから、もう一度4つの検査を通す。直せなかったものは、対応する検査の不合格になる(質問の文は出力可能、それ以外は警告)",
+    "delete_sentence": ["internal_word", "internal_term", "dev_term", "forbidden_phrase", "process_phrase", "process_excuse", "work_report",
+                        "reply_dev_term", "offer_not_allowed", "official_not_tried", "question_in_answer", "reread_without_new_records",
+                        "reread_not_from_record", "knowledge_refused"],
+    "rebuild_sources": ["source_unused", "source_missing", "sources_heading", "knowledge_source_unused"],
+    "reduce_candidates": ["too_long"]
+  },
+  "warn": {
+    "note": "合否に使わない。記録(logs/answers.jsonl)に残すだけ",
+    "codes": ["too_few_candidates", "no_typical_in_candidate", "no_season_birds_in_candidate", "birds_typical_phrase", "fetch_skipped",
+              "practical_missing", "practical_fallback_missing", "typical_unknown_without_alternative", "plan_pick_missing", "origin_km_missing",
+              "origin_missing", "subject_wrong_word", "repeated_phrase", "vc_state_species_joined", "vc_species_without_kind", "typo",
+              "knowledge_starts_with_list", "clarify_not_one_sentence", "long_quote", "quote_repeated", "too_long",
+              "source_unused", "knowledge_source_unused", "sources_heading"]
+  },
+  "length": {
+    "note": "字数の上限(目安)。1 地域・1 期間・1 対象は base。対象・期間の節が増えるごとに per_segment、地域が増えるごとに per_region を足す。超えたら、点数の低い候補から減らして作り直す(合否には使わない)",
+    "base": 1500,
+    "per_segment": 1500,
+    "per_region": 700
+  },
+  "fallback": ["polished", "skeleton", "partial", "minimal"],
+  "status": {
+    "PASS": "必須の4つの検査に合格",
+    "DEGRADED": "一部の候補・主張を外した、または未確認を明記した最低限の答え",
+    "BLOCKED": "危険な案内(安全の検査の不合格)を外して、残りを答えた"
+  }
+}

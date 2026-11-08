@@ -137,6 +137,10 @@ def resolve(question, now, policy=None):
     origin = origins.choose(question)
     area_names = [n for n in AR.from_question(question) if AR.resolve(n)]
     region = None if area_names else resolve_region(question)
+    c = cfg(policy)
+    q = question or ""
+    if kind == "knowledge" and not any(w in q for w in c["knowledge_words"]) and             (region or area_names or not defaulted or any(w in q for w in c["plan_words"])):
+        kind = "plan"                                    # 「神奈川と東京で紅葉の見ごろを教えて」は場所・時期の質問
     if wild and kind != "event":                         # 野草・高山植物の語は、知識の言い方(「教えて」)でも野草の経路(段階40)
         route = "wildflower"
     elif kind in ("knowledge", "difference", "chat", "normal", "event"):
@@ -204,13 +208,31 @@ def minimal_answer(facts_doc, plan_doc=None, policy=None):
     return "\n".join(lines) + "\n"
 
 
-# ---- 検査(段階63a 第1部では、これまでの検査器そのまま。第2部で必須の 4 つに分ける) ----
+# ---- 検査(段階63a 第2部) ----
 
-def gate_check(text, facts_doc, plan_doc, gaz):
-    r = V.check(text, facts_doc, gazetteer=gaz, plan=plan_doc)
-    errs = [{"code": e["code"], "detail": e["detail"], "line": x["line"]} for x in r["sentences"] for e in x["errors"]] + \
-           [{"code": e["code"], "detail": e["detail"]} for e in r["answer_errors"]]
-    return {"ok": not errs and bool(text.strip()), "errors": errs, "warnings": []}
+def gate_check(text, facts_doc, plan_doc, gaz, offers=None):
+    """段階63a 第2部: 自動修正 → 必須の 4 つの検査(answer_gates.py・data/ask/answer_contract.json)。
+    → {ok, text(自動修正した文), errors(4つの検査の不合格。gate つき), warnings, fixed}"""
+    from . import answer_gates as AG
+    r = AG.run(text, facts_doc, plan_doc, gaz, offers)
+    return {"ok": r["ok"], "text": r["text"], "errors": AG.errors_of(r), "warnings": r["warnings"], "fixed": r["fixed"]}
+
+
+def fit_length(facts_doc, plan_doc, offers, defaulted, max_drop=None):
+    """骨組みが字数の上限(答えの仕様の length)を超えたら、点数の低い候補から減らして作り直す。→ (骨組み, 計画, 外した候補)"""
+    from . import answer_gates as AG
+    from . import skeleton as SK
+    text = SK.compose(facts_doc, plan_doc, offers, defaulted_date=defaulted)
+    dropped = []
+    while len(text) > AG.length_limit(plan_doc, text):
+        picks = SK._flat_picks(plan_doc)
+        if len(picks) <= 1 or (max_drop is not None and len(dropped) >= max_drop):
+            break
+        worst = min(picks, key=lambda x: (x.get("score") is None, x.get("score") or 0, -(x.get("rank") or 0)))
+        dropped.append(worst["name"])
+        plan_doc = drop_picks(plan_doc, {worst["name"]})
+        text = SK.compose(facts_doc, plan_doc, offers, defaulted_date=defaulted)
+    return text, plan_doc, dropped
 
 
 def _candidates_with_errors(text, facts_doc, plan_doc, errs):
@@ -322,7 +344,9 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     f.save_calls()
     gaz = sorted(set(ask.place_names()))
     offers = OF.texts(plan_doc.get("offers"))
-    skeleton = SK.compose(facts_doc, plan_doc, offers, defaulted_date=cond["defaulted_date"])
+    skeleton, plan_doc, shortened = fit_length(facts_doc, plan_doc, offers, cond["defaulted_date"])
+    if shortened:
+        res["warnings"].append({"code": "too_long", "detail": "字数の上限に収めるため候補を減らした: " + "・".join(shortened)})
     (Path(workdir) / "skeleton.txt").write_text(skeleton, encoding="utf-8")
     try:
         res["refresh_pages"] = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
@@ -332,23 +356,25 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     if polished and not over_budget:                                      # 段 1: 整えた文章
         from . import polish as PL
         fr = PL.check(skeleton, polished, ask.polish_names(facts_doc))
-        g = gate_check(polished, facts_doc, plan_doc, gaz)
+        g = gate_check(polished, facts_doc, plan_doc, gaz, offers)
         if fr["ok"] and g["ok"]:
-            res.update(text=polished, stage=1, status=STATUS_PASS)
+            res.update(text=g["text"], stage=1, status=STATUS_PASS, warnings=res["warnings"] + g["warnings"])
             return
-        res["warnings"] += [{"code": e["code"], "detail": e.get("detail", "")} for e in fr["errors"]] + g["errors"]
-    g = gate_check(skeleton, facts_doc, plan_doc, gaz)                    # 段 2: 骨組み
+        res["warnings"] += [{"code": e["code"], "detail": e.get("detail", ""), "where": "polished"} for e in fr["errors"]] +                            [{**e, "where": "polished"} for e in g["errors"]]
+    g = gate_check(skeleton, facts_doc, plan_doc, gaz, offers)            # 段 2: 骨組み
     if g["ok"]:
-        res.update(text=skeleton, stage=2, status=STATUS_PASS)
+        res.update(text=g["text"], stage=2, status=STATUS_PASS, warnings=res["warnings"] + g["warnings"])
         return
     res["errors"] = g["errors"]
+    res["warnings"] += g["warnings"]
     bad = _candidates_with_errors(skeleton, facts_doc, plan_doc, g["errors"]) if not over_budget else set()
     if bad:                                                               # 段 3: 部分回答(問題のある候補を外す)
         part_plan = drop_picks(plan_doc, bad)
         part = SK.compose(facts_doc, part_plan, offers, defaulted_date=cond["defaulted_date"])
-        g3 = gate_check(part, facts_doc, part_plan, gaz)
+        g3 = gate_check(part, facts_doc, part_plan, gaz, offers)
         if g3["ok"] and SK._flat_picks(part_plan):
-            res.update(text=part, stage=3, status=STATUS_DEGRADED, removed=sorted(bad))
+            blocked = any(e.get("gate") == "safety" for e in g["errors"])
+            res.update(text=g3["text"], stage=3, status=STATUS_BLOCKED if blocked else STATUS_DEGRADED, removed=sorted(bad))
             return
     res.update(text=minimal_answer(facts_doc, plan_doc, pol), stage=4, status=STATUS_DEGRADED)   # 段 4: 最低限の答え
 
