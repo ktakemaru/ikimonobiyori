@@ -44,7 +44,12 @@ def counts(env=None, sources_dir=None, centers=None, events=None, cards=None, no
         rows = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("sources") or [] if p.exists() else []
         out[subj] = {"used": [r for r in rows if _status(r) == "approved" and r.get("kind") != "reference_link"],
                      "review": sum(1 for r in rows if _status(r) == "pending"), "key": "publisher"}
-    ev = events if events is not None else FE.load()
+    if events is None:                                   # 段階62 第10部の確認: 行事の索引(行事の台帳と、使ってよい施設の記録済みの行事)の施設を数える
+        from datetime import date
+        from . import event_index as EI
+        ev = EI.build(date.today())
+    else:
+        ev = events
     facs = ev.get("facilities") or []
     facs = list(facs.values()) if isinstance(facs, dict) else facs
     out["events"] = {"used": [f for f in facs if _status(f) == "approved"], "review": sum(1 for f in facs if _status(f) == "pending"), "key": "name"}
