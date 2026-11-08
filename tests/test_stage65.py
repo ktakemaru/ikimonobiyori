@@ -82,5 +82,84 @@ class Part3ApprovalList(unittest.TestCase):
             self.assertIn(f"（{i}）", approved, i)
 
 
+def _card(title, place, cat, facts, aliases=(), src="試験の自然博物館"):
+    return {"title": title, "category": cat, "place": place, "place_aliases": list(aliases), "facts": list(facts), "condition": {"year_dependent": False},
+            "source": {"name": src, "title": "試験の資料", "url": "https://example.org/" + title, "checked_on": "2026-11-01"},
+            "confidence": "紹介", "rights": "確認済み", "usage": "ガイドの目として1行"}
+
+
+def _hcand(cid, name, city, start, end, kind=None, events=(), point=None):
+    return {"id": cid, "name": name, "city": city, "area": None, "prefecture": "栃木県", "point": point, "flower_kinds": [kind] if kind else [],
+            "typical": [{"start": start, "end": end, "text": "例年", "url": "https://example.org/w-" + cid, "kind": kind, "source_class": "official"}],
+            "events": list(events)}
+
+
+class Part4Highlights(unittest.TestCase):
+    """第4部: 「見どころ」の型(日付のない、場所の質問)。"""
+
+    CARDS = [_card("試験の高原の湿原", "戦場ヶ原", "季節の仕組み", ["湿原の草原は秋に黄金色になる", "周りの森はカラマツが多い"]),
+             _card("試験のクマ", "奥日光", "安全", ["クマがいることを意識して歩く"]),
+             _card("試験の花の流れ", "奥日光", "見頃の流れ", ["4月下旬に花が咲き始める"]),
+             _card("よその町の話", "神奈川", "季節の仕組み", ["関係のない事実"])]
+    CENTERS = [{"id": "t-vc", "name": "試験の日光ビジターセンター", "operator": "試験", "class": "official", "approval": {"status": "approved"}},
+               {"id": "t-vc2", "name": "試験の那須の森", "operator": "試験", "class": "official", "approval": {"status": "pending"}}]
+
+    def compose(self, q, **kw):
+        from datetime import date
+        from ikimonobiyori import highlights as HL
+        cands = {"autumn_leaves": [_hcand("t-1", "奥日光 戦場ヶ原", "日光市", "10-01", "10-20")],
+                 "flowers": [_hcand("t-2", "試験の高原", "日光市", "06-10", "07-10", kind="ニッコウキスゲ"),
+                             _hcand("t-3", "よその公園", "横浜市", "03-20", "04-10", kind="桜")],
+                 "birds": []}
+        return HL.compose(q, today=date(2026, 11, 9), cards=self.CARDS, centers=self.CENTERS, reports=[], cands=cands,
+                          records={"autumn_leaves": [], "flowers": [], "birds": []}, **kw)
+
+    def test_question_types(self):
+        from ikimonobiyori import highlights as HL
+        self.assertTrue(HL.is_highlights_question("日光や那須で見どころを教えて", cards=self.CARDS))
+        self.assertTrue(HL.is_highlights_question("日光ってどんなところ", cards=self.CARDS))
+        self.assertTrue(HL.is_highlights_question("戦場ヶ原で何が見られる", cards=self.CARDS))
+        self.assertFalse(HL.is_highlights_question("今週末の日光の見どころは?", cards=self.CARDS))     # 日付があれば計画の型
+        self.assertFalse(HL.is_highlights_question("日光の紅葉は今どう?", cards=self.CARDS))
+
+    def test_route_is_highlights_only_without_a_date(self):
+        from ikimonobiyori import answer_run as R
+        from ikimonobiyori import ask
+        self.assertEqual(R.resolve("筑波山の見どころを教えて", ask._clock())["route"], "highlights")
+        self.assertEqual(R.resolve("今週末の日光の見どころは?", ask._clock())["route"], "plan")
+
+    def test_answer_shape(self):
+        r = self.compose("日光の見どころを教えて")
+        t = r["text"]
+        self.assertTrue(t.startswith("**日光の見どころ**"))
+        self.assertIn("日光の自然: 湿原の草原は秋に黄金色になる。周りの森はカラマツが多い。", t)      # 冒頭はカードの事実
+        self.assertLess(t.index("### 夏"), t.index("### 秋"))                                 # 季節の順
+        self.assertIn("・試験の高原: ニッコウキスゲ(例年 6月上旬〜7月上旬)", t)
+        self.assertNotIn("よその公園", t)
+        self.assertNotIn("関係のない事実", t)
+        self.assertIn("## 行く前に確認すること", t)                                            # 安全のカードは行く前に
+        self.assertIn("・試験の日光ビジターセンター", t)                                       # 承認済みの施設
+        self.assertNotIn("那須の森", t)                                                        # 承認待ちは出さない
+        self.assertIn("出典", t)
+
+    def test_no_material_no_padding(self):
+        from datetime import date
+        from ikimonobiyori import highlights as HL
+        r = HL.compose("那須の見どころを教えて", today=date(2026, 11, 9), cards=[], centers=[], reports=[], cands={"autumn_leaves": [], "flowers": [], "birds": []},
+                       records={"autumn_leaves": [], "flowers": [], "birds": []})
+        self.assertTrue(r["needs_research"])
+        self.assertNotIn("資料", r["text"])
+        self.assertNotIn("観光名所", r["text"])
+
+    def test_at_most_five_cards_and_categories_spread(self):
+        many = [_card(f"試験{i}", "奥日光", "季節の仕組み", [f"事実{i}"]) for i in range(6)] + [_card("試験の鳥", "奥日光", "出会い方・歩き方", ["鳥の事実"])]
+        from datetime import date
+        from ikimonobiyori import highlights as HL
+        g = HL.gather(HL.places("奥日光の見どころ", many), date(2026, 11, 9), cards=many, centers=[], reports=[],
+                      cands={"autumn_leaves": [], "flowers": [], "birds": []}, records={"autumn_leaves": [], "flowers": [], "birds": []})
+        self.assertEqual(len(g["cards"]), HL.cfg()["max_cards"])
+        self.assertIn("試験の鳥", [c["title"] for c in g["cards"]])
+
+
 if __name__ == "__main__":
     unittest.main()
