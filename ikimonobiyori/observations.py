@@ -211,6 +211,10 @@ def _ledger_urls():
                 u = urlparse(s.get("url") or "")
                 if u.hostname:
                     rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), f.stem, s.get("id")))
+        for s in (load_policy()["record"].get("pending_sources") or []):     # 段階62 第7部: 台帳に入れられない承認待ちの情報源
+            u = urlparse(s.get("url") or "")
+            if u.hostname:
+                rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), s.get("subject"), s.get("id")))
         _LEDGER_URLS["rows"] = rows
     return _LEDGER_URLS["rows"]
 

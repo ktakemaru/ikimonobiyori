@@ -1231,3 +1231,30 @@ entries:
         source_class: secondary
         source_year: 2026
         note: "まっぷるウェブに「見頃は3月下旬～4月中旬」とある（紹介サイト）"
+  - id: hana-0041
+    name: 筑波実験植物園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    point: {lat: 36.1014, lon: 140.112, elevation_m: null}
+    location_precision: exact
+    status: candidate
+    tags:
+      prefecture: 茨城県
+      area: つくば
+      city: つくば市
+      terrain: [garden]
+      flower_kinds: [季節の花]
+      source: "Claude Code が付けた(段階62 第7部。座標は Wikidata Q3162410 の P625(36.1014, 140.112。項目の説明「茨城県つくば市にある植物の研究機関」)を 2026-11-08 に読んだ値)。承認の記入はしていない(候補)"
+    sources:
+      - {url: "https://tbg.kahaku.go.jp/migoro-event/syokubutsu/index.html", title: "筑波実験植物園 今週のみごろ(国立科学博物館)", checked_on: '2026-11-08'}
+    note: "花は通年(開花の種類は季節で変わる)。今週のみごろのページは確認中の情報源(承認待ち。observations/policy.yaml の record.pending_sources)のため、承認されるまで現況は答えに出ない"
+    flower_windows:
+      - kind: 季節の花
+        start: '01-01'
+        end: '12-31'
+        source_url: https://tbg.kahaku.go.jp/migoro-event/syokubutsu/index.html
+        source_host: tbg.kahaku.go.jp
+        source_class: secondary
+        source_year: 2026
+        note: "通年(開花の種類は季節で変わる)。指示書 段階62 第7部 1 の扱い。施設の公式サイトだが、情報源が確認中(承認待ち)のため、承認までは公式の扱いにしない"
