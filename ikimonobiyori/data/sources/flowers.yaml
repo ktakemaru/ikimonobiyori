@@ -116,15 +116,19 @@ sources:
       date_basis: observed_date
       note: 2026-10-31 に調査で読んだ(要約の道具。原文との照合は人の目でしていない)。状態の語は公式に書かれたものだけ。数や紹介文から段階を推測しない
     readable:
-      status: unconfirmed
-      checked_on: '2026-10-31'
-      robots: unknown
-      note: 調査で読んだが、承認した通信先ではない。コードでも要約の道具でも読まない
+      status: ok
+      checked_on: '2026-11-08'
+      robots: allows
+      note: "2026-11-08(段階64 第8部): robots.txt は /_cms/wp-admin/ だけ拒否。トップの本文を要約の道具で読めた"
     terms:
-      status: not_checked
+      status: no_prohibition_found
+      url: https://kana-garden.com/
+      note: 利用規約・著作権のページはなく、プライバシーポリシーと SNS 運用ガイドラインにも転載・複製・引用・自動取得の記載なし(フッターに © 表示のみ)。2026-11-08 確認
     approval:
-      status: pending
-      reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+      status: approved
+      approved_by: user
+      approved_on: '2026-11-08'
+      reason: 承認(2026-11-08)。通信先 kana-garden.com と情報源 kana-garden-news。robots.txt と規約の確認(段階64 第8部)を根拠に。本人の指示による記入
   - id: kanagawa-kankou-kana-rose
     publisher: 公益社団法人神奈川県観光協会(観光かながわNOW)
     publisher_kind: prefecture_tourism

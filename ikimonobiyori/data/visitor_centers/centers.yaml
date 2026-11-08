@@ -220,7 +220,7 @@ centers:
     approved_by: user
     approved_on: '2026-11-07'
     reason: 承認(2026-11-07)。本人が承認一覧(docs/sources-approval.md)の規約メモを確認のうえ承認。本人の指示による記入
-  notes: 事業ページ（event/event.html）の最終更新 2026-11-04。文字コードは CP932（宣言なし）。現在の読み取りの道具では状態の語・種名を正しく読めない。読むには、バイト列を CP932 で復号するコード（visitor_centers.decode_html）による取得が要り、これは Python のコードによる実通信なので、利用者がその場で認めたときだけ（CLAUDE.md 規則 6）
+  notes: 事業ページ（event/event.html）の最終更新 2026-11-04。文字コードは CP932（宣言なし）。現在の読み取りの道具では状態の語・種名を正しく読めない。読むには、バイト列を CP932 で復号するコード（visitor_centers.decode_html）による取得が要り、これは Python のコードによる実通信なので、利用者がその場で認めたときだけ（CLAUDE.md 規則 6）。2026-11-08、本人の許可で today/index.html を 1 回だけ取得し（robots.txt は 404、GET 2 回）、decode_html で CP932 として読めた（題名「埼玉県自然学習センター・北本自然観察公園／公園日記」、11月1日〜11月8日の日付）。本文は保存していない
 - id: sayama-ikimono-fureai
   name: 狭山丘陵いきものふれあいの里センター
   operator: 指定管理者 公益財団法人トトロのふるさと基金（県の案内の原文）

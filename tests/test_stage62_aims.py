@@ -64,8 +64,15 @@ class OldRecord(unittest.TestCase):
                                   "avoid": [], "nearby_out_of_region": [], "alternatives": []}}
         f = T57.facts_doc(subj, dates=("2026-11-08",), now="2026-11-08T09:00:00+09:00")
         text = SK.compose(f, p, cards=[])
-        line = next(ln for ln in text.splitlines() if "古い記録の園" in ln and ln.startswith(("①", "②", "③")))
-        self.assertIn("11日前の記録です", line)
+        # 段階64 第7部 2(本人の判断 2026-11-08): 1 行目は名所名と距離、事実はその下の箇条。候補の段(次の番号・空行まで)で見る
+        lines = text.splitlines()
+        i = next(n for n, ln in enumerate(lines) if "古い記録の園" in ln and ln.startswith(("①", "②", "③")))
+        block = [lines[i]]
+        for ln in lines[i + 1:]:
+            if not ln.startswith("・"):
+                break
+            block.append(ln)
+        self.assertIn("・11日前の記録です", block)
 
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ partial_variety:
 # 区分 secondary の値も確度の判定(今年のイベント期間)に使う。答えでは「公式ではない(出所・日付)」と添える(段階34。利用者の決定)。
 approved_hosts:
   source: "ユーザーの承認(指示書 3-5、2026-10-31)。段階34: この一覧は「公式」の区分の判定にだけ使う(読む先の限定ではない)"
-  hosts: [kanagawaparks.com, sankeien.or.jp, kanagawa-kankou.or.jp, www.welcome.city.yokohama.jp, www.nikko-kankou.org, www.kirigamine-vc.jp, oze-fnd.or.jp]   # 段階44(利用者の指示 2026-11-04『公式の出どころがあるものだけ追加』): 日光市観光協会・霧ヶ峰自然保護センター・尾瀬保護財団を公式に足した
+  hosts: [kanagawaparks.com, sankeien.or.jp, kanagawa-kankou.or.jp, www.welcome.city.yokohama.jp, www.nikko-kankou.org, www.kirigamine-vc.jp, oze-fnd.or.jp, kana-garden.com]   # 段階64 続き(本人の承認 2026-11-08): 花菜ガーデンの通信先を足した。段階44(利用者の指示 2026-11-04『公式の出どころがあるものだけ追加』): 日光市観光協会・霧ヶ峰自然保護センター・尾瀬保護財団を公式に足した
 
 # 段階 → 答えの区分
 stage_groups:
