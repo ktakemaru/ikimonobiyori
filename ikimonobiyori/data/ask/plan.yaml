@@ -168,7 +168,6 @@ skeleton:
   lead_ok: 見頃が続いている可能性がある場所を選びました。
   lead_toward: 見頃に向かう可能性がある場所を選びました。
   lead_mixed: 現況が確認できている場所と、できていない場所があります。
-  cannot_answer: 今は答えを用意できません。
   lead_none: この条件で今年の情報が確認できた候補はありません。
   area_none: "{name}は、今年の情報が確認できていません。"
   lead_no_current: 今年の状況は確認できていません。例年の時期とまつりの日程から選びました。
@@ -336,3 +335,26 @@ polish:
 # 段階60 第8部: 場所の質問(「高尾山の今の様子を教えて」)の答えの検査(ask verify --place)。1 か所の答えなので、候補数の下限は当てない(ほかの検査はそのまま)
 place_answer:
   verify_skip: [too_few_candidates]
+
+# 段階63a 第1部: 一発コマンド ask answer(ikimonobiyori/answer_run.py)。質問の文 → 必ず空でない答えの本文と、状態(PASS / DEGRADED / BLOCKED)。
+# フォールバックの順: 1 整えた文章(必須の検査に合格)→ 2 骨組み → 3 部分回答(問題のある候補を外した骨組み)→ 4 最低限の答え。
+answer_run:
+  budget_s: {value: 180, reason: "本人の指示(段階63a 第1部 4): 全体で3分を目安。取得が時間切れなら保存済みの記録で答える"}
+  max_rewrites: 1                      # 整える工程の作り直しは最大 1 回(段階63a 第1部 3)
+  # 質問の語 → 答える対象(ask の対象)。ガイドの言葉の表(data/guide/policy.yaml の words)のテーマから決める
+  subject_by_theme: {紅葉: autumn_leaves, 花: flowers, 野鳥: birds, 冬鳥: birds}
+  # ask の対象がないテーマ(現況の記録がない)は、ガイド型の答え(guide find --text --brief)
+  guide_only_themes: [桜, ホタル]
+  # 最低限の答え(段階63a 第1部 2-4: 確認できた範囲・確認できなかったこと・確認の方法)。事実は facts の値だけ
+  minimal:
+    lead: "{days}について、確認できた範囲でお答えします。"
+    lead_none: "{days}について、確認できている公式の情報の範囲では、今年の様子を確かめられた場所が見つかりませんでした。"
+    item: "・{name}: {state}"
+    unknown_heading: 確認できなかったこと
+    unknown_line: "・{names}は、今年の状況を確認できていません。"
+    how_heading: 確認の方法
+    how_line: 出かける前に、各施設・自治体の公式ページで今の様子を確かめてください。
+    max_items: 3
+  # 知識の質問で、手元の資料(知識カード)も名所の一覧もないときの最低限の答え
+  knowledge_none: "{topic}について、イキモノビヨリで確かめた資料はまだありません。"
+  knowledge_how: 研究機関・国や自治体・植物園や博物館の解説で確かめてください。

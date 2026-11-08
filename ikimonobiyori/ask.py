@@ -227,10 +227,12 @@ def record_first_check(workdir, result, now, env=None):
 
 
 def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
-    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。作れなければ 1 行。
+    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。
+    段階63a 第1部: 骨組みも通らなければ、最低限の答え(確認できた範囲・確認できなかったこと・確認の方法)。(段階63 までの 1 行の断りの文は出さない)。
     計画のない古い経路(facts だけの検査)は、これまでどおり通らない文を除く。"""
     if not plan_doc:
         return V.strip(text, result)
+    from . import answer_run as AR
     from . import skeleton as SK
     try:
         alt = SK.compose(facts_doc, plan_doc)
@@ -238,7 +240,7 @@ def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
             return alt
     except (KeyError, ValueError, TypeError):
         pass
-    return AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+    return AR.minimal_answer(facts_doc, plan_doc)
 
 
 def _plan_cfg():
@@ -964,6 +966,12 @@ def main(argv=None, http_get=None):
     p.add_argument("--lon", type=float)
     p.add_argument("--qid")
     p.add_argument("--prefecture")
+    p = sub.add_parser("answer", help="一発コマンド(段階63a): 質問の文 → 必ず空でない答えの本文(標準出力)と状態(標準エラー)。通信しない")
+    p.add_argument("--question", required=True)
+    p.add_argument("--polished", help="書き手が整えた文章のファイル(任意。骨組みとの事実の一致と必須の検査に通れば、それを答えにする)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くとデータ置き場の ask/<日時>)")
+    p.add_argument("--now")
+    p.add_argument("--json", action="store_true", help="結果をすべて JSON で出す(デバッグ用)")
     p = sub.add_parser("warm", help="「今日の準備」: 承認済みの情報源のうち、有効期間を過ぎたものの一覧(優先順)。読むのはエージェントの道具。通信しない(段階63b)")
     p.add_argument("--now")
     p.add_argument("--mark", action="append", default=[], help="記録する事実がなかった・読めなかったページの URL(読んだ時刻だけを残す)")
@@ -1070,6 +1078,12 @@ def main(argv=None, http_get=None):
             return 0
         last = load_last_plan(_clock()) if a.follow_up else None
         _out(origins.choose(a.question, a.follow_up, (last or {}).get("origin")))
+        return 0
+    if a.step == "answer":                               # 段階63a 第1部: 一発コマンド
+        from . import answer_run as AR
+        pol_text = Path(a.polished).read_text(encoding="utf-8") if a.polished else None
+        res = AR.run(a.question, now=now, workdir=Path(a.out_dir) if a.out_dir else None, polished=pol_text)
+        AR.print_result(res, sys.stdout, sys.stderr, as_json=a.json)
         return 0
     if a.step == "warm":                                 # 段階63b 第3部: 今日の準備(答えは作らない)
         from . import warm as WM
