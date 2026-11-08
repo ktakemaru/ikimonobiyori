@@ -298,6 +298,11 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
         conf.append(load_rules()["stage51"]["practical_fallback"] + "。")
     if any((c.get("current") or {}).get("source_class") == "secondary" for c in mentioned):
         conf.append(t["secondary_note"])
+    taken = sorted({str(f["taken_on"])[:10] for c in mentioned for f in c.get("festivals") or [] if f.get("taken_on") and f.get("period_line")})
+    if taken and today and t.get("festival_checked"):                   # 段階63a 第9部: まつり・行事の期間を確かめた日(いちばん古いもの)
+        d0 = date.fromisoformat(taken[0])
+        age = (today - d0).days
+        conf.append((t["festival_checked"] if age <= t["festival_checked_max_days"] else t["festival_checked_old"]).format(md=_md(taken[0]), days=age))
     if conf:
         lines += ["", t["confidence_heading"]] + conf
     opener = (facts.get("lines") or {}).get("open_urls")

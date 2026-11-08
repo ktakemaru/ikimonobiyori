@@ -422,6 +422,34 @@ class Contract(unittest.TestCase):
         self.assertIn(str(c["length"]["base"]), detail)
 
 
+class Leftovers(unittest.TestCase):
+    """第9部(段階63 第4部): 行事の期間は、取得日を書いて出す(7 日以内は読み直さない。古くても取得日つきで出す)。"""
+
+    def facts(self, taken_on):
+        fest = [{"name": "試験まつり", "url": "https://matsuri.example.org/t", "period_line": "主催者が設定した期間: まつり期間中(11/1〜11/30)", "taken_on": taken_on}]
+        return facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷", 10, festivals=fest))})
+
+    def test_recent_festival_record_is_used_with_its_date(self):
+        from ikimonobiyori import skeleton as SK
+        f = self.facts("2026-11-05")
+        plan = AP.build(f, "autumn_leaves")
+        t = SK.compose(f, plan)
+        self.assertIn("まつり・行事の期間は、11/5に主催者の公式ページで確かめたものです。", t)
+        self.assertTrue(AR.gate_check(t, f, plan, ())["ok"])
+
+    def test_old_festival_record_is_still_used_with_its_date(self):
+        from ikimonobiyori import skeleton as SK
+        f = self.facts("2026-10-20")
+        plan = AP.build(f, "autumn_leaves")
+        t = SK.compose(f, plan)
+        self.assertIn("10/20に確かめたもの(19日前)", t)
+        self.assertTrue(AR.gate_check(t, f, plan, ())["ok"])
+
+    def test_not_having_re_read_is_only_a_warning(self):
+        from ikimonobiyori import answer_gates as AG
+        self.assertEqual(AG.gate_of("fetch_skipped"), "warn")
+
+
 class AnswerLog(unittest.TestCase):
     """第5部: 答えごとの記録(データ置き場の logs/answers.jsonl。リポジトリの外)と集計。"""
 
