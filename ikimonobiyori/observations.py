@@ -23,7 +23,6 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-import yaml
 
 from . import festivals as festivals_mod
 from . import catalog as catalog_mod
@@ -54,7 +53,7 @@ def load_spots(path=None):
 
 def load_obs_bird_areas(path=None):
     p = Path(path or BIRD_AREAS_PATH)
-    return (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("bird_areas") or [] if p.exists() else []
+    return (yamlcache.load(p) or {}).get("bird_areas") or [] if p.exists() else []
 
 
 def log_path(subject, env=None, policy=None):
@@ -62,10 +61,16 @@ def log_path(subject, env=None, policy=None):
     return data_path(policy["record"]["dir"], env) / f"{subject}.jsonl"
 
 
+_KEY_RE = re.compile(r"[\s()（）「」『』・]")
+_KEYS = {}
+
+
 def _key(s):
-    """名前の照合用(全角・半角、空白、かっこの違いを無視)。"""
-    s = unicodedata.normalize("NFKC", s or "")
-    return re.sub(r"[\s()（）「」『』・]", "", s)
+    """名前の照合用(全角・半角、空白、かっこの違いを無視)。同じ文字列は 1 回の実行で 1 回だけ作る(段階63b 第1部)。"""
+    got = _KEYS.get(s)
+    if got is None:
+        got = _KEYS[s] = _KEY_RE.sub("", unicodedata.normalize("NFKC", s or ""))
+    return got
 
 
 # ---- 例年の見頃の原文 → 期間 ----
@@ -184,7 +189,7 @@ _LEDGER = {}
 
 def _source_approved(ledger, source_id):
     if ledger not in _LEDGER:
-        doc = yaml.safe_load((DATA_FILES_DIR / "sources" / f"{ledger}.yaml").read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load((DATA_FILES_DIR / "sources" / f"{ledger}.yaml")) or {}
         _LEDGER[ledger] = {s["id"]: (s.get("approval") or {}).get("status") for s in doc.get("sources") or []}
     return _LEDGER[ledger].get(source_id) == "approved"
 
@@ -207,7 +212,7 @@ def _ledger_urls():
         for f in sorted((DATA_FILES_DIR / "sources").glob("*.yaml")):
             if f.name == "policy.yaml":
                 continue
-            doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            doc = yamlcache.load(f) or {}
             for s in doc.get("sources") or []:
                 u = urlparse(s.get("url") or "")
                 if u.hostname:
@@ -674,7 +679,7 @@ PLACE_ALIAS_LOCAL = "ask/place_aliases.json"
 
 def place_alias_table(env=None):
     """別名辞書(リポジトリの辞書 + 手元で確かめて足した分)。別名 → 正式名称。"""
-    table = dict((yaml.safe_load(PLACE_ALIAS_PATH.read_text(encoding="utf-8")) or {}).get("aliases") or {})
+    table = dict((yamlcache.load(PLACE_ALIAS_PATH) or {}).get("aliases") or {})
     try:
         table.update(json.loads(Path(data_path(PLACE_ALIAS_LOCAL, env)).read_text(encoding="utf-8")))
     except (OSError, ValueError):
@@ -1454,7 +1459,7 @@ def known_bird_names(extra=()):
     """記録の原文から鳥の名前を拾うための和名の辞書: data/guide/bird_taxa.yaml の和名 + extra(その公園の集計の和名など)。"""
     names = set(x for x in extra if x)
     if BIRD_TAXA_PATH.exists():
-        for r in (yaml.safe_load(BIRD_TAXA_PATH.read_text(encoding="utf-8")) or {}).get("taxa") or []:
+        for r in (yamlcache.load(BIRD_TAXA_PATH) or {}).get("taxa") or []:
             if r.get("name"):
                 names.add(r["name"])
     return names

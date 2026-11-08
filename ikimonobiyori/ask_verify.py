@@ -13,8 +13,8 @@ import unicodedata
 from pathlib import Path
 from urllib.parse import urlsplit
 
-import yaml
 
+from . import yamlcache
 from . import answer_plan as AP
 from . import offers as OF
 from .paths import DATA_FILES_DIR
@@ -29,7 +29,7 @@ NUM_RE = re.compile(r"\d+(?:\.\d+)?")
 
 
 def load_rules(path=None):
-    return yaml.safe_load(Path(path or CONFIG).read_text(encoding="utf-8"))["answer_check"]
+    return yamlcache.load(Path(path or CONFIG))["answer_check"]
 
 
 def _n(s):
@@ -62,8 +62,18 @@ def _spots(facts):
     return out
 
 
+_SHORT = {}
+
+
 def short_names(name):
-    """名所の名前と、答えで使われやすい短い形(かっこの中・外、空白で区切った最後の部分、『の紅葉』を外した形)。"""
+    """名所の名前と、答えで使われやすい短い形(かっこの中・外、空白で区切った最後の部分、『の紅葉』を外した形)。
+    同じ名前の結果は 1 回の実行で 1 回だけ作り、写しを返す(段階63b 第1部。結果は同じ)。"""
+    if name not in _SHORT:
+        _SHORT[name] = frozenset(_short_names(name))
+    return set(_SHORT[name])
+
+
+def _short_names(name):
     n = _n(name)
     forms = {n}
     m = re.match(r"^(.*?)\((.*?)\)(.*)$", n)
@@ -106,9 +116,18 @@ def strict_names(name, shared=frozenset()):
 
 
 def shared_prefixes(mat):
+    """同じ地域名(かっこの前)を持つ候補が 2 つ以上ある地域名。材料ごとに 1 回だけ数える(候補の一覧は作ったあと変わらない)。"""
+    got = getattr(mat, "_shared_prefixes", None)
+    if got is not None and got[0] is mat.region_candidates and got[1] == len(mat.region_candidates):
+        return got[2]
     from collections import Counter
     cnt = Counter(prefix_of(c["name"]) for c in mat.region_candidates)
-    return frozenset(p for p, n in cnt.items() if p and n > 1)
+    out = frozenset(p for p, n in cnt.items() if p and n > 1)
+    try:
+        mat._shared_prefixes = (mat.region_candidates, len(mat.region_candidates), out)
+    except AttributeError:
+        pass
+    return out
 
 
 class Material:

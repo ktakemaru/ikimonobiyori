@@ -9,8 +9,8 @@
 import re
 from datetime import date, timedelta
 
-import yaml
 
+from . import yamlcache
 from . import observations as O
 from .paths import DATA_FILES_DIR
 
@@ -19,7 +19,7 @@ SCHEMA = "ikimonobiyori-answer-plan/1"
 
 
 def load_policy(path=None):
-    return yaml.safe_load((path or PLAN_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load((path or PLAN_PATH))
 
 
 def _d(x):
@@ -141,7 +141,7 @@ def mountain_names():
     if _MOUNTAIN_NAMES is None:
         import yaml
         from .paths import DATA_FILES_DIR
-        doc = yaml.safe_load((DATA_FILES_DIR / "sites.yaml").read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load((DATA_FILES_DIR / "sites.yaml")) or {}
         rows = doc.get("sites") if isinstance(doc, dict) else doc
         _MOUNTAIN_NAMES = frozenset(r["name"] for r in rows or [] if isinstance(r, dict) and r.get("kind") == "mountain" and r.get("name"))
     return _MOUNTAIN_NAMES

@@ -9,8 +9,8 @@ import json
 import re
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from .paths import DATA_FILES_DIR, data_path
 
 POLICY = DATA_FILES_DIR / "knowledge" / "policy.yaml"
@@ -18,7 +18,7 @@ JP = re.compile(r"[ぁ-んァ-ヶ一-龠]")
 
 
 def policy():
-    return yaml.safe_load(POLICY.read_text(encoding="utf-8"))
+    return yamlcache.load(POLICY)
 
 
 def join_vertical(text):

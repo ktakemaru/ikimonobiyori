@@ -15,8 +15,8 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import answer_plan as AP
 from . import ask_verify as V
 from .paths import DATA_FILES_DIR
@@ -30,7 +30,7 @@ LEAD_BAD_START = ("①", "②", "③", "出典", "根拠", "#", "-", "・", "*",
 
 
 def load_cases(path=None):
-    return yaml.safe_load((path or CASES).read_text(encoding="utf-8"))
+    return yamlcache.load((path or CASES))
 
 
 def build_facts(case):
@@ -287,7 +287,7 @@ def run_flow(flow, doc, env, workdir, now):
 
 def run_flows(path=None, now=None):
     from datetime import datetime, timedelta, timezone
-    doc = yaml.safe_load((path or FLOWS).read_text(encoding="utf-8"))
+    doc = yamlcache.load((path or FLOWS))
     now = now or datetime(2026, 11, 7, 12, 0, tzinfo=timezone(timedelta(hours=9)))
     out = []
     for flow in doc["flows"]:

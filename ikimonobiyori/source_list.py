@@ -4,8 +4,8 @@
 文と語は ask/policy.yaml の source_list。内部用語を出さない(ask_verify.internal_word_errors で検査する)。"""
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import facility_events as FE
 from . import jma_normals as JN
 from . import knowledge as K
@@ -17,7 +17,7 @@ POLICY = HERE / "data" / "ask" / "policy.yaml"
 
 
 def policy(path=None):
-    return yaml.safe_load(Path(path or POLICY).read_text(encoding="utf-8"))["source_list"]
+    return yamlcache.load(Path(path or POLICY))["source_list"]
 
 
 def _status(x):
@@ -41,7 +41,7 @@ def counts(env=None, sources_dir=None, centers=None, events=None, cards=None, no
     out["centers"] = {"used": [c for c in cs if _status(c) == "approved"], "review": sum(1 for c in cs if _status(c) == "pending"), "key": "name"}
     for subj in ("autumn_leaves", "flowers", "birds", "wintering_birds"):
         p = sd / f"{subj}.yaml"
-        rows = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("sources") or [] if p.exists() else []
+        rows = (yamlcache.load(p) or {}).get("sources") or [] if p.exists() else []
         out[subj] = {"used": [r for r in rows if _status(r) == "approved" and r.get("kind") != "reference_link"],
                      "review": sum(1 for r in rows if _status(r) == "pending"), "key": "publisher"}
     if events is None:                                   # 段階62 第10部の確認: 行事の索引(行事の台帳と、使ってよい施設の記録済みの行事)の施設を数える

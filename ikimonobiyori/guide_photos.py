@@ -16,6 +16,7 @@ import sys
 
 import yaml
 
+from . import yamlcache
 from . import guide, livegate
 from .config import load_config
 from .fetch import commons_photos, inat_photos
@@ -47,7 +48,7 @@ def page_dir(env=None, policy=None):
 def _read_table(path):
     if not path.is_file():
         return []
-    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    doc = yamlcache.load(path) or {}
     return list(doc.get("taxa") or [])
 
 
@@ -58,7 +59,7 @@ def load_sources(env=None, include_runtime=True, policy=None):
     paths_ = [table_path(policy)] + ([export_dir(env) / ph["table_file"]] if include_runtime else [])
     for p in paths_:
         if p.is_file():
-            for k, v in ((yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("sources") or {}).items():
+            for k, v in ((yamlcache.load(p) or {}).get("sources") or {}).items():
                 out.setdefault(k, v)
     return out
 

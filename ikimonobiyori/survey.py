@@ -9,8 +9,8 @@ import time
 from http import HTTPStatus
 from urllib.parse import urlsplit
 
-import yaml
 
+from . import yamlcache
 from .fetch import ParseError, inaturalist
 from .fetch.live import LiveError, _save_unparsed, default_http_get
 from .paths import DATA_FILES_DIR
@@ -20,7 +20,7 @@ SOURCE = "iNaturalist API"
 
 
 def load_survey(path=None):
-    return yaml.safe_load((path or SURVEY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load((path or SURVEY_PATH))
 
 
 def window_queries(survey):

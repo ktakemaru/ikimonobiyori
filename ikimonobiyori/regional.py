@@ -10,8 +10,8 @@ from urllib.parse import urlparse
 from datetime import date, timedelta
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import catalog as catalog_mod
 from . import sources as S
 from .answer import FRESHNESS_ORDER, URL_RE, day_label, time_label  # noqa: F401  (URL_RE は自己検査で使う)
@@ -21,7 +21,7 @@ SUBJECT = "flowers"
 
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or POLICY_PATH))
 
 
 def _val(x):

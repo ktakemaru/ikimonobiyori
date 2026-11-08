@@ -3,15 +3,15 @@
 案内の文は data/ask/offers.yaml の一覧から、条件を満たすものだけをコードが組み立てる。通信しない・書き込まない。"""
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from .paths import DATA_FILES_DIR
 
 OFFERS_PATH = DATA_FILES_DIR / "ask" / "offers.yaml"
 
 
 def load(path=None):
-    return yaml.safe_load(Path(path or OFFERS_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or OFFERS_PATH))
 
 
 def theme_list(doc=None):

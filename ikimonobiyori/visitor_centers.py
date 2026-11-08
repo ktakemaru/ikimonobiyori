@@ -12,8 +12,8 @@ import json
 from datetime import date
 from urllib.parse import urlparse
 
-import yaml
 
+from . import yamlcache
 from . import season
 from .paths import DATA_FILES_DIR, data_path
 
@@ -27,11 +27,11 @@ def _v(x):
 
 
 def load_policy(path=None):
-    return yaml.safe_load((path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load((path or POLICY_PATH))
 
 
 def load_centers(path=None):
-    doc = yaml.safe_load((path or CENTERS_PATH).read_text(encoding="utf-8")) or {}
+    doc = yamlcache.load((path or CENTERS_PATH)) or {}
     return doc.get("centers") or []
 
 

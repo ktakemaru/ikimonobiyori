@@ -26,9 +26,9 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
 
-import yaml
 from jsonschema import Draft202012Validator
 
+from . import yamlcache
 from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
@@ -48,7 +48,7 @@ ROBOTS_BLOCKING = ("disallows", "ai_agents_blocked")      # 仮承認しない r
 def load_policy(path=None, profiles_dir=None):
     """方針(data/sources/policy.yaml)。対象ごとの段階(stages)は、各プロファイルの stages を policy["stages"][<対象>] に置く(段階16 B-1。正本はプロファイル)。"""
     from .profiles import load_profiles
-    pol = yaml.safe_load(Path(path or SOURCES_POLICY_PATH).read_text(encoding="utf-8"))
+    pol = yamlcache.load(Path(path or SOURCES_POLICY_PATH))
     pol["stages"] = {pid: prof["stages"] for pid, prof in load_profiles(profiles_dir).items() if prof.get("stages")}
     return pol
 
@@ -82,7 +82,7 @@ def scope_orders(policy, early=False, late=False):
 def load_registry(subject, sources_dir=None):
     """本番の台帳(data/sources/<subject>.yaml)。なければ None。"""
     p = Path(sources_dir or SOURCES_DIR) / f"{subject}.yaml"
-    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+    return yamlcache.load(p) if p.is_file() else None
 
 
 def val(x):
@@ -200,7 +200,7 @@ def check_all(sources_dir=None, catalog_dir=None, policy_path=None):
     for p in sorted(Path(sources_dir or SOURCES_DIR).glob("*.yaml")):
         if p.resolve() == pol:
             continue
-        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        doc = yamlcache.load(p)
         if not isinstance(doc, dict):
             out.append((p, ["YAML の最上位が辞書でない"]))
             continue
@@ -216,7 +216,7 @@ SECONDARY_LABELS = ("紹介サイト(公式ではない)", "予報会社")
 def load_secondary_registry(subject, sources_dir=None):
     """紹介サイト・予報会社の台帳(data/sources/secondary/<subject>.yaml)。なければ None。"""
     p = Path(sources_dir or SECONDARY_SOURCES_DIR) / f"{subject}.yaml"
-    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.is_file() else None
+    return yamlcache.load(p) if p.is_file() else None
 
 
 def check_secondary_registry(doc, *, name, policy):
@@ -253,7 +253,7 @@ def check_all_secondary(sources_dir=None, policy_path=None):
     policy = load_policy(policy_path)
     out = []
     for p in sorted(Path(sources_dir or SECONDARY_SOURCES_DIR).glob("*.yaml")):
-        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        doc = yamlcache.load(p)
         out.append((p, ["YAML の最上位が辞書でない"] if not isinstance(doc, dict) else check_secondary_registry(doc, name=p.stem, policy=policy)))
     return out
 
@@ -477,7 +477,7 @@ def days_from_window(d, tw):
 # ---- 地域・条件・対象(段階16 B-3・B-4) ----
 
 def load_regions(path=None):
-    return yaml.safe_load(Path(path or REGIONS_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or REGIONS_PATH))
 
 
 def resolve_region(query, regions_doc):

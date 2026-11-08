@@ -20,8 +20,8 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
@@ -35,7 +35,7 @@ POLICY_PATH = DATA_FILES_DIR / "ask" / "policy.yaml"
 
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or POLICY_PATH))
 
 
 def _clock():
@@ -133,7 +133,7 @@ def place_names():
     for f in files:
         if not f.exists() or f.name == "policy.yaml":
             continue
-        doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load(f) or {}
         for e in (doc.get("entries") or []) + (doc.get("spots") or []):
             if not isinstance(e, dict) or e.get("example"):
                 continue
@@ -813,7 +813,7 @@ def polish_names(facts_doc=None):
     """事実の一致検査で照合する名前: 名所・市区町村・地域、鳥の和名、野草の種名、施設名、その答えの候補・樹種・花の種類。"""
     names = set(place_names()) | set(O.known_bird_names())
     try:
-        sp = yaml.safe_load((DATA_FILES_DIR / "guide" / "wildflower_species.yaml").read_text(encoding="utf-8")) or {}
+        sp = yamlcache.load((DATA_FILES_DIR / "guide" / "wildflower_species.yaml")) or {}
         names |= {x["name"] for x in sp.get("species") or [] if x.get("name")}
     except OSError:
         pass
