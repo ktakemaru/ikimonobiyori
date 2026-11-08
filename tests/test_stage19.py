@@ -93,8 +93,12 @@ class StillDraft(unittest.TestCase):
             self.assertNotIn(n, names)
 
     def test_every_entry_added_in_stage19_comes_from_the_map_embed(self):
+        # 段階64 続き(本人の判断 2026-11-08): 本人が承認した地点(approved_by: user)は、Wikidata の P625 の座標も認める(長瀞の 3 地点)。
         for i, e in CAT.items():
             if int(i.split("-")[1]) >= 36:
+                if e.get("approved_by") == "user" and "Wikidata" in e["tags"]["source"]:
+                    self.assertTrue(any("wikidata.org/wiki/Q" in s["url"] for s in e["sources"]), i)
+                    continue
                 self.assertIn("公式ページの地図の埋め込み", e["tags"]["source"], i)
 
 

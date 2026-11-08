@@ -776,3 +776,53 @@ entries:
       map_point: {lat: 36.837592, lon: 139.718757, source: "公式ページ(スポットのページ)の地図の埋め込みの座標(2026-10-24 に取得)"}
       point_meaning: "地図の点は山麓駅(ロープウェイの乗り場)付近の可能性がある。取得した標高 468 m と山頂 約 700 m の差は 232 m(公式の標高は山頂、地図の点は山麓駅付近の可能性)"
     note: "段階19(続き)。所在地は日光市鬼怒川温泉滝。座標の出所: 公式ページの地図の埋め込み(2026-10-24 に取得。コードで数字だけを読んだ)。代表点は地図の点(36.837592, 139.718757)で、山麓駅付近の可能性があるため location_precision を area_1km にし、座標は小数 2 桁に丸めた(原文は site_details)。標高 468 m は Open-Meteo Elevation API の値(同じ座標)。公式ページの標高(約 700 m)は山頂のもので、差 232 m(100 m 以上)は山頂と山麓駅付近の違いの可能性。ユーザーの確認(2026-10-24)で足した。例年の時期の記載はない"
+  # 段階64 続き(本人の判断 2026-11-08): 長瀞の 3 地点を下書きから承認へ。座標は Wikidata の P625(2026-11-08 に読んだ値。推定の座標は使わない)。
+  # 3 地点とも、承認済みの長瀞町観光協会の紅葉情報(2026-11-05 の記事)に地点名と状態の語がある。岩畳は Wikidata に独立した項目がなく座標を確かめられないので入れない。
+  - id: kouyou-0063
+    name: 金石水管橋(長瀞)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.1051, lon: 139.1129, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: user
+    approved_at: "2026-11-08"
+    tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, terrain: [river], source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q20043675「埼玉県長瀞町の橋」の P625(36.10513888888889, 139.11288888888888)を 2026-11-08 に読んだ値)"}
+    status_sources: [nagatoro-kanko-koyo]
+    sources:
+      - {url: "https://www.wikidata.org/wiki/Q20043675", title: "Wikidata 金石水管橋", checked_on: '2026-11-08'}
+      - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報", checked_on: '2026-11-08'}
+    note: "公式に例年の記載なし。長瀞町観光協会の紅葉情報(2026-11-05)に「金石水管橋」の状態がある。座標の出所: Wikidata の P625(本人の判断 2026-11-08 で承認)"
+  - id: kouyou-0064
+    name: 白鳥橋(長瀞)
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.1323, lon: 139.1262, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: user
+    approved_at: "2026-11-08"
+    tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, terrain: [river], source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q17993675「埼玉県長瀞町の橋」の P625(36.132305555555554, 139.12616666666668)を 2026-11-08 に読んだ値)"}
+    status_sources: [nagatoro-kanko-koyo]
+    sources:
+      - {url: "https://www.wikidata.org/wiki/Q17993675", title: "Wikidata 白鳥橋", checked_on: '2026-11-08'}
+      - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報", checked_on: '2026-11-08'}
+    note: "公式に例年の記載なし。長瀞町観光協会の紅葉情報(2026-11-05)に「白鳥橋」の状態がある。座標の出所: Wikidata の P625(本人の判断 2026-11-08 で承認)"
+  - id: kouyou-0065
+    name: 埼玉県立自然の博物館
+    subjects: [autumn_leaves]
+    timing_type: temperature
+    kind: point
+    point: {lat: 36.0874, lon: 139.1159, elevation_m: null}
+    location_precision: exact
+    status: approved
+    approved_by: user
+    approved_at: "2026-11-08"
+    tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q11426751「埼玉県長瀞町にある自然史博物館」の P625(36.08742, 139.115905)を 2026-11-08 に読んだ値)"}
+    status_sources: [nagatoro-kanko-koyo]
+    sources:
+      - {url: "https://www.wikidata.org/wiki/Q11426751", title: "Wikidata 埼玉県立自然の博物館", checked_on: '2026-11-08'}
+      - {url: "https://www.nagatoro.gr.jp/category/%E7%B4%85%E8%91%89%E6%83%85%E5%A0%B1/", title: "長瀞町観光協会 紅葉情報", checked_on: '2026-11-08'}
+    note: "公式に例年の記載なし。長瀞町観光協会の紅葉情報(2026-11-05)に「埼玉県立自然の博物館」の状態がある(ライトアップの告知では「県立自然の博物館」)。座標の出所: Wikidata の P625(本人の判断 2026-11-08 で承認)"
