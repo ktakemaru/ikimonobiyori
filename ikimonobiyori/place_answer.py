@@ -156,8 +156,8 @@ def section(c, facts_doc):
     if c.get("typical_line"):
         out.append(c["typical_line"])
     for f in c.get("festivals") or []:
-        if f.get("period_line"):
-            out.append(f["period_line"])
+        if f.get("named_line"):                                     # 段階67 第3部 2: 行事の名前を先に
+            out.append(f["named_line"])
     for p in (c.get("practical") or [])[:1]:
         out.append(t["practical"].format(text=p["text"]))
     if c.get("distance_km") is not None and facts_doc.get("origin"):

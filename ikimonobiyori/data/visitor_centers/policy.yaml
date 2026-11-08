@@ -32,6 +32,11 @@ line:
   species_open: "（"
   species_close: "）"
   species_sep: "・"
+  # 段階67 第2部(承認欄 D。本人の判断 2026-11-09): 野鳥の候補の行で、公園の観察記録がないとき、同じ場所の承認済みの施設の発信(14日以内)を使う
+  candidate_species: "{name}は、{month}/{day}時点の発信で、{names}の名があります"
+  candidate_state: "{name}は、{month}/{day}時点で「{state}」と発信しています"
+  candidate_kind_tail: "（{kind}）"
+  candidate_max_species: 10
 # 段階62 第5部: 種名の区分(鳥・花・木・昆虫など)。区分の分からない種名は出さず「ほか○種」にする。名前は和名の完全一致
 species_kinds:
   鳥: [ジョウビタキ, シメ, ルリビタキ, ツグミ, アトリ, マヒワ, ウソ, ベニマシコ, オシドリ, カワセミ, ミソサザイ, キクイタダキ, エナガ, シジュウカラ,

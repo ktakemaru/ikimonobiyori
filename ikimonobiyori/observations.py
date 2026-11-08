@@ -608,6 +608,22 @@ def _pub_official(url):
     return P.is_official(url)
 
 
+def festival_on_dates(f, dates):
+    """段階67 第3部 2: 対象の日と関係のない行事(対象の日より前に終わる・対象の日にない 1 日だけの行事)は出さない。日付が読めなければ残す。"""
+    if not dates:
+        return True
+    try:
+        s, e = date.fromisoformat(str(f["start"])[:10]), date.fromisoformat(str(f["end"])[:10])
+    except (KeyError, TypeError, ValueError):
+        return True
+    ds = [d if isinstance(d, date) else date.fromisoformat(str(d)[:10]) for d in dates]
+    if e < min(ds):
+        return False
+    if s == e and s not in ds:
+        return False
+    return True
+
+
 def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
@@ -1929,7 +1945,8 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
         f["reasons"].append("near")
     for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
         _today = now.date() if hasattr(now, "date") else now
-        f["festivals"] = festivals_mod.for_spot(f["id"], _today)
+        f["festivals"] = [x for x in festivals_mod.for_spot(f["id"], _today, subject=subject, tags={"city": f.get("city")})
+                          if festival_on_dates(x, dates)]          # 段階67 第2部・第3部: 同じ町のまつり・対象の合うもの・対象の日に関係するものだけ
         f["practical"] = practical_for_dates((f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today), dates, policy)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":

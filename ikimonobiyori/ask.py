@@ -307,6 +307,25 @@ def restore_workdir(doc):
     return wd
 
 
+def attach_vc_to_bird_candidates(doc, vc_rows):
+    """段階67 第2部(承認欄 D): 野鳥の候補で、公園の観察記録(現況・最近の記録)がないとき、同じ場所の承認済みの施設の発信(14日以内)を候補に付ける。
+    使った発信には used_in を付け、施設の欄で二重に出さない。"""
+    from . import visitor_centers as VC
+    subs = [doc.get("subjects") or {}] + [p.get("subjects") or {} for p in doc.get("periods") or []]
+    for sub in subs:
+        for c in (sub.get("birds") or {}).get("candidates") or []:
+            if c.get("current") or any(b.get("kind") == "recent" for b in c.get("park_birds") or []):
+                continue
+            rep = VC.candidate_report(c.get("name"), vc_rows)
+            if rep:
+                c["vc_report"] = rep
+                for r in vc_rows:
+                    if r["center"] == rep["center"]:
+                        r.setdefault("used_in", [])
+                        if c["name"] not in r["used_in"]:
+                            r["used_in"].append(c["name"])
+
+
 class PageUnsupported(Exception):
     """写真つきページに対応していない対象(段階57 第1部)。別のページを作らず、終了コード 2 で止める。"""
 
@@ -482,6 +501,7 @@ class Flow:
         vc = VC.fact_rows(self.now.date(), subjects=list(subjects), env=self.env)
         if vc:
             doc["visitor_centers"] = vc
+            attach_vc_to_bird_candidates(doc, vc)          # 段階67 第2部(承認欄 D)
         self._save("facts.json", doc)
         self.call("facts", subjects=list(subjects), new_records=rnd["new_records"], attempted=rnd["attempted"])
         return doc

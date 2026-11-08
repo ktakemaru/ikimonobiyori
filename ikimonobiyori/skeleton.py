@@ -41,6 +41,8 @@ def current_line(c, t, phr, today=None, sj=None):
     """今の状況の文。第三者サイトの現況は採用理由にせず参考の 1 行にとどめる。記号だけで読めないものは断定しない。
     段階63a: まつりのある候補の「色づき状況は確認できていません」は紅葉だけ(花・野鳥に「色づき」を書かない。段階58 第10部の対象別の定型文)。"""
     cur = c.get("current")
+    if sj == "birds" and c.get("vc_report") and not AP.has_state_record(c):     # 段階67 第2部(承認欄 D)
+        return c["vc_report"]["line"]
     if not AP.has_state_record(c) or not (cur.get("display") or cur.get("state_raw")):
         return t["no_current_fest"] if c.get("festivals") and sj in (None, "autumn_leaves") else t["no_current"]
     state = cur.get("display") or cur["state_raw"]
@@ -69,14 +71,16 @@ def season_text(c, sj, t, max_quote):
 def pick_block(p, i, c, sj, t, max_quote, today=None):
     """段階64 第7部 2(本人の判断 2026-11-08): 1 行目に名所名と距離、その下に箇条で事実(今の状況・例年の時期・見込み・行事・行く前の注意)。1 つの箇条に 1 つの事実。"""
     head = f"{CIRCLED[i]} {p['name']}"
-    if c.get("city"):
+    if c.get("city") and not p["name"].endswith((")", "）")):        # 段階67: 名前に括弧の地名があるとき(「白鳥橋(長瀞)」)は重ねない
         head += f"({c['city']})"
     if p.get("distance_text"):
         head += f" {p['distance_text']}"
     bits = [current_line(c, t, p, today, sj)]
     if p.get("old_record_note"):                                     # 段階62 第3部: 対象日の数日前の記録
         bits.append(p["old_record_note"])
-    bits.append(season_text(c, sj, t, max_quote))
+    st_ = season_text(c, sj, t, max_quote)
+    if not (sj == "birds" and c.get("vc_report") and st_ == t.get("birds_unknown")):   # 段階67: 施設の発信を書いた行に「記録は見つかっていません」を並べない
+        bits.append(st_)
     if p.get("phrase"):
         bits.append(p["phrase"])
     if p.get("note") and p["note"] not in " ".join(bits) and "確認できていません" not in bits[0]:
@@ -86,8 +90,8 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
         if e.get("closed") and e.get("line"):
             lines.append(f"・{e['line']}")
     for f in c.get("festivals") or []:
-        if f.get("period_line"):
-            lines.append(f"・{f['period_line']}")
+        if f.get("named_line"):                                     # 段階67 第3部 2: 行事の名前を必ず先に書く(名前のない行事は出さない)
+            lines.append(f"・{f['named_line']}")
     if c.get("practical"):
         lines.append(f"・{c['practical'][0]['text']}")
     if today and sj != "birds":
@@ -103,6 +107,8 @@ def _used_urls(c, sj):
     cur = c.get("current")
     if cur and cur.get("url"):
         out.add(cur["url"])
+    if sj == "birds" and c.get("vc_report") and not cur:                # 段階67 第2部: 候補の行に使った施設の発信
+        out.add(c["vc_report"]["url"])
     for t in c.get("typical") or []:
         if t.get("url") and (c.get("typical_line") or "") and (t.get("text") or "") in (c.get("typical_line") or ""):
             out.add(t["url"])
@@ -211,8 +217,10 @@ def vc_lines(facts, mentioned, t, prefectures=()):
     if prefectures:
         from . import visitor_centers as VC
         pref_of = {c["id"]: c.get("prefecture") for c in VC.load_centers()}
-    return [r for r in facts.get("visitor_centers") or [] if any(w in words for w in places.get(r.get("center")) or [])
-            or (prefectures and pref_of.get(r.get("center")) in prefectures)]
+    names = {c.get("name") for c in mentioned}
+    return [r for r in facts.get("visitor_centers") or [] if not (set(r.get("used_in") or []) & names)       # 段階67 第2部: 候補の行で使った発信は二重に出さない
+            and (any(w in words for w in places.get(r.get("center")) or [])
+                 or (prefectures and pref_of.get(r.get("center")) in prefectures))]
 
 
 def avoid_lines(facts, t):

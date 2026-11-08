@@ -224,6 +224,33 @@ def report_sentences(c, rep, policy=None):
     return out
 
 
+def _bare(name):
+    import re
+    return re.sub(r"[\s()（）・]", "", name or "")
+
+
+def candidate_report(cand_name, rows, policy=None):
+    """段階67 第2部(承認欄 D): 野鳥の候補(公園)と同じ場所の、承認済みの施設の発信(fact_rows の 1 行。14日以内)→ 候補の行の文と材料。なければ None。
+    同じ場所は「候補の名前(括弧の外)が施設の名前に含まれる」(北本自然観察公園 ⊂ 埼玉県自然学習センター・北本自然観察公園)。"""
+    p = policy or load_policy()
+    L = p["line"]
+    base = _bare(str(cand_name or "").split("(")[0].split("（")[0])
+    if not base:
+        return None
+    row = next((r for r in rows or [] if base in _bare(r.get("name"))), None)
+    if not row:
+        return None
+    d = date.fromisoformat(str(row["date"])[:10])
+    birds = [s for s in (row.get("species") or []) if species_kind(s, p) == "鳥"][: _v(L["candidate_max_species"])]
+    if birds:
+        text = L["candidate_species"].format(name=cand_name, month=d.month, day=d.day, names="・".join(birds) + L["candidate_kind_tail"].format(kind="鳥"))
+    elif row.get("state"):
+        text = L["candidate_state"].format(name=cand_name, month=d.month, day=d.day, state=row["state"])
+    else:
+        return None                                   # 段階67 第3部 6: 状態の語も種名もない発信は候補の行にしない
+    return {"center": row["center"], "date": row["date"], "url": row["url"], "species": birds, "state": row.get("state"), "line": text}
+
+
 # ---- 第5部: 読んだ事実の記録と、答えの材料 ----
 
 def decode_html(raw, declared=None, fallbacks=("utf-8", "cp932")):

@@ -92,6 +92,17 @@ festivals:
   organizer_line: "主催: {organizer}({klass})"
   class_labels: {official: 公式, secondary: 公式ではありません}
   no_state: "色づき状況は確認できていません"
+  # 段階67 第2部(承認欄 A(b)。本人の判断 2026-11-09): 会場が町内の複数か所にわたるまつり(festivals.yaml の area)は、名所の tags の同じ項目が同じなら、
+  # 同じ地域の名所にも結ぶ(対象 targets が名所の対象と合うときだけ)。会場が特定の場所だけのまつりには area を付けない
+  area_link:
+    fields: [city]
+    source: "本人の判断(2026-11-09。段階67 指示書の承認欄 A(b))"
+    provisional: false
+  # 段階67 第3部 1・2: まつり・行事の対象(targets)が節の対象と合うものだけ付ける。名前のない行事は出さない。対象の日と重ならない行事は出さない
+  target_of_subject: {autumn_leaves: [autumn_leaves], flowers: [flowers], birds: [birds]}
+  # 答えの行(名前を必ず先に書く)。label は「主催者が設定した期間」(1日だけの行事は付けない)
+  named_line: "{name}({label}): {period}"
+  named_line_single: "{name}: {period}"
   contact_line: "問い合わせ: {contact}"
   dropped:
     other_year: 今シーズンの情報ではない

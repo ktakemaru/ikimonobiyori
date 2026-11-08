@@ -95,5 +95,92 @@ class Part1OfficialByPublisherKind(unittest.TestCase):
             self.assertNotIn("(、", ln)
 
 
+def _fest(**kw):
+    f = {"id": "t-fest", "name": "試験町紅葉まつり2026", "spots": ["k-1"], "targets": ["autumn_leaves"], "organizer": "試験町観光協会",
+         "organizer_class": "official", "start": "2026-11-01", "end": "2026-11-30", "url": "https://kanko.example.jp/f", "raw": []}
+    f.update(kw)
+    return f
+
+
+class Part2NagatoroAndKitamoto(unittest.TestCase):
+    TODAY = __import__("datetime").date(2026, 11, 9)
+
+    def test_area_festival_links_to_spots_of_the_same_town_only(self):
+        from ikimonobiyori import festivals as F
+        doc = {"festivals": [_fest(area={"city": "試験町"})]}
+        self.assertEqual([r["name"] for r in F.for_spot("k-2", self.TODAY, doc, subject="autumn_leaves", tags={"city": "試験町"})], ["試験町紅葉まつり2026"])
+        self.assertEqual(F.for_spot("k-3", self.TODAY, doc, subject="autumn_leaves", tags={"city": "別の町"}), [])
+        doc2 = {"festivals": [_fest()]}                                       # area のない(会場が特定の場所だけの)まつりは結ばない
+        self.assertEqual(F.for_spot("k-2", self.TODAY, doc2, subject="autumn_leaves", tags={"city": "試験町"}), [])
+
+    def test_the_real_nagatoro_festival_reaches_the_town_spots(self):
+        from ikimonobiyori import festivals as F
+        for sid in ("kouyou-0013", "kouyou-0063", "kouyou-0064", "kouyou-0065"):
+            self.assertIn("長瀞紅葉まつり2026", [r["name"] for r in F.for_spot(sid, self.TODAY, subject="autumn_leaves", tags={"city": "長瀞町"})], sid)
+
+    def test_nagatoro_spots_have_the_official_typical_window(self):
+        from ikimonobiyori import catalog as CM
+        ents = {e["id"]: e for e in CM.load_catalog("autumn_leaves")["entries"]}
+        for sid in ("kouyou-0013", "kouyou-0063", "kouyou-0064", "kouyou-0065"):
+            tw = ents[sid]["typical_window"]
+            self.assertEqual((tw["start"], tw["end"]), ("11-11", "11-30"), sid)
+            self.assertIn("nagatoro.gr.jp", tw["source_url"])
+            self.assertNotIn("まつり", tw["note"])                          # 行事の期間ではない
+
+    def test_kitamoto_facility_report_fills_the_bird_candidate_row_once(self):
+        from ikimonobiyori import ask, skeleton as SK
+        vc = [{"center": "kitamoto-shizen-gakushu", "name": "埼玉県自然学習センター・北本自然観察公園", "date": "2026-11-06", "state": "八ツ橋の池のコガモの群れにハシビロガモ",
+               "species": ["コガモ", "ハシビロガモ"], "url": "http://www.saitama-shizen.info/today/index.html"}]
+        doc = {"subjects": {"birds": {"candidates": [{"name": "北本自然観察公園", "current": None, "park_birds": []}]}}}
+        ask.attach_vc_to_bird_candidates(doc, vc)
+        c = doc["subjects"]["birds"]["candidates"][0]
+        self.assertEqual(c["vc_report"]["line"], "北本自然観察公園は、11/6時点の発信で、コガモ・ハシビロガモ（鳥）の名があります")
+        t = SK.cfg()
+        self.assertEqual(SK.current_line(c, t, {}, None, "birds"), c["vc_report"]["line"])
+        facts = {"visitor_centers": vc}
+        self.assertEqual(SK.vc_lines(facts, [{"name": "北本自然観察公園", "city": "北本市"}], t), [])      # 施設の欄で二重に出さない
+
+    def test_report_without_state_or_species_is_not_a_candidate_line(self):
+        from ikimonobiyori import visitor_centers as V
+        self.assertIsNone(V.candidate_report("試験の公園", [{"center": "x", "name": "試験の公園センター", "date": "2026-11-06", "state": None, "species": [], "url": "u"}]))
+
+
+class Part3FestivalTargetsAndNames(unittest.TestCase):
+    TODAY = __import__("datetime").date(2026, 11, 9)
+
+    def test_a_chrysanthemum_show_is_not_attached_to_autumn_leaves(self):
+        from ikimonobiyori import festivals as F
+        doc = {"festivals": [_fest(name="試験園 菊花展2026", targets=["flowers"])]}
+        self.assertEqual(F.for_spot("k-1", self.TODAY, doc, subject="autumn_leaves"), [])
+        self.assertEqual(len(F.for_spot("k-1", self.TODAY, doc, subject="flowers")), 1)
+        real = [r["name"] for r in F.for_spot("obs-kouyou-0002", self.TODAY, subject="autumn_leaves")]
+        self.assertNotIn("三溪園 菊花展2026", real)
+
+    def test_festival_line_starts_with_its_name_and_nameless_ones_are_dropped(self):
+        from ikimonobiyori import festivals as F
+        r = F.for_spot("k-1", self.TODAY, {"festivals": [_fest()]}, subject="autumn_leaves")[0]
+        self.assertTrue(r["named_line"].startswith("試験町紅葉まつり2026(主催者が設定した期間): "), r["named_line"])
+        one = F.for_spot("k-1", self.TODAY, {"festivals": [_fest(name="試験の学会", start="2026-11-29", end="2026-11-29")]}, subject="autumn_leaves")[0]
+        self.assertEqual(one["named_line"], "試験の学会: 11/29（日）に開催（あと20日）")
+        self.assertEqual(F.for_spot("k-1", self.TODAY, {"festivals": [_fest(name="")]}, subject="autumn_leaves"), [])
+
+    def test_events_unrelated_to_the_target_days_are_not_shown(self):
+        from datetime import date
+        from ikimonobiyori import observations as O
+        days = [date(2026, 11, 21), date(2026, 11, 22)]
+        self.assertFalse(O.festival_on_dates({"start": "2026-11-29", "end": "2026-11-29"}, days))      # 対象の日にない1日だけの行事
+        self.assertFalse(O.festival_on_dates({"start": "2026-11-01", "end": "2026-11-14"}, days))      # 対象の日より前に終わる
+        self.assertTrue(O.festival_on_dates({"start": "2026-11-21", "end": "2026-11-23"}, days))
+        self.assertTrue(O.festival_on_dates({"start": "2026-11-22", "end": "2026-11-22"}, days))
+
+    def test_omiya_answer_lines_of_2026_11_09_are_not_repeated(self):
+        """今日の動作確認の答え(2026-11-09、大宮)の実際の行。名前のない行事の行・紅葉の節の菊花展は出さない。"""
+        from ikimonobiyori import skeleton as SK
+        c = {"name": "試験の森", "festivals": [{"named_line": None, "period_line": "11/29（日）に開催（あと20日）"}], "current": None}
+        lines = SK.pick_block({"name": "試験の森"}, 0, c, "birds", SK.cfg(), 40)
+        self.assertNotIn("・11/29（日）に開催（あと20日）", lines)
+        self.assertNotIn("・主催者が設定した期間: あと12日で開始(11/21〜11/23)", lines)
+
+
 if __name__ == "__main__":
     unittest.main()

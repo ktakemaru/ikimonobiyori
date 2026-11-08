@@ -350,7 +350,8 @@ entries:
     point: {lat: 36.091, lon: 139.113, elevation_m: 149}
     location_precision: exact
     status: approved
-    tags: {prefecture: 埼玉県, area: 秩父・長瀞, terrain: [valley, river], access: [walk_from_station], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, terrain: [valley, river], access: [walk_from_station], source: "段階67: city は長瀞町観光協会の所在(月の石もみじ公園は長瀞町)。Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.nagatoro.gr.jp/kouyo2024/", note: "11月中旬〜11月下旬(見頃のピーク。長瀞町観光協会)"}   # 段階67 第2部(承認欄 A(c)): 長瀞町観光協会のページ(2024年版)の「例年、10月下旬より色づきが始まり、11月中旬ごろから見ごろ」「見頃のピークは11月中旬〜下旬」(2026-11-09 に読んだ)。行事の期間ではない
     status_sources: [nagatoro-kanko-koyo]
     approved_at: "2026-10-22"
     sources:
@@ -789,6 +790,7 @@ entries:
     approved_by: user
     approved_at: "2026-11-08"
     tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, terrain: [river], source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q20043675「埼玉県長瀞町の橋」の P625(36.10513888888889, 139.11288888888888)を 2026-11-08 に読んだ値)"}
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.nagatoro.gr.jp/kouyo2024/", note: "11月中旬〜11月下旬(見頃のピーク。長瀞町観光協会)"}   # 段階67 第2部(承認欄 A(c)): 長瀞町観光協会のページ(2024年版)の「例年、10月下旬より色づきが始まり、11月中旬ごろから見ごろ」「見頃のピークは11月中旬〜下旬」(2026-11-09 に読んだ)。行事の期間ではない
     status_sources: [nagatoro-kanko-koyo]
     sources:
       - {url: "https://www.wikidata.org/wiki/Q20043675", title: "Wikidata 金石水管橋", checked_on: '2026-11-08'}
@@ -805,6 +807,7 @@ entries:
     approved_by: user
     approved_at: "2026-11-08"
     tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, terrain: [river], source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q17993675「埼玉県長瀞町の橋」の P625(36.132305555555554, 139.12616666666668)を 2026-11-08 に読んだ値)"}
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.nagatoro.gr.jp/kouyo2024/", note: "11月中旬〜11月下旬(見頃のピーク。長瀞町観光協会)"}   # 段階67 第2部(承認欄 A(c)): 長瀞町観光協会のページ(2024年版)の「例年、10月下旬より色づきが始まり、11月中旬ごろから見ごろ」「見頃のピークは11月中旬〜下旬」(2026-11-09 に読んだ)。行事の期間ではない
     status_sources: [nagatoro-kanko-koyo]
     sources:
       - {url: "https://www.wikidata.org/wiki/Q17993675", title: "Wikidata 白鳥橋", checked_on: '2026-11-08'}
@@ -821,6 +824,7 @@ entries:
     approved_by: user
     approved_at: "2026-11-08"
     tags: {prefecture: 埼玉県, area: 秩父・長瀞, city: 長瀞町, source: "Claude Code が付けた(段階63a 第9部。座標は Wikidata Q11426751「埼玉県長瀞町にある自然史博物館」の P625(36.08742, 139.115905)を 2026-11-08 に読んだ値)"}
+    typical_window: {start: "11-11", end: "11-30", source_url: "https://www.nagatoro.gr.jp/kouyo2024/", note: "11月中旬〜11月下旬(見頃のピーク。長瀞町観光協会)"}   # 段階67 第2部(承認欄 A(c)): 長瀞町観光協会のページ(2024年版)の「例年、10月下旬より色づきが始まり、11月中旬ごろから見ごろ」「見頃のピークは11月中旬〜下旬」(2026-11-09 に読んだ)。行事の期間ではない
     status_sources: [nagatoro-kanko-koyo]
     sources:
       - {url: "https://www.wikidata.org/wiki/Q11426751", title: "Wikidata 埼玉県立自然の博物館", checked_on: '2026-11-08'}
