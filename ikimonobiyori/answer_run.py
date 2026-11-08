@@ -334,6 +334,9 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     if shortened:
         res["warnings"].append({"code": "too_long", "detail": "字数の上限に収めるため候補を減らした: " + "・".join(shortened)})
     (Path(workdir) / "skeleton.txt").write_text(skeleton, encoding="utf-8")
+    from . import polish as PL
+    (Path(workdir) / "skeleton_facts.json").write_text(json.dumps(PL.skeleton_facts(skeleton, ask.polish_names(facts_doc)), ensure_ascii=False, indent=0),
+                                                       encoding="utf-8")
     try:
         res["refresh_pages"] = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
     except (KeyError, ValueError, TypeError):
@@ -341,7 +344,7 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     over_budget = (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"]
     if polished and not over_budget:                                      # 段 1: 整えた文章
         from . import polish as PL
-        fr = PL.check(skeleton, polished, ask.polish_names(facts_doc))
+        fr = PL.check_structured(skeleton, polished, ask.polish_names(facts_doc))    # 第4部: 骨組みの事実(構造化)との照合。事実の行は骨組みの文のまま
         g = gate_check(polished, facts_doc, plan_doc, gaz, offers)
         if fr["ok"] and g["ok"]:
             res.update(text=g["text"], stage=1, status=STATUS_PASS, warnings=res["warnings"] + g["warnings"])

@@ -346,5 +346,57 @@ class Localize(unittest.TestCase):
         self.assertNotIn("now_visible_unsupported", codes("鳥の沼では今もカモが見られます。", fresh))
 
 
+class PolishedMatch(unittest.TestCase):
+    """第4部: 骨組みの事実を構造化して持ち、整えた文章と照合する。食い違ったら骨組みが正しい。整えてよいのは冒頭の文とガイドの目だけ。"""
+
+    def setUp(self):
+        from ikimonobiyori import polish as PL, skeleton as SK
+        self.PL = PL
+        self.f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷", 10, city="試験町"), spot("試験の滝", 60, city="滝村"))})
+        self.plan = AP.build(self.f, "autumn_leaves")
+        self.sk = SK.compose(self.f, self.plan)
+        self.names = ask.polish_names(self.f)
+
+    def test_skeleton_facts_are_structured(self):
+        rows = self.PL.skeleton_facts(self.sk, self.names)
+        cand = [r for r in rows if r["text"].startswith("①")]
+        self.assertTrue(cand and cand[0]["fixed"])
+        self.assertIn("date", cand[0]["facts"])
+        self.assertIn("name", cand[0]["facts"])
+        lead = rows[0]
+        self.assertFalse(lead["fixed"])                                      # 冒頭の決まり文は整えてよい
+
+    def test_rewording_the_lead_is_fine(self):
+        lines = self.sk.splitlines()
+        lines[0] = "今週末は、色づきの様子を確かめながら出かけられそうです。"
+        self.assertEqual(self.PL.fixed_line_errors(self.sk, NL.join(lines) + NL, self.names), [])
+
+    def test_changing_a_fact_line_is_caught_and_the_skeleton_wins(self):
+        bad = self.sk.replace("11/7時点", "11/6時点", 1)
+        r = self.PL.check_structured(self.sk, bad, self.names)
+        self.assertFalse(r["ok"])
+        self.assertIn("polish_fixed_line_changed", [e["code"] for e in r["errors"]])
+
+    def test_dropping_a_candidate_line_is_caught(self):
+        bad = NL.join(l for l in self.sk.splitlines() if not l.startswith("②")) + NL
+        self.assertTrue(self.PL.fixed_line_errors(self.sk, bad, self.names))
+
+    def test_polished_answer_with_a_changed_fact_falls_back_to_the_skeleton(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            with unittest.mock.patch.dict("os.environ", env):
+                res = AR.run("今日お出かけするならどこ?", now=NOW, env=env)
+                sk = Path(res["workdir"], "skeleton.txt").read_text(encoding="utf-8")
+                facts = json.loads(Path(res["workdir"], "skeleton_facts.json").read_text(encoding="utf-8"))
+                self.assertTrue(any(r["fixed"] for r in facts))
+                changed = sk.replace("今回のおすすめ", "今回のおすすめ!", 1)
+                res2 = AR.run("今日お出かけするならどこ?", now=NOW, env=env, polished=changed)
+                self.assertNotEqual(res2["stage"], 1)
+                self.assertNotIn("今回のおすすめ!", res2["text"])
+                same = sk
+                res3 = AR.run("今日お出かけするならどこ?", now=NOW, env=env, polished=same)
+                self.assertIn(res3["stage"], (1, 2, 3, 4))
+
+
 if __name__ == "__main__":
     unittest.main()

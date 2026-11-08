@@ -9,7 +9,7 @@
                 "blocked_source", "sns_source", "phone_not_from_official", "date_range", "old_year_basis", "restricted_source",
                 "visitor_center_not_approved", "visitor_center_field_not_allowed", "guide_eye_not_from_card", "ended_phenology_this_year",
                 "jma_normal_source_missing", "source_missing", "knowledge_fact_not_in_card", "knowledge_source_missing",
-                "polish_added_fact", "polish_dropped_fact", "polish_unmapped_sentence",
+                "polish_added_fact", "polish_dropped_fact", "polish_unmapped_sentence", "polish_fixed_line_changed",
                 "event_date_mismatch", "event_weekday_mismatch", "event_weekday_missing", "event_date_no_year", "event_date_missing",
                 "event_time_mismatch", "event_capacity_mismatch", "event_target_mismatch", "event_not_approved", "event_invalid_in_ledger",
                 "event_not_in_ledger", "event_fact_not_in_ledger", "event_source_unknown", "event_source_missing"]
