@@ -72,6 +72,8 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
     if p.get("distance_text"):
         head += f" {p['distance_text']}"
     bits = [current_line(c, t, p, today)]
+    if p.get("old_record_note"):                                     # 段階62 第3部: 対象日の数日前の記録
+        bits.append(p["old_record_note"])
     bits.append(season_text(c, sj, t, max_quote))
     if p.get("phrase"):
         bits.append(p["phrase"])

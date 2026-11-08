@@ -550,7 +550,15 @@ def _from_catalog(e, subject, policy=None):
             "area": t.get("area"), "point": e.get("point"), "elevation_m": (e.get("point") or {}).get("elevation_m"),
             "typical": _typical_from_catalog(e, policy), "events": _events_from_catalog(e),
             "pages": [{"url": s["url"], "publisher": s.get("title") or urlparse(s["url"]).hostname, "source_class": "official"} for s in e.get("sources") or []],
-            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True}
+            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True,
+            "spot_kind": t.get("spot_kind") or _kind_by_terrain(t.get("terrain"))}
+
+
+def _kind_by_terrain(terrain):
+    """段階62 第3部: 名所カタログの地形 → 地点の種類(mountain/park)。山の地形があれば登山・山岳。決められなければ None。"""
+    table = catalog_mod.load_policy().get("spot_kind_by_terrain") or {}
+    kinds = [table[t] for t in terrain or [] if t in table]
+    return "mountain" if "mountain" in kinds else (kinds[0] if kinds else None)
 
 
 def _tree_names(text):
@@ -569,7 +577,7 @@ def _from_spot(s, policy, catalog_by_id):
          "city": s.get("city"), "area": s.get("area"), "point": s.get("point"), "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
-         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"),
+         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"), "spot_kind": s.get("spot_kind"),
          "tree_species": _tree_names((s.get("trees") or {}).get("species") if isinstance(s.get("trees"), dict) else None)}
     pa = park_area(s, policy)                    # 段階38: 探鳥地ごとの範囲があれば、その範囲で集計する(半径10kmの区域をやめる)
     if pa:
@@ -592,6 +600,7 @@ def _from_spot(s, policy, catalog_by_id):
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
         c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
         c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
+        c["spot_kind"] = c.get("spot_kind") or cat.get("spot_kind")
     return c
 
 
@@ -1699,7 +1708,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
     out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "point": c.get("point"), "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
-            "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
+            "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"), "spot_kind": c.get("spot_kind"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
