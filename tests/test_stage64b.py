@@ -38,5 +38,16 @@ class NagatoroApproved(unittest.TestCase):
         self.assertEqual(src["approval"]["status"], "approved")
 
 
+class KanaGardenApproved(unittest.TestCase):
+    def test_source_and_host_are_approved_by_the_user(self):
+        from ikimonobiyori import regional
+        reg = sources.load_registry("flowers")
+        src = next(s for s in reg["sources"] if s["id"] == "kana-garden-news")
+        ap = src["approval"]
+        self.assertEqual((ap["status"], ap["approved_by"], ap["approved_on"]), ("approved", "user", "2026-11-08"))
+        self.assertEqual((src["readable"]["robots"], src["terms"]["status"]), ("allows", "no_prohibition_found"))
+        self.assertIn("kana-garden.com", regional.load_policy()["approved_hosts"]["hosts"])
+
+
 if __name__ == "__main__":
     unittest.main()
