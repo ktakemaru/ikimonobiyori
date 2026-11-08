@@ -410,7 +410,7 @@ def annotate(items, *, policy=None, now=None, env=None):
 
 def load_places(env=None, include_runtime=True):
     """{(都道府県, 市区町村): 代表点の辞書}。data/guide/places.yaml + 手元の guide/places.jsonl(あと勝ち)。"""
-    rows = (yaml.safe_load(PLACES_PATH.read_text(encoding="utf-8")) or {}).get("places", []) if PLACES_PATH.is_file() else []
+    rows = (yamlcache.load(PLACES_PATH) or {}).get("places", []) if PLACES_PATH.is_file() else []
     if include_runtime:
         rows = rows + _jsonl(guide_dir(env) / "places.jsonl")
     return {(r["prefecture"], r["municipality"]): r for r in rows}
@@ -508,7 +508,7 @@ def load_retired(policy, reviews=None, catalog_dir=None):
     g = policy.get("retired_guard") or {}
     names, urls = {}, {}
     for p in sorted(Path(catalog_dir or catalog_mod.CATALOG_DIR).glob("*.yaml")):
-        doc = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load(p) or {}
         for e in doc.get("entries") or []:
             if e.get("status") in (g.get("catalog_status") or []):
                 why = e.get("retired_reason") or "退役"
@@ -534,7 +534,7 @@ def _best(sources):
 
 def load_reviews(env=None, include_runtime=True):
     """{名所 id: 最後の見直し {"state": rejected / approved, "at", "by", "reason"}}。data/guide/reviews.yaml + 手元の guide/reviews.jsonl(あと勝ち)。"""
-    rows = (yaml.safe_load(REVIEWS_PATH.read_text(encoding="utf-8")) or {}).get("reviews", []) if REVIEWS_PATH.is_file() else []
+    rows = (yamlcache.load(REVIEWS_PATH) or {}).get("reviews", []) if REVIEWS_PATH.is_file() else []
     if include_runtime:
         rows = rows + _jsonl(guide_dir(env) / "reviews.jsonl")
     out = {}
@@ -949,7 +949,7 @@ def reference_count_for(counts, subject, name, policy):
 
 def load_status_alias(path=None):
     p = Path(path or STATUS_ALIAS_PATH)
-    return (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("aliases") or [] if p.is_file() else []
+    return (yamlcache.load(p) or {}).get("aliases") or [] if p.is_file() else []
 
 
 def check_status_alias(aliases, policy, guide_entries, status_catalogs):
@@ -1598,7 +1598,7 @@ def main(argv=None, http_get=None, http_bytes=None):
         return 0
     if a.cmd == "import-seed":
         rows = parse_seed(Path(a.file).read_text(encoding="utf-8"))
-        mapping = yaml.safe_load(Path(a.map).read_text(encoding="utf-8"))
+        mapping = yamlcache.load(Path(a.map))
         items, skipped = seed_items(rows, mapping)
         try:
             n, dup, _ = record_candidates(items, policy=policy)

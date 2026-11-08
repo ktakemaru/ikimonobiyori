@@ -1,12 +1,12 @@
 """複数テーマの組み合わせ(「白鳥と季節の花」「紅葉と花」。段階58 第10部)。通信しない。
 
 同じ地点で複数の見どころがあるものと、近く(直線距離の上限は data/ask/plan.yaml の combo.max_km)の組み合わせだけを出す。遠い地点どうしを 1 日の組み合わせにしない。所要時間は書かない。"""
+from . import yamlcache
 from . import answer_plan as AP
 from . import catalog as C
 from . import observations as O
 from .paths import DATA_FILES_DIR
 
-import yaml
 
 
 def cfg():
@@ -16,7 +16,7 @@ def cfg():
 def _candidates(subject):
     """対象の名所(点のあるもの・名前)。観察の一覧とカタログ。"""
     if subject == "wintering_birds":
-        doc = yaml.safe_load((DATA_FILES_DIR / "catalog" / "wintering_birds.yaml").read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load((DATA_FILES_DIR / "catalog" / "wintering_birds.yaml")) or {}
         return [{"name": e["name"], "point": e.get("point"), "city": (e.get("tags") or {}).get("city")} for e in doc.get("entries") or []
                 if not e.get("example") and e.get("status") not in ("retired", "rejected", "candidate")]
     return O.all_candidates(subject)

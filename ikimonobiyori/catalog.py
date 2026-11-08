@@ -12,7 +12,6 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
-import yaml
 from jsonschema import Draft202012Validator
 
 from . import yamlcache
@@ -24,7 +23,7 @@ LEAP_YEAR = 2000          # MM-DD の妥当性を見るための閏年(02-29 を
 
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or CATALOG_POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or CATALOG_POLICY_PATH))
 
 
 def schema_errors(doc):
@@ -240,7 +239,7 @@ def check_all(catalog_dir=None, profiles_dir=None, policy_path=None):
     """→ [(ファイル, エラーのリスト)]。"""
     out, ids = [], set()
     for p in sorted(Path(profiles_dir or PROFILE_DIR).glob("*.yaml")):
-        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        doc = yamlcache.load(p)
         errs = check_profile(doc) if isinstance(doc, dict) else ["YAML の最上位が辞書でない"]
         out.append((p, errs))
         if not errs:
@@ -250,7 +249,7 @@ def check_all(catalog_dir=None, profiles_dir=None, policy_path=None):
     for p in sorted(Path(catalog_dir or CATALOG_DIR).glob("*.yaml")):
         if p.resolve() == pol_path:
             continue
-        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        doc = yamlcache.load(p)
         errs = check_catalog(doc, name=p.stem, profile_ids=ids, policy=policy) if isinstance(doc, dict) else ["YAML の最上位が辞書でない"]
         out.append((p, errs))
     return out

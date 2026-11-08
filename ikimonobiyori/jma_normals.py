@@ -14,6 +14,7 @@ from pathlib import Path
 
 import yaml
 
+from . import yamlcache
 from . import jma_phenology as J
 from .fetch import ParseError
 from .paths import DATA_FILES_DIR
@@ -28,7 +29,7 @@ _cache = {}
 def policy(path=None):
     p = Path(path or POLICY_PATH)
     if p not in _cache:
-        _cache[p] = yaml.safe_load(p.read_text(encoding="utf-8"))
+        _cache[p] = yamlcache.load(p)
     return _cache[p]
 
 
@@ -118,7 +119,7 @@ def dump(doc, out):
 
 def load(path=None):
     p = Path(path or NORMALS_PATH)
-    return yaml.safe_load(p.read_text(encoding="utf-8")) if p.exists() else None
+    return yamlcache.load(p) if p.exists() else None
 
 
 def match(question, pol=None):

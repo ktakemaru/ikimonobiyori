@@ -20,8 +20,8 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import answer_plan as AP
 from . import ask_verify as V
 from . import livegate, netbudget
@@ -35,7 +35,7 @@ POLICY_PATH = DATA_FILES_DIR / "ask" / "policy.yaml"
 
 
 def load_policy(path=None):
-    return yaml.safe_load(Path(path or POLICY_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or POLICY_PATH))
 
 
 def _clock():
@@ -133,7 +133,7 @@ def place_names():
     for f in files:
         if not f.exists() or f.name == "policy.yaml":
             continue
-        doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        doc = yamlcache.load(f) or {}
         for e in (doc.get("entries") or []) + (doc.get("spots") or []):
             if not isinstance(e, dict) or e.get("example"):
                 continue
@@ -227,10 +227,12 @@ def record_first_check(workdir, result, now, env=None):
 
 
 def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
-    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。作れなければ 1 行。
+    """段階58 第9部 e: 不合格の答えを、通らない文を除いて出さない。骨組みから作った最小の答え(検査に通る形)。
+    段階63a 第1部: 骨組みも通らなければ、最低限の答え(確認できた範囲・確認できなかったこと・確認の方法)。(段階63 までの 1 行の断りの文は出さない)。
     計画のない古い経路(facts だけの検査)は、これまでどおり通らない文を除く。"""
     if not plan_doc:
         return V.strip(text, result)
+    from . import answer_run as AR
     from . import skeleton as SK
     try:
         alt = SK.compose(facts_doc, plan_doc)
@@ -238,7 +240,7 @@ def minimal_answer(text, facts_doc, plan_doc, result, gazetteer=()):
             return alt
     except (KeyError, ValueError, TypeError):
         pass
-    return AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+    return AR.minimal_answer(facts_doc, plan_doc)
 
 
 def _plan_cfg():
@@ -349,7 +351,8 @@ class Flow:
                "now": self.now.isoformat(), "out_dir": str(self.workdir),
                "summary_pages": [p for pl in plans.values() for p in pl.get("summary_pages") or []],
                "limits": next(iter(plans.values()))["limits"] if plans else None}
-        drop_fetched(doc, fetched_today(self.now, self.env))           # 段階57 第5部: 同じ日の同じページを読み直さない
+        from . import page_cache as PC                                  # 段階63b 第2部: 有効期間の中で読んだページは読み直さない(ページの日付では決めない)
+        drop_fetched(doc, fetched_today(self.now, self.env) | PC.fresh_urls(self.now, self.env))      # 段階57 第5部: 同じ日の同じページを読み直さない
         if "birds" in plans:
             doc["inat_refresh"] = self.inat_plan(plans["birds"].get("inat_refresh") or {})
         self._save("params.json", {"subjects": list(subjects), "region": region, "dates": [d.isoformat() for d in dates], "origin": origin,
@@ -433,6 +436,8 @@ class Flow:
                      "by_url": out.get("by_url")})
         self._save("records.json", hist)
         mark_fetched([u.get("url") for u in out.get("by_url") or []], self.clock(), self.env)
+        from . import page_cache as PC                                  # 段階63b 第2部: 取得のキャッシュ(本文は保存しない。取り出した事実のハッシュだけ)
+        PC.note(PC.entries_for_batch(batch, out.get("by_url")), self.clock(), self.env)
         self.call("record", submitted=len(batch), written=out.get("written"), duplicates=out.get("duplicates"),
                   rejected=len(out.get("rejected") or []))
         return out
@@ -445,6 +450,11 @@ class Flow:
         mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
         mark_fetched([r.get("url") for r in (fetch_log or {}).get("read") or []], self.now, self.env)
+        from . import page_cache as PC                                  # 段階63b 第2部: 読んだ(読めなかった)ページの時刻。読めなかったページも有効期間の中で繰り返し取りに行かない
+        recorded = {u["url"] for r in self._load("records.json", []) for u in r.get("by_url") or []}
+        PC.note([{"url": r.get("url"), "ok": True} for r in (fetch_log or {}).get("read") or [] if r.get("url") not in recorded]
+                + [{"url": r.get("url"), "ok": False, "reason": str(r.get("reason") or "")[:80]} for r in (fetch_log or {}).get("failed") or []],
+                self.clock(), self.env)
         inat = (plan_doc or {}).get("inat_refresh")
         if inat and inat.get("reason") == "not_yet":   # 取り直しの対象があったが、計測フックの下で取り直していない(単体で聞いたとき)
             self.call("inat_refresh", skipped="no_measure_hook", areas=inat.get("areas"))
@@ -813,7 +823,7 @@ def polish_names(facts_doc=None):
     """事実の一致検査で照合する名前: 名所・市区町村・地域、鳥の和名、野草の種名、施設名、その答えの候補・樹種・花の種類。"""
     names = set(place_names()) | set(O.known_bird_names())
     try:
-        sp = yaml.safe_load((DATA_FILES_DIR / "guide" / "wildflower_species.yaml").read_text(encoding="utf-8")) or {}
+        sp = yamlcache.load((DATA_FILES_DIR / "guide" / "wildflower_species.yaml")) or {}
         names |= {x["name"] for x in sp.get("species") or [] if x.get("name")}
     except OSError:
         pass
@@ -906,7 +916,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(知識の答え・guide find の出力など)")
     p.add_argument("--question", help="--generic のとき: 知識の答えの質問の文(ガイドの目がカードの事実のままかも確かめる)")
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask verify --place と同じ検査)")
-    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
+    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(今回のおすすめの候補のうち、現況を最後に読んでから有効期間を過ぎたもの・ないもの。最大 3 ページ。読むのはエージェントの道具。段階57・63b)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
     p = sub.add_parser("intent", help="質問の意図の分類(知識・違い・雑談・場所と時期・今の状況・計画)。段階59")
@@ -956,6 +966,21 @@ def main(argv=None, http_get=None):
     p.add_argument("--lon", type=float)
     p.add_argument("--qid")
     p.add_argument("--prefecture")
+    p = sub.add_parser("answer", help="一発コマンド(段階63a): 質問の文 → 必ず空でない答えの本文(標準出力)と状態(標準エラー)。通信しない")
+    p.add_argument("--question", required=True)
+    p.add_argument("--polished", help="書き手が整えた文章のファイル(任意。骨組みとの事実の一致と必須の検査に通れば、それを答えにする)")
+    p.add_argument("--out-dir", help="作業フォルダ(省くとデータ置き場の ask/<日時>)")
+    p.add_argument("--now")
+    p.add_argument("--json", action="store_true", help="結果をすべて JSON で出す(デバッグ用)")
+    p = sub.add_parser("checks", help="答えの検査の記録(データ置き場の logs/answers.jsonl)の集計(段階63a 第5部)。report: よく落ちる検査・フォールバックの段の割合")
+    p.add_argument("action", choices=["report"])
+    p.add_argument("--json", action="store_true")
+    p = sub.add_parser("warm", help="「今日の準備」: 承認済みの情報源のうち、有効期間を過ぎたものの一覧(優先順)。読むのはエージェントの道具。通信しない(段階63b)")
+    p.add_argument("--now")
+    p.add_argument("--mark", action="append", default=[], help="記録する事実がなかった・読めなかったページの URL(読んだ時刻だけを残す)")
+    p.add_argument("--failed", help="--mark のページが読めなかった理由")
+    p = sub.add_parser("vc-record", help="施設の発信(ビジターセンター)の読んだ事実を記録する(段階55 の規則。段階63b: 読んだ時刻を取得のキャッシュに残す)")
+    p.add_argument("--batch", required=True)
     p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
     p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
@@ -1057,6 +1082,40 @@ def main(argv=None, http_get=None):
         last = load_last_plan(_clock()) if a.follow_up else None
         _out(origins.choose(a.question, a.follow_up, (last or {}).get("origin")))
         return 0
+    if a.step == "answer":                               # 段階63a 第1部: 一発コマンド
+        from . import answer_run as AR
+        pol_text = Path(a.polished).read_text(encoding="utf-8") if a.polished else None
+        res = AR.run(a.question, now=now, workdir=Path(a.out_dir) if a.out_dir else None, polished=pol_text)
+        AR.print_result(res, sys.stdout, sys.stderr, as_json=a.json)
+        return 0
+    if a.step == "checks":                               # 段階63a 第5部
+        from . import answer_run as AR
+        rows = AR.read_log()
+        if a.json:
+            _out(rows)
+        else:
+            sys.stdout.write(AR.report(rows))
+        return 0
+    if a.step == "warm":                                 # 段階63b 第3部: 今日の準備(答えは作らない)
+        from . import warm as WM
+        t = now or _clock()
+        if a.mark:
+            n = WM.mark(a.mark, t, failed=a.failed)
+            _out({"marked": n})
+            return 0
+        rows = WM.targets(t)
+        _out({"now": t.isoformat(), "count": len(rows), "pages": rows})
+        return 0
+    if a.step == "vc-record":
+        from . import page_cache as PC
+        from . import visitor_centers as VC
+        batch = json.loads(Path(a.batch).read_text(encoding="utf-8"))
+        batch = batch if isinstance(batch, list) else [batch]
+        out = VC.record_reports(batch)
+        bad = {r["index"] for r in out["rejected"]}
+        PC.note([{"url": r.get("url"), "ok": True, "kind": "visitor_center"} for i, r in enumerate(batch) if i not in bad and isinstance(r, dict)], _clock())
+        _out(out)
+        return 1 if out["rejected"] else 0
     if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
         plan = {}
         if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():

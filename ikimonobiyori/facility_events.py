@@ -6,19 +6,19 @@ import unicodedata
 from datetime import date
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from .paths import DATA_FILES_DIR
 
 DIR = DATA_FILES_DIR / "facility_events"
 
 
 def policy(path=None):
-    return yaml.safe_load(Path(path or DIR / "policy.yaml").read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or DIR / "policy.yaml"))
 
 
 def load(path=None):
-    return yaml.safe_load(Path(path or DIR / "events.yaml").read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or DIR / "events.yaml"))
 
 
 def _wd(iso, pol):

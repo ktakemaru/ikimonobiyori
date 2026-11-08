@@ -168,7 +168,6 @@ skeleton:
   lead_ok: 見頃が続いている可能性がある場所を選びました。
   lead_toward: 見頃に向かう可能性がある場所を選びました。
   lead_mixed: 現況が確認できている場所と、できていない場所があります。
-  cannot_answer: 今は答えを用意できません。
   lead_none: この条件で今年の情報が確認できた候補はありません。
   area_none: "{name}は、今年の情報が確認できていません。"
   lead_no_current: 今年の状況は確認できていません。例年の時期とまつりの日程から選びました。
@@ -193,6 +192,10 @@ skeleton:
   region_part_few: "{name}で今年の情報が確認できた候補は{n}件です。"
   region_names_sep: 、
   secondary_note: 紹介サイトの情報は公式の発表ではありません。
+  # 段階63(第4部 1)・63a 第9部: まつり・行事の期間を確かめた日(取得日)。7 日以内は読み直さずに出す。それより古いときも、取得日を書いて出す
+  festival_checked: "まつり・行事の期間は、{md}に主催者の公式ページで確かめたものです。"
+  festival_checked_old: "まつり・行事の期間は、{md}に確かめたもの({days}日前)です。最新の日程は主催者の公式ページで確かめてください。"
+  festival_checked_max_days: 7
   # 段階60 第8部: 承認済み施設の発信(facts の visitor_centers)を、どの名所の答えに添えるか(施設 id → 地域の語)。名所の名前・市区町村・地域に語が含まれれば添える
   visitor_center_places:
     hakone-vc: [箱根]
@@ -280,10 +283,23 @@ place:
 # 段階57 第9部: 期間別の節の見出し(この形の行で節を始める)
 period_heading: "{days}のおすすめ"
 
-# 段階57 第9部: 答えの前の事前取得(ask refresh --plan)。計画の上位候補のうち、現況が対象日よりこの日数以上古いもの・現況がないものを読む
+# 段階57 第9部・段階63b 第2部: 答えの前の事前取得(ask refresh --plan・ask answer)。
+# 今回のおすすめの候補のうち、現況の記録を最後に読んでから有効期間(page_cache.ttl_hours)を過ぎたもの・現況の記録がないものの、
+# 有効期間の中で読んでいないページを読む(ページに書かれた日付では決めない。紹介サイトのページと、読むページのない候補は対象にしない)。
+# 段階63b(本人の指示 2026-11-08): 1 回の質問で読むページは 8 → 3。超えた分は、記録を日付つきで使う。
 refresh:
-  stale_days: 3
-  max_pages: 8
+  max_pages: 3
+
+# 段階63b 第2部: 取得のキャッシュ(データ置き場の cache/pages.jsonl。本文は保存しない)と、情報源の種類ごとの有効期間(時間)
+page_cache:
+  file: cache/pages.jsonl
+  ttl_hours:
+    status: {value: 24, reason: "紅葉・花の現況ページ。公式の更新は週1〜2回が多い(段階63b の指示書の初期値)"}
+    birds: {value: 24, reason: "野鳥の観察記録(東京港野鳥公園など)。毎日〜数日ごとの更新(同上)"}
+    visitor_center: {value: 48, reason: "施設の発信(ビジターセンター)。週1回程度の更新が多い(同上)"}
+    event: {value: 168, reason: "まつり・行事・観察会。期間は変わりにくい(同上。7日)"}
+    practical: {value: 720, reason: "開園時間・アクセスなどの実用情報。ほとんど変わらない(同上。30日)"}
+  # 名所カタログ・知識カード・気象庁の平年は、質問のたびには読まない(取得の対象にしない)
 
 # 段階57 第3部: 複数の対象の答えの節の見出し(この語だけの行を対象の節の始まりとして検査する)
 segment_headings: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
@@ -323,3 +339,30 @@ polish:
 # 段階60 第8部: 場所の質問(「高尾山の今の様子を教えて」)の答えの検査(ask verify --place)。1 か所の答えなので、候補数の下限は当てない(ほかの検査はそのまま)
 place_answer:
   verify_skip: [too_few_candidates]
+
+# 段階63a 第1部: 一発コマンド ask answer(ikimonobiyori/answer_run.py)。質問の文 → 必ず空でない答えの本文と、状態(PASS / DEGRADED / BLOCKED)。
+# フォールバックの順: 1 整えた文章(必須の検査に合格)→ 2 骨組み → 3 部分回答(問題のある候補を外した骨組み)→ 4 最低限の答え。
+answer_run:
+  budget_s: {value: 180, reason: "本人の指示(段階63a 第1部 4): 全体で3分を目安。取得が時間切れなら保存済みの記録で答える"}
+  max_rewrites: 1                      # 整える工程の作り直しは最大 1 回(段階63a 第1部 3)
+  # 質問の語 → 答える対象(ask の対象)。ガイドの言葉の表(data/guide/policy.yaml の words)のテーマから決める
+  subject_by_theme: {紅葉: autumn_leaves, 花: flowers, 野鳥: birds, 冬鳥: birds}
+  # 知識の言い方(「教えて」)でも、地域・日付の指定か、この語があれば、場所・時期の答え(計画)にする(「神奈川と東京で紅葉の見ごろを教えて」)。
+  # ただし knowledge_words(「について」「とは」など)があれば知識の答え
+  plan_words: [見ごろ, 見頃, おすすめ, お出かけ, 出かけ, 行きたい, 咲いて, 色づき, 見られる, 見に行]
+  knowledge_words: [について, とは, って何, どんな, 違い]
+  # ask の対象がないテーマ(現況の記録がない)は、ガイド型の答え(guide find --text --brief)
+  guide_only_themes: [桜, ホタル]
+  # 最低限の答え(段階63a 第1部 2-4: 確認できた範囲・確認できなかったこと・確認の方法)。事実は facts の値だけ
+  minimal:
+    lead: "{days}について、確認できた範囲でお答えします。"
+    lead_none: "{days}について、確認できている公式の情報の範囲では、今年の様子を確かめられた場所が見つかりませんでした。"
+    item: "・{name}: {state}"
+    unknown_heading: 確認できなかったこと
+    unknown_line: "・{names}は、今年の状況を確認できていません。"
+    how_heading: 確認の方法
+    how_line: 出かける前に、各施設・自治体の公式ページで今の様子を確かめてください。
+    max_items: 3
+  # 知識の質問で、手元の資料(知識カード)も名所の一覧もないときの最低限の答え
+  knowledge_none: "{topic}について、イキモノビヨリで確かめた資料はまだありません。"
+  knowledge_how: 研究機関・国や自治体・植物園や博物館の解説で確かめてください。

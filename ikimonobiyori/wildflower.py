@@ -8,7 +8,6 @@ import functools
 import json
 from datetime import date
 
-import yaml
 
 from . import guide
 from . import yamlcache
@@ -27,7 +26,7 @@ def _v(x):
 
 
 def _load(name):
-    return yaml.safe_load((guide.GUIDE_DIR / name).read_text(encoding="utf-8"))
+    return yamlcache.load((guide.GUIDE_DIR / name))
 
 
 def load():

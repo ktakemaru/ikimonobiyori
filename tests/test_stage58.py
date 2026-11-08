@@ -377,7 +377,10 @@ class Part9Skeleton(unittest.TestCase):
         f = facts_doc({"autumn_leaves": subject(spot("中津峡", 90, city="秩父市"))})
         plan = {"subject": "unknown-shape", "picks": []}
         r = {"sentences": [], "answer_errors": []}
-        self.assertEqual(ask.minimal_answer("x", f, plan, r), "今は答えを用意できません。\n")
+        got = ask.minimal_answer("x", f, plan, r)                   # 段階63a 第1部 5: 「今は答えを用意できません」をなくし、最低限の答え(空でない)にした
+        self.assertTrue(got.strip())
+        self.assertNotIn("答えを用意できません", got)
+        self.assertIn(AP.load_policy()["answer_run"]["minimal"]["how_heading"], got)
 
 
 class Part10Subjects(unittest.TestCase):

@@ -3,8 +3,8 @@
 「秩父・長瀞のエリア」「飯能あたり」「A・B、C〜D〜E、F周辺など」をエリアに分解し、エリア内の名所で計画を作る。"""
 import re
 
-import yaml
 
+from . import yamlcache
 from . import catalog as C
 from .paths import DATA_FILES_DIR
 
@@ -15,7 +15,7 @@ _doc = None
 def load():
     global _doc
     if _doc is None:
-        _doc = yaml.safe_load(PATH.read_text(encoding="utf-8"))
+        _doc = yamlcache.load(PATH)
     return _doc
 
 

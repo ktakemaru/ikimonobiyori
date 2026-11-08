@@ -16,6 +16,7 @@ import re
 import sys
 from pathlib import Path
 
+from . import yamlcache
 from . import catalog as catalog_mod
 from . import livegate, paths, regional
 from .fetch import wikidata
@@ -116,7 +117,7 @@ def _fetch(a, http_get=None):
         print("--live は計測フック(BIYORI_REQ_LOG)が有効なときだけ実行します", file=sys.stderr)
         return 2
     import yaml
-    cfg = yaml.safe_load((Path(__file__).resolve().parent / "config.yaml").read_text(encoding="utf-8"))
+    cfg = yamlcache.load((Path(__file__).resolve().parent / "config.yaml"))
     cp = regional.load_policy()["coordinates"]
     doc = catalog_mod.load_catalog("flowers")
     ents = targets(doc, cp)

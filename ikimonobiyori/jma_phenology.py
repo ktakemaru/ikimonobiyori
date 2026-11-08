@@ -13,8 +13,8 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from .fetch import ParseError
 from .paths import JMA_PHENOLOGY_DEF_PATH
 
@@ -29,7 +29,7 @@ COMMENT = "#"      # 正規化した CSV の冒頭の出典の行の印(read_csv
 
 
 def load_definition(path=None):
-    return yaml.safe_load(Path(path or JMA_PHENOLOGY_DEF_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or JMA_PHENOLOGY_DEF_PATH))
 
 
 def _mmdd(v):

@@ -166,3 +166,50 @@ def decide(state, skeleton_text, fact_ok, verify_ok):
     if state["attempts"] <= cfg()["max_rewrites"]:
         return "retry", state
     return "skeleton", state
+
+
+# ---- 段階63a 第4部: 骨組みの事実を構造化して持ち、整えた文章と照合する(段階63 第5部を統合) ----
+
+GUIDE_EYE_PREFIX = "ガイドの目:"
+
+
+def _free_lines(policy=None):
+    """書き手が整えてよい行: 冒頭の文(骨組みの lead_* の決まり文)と「ガイドの目」。ほかの行(候補・日付・距離・見込み・行事・施設の発信・
+    お知らせ・見出し・出典)は骨組みの文のまま(一字一句)。"""
+    t = (policy or AP.load_policy())["skeleton"]
+    return {_n(v).strip() for k, v in t.items() if k.startswith("lead_") and isinstance(v, str)}
+
+
+def skeleton_facts(skeleton, names=(), policy=None):
+    """骨組み → 行ごとの構造化した事実の一覧 [{line, text, fixed, facts: {種類: [値]}}](日付・曜日・時刻・距離・月・年・数値・URL・名前)。"""
+    free = _free_lines(policy)
+    out = []
+    for i, line in enumerate(skeleton.splitlines()):
+        t = _n(line).strip()
+        if not t:
+            continue
+        fixed = not (t in free or t.startswith(_n(GUIDE_EYE_PREFIX)))
+        out.append({"line": i, "text": line.strip(), "norm": t, "fixed": fixed, "facts": {k: sorted(v) for k, v in extract(line, names).items() if v}})
+    return out
+
+
+def fixed_line_errors(skeleton, text, names=(), policy=None):
+    """骨組みの事実の行(fixed)が、整えた文章に一字一句そのまま、同じ順で残っているか。食い違ったら骨組みのデータが正しい。"""
+    rows = [r for r in skeleton_facts(skeleton, names, policy) if r["fixed"]]
+    got = [_n(l).strip() for l in text.splitlines() if l.strip()]
+    errs, pos = [], 0
+    for r in rows:
+        try:
+            pos = got.index(r["norm"], pos) + 1
+        except ValueError:
+            errs.append({"code": "polish_fixed_line_changed", "kind": "line", "items": [r["text"][:40]],
+                         "detail": f"骨組みの事実の行が変わっています: {r['text'][:40]}"})
+    return errs
+
+
+def check_structured(skeleton, text, names=()):
+    """ask answer の段 1 の照合: これまでの事実の一致(check)に、事実の行の固定を足す。→ {ok, errors, facts}"""
+    base = check(skeleton, text, names)
+    fx = fixed_line_errors(skeleton, text, names)
+    errs = base["errors"] + fx
+    return {"ok": not errs, "errors": errs, "facts": skeleton_facts(skeleton, names)}

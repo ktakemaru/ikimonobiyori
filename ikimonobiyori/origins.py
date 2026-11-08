@@ -7,8 +7,8 @@ import json
 import re
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from .paths import DATA_FILES_DIR, data_path
 
 ORIGINS_PATH = DATA_FILES_DIR / "ask" / "origins.yaml"
@@ -20,14 +20,14 @@ _doc, _places = None, None
 def load():
     global _doc
     if _doc is None:
-        _doc = yaml.safe_load(ORIGINS_PATH.read_text(encoding="utf-8"))
+        _doc = yamlcache.load(ORIGINS_PATH)
     return _doc
 
 
 def places():
     global _places
     if _places is None:
-        _places = {p["municipality"]: p for p in (yaml.safe_load(PLACES_PATH.read_text(encoding="utf-8")) or {}).get("places") or []}
+        _places = {p["municipality"]: p for p in (yamlcache.load(PLACES_PATH) or {}).get("places") or []}
     return _places
 
 

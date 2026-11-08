@@ -2,9 +2,9 @@
 import json
 from pathlib import Path
 
-import yaml
 from jsonschema import Draft202012Validator
 
+from . import yamlcache
 from .paths import PROFILE_DIR, PROFILE_SCHEMA_PATH as SCHEMA_PATH, SITES_PATH  # noqa: E402,F401  (パッケージの中。段階12)
 
 
@@ -12,16 +12,30 @@ class ProfileError(ValueError):
     pass
 
 
+_VALIDATED = {}
+
+
 def validate_profile(doc):
-    v = Draft202012Validator(json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
-    return ["/".join(map(str, e.path)) + ": " + e.message[:120] for e in sorted(v.iter_errors(doc), key=lambda e: list(e.path))]
+    """スキーマの誤りの一覧。同じスキーマ・同じ中身の検査は 1 回の実行で 1 回だけ行う(段階63b 第1部。結果は同じ)。"""
+    schema_text = SCHEMA_PATH.read_text(encoding="utf-8")
+
+    def run():
+        v = Draft202012Validator(json.loads(schema_text))
+        return ["/".join(map(str, e.path)) + ": " + e.message[:120] for e in sorted(v.iter_errors(doc), key=lambda e: list(e.path))]
+    try:
+        key = (schema_text, json.dumps(doc, sort_keys=True, ensure_ascii=False))
+    except (TypeError, ValueError):                     # JSON にできない値(数と文字のキーが混ざるなど)は毎回検査する
+        return run()
+    if key not in _VALIDATED:
+        _VALIDATED[key] = run()
+    return list(_VALIDATED[key])
 
 
 def load_profiles(directory=None):
     """{profile_id: profile}。スキーマに通らないものは ProfileError。"""
     out = {}
     for p in sorted(Path(directory or PROFILE_DIR).glob("*.yaml")):
-        doc = yaml.safe_load(p.read_text(encoding="utf-8"))
+        doc = yamlcache.load(p)
         errs = validate_profile(doc)
         if errs:
             raise ProfileError(f"{p.name}: {errs[0]}")
@@ -43,5 +57,5 @@ def provisional_params(profile):
 
 
 def load_sites(path=None):
-    doc = yaml.safe_load(Path(path or SITES_PATH).read_text(encoding="utf-8"))
+    doc = yamlcache.load(Path(path or SITES_PATH))
     return {s["id"]: s for s in doc["sites"]}, doc

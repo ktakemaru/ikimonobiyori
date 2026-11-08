@@ -10,6 +10,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from urllib.parse import urlencode
 
+from . import yamlcache
 from .methods.temperature_progression import mean_tmin, stage_for
 from .profiles import param
 
@@ -182,7 +183,7 @@ def load_plan(path=None):
     import yaml
 
     from .paths import BACKTEST_PLAN_PATH
-    return yaml.safe_load(Path(path or BACKTEST_PLAN_PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or BACKTEST_PLAN_PATH))
 
 
 def plan_years(plan):

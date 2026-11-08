@@ -4,8 +4,8 @@
 from datetime import date
 from pathlib import Path
 
-import yaml
 
+from . import yamlcache
 from . import season, sources
 from .paths import DATA_FILES_DIR
 
@@ -13,7 +13,7 @@ PATH = DATA_FILES_DIR / "observations" / "festivals.yaml"
 
 
 def load(path=None):
-    return yaml.safe_load(Path(path or PATH).read_text(encoding="utf-8"))
+    return yamlcache.load(Path(path or PATH))
 
 
 def _pol(policy=None):
