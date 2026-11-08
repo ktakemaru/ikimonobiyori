@@ -166,5 +166,10 @@ def render(rows=None, notes=None):
             out.append("| " + " | ".join(_cell(x) for x in [f"{r['name']}（{r['id']}）", s.get("url"), s.get("class"), s.get("terms")]) + " |")
     if nt.get("showakinen"):
         out += ["", "## 5. 国営昭和記念公園（showakinen-flower-information・showakinen-flower-information-flowers）の規約", "", nt["showakinen"].rstrip()]
+    if nt.get("terms_stage67"):                                            # 段階67 第5部: 規約を読めていなかった出典(承認の記入はしない)
+        out += ["", "## 6. 知識カード・名所の出典の規約の要約（段階67 第5部。2026-11-09 に読んだ。承認の記入はしていない）", "",
+                "| 出典 | 読んだページ | 要約(2行以内) | 本人の判断 |", "|---|---|---|---|"]
+        for x in nt["terms_stage67"]:
+            out.append("| " + " | ".join(_cell(v) for v in [x.get("name"), x.get("url"), x.get("summary"), x.get("judgement") or "—"]) + " |")
     out += ["", nt.get("takao_mitake", "").rstrip(), "", nt.get("yamakei", "").rstrip(), ""]
     return NL.join(re.sub(r"[ \t]+$", "", l) for l in out)

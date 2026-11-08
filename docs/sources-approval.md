@@ -222,13 +222,13 @@
 | 芦川のすずらん群生地（hana-0044） | https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html | 県の観光公式(やまなし観光推進機構)。群生地の管理者自身のページではない | 「このサイトについて」に引用・転載・自動取得の規定はなく © 表示だけ(台帳 yamanashi-kankou-koyo の確認) |
 | 府中市郷土の森博物館(梅園)（hana-0045） | https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html | 紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない | 許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認) |
 | あしかがフラワーパーク（hana-0046） | https://www.ashikaga.co.jp/ | 施設自身の公式ページ(あしかがフラワーパーク) | トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09) |
-| 吾妻山公園（hana-0047） | https://www.town.ninomiya.kanagawa.jp/0000001281.html | 自治体の公式ページ(二宮町。公園の管理者の町自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
-| 寄ロウバイ園（hana-0048） | https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html | 自治体の公式ページ(松田町。園の運営の町自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
-| 熱海梅園（hana-0049） | https://www.city.atami.lg.jp/hana/1003681/1003692/index.html | 自治体の公式ページ(熱海市。梅園の設置者の市自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
-| 越生梅林（hana-0050） | https://ogose-kanko.jp/tourist_attractions/ogose-bairin | 町の観光協会の公式ページ(越生町観光協会) | 規約は未読(段階65 第2部では本文だけ読んだ) |
-| 偕楽園（hana-0051） | https://ibaraki-kairakuen.jp/zukan/ | 施設自身の公式ページ(偕楽園) | 規約は未読(段階65 第2部では本文だけ読んだ) |
-| 曽我梅林（hana-0052） | https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html | 自治体の公式ページ(小田原市) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
-| 権現堂桜堤（hana-0053） | https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html | 自治体の公式ページ(幸手市) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
+| 吾妻山公園（hana-0047） | https://www.town.ninomiya.kanagawa.jp/0000001281.html | 自治体の公式ページ(二宮町。公園の管理者の町自身のページ) | 段階67 第5部(2026-11-09): 無断の複製・転用は不可(私的使用・引用を除く)。自動取得の記載なし |
+| 寄ロウバイ園（hana-0048） | https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html | 自治体の公式ページ(松田町。園の運営の町自身のページ) | 段階67 第5部(2026-11-09): 無断の複製・転載・販売・貸与・改変は不可(私的使用・引用を除く)。自動取得の記載なし |
+| 熱海梅園（hana-0049） | https://www.city.atami.lg.jp/hana/1003681/1003692/index.html | 自治体の公式ページ(熱海市。梅園の設置者の市自身のページ) | 段階67 第5部(2026-11-09): 市の許可なく複製・転用・販売などの二次利用を禁じる。自動取得の記載なし |
+| 越生梅林（hana-0050） | https://ogose-kanko.jp/tourist_attractions/ogose-bairin | 町の観光協会の公式ページ(越生町観光協会) | 段階67 第5部(2026-11-09): フッターに「無断転載・複製を禁止」。規約のページはない |
+| 偕楽園（hana-0051） | https://ibaraki-kairakuen.jp/zukan/ | 施設自身の公式ページ(偕楽園) | 段階67 第5部(2026-11-09): トップに規約のページへのリンクなし(© 茨城県)。転載の記載は確認できず |
+| 曽我梅林（hana-0052） | https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html | 自治体の公式ページ(小田原市) | 段階67 第5部(2026-11-09): 権利者の許可なく複製・転用などの二次利用を禁じる。自動取得の記載なし |
+| 権現堂桜堤（hana-0053） | https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html | 自治体の公式ページ(幸手市) | 段階67 第5部(2026-11-09): 著作権のページ(4091.html)は未読。目次のページに転載の記載なし |
 
 ## 5. 国営昭和記念公園（showakinen-flower-information・showakinen-flower-information-flowers）の規約
 
@@ -236,6 +236,26 @@
 - 要約: 掲載データ・写真は「無断転載を禁じます」、著作権は公園に帰属。複製・自動取得の記載はなく、リンクはフリー(トップへ)。robots.txt は全ロボット向けに /wp-admin/ など管理用の 2 か所だけ拒否。
 - 承認すると出る現況(2026-11-09 の記録): 記録 8 件(状態の読めるもの 7 件)。名所では 紅葉 3 か所(国営昭和記念公園(日本庭園)・カナール・イチョウ並木・かたらいのイチョウ並木)と 花 1 か所(国営昭和記念公園 hana-0004)。どれも状態の日付は 10/31〜11/05 で、新しさの区分は「やや古い」以下。
 - 推奨: **要判断**。無断転載の禁止はあるが、状態の語・日付・URL の短い事実を出典つきで示す使い方(ほかの承認済みの施設と同じ)を許すかは本人の判断。
+
+## 6. 知識カード・名所の出典の規約の要約（段階67 第5部。2026-11-09 に読んだ。承認の記入はしていない）
+
+| 出典 | 読んだページ | 要約(2行以内) | 本人の判断 |
+|---|---|---|---|
+| 北杜市観光協会 | https://www.hokuto-kanko.jp/policy/ | プライバシーポリシーだけで、転載・複製・引用・自動取得の記載なし。トップに © 表示のみ。robots.txt は未確認 | — |
+| 中央アルプス観光 | https://chuo-alps.com/privacy/ | 規約・著作権のページはなく、プライバシーポリシーにも転載・複製・自動取得の記載なし。© 表示のみ。robots.txt は未確認 | — |
+| 駒ヶ根観光協会 | https://www.kankou-komagane.com/policy | プライバシーポリシーだけで、転載・複製・引用・自動取得の記載なし。© 表示のみ。robots.txt は未確認 | — |
+| 新潟県観光協会 | https://niigata-kankou.or.jp/site-policy/ | 著作権は協会か情報提供者に帰属。私的使用・引用の範囲を超える使用は協会へ問い合わせ。自動取得の記載なし | — |
+| 新穂高ロープウェイ(奥飛観光開発) | https://shinhotaka-ropeway.jp/privacy/ | 規約・著作権のページはなく、プライバシーポリシーにも転載・自動取得の記載なし。© 表示のみ | — |
+| 大山観光電鉄 | https://www.ooyama-cable.co.jp/ | トップに規約・著作権のページへのリンクがない(© 表示のみ)。転載・自動取得の記載は確認できず | — |
+| 立山黒部貫光 | https://www.alpen-route.co.jp/policy/ | サイトポリシーの入口はリンク集だけで、本文(s-policy-j)は上限のため未読。転載・自動取得の記載は未確認 | — |
+| mtasama.com(浅間山ジオパーク推進協議会) | https://mtasama.com/ | 運営は浅間山ジオパーク推進協議会(公的な協議会)。規約のページはなく、転載・複製の記載なし。写真・ロゴの使用は申請制(要綱 PDF は未読) | — |
+| 二宮町 | https://www.town.ninomiya.kanagawa.jp/site_policy/0000000003.html | 私的使用の複製・引用など著作権法で認められた場合を除き、無断の複製・転用は不可。自動取得の記載なし | 無断の複製・転用の禁止あり(事実のみ・自分の言葉・出典明記で使うかは本人の判断) |
+| 松田町 | https://town.matsuda.kanagawa.jp/site/userguide/08.html | 私的使用・引用などを除き、無断の複製・転載・販売・貸与・改変は不可。自動取得の記載なし | 無断の複製・転載の禁止あり(同上) |
+| 熱海市 | https://www.city.atami.lg.jp/about/sitepolicy.html | 著作権は市に帰属。市の許可なく複製・転用・販売などの二次利用を固く禁じる。自動取得の記載なし | 許可のない二次利用の禁止あり(同上) |
+| 越生町観光協会 | https://ogose-kanko.jp/ | フッターに「無断転載・複製を禁止」。規約のページはなく、自動取得の記載なし | 無断転載・複製の禁止あり(同上) |
+| 偕楽園(茨城県) | https://ibaraki-kairakuen.jp/ | トップに規約・著作権のページへのリンクがない(© 茨城県の表示)。転載・自動取得の記載は確認できず | — |
+| 小田原市 | https://www.city.odawara.kanagawa.jp/tyosaku/tyosakuetc.html | 権利者の許可なく複製・転用・販売などの二次利用を固く禁じる。リンクは原則自由。自動取得の記載なし | 許可のない二次利用の禁止あり(同上) |
+| 幸手市 | https://www.city.satte.lg.jp/soshiki/hisyo/7228.html | 「市ホームページについて」は目次だけで、著作権のページ(4091.html)は上限のため未読。転載・自動取得の記載は未確認 | — |
 
 ### 高尾・御岳ビジターセンター: 施設の自前サイトと、山と溪谷オンライン経由の違い
 | 項目 | 施設の自前サイト（takaovc.ces-net.jp・mitakevc.ces-net.jp） | 山と溪谷オンライン経由（掲載されていた情報） |
