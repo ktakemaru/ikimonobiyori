@@ -67,6 +67,7 @@ def season_text(c, sj, t, max_quote):
 
 
 def pick_block(p, i, c, sj, t, max_quote, today=None):
+    """段階64 第7部 2(本人の判断 2026-11-08): 1 行目に名所名と距離、その下に箇条で事実(今の状況・例年の時期・見込み・行事・行く前の注意)。1 つの箇条に 1 つの事実。"""
     head = f"{CIRCLED[i]} {p['name']}"
     if c.get("city"):
         head += f"({c['city']})"
@@ -80,8 +81,7 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
         bits.append(p["phrase"])
     if p.get("note") and p["note"] not in " ".join(bits) and "確認できていません" not in bits[0]:
         bits.append(p["note"])
-    body = "。".join(x.rstrip("。") for x in bits if x) + "。"
-    lines = [f"{head}: {body}"]
+    lines = [head] + [f"・{x.rstrip('。')}" for x in bits if x]
     for e in c.get("closed_on") or []:
         if e.get("closed") and e.get("line"):
             lines.append(f"・{e['line']}")

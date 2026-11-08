@@ -49,5 +49,34 @@ class KanaGardenApproved(unittest.TestCase):
         self.assertIn("kana-garden.com", regional.load_policy()["approved_hosts"]["hosts"])
 
 
+class PickBlockShape(unittest.TestCase):
+    """段階64 第7部 2(本人の判断 2026-11-08): 名所ごとに 1 行目は名所名と距離、その下に箇条で事実を 1 つずつ。"""
+
+    def compose(self):
+        from ikimonobiyori import answer_plan as AP
+        from ikimonobiyori import skeleton as SK
+        import test_stage57 as T57
+        subj = {"subject": "autumn_leaves", "avoid": [], "nearby_out_of_region": [], "alternatives": [],
+                "candidates": [T57.spot("試験の園", 20, date_="2026-11-07", city="園町"), T57.spot("試験の谷", 60, date_="2026-11-07", city="谷町")]}
+        f = T57.facts_doc({"autumn_leaves": subj}, dates=("2026-11-08",), now="2026-11-08T09:00:00+09:00")
+        return SK.compose(f, AP.build(f, "autumn_leaves"), cards=[])
+
+    def test_head_line_is_name_and_distance_and_facts_are_bullets(self):
+        lines = self.compose().splitlines()
+        heads = [n for n, ln in enumerate(lines) if ln.startswith(("①", "②"))]
+        self.assertEqual(len(heads), 2)
+        for n in heads:
+            with self.subTest(lines[n]):
+                self.assertRegex(lines[n], r"^[①②] \S+\(\S+\) 約\d+km$")
+                bullets = []
+                for ln in lines[n + 1:]:
+                    if not ln.startswith("・"):
+                        break
+                    bullets.append(ln)
+                self.assertGreaterEqual(len(bullets), 2)
+                self.assertTrue(any("時点" in b for b in bullets))                    # 今の状況
+                self.assertTrue(all(not b.endswith("。") for b in bullets))
+
+
 if __name__ == "__main__":
     unittest.main()

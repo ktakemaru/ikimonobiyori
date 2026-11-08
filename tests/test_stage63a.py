@@ -361,8 +361,16 @@ class PolishedMatch(unittest.TestCase):
         rows = self.PL.skeleton_facts(self.sk, self.names)
         cand = [r for r in rows if r["text"].startswith("①")]
         self.assertTrue(cand and cand[0]["fixed"])
-        self.assertIn("date", cand[0]["facts"])
         self.assertIn("name", cand[0]["facts"])
+        # 段階64 第7部 2(本人の判断 2026-11-08): 日付は 1 行目ではなく、その下の箇条(事実の行。fixed)にある
+        k = rows.index(cand[0])
+        bullets = []
+        for r in rows[k + 1:]:
+            if not r["text"].startswith("・"):
+                break
+            bullets.append(r)
+        self.assertTrue(bullets and all(r["fixed"] for r in bullets))
+        self.assertTrue(any("date" in r["facts"] for r in bullets))
         lead = rows[0]
         self.assertFalse(lead["fixed"])                                      # 冒頭の決まり文は整えてよい
 
