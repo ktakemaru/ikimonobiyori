@@ -398,5 +398,37 @@ class PolishedMatch(unittest.TestCase):
                 self.assertIn(res3["stage"], (1, 2, 3, 4))
 
 
+class AnswerLog(unittest.TestCase):
+    """第5部: 答えごとの記録(データ置き場の logs/answers.jsonl。リポジトリの外)と集計。"""
+
+    def test_each_answer_is_logged_and_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            with unittest.mock.patch.dict("os.environ", env):
+                AR.run("今日お出かけするならどこ?", now=NOW, env=env)
+                with unittest.mock.patch.object(AR, "gate_check", lambda text, *a, **k: {"ok": False, "text": text,
+                                                                                         "errors": [{"code": "unknown_date", "detail": "x", "gate": "fact"}], "warnings": []}):
+                    AR.run("箱根の紅葉はどう?", now=NOW, env=env)
+                rows = AR.read_log(env)
+                self.assertEqual(len(rows), 2)
+                self.assertTrue(Path(d, "logs", "answers.jsonl").is_file())
+                for r in rows:
+                    for k in ("status", "stage", "checks", "failed", "warnings", "removed_candidates", "elapsed_s"):
+                        self.assertIn(k, r)
+                    self.assertEqual([c["id"] for c in r["checks"]], ["fact", "safety", "consistency", "output"])
+                self.assertEqual(rows[1]["stage"], 4)
+                self.assertIn("unknown_date", rows[1]["failed"])
+                text = AR.report(rows)
+                self.assertIn("フォールバックの段", text)
+                self.assertIn("unknown_date", text)
+                out = io.StringIO()
+                with redirect_stdout(out):
+                    self.assertEqual(ask.main(["checks", "report"]), 0)
+                self.assertIn("答えの数: 2", out.getvalue())
+
+    def test_log_is_not_written_in_the_repository(self):
+        self.assertFalse((ROOT / "logs").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

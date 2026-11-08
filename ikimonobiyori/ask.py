@@ -972,6 +972,9 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(省くとデータ置き場の ask/<日時>)")
     p.add_argument("--now")
     p.add_argument("--json", action="store_true", help="結果をすべて JSON で出す(デバッグ用)")
+    p = sub.add_parser("checks", help="答えの検査の記録(データ置き場の logs/answers.jsonl)の集計(段階63a 第5部)。report: よく落ちる検査・フォールバックの段の割合")
+    p.add_argument("action", choices=["report"])
+    p.add_argument("--json", action="store_true")
     p = sub.add_parser("warm", help="「今日の準備」: 承認済みの情報源のうち、有効期間を過ぎたものの一覧(優先順)。読むのはエージェントの道具。通信しない(段階63b)")
     p.add_argument("--now")
     p.add_argument("--mark", action="append", default=[], help="記録する事実がなかった・読めなかったページの URL(読んだ時刻だけを残す)")
@@ -1084,6 +1087,14 @@ def main(argv=None, http_get=None):
         pol_text = Path(a.polished).read_text(encoding="utf-8") if a.polished else None
         res = AR.run(a.question, now=now, workdir=Path(a.out_dir) if a.out_dir else None, polished=pol_text)
         AR.print_result(res, sys.stdout, sys.stderr, as_json=a.json)
+        return 0
+    if a.step == "checks":                               # 段階63a 第5部
+        from . import answer_run as AR
+        rows = AR.read_log()
+        if a.json:
+            _out(rows)
+        else:
+            sys.stdout.write(AR.report(rows))
         return 0
     if a.step == "warm":                                 # 段階63b 第3部: 今日の準備(答えは作らない)
         from . import warm as WM

@@ -25,6 +25,7 @@ from . import sources as S
 from .paths import data_path
 
 STATUS_PASS, STATUS_DEGRADED, STATUS_BLOCKED = "PASS", "DEGRADED", "BLOCKED"
+NL = "\n"
 STAGES = {1: "polished", 2: "skeleton", 3: "partial", 4: "minimal"}
 
 
@@ -294,6 +295,10 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
     res["elapsed_s"] = round(time.monotonic() - t0, 2)
     res["stage_name"] = STAGES.get(res["stage"])
     try:
+        write_log(res, now, env)
+    except OSError:
+        pass
+    try:
         Path(workdir).mkdir(parents=True, exist_ok=True)
         (Path(workdir) / "final.txt").write_text(res["text"], encoding="utf-8")
         (Path(workdir) / "answer.json").write_text(json.dumps({k: v for k, v in res.items() if k != "text"}, ensure_ascii=False, indent=1, default=str),
@@ -301,6 +306,56 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
     except OSError:
         pass
     return res
+
+
+def log_row(res, now):
+    """答えごとの記録の 1 行(段階63a 第5部): 状態・4つの検査の結果・落ちた理由・警告・フォールバックの段・外した候補の数・かかった時間。"""
+    from . import answer_gates as AG
+    errs = res.get("errors") or []
+    checks = [{"id": g, "result": "FAIL" if any(e.get("gate") == g for e in errs) else "PASS",
+               "codes": sorted({e["code"] for e in errs if e.get("gate") == g})} for g in AG.GATES]
+    return {"at": now.isoformat(), "question": (res.get("question") or "")[:80], "route": res.get("route"), "status": res.get("status"),
+            "stage": res.get("stage"), "stage_name": STAGES.get(res.get("stage")), "checks": checks,
+            "failed": sorted({e["code"] for e in errs}), "warnings": sorted({w["code"] for w in res.get("warnings") or []}),
+            "removed_candidates": len(res.get("removed") or []), "removed_lines": len(res.get("removed_lines") or []),
+            "elapsed_s": res.get("elapsed_s"), "refresh_pages": len(res.get("refresh_pages") or [])}
+
+
+def write_log(res, now, env=None):
+    p = _log_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a", encoding="utf-8", newline="") as f:
+        f.write(json.dumps(log_row(res, now), ensure_ascii=False) + NL)
+
+
+def read_log(env=None):
+    try:
+        return [json.loads(l) for l in _log_path(env).read_text(encoding="utf-8").splitlines() if l.strip()]
+    except (OSError, ValueError):
+        return []
+
+
+def report(rows):
+    """記録の集計: よく落ちる検査・よく出る警告・フォールバックの段と状態の割合・かかった時間。→ 文字列"""
+    from collections import Counter
+    n = len(rows)
+    if not n:
+        return "記録がまだありません。" + NL
+    fail, warn, stage, status = Counter(), Counter(), Counter(), Counter()
+    for r in rows:
+        fail.update(r.get("failed") or [])
+        warn.update(r.get("warnings") or [])
+        stage[r.get("stage_name") or str(r.get("stage"))] += 1
+        status[r.get("status")] += 1
+    el = sorted(r["elapsed_s"] for r in rows if isinstance(r.get("elapsed_s"), (int, float)))
+    out = [f"答えの数: {n}"]
+    out.append("フォールバックの段: " + "、".join(f"{k} {v}件({v * 100 // n}%)" for k, v in stage.most_common()))
+    out.append("状態: " + "、".join(f"{k} {v}件({v * 100 // n}%)" for k, v in status.most_common()))
+    if el:
+        out.append(f"かかった時間: 中央 {el[len(el) // 2]} 秒、最大 {el[-1]} 秒")
+    out.append("よく落ちる検査: " + ("、".join(f"{k} {v}" for k, v in fail.most_common(10)) or "なし"))
+    out.append("よく出る警告: " + ("、".join(f"{k} {v}" for k, v in warn.most_common(10)) or "なし"))
+    return NL.join(out) + NL
 
 
 def _last_resort(cond, now, pol):
