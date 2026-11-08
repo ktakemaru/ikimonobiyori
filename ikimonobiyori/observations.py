@@ -522,10 +522,14 @@ def record(batch, *, env=None, policy=None, now=None):
 
 # ---- 候補(名所の一覧 + 既存の名所カタログ) ----
 
-def event_derived(w, events, policy=None):
+def event_derived(w, events, policy=None, name=None):
     """例年の時期として置かれた期間が、行事の期間を写したものか(段階35)。
-    同じ月日の行事がある、または注記に「行事の期間」を表す語(policy の typical.event_note_words)がある → True。"""
+    同じ月日の行事がある、または注記に「行事の期間」を表す語(policy の typical.event_note_words)がある → True。
+    段階64 第2部 3: 名所の名前が行事・展示の名前(typical.event_name_words。「平塚八幡宮 菊花展」)なら、その名所の期間も行事の期間。"""
     words = ((policy or {}).get("typical") or {}).get("event_note_words") or ["期間", "フェスタ", "フェスティバル", "まつり", "祭", "開放"]
+    name_words = ((policy or {}).get("typical") or {}).get("event_name_words") or []
+    if name and any(x in name for x in name_words):
+        return True
     for ev in events or []:
         if ev.get("start") and ev.get("end") and str(ev["start"])[5:] == w.get("start") and str(ev["end"])[5:] == w.get("end"):
             return True
@@ -543,7 +547,7 @@ def _typical_from_catalog(e, policy=None):
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
                     "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": urlparse(w["source_url"]).hostname,
                     "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
-                    "event_derived": event_derived(w, e.get("events"), policy)})
+                    "event_derived": event_derived(w, e.get("events"), policy, e.get("name"))})
     return out
 
 

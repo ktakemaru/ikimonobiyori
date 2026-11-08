@@ -449,6 +449,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
+    answer_errors += event_as_typical_errors(text, mat)            # 段階64 第2部 3
     answer_errors += stage51_errors(text, facts, mat, rules, plan=plan, segs=segs)
     answer_errors += restricted_source_errors(facts)
     if plan and segs:                                                        # 段階57 第3部: 節ごとに、計画の今回のおすすめと照合する
@@ -820,6 +821,21 @@ def answer_units(text):
         rest = [ln for ln in para.splitlines() if not any(ln in b.splitlines() for b in blocks)]
         out += blocks + ([chr(10).join(rest)] if any(x.strip() for x in rest) else [])
     return out
+
+
+def event_as_typical_errors(text, mat):
+    """段階64 第2部 3: 「例年の見頃: X」の X が、その候補の行事・まつり・展示の期間を写した値(event_derived)なら不合格。
+    例年の時期としては書かず、「例年の時期は分かりません。今年は○/○〜○/○に(行事名)があります」にする(骨組みはそう作る)。"""
+    from . import observations as O
+    lab = O.load_policy()["typical_labels"]["known"]
+    errs = []
+    for unit in answer_units(text):
+        u = _n(unit)
+        for spot in mat.spots_in(unit):
+            for t in spot.get("typical") or []:
+                if t.get("event_derived") and t.get("text") and _n(lab.format(text=t["text"])) in u:
+                    errs.append({"code": "event_as_typical", "detail": f"{spot.get('name')}: 行事の期間({t['text']})を例年の見頃として書いた"})
+    return errs
 
 
 def typical_unknown_errors(text, mat, rules):

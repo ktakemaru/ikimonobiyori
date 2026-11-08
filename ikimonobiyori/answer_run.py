@@ -492,6 +492,8 @@ def _other_route(res, cond, now, env, pol):
     elif cond["route"] == "guide" and cond.get("guide_word"):
         text = _guide_text(cond["guide_word"], [date.fromisoformat(x) for ds in cond["periods"] for x in ds][0], cond["origin"])
     if text:
+        from . import answer_gates as AG
+        text = AG.strip_old_list(text)                                    # 段階64 第2部 4: 古い一覧の形を答えに出さない
         r = V.generic_check(text)
         errs = [e for e in r["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
         if not errs:
