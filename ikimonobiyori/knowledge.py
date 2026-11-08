@@ -156,8 +156,21 @@ def line_for(card):
     c = cfg()
     cond = card.get("condition") or {}
     facts = "。".join(x.rstrip("。") for x in card["facts"][: c["max_facts_in_answer"]])
-    year = c["year_prefix"].format(year=cond["year"]) if cond.get("year_dependent") else ""
+    year = c["year_prefix"].format(year=cond["year"]) if cond.get("year_dependent") and not has_year_in_facts(card) else ""
     return c["line"].format(year=year, facts=facts, source=card["source"]["name"])
+
+
+def plain_line(card):
+    """段階67 第4部 2: 見出しの下に置く行(「ガイドの目:」を付けない)。事実と出典。"""
+    c = cfg()
+    return c["before_line"].format(facts="。".join(x.rstrip("。") for x in card["facts"][: c["max_facts_in_answer"]]), source=card["source"]["name"])
+
+
+def has_year_in_facts(card):
+    """段階67 第4部 4(承認欄 G): 事実の中に年(「2026年」)があるカードは「○年の記録では」の前置きを付けない。"""
+    c = cfg()
+    facts = card.get("facts") or []
+    return any(re.search(r"(19|20)\d{2}年", f) for f in facts[: c["max_facts_in_answer"]])
 
 
 def split_lines(cards):

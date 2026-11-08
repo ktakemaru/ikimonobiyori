@@ -294,5 +294,59 @@ class Part3UmeFamousSpots(unittest.TestCase):
         self.assertNotIn("2027年", text)
 
 
+def _kcard(title, place, cat, facts, year=None, sites=("m052",), months=()):
+    return {"title": title, "category": cat, "place": place, "place_aliases": [], "facts": facts, "sites": list(sites),
+            "condition": {"months": list(months), "year_dependent": bool(year), **({"year": year} if year else {})},
+            "source": {"name": "試験県", "url": f"https://example.org/{title}", "checked_on": "2026-11-09"},
+            "confidence": "公的資料", "rights": "確認済み。事実のみ", "usage": "ガイドの目として1行"}
+
+
+class Part4MountainCards(unittest.TestCase):
+    NONE = {"autumn_leaves": [], "flowers": [], "birds": []}
+
+    def compose(self, q, cards):
+        from datetime import date
+        from ikimonobiyori import highlights as HL
+        return HL.compose(q, today=date(2026, 11, 9), cards=cards, centers=[], reports=[], cands=self.NONE, records=self.NONE)["text"]
+
+    def test_season_lines_come_from_the_months_in_the_cards(self):
+        cs = [_kcard("試験の森", "赤城山", "季節の仕組み", ["ミズナラの林が広がる"]),
+              _kcard("試験の花", "赤城山", "見頃の流れ", ["荒山は5月中旬のツツジ", "7〜8月はクロユリ・チングルマ"], months=[5, 7])]
+        t = self.compose("赤城山の見どころを教えて", cs)
+        self.assertIn("### 春\n・荒山: ツツジ(例年5月中旬、試験県)", t)
+        self.assertIn("### 夏\n・クロユリ・チングルマ(例年7〜8月、試験県)", t)
+        self.assertNotIn("荒山は5月中旬のツツジ。", t)                     # 季節の行にした事実はガイドの目に重ねない
+
+    def test_facility_and_walk_cards_go_to_their_sections(self):
+        cs = [_kcard("試験の森", "赤城山", "季節の仕組み", ["ミズナラの林が広がる"]),
+              _kcard("試験VC", "赤城山", "施設", ["試験ビジターセンターは2026年9月19日にオープンした"], year=2026),
+              _kcard("試験の散策路", "赤城山", "行き方・歩き方", ["大沼一周は約60分"])]
+        t = self.compose("赤城山の見どころを教えて", cs)
+        self.assertIn("## 施設\n・試験ビジターセンターは2026年9月19日にオープンした(試験県)", t)
+        self.assertIn("## 行く前に・歩き方\n大沼一周は約60分(試験県)", t)
+        self.assertNotIn("ガイドの目: ", t)
+
+    def test_lead_is_the_whole_area_card(self):
+        cs = [_kcard("滝の話", "竜頭ノ滝", "季節の仕組み", ["竜頭ノ滝は滝上の紅葉がいちばん早い"], sites=()),
+              _kcard("森の話", "日光", "見頃の流れ", ["4月下旬に花が咲き始める"], sites=())]
+        cs[0]["place_aliases"] = ["奥日光"]
+        t = self.compose("日光の見どころを教えて", cs)
+        self.assertTrue(t.splitlines()[1].startswith("日光の自然: 4月下旬に花が咲き始める"), t)
+
+    def test_no_year_prefix_when_the_fact_has_a_year(self):
+        from ikimonobiyori import knowledge as K
+        c1 = _kcard("試験", "赤城山", "保全・マナー", ["新しい木道は2024年秋に完成した"], year=2026)
+        self.assertNotIn("2026年の記録では", K.line_for(c1))
+        c2 = _kcard("試験2", "赤城山", "保全・マナー", ["シカの食害が深刻"], year=2026)
+        self.assertIn("2026年の記録では", K.line_for(c2))
+
+    def test_site_name_is_not_matched_by_a_shorter_alias(self):
+        cs = [_kcard("木曽の花", "木曽駒ヶ岳", "季節の仕組み", ["カールがお花畑になる"], sites=("m008",)),
+              _kcard("箱根の鳥", "箱根", "種の解説", ["箱根だけの固有の鳥はいない"], sites=())]
+        cs[1]["place_aliases"] = ["駒ヶ岳"]
+        t = self.compose("木曽駒ヶ岳の見どころを教えて", cs)
+        self.assertNotIn("箱根だけの固有の鳥", t)
+
+
 if __name__ == "__main__":
     unittest.main()

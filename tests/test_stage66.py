@@ -36,7 +36,8 @@ class MountainCards(unittest.TestCase):
               card("試験の山の鳥", "筑波山", "出会い方・歩き方", ["冬は林で小鳥の群れに出会える"], sites=["m057"])]
         t = HL.compose("筑波山の見どころを教えて", today=date(2026, 11, 9), cards=cs, centers=[], reports=[], cands=NONE, records=NONE)["text"]
         self.assertIn("筑波山の自然: 山麓は落葉広葉樹林。山頂付近にブナ林。", t)
-        self.assertIn("ガイドの目: 冬は林で小鳥の群れに出会える", t)
+        # 段階67 第4部 5(指示書: 見出し「ガイドの目」があるときは行の先頭に「ガイドの目:」を付けない)
+        self.assertIn("## ガイドの目\n冬は林で小鳥の群れに出会える", t)
 
     def test_a_species_card_is_not_found_by_an_alias_inside_a_spot_name(self):
         cs = [card("試験の外来の鳥", "試験の鳥", "保全・マナー", ["外来の鳥"], aliases=["試験山地"]),

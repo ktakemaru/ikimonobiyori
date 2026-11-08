@@ -132,7 +132,9 @@ class Part4Highlights(unittest.TestCase):
         r = self.compose("日光の見どころを教えて")
         t = r["text"]
         self.assertTrue(t.startswith("**日光の見どころ**"))
-        self.assertIn("日光の自然: 湿原の草原は秋に黄金色になる。周りの森はカラマツが多い。", t)      # 冒頭はカードの事実
+        # 段階67 第4部 3(指示書: 冒頭は1地点の話より山・エリア全体のカードを優先): エリアの別名(奥日光)のカードが冒頭。1地点(戦場ヶ原)のカードはガイドの目に
+        self.assertIn("日光の自然: 4月下旬に花が咲き始める。", t)      # 冒頭はカードの事実
+        self.assertIn("湿原の草原は秋に黄金色になる。周りの森はカラマツが多い", t)
         self.assertLess(t.index("### 夏"), t.index("### 秋"))                                 # 季節の順
         self.assertIn("・試験の高原: ニッコウキスゲ(例年 6月上旬〜7月上旬)", t)
         self.assertNotIn("よその公園", t)
