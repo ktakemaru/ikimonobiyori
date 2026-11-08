@@ -159,6 +159,9 @@ def check_event(text, today, events=None, rules=None):
     """行事の答えの検査(意図が event のとき。知識カードの検査と名所の候補数の下限は当てない)。
     台帳との照合(facility_events.answer_errors)+ 作業の事情・内部用語・答えの中の質問(既存の規則)。"""
     rules = rules or load_rules()
+    if events is None:                                   # 段階62 第6部: 行事の台帳と記録済みの行事の索引
+        from . import event_index as EI
+        events = EI.build(today)
     return (FE.answer_errors(text, today, events) + process_excuse_errors(text, rules) + question_errors(text, rules)
             + [{"code": e["code"], "detail": e["detail"]} for e in term_errors(text, rules) + internal_word_errors(text, rules)])
 

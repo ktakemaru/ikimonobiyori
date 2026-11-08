@@ -1,7 +1,7 @@
 # 段階61 第2部: 博物館などの行事・展示の台帳(events.yaml)の方針(ikimonobiyori/facility_events.py)。値と文はここに置く。
 # 行事は現況ではない。年つきの日付と、書かれた曜日が暦と合うものだけを使う。承認(approval.status: approved)の施設の行事だけを答えに出す(承認は本人が行う)
 schema: ikimono-facility-events-policy/1
-kinds: [講座, 観察会, 展示]
+kinds: [講座, 観察会, 展示, まつり, イベント]      # 段階62 第6部: 記録済みの行事(まつり・イベント)も同じ形で扱う
 weekdays: [月, 火, 水, 木, 金, 土, 日]
 # 質問の語 → 行事の話題(events の topics と照らす)
 ask_words: [観察会, 講座, イベント, 催し, 行事, 展示, 特別展, 企画展, 勉強会]
@@ -9,15 +9,33 @@ topic_words:
   野鳥: [野鳥, 鳥, バードウォッチング, 探鳥]
   地形・地質: [地形, 地質, 岩石, 石, 火山]
   自然: [自然, 生き物, 里山]
-regions: {神奈川: [神奈川県]}
+regions: {神奈川: [神奈川県], 東京: [東京都], 埼玉: [埼玉県], 千葉: [千葉県], 栃木: [栃木県], 群馬: [群馬県], 山梨: [山梨県], 茨城: [茨城県], 長野: [長野県]}
+# 段階62 第6部: 期間の語(質問の語 → 期間)。どれもなければ期間で絞らない(今日以降の行事)
+period_words: {今日: today, 明日: tomorrow, 今週末: this_weekend, 来週末: next_weekend, 今月: this_month, 来月: next_month}
+month_re: '(\d{1,2})月'
 # 段階62 第1部 2: 範囲の限界の文の「いつ」(質問の語 → 文の語。どれもなければ default)。文は ask/policy.yaml の scope_limit_lines
 when_words: [今日, 明日, 今週末, 来週末, 今月, 来月]
 when_default: これから
 line_event: "{facility}の{kind}「{title}」: {date}({weekday}){time}。{place}{extra}"
 line_exhibition: "{facility}の{kind}「{title}」: {start}〜{end}。"
+line_period: "{facility}の{kind}「{title}」: {start}({sw})〜{end}({ew})。{place}"      # 段階62 第6部: 数日にわたる行事
 deadline: "申し込みの締め切りは{date}({weekday})"
 capacity: "定員{n}人"
 target: "対象は{target}"
 # 行事の答えの検査(facility_events.answer_errors)。施設・場所の名前とみなす語の終わり。答えに出る名前は、行事の台帳の施設名・場所にあるものだけ
 answer_check:
   name_suffixes: [博物館, 美術館, 資料館, 科学館, ビジターセンター, 植物園, 動物園, 水族館]
+
+# 段階62 第6部: 行事の索引(ikimonobiyori/event_index.py)。記録済みの行事(observations/festivals.yaml)は、主催・会場が使ってよいと決めた施設
+# (visitor_centers/centers.yaml で approved)のもので、公式の発信(organizer_class: official)・年つき・曜日が今年の暦と合うものだけ
+index:
+  kind_words:
+    観察会: [観察会, バードウォッチング, 探鳥会, オリエンテーリング, 自然観察]
+    講座: [講座, 学会, 勉強会, 教室, 入門]
+    まつり: [まつり, 祭り, 祭, フェスタ, フェスティバル, ライトアップ]
+  kind_default: イベント
+  name_note_re: '[（(][^）)]*[）)]'
+  topics_default: [自然]
+  # 施設 → 話題(野鳥の施設の行事は野鳥の質問にも出す)
+  center_topics:
+    野鳥: [yokohama-shizen-kansatsu, kitamoto-shizen-gakushu, yatsuhigata-nature-center]
