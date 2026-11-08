@@ -164,6 +164,11 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
         if 0 <= age <= c["current_max_age_days"]:
             current.append((sd, s, rec))
     current.sort(key=lambda x: x[0], reverse=True)
+    lead_cats = set(c["lead_categories"])
+    if not any(r.get("place") in exact and r.get("category") in lead_cats for r in picked):     # 段階67 第4部 3: 冒頭に使える、質問の山そのもののカードを入れる
+        own = next((r for r in hits if r.get("place") in exact and r.get("category") in lead_cats and r not in picked), None)
+        if own:
+            picked = [own] + picked[: max(0, c["max_cards"] - 1)]
     return {"cards": picked + side, "spots": spots, "facilities": vc_names, "vc_rows": vc_rows, "current": current[: c["max_current_lines"]]}
 
 
