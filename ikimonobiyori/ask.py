@@ -964,6 +964,12 @@ def main(argv=None, http_get=None):
     p.add_argument("--lon", type=float)
     p.add_argument("--qid")
     p.add_argument("--prefecture")
+    p = sub.add_parser("warm", help="「今日の準備」: 承認済みの情報源のうち、有効期間を過ぎたものの一覧(優先順)。読むのはエージェントの道具。通信しない(段階63b)")
+    p.add_argument("--now")
+    p.add_argument("--mark", action="append", default=[], help="記録する事実がなかった・読めなかったページの URL(読んだ時刻だけを残す)")
+    p.add_argument("--failed", help="--mark のページが読めなかった理由")
+    p = sub.add_parser("vc-record", help="施設の発信(ビジターセンター)の読んだ事実を記録する(段階55 の規則。段階63b: 読んだ時刻を取得のキャッシュに残す)")
+    p.add_argument("--batch", required=True)
     p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
     p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
@@ -1065,6 +1071,26 @@ def main(argv=None, http_get=None):
         last = load_last_plan(_clock()) if a.follow_up else None
         _out(origins.choose(a.question, a.follow_up, (last or {}).get("origin")))
         return 0
+    if a.step == "warm":                                 # 段階63b 第3部: 今日の準備(答えは作らない)
+        from . import warm as WM
+        t = now or _clock()
+        if a.mark:
+            n = WM.mark(a.mark, t, failed=a.failed)
+            _out({"marked": n})
+            return 0
+        rows = WM.targets(t)
+        _out({"now": t.isoformat(), "count": len(rows), "pages": rows})
+        return 0
+    if a.step == "vc-record":
+        from . import page_cache as PC
+        from . import visitor_centers as VC
+        batch = json.loads(Path(a.batch).read_text(encoding="utf-8"))
+        batch = batch if isinstance(batch, list) else [batch]
+        out = VC.record_reports(batch)
+        bad = {r["index"] for r in out["rejected"]}
+        PC.note([{"url": r.get("url"), "ok": True, "kind": "visitor_center"} for i, r in enumerate(batch) if i not in bad and isinstance(r, dict)], _clock())
+        _out(out)
+        return 1 if out["rejected"] else 0
     if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
         plan = {}
         if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():

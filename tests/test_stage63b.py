@@ -14,7 +14,7 @@ import yaml
 
 import helpers as H  # noqa: F401  (通信禁止)
 
-from ikimonobiyori import answer_plan as AP, ask, page_cache as PC, profiles, yamlcache
+from ikimonobiyori import answer_plan as AP, ask, page_cache as PC, profiles, warm as WM, yamlcache
 
 ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "ikimonobiyori"
@@ -216,6 +216,52 @@ class PageCache(unittest.TestCase):
         doc = {"subjects": {"x": {"summary_pages": [], "items": [{"id": "a", "pages": [{"url": "https://a.example/1"}]}]}}}
         ask.drop_fetched(doc, PC.fresh_urls(NOW, reads={"https://a.example/1": NOW - timedelta(hours=5)}))
         self.assertFalse(doc["needs_fetch"])
+
+
+class Warm(unittest.TestCase):
+    """第3部: 今日の準備(承認済みの情報源のうち、有効期間を過ぎたものを優先順に)。通信しない。"""
+
+    def test_order_is_status_then_centers_then_events_then_practical(self):
+        rows = WM.targets(NOW, reads={})
+        kinds = [r["kind"] for r in rows]
+        self.assertTrue(kinds)
+        self.assertEqual(kinds, sorted(kinds, key=WM.KIND_ORDER.index))
+        self.assertEqual([r["order"] for r in rows], list(range(1, len(rows) + 1)))
+
+    def test_only_approved_sources(self):
+        from ikimonobiyori import visitor_centers as VC
+        urls = {r["url"] for r in WM.targets(NOW, reads={})}
+        for c in VC.pending_centers():
+            self.assertNotIn(c.get("info_url"), urls, c["id"])
+        for sj in WM.SUBJECT_ORDER:
+            f = PKG / "data" / "sources" / f"{sj}.yaml"
+            for e in (yamlcache.load(f) or {}).get("sources") or [] if f.exists() else []:
+                if (e.get("approval") or {}).get("status") != "approved" and e.get("url") not in {x.get("url") for x in (yamlcache.load(f) or {}).get("sources") or []
+                                                                                                    if (x.get("approval") or {}).get("status") == "approved"}:
+                    self.assertNotIn(e.get("url"), urls, e.get("id"))
+
+    def test_pages_read_within_ttl_are_left_out(self):
+        rows = WM.targets(NOW, reads={})
+        first = rows[0]
+        again = WM.targets(NOW, reads={first["url"]: NOW - timedelta(hours=1)})
+        self.assertNotIn(first["url"], {r["url"] for r in again})
+        later = WM.targets(NOW, reads={first["url"]: NOW - timedelta(hours=25)})
+        self.assertIn(first["url"], {r["url"] for r in later})
+
+    def test_mark_keeps_only_the_read_time(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            WM.mark(["https://a.example/1"], NOW, env)
+            WM.mark(["https://a.example/2"], NOW, env, failed="403")
+            lines = [json.loads(x) for x in PC.path(env).read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([(x["url"], x["ok"]) for x in lines], [("https://a.example/1", True), ("https://a.example/2", False)])
+            self.assertEqual(set(PC.last_reads(NOW, env)), {"https://a.example/1", "https://a.example/2"})
+
+    def test_second_question_of_the_day_needs_no_fetch(self):
+        """同じ日の 2 回目は、1 回目に読んだページを読み直さない(通信なしで答えが出る)。"""
+        u = "https://a.example/koyo"
+        c = cand("試験の谷", [(u, "official")], current=cur(u, "2026-11-01", NOW - timedelta(hours=1)))
+        self.assertEqual(AP.refresh_targets(fdoc([c]), plan_of(["試験の谷"]), reads={u: NOW - timedelta(hours=1)}, now=NOW), [])
 
 
 if __name__ == "__main__":
