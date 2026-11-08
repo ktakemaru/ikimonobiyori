@@ -541,11 +541,13 @@ def vc_sentence_errors(text, facts):
     kinds = list((p.get("species_kinds") or {}).keys())
     errs = []
     body = URL_RE.sub(" ", _n(text))
+    for m in re.finditer(r"([^\s、。「」]{2,40}?)発信、\d{1,2}/\d{1,2}時点[:：]", body):     # 段階64 第1部(段階63 第7部): 段階55 の古い 1 行の形も不合格
+        errs.append({"code": "vc_legacy_line", "detail": f"{m.group(1)}: 「○○発信、M/D時点: 状態」の古い形"})
     for r in facts.get("visitor_centers") or []:
         name = _n(r.get("name") or "")
         if not name:
             continue
-        legacy = name + "発信、"                                            # 段階55 の 1 行の形(「○○発信、11/5時点: 状態（種名）」)は既存の決まりのまま(この検査の外)
+        legacy = name + "発信、"                                            # 段階55 の 1 行の形は上の vc_legacy_line で落とす(下の 2 つの決まりは文の形だけを見る)
         lines = [ln for ln in body.splitlines() if legacy not in ln and ((name in ln and "発信" in ln) or ln.strip().startswith(_n(p["line"]["sentence_species"]).split("{")[0]))]
         block = "\n".join(lines)                                            # 施設の発信の行だけを見る(ほかの行の種名は、この決まりの外)
         sp = [s for s in (r.get("species") or []) if s] or [s for s in re.findall(r"[（(]([^）)]+)[）)]", r.get("line") or "") for s in s.split("・")]

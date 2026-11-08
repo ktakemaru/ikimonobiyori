@@ -149,6 +149,8 @@ def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned, today=No
         out += pick_block(p, len(used) - 1, c, sj, t, max_quote, today)
         urls |= _used_urls(c, sj)
         mentioned.append(c)
+    if pl.get("fill_skipped") and picks:                                 # 段階64 第1部: 遠い候補で埋めなかったときは、件数の決まり文(段階58)
+        out.append(t["few"].format(n=len(picks)))
     return out
 
 
