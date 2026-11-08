@@ -218,6 +218,33 @@ class PageCache(unittest.TestCase):
         self.assertFalse(doc["needs_fetch"])
 
 
+class SmallDocs(unittest.TestCase):
+    """第4部・段階63a 第8部: 指示の文書は小さく、今有効な決まりの一覧。手順は ask answer を 1 回。"""
+
+    def test_sizes(self):
+        self.assertLessEqual(len((ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_bytes()), 15000)
+        self.assertLessEqual(len((ROOT / "CLAUDE.md").read_bytes()), 30000)
+        self.assertLessEqual(len((ROOT / "AGENTS.md").read_bytes()), 30000)
+
+    def test_the_skill_runs_ask_answer_once_and_never_asks_back(self):
+        s = (ROOT / ".claude" / "skills" / "ikimono-weekend" / "SKILL.md").read_text(encoding="utf-8")
+        for needle in ("ikimonobiyori.ask answer --question", "**そのまま**答えにする", "**聞き返さない**", "「今は答えを用意できません」と答えない",
+                       "ask warm", "docs/rules-history.md"):
+            self.assertIn(needle, s)
+        head = s.split("---")[1]
+        for w in ("紅葉", "花", "野鳥", "見ごろ", "お出かけ", "おすすめ", "観察会", "どこで見られる"):
+            self.assertIn(w, head)                                              # 説明(description)で自動で起動する語
+
+    def test_the_users_rules_are_all_kept(self):
+        s = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+        for needle in ("内部用語", "できないことを提案しない", "質問を入れない", "ウェザーニュース", "tenki.jp", "日本気象協会", "SNS", "山と溪谷オンラインは状態の語・日付・URL だけ",
+                       "承認待ちの情報源", "台帳の承認の記入は、本人がチャットで対象と条件を示したときだけ", "出典の見出しは「出典」", "手書きの HTML・図で代用しない"):
+            self.assertIn(needle, s)
+        h = (ROOT / "docs" / "rules-history.md").read_text(encoding="utf-8")
+        self.assertIn("### 段階57(最優先", h)                                     # 経緯は消さずに移した
+        self.assertIn("### 段階39", h)
+
+
 class Warm(unittest.TestCase):
     """第3部: 今日の準備(承認済みの情報源のうち、有効期間を過ぎたものを優先順に)。通信しない。"""
 
