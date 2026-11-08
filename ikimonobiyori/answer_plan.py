@@ -7,7 +7,7 @@
   python -X utf8 -m ikimonobiyori.ask plan --out-dir DIR [--subject S] [--explain 名所] [--override 名所 --reason 理由 [--replace 計画の名所]]
 """
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 
 from . import yamlcache
@@ -629,17 +629,36 @@ def target_week_line(c, today, pol=None):
 
 # ---- 事前取得の対象(段階57 第9部) ----
 
-def refresh_targets(facts_doc, plan, seen=(), policy=None):
-    """計画の上位候補のうち、現況が古い・ないものの読むページ(同じ日に読んだページは除く。最大 max_pages)。取得はエージェントの道具で行う(このコードは通信しない)。"""
+def _all_pick_names(plan):
+    """今回のおすすめ(対象別・期間別・エリア別の節の中も)の (対象, 名所)。"""
+    out = []
+    for p in plan.get("picks") or []:
+        out.append((p.get("subject") or plan.get("area_subject") or plan.get("subject"), p["name"]))
+    out += [(plan.get("area_subject") or plan.get("subject"), it["name"]) for s in plan.get("sections") or [] for it in s.get("items") or []]   # 狙い別の節の候補(段階57 から同じ)
+    for s in plan.get("segments") or []:
+        sub = s.get("plan") or (plan.get("subjects") or {}).get(s.get("subject")) or {}
+        out += _all_pick_names(sub) if sub is not plan else []
+    for sj, sub in (plan.get("subjects") or {}).items():
+        out += [(sj, p["name"]) for p in sub.get("picks") or []]
+    return out
+
+
+def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None, env=None):
+    """答えの前に読むページ(段階57 第9部・段階63b 第2部)。取得はエージェントの道具で行う(このコードは通信しない)。
+    今回のおすすめの候補のうち、現況の記録を最後に読んで(確かめて)から有効期間を過ぎたもの・現況の記録がないものについて、
+    有効期間の中で読んでいないページだけ(最大 refresh.max_pages)。ページに書かれた日付が古くても、有効期間の中で読んでいれば読まない。
+    読むのは現況の情報源(紅葉・花の現況・野鳥の観察記録)のページだけ。紹介サイトのページ(source_class: secondary)と、
+    現況の情報源のない候補(行事のページしかないなど)は対象にしない。seen: ほかに除くページ(今日読んだページなど)。
+    reads: {URL: 最後に読んだ時刻}(省くとデータ置き場から)。"""
+    from . import page_cache as PC
     pol = policy or load_policy()
     cfg = pol["refresh"]
-    first = _d(facts_doc["dates"][0])
+    now = now or datetime.fromisoformat(facts_doc["now"])
+    reads = PC.last_reads(now, env, pol) if reads is None else reads
     subjects = facts_doc["subjects"]
     out, used = [], set(seen)
-    names = [(p.get("subject") or plan.get("subject"), p["name"]) for p in plan.get("picks") or []]
-    names += [(plan.get("subject"), it["name"]) for s in plan.get("sections") or [] for it in s["items"]]
     done = set()
-    for sj, name in names:
+    for sj, name in _all_pick_names(plan):
         if (sj, name) in done or sj not in subjects:
             continue
         done.add((sj, name))
@@ -647,16 +666,25 @@ def refresh_targets(facts_doc, plan, seen=(), policy=None):
         if not c:
             continue
         cur = c.get("current")
-        sd = (cur or {}).get("state_date")
-        stale = (not cur) or (sd is None) or (first - _d(sd)).days >= cfg["stale_days"]
-        if not stale:
-            continue
+        last = PC.candidate_last_read(c, reads) if cur else None
+        if cur and last is not None and now - last < PC.ttl(PC.page_kind(cur.get("url"), c, sj), pol):
+            continue                                         # 現況を有効期間の中で読んでいる(ページの日付が古くても読み直さない)
         for pg in c.get("pages") or []:
             u = pg.get("url")
-            if u and u not in used and len(out) < cfg["max_pages"]:
-                used.add(u)
-                out.append({"name": name, "subject": sj, "url": u, "publisher": pg.get("publisher"), "source_class": pg.get("source_class"),
-                            "reason": "no_current" if not cur else "stale", "current_date": sd})
+            if not u or u in used or pg.get("source_class") == "secondary":
+                continue
+            kind = PC.page_kind(u, c, sj)
+            if kind not in ("status", "birds"):             # 現況の情報源だけ(行事・実用情報・参考リンクは ask warm が種類ごとの有効期間で出す)
+                continue
+            if PC.is_fresh(u, kind, now, reads, pol):
+                continue
+            if len(out) >= cfg["max_pages"]:
+                return out
+            used.add(u)
+            t = reads.get(u)
+            out.append({"name": name, "subject": sj, "url": u, "publisher": pg.get("publisher"), "source_class": pg.get("source_class"),
+                        "kind": kind, "reason": "no_current" if not cur else "expired", "current_date": (cur or {}).get("state_date"),
+                        "last_read": t.isoformat() if t else None})
     return out
 
 

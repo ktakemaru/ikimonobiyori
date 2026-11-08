@@ -447,6 +447,7 @@ class Part9Procedure(unittest.TestCase):
         s["candidates"][0]["current"] = None
         s["candidates"][1]["current"]["state_date"] = "2026-11-07"              # 新しい現況は読まない
         s["candidates"][2]["current"]["state_date"] = "2026-11-01"
+        s["candidates"][2]["current"]["read_at"] = "2026-11-01T09:00:00+09:00"   # 段階63b 第2部: 古い記録 = 最後に読んだのが有効期間より前(ページの日付ではなく読んだ時刻で決める)
         for i, c in enumerate(s["candidates"]):
             c["pages"] = [{"url": f"https://a.example/{i}/{j}", "publisher": "試験市"} for j in range(10)]
         f = facts_doc({"autumn_leaves": s})

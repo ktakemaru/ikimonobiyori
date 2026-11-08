@@ -349,7 +349,8 @@ class Flow:
                "now": self.now.isoformat(), "out_dir": str(self.workdir),
                "summary_pages": [p for pl in plans.values() for p in pl.get("summary_pages") or []],
                "limits": next(iter(plans.values()))["limits"] if plans else None}
-        drop_fetched(doc, fetched_today(self.now, self.env))           # 段階57 第5部: 同じ日の同じページを読み直さない
+        from . import page_cache as PC                                  # 段階63b 第2部: 有効期間の中で読んだページは読み直さない(ページの日付では決めない)
+        drop_fetched(doc, fetched_today(self.now, self.env) | PC.fresh_urls(self.now, self.env))      # 段階57 第5部: 同じ日の同じページを読み直さない
         if "birds" in plans:
             doc["inat_refresh"] = self.inat_plan(plans["birds"].get("inat_refresh") or {})
         self._save("params.json", {"subjects": list(subjects), "region": region, "dates": [d.isoformat() for d in dates], "origin": origin,
@@ -433,6 +434,8 @@ class Flow:
                      "by_url": out.get("by_url")})
         self._save("records.json", hist)
         mark_fetched([u.get("url") for u in out.get("by_url") or []], self.clock(), self.env)
+        from . import page_cache as PC                                  # 段階63b 第2部: 取得のキャッシュ(本文は保存しない。取り出した事実のハッシュだけ)
+        PC.note(PC.entries_for_batch(batch, out.get("by_url")), self.clock(), self.env)
         self.call("record", submitted=len(batch), written=out.get("written"), duplicates=out.get("duplicates"),
                   rejected=len(out.get("rejected") or []))
         return out
@@ -445,6 +448,11 @@ class Flow:
         mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
         mark_fetched([r.get("url") for r in (fetch_log or {}).get("read") or []], self.now, self.env)
+        from . import page_cache as PC                                  # 段階63b 第2部: 読んだ(読めなかった)ページの時刻。読めなかったページも有効期間の中で繰り返し取りに行かない
+        recorded = {u["url"] for r in self._load("records.json", []) for u in r.get("by_url") or []}
+        PC.note([{"url": r.get("url"), "ok": True} for r in (fetch_log or {}).get("read") or [] if r.get("url") not in recorded]
+                + [{"url": r.get("url"), "ok": False, "reason": str(r.get("reason") or "")[:80]} for r in (fetch_log or {}).get("failed") or []],
+                self.clock(), self.env)
         inat = (plan_doc or {}).get("inat_refresh")
         if inat and inat.get("reason") == "not_yet":   # 取り直しの対象があったが、計測フックの下で取り直していない(単体で聞いたとき)
             self.call("inat_refresh", skipped="no_measure_hook", areas=inat.get("areas"))
@@ -906,7 +914,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(知識の答え・guide find の出力など)")
     p.add_argument("--question", help="--generic のとき: 知識の答えの質問の文(ガイドの目がカードの事実のままかも確かめる)")
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask verify --place と同じ検査)")
-    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(計画の上位候補のうち現況が古い・ないもの。最大 8 ページ・同日は除く。読むのはエージェントの道具。段階57)")
+    p = sub.add_parser("refresh", help="答えの前に読むページの一覧(今回のおすすめの候補のうち、現況を最後に読んでから有効期間を過ぎたもの・ないもの。最大 3 ページ。読むのはエージェントの道具。段階57・63b)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--plan", action="store_true", help="計画の上位候補から(既定)")
     p = sub.add_parser("intent", help="質問の意図の分類(知識・違い・雑談・場所と時期・今の状況・計画)。段階59")

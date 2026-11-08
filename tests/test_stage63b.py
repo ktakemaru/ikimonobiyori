@@ -1,17 +1,20 @@
 """段階63b(指示書 docs/stage63b-speed-and-cache-instructions.md): 速く答える。通信しない。合成データだけ。"""
 import ast
+import json
 import os
 import tempfile
 import time
 import unittest
 import unittest.mock
+import warnings
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
 
 import helpers as H  # noqa: F401  (通信禁止)
 
-from ikimonobiyori import profiles, yamlcache
+from ikimonobiyori import answer_plan as AP, ask, page_cache as PC, profiles, yamlcache
 
 ROOT = Path(__file__).resolve().parent.parent
 PKG = ROOT / "ikimonobiyori"
@@ -84,7 +87,10 @@ class YamlOnce(unittest.TestCase):
         for f in PKG.rglob("*.py"):
             if f.name == "yamlcache.py":
                 continue
-            for n in ast.walk(ast.parse(f.read_text(encoding="utf-8"))):
+            with warnings.catch_warnings():                                   # paths.py の docstring の Windows のパス(\i)の警告は、この検査と関係がない
+                warnings.simplefilter("ignore", SyntaxWarning)
+                tree = ast.parse(f.read_text(encoding="utf-8"))
+            for n in ast.walk(tree):
                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and n.func.attr in ("safe_load", "load") \
                         and isinstance(n.func.value, ast.Name) and n.func.value.id == "yaml":
                     bad.append(f"{f.name}:{n.lineno}")
@@ -101,6 +107,115 @@ class YamlOnce(unittest.TestCase):
         self.assertEqual(profiles.validate_profile(broken), errs)
         errs.append("x")                                                       # 返した一覧を書き換えても次に影響しない
         self.assertNotIn("x", profiles.validate_profile(broken))
+
+
+JST = timezone(timedelta(hours=9))
+NOW = datetime(2026, 11, 8, 12, 0, tzinfo=JST)
+
+
+def cand(name, pages, current=None, **kw):
+    return {"name": name, "current": current, "pages": [{"url": u, "publisher": "試験市", "source_class": sc} for u, sc in pages], **kw}
+
+
+def cur(url, state_date, read_at):
+    return {"url": url, "state": "見頃", "state_date": state_date, "read_at": read_at.isoformat(), "publisher": "試験市", "source_class": "official"}
+
+
+def fdoc(cands, subject="autumn_leaves"):
+    return {"now": NOW.isoformat(), "dates": ["2026-11-08"], "subjects": {subject: {"subject": subject, "candidates": cands}}}
+
+
+def plan_of(names, subject="autumn_leaves"):
+    return {"subject": subject, "picks": [{"name": n} for n in names]}
+
+
+class PageCache(unittest.TestCase):
+    """第2部: 読み直しは「最後に読んだ時刻」で決める。上限 3 ページ。本文は保存しない。"""
+
+    def targets(self, cands, names=None, reads=None, subject="autumn_leaves"):
+        return AP.refresh_targets(fdoc(cands, subject), plan_of(names or [c["name"] for c in cands], subject), reads=reads or {}, now=NOW)
+
+    def test_page_read_within_ttl_is_not_a_target(self):
+        c = cand("試験の谷", [("https://a.example/koyo", "official")])
+        self.assertEqual([x["url"] for x in self.targets([c])], ["https://a.example/koyo"])                    # 読んだことがない
+        self.assertEqual(self.targets([c], reads={"https://a.example/koyo": NOW - timedelta(hours=2)}), [])     # 2 時間前に読んだ
+
+    def test_old_page_date_but_read_yesterday_is_not_a_target(self):
+        u = "https://a.example/koyo"
+        c = cand("試験の谷", [(u, "official")], current=cur(u, "2026-11-01", NOW - timedelta(hours=20)))       # ページの日付は 7 日前、読んだのは 20 時間前
+        self.assertEqual(self.targets([c]), [])
+
+    def test_only_expired_pages_are_targets(self):
+        u1, u2 = "https://a.example/1", "https://a.example/2"
+        c = cand("試験の谷", [(u1, "official"), (u2, "official")], current=cur(u1, "2026-11-06", NOW - timedelta(hours=30)))
+        got = self.targets([c], reads={u1: NOW - timedelta(hours=30), u2: NOW - timedelta(hours=3)})
+        self.assertEqual([(x["url"], x["reason"]) for x in got], [(u1, "expired")])
+
+    def test_at_most_three_pages(self):
+        self.assertEqual(AP.load_policy()["refresh"]["max_pages"], 3)
+        cs = [cand(f"試験の谷{i}", [(f"https://a.example/{i}/{j}", "official") for j in range(3)]) for i in range(3)]
+        got = self.targets(cs)
+        self.assertEqual(len(got), 3)
+
+    def test_candidates_without_status_pages_and_secondary_pages_are_not_targets(self):
+        cs = [cand("試験の池", []), cand("試験の山", [("https://intro.example/takao", "secondary")])]
+        self.assertEqual(self.targets(cs), [])
+
+    def test_candidates_with_only_event_pages_are_not_targets(self):
+        u = "https://a.example/matsuri"
+        c = cand("試験の池", [(u, "official")], festivals=[{"url": u, "name": "試験まつり"}])           # 現況の情報源がない(行事のページだけ)
+        self.assertEqual(self.targets([c]), [])
+        self.assertEqual(self.targets([c], reads={u: NOW - timedelta(days=30)}), [])
+
+    def test_event_and_practical_ttls(self):
+        self.assertEqual(PC.ttl("event"), timedelta(days=7))
+        self.assertEqual(PC.ttl("practical"), timedelta(days=30))
+        self.assertEqual(PC.ttl("visitor_center"), timedelta(hours=48))
+        self.assertEqual(PC.ttl("status"), timedelta(hours=24))
+        self.assertEqual(PC.ttl("birds"), timedelta(hours=24))
+
+    def test_only_picks_are_targets(self):
+        cs = [cand("試験の谷", [("https://a.example/1", "official")]), cand("試験の滝", [("https://a.example/2", "official")])]
+        self.assertEqual([x["name"] for x in self.targets(cs, names=["試験の滝"])], ["試験の滝"])
+
+    def test_last_reads_use_records_and_confirmed_times(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            obs = Path(d) / "observations"
+            obs.mkdir()
+            (obs / "autumn_leaves.jsonl").write_text(json.dumps({"url": "https://a.example/r", "read_at": "2026-11-07T10:00:00+09:00"}) + "\n", encoding="utf-8")
+            (obs / "autumn_leaves.confirmed.json").write_text(json.dumps({"k": {"url": "https://a.example/r", "last_confirmed_at": "2026-11-08T09:00:00+09:00"}}),
+                                                             encoding="utf-8")
+            PC.note([{"url": "https://a.example/c", "ok": False, "reason": "403"}], NOW - timedelta(hours=1), env)
+            reads = PC.last_reads(NOW, env)
+            self.assertEqual(reads["https://a.example/r"], datetime(2026, 11, 8, 9, 0, tzinfo=JST))
+            self.assertEqual(reads["https://a.example/c"], NOW - timedelta(hours=1))
+            self.assertEqual(PC.fresh_urls(NOW, env, reads=reads), {"https://a.example/r", "https://a.example/c"})
+
+    def test_cache_does_not_keep_page_text(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            body = "本文" * 500
+            PC.note([{"url": "https://a.example/x", "ok": True, "body": body, "text": body, "html": body}], NOW, env)
+            f = ask.Flow(Path(d) / "w", now=NOW, env=env)
+            batch = [{"subject": "autumn_leaves", "name": "試験の谷", "city": "試験町", "state": "見頃", "state_date": "2026-11-07",
+                      "url": "https://a.example/y", "publisher": "試験市", "source_class": "official"}]
+            bp = Path(d) / "reads.json"
+            bp.write_text(json.dumps(batch, ensure_ascii=False), encoding="utf-8")
+            f.record(bp)
+            lines = [json.loads(x) for x in PC.path(env).read_text(encoding="utf-8").splitlines()]
+            self.assertEqual({x["url"] for x in lines}, {"https://a.example/x", "https://a.example/y"})
+            for x in lines:
+                self.assertLessEqual(set(x), set(PC.KEEP))
+            raw = PC.path(env).read_text(encoding="utf-8")
+            self.assertNotIn("本文", raw)
+            self.assertNotIn("見頃", raw)                                    # 事実そのものも書かない(ハッシュだけ)
+            self.assertEqual(PC.facts_hash(batch), next(x for x in lines if x["url"].endswith("/y"))["facts_hash"])
+
+    def test_prepare_skips_pages_read_within_ttl(self):
+        doc = {"subjects": {"x": {"summary_pages": [], "items": [{"id": "a", "pages": [{"url": "https://a.example/1"}]}]}}}
+        ask.drop_fetched(doc, PC.fresh_urls(NOW, reads={"https://a.example/1": NOW - timedelta(hours=5)}))
+        self.assertFalse(doc["needs_fetch"])
 
 
 if __name__ == "__main__":
