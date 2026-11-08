@@ -147,5 +147,78 @@ class Part2AutoFix(unittest.TestCase):
         self.assertEqual(AV.event_as_typical_errors("① 試験大師 菊花展: 例年の時期は分かりません。\n", mat), [])
 
 
+class Part3SeasonPlace(unittest.TestCase):
+    """第3部: 種の名前で引く、季節を問わない「いつ・どこ」の答え。"""
+
+    def setUp(self):
+        from ikimonobiyori import season_place as SP
+        self.SP = SP
+
+    def row(self, name, km, start="06-11", end="07-20", pref="栃木県", official=True):
+        return {"name": name, "prefecture": pref, "city": "試験市", "km": km, "km_estimated": False, "kinds": ["試験の花"],
+                "start": start, "end": end, "season": self.SP.window_text(start, end, self.SP.cfg()["text"]["thirds"]) if start else None,
+                "url": "https://example.org/" + name, "official": official, "care": None, "from": "catalog", "subject": "flowers"}
+
+    def test_aliases_resolve_to_one_species(self):
+        for q, name in (("紫陽花の名所", "アジサイ"), ("あじさいの名所", "アジサイ"), ("曼珠沙華の群生地", "ヒガンバナ"), ("彼岸花の群生地と時期を教えて", "ヒガンバナ"),
+                        ("日光キスゲはどこ", "ニッコウキスゲ"), ("冬桜の名所", "冬桜")):
+            self.assertEqual(self.SP.resolve_species(q)["name"], name, q)
+        self.assertEqual([x["name"] for x in self.SP.resolve_all("神奈川県内で菜の花や桜が楽しめる場所を教えて")], ["菜の花", "桜"])
+
+    def test_question_types(self):
+        for q in ("藤が有名な場所と時期を教えて", "ニッコウキスゲはいつどこへ行けばいい?", "スズランの見頃と場所を教えて", "彼岸花の群生地と時期を教えて",
+                  "カワセミが見られる場所と時期を紹介して"):
+            self.assertTrue(self.SP.is_season_place(q), q)
+        for q in ("今の時期、見るべき花と見られる場所を教えて", "今週末の藤の名所", "来週末、大宮から行きやすい場所でおすすめある?"):
+            self.assertFalse(self.SP.is_season_place(q), q)
+
+    def test_nikkokisuge_lists_both_catalog_spots(self):
+        from datetime import date
+        r = self.SP.compose("ニッコウキスゲはいつどこへ行けばいい?", today=date(2026, 11, 8), origin="横浜")
+        names = [x["name"] for x in r["spots"]]
+        self.assertTrue(any("霧降高原" in n for n in names), names)
+        self.assertTrue(any("霧ヶ峰" in n for n in names), names)
+        self.assertIn("今は時期の外で、次は6月ごろです。", r["text"])           # 時期の外でも候補が出る
+        self.assertIn("出典", r["text"])
+
+    def test_out_of_range_and_prefecture_filters(self):
+        rows = [self.row("近い名所", 40, pref="神奈川県"), self.row("遠い名所", 600, pref="北海道"), self.row("距離不明の北の名所", None, pref="北海道"),
+                self.row("距離不明の県内", None, pref="神奈川県")]
+        keep, n_out = self.SP.select(rows, "横浜")
+        self.assertEqual([r["name"] for r in keep], ["近い名所", "距離不明の県内"])
+        self.assertEqual(n_out, 2)
+        keep, _ = self.SP.select(rows + [self.row("東京の名所", 30, pref="東京都")], "横浜", prefectures=["神奈川県"])
+        self.assertEqual({r["pref"] if "pref" in r else r["prefecture"] for r in keep}, {"神奈川県"})
+
+    def test_only_out_of_range_says_so_in_one_sentence(self):
+        from datetime import date
+        sp = {"name": "試験の花", "match": ["試験の花"], "words": ["試験の花"], "includes": []}
+        lines, urls, _ = self.SP._species_part(sp, [], 2, today=date(2026, 11, 8), origin="横浜", region=None, prefectures=None, table=False, c=self.SP.cfg())
+        self.assertEqual(lines, ["横浜から250km前後の範囲では見つかりませんでした。"])
+
+    def test_spots_are_ordered_by_season_and_table_form(self):
+        from datetime import date
+        sp = {"name": "試験の花", "match": ["試験の花"], "words": ["試験の花"], "includes": []}
+        rows = [self.row("夏の名所", 50, "07-11", "07-31"), self.row("初夏の名所", 80, "06-11", "07-20")]
+        keep, _ = self.SP.select(rows, "横浜")
+        self.assertEqual([r["name"] for r in keep], ["初夏の名所", "夏の名所"])
+        lines, _u, _s = self.SP._species_part(sp, keep, 0, today=date(2026, 11, 8), origin="横浜", region=None, prefectures=None, table=True, c=self.SP.cfg())
+        self.assertIn("| 場所 | 例年の時期 | 距離 |", lines)
+        self.assertEqual(lines[0], "試験の花は、例年6月〜7月が目安です。")
+
+    def test_kinds_of_another_longer_species_are_not_matched(self):
+        sp = self.SP.resolve_species("梅の名所と時期")
+        self.assertFalse(self.SP._matches("蝋梅", sp["match"], sp))
+        self.assertTrue(self.SP._matches("梅", sp["match"], sp))
+        sakura = self.SP.resolve_species("桜の名所と時期")
+        self.assertTrue(self.SP._matches("河津桜", sakura["match"] + sakura["includes"], sakura))
+
+    def test_ask_answer_uses_the_new_route(self):
+        from datetime import datetime
+        from ikimonobiyori import answer_run as R
+        cond = R.resolve("ニッコウキスゲはいつどこへ行けばいい?", datetime.fromisoformat("2026-11-08T12:00:00+09:00"))
+        self.assertEqual(cond["route"], "season_place")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -147,7 +147,10 @@ def resolve(question, now, policy=None):
     q = question or ""
     if kind == "knowledge" and not any(w in q for w in c["knowledge_words"]) and             (region or area_names or not defaulted or any(w in q for w in c["plan_words"])):
         kind = "plan"                                    # 「神奈川と東京で紅葉の見ごろを教えて」は場所・時期の質問
-    if wild and kind != "event":                         # 野草・高山植物の語は、知識の言い方(「教えて」)でも野草の経路(段階40)
+    from . import season_place as SP
+    if kind not in ("event", "normal", "difference", "chat") and SP.is_season_place(q):    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
+        route = "season_place"
+    elif wild and kind != "event":                       # 野草・高山植物の語は、知識の言い方(「教えて」)でも野草の経路(段階40)
         route = "wildflower"
     elif kind in ("knowledge", "difference", "chat", "normal", "event"):
         route = kind
@@ -464,12 +467,38 @@ def partial_answer(facts_doc, plan_doc, g, offers, defaulted, gaz, max_rounds=3)
 
 
 
+def _season_place_route(res, cond, now, env):
+    """段階64 第3部: 時期と場所の答え(名所カタログ・ガイドのカタログ・記録から。今の日付で絞らない)。"""
+    from . import answer_gates as AG
+    from . import observations as O
+    from . import season_place as SP
+    prefs = None
+    if cond.get("region"):
+        reg = O.resolve(cond["region"], cond["origin"], O.load_policy())
+        prefs = reg.get("prefectures") or None
+    got = SP.compose(cond["question"], today=now.date(), origin=cond["origin"], region=cond.get("region"), prefectures=prefs, env=env)
+    text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
+    errs = [e for e in V.generic_check(text)["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
+    res["season_place"] = {"species": got["species_all"], "spots": [r["name"] for r in got["spots"]], "missing": got["missing"]}
+    if not got["spots"]:
+        res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
+    elif got["needs_research"]:                                           # 一部の種に名所の記録がない(その種は 1 文で書いた)
+        res.update(text=text, stage=3, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place", errors=errs)
+    elif errs:
+        res.update(text=text, stage=3, status=STATUS_DEGRADED, errors=errs)
+    else:
+        res.update(text=text, stage=2, status=STATUS_PASS)
+
+
 def _other_route(res, cond, now, env, pol):
     """知識・違い・雑談・平年・行事・野草・ガイド型(facts を持たない経路)。"""
     from . import intent
     q = cond["question"]
     today = now.date()
     text = None
+    if cond["route"] == "season_place":
+        _season_place_route(res, cond, now, env)
+        return
     if cond["route"] in ("knowledge", "difference", "chat", "normal", "event"):
         text = intent.compose(q, today=today)
         if text is not None:
@@ -537,5 +566,8 @@ def print_result(res, out, err, as_json=False):
     err.write(f"状態: {res['status']}(段 {res['stage']}: {res.get('stage_name')})・{res['elapsed_s']}秒・作業フォルダ {res['workdir']}\n")
     for p in res.get("refresh_pages") or []:
         err.write(f"読むページ: {p['url']}({p['name']}。最後に読んだのは {p.get('last_read') or 'まだ'})\n")
-    if res.get("needs_research"):
+    if res.get("needs_research") and res.get("research_kind") == "season_place":
+        err.write("名所の記録が足りません: 公式ページ(なければ紹介サイト)の本文を読み、ask record で kind(種)と typical(例年の時期)を記録してから、"
+                  "もう一度 ask answer を実行します(最大3ページ。検索の要約は記録しない)\n")
+    elif res.get("needs_research"):
         err.write("資料が足りません: 公的な解説を読んで ask knowledge add で記録すると、次は資料から答えられます\n")
