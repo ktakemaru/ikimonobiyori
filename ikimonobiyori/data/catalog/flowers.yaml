@@ -103,11 +103,57 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: "2026-10-24"
-    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], flower_kinds: [秋バラ, 菊], source: "Claude Code が付けた(推定。段階17)"}
+    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], flower_kinds: [秋バラ, 菊, つつじ, 藤, バラ, アジサイ, 蓮], source: "Claude Code が付けた(推定。段階17)"}
     status_sources: [tokyo-park-jindai-news]
     sources:
       - {url: "https://www.tokyo-park.or.jp/park/jindai/news/index.html", title: "神代植物公園 お知らせ(東京都公園協会)", checked_on: "2026-10-24"}
     note: "お知らせに『秋のバラフェスタ 10/6(火)〜開催』(2026/09/09)、『神代花だより10・11・12月号』(2026/09/23)、菊花大会の案内。開花状況の記事は 2026-10-24 の確認では見つからなかった"
+    flower_windows:   # 段階68 第2部
+      - kind: つつじ
+        start: '04-11'
+        end: '05-20'
+        source_url: https://www.tokyo-park.or.jp/special/jindai/spring.html
+        source_host: www.tokyo-park.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京都公園協会: 神代植物公園のツツジの見ごろは4月中旬〜5月中旬(約12,000株)。サツキは5月下旬〜6月中旬"
+      - kind: 藤
+        start: '04-21'
+        end: '05-10'
+        source_url: https://www.tokyo-park.or.jp/special/jindai/spring.html
+        source_host: www.tokyo-park.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京都公園協会: 神代植物公園のフジは4月下旬〜5月上旬(13品種49本)"
+      - kind: バラ
+        start: '05-11'
+        end: '07-31'
+        source_url: https://www.tokyo-park.or.jp/special/jindai/summer.html
+        source_host: www.tokyo-park.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京都公園協会: 神代植物公園のばら園(409品種約5,200株)は5月中旬〜7月と10月上旬〜11月に楽しめる"
+      - kind: アジサイ
+        start: '06-01'
+        end: '07-10'
+        source_url: https://www.tokyo-park.or.jp/special/jindai/summer.html
+        source_host: www.tokyo-park.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京都公園協会: 神代植物公園のアジサイは6月上旬〜7月上旬"
+      - kind: 蓮
+        start: '07-11'
+        end: '08-20'
+        source_url: https://www.tokyo-park.or.jp/special/jindai/summer.html
+        source_host: www.tokyo-park.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京都公園協会: 神代植物公園の花ハス(約35品種)は7月中旬〜8月中旬"
   - id: hana-0004
     name: 国営昭和記念公園
     subjects: [flowers]
@@ -1456,7 +1502,7 @@ entries:
       area: 足利
       city: 足利市
       terrain: [garden]
-      flower_kinds: [藤, ツツジ]
+      flower_kinds: [藤, ツツジ, つつじ, 花菖蒲]
       source: Claude Code が付けた(段階64 第6部。公式サイトのトップの季節の一覧。所在地「栃木県足利市迫間町607」。座標は未確認)
     sources:
       - {url: "https://www.ashikaga.co.jp/", title: "あしかがフラワーパーク公式(季節の一覧「ふじのはな物語」4月中旬～5月中旬 藤・ツツジ・シャクナゲ)", checked_on: '2026-11-08'}
@@ -1472,6 +1518,24 @@ entries:
         source_year: null
         note: "公式サイトの季節の一覧(年の記載なし)「4月中旬～5月中旬 藤・ツツジ・シャクナゲ」(2026-11-08 に読んだ)"
   # 段階65 第2部: 12〜3月の花(本文を読んで確かめたものだけ。座標は未確認で入れない。通信先が台帳で未承認のため source_class: secondary)
+      - kind: つつじ
+        start: '04-11'
+        end: '05-10'
+        source_url: https://www.ashikaga.co.jp/flower/spring.html
+        source_host: www.ashikaga.co.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "あしかがフラワーパーク 春の花ごよみ: つつじの見頃時期 4月中旬〜5月上旬"
+      - kind: 花菖蒲
+        start: '06-01'
+        end: '06-30'
+        source_url: https://www.ashikaga.co.jp/flower/spring.html
+        source_host: www.ashikaga.co.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "あしかがフラワーパーク 春の花ごよみ: 花菖蒲の見頃時期 6月上旬〜6月下旬"
   - id: hana-0047
     name: 吾妻山公園
     subjects: [flowers]
@@ -1564,6 +1628,18 @@ entries:
         unapproved_host: true
         source_year: null
         note: "熱海市の梅の開花情報の本文「開花時期 1月から3月」(2026-11-09 に読んだ)"
+    events:   # 段階68 第3部 2: 2026〜2027年の冬の花の行事(公式の発表。年つき)
+      - kind: 梅
+        name: 第83回熱海梅園梅まつり
+        start: '2027-01-09'
+        end: '2027-03-07'
+        year: 2027
+        source_url: https://www.ataminews.gr.jp/event/355
+        checked_on: '2026-11-09'
+        verified: false
+        source_host: www.ataminews.gr.jp
+        source_class: secondary
+        note: "熱海市観光協会の観光サイトの「次回開催期間/2027年1/9（土）～3/7（日）」。主催は熱海市・熱海市観光協会。曜日は2027年の暦と合う。ほかの内容は前回のまま(次回内容が決まり次第更新とある)"
   - id: hana-0050
     name: 越生梅林
     subjects: [flowers]
@@ -1939,3 +2015,76 @@ entries:
         unapproved_host: true
         source_year: 2021
         note: "富士見町: 6月、入笠湿原に100万株のすずらんが咲く"
+  - id: hana-0064
+    name: 爪木崎の水仙
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 静岡県
+      area: 下田
+      city: 下田市
+      terrain: [coast]
+      flower_kinds: [水仙]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.shimoda.shizuoka.jp/category/100500hanameguri/110732.html", title: "下田市 水仙(2023年3月5日更新。須崎半島爪木崎に300万本の野水仙)", checked_on: '2026-11-09'}
+    note: "水仙まつりは毎年12月20日〜1月31日(行事の期間。例年の見ごろとは別)。2026〜27年の開催の告知は確認できず(下田市観光協会のフォトコンテストの応募期間 2026/12/20〜2027/1/31 は行事の期間ではない)"
+    flower_windows:
+      - kind: 水仙
+        start: '12-21'
+        end: '01-31'
+        source_url: https://www.city.shimoda.shizuoka.jp/category/100500hanameguri/110732.html
+        source_host: www.city.shimoda.shizuoka.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2023
+        note: "下田市: 見ごろは12月下旬から1月末(爪木崎の野水仙300万本)"
+    annual_events:
+      - {name: 水仙まつり, text: 毎年12月20日〜1月31日, source_url: "https://www.city.shimoda.shizuoka.jp/category/100500hanameguri/110732.html", publisher: 下田市, checked_on: '2026-11-09'}
+  - id: hana-0065
+    name: 河津川沿いの桜並木
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 静岡県
+      area: 河津
+      city: 河津町
+      terrain: [river]
+      flower_kinds: [河津桜]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://kankou.town.kawazu.shizuoka.jp/attraction/147/", title: "河津町観光協会 河津桜まつり(河津川沿いに約850本・町全体で約8,000本)", checked_on: '2026-11-09'}
+      - {url: "https://kankou.town.kawazu.shizuoka.jp/newevent/4766/", title: "河津町観光協会 第37回河津桜まつり開催(2026年10月16日更新)", checked_on: '2026-11-09'}
+    note: "第37回河津桜まつりは令和9年(2027年)2月6日〜3月7日(河津町観光協会の発表。曜日の記載なし。2027-02-06 は土曜・03-07 は日曜で暦と合う)。行事の期間で、例年の時期とは別"
+    flower_windows:
+      - kind: 河津桜
+        start: '02-01'
+        end: '03-10'
+        source_url: https://kankou.town.kawazu.shizuoka.jp/attraction/147/
+        source_host: kankou.town.kawazu.shizuoka.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "河津町観光協会: 毎年2月上旬から咲き始める早咲きの桜で、3月上旬ごろまで見られる"
+    events:   # 段階68 第3部 2: 2026〜2027年の冬の花の行事(公式の発表。年つき)
+      - kind: 河津桜
+        name: 第37回河津桜まつり
+        start: '2027-02-06'
+        end: '2027-03-07'
+        year: 2027
+        source_url: https://kankou.town.kawazu.shizuoka.jp/newevent/4766/
+        checked_on: '2026-11-09'
+        verified: false
+        source_host: kankou.town.kawazu.shizuoka.jp
+        source_class: secondary
+        note: "河津町観光協会の発表(期間は令和9年2月6日から3月7日)。通信先が公式の一覧にないので verified: false"
