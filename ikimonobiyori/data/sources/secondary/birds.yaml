@@ -17,4 +17,5 @@ sources:
     readable: {status: ok, checked_on: '2026-11-08', robots: no_file, note: robots.txt は 404}
     terms: {status: not_checked, note: 著作権・利用条件のページが見つからなかった(プライバシーポリシーだけ。docs/sources-approval-61.md)}
     approval: {status: pending, reason: 承認待ち(段階61 第5部)。利用条件が確かめられず、投稿の集計なので、本人の判断まで答えの材料にしない}
+    note: "不採用(本人の判断 2026-11-08)。答えにも、記録にも、知識カードの出典にも使わない。再び足さない(observations の record.rejected_hosts)"
     confidence_label: 紹介サイト(公式ではない)

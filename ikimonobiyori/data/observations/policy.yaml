@@ -14,6 +14,8 @@ record:
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  # 段階62 第9部: 本人が不採用と決めた情報源のホスト(バードリサーチ。2026-11-08)。読まない・記録できない・答えと知識カードの出典に使わない
+  rejected_hosts: [bird-research.jp]
   # 段階58 第4部: SNS の投稿を事実の根拠にしない(記録しない。過去の記録も答えの材料にしない)
   sns_hosts: [x.com, twitter.com, facebook.com, instagram.com, youtube.com, youtu.be, tiktok.com, threads.net]
   # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)

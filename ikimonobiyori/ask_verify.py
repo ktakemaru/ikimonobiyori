@@ -273,7 +273,7 @@ def source_rule_errors(text, rules, blob=None):
     pol = O.load_policy()
     errs = []
     low = text.lower()
-    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
+    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(pol["record"].get("rejected_hosts") or []) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
         if w.lower() in low:
             errs.append({"code": "blocked_source", "detail": w})
     for m in re.finditer(rules["phone_re"], _n(text)):

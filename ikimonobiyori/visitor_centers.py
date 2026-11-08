@@ -148,6 +148,8 @@ def usable_center(c, today, policy=None, sp=None):
     p = policy or load_policy()
     if validate_center(c, p):
         return False, "invalid"
+    if c.get("closed"):                                       # 段階62 第9部: 閉館した施設(宮ヶ瀬ビジターセンター)は使わない
+        return False, "closed"
     st = (c.get("approval") or {}).get("status")
     if st != "approved":
         return False, "not_approved" if st == "pending" else "revoked"

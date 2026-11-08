@@ -155,7 +155,8 @@ def clock_now():
 def _blocked_host(host, policy):
     """段階47: 利用規約が自動取得を禁じるホスト(policy record.not_read_hosts)か。サブドメインも含む。"""
     host = (host or "").lower()
-    return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
+    hosts = list(_v(policy["record"].get("not_read_hosts") or {"value": []})) + list(policy["record"].get("rejected_hosts") or [])   # 段階62 第9部
+    return any(host == b or host.endswith("." + b) for b in hosts)
 
 
 def _sns_host(host, policy):

@@ -43,6 +43,11 @@ def validate(card):
     if cond.get("year_dependent") and not cond.get("year"):
         errs.append("年に依存する事実には年が要る")
     src = card.get("source") or {}
+    from urllib.parse import urlparse
+    from . import observations as O
+    host = (urlparse(src.get("url") or "").hostname or "").lower()
+    if any(host == b or host.endswith("." + b) for b in O.load_policy()["record"].get("rejected_hosts") or []):     # 段階62 第9部
+        errs.append(f"出典のホスト {host} は使わない(本人が不採用と決めた情報源)")
     for k in c["source_required"]:
         if not src.get(k):
             errs.append(f"出典の {k} がない")
@@ -79,6 +84,8 @@ def usable(card, centers=None):
     確度が施設のもの(施設の観察記録・解説・発信)は、出典の施設が施設台帳で承認待ち・取り消しなら出さない(台帳にない施設は従来どおり)。
     公的資料・研究機関の解説は、権利メモが確認済みのときだけ。紹介(紹介サイト。公式ではないと明記して出す)はこれまでどおり。"""
     g = cfg()["gate"]
+    if card.get("retired"):                                   # 段階62 第9部: 出典を差し替えて作り直した古いカード(宮ヶ瀬の 2010 年の資料など)は出さない
+        return False, "retired"
     conf = card.get("confidence")
     name = (card.get("source") or {}).get("name") or ""
     if conf in g["facility_confidences"]:
