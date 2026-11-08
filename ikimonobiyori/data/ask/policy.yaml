@@ -135,6 +135,34 @@ answer_check:
   bare_symbol_re: '[✕×△〇◯○◎▼](?![ 　]?[ぁ-んァ-ヶ一-龠])'
   # 段階38(指示書 3-4): 利用者への返事の全文(答えの本文の外に付け足した文も)の検査。作業・開発の説明を落とす
   reply_terms: [検査に合格, 合格しました, 合格です, テストは, 新しい記録が, 件増えました, 今回の作業, 作業で実行, 実行したこと, リポジトリ, 追跡ファイル, 保存先, 単体テスト, "(?<![A-Za-z])git(?![A-Za-z])", 変更していない, 変更していません, 書き込み先, 手順を]
+  # 段階62 第1部(会話の試用 2026-11-08。「台帳ってなに?」と聞き返された): 内部用語・作業の事情の語(正規表現)。
+  # 答えの本文と、出典以外の文で、出たら不合格(internal_word)。URL と、見出し「出典」の行より後ろは数えない。
+  # 範囲の限界は利用者の語で書く(scope_limit_lines)。英字の語は前後が英字でないときだけ(大文字小文字を区別しない)。
+  internal_words:
+    - 台帳
+    - 承認済み
+    - 承認待ち
+    - 検査
+    - 不合格
+    - "(?<!不)合格"
+    - 行事用
+    - 骨組み
+    - "(答えの|回答の|おすすめの)計画"
+    - "計画(どおり|のとおり|に沿って|を作り|を作っ|を更新|に入っ|に入れ|にない|にあり|から外)"
+    - "記録(を読|から作|済み|に入っ|に入れ|にあり|にあった|にない)"
+    - コマンド
+    - スキル
+    - リポジトリ
+    - データ置き場
+    - "(?<![A-Za-z])(ask|plan|verify|skeleton|knowledge|catalog)(?![A-Za-z])"
+    - "(この|内部の|今回の)決まり"
+    - "決まり(で|により|なので|に従って|のため|上)"
+    - "(答え|回答|文章)は[^。]*を通して(い|お|あ)"
+  # 段階62 第1部 2: 範囲の限界の文(利用者の語)。「台帳に入っていない」「承認済みの台帳」と書かない
+  scope_limit_lines:
+    events_other: ほかの施設の観察会は、確認できていません。
+    events_none: 確認できている公式ページの範囲では、{when}の観察会・行事は見つかりませんでした。
+    place_not_covered: "{name}の今の様子は、確認できている公式ページの範囲にありません。"
 
 # 段階38(利用者の決定 2026-11-01。指示書 2-1): 単体で iNaturalist を取りに行くときの小さな上限(ikimonobiyori/netbudget.py)。
 # 1 回の実行の上限は observations の inat_refresh.max_requests_per_question(集計)と guide の photos.max_requests_per_run(写真)。
@@ -162,6 +190,7 @@ plan_page:
   reply_line: "写真つきのページ: {path}"
   text:
     title: "{dates} {labels}のおすすめ"
+    title_region: "{dates} {region}の{labels}のおすすめ"            # 段階62 第2部: 題名に地域・日付・テーマ(ページが複数でも区別できる)
     conclusion: "{dates}のおすすめは、{names}です。"
     picks_heading: 今回のおすすめ
     subject_labels: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
@@ -219,3 +248,33 @@ park_page:
     care_heading: 観察のマナー
     confidence_heading: 確かさの補足
     footer: "写真提供: iNaturalist / Wikimedia Commons。鳥の記録: 公園の観察の記録と iNaturalist の過去の記録。"
+
+# 段階62 第1部 5: 利用者向けの情報源の一覧(ikimonobiyori/source_list.py。`ask sources`)。答えに使っているものだけを数える。
+# 「台帳にはどのくらいの登録があるの?」はこれで答える。確認中の件数は、利用者が「承認」について聞いたときだけ(--review)。内部用語を書かない。
+source_list:
+  kinds: [centers, autumn_leaves, flowers, birds, wintering_birds, events, knowledge, normals]
+  max_names: {value: 3, source: "表示の設計値(代表的な名称を3つまで。残りは「ほか○件」)", provisional: true}
+  heading: イキモノビヨリが答えに使っている情報源です。
+  labels:
+    centers: 施設の発信(ビジターセンターなど)
+    autumn_leaves: 今の様子を読む公式ページ(紅葉)
+    flowers: 今の様子を読む公式ページ(花)
+    birds: 今の様子を読む公式ページ(野鳥)
+    wintering_birds: 今の様子を読む公式ページ(冬鳥)
+    events: 行事・観察会の公式ページ
+    knowledge: ネイチャーガイドの知識(出典つきの短いまとめ)
+    normals: 気象庁の平年の目安(標本木などの観測)
+  units: {default: 件, centers: か所, events: か所, knowledge: 枚}
+  line_named: "- {label}: {n}{unit}({names}{more})"
+  line_count: "- {label}: {n}{unit}"
+  line_normals: "- {label}: {n}項目({stations}地点)"
+  more: "など"
+  names_sep: 、
+  note: どれも、公開されている公式ページや資料から、日付と出どころが分かる事実だけを使っています。
+  review_heading: 使ってよいか確認している情報源(まだ答えには使っていません)
+  review_line: "- {label}: {n}{unit}"
+  review_note: 確認が済むまでは、答えに出しません。
+  # 段階62 第1部 4: 利用者が「台帳ってなに?」「承認って?」と聞いたときの説明(利用者の語。内部の用語を繰り返さない)。`ask sources --explain <語>`
+  explain:
+    台帳: イキモノビヨリが使ってよいと決めた公式ページや施設の一覧のことです。ページごとに、発行元・使ってよい範囲・確かめた日を控えています。
+    承認: その一覧に入れて答えに使ってよいか、利用規約や発行元を確かめたうえで、利用者ご本人が決めることです。確かめている途中のものは、答えに出しません。

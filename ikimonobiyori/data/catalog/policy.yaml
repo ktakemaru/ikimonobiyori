@@ -29,3 +29,7 @@ range_limit:
   origins:
     - {name: 東京, lat: 35.681, lon: 139.767}
     - {name: 横浜, lat: 35.466, lon: 139.622}
+
+# 段階62 第3部: 名所カタログの地形(tags.terrain)→ 地点の種類(ask/plan.yaml の aims.spot_kinds)。
+# 確認できた地形だけで決める。mountain は登山・山岳。高原・渓谷・滝は決めない(手軽な場所と山歩きの両方がある)
+spot_kind_by_terrain: {mountain: mountain, garden: park, urban: park, lake: park, wetland: park}

@@ -155,7 +155,8 @@ def clock_now():
 def _blocked_host(host, policy):
     """段階47: 利用規約が自動取得を禁じるホスト(policy record.not_read_hosts)か。サブドメインも含む。"""
     host = (host or "").lower()
-    return any(host == b or host.endswith("." + b) for b in _v(policy["record"].get("not_read_hosts") or {"value": []}))
+    hosts = list(_v(policy["record"].get("not_read_hosts") or {"value": []})) + list(policy["record"].get("rejected_hosts") or [])   # 段階62 第9部
+    return any(host == b or host.endswith("." + b) for b in hosts)
 
 
 def _sns_host(host, policy):
@@ -211,6 +212,10 @@ def _ledger_urls():
                 u = urlparse(s.get("url") or "")
                 if u.hostname:
                     rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), f.stem, s.get("id")))
+        for s in (load_policy()["record"].get("pending_sources") or []):     # 段階62 第7部: 台帳に入れられない承認待ちの情報源
+            u = urlparse(s.get("url") or "")
+            if u.hostname:
+                rows.append((_bare_host(u.hostname), unquote(u.path or "/"), (s.get("approval") or {}).get("status"), s.get("subject"), s.get("id")))
         _LEDGER_URLS["rows"] = rows
     return _LEDGER_URLS["rows"]
 
@@ -550,7 +555,15 @@ def _from_catalog(e, subject, policy=None):
             "area": t.get("area"), "point": e.get("point"), "elevation_m": (e.get("point") or {}).get("elevation_m"),
             "typical": _typical_from_catalog(e, policy), "events": _events_from_catalog(e),
             "pages": [{"url": s["url"], "publisher": s.get("title") or urlparse(s["url"]).hostname, "source_class": "official"} for s in e.get("sources") or []],
-            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True}
+            "flower_kinds": t.get("flower_kinds") or [], "tree_species": list(e.get("species") or []), "from_catalog": True,
+            "spot_kind": t.get("spot_kind") or _kind_by_terrain(t.get("terrain"))}
+
+
+def _kind_by_terrain(terrain):
+    """段階62 第3部: 名所カタログの地形 → 地点の種類(mountain/park)。山の地形があれば登山・山岳。決められなければ None。"""
+    table = catalog_mod.load_policy().get("spot_kind_by_terrain") or {}
+    kinds = [table[t] for t in terrain or [] if t in table]
+    return "mountain" if "mountain" in kinds else (kinds[0] if kinds else None)
 
 
 def _tree_names(text):
@@ -569,7 +582,7 @@ def _from_spot(s, policy, catalog_by_id):
          "city": s.get("city"), "area": s.get("area"), "point": s.get("point"), "elevation_m": s.get("elevation_m"), "elevation_note": s.get("elevation_note"),
          "typical": typ, "events": list(s.get("events") or []), "pages": list(s.get("pages") or []), "search": s.get("search"),
          "hours": s.get("hours"), "closed": s.get("closed"), "birds_note": s.get("birds_note"), "flower_kinds": s.get("flower_kinds") or [],
-         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"),
+         "season_birds": list(s.get("season_birds") or []), "bird_area": s.get("bird_area"), "spot_kind": s.get("spot_kind"),
          "tree_species": _tree_names((s.get("trees") or {}).get("species") if isinstance(s.get("trees"), dict) else None)}
     pa = park_area(s, policy)                    # 段階38: 探鳥地ごとの範囲があれば、その範囲で集計する(半径10kmの区域をやめる)
     if pa:
@@ -592,6 +605,7 @@ def _from_spot(s, policy, catalog_by_id):
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
         c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
         c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
+        c["spot_kind"] = c.get("spot_kind") or cat.get("spot_kind")
     return c
 
 
@@ -807,11 +821,62 @@ def resolve(region_query, origin, policy, regions_doc=None):
     if region_query:
         r = S.resolve_region(region_query, regions_doc)
         if r is None:
+            multi = resolve_multi(region_query, policy, regions_doc)
+            if multi:
+                return multi
             return {"name": region_query, "prefectures": [], "areas": [], "resolved": False}
         m = r.get("match") or {}
         return {"name": r["name"], "prefectures": m.get("prefectures") or [], "areas": m.get("areas") or [], "resolved": True}
     pref = policy["origin_home"].get(origin)
     return {"name": pref, "prefectures": [pref] if pref else [], "areas": [], "resolved": bool(pref), "from_origin": True}
+
+
+def resolve_multi(region_query, policy, regions_doc=None):
+    """段階62 第2部: 「東京か神奈川」「神奈川・埼玉」→ 都県の OR の地域 {name, prefectures, areas, parts}。どれかの部分が地域の呼び名に
+    一致しなければ None(推測しない)。部分が 1 つだけのときも None。"""
+    cfg = policy.get("multi_region") or {}
+    if not cfg:
+        return None
+    regions_doc = regions_doc or S.load_regions()
+    q = re.sub(cfg["strip_suffix_re"], "", (region_query or "").strip())
+    names = [re.sub(cfg["strip_suffix_re"], "", x.strip()) for x in re.split(cfg["split_re"], q)]
+    names = [x for x in names if x]
+    if len(names) < 2:
+        return None
+    parts = []
+    for n in names:
+        r = S.resolve_region(n, regions_doc)
+        if r is None:
+            return None
+        m = r.get("match") or {}
+        if r["name"] not in {p["name"] for p in parts}:
+            parts.append({"name": r["name"], "query": n, "prefectures": m.get("prefectures") or [], "areas": m.get("areas") or []})
+    prefs = [x for p in parts for x in p["prefectures"]]
+    areas = [x for p in parts for x in p["areas"]]
+    return {"name": cfg["name_sep"].join(p["query"] for p in parts), "prefectures": list(dict.fromkeys(prefs)), "areas": list(dict.fromkeys(areas)),
+            "resolved": True, "parts": parts}
+
+
+def known_prefectures(regions_doc=None):
+    """地域の一覧に出てくる都道府県の名前(記録の市区町村・発行元から都県を読むため)。"""
+    regions_doc = regions_doc or S.load_regions()
+    out = []
+    for r in regions_doc.get("regions") or []:
+        for p in (r.get("match") or {}).get("prefectures") or []:
+            if p not in out:
+                out.append(p)
+    return out
+
+
+def prefecture_from_text(*texts, known=None):
+    """段階62 第2部: 記録の市区町村(「神奈川県」「神奈川県山北町」)や発行元(「神奈川県」)が都県の名前で始まれば、その都県。なければ None。"""
+    known = known if known is not None else known_prefectures()
+    for t in texts:
+        t = (t or "").strip()
+        for p in known:
+            if t.startswith(p):
+                return p
+    return None
 
 
 def in_region(c, region, km=None, max_km=None):
@@ -1648,7 +1713,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
     pubs = _publishers(c, rows)
     out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "point": c.get("point"), "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
-            "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"),
+            "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"), "spot_kind": c.get("spot_kind"),
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
@@ -1748,10 +1813,12 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
         for r in g["rows"]:
             x["prefecture"] = x["prefecture"] or r.get("prefecture")
             x["area"] = x["area"] or r.get("area")
+        if x["prefecture"] is None:                            # 段階62 第2部: 記録の市区町村・発行元が都県の名前で始まれば、その都県(東京の計画に神奈川の山が入った不具合)
+            x["prefecture"] = prefecture_from_text(g["city"], *[r.get("city") for r in g["rows"]], *[r.get("publisher") for r in g["rows"]])
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
     for x in extra.values():
-        if x["prefecture"] is None and x["area"] is None and reg["prefectures"] and not reg["areas"]:
-            x["prefecture"] = reg["prefectures"][0]         # 都道府県だけの地域で、記録に場所の手がかりがないとき(従来どおり)
+        if x["prefecture"] is None and x["area"] is None and len(reg["prefectures"]) == 1 and not reg["areas"]:
+            x["prefecture"] = reg["prefectures"][0]         # 都道府県 1 つだけの地域で、記録に場所の手がかりがないとき(従来どおり。複数の都県では、どれか分からないので入れない)
         f = fact_for(x, x["rows"], dates, today, subject, policy, origin, cat_pol)
         f["outside_list"] = True
         all_f.append(f)

@@ -705,6 +705,7 @@ class Flow:
         if facts_doc.get("periods"):                                  # 段階57 第9部: 期間が 2 つ。期間ごとの計画
             doc = AP.build_periods(facts_doc)
             doc["offers"] = []
+            AP.attach_region_parts(doc, facts_doc)                       # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
             self._save("answer_plan.json", doc)
             save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
             self.call("plan", subject="periods", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
@@ -716,6 +717,7 @@ class Flow:
         doc = AP.build_all(facts_doc, overrides=keep, refine=refine) if sj == "all" else AP.build(facts_doc, sj, overrides=keep, refine=refine)
         if override:
             AP.add_override(doc, override, reason, replace=replace, at=self.now.isoformat())
+        AP.attach_region_parts(doc, facts_doc)                           # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
         doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
         save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)
@@ -932,6 +934,9 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("place-alias", help="確かめた場所の別名を手元に足す(段階58。次回から使う)")
     p.add_argument("--add", required=True, help="別名")
     p.add_argument("--official", required=True, help="正式名称")
+    p = sub.add_parser("sources", help="利用者向けの情報源の一覧(段階62。種類別の件数と代表的な名称。通信しない)")
+    p.add_argument("--review", action="store_true", help="確認中の件数も出す(利用者が承認について聞いたときだけ)")
+    p.add_argument("--explain", help="利用者が聞いた語(台帳・承認)の説明を利用者の語で出す")
     p = sub.add_parser("compare", help="ここまでの候補の比較表をコードで作る(履歴の計画が 2 件以上のとき。段階58)")
     p = sub.add_parser("import-csv", help="公式の機械可読データの本文を記録にする(段階57。山梨県の紅葉状況 CSV。承認されるまで答えには出ない。本文は保存しない)")
     p.add_argument("--out-dir", required=True)
@@ -1027,6 +1032,13 @@ def main(argv=None, http_get=None):
         from . import place_answer as PA
         PA.add_alias(a.add, a.official)
         return 0
+    if a.step == "sources":                              # 段階62 第1部 5
+        from . import source_list
+        if a.explain:
+            print(source_list.explain(a.explain))
+            return 0
+        print(source_list.text(with_review=a.review), end="")
+        return 0
     if a.step == "compare":                              # 段階58 第5部: 履歴がなければ作らない
         from . import compare
         text, urls = compare.table(_clock())
@@ -1062,7 +1074,7 @@ def main(argv=None, http_get=None):
             final = text
             if errs:                                     # 通らなければ、台帳から作った答え(それも通らなければ 1 行)
                 made = intent.compose(a.question, today=today)
-                final = made if made and not intent.check_event(made, today) else AP.load_policy()["skeleton"]["cannot_answer"] + "\n"
+                final = made if made and not intent.check_event(made, today) else intent.event_none_line(a.question) + "\n"     # 段階62 第1部 2: 利用者の語で範囲を書く
             fp = Path(a.text).with_name("final.txt")
             fp.write_text(final, encoding="utf-8")
             print(("合格: " if not errs else "不合格(台帳から作った答えを書きました): ") + str(fp))

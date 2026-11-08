@@ -14,13 +14,26 @@ record:
   required: [url, state, source_class]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
+  # 段階62 第9部: 本人が不採用と決めた情報源のホスト(バードリサーチ。2026-11-08)。読まない・記録できない・答えと知識カードの出典に使わない
+  rejected_hosts: [bird-research.jp]
   # 段階58 第4部: SNS の投稿を事実の根拠にしない(記録しない。過去の記録も答えの材料にしない)
   sns_hosts: [x.com, twitter.com, facebook.com, instagram.com, youtube.com, youtu.be, tiktok.com, threads.net]
   # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)
   # 段階60 第9部: 承認待ちを隠す仕組みの統一。対象(記録の対象 → 隠す台帳の状態)。公式の台帳(data/sources/*.yaml)で、
   # 記録の URL に対応する項目がこの状態なら、公式としての記録は承認されるまで答えに出さない(記録は残る。承認されれば自動で出る)。
   # 紹介サイトなど(source_class secondary)は段階34 の方針どおり「公式ではありません」で出る。野鳥・冬鳥の現況の記録(status_log)は記録の時点で承認済みだけが通る
-  gated_ledgers: {autumn_leaves: [pending, revoked], flowers: [pending, revoked]}      # 段階61 第8部(本人の確認 2026-11-08): 花の台帳にも広げた
+  gated_ledgers: {autumn_leaves: [pending, revoked], flowers: [pending, revoked]}
+  # 段階62 第7部: 名所カタログの地点がまだ候補のため、台帳(data/sources/<対象>.yaml。地点は承認済みの名所に結ぶ決まり)に入れられない
+  # 承認待ちの情報源。承認待ちとして扱い(gated_ledgers と同じ)、承認されるまで公式としての記録を答えの材料にしない。承認の記入はしていない
+  pending_sources:
+    - id: tbg-kahaku-migoro
+      subject: flowers
+      publisher: 国立科学博物館 筑波実験植物園
+      url: https://tbg.kahaku.go.jp/migoro-event/syokubutsu/index.html
+      site_candidate: hana-0041
+      robots: "robots.txt は /staging/* だけを拒否(「今週のみごろ」は拒否されていない。指示書 段階62 第7部 2)"
+      terms: "「当サイトの内容等を許可なく複製・改変および販売・出版・放送等に利用しないようにお願いします」の記載。使うのは花の名前・「見ごろ」の語・日付・URL だけ(事実のみ)"
+      approval: {status: pending, reason: 段階62 第7部で承認待ちとして追加。利用者が規約メモを見て決めるまで答えの材料にしない}      # 段階61 第8部(本人の確認 2026-11-08): 花の台帳にも広げた
   gated_sources:
     - {url_re: 'yamanashi-kankou\.jp/special/documents/koyo_', ledger: autumn_leaves, source: yamanashi-kankou-koyo-csv}
   # 段階54 第1部(利用者の決定 2026-11-06): 山と溪谷オンライン(山と溪谷社)の掲載情報。利用規約が事前の承諾のない複製・転用を禁じる(第4条⑧)ので、
@@ -215,6 +228,12 @@ origin_home: {横浜: 神奈川県, 東京: 東京都}
 # 地域を指定しない質問（ask の既定。利用者の決定 2026-11-04）: 都道府県に縛らず、出発地から片道の範囲内（catalog の range_limit）の登録済みの名所すべて
 all_range_words: [全範囲, 登録済みの全範囲]
 all_range_name: 登録済みの全範囲（出発地から片道250km前後）
+# 段階62 第2部: 複数の都県の指定(「東京か神奈川で」「東京と神奈川」「神奈川・埼玉」)を都県の OR として受け付ける。
+# 全体で 1 つの地域にならないときだけ、区切りで分けて、どの部分も地域の呼び名に一致するときに使う(推測で近いものを選ばない)。
+multi_region:
+  split_re: '[・、,/／]|か|と|や|または|および'
+  strip_suffix_re: '(で|あたり|周辺|方面|の中|内)$'
+  name_sep: ・
 
 # 答えに出さない内部用語(facts の文の自己検査)
 forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台帳, observations, source_class, secondary, official]

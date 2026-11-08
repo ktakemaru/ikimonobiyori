@@ -72,6 +72,8 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
     if p.get("distance_text"):
         head += f" {p['distance_text']}"
     bits = [current_line(c, t, p, today)]
+    if p.get("old_record_note"):                                     # 段階62 第3部: 対象日の数日前の記録
+        bits.append(p["old_record_note"])
     bits.append(season_text(c, sj, t, max_quote))
     if p.get("phrase"):
         bits.append(p["phrase"])
@@ -219,6 +221,9 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     if ol:
         lines.append(ol)
     lines += list(extra_lines)
+    for rp in plan.get("region_parts") or []:                          # 段階62 第2部: 地域ごとの行(候補がない地域も書く)
+        lines.append(t["region_part"].format(name=rp["name"], names=t["region_names_sep"].join(rp["picks"])) if rp["picks"]
+                     else t["region_part_few"].format(name=rp["name"], n=0))
     urls, mentioned = set(), []
     segs = plan.get("segments") or []
     today = date.fromisoformat(str(facts.get("now"))[:10]) if facts.get("now") else None
@@ -279,7 +284,7 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     eye, before_k, card_urls = K.split_lines(chosen)
     vc = vc_lines(facts, mentioned, t)                                # 段階60 第8部: 質問の場所の承認済み施設の発信(段階55 の 1 行)
     if vc:
-        lines += [""] + [x for row in vc for x in (row["line"], row.get("hours_line")) if x]
+        lines += [""] + [x for row in vc for x in ([" ".join(row["sentences"])] if row.get("sentences") else [row["line"]]) + [row.get("hours_line")] if x]     # 段階62 第5部: 状態と種名は別の文
         urls |= {row["url"] for row in vc if row.get("url")}
     if eye:
         lines += [""] + eye

@@ -662,4 +662,5 @@ centers:
   within_range: true
   hours: null
   checked_on: '2026-11-08'
+  closed: {date: '2016-03-31', successor: 宮ヶ瀬やまなみセンター別館「みやがせミーヤ館」(総合案内の施設), source_url: "https://www.kanaloco.jp/news/culture/entry-76095.html", source: 神奈川新聞 2016年5月22日, note: "本人の確認(2026-11-08)。2016年3月末に閉館し、全面改装されて総合案内の施設になった。施設台帳では閉館として扱い、答えの材料にしない(承認の記入ではない。経緯は docs/stage62-closed-centers.md)"}
   approval: {status: pending, reason: "段階61 第8部(本人の確認 2026-11-08 で台帳に足すことのみ。承認ではない)。公式サイトと現在の運営を確認できないため、承認は本人が決める。承認されるまで、この施設のカード2枚は答えに出ない"}

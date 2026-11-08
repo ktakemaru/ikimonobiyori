@@ -50,7 +50,7 @@ def validate(doc, pol=None):
                     errs.append(f"{t}: {k} の曜日 {e[wk]} が暦({w})と合わない")
         if e.get("kind") == "展示" and not (e.get("start") and e.get("end")):
             errs.append(f"{t}: 展示は会期(start・end)が要る")
-        if e.get("kind") != "展示" and not e.get("date"):
+        if e.get("kind") != "展示" and not e.get("date") and not (e.get("start") and e.get("end")):     # 段階62 第6部: 数日にわたる行事は会期
             errs.append(f"{t}: 日付がない")
     return errs
 
@@ -76,6 +76,9 @@ def _md_ja(iso):
 
 def line(e, fac, pol=None):
     pol = pol or policy()
+    if e["kind"] != "展示" and not e.get("date") and e.get("start") and e.get("end"):
+        return pol["line_period"].format(facility=fac["name"], kind=e["kind"], title=e["title"], start=_md_ja(e["start"]), sw=_wd(e["start"], pol),
+                                         end=_md_ja(e["end"]), ew=_wd(e["end"], pol), place=(e["place"] + "。") if e.get("place") else "")
     if e["kind"] == "展示":
         return pol["line_exhibition"].format(facility=fac["name"], kind=e.get("label") or e["kind"], title=e["title"],
                                              start=_md_ja(e["start"]), end=_md_ja(e["end"]))
@@ -91,25 +94,65 @@ def line(e, fac, pol=None):
                                     extra="、".join(extra) + ("。" if extra else ""))
 
 
+def period_of(question, today, pol=None):
+    """段階62 第6部: 質問の期間の語 → (始まり, 終わり)。「12月」のような月も。なければ None(今日以降すべて)。"""
+    import calendar
+    from datetime import timedelta
+    pol = pol or policy()
+    q = question or ""
+    key = next((v for k, v in pol.get("period_words", {}).items() if k in q), None)
+    if key == "today":
+        return today, today
+    if key == "tomorrow":
+        return today + timedelta(days=1), today + timedelta(days=1)
+    if key in ("this_weekend", "next_weekend"):
+        from . import sources as S
+        from datetime import datetime
+        wk = S.next_weekend(datetime(today.year, today.month, today.day))
+        wk = [d.date() if hasattr(d, "date") and not isinstance(d, date) else d for d in wk]
+        if key == "next_weekend":
+            wk = [d + timedelta(days=7) for d in wk]
+        return min(wk), max(wk)
+    if key in ("this_month", "next_month"):
+        y, m = today.year, today.month
+        if key == "next_month":
+            y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+        return (today if key == "this_month" else date(y, m, 1)), date(y, m, calendar.monthrange(y, m)[1])
+    mm = re.search(pol.get("month_re") or r"$^", q)
+    if mm and 1 <= int(mm.group(1)) <= 12:
+        m = int(mm.group(1))
+        y = today.year if m >= today.month else today.year + 1
+        return max(today, date(y, m, 1)), date(y, m, calendar.monthrange(y, m)[1])
+    return None
+
+
 def lines_for(question, today, doc=None, pol=None, prefecture=None):
     """質問の文 → (行の一覧, 出典の URL)。承認済みの施設の、今日以降の行事・会期中かこれからの展示だけ。曜日が合わないものは出さない。"""
     pol = pol or policy()
-    doc = doc if doc is not None else load()
+    if doc is None:                                                        # 段階62 第6部: 行事の台帳と記録済みの行事をまとめた索引
+        from . import event_index as EI
+        doc = EI.build(today, pol=pol)
     tps = match(question, pol)
     if not tps or validate(doc, pol):
         return [], []
-    if prefecture is None:
-        prefecture = next((p for k, ps in pol["regions"].items() if k in (question or "") for p in ps), None)
+    if prefecture is None:                                                      # 段階62 第6部: 「神奈川・東京」のように複数の都県も
+        prefs = [p for k, ps in pol["regions"].items() if k in (question or "") for p in ps]
+    else:
+        prefs = [prefecture] if isinstance(prefecture, str) else list(prefecture)
+    win = period_of(question, today, pol)
     facs = _approved(doc)
     out, urls = [], []
-    for e in doc.get("events") or []:
+    for e in sorted(doc.get("events") or [], key=lambda x: (x.get("date") or x.get("start") or "", x.get("title") or "")):
         fac = facs.get(e["facility"])
-        if not fac or (prefecture and fac.get("prefecture") != prefecture):
+        if not fac or (prefs and fac.get("prefecture") not in prefs):
             continue
         if not set(e.get("topics") or []) & set(tps):
             continue
         last = e.get("end") or e.get("date")
         if date.fromisoformat(last) < today:
+            continue
+        first = e.get("date") or e.get("start")
+        if win and (date.fromisoformat(last) < win[0] or date.fromisoformat(first) > win[1]):
             continue
         out.append(line(e, fac, pol))
         urls.append(e["url"])
@@ -150,11 +193,11 @@ def _line_errors(line, e, pol):
             continue
         if m.group(4) and m.group(4) != _wd(iso, pol):
             errs.append({"code": "event_weekday_mismatch", "detail": f"{e['title']}: {m.group(0)}(暦は{_wd(iso, pol)})"})
-        if not m.group(4) and iso in (e.get("date"), e.get("deadline")):
+        if not m.group(4) and iso in {e.get("date"), e.get("deadline")} | ({e.get("start"), e.get("end")} if e["kind"] != "展示" and not e.get("date") else set()):
             errs.append({"code": "event_weekday_missing", "detail": f"{e['title']}: {m.group(0)}"})
     for m in _DATE_NOY.finditer(line):
         errs.append({"code": "event_date_no_year", "detail": f"{e['title']}: {m.group(0)}"})
-    need = [e["start"], e["end"]] if e["kind"] == "展示" else [e["date"]]
+    need = [e["start"], e["end"]] if (e["kind"] == "展示" or not e.get("date")) else [e["date"]]
     for iso in need:
         if iso not in found:
             errs.append({"code": "event_date_missing", "detail": f"{e['title']}: {_md_ja(iso)}"})

@@ -9,7 +9,7 @@ from . import facility_events as FE
 from . import jma_normals as JN
 from . import knowledge as K
 from . import pdf_text as PT
-from .ask_verify import URL_RE, _n, load_rules, process_excuse_errors, question_errors, term_errors
+from .ask_verify import URL_RE, _n, internal_word_errors, load_rules, process_excuse_errors, question_errors, term_errors
 
 
 def cfg():
@@ -73,6 +73,18 @@ def cards_for(question, cards=None, env=None, month=None):
     return uniq
 
 
+def scope_limit(key, **kw):
+    """段階62 第1部 2: 範囲の限界の文(利用者の語。ask/policy.yaml の scope_limit_lines)。"""
+    return load_rules()["scope_limit_lines"][key].format(**kw)
+
+
+def event_none_line(question):
+    """行事が見つからないときの 1 行(「確認できている公式ページの範囲では、今週末の観察会・行事は見つかりませんでした。」)。"""
+    pol = FE.policy()
+    when = next((w for w in pol["when_words"] if w in (question or "")), pol["when_default"])
+    return scope_limit("events_none", when=when)
+
+
 def compose(question, cards=None, env=None, month=None, today=None, events=None):
     """知識の答え(カードの事実と出典だけ)。カードがなければ None(先に調べて記録する)。
     行事の質問は、承認済みの施設の行事の行だけ(なければ None)。today は行事の日付と比べる日(省くと今日)。"""
@@ -83,7 +95,7 @@ def compose(question, cards=None, env=None, month=None, today=None, events=None)
         ev, ev_urls = FE.lines_for(question, today or _date.today(), events)
         if not ev:
             return None
-        return "\n".join(ev + ["", c["sources_heading"]] + ev_urls) + "\n"
+        return "\n".join(ev + ["", scope_limit("events_other"), "", c["sources_heading"]] + ev_urls) + "\n"
     rows = cards_for(question, cards, env, month)
     normals, normal_src = JN.lines_for(question)     # 段階61 第1部: 気象庁の標本木・観測の平年の目安(カードとは別。出典と加工の明記つき)
     if not rows and not normals:
@@ -147,8 +159,11 @@ def check_event(text, today, events=None, rules=None):
     """行事の答えの検査(意図が event のとき。知識カードの検査と名所の候補数の下限は当てない)。
     台帳との照合(facility_events.answer_errors)+ 作業の事情・内部用語・答えの中の質問(既存の規則)。"""
     rules = rules or load_rules()
+    if events is None:                                   # 段階62 第6部: 行事の台帳と記録済みの行事の索引
+        from . import event_index as EI
+        events = EI.build(today)
     return (FE.answer_errors(text, today, events) + process_excuse_errors(text, rules) + question_errors(text, rules)
-            + [{"code": e["code"], "detail": e["detail"]} for e in term_errors(text, rules)])
+            + [{"code": e["code"], "detail": e["detail"]} for e in term_errors(text, rules) + internal_word_errors(text, rules)])
 
 
 def _normal_values():

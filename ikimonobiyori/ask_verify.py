@@ -251,13 +251,29 @@ def _third_in_ranges(m, th, mat):
     return False
 
 
+def internal_word_errors(text, rules=None):
+    """段階62 第1部: 内部用語・作業の事情の語(rules["internal_words"])。答えの本文と、出典以外の文だけを数える
+    (URL と、見出し「出典」の行より後ろは数えない)。→ [{code, detail, line}]"""
+    rules = rules or load_rules()
+    pats = rules.get("internal_words") or []
+    out = []
+    for i, line in enumerate(text.splitlines()):
+        if re.fullmatch(r"\s*[#*\s]*出典\s*[:：]?\s*[*]*\s*", line):
+            break
+        t = URL_RE.sub(" ", _n(line))
+        for pat in pats:
+            if re.search(pat, t, flags=re.IGNORECASE):
+                out.append({"code": "internal_word", "detail": pat, "line": i + 1})
+    return out
+
+
 def source_rule_errors(text, rules, blob=None):
     """段階57 第10部: 使わない種類のホスト・語(本文にも出典にも)／事実にない電話番号／英語の出典の見出し。blob: 取得した事実の文字列(なければ番号はすべて不合格)。"""
     from . import observations as O
     pol = O.load_policy()
     errs = []
     low = text.lower()
-    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
+    for w in list(O._v(pol["record"]["not_read_hosts"])) + list(pol["record"].get("rejected_hosts") or []) + list(O._v(pol.get("not_read_words") or {"value": []})) + (rules.get("extra_blocked_words") or []):
         if w.lower() in low:
             errs.append({"code": "blocked_source", "detail": w})
     for m in re.finditer(rules["phone_re"], _n(text)):
@@ -421,8 +437,10 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
+    answer_errors += vc_sentence_errors(text, facts)               # 段階62 第5部
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
+    answer_errors += internal_word_errors(text, rules)      # 段階62 第1部
     answer_errors += question_errors(text, rules)
     answer_errors += not_tried_errors(text, facts)
     answer_errors += subject_word_errors(text, facts, rules) + quote_errors(text, rules)
@@ -487,6 +505,40 @@ def visitor_center_errors(text, facts):
     for m in re.finditer(r"([^\s、。「」（）()]{2,24}?(?:ビジターセンター|自然観察の森|自然観察公園|自然学習センター))発信", text):
         if m.group(1) not in allowed and m.group(1) not in names:
             errs.append({"code": "visitor_center_not_approved", "detail": f"{m.group(1)}は台帳にない施設"})
+    return errs
+
+
+def vc_sentence_errors(text, facts):
+    """段階62 第5部: 施設の発信の文。(a) 状態の語の直後に括弧の種名が続く形(「色づき始めの草木の葉（ジョウビタキ）」)は不合格
+    (b) 発信の種名に、何の種名か(鳥・花・木・昆虫など)が添えられていなければ不合格。"""
+    from . import visitor_centers as VC
+    p = VC.load_policy()
+    kinds = list((p.get("species_kinds") or {}).keys())
+    errs = []
+    body = URL_RE.sub(" ", _n(text))
+    for r in facts.get("visitor_centers") or []:
+        name = _n(r.get("name") or "")
+        if not name:
+            continue
+        legacy = name + "発信、"                                            # 段階55 の 1 行の形(「○○発信、11/5時点: 状態（種名）」)は既存の決まりのまま(この検査の外)
+        lines = [ln for ln in body.splitlines() if legacy not in ln and ((name in ln and "発信" in ln) or ln.strip().startswith(_n(p["line"]["sentence_species"]).split("{")[0]))]
+        block = "\n".join(lines)                                            # 施設の発信の行だけを見る(ほかの行の種名は、この決まりの外)
+        sp = [s for s in (r.get("species") or []) if s] or [s for s in re.findall(r"[（(]([^）)]+)[）)]", r.get("line") or "") for s in s.split("・")]
+        st = _n(r.get("state") or "")
+        for s in sp:
+            s = _n(s)
+            if st and re.search(re.escape(st) + r"[」]?\s*[(]" + r"[^)]*" + re.escape(s), block):
+                errs.append({"code": "vc_state_species_joined", "detail": f"{r.get('name')}: 「{st}」の直後に括弧の種名"})
+                continue
+            for m in re.finditer(re.escape(s), block):
+                tail = block[m.end(): m.end() + 6]
+                if not any(tail.startswith(f"({k})") for k in kinds):
+                    errs.append({"code": "vc_species_without_kind", "detail": f"{r.get('name')}: {s}"})
+                    break
+    allowed = {r.get("name") for r in facts.get("visitor_centers") or []}
+    for c in VC.load_centers():
+        if c["name"] not in allowed and re.search(re.escape(_n(c["name"])) + r"は、\d+/\d+時点(で|の発信)", body):
+            errs.append({"code": "visitor_center_not_approved", "detail": f"{c['name']}は使える施設ではない"})
     return errs
 
 
@@ -833,6 +885,7 @@ def generic_check(text, rules=None, offers=None, clarify=False):
             return {"ok": True, "errors": [], "candidates": 0}
         return {"ok": False, "errors": [{"code": "clarify_not_one_sentence", "detail": "聞き返しは 1 文だけ", "line": 0}], "candidates": 0}
     errs += term_errors(text, rules)
+    errs += internal_word_errors(text, rules)                 # 段階62 第1部
     for pat in g["typos"]:                                  # 出力の項目名の誤字(「出どろ」など)
         if pat in text:
             errs.append({"code": "typo", "detail": pat, "line": 0})

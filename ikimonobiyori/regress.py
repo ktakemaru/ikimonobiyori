@@ -56,6 +56,11 @@ def build_facts(case):
                 out[k_dst] = c[k_src]
         if cur and c.get("age") is not None:
             cur["age_days"] = c["age"]
+        for k_src, k_dst in (("pref", "prefecture"), ("kind", "spot_kind")):     # 段階62: 都県・地点の種類
+            if c.get(k_src):
+                out[k_dst] = c[k_src]
+        if cur and c.get("cls"):
+            cur["source_class"] = c["cls"]
         return out
 
     subj = f["subject"]
@@ -76,7 +81,7 @@ def common_checks(text, case, facts, policy_words, min_lead=0):
         errs.append({"code": "no_lead", "detail": "先頭に結論の文がない"})
     g = V.generic_check(text)
     for e in g["errors"]:
-        if e["code"] in ("forbidden_phrase", "process_phrase", "dev_term", "internal_term", "typo"):
+        if e["code"] in ("forbidden_phrase", "process_phrase", "dev_term", "internal_term", "internal_word", "typo"):     # 段階62: internal_word
             errs.append({"code": "work_or_internal_word", "detail": e["detail"]})
     if RANGE_RE.search(text):
         errs.append({"code": "date_range", "detail": "状態の日付が範囲になっている"})
@@ -109,8 +114,19 @@ def policy_words():
     return {"blocked": blocked, "pending": pending}
 
 
-def generated_text(g):
+def generated_text(g, case=None):
     """コードが組み立てる答え(通信しない)を、決まった日で作る。"""
+    if g["kind"] == "event":                         # 段階62 第6部: 行事の答え(行事の索引から)
+        from . import intent
+        return intent.compose(case["question"], cards=[], today=date.fromisoformat(g["today"])) or intent.event_none_line(case["question"])
+    if g["kind"] == "sources":                       # 段階62 第1部: 情報源の一覧
+        from . import source_list
+        return source_list.text(cards=[])
+    if g["kind"] == "skeleton":                      # 段階62 第2部〜第4部: 計画 → 骨組み
+        from . import skeleton as SK
+        facts = build_facts(case)
+        plan = _plan_for(case, facts)
+        return SK.compose(facts, plan, cards=[])
     if g["kind"] == "species":
         from . import wildflower_species as WS
         return WS.species_answer(g["name"], month=g.get("month"), date_=g.get("date"))["text"]
@@ -120,16 +136,37 @@ def generated_text(g):
     raise ValueError(g["kind"])
 
 
+def _plan_for(case, facts):
+    plan = AP.build(facts, case["facts"]["subject"], overrides=case.get("overrides"))
+    AP.attach_region_parts(plan, facts)
+    return plan
+
+
 def run_case(case, words, min_lead=0):
-    text = case["answer"] if "answer" in case else generated_text(case["generate"])
+    text = case["answer"] if "answer" in case else generated_text(case["generate"], case)
     facts = build_facts(case)
     errs = common_checks(text, case, facts, words, min_lead)
-    if case.get("generate"):                      # コードが作る文は、聞き返しだけで終わらないなどの汎用の検査も通す
+    gk = (case.get("generate") or {}).get("kind")
+    if gk == "event":                                # 段階62: 行事の答えは行事用の検査(名所の候補の検査は当てない)
+        from . import intent
+        errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in intent.check_event(text, date.fromisoformat(case["generate"]["today"]))]
+        facts = None
+    if gk == "sources":
+        errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in V.internal_word_errors(text) + V.term_errors(text)]
+    if gk == "skeleton":                             # 段階62: 計画の採用・狙いの条件(near に入れない名所・計画に入る名所)
+        plan = _plan_for(case, facts)
+        names_in = {it["name"] for s in plan["sections"] for it in s["items"]} | {p["name"] for p in plan["picks"]}
+        for aim, names in (case.get("expect_not_in_aim") or {}).items():
+            got = {it["name"] for s in plan["sections"] if s["aim"] == aim for it in s["items"]}
+            errs += [{"code": "aim_mismatch", "detail": f"{n} が {aim}"} for n in names if n in got]
+        errs += [{"code": "plan_missing", "detail": n} for n in case.get("expect_in_plan") or [] if n not in names_in]
+        errs += [{"code": "plan_out_of_region", "detail": n} for n in case.get("expect_not_in_plan") or [] if n in names_in]
+    if case.get("generate") and gk not in ("event", "skeleton"):    # コードが作る文は、聞き返しだけで終わらないなどの汎用の検査も通す
         errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in V.generic_check(text)["errors"] if e["code"] not in ("ask_back_only", "too_few_candidates")]
     if facts is not None:
         plan = None
-        if case.get("plan"):                          # 段階56: 計画を通す形。答えの①②③が計画のおすすめと合っていること
-            plan = AP.build(facts, case["facts"]["subject"], overrides=case.get("overrides"))
+        if case.get("plan") or gk == "skeleton":      # 段階56: 計画を通す形。答えの①②③が計画のおすすめと合っていること
+            plan = _plan_for(case, facts)
         r = V.check(text, facts, V.load_rules(), plan=plan)
         for s in r["sentences"]:
             errs += [{"code": e["code"], "detail": e.get("detail", "")} for e in s["errors"]]

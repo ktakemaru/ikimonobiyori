@@ -53,6 +53,8 @@ def outlook_of(c, d, pol, subject=None):
     cur = c.get("current") or {}
     st = cur.get("state")
     rel = c.get("relation")
+    if rel == "after_peak" and st in (o.get("after_window_current") or {}) and _fresh_official(cur, d, o):
+        return o["after_window_current"][st]                  # 段階62 第4部: 公式の新しい現況を、例年の時期より優先する
     if c.get("avoid") == "past" or rel == "after_peak" or st == "見頃過ぎ":
         return "past"
     typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end")), None)
@@ -63,6 +65,8 @@ def outlook_of(c, d, pol, subject=None):
         if d < s:
             return "toward" if (s - d).days <= o["toward_days"] else "early"
         if (e - d).days <= o["late_days"]:
+            if st in ("色づき始め", "見頃前") and _fresh_official(cur, d, o):     # 段階62 第4部: 公式の新しい「色づき始め」を「終盤」にしない
+                return o["after_window_current"][st]
             return "late"
         if st in ("色づき始め", "見頃前"):
             return "toward"
@@ -73,6 +77,12 @@ def outlook_of(c, d, pol, subject=None):
     if st == "見頃" and rel == "in_peak":
         return "in_peak" if _gap_ok(cur, d, o) else "unknown"
     return "unknown"
+
+
+def _fresh_official(cur, d, o):
+    """段階62 第4部: 公式の現況で、状態の日付が対象日の after_window_max_gap_days 日以内か。"""
+    sd = cur.get("state_date")
+    return bool(o.get("after_window_max_gap_days")) and cur.get("source_class") == "official" and bool(sd) and 0 <= (d - _d(sd)).days <= o["after_window_max_gap_days"]
 
 
 def _gap_ok(cur, d, o):
@@ -122,17 +132,43 @@ def _fest_active(fest, dates):
     return any(s <= x <= e for x in dates)
 
 
+_MOUNTAIN_NAMES = None
+
+
+def mountain_names():
+    """登山地点(data/sites.yaml の kind: mountain)の名前。"""
+    global _MOUNTAIN_NAMES
+    if _MOUNTAIN_NAMES is None:
+        import yaml
+        from .paths import DATA_FILES_DIR
+        doc = yaml.safe_load((DATA_FILES_DIR / "sites.yaml").read_text(encoding="utf-8")) or {}
+        rows = doc.get("sites") if isinstance(doc, dict) else doc
+        _MOUNTAIN_NAMES = frozenset(r["name"] for r in rows or [] if isinstance(r, dict) and r.get("kind") == "mountain" and r.get("name"))
+    return _MOUNTAIN_NAMES
+
+
+def spot_kind_of(c, pol):
+    """段階62 第3部: 地点の種類(mountain=登山・山岳 / park=公園・庭園・湖畔・施設 / None=分からない)。
+    名所の spot_kind が先。なければ、括弧を除いた名前(空白で区切った語のどれか)が登山地点の名前と一致すれば mountain。"""
+    if c.get("spot_kind"):
+        return c["spot_kind"]
+    name = re.sub(pol["aims"]["name_strip_re"], " ", c.get("name") or "")
+    words = set(name.split()) | {name.replace(" ", "")}
+    return "mountain" if words & mountain_names() else None
+
+
 def aim_of(c, km, lightup, outlook, pol):
     a = pol["aims"]
     if lightup and outlook in a["night_outlooks"]:
         return "night"
     name = c.get("name") or ""
     elev = c.get("elevation_m")
-    if re.search(a["trek_name_re"], name):
+    kind = spot_kind_of(c, pol)
+    if kind == "mountain" or (kind != "park" and re.search(a["trek_name_re"], name)):     # 段階62 第3部: 登山・山岳は近場にしない
         return "trek"
     if km is not None and km >= a["far_min_km"]:                  # 遠い名所は、標高が高くても「歩く」ではなく「遠出」
         return "far"
-    if elev is not None and elev >= a["trek_min_elevation_m"]:
+    if elev is not None and elev >= a["trek_min_elevation_m"] and kind != "park":         # 公園・湖畔は標高だけで山歩きにしない
         return "trek"
     if km is None:
         return "other"
@@ -262,6 +298,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
+                  "target_age_days": _target_age(c, dates[0], facts_doc.get("now")),
                   "has_current": has_current(c), "has_state": has_state_record(c), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
@@ -366,7 +403,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
         picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
     else:
-        picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["evidence"]["no_current_note"]})) for i, it in enumerate(sorted(chosen, key=key))]
+        picks = [dict(weaken(it, pol), rank=i + 1, **({} if it["has_state"] else {"note": pol["evidence"]["no_current_note"]}))       # 段階62 第3部: 古い現況は上位に置かない
+                 for i, it in enumerate(sorted(chosen, key=lambda it: (is_old_record(it, pol),) + key(it)))]
     ranking = []
     for r in sorted(rows, key=lambda x: (-x["score"], x["name"])):
         st = status.get(r["name"])
@@ -428,10 +466,36 @@ def rank_key(it, pol):
     return (-rank, -evidence_level(it, pol), tuple(-ord(ch) for ch in (it.get("current_date") or "")), -it["score"], it["name"])
 
 
+def _target_age(c, d, now=None):
+    """段階62 第3部: 現況の日付が、対象日(先の日なら今日)の何日前か(状態が読める記録だけ)。なければ None。
+    先の週の質問では、今日までの記録がいちばん新しいので、今日から数える(対象日が今日なら同じ)。"""
+    cur = c.get("current") or {}
+    if not has_state_record(c) or not cur.get("state_date"):
+        return None
+    ref = min(d, _d(str(now)[:10])) if now else d
+    return (ref - _d(cur["state_date"])).days
+
+
+def is_old_record(it, pol):
+    age = it.get("target_age_days")
+    return age is not None and age >= pol["evidence"]["old_record_days"]
+
+
+def weaken(it, pol):
+    """古い現況の候補: 「○日前の記録です」を添え、見込みを弱い言い方にする(old_record_phrases にある区分だけ)。"""
+    if not is_old_record(it, pol) or it.get("subject") == "birds":
+        return it
+    ev = pol["evidence"]
+    out = dict(it, old_record=True, old_record_note=ev["old_record_note"].format(n=it["target_age_days"]))
+    if it.get("phrase") and it["outlook"] in ev["old_record_phrases"]:
+        out["phrase"] = ev["old_record_phrases"][it["outlook"]]
+    return out
+
+
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
             "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "subject": r.get("subject"),
-            "current_age_days": r.get("current_age_days"),
+            "current_age_days": r.get("current_age_days"), "target_age_days": r.get("target_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
             "distance_text": f"約{int(round(r['distance_km']))}km" if r["distance_km"] is not None and not r["distance_estimated"] else None,
@@ -454,11 +518,51 @@ def build_all(facts_doc, policy=None, overrides=None, refine=None):
     for it in sorted(rest, key=key):
         if len(picks) < n and it["name"] not in used:
             picks.append(it); used.add(it["name"])
-    picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(picks, key=key))]
+    picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(picks, key=lambda it: (is_old_record(it, pol),) + key(it)))]      # 段階62 第3部
     segs = [{"heading": pol["segment_headings"][sj], "key": sj, "subject": sj} for sj in subs]     # 段階57 第3部: 対象別の節(それぞれに今回のおすすめ)で答えるときの見出し
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),
             "use_headings": False, "subjects": subs, "sections": [], "picks": picks, "segments": segs, **({"refine": refine} if refine else {}),
             "ranking": [dict(r, subject=sj) for sj, pl in subs.items() for r in pl["ranking"]], "overrides": list(overrides or [])}
+
+
+# ---- 複数の都県の指定(段階62 第2部) ----
+
+def _all_picks(plan):
+    """計画のすべての採用(全体・対象別・期間別・エリア別)→ 名所の名前の一覧(重複なし)。"""
+    out = [p["name"] for p in plan.get("picks") or []]
+    for sub in (plan.get("subjects") or {}).values():
+        out += [p["name"] for p in sub.get("picks") or []]
+    for seg in plan.get("segments") or []:
+        if seg.get("plan"):
+            out += _all_picks(seg["plan"])
+    return list(dict.fromkeys(out))
+
+
+def attach_region_parts(plan, facts_doc, policy=None):
+    """「東京か神奈川で」のような都県の OR の質問 → plan["region_parts"] = [{name, prefectures, picks}](地域ごとの節)。
+    答えは地域の名前に漏らさず触れる(area_names に足す。検査器 area_missing)。地域が 1 つのときは何もしない。"""
+    from . import observations as O
+    q = facts_doc.get("region")
+    multi = O.resolve_multi(q, O.load_policy()) if q else None
+    if not multi:
+        return plan
+    pref_of = {}
+    for sub in (facts_doc.get("subjects") or {}).values():
+        for c in sub.get("candidates") or []:
+            pref_of.setdefault(c["name"], c.get("prefecture"))
+    for per in facts_doc.get("periods") or []:
+        for sub in (per.get("subjects") or {}).values():
+            for c in sub.get("candidates") or []:
+                pref_of.setdefault(c["name"], c.get("prefecture"))
+    names = _all_picks(plan)
+    parts = []
+    for part in multi["parts"]:
+        mine = [n for n in names if pref_of.get(n) in part["prefectures"]]
+        parts.append({"name": part["query"], "prefectures": part["prefectures"], "picks": mine})
+    plan["region_parts"] = parts
+    plan["region_name"] = multi["name"]
+    plan["area_names"] = list(dict.fromkeys(list(plan.get("area_names") or []) + [p["name"] for p in parts]))
+    return plan
 
 
 # ---- 日付の既定(段階58 第9部) ----
