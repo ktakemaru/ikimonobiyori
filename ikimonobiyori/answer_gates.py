@@ -245,3 +245,54 @@ def drop_lines(text, line_numbers):
             continue
         keep.append(l)
     return "\n".join(keep).rstrip() + "\n"
+
+
+# ---- 文書(段階63a 第6部): docs/answer-checks.md は、この仕様から作る(手で二重に管理しない) ----
+
+def doc_text():
+    c = contract()
+    d = c.get("descriptions") or {}
+    L = c["length"]
+    out = ["# 答えの検査(自動で作る文書。手で直さない)", "",
+           "> この文書は `ikimonobiyori/data/ask/answer_contract.json`(答えの仕様)から `python -X utf8 -m ikimonobiyori.answer_gates doc --write` で作る。",
+           "> 仕様を直したら作り直す(`tests/test_stage63a.py` が一致を確かめる)。段階63a(2026-11-08)。", "",
+           "## 答えの形と流れ", "",
+           "質問 → `ask answer`(`ikimonobiyori/answer_run.py`)→ 記録から材料・計画・骨組み → 自動修正 → 必須の4つの検査 → 答え。",
+           "フォールバックの順: " + " → ".join(f"{i + 1} {x}" for i, x in enumerate(c["fallback"])) + "。どの段でも空の答えにしない。", "",
+           "| 状態 | 意味 |", "|---|---|"] + [f"| {k} | {v} |" for k, v in c["status"].items()] + [""]
+    out += ["## 必須の4つの検査(合否に使う)", ""]
+    for g in GATES:
+        G = c["gates"][g]
+        out += [f"### {G['label']}(`{g}`)", "", G["what"], "", "| 検査のID | 見ること |", "|---|---|"]
+        out += [f"| `{x}` | {d.get(x, '')} |" for x in G["codes"]] + [""]
+    out += ["## 自動修正(コードが直してから、もう一度4つの検査を通す)", "", c["autofix"]["note"], ""]
+    names = {"delete_sentence": "その文を消す", "rebuild_sources": "出典の一覧を本文の事実から作り直す", "reduce_candidates": "点数の低い候補から減らす"}
+    for k in ("delete_sentence", "rebuild_sources", "reduce_candidates"):
+        out += [f"### {names[k]}(`{k}`)", "", "| 検査のID | 見ること |", "|---|---|"] + [f"| `{x}` | {d.get(x, '')} |" for x in c["autofix"][k]] + [""]
+    out += ["## 警告(合否に使わない。記録だけ)", "", c["warn"]["note"], "", "| 検査のID | 見ること |", "|---|---|"]
+    out += [f"| `{x}` | {d.get(x, '')} |" for x in c["warn"]["codes"]] + [""]
+    out += ["## 字数の上限", "", L["note"], "", f"- 基本: {L['base']} 字", f"- 対象・期間の節が 1 つ増えるごと: +{L['per_segment']} 字",
+            f"- 地域が 1 つ増えるごと: +{L['per_region']} 字", "",
+            "## 新しい検査を足すとき", "",
+            "4つの検査で扱えない理由と、それを捉えるテストを書いてから、先にこの仕様で分類する。分類のない ID は事実の検査として扱われる(合否に使う)。", ""]
+    return "\n".join(out)
+
+
+def main(argv=None):
+    import argparse
+    import sys
+    ap = argparse.ArgumentParser(prog="answer_gates")
+    ap.add_argument("cmd", choices=["doc"])
+    ap.add_argument("--write", action="store_true", help="docs/answer-checks.md に書く(開発のときだけ)")
+    a = ap.parse_args(argv)
+    text = doc_text()
+    if a.write:
+        from .paths import PKG
+        (PKG.parent / "docs" / "answer-checks.md").write_text(text, encoding="utf-8", newline="\n")
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

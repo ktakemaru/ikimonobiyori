@@ -26,7 +26,12 @@ from .paths import data_path
 
 STATUS_PASS, STATUS_DEGRADED, STATUS_BLOCKED = "PASS", "DEGRADED", "BLOCKED"
 NL = "\n"
-STAGES = {1: "polished", 2: "skeleton", 3: "partial", 4: "minimal"}
+def _stages():
+    from . import answer_gates as AG                     # 段階63a 第6部: フォールバックの順は答えの仕様から
+    return {i + 1: name for i, name in enumerate(AG.contract()["fallback"])}
+
+
+STAGES = _stages()
 
 
 def cfg(policy=None):

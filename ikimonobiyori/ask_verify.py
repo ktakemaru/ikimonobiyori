@@ -480,8 +480,10 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     for w, mx in (rules.get("max_repeats") or {}).items():       # 段階38: 「公式ではない」は補足に1回まとめる
         if text.count(w) > mx * n_seg:
             answer_errors.append({"code": "repeated_phrase", "detail": f"「{w}」が {text.count(w)} 回(まとめて {mx * n_seg} 回まで)"})
-    if len(text) > rules["max_chars"] * n_seg:
-        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {rules['max_chars'] * n_seg} 字)"})
+    from . import answer_gates as AG                             # 段階63a 第6部: 字数の上限は答えの仕様(answer_contract.json の length)から
+    limit = AG.length_limit(plan, text) if plan else rules["max_chars"] * n_seg
+    if len(text) > limit:
+        answer_errors.append({"code": "too_long", "detail": f"{len(text)} 字(目安 {limit} 字)"})
     ok = not answer_errors and all(not x["errors"] for x in sents)
     return {"ok": ok, "sentences": sents, "answer_errors": answer_errors, "candidates_mentioned": mentioned}
 

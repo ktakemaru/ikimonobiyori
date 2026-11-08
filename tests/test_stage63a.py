@@ -398,6 +398,30 @@ class PolishedMatch(unittest.TestCase):
                 self.assertIn(res3["stage"], (1, 2, 3, 4))
 
 
+class Contract(unittest.TestCase):
+    """第6部: 答えの形・4つの検査・字数・フォールバックの順は 1 つの定義(answer_contract.json)。文書はそこから作る。"""
+
+    def test_doc_is_generated_from_the_contract(self):
+        from ikimonobiyori import answer_gates as AG
+        self.assertEqual((ROOT / "docs" / "answer-checks.md").read_text(encoding="utf-8"), AG.doc_text())
+
+    def test_every_classified_check_has_a_description(self):
+        from ikimonobiyori import answer_gates as AG
+        c = AG.contract()
+        ids = {x for g in AG.GATES for x in c["gates"][g]["codes"]} | set(c["warn"]["codes"]) | {x for k in c["autofix"] if k != "note" for x in c["autofix"][k]}
+        self.assertEqual(sorted(i for i in ids if not c["descriptions"].get(i)), [])
+
+    def test_builder_and_checker_read_the_same_definition(self):
+        from ikimonobiyori import answer_gates as AG
+        c = AG.contract()
+        self.assertEqual(list(AR.STAGES.values()), c["fallback"])                       # 骨組みを作る側
+        f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷"))})
+        plan = AP.build(f, "autumn_leaves")
+        text = "x" * (c["length"]["base"] + 1) + "\n"
+        detail = next(e["detail"] for e in V.check(text, f, plan=plan)["answer_errors"] if e["code"] == "too_long")   # 検査する側
+        self.assertIn(str(c["length"]["base"]), detail)
+
+
 class AnswerLog(unittest.TestCase):
     """第5部: 答えごとの記録(データ置き場の logs/answers.jsonl。リポジトリの外)と集計。"""
 
