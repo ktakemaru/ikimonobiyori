@@ -614,8 +614,12 @@ def lead_errors(lines, cfg, facts, mat, kind="", planned=None):
 
 def lead_vs_picks(lead, pick_text, n, cfg, facts, mat, planned=None):
     errs = []
+    lead_k = lead                                                         # 段階63a(衝突8): 名所の名前の中の語(「袋田の滝」の「滝」)は、対象の語として数えない
+    for c in sorted(mat.region_candidates, key=lambda x: -len(x.get("name") or "")):
+        for f in sorted(short_names(c["name"]), key=len, reverse=True):
+            lead_k = lead_k.replace(f, " ")
     for kw in cfg["lead_kind_words"]:
-        if kw in lead and kw not in pick_text:
+        if kw in lead_k and kw not in pick_text:
             errs.append({"code": "lead_mismatch", "detail": f"冒頭に「{kw}」とあるが、今回のおすすめの{n}件にない"})
     if (facts.get("lines") or {}).get("practical_rules") and any(p in pick_text for p in cfg["pick_hedge_phrases"]):     # 段階52: 冒頭の確かさを、おすすめのいちばん弱いものに合わせる
         if any(p in lead for p in cfg["lead_assertive_phrases"]) or not any(w in lead for w in cfg["lead_hedge_words"]):
@@ -702,7 +706,9 @@ def stage51_errors(text, facts, mat, rules, plan=None, segs=None):
                 if any(w in s for w in ("主催者が設定した期間", "まつり期間中")) and any(w in s for w in cfg["festival_state_words"]):
                     errs.append({"code": "festival_mixed_with_state", "detail": s.strip()[:40]})
                     break
-            if not c.get("current") and cfg["festival_no_state"] not in text and AP.load_policy()["skeleton"]["no_current"] not in text:   # 段階63a: 花・野鳥は「今年の状況は確認できていません」
+            mine = [l for l in lines if any(f in _n(l) for f in strict_names(c["name"], shared_prefixes(mat)))]
+            stated = any("確認できていません" in l for l in mine)                 # 段階63a(衝突9): その候補の行で未確認を明記していればよい(今年の情報が確認できていない候補の欄も)
+            if not c.get("current") and not stated and cfg["festival_no_state"] not in text and AP.load_policy()["skeleton"]["no_current"] not in text:   # 段階63a: 花・野鳥は「今年の状況は確認できていません」
                 errs.append({"code": "festival_no_state_missing", "detail": c["name"]})
     # 段階52: 実用情報（読めた公式ページの 1 行）。出た候補に実用情報があるなら 1 つは書く。1 件もなければ決まった一文だけを確かさの欄に書く
     mentioned = mentioned_cands(mat, norm)

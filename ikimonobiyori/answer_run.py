@@ -389,39 +389,46 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
             plan_doc = f.plan()
     f.save_calls()
     gaz = sorted(set(ask.place_names()))
-    offers = OF.texts(plan_doc.get("offers"))
-    skeleton, plan_doc, shortened = fit_length(facts_doc, plan_doc, offers, cond["defaulted_date"])
-    if shortened:
-        res["warnings"].append({"code": "too_long", "detail": "字数の上限に収めるため候補を減らした: " + "・".join(shortened)})
-    (Path(workdir) / "skeleton.txt").write_text(skeleton, encoding="utf-8")
-    from . import polish as PL
-    (Path(workdir) / "skeleton_facts.json").write_text(json.dumps(PL.skeleton_facts(skeleton, ask.polish_names(facts_doc)), ensure_ascii=False, indent=0),
-                                                       encoding="utf-8")
+    res.update(answer_from_facts(facts_doc, plan_doc, cond["defaulted_date"], polished=polished, gaz=gaz, policy=pol, warnings=res["warnings"],
+                                 over_budget=lambda: (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"], workdir=workdir,
+                                 names=ask.polish_names(facts_doc)))
     try:
         res["refresh_pages"] = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
     except (KeyError, ValueError, TypeError):
         res["refresh_pages"] = []
-    over_budget = (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"]
-    if polished and not over_budget:                                      # 段 1: 整えた文章
-        from . import polish as PL
-        fr = PL.check_structured(skeleton, polished, ask.polish_names(facts_doc))    # 第4部: 骨組みの事実(構造化)との照合。事実の行は骨組みの文のまま
+
+
+def answer_from_facts(facts_doc, plan_doc, defaulted=False, *, polished=None, gaz=(), policy=None, warnings=None, over_budget=None, workdir=None,
+                      names=()):
+    """材料(facts)と計画 → 答え(段 1〜4。必ず空でない)。ask answer の計画の経路と、総当たりのテストが同じこれを使う。
+    → {text, stage, status, errors, warnings, removed, removed_lines, by_candidate}"""
+    from . import polish as PL
+    pol = policy or AP.load_policy()
+    over = over_budget or (lambda: False)
+    out = {"errors": [], "warnings": list(warnings or []), "removed": [], "removed_lines": []}
+    offers = OF.texts(plan_doc.get("offers"))
+    skeleton, plan_doc, shortened = fit_length(facts_doc, plan_doc, offers, defaulted)
+    if shortened:
+        out["warnings"].append({"code": "too_long", "detail": "字数の上限に収めるため候補を減らした: " + "・".join(shortened)})
+    if workdir is not None:
+        (Path(workdir) / "skeleton.txt").write_text(skeleton, encoding="utf-8")
+        (Path(workdir) / "skeleton_facts.json").write_text(json.dumps(PL.skeleton_facts(skeleton, names), ensure_ascii=False, indent=0), encoding="utf-8")
+    if polished and not over():                                           # 段 1: 整えた文章
+        fr = PL.check_structured(skeleton, polished, names)               # 第4部: 骨組みの事実(構造化)との照合。事実の行は骨組みの文のまま
         g = gate_check(polished, facts_doc, plan_doc, gaz, offers)
         if fr["ok"] and g["ok"]:
-            res.update(text=g["text"], stage=1, status=STATUS_PASS, warnings=res["warnings"] + g["warnings"])
-            return
-        res["warnings"] += [{"code": e["code"], "detail": e.get("detail", ""), "where": "polished"} for e in fr["errors"]] +                            [{**e, "where": "polished"} for e in g["errors"]]
+            return {**out, "text": g["text"], "stage": 1, "status": STATUS_PASS, "warnings": out["warnings"] + g["warnings"]}
+        out["warnings"] += [{"code": e["code"], "detail": e.get("detail", ""), "where": "polished"} for e in fr["errors"]] +                            [{**e, "where": "polished"} for e in g["errors"]]
     g = gate_check(skeleton, facts_doc, plan_doc, gaz, offers)            # 段 2: 骨組み
     if g["ok"]:
-        res.update(text=g["text"], stage=2, status=STATUS_PASS, warnings=res["warnings"] + g["warnings"])
-        return
-    res["errors"] = g["errors"]
-    res["warnings"] += g["warnings"]
-    if not over_budget:                                                   # 段 3: 部分回答(第3部: 問題を候補ごと・主張ごとに外す)
-        got = partial_answer(facts_doc, plan_doc, g, offers, cond["defaulted_date"], gaz)
+        return {**out, "text": g["text"], "stage": 2, "status": STATUS_PASS, "warnings": out["warnings"] + g["warnings"]}
+    out["errors"] = g["errors"]
+    out["warnings"] += g["warnings"]
+    if not over():                                                        # 段 3: 部分回答(第3部: 問題を候補ごと・主張ごとに外す)
+        got = partial_answer(facts_doc, plan_doc, g, offers, defaulted, gaz)
         if got:
-            res.update(**got)
-            return
-    res.update(text=minimal_answer(facts_doc, plan_doc, pol), stage=4, status=STATUS_DEGRADED)   # 段 4: 最低限の答え
+            return {**out, **got}
+    return {**out, "text": minimal_answer(facts_doc, plan_doc, pol), "stage": 4, "status": STATUS_DEGRADED}   # 段 4: 最低限の答え
 
 
 def partial_answer(facts_doc, plan_doc, g, offers, defaulted, gaz, max_rounds=3):
