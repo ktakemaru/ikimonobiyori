@@ -246,7 +246,7 @@ first_check_file: ask/first_check.jsonl
 
 # 段階58 第7部: 見頃を狙う週(例年の見頃の窓のまん中に近い週末)。確認できた例年の見頃だけから計算する
 target_week:
-  line: "見頃を狙うなら{s}〜{e}の週末が目安です(例年の見頃({publisher}、{label})から。今年の現況は分かりません)"
+  line: "見頃を狙うなら{s}〜{e}の週末が目安です(例年の見頃({publisher}{label})から。今年の現況は分かりません)"   # publisher は「名前、」か空(段階67)
   class_official: 公式
   class_secondary: 公式ではありません
 

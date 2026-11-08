@@ -63,6 +63,8 @@ text:
   head: "**{name}**({where}){km}"
   km: " 約{km}km"
   typical: "・例年の時期: {text}({publisher})"
+  typical_nopub: "・例年の時期: {text}(公式)"
+  # 段階67 第1部 4: 発行元は名前(ドメインは出さない)。名前が分からなければ「紹介サイト。公式ではありません」
   typical_secondary: "・例年の時期: {text}(紹介サイト{publisher}。公式ではありません)"
   typical_unknown: "・例年の時期は分かりません"
   # 鳥は「例年の見頃」でなく、見られる時期(段階58 の定型)

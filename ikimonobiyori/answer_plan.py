@@ -654,8 +654,9 @@ def target_week_line(c, today, pol=None):
     if not w:
         return None
     t = pol["target_week"]
-    label = t["class_official"] if typ.get("source_class") == "official" else t["class_secondary"]
-    return t["line"].format(s=f"{w[0].month}/{w[0].day}", e=f"{w[1].month}/{w[1].day}", publisher=typ.get("publisher") or "", label=label)
+    label = t["class_official"] if (typ.get("source_class") == "official" or typ.get("publisher_official")) else t["class_secondary"]   # 段階67(承認欄 C)
+    pub = typ.get("publisher") or ""
+    return t["line"].format(s=f"{w[0].month}/{w[0].day}", e=f"{w[1].month}/{w[1].day}", publisher=f"{pub}、" if pub else "", label=label)
 
 
 # ---- 事前取得の対象(段階57 第9部) ----

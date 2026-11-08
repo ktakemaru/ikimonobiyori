@@ -595,24 +595,38 @@ def event_derived(w, events, policy=None, name=None):
     return any(x in (w.get("note") or "") for x in words)
 
 
+def _pub_name(url, e):
+    """段階67 第1部 4: 発行元は名前(「二宮町」)。ドメインを答えに出さない。分からなければ None。"""
+    from . import publisher as P
+    title = next((s.get("title") for s in e.get("sources") or [] if s.get("url") == url), None)
+    return P.name(url, e, title)
+
+
+def _pub_official(url):
+    """段階67 第1部 3(承認欄 C): 町・市・県・国の自身のページは、通信先の承認とは別に「公式」と表示する。"""
+    from . import publisher as P
+    return P.is_official(url)
+
+
 def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
     if tw:
         out.append({"text": tw.get("note") or f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}",
-                    "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": urlparse(tw.get("source_url") or "").hostname,
-                    "year": None, "source_class": "official"})
+                    "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": _pub_name(tw.get("source_url"), e),
+                    "year": None, "source_class": "official", "publisher_official": _pub_official(tw.get("source_url"))})
     for w in e.get("flower_windows") or []:
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
-                    "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": urlparse(w["source_url"]).hostname,
+                    "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": _pub_name(w["source_url"], e),
                     "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
+                    "publisher_official": _pub_official(w["source_url"]),
                     "event_derived": event_derived(w, e.get("events"), policy, e.get("name"))})
     return out
 
 
 def _events_from_catalog(e):
     return [{"name": v["name"], "kind": v.get("kind"), "start": v["start"], "end": v["end"], "url": v["source_url"],
-             "publisher": urlparse(v["source_url"]).hostname,
+             "publisher": _pub_name(v["source_url"], e), "publisher_official": _pub_official(v["source_url"]),
              "source_class": "secondary" if (v.get("source_class") == "secondary" or v.get("unapproved_host")) else "official"}
             for v in e.get("events") or []]
 
@@ -1785,7 +1799,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
-            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class")} for t in real_typ]
+            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class", "publisher_official")} for t in real_typ]
                        + ([] if not typ or typ in real_typ else [typ]),
             "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
                                           for t in c.get("typical") or [] if t.get("event_derived")],

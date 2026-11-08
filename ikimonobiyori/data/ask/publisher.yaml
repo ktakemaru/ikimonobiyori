@@ -1,0 +1,22 @@
+# 段階67 第1部(承認欄 C。本人の判断 2026-11-09): 出典の「公式かどうか」の表示を、発行元の種類で決める。
+# 通信先の承認(読むかどうか。regional/policy.yaml の approved_hosts・台帳の approval)とは別の項目。
+# ここで「公式」になるのは、町・市・県・国が自分で出しているページだけ(観光協会・紹介サイトはここでは決めない)。
+official_publisher:
+  source: "本人の判断(2026-11-09。段階67 指示書の承認欄 C『町・市・県・国の自身のページは、発行元の区分で公式と表示する』)"
+  provisional: false
+  # 台帳(data/sources/*.yaml)の publisher_kind のうち、町・市・県・国にあたるもの
+  kinds: [municipality, prefecture, national, government]
+  # ドメインの後ろがこれに一致すれば、自治体・国のページ
+  suffixes: [lg.jp, go.jp]
+  # ホストのラベルにこれがあり、末尾が .jp なら自治体のページ(www.town.ninomiya.kanagawa.jp・www.city.odawara.kanagawa.jp・www.pref.saitama.lg.jp など)
+  labels: [pref, city, town, village, metro]
+
+# 答えに出す発行元の名前。ドメインをそのまま出さない(段階67 第1部 4)。
+# 引く順: ガイドの発行元の表(data/guide/policy.yaml の hosts) → 台帳の発行元(data/sources/*.yaml・visitor_centers) →
+# 自治体のドメインなら名所の市区町村・都道府県(ラベル pref は都道府県、ほかは市区町村) → 名所の出典の題名の最初の語 → なし(名前を書かない)
+name_from_label:
+  pref: prefecture
+  metro: prefecture
+  city: city
+  town: city
+  village: city
