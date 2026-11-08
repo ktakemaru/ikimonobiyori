@@ -203,3 +203,45 @@ def run(text, facts, plan, gazetteer=(), offers=None, rules=None):
 
 def errors_of(ev):
     return [{**e, "gate": g} for g in GATES for e in ev["gates"][g]]
+
+
+# ---- 問題の局所化(段階63a 第3部) ----
+
+def localize(errors, text, plan):
+    """検査の不合格を、候補(場所)ごと・主張(文)ごとに分ける。→ {"by_candidate": {名所: [誤り]}, "by_line": {行番号: [誤り]}, "general": [誤り]}
+    候補の名前は、その誤りの行と詳細から探す(共通の地域名で別の名所を取り違えない)。"""
+    from . import skeleton as SK
+    lines = text.splitlines()
+    picks = [p["name"] for p in SK._flat_picks(plan or {})]
+    blocks = V.candidate_blocks(text)
+    out = {"by_candidate": {}, "by_line": {}, "general": []}
+    for e in errors:
+        ln = e.get("line")
+        where = (lines[ln] if isinstance(ln, int) and 0 <= ln < len(lines) else "")
+        if not where:                                                     # 行のない誤り(答え全体の検査): 詳細の文がある行を探す
+            core = (e.get("detail") or "").strip()
+            core = core.split(": ", 1)[-1] if core.startswith(("紅葉:", "花:", "野鳥:")) else core
+            hit = next((i for i, l in enumerate(lines) if len(core) >= 6 and core[:30] in l), None)
+            if hit is not None:
+                ln, where = hit, lines[hit]
+        hay = V._n(where + " " + (e.get("detail") or ""))
+        blk = next((b for b in blocks if where and where in b), None) if where else None
+        names = [n for n in picks if any(f in V._n(blk.splitlines()[0] if blk else hay) for f in V.strict_names(n))]
+        if names:
+            for n in names[:1]:
+                out["by_candidate"].setdefault(n, []).append(e)
+        elif isinstance(ln, int):
+            out["by_line"].setdefault(ln, []).append(e)
+        else:
+            out["general"].append(e)
+    return out
+
+
+def drop_lines(text, line_numbers):
+    """主張(行)ごとに外す。番号つきの候補の行は外さない(候補は計画から外す)。"""
+    keep = []
+    for i, l in enumerate(text.splitlines()):
+        if i in line_numbers and not re.match(r"^\s*[①-⑳]", l):
+            continue
+        keep.append(l)
+    return "\n".join(keep).rstrip() + "\n"

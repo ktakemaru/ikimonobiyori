@@ -250,6 +250,9 @@ def check_sentence(s, mat):
         if _n(w) in body and not any(_n(w) in x for x in pool):
             if not (spots and any(_n(w) in (tt.get("text") or "") for sp in spots for tt in sp.get("typical") or [])):
                 errs.append({"code": "unknown_state", "detail": w})
+    if r.get("now_visible_re") and spots and re.search(r["now_visible_re"], body):     # 段階63a 第3部: 記録があることと、今見られることは別の主張
+        if not any((sp.get("current") or {}).get("freshness") == "fresh" for sp in spots):
+            errs.append({"code": "now_visible_unsupported", "detail": "新しい現況の記録がない名所で「今見られる」と書いている"})
     for pat in r["peak_claims"]:
         if re.search(pat, body):
             peaks = [sp for sp in (spots or mat.spots) if (sp.get("current") or {}).get("state") == "見頃"]

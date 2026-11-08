@@ -18,7 +18,7 @@
       "label": "安全",
       "what": "危険な案内がない。立入禁止・利用制限・閉館・休園を無視していない。不確かなことを断定していない",
       "codes": ["unsupported_peak_claim", "old_record_as_now", "assertive_forecast", "lead_too_assertive", "stale_state_asserted",
-                "closed_not_stated", "practical_other_day", "polish_caution_word"]
+                "closed_not_stated", "practical_other_day", "polish_caution_word", "now_visible_unsupported"]
     },
     "consistency": {
       "label": "整合",

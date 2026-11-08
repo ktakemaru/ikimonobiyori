@@ -71,10 +71,11 @@ class AlwaysAnswers(unittest.TestCase):
         self.assertNotEqual(a["workdir"], b["workdir"])
 
     def test_falls_back_to_the_minimal_answer_when_every_check_fails(self):
-        with unittest.mock.patch.object(AR, "gate_check", lambda *a, **k: {"ok": False, "errors": [{"code": "x", "detail": "x"}], "warnings": []}):
+        with unittest.mock.patch.object(AR, "gate_check", lambda text, *a, **k: {"ok": False, "text": text, "errors": [{"code": "x", "detail": "x", "gate": "fact"}], "warnings": []}):
             res = AR.run("今日お出かけするならどこ?", now=NOW, env=self.env)
         self.assertEqual(res["stage"], 4)
         self.assertEqual(res["status"], AR.STATUS_DEGRADED)
+        self.assertNotIn("internal_error", [w["code"] for w in res["warnings"]])      # 例外ではなく、決まった段で最低限の答えになる
         answer_ok(self, res, "fallback")
         self.assertIn(AP.load_policy()["answer_run"]["minimal"]["how_heading"], res["text"])
 
@@ -273,6 +274,76 @@ class FourGates(unittest.TestCase):
         text = "箱根 仙石原(長安寺)は見頃の可能性があります。\n今回のおすすめ\n① 箱根 仙石原(長安寺): 今の状況は見頃(11/7時点、試験市)。例年の見頃: 11月。\n"
         details = [e["detail"] for e in V.check(text, f, plan=plan)["answer_errors"] if e["code"] == "lead_mismatch"]
         self.assertFalse(any("芦ノ湖" in d for d in details), details)
+
+
+
+NL = "\n"
+
+
+class Localize(unittest.TestCase):
+    """第3部: 問題は候補(場所)ごと・主張(文)ごとに外し、ほかは残す。"""
+
+    def setUp(self):
+        from ikimonobiyori import skeleton as SK
+        self.SK = SK
+        self.f = facts_doc({"autumn_leaves": subj("autumn_leaves", spot("試験の谷", 10, city="試験町"), spot("試験の滝", 60, city="滝村"),
+                                                  spot("試験の湖", 150, city="湖市"))})
+        self.plan = AP.build(self.f, "autumn_leaves")
+        self.names = [p["name"] for p in self.plan["picks"]]
+        self.assertGreaterEqual(len(self.names), 2)
+
+    def broken(self, name, extra):
+        text = self.SK.compose(self.f, self.plan)
+        return NL.join(l + extra if l.startswith(("①", "②", "③")) and name in l else l for l in text.splitlines()) + NL
+
+    def test_one_candidate_with_a_wrong_fact_is_removed_and_the_rest_kept(self):
+        bad = self.names[1]
+        g = AR.gate_check(self.broken(bad, "11/30時点で見頃です。"), self.f, self.plan, ())
+        self.assertFalse(g["ok"])
+        got = AR.partial_answer(self.f, self.plan, g, [], False, ())
+        self.assertIsNotNone(got)
+        self.assertEqual(got["status"], AR.STATUS_DEGRADED)
+        self.assertEqual(got["removed"], [bad])
+        self.assertNotIn(bad, got["text"].split("出典")[0])
+        for n in self.names:
+            if n != bad:
+                self.assertIn(n, got["text"])
+
+    def test_dangerous_claim_is_removed_and_marked_blocked(self):
+        bad = self.names[0]
+        phrase = V.load_rules()["stage51"]["assertive_phrases"][0]               # 見込みを言い切る(不確かなことの断定)
+        g = AR.gate_check(self.broken(bad, f"今週末は{phrase}。"), self.f, self.plan, ())
+        self.assertIn("safety", {e["gate"] for e in g["errors"]})
+        got = AR.partial_answer(self.f, self.plan, g, [], False, ())
+        self.assertEqual(got["status"], AR.STATUS_BLOCKED)
+        self.assertIn(bad, got["removed"])
+
+    def test_all_candidates_bad_gives_none_then_minimal(self):
+        g = {"ok": False, "text": self.SK.compose(self.f, self.plan), "errors": [{"code": "unknown_date", "gate": "fact", "detail": n} for n in self.names]}
+        self.assertIsNone(AR.partial_answer(self.f, self.plan, g, [], False, ()))
+        t = AR.minimal_answer(self.f, self.plan)
+        self.assertTrue(t.strip())
+
+    def test_a_wrong_sentence_outside_the_candidates_is_removed_alone(self):
+        text = self.SK.compose(self.f, self.plan).replace(NL + "出典", NL + "この谷の標高は1234mです。" + NL + NL + "出典", 1)
+        g = AR.gate_check(text, self.f, self.plan, ())
+        self.assertFalse(g["ok"])
+        got = AR.partial_answer(self.f, self.plan, g, [], False, ())
+        self.assertIsNotNone(got)
+        self.assertNotIn("1234", got["text"])
+        self.assertEqual(got["removed"], [])
+        self.assertTrue(got["removed_lines"])
+
+    def test_record_and_now_visible_are_different_claims(self):
+        def codes(text, f):
+            return [e["code"] for s in V.check(text + NL, f)["sentences"] for e in s["errors"]]
+        old = spot("鳥の沼", subject="birds")
+        old["current"]["freshness"] = "stale"
+        f = facts_doc({"birds": subj("birds", old)})
+        self.assertIn("now_visible_unsupported", codes("鳥の沼では今もカモが見られます。", f))
+        self.assertNotIn("now_visible_unsupported", codes("鳥の沼では、この時期にカモの観察の記録があります。", f))
+        fresh = facts_doc({"birds": subj("birds", spot("鳥の沼", subject="birds"))})
+        self.assertNotIn("now_visible_unsupported", codes("鳥の沼では今もカモが見られます。", fresh))
 
 
 if __name__ == "__main__":

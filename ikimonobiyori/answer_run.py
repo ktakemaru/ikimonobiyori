@@ -235,20 +235,6 @@ def fit_length(facts_doc, plan_doc, offers, defaulted, max_drop=None):
     return text, plan_doc, dropped
 
 
-def _candidates_with_errors(text, facts_doc, plan_doc, errs):
-    """誤りの行・詳細に名前が出る、今回のおすすめの候補。"""
-    from . import skeleton as SK
-    lines = text.splitlines()
-    names = [p["name"] for p in SK._flat_picks(plan_doc)]
-    bad = set()
-    for e in errs:
-        where = (lines[e["line"]] if isinstance(e.get("line"), int) and e["line"] < len(lines) else "") + " " + (e.get("detail") or "")
-        for n in names:
-            if any(f in V._n(where) for f in V.short_names(n)):
-                bad.add(n)
-    return bad
-
-
 def drop_picks(plan_doc, names):
     """計画から、外す候補を除く(節・期間・エリアの中も)。→ 新しい計画。"""
     plan = json.loads(json.dumps(plan_doc, ensure_ascii=False))
@@ -367,16 +353,45 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
         return
     res["errors"] = g["errors"]
     res["warnings"] += g["warnings"]
-    bad = _candidates_with_errors(skeleton, facts_doc, plan_doc, g["errors"]) if not over_budget else set()
-    if bad:                                                               # 段 3: 部分回答(問題のある候補を外す)
-        part_plan = drop_picks(plan_doc, bad)
-        part = SK.compose(facts_doc, part_plan, offers, defaulted_date=cond["defaulted_date"])
-        g3 = gate_check(part, facts_doc, part_plan, gaz, offers)
-        if g3["ok"] and SK._flat_picks(part_plan):
-            blocked = any(e.get("gate") == "safety" for e in g["errors"])
-            res.update(text=g3["text"], stage=3, status=STATUS_BLOCKED if blocked else STATUS_DEGRADED, removed=sorted(bad))
+    if not over_budget:                                                   # 段 3: 部分回答(第3部: 問題を候補ごと・主張ごとに外す)
+        got = partial_answer(facts_doc, plan_doc, g, offers, cond["defaulted_date"], gaz)
+        if got:
+            res.update(**got)
             return
     res.update(text=minimal_answer(facts_doc, plan_doc, pol), stage=4, status=STATUS_DEGRADED)   # 段 4: 最低限の答え
+
+
+def partial_answer(facts_doc, plan_doc, g, offers, defaulted, gaz, max_rounds=3):
+    """問題のある候補を計画から外し(候補ごと)、候補に結びつかない文の誤りはその行だけ外す(主張ごと)。外して直らない・全部の候補が外れたら None。
+    → {text, stage: 3, status, removed, removed_lines, by_candidate}。危険な案内(安全の検査)を外したら BLOCKED。"""
+    from . import answer_gates as AG
+    from . import skeleton as SK
+    removed, removed_lines, by_cand = set(), [], {}
+    blocked = any(e.get("gate") == "safety" for e in g["errors"])
+    text, errors, plan = g["text"], g["errors"], plan_doc
+    for _ in range(max_rounds):
+        loc = AG.localize(errors, text, plan)
+        if loc["general"]:
+            return None                                                   # どの候補・文に当たるか分からない誤り: 外しても直らない
+        if loc["by_candidate"]:
+            for n, es in loc["by_candidate"].items():
+                by_cand.setdefault(n, []).extend({"code": e["code"], "gate": e.get("gate")} for e in es)
+            removed |= set(loc["by_candidate"])
+            plan = drop_picks(plan, removed)
+            if not SK._flat_picks(plan):
+                return None
+            r = gate_check(SK.compose(facts_doc, plan, offers, defaulted_date=defaulted), facts_doc, plan, gaz, offers)
+        else:
+            src = text.splitlines()
+            removed_lines += [src[i] for i in sorted(loc["by_line"]) if i < len(src)]
+            r = gate_check(AG.drop_lines(text, set(loc["by_line"])), facts_doc, plan, gaz, offers)
+        if r["ok"]:
+            return {"text": r["text"], "stage": 3, "status": STATUS_BLOCKED if blocked else STATUS_DEGRADED, "removed": sorted(removed),
+                    "removed_lines": removed_lines, "by_candidate": by_cand}
+        blocked = blocked or any(e.get("gate") == "safety" for e in r["errors"])
+        text, errors = r["text"], r["errors"]
+    return None
+
 
 
 def _other_route(res, cond, now, env, pol):
