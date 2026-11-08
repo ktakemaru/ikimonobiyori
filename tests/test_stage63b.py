@@ -167,6 +167,15 @@ class PageCache(unittest.TestCase):
         self.assertEqual(self.targets([c]), [])
         self.assertEqual(self.targets([c], reads={u: NOW - timedelta(days=30)}), [])
 
+    def test_pending_sources_are_not_targets(self):
+        """承認待ちの情報源のページは、読んでも答えの材料にならないので読み直しの対象にしない。"""
+        from ikimonobiyori import observations as O
+        u = "https://pending.example.org/x"
+        c = cand("試験の谷", [(u, "official")])
+        with unittest.mock.patch.object(O, "_ledger_gated", lambda r, sj, pol: r["url"] == u):
+            self.assertEqual(self.targets([c]), [])
+        self.assertEqual([x["url"] for x in self.targets([c])], [u])
+
     def test_event_and_practical_ttls(self):
         self.assertEqual(PC.ttl("event"), timedelta(days=7))
         self.assertEqual(PC.ttl("practical"), timedelta(days=30))

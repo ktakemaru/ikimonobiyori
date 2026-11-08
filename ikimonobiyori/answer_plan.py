@@ -655,6 +655,7 @@ def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None,
     cfg = pol["refresh"]
     now = now or datetime.fromisoformat(facts_doc["now"])
     reads = PC.last_reads(now, env, pol) if reads is None else reads
+    opol = O.load_policy()
     subjects = facts_doc["subjects"]
     out, used = [], set(seen)
     done = set()
@@ -675,6 +676,9 @@ def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None,
                 continue
             kind = PC.page_kind(u, c, sj)
             if kind not in ("status", "birds"):             # 現況の情報源だけ(行事・実用情報・参考リンクは ask warm が種類ごとの有効期間で出す)
+                continue
+            rec = {"url": u, "source_class": pg.get("source_class") or "official"}
+            if O._ledger_gated(rec, sj, opol) or O._gated_unusable(rec, opol):     # 承認待ちの情報源は、読んでも答えの材料にならないので読まない
                 continue
             if PC.is_fresh(u, kind, now, reads, pol):
                 continue
