@@ -109,10 +109,15 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
                 spots.append(dict(x, subject=sj, records=by_c.get(x["id"]) or []))
     terms = [t for pl in pls for t in pl["terms"] if t] + [_strip(s["name"]) for s in spots]
     rows = cards if cards is not None else K.load_shown(env)
-    hits = [r for r in rows if any(K.place_match(r, t) for t in terms if len(t) >= 2)]
+    sids = {pl.get("site_id") for pl in pls if pl.get("site_id")}
+    hits = [r for r in rows if any(K.place_match(r, t) for t in terms if len(t) >= 2) or sids & set(r.get("sites") or [])]   # 段階66 第3部: 地点 id でも引く
     order = {k: i for i, k in enumerate(K.cfg()["category_priority"])}
+
+    def month_gap(r):                                         # 段階66 第3部: 月のあるカード(季節の花など)は、今の月に近いものを先に
+        ms = K._months(r)
+        return min(((m - today.month) % 12 for m in ms), default=0)
     by_cat = {}
-    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), r["title"])):
+    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), month_gap(r), r["title"])):
         by_cat.setdefault(r.get("category"), []).append(r)
     picked = []
     while len(picked) < c["max_cards"] and any(by_cat.values()):         # 分類の偏りなく(分類ごとに 1 枚ずつ順に)
