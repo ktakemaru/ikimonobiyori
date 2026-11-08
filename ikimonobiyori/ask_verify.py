@@ -437,6 +437,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
     elif plan:                                                               # 段階56: 答えの採用と計画の照合
         answer_errors += AP.plan_errors(text, plan, mat, candidate_blocks(text), short_names)
     answer_errors += visitor_center_errors(text, facts)
+    answer_errors += vc_sentence_errors(text, facts)               # 段階62 第5部
     answer_errors += stage57_text_errors(text, facts, mat, rules)
     answer_errors += process_excuse_errors(text, rules)
     answer_errors += internal_word_errors(text, rules)      # 段階62 第1部
@@ -504,6 +505,40 @@ def visitor_center_errors(text, facts):
     for m in re.finditer(r"([^\s、。「」（）()]{2,24}?(?:ビジターセンター|自然観察の森|自然観察公園|自然学習センター))発信", text):
         if m.group(1) not in allowed and m.group(1) not in names:
             errs.append({"code": "visitor_center_not_approved", "detail": f"{m.group(1)}は台帳にない施設"})
+    return errs
+
+
+def vc_sentence_errors(text, facts):
+    """段階62 第5部: 施設の発信の文。(a) 状態の語の直後に括弧の種名が続く形(「色づき始めの草木の葉（ジョウビタキ）」)は不合格
+    (b) 発信の種名に、何の種名か(鳥・花・木・昆虫など)が添えられていなければ不合格。"""
+    from . import visitor_centers as VC
+    p = VC.load_policy()
+    kinds = list((p.get("species_kinds") or {}).keys())
+    errs = []
+    body = URL_RE.sub(" ", _n(text))
+    for r in facts.get("visitor_centers") or []:
+        name = _n(r.get("name") or "")
+        if not name:
+            continue
+        legacy = name + "発信、"                                            # 段階55 の 1 行の形(「○○発信、11/5時点: 状態（種名）」)は既存の決まりのまま(この検査の外)
+        lines = [ln for ln in body.splitlines() if legacy not in ln and ((name in ln and "発信" in ln) or ln.strip().startswith(_n(p["line"]["sentence_species"]).split("{")[0]))]
+        block = "\n".join(lines)                                            # 施設の発信の行だけを見る(ほかの行の種名は、この決まりの外)
+        sp = [s for s in (r.get("species") or []) if s] or [s for s in re.findall(r"[（(]([^）)]+)[）)]", r.get("line") or "") for s in s.split("・")]
+        st = _n(r.get("state") or "")
+        for s in sp:
+            s = _n(s)
+            if st and re.search(re.escape(st) + r"[」]?\s*[(]" + r"[^)]*" + re.escape(s), block):
+                errs.append({"code": "vc_state_species_joined", "detail": f"{r.get('name')}: 「{st}」の直後に括弧の種名"})
+                continue
+            for m in re.finditer(re.escape(s), block):
+                tail = block[m.end(): m.end() + 6]
+                if not any(tail.startswith(f"({k})") for k in kinds):
+                    errs.append({"code": "vc_species_without_kind", "detail": f"{r.get('name')}: {s}"})
+                    break
+    allowed = {r.get("name") for r in facts.get("visitor_centers") or []}
+    for c in VC.load_centers():
+        if c["name"] not in allowed and re.search(re.escape(_n(c["name"])) + r"は、\d+/\d+時点(で|の発信)", body):
+            errs.append({"code": "visitor_center_not_approved", "detail": f"{c['name']}は使える施設ではない"})
     return errs
 
 

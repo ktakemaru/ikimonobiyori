@@ -284,7 +284,7 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     eye, before_k, card_urls = K.split_lines(chosen)
     vc = vc_lines(facts, mentioned, t)                                # 段階60 第8部: 質問の場所の承認済み施設の発信(段階55 の 1 行)
     if vc:
-        lines += [""] + [x for row in vc for x in (row["line"], row.get("hours_line")) if x]
+        lines += [""] + [x for row in vc for x in ([" ".join(row["sentences"])] if row.get("sentences") else [row["line"]]) + [row.get("hours_line")] if x]     # 段階62 第5部: 状態と種名は別の文
         urls |= {row["url"] for row in vc if row.get("url")}
     if eye:
         lines += [""] + eye

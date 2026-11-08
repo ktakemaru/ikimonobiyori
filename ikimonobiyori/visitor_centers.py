@@ -195,6 +195,33 @@ def report_line(c, rep, policy=None):
     return head + body
 
 
+def species_kind(name, policy=None):
+    """段階62 第5部: 種名 → 区分(鳥・花・木・昆虫など)。分からなければ None(推測しない)。"""
+    p = policy or load_policy()
+    return next((k for k, names in (p.get("species_kinds") or {}).items() if name in (names or [])), None)
+
+
+def report_sentences(c, rep, policy=None):
+    """段階62 第5部: 答えの文(状態の語と種名を別の文に)。→ [文]。
+    「箱根ビジターセンターは、11/6時点で「色づき始め」と発信しています。」「同じ発信に、ジョウビタキ(鳥)の名があります。」
+    種名は、区分が分かるものだけ(残りは「ほか○種」)。種名を使わない施設(allowed_fields に species がない)は、種名の文を出さない。"""
+    p = policy or load_policy()
+    L = p["line"]
+    d = date.fromisoformat(str(rep["date"]))
+    af = allowed_fields(c, p)
+    st = (rep.get("state") or "") if "state" in af else ""
+    out = [L["sentence_state"].format(center=c["name"], month=d.month, day=d.day, state=st) if st
+           else L["sentence_date_only"].format(center=c["name"], month=d.month, day=d.day)]
+    if rep.get("species") and "species" in af:
+        known = [(s, species_kind(s, p)) for s in rep["species"]]
+        items = [L["species_item"].format(name=s, kind=k) for s, k in known if k]
+        rest = sum(1 for _s, k in known if not k)
+        if items:
+            names = L["species_item_sep"].join(items) + (L["sentence_species_rest"].format(n=rest) if rest else "")
+            out.append(L["sentence_species"].format(names=names))
+    return out
+
+
 # ---- 第5部: 読んだ事実の記録と、答えの材料 ----
 
 def decode_html(raw, declared=None, fallbacks=("utf-8", "cp932")):
@@ -285,7 +312,8 @@ def fact_rows(today, subjects=None, env=None, policy=None, centers=None, reports
         af = allowed_fields(c, p)
         hours = c.get("hours") if "hours" in af else None
         row = {"center": c["id"], "name": c["name"], "operator": c["operator"], "class": c["class"], "date": str(r["date"]),
-               "line": report_line(c, r, p), "url": r["url"], "hours": hours,
+               "line": report_line(c, r, p), "sentences": report_sentences(c, r, p), "state": r.get("state") if "state" in af else None,
+               "species": list(r.get("species") or []) if "species" in af else [], "url": r["url"], "hours": hours,
                "hours_line": p["facts"]["hours_label"].format(hours=hours) if hours else None}
         if restricted(c, p):                                              # 段階56b: 使う項目を絞った施設だけ印を付ける（検査器が、除いた項目が答えに出たら落とす）
             row["allowed_fields"] = af
