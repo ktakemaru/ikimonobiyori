@@ -18,11 +18,66 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: "2026-10-24"
-    tags: {prefecture: 茨城県, area: ひたちなか, terrain: [garden, coast], flower_kinds: [コキア, キバナコスモス, バラ], source: "Claude Code が付けた(推定。花の種類は公式の『現在の花情報』の 2026-10-24 の掲載から)"}
+    tags: {prefecture: 茨城県, area: ひたちなか, terrain: [garden, coast], flower_kinds: [コキア, キバナコスモス, バラ, ネモフィラ, チューリップ, スイセン, 梅, 菜の花], source: "Claude Code が付けた(推定。花の種類は公式の『現在の花情報』の 2026-10-24 の掲載から)"}
     status_sources: [hitachi-flower-info]
     sources:
       - {url: "https://www.hitachikaihin.jp/flower-plant/flower-info/", title: "国営ひたち海浜公園 現在の花情報", checked_on: "2026-10-24"}
     note: "公式の花のカレンダーでは、コスモスは 10 月、コキア(紅葉)は 10 月中旬(トップページの一覧。2026-10-24 の確認)。花ごとの状態は『撮影日:M月D日』つき(年はない)"
+    flower_windows:   # 段階68 第2部
+      - kind: ネモフィラ
+        start: '04-11'
+        end: '05-10'
+        source_url: https://www.hitachikaihin.jp/flower-plant/flower/nemophila.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: ネモフィラの鑑賞時期 4月中旬〜5月上旬(みはらしの丘。約530万本)"
+      - kind: チューリップ
+        start: '04-11'
+        end: '04-30'
+        source_url: https://www.hitachikaihin.jp/event/seasons-recommended.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: チューリップ 4月中旬〜4月下旬(たまごの森。約230品種26万本)"
+      - kind: スイセン
+        start: '03-21'
+        end: '04-20'
+        source_url: https://www.hitachikaihin.jp/event/seasons-recommended.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: スイセン 3月下旬〜4月中旬(約500品種100万本)"
+      - kind: 梅
+        start: '01-21'
+        end: '03-20'
+        source_url: https://www.hitachikaihin.jp/flower-plant/flower/ume.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: ウメの鑑賞時期 1月下旬〜3月中旬(スイセンガーデン周辺)"
+      - kind: 菜の花
+        start: '04-11'
+        end: '04-30'
+        source_url: https://www.hitachikaihin.jp/flower-plant/flower/nanohana.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: ナノハナの鑑賞時期 4月中旬〜4月下旬(みはらしの里)"
+      - kind: バラ
+        start: '05-11'
+        end: '06-10'
+        source_url: https://www.hitachikaihin.jp/flower-plant/flower/rose.html
+        source_host: www.hitachikaihin.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "国営ひたち海浜公園: バラの鑑賞時期 5月中旬〜6月上旬(常陸ローズガーデン。約120品種3400株。秋は10月下旬〜11月上旬)"
   - id: hana-0002
     name: 旧古河庭園
     subjects: [flowers]
@@ -67,7 +122,7 @@ entries:
     status_sources: [showakinen-flower-information-flowers]
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花情報", checked_on: "2026-10-24"}
-    note: "花情報のページは段階16 では応答がなく、2026-10-24 の再確認でも HTTP 504 で読めなかった。名所として載せ、情報源は承認待ち(人が開く URL)"
+    note: "花情報のページは段階16 では応答がなく、2026-10-24 の再確認でも HTTP 504 で読めなかった。名所として載せ、情報源は承認待ち(人が開く URL)。段階67 で情報源は承認済み"
   - id: hana-0005
     name: 京成バラ園
     subjects: [flowers]
@@ -1363,11 +1418,30 @@ entries:
       area: 府中
       city: 府中市
       terrain: [garden]
-      flower_kinds: [梅]
+      flower_kinds: [梅, アジサイ, ヒガンバナ]
       source: Claude Code が付けた(段階64 第6部。GO TOKYO(東京観光財団)のページの本文。所在地「東京都府中市南町6-32」。座標は未確認)
     sources:
       - {url: "https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html", title: "GO TOKYO 東京の冬に咲く梅(2026年2月9日作成。約120品種・1,300本以上)", checked_on: '2026-11-08'}
     note: "梅は約120品種・1,300本以上(GO TOKYO)。ページの「例年2月上旬から3月中旬」は東京全体の記載で、この施設の例年の時期ではないので flower_windows に入れない。梅まつりの期間は今年の行事(2027年は未確認)"
+    flower_windows:   # 段階68 第2部
+      - kind: アジサイ
+        start: '06-01'
+        end: '06-30'
+        source_url: https://www.fuchu-cpf.or.jp/museum/hanagoyomi/index.html
+        source_host: www.fuchu-cpf.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "府中市郷土の森博物館 季節の花ごよみ: 6月の欄にアジサイ"
+      - kind: ヒガンバナ
+        start: '09-01'
+        end: '11-30'
+        source_url: https://www.fuchu-cpf.or.jp/museum/hanagoyomi/index.html
+        source_host: www.fuchu-cpf.or.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "府中市郷土の森博物館 季節の花ごよみ: 9〜11月の欄にヒガンバナ(月の欄なので幅が広い)"
   - id: hana-0046
     name: あしかがフラワーパーク
     subjects: [flowers]
@@ -1571,3 +1645,297 @@ entries:
     sources:
       - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", title: "幸手市 権現堂堤(2021年10月1日更新。周囲に広がる菜の花畑)", checked_on: '2026-11-09'}
     note: "ソメイヨシノと、周囲の菜の花畑。例年の時期の記載は公式ページで確認できず。2026年の幸手桜まつり(3/27〜4/12)は行事の期間"
+  - id: hana-0054
+    name: 鎌倉 長谷寺
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 鎌倉
+      city: 鎌倉市
+      terrain: [garden]
+      flower_kinds: [アジサイ]
+      care_note: あじさい路の順路を守る。
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.trip-kamakura.com/advertisement/detail.php?id=130", title: "鎌倉市観光協会 2026年【あじさい情報】鎌倉市内の開花状況について(例年の時期の記載あり)", checked_on: '2026-11-09'}
+    note: "あじさい路の有料期間(2026年は6/5から)は行事・運営の期間なので例年の時期に入れない"
+    flower_windows:
+      - kind: アジサイ
+        start: '05-21'
+        end: '06-30'
+        source_url: https://www.trip-kamakura.com/advertisement/detail.php?id=130
+        source_host: www.trip-kamakura.com
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2026
+        note: "鎌倉市観光協会: 長谷寺のあじさい路は40種類以上約2500株、例年5月下旬〜6月下旬が見頃"
+  - id: hana-0055
+    name: 明月院
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 鎌倉
+      city: 鎌倉市
+      terrain: [garden]
+      flower_kinds: [アジサイ]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.trip-kamakura.com/advertisement/detail.php?id=130", title: "鎌倉市観光協会 2026年【あじさい情報】鎌倉市内の開花状況について(例年の時期の記載あり)", checked_on: '2026-11-09'}
+    note: "明月院だけの例年の時期の記載は公式で確認できず、鎌倉市内全体の例年を使った"
+    flower_windows:
+      - kind: アジサイ
+        start: '06-01'
+        end: '06-30'
+        source_url: https://www.trip-kamakura.com/advertisement/detail.php?id=130
+        source_host: www.trip-kamakura.com
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2026
+        note: "鎌倉市観光協会: 鎌倉市内全体の例年(西洋アジサイは6月上旬〜下旬)。明月院だけの例年値ではない。明月院は参道沿いに約2,500株"
+  - id: hana-0056
+    name: 南沢あじさい山
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 東京都
+      area: 秋川渓谷
+      city: あきる野市
+      terrain: [mountain]
+      flower_kinds: [アジサイ]
+      care_note: 山の斜面の道から外れない。
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.akirunokanko.com/?p=338", title: "あきる野観光協会 南沢あじさい山(約1万株)", checked_on: '2026-11-09'}
+    note: "入山料・開山期間は年で違う(記事ごとに金額が違う)ので持たない"
+    flower_windows:
+      - kind: アジサイ
+        start: '06-11'
+        end: '07-10'
+        source_url: https://www.akirunokanko.com/?p=338
+        source_host: www.akirunokanko.com
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "あきる野観光協会: 6月中旬〜7月上旬のアジサイの季節(約1万株)"
+  - id: hana-0057
+    name: 河口湖天上山公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 山梨県
+      area: 河口湖
+      city: 富士河口湖町
+      terrain: [mountain]
+      flower_kinds: [アジサイ]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.yamanashi-kankou.jp/kankou/spot/p1_5028.html", title: "富士の国やまなし観光ネット 河口湖天上山公園(2024年10月10日現在)", checked_on: '2026-11-09'}
+    flower_windows:
+      - kind: アジサイ
+        start: '07-01'
+        end: '08-10'
+        source_url: https://www.yamanashi-kankou.jp/kankou/spot/p1_5028.html
+        source_host: www.yamanashi-kankou.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2024
+        note: "やまなし観光推進機構: あじさいの見ごろ 7月上旬〜8月上旬(約10万本。1999年に町民が植樹)"
+  - id: hana-0058
+    name: 羊山公園 芝桜の丘
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 埼玉県
+      area: 秩父
+      city: 秩父市
+      terrain: [garden]
+      flower_kinds: [芝桜, 桜]
+      care_note: 芝桜の中に入らない。
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.chichibu.lg.jp/1853.html", title: "秩父市 羊山公園(約17,600㎡に10品種・40万株以上の芝桜)", checked_on: '2026-11-09'}
+    note: "芝桜まつり(芝桜の開花期間中)は行事の期間なので例年の時期に入れない。芝生広場にソメイヨシノなど(開花時期の記載なし)"
+    flower_windows:
+      - kind: 芝桜
+        start: '04-11'
+        end: '05-10'
+        source_url: https://www.city.chichibu.lg.jp/1853.html
+        source_host: www.city.chichibu.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "秩父市: 芝桜の丘は4月中旬〜5月上旬に見ごろ(10品種・40万株以上)"
+  - id: hana-0059
+    name: 座間のひまわり畑
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 座間
+      city: 座間市
+      terrain: [river]
+      flower_kinds: [ひまわり]
+      care_note: 畑の中に入らない。
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.zama.kanagawa.jp/youkoso/kanko/himawari/1006267.html", title: "座間市 市の花ヒマワリ(2022年12月7日更新。毎年8月、市内数カ所で約55万本)", checked_on: '2026-11-09'}
+    note: "ひまわりまつりの期間は行事なので例年の時期に入れない。場所は年によって変わる(市内数カ所)"
+    flower_windows:
+      - kind: ひまわり
+        start: '08-01'
+        end: '08-31'
+        source_url: https://www.city.zama.kanagawa.jp/youkoso/kanko/himawari/1006267.html
+        source_host: www.city.zama.kanagawa.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2022
+        note: "座間市: 毎年8月、市内数カ所で約55万本のヒマワリが咲く"
+  - id: hana-0060
+    name: 堀切菖蒲園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 東京都
+      area: 葛飾
+      city: 葛飾区
+      terrain: [garden]
+      flower_kinds: [花菖蒲]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.katsushika.lg.jp/institution/1000096/1006888.html", title: "葛飾区 施設案内 堀切菖蒲園(2026年6月25日更新)", checked_on: '2026-11-09'}
+    note: "葛飾菖蒲まつりの期間は行事なので例年の時期に入れない。入園無料・9時〜17時"
+    flower_windows:
+      - kind: 花菖蒲
+        start: '05-21'
+        end: '06-20'
+        source_url: https://www.city.katsushika.lg.jp/institution/1000096/1006888.html
+        source_host: www.city.katsushika.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2026
+        note: "葛飾区: 5月下旬から6月中旬に花菖蒲が見頃となる"
+  - id: hana-0061
+    name: 千鳥ヶ淵公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 東京都
+      area: 千代田
+      city: 千代田区
+      terrain: [garden]
+      flower_kinds: [桜, 菜の花]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://visit-chiyoda.tokyo/app/spot/detail/800", title: "千代田区観光協会 Visit Chiyoda 千鳥ヶ淵公園(約170本の桜)", checked_on: '2026-11-09'}
+    note: "千代田のさくらまつり・ライトアップの期間は行事なので例年の時期に入れない"
+    flower_windows:
+      - kind: 桜
+        start: '03-21'
+        end: '04-10'
+        source_url: https://visit-chiyoda.tokyo/app/spot/detail/800
+        source_host: visit-chiyoda.tokyo
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "千代田区観光協会: ソメイヨシノとヤマザクラの見頃は3月下旬から4月上旬(約170本)"
+  - id: hana-0062
+    name: 古代蓮の里
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 埼玉県
+      area: 行田
+      city: 行田市
+      terrain: [wetland]
+      flower_kinds: [蓮]
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.gyoda.lg.jp/soshiki/kankyokeizaibu/shoko_kanko/gyomu/kanko_joho/8907.html", title: "行田市 観光スポット(2025年7月16日更新。行田蓮約10万株・世界の蓮41種類約2万株)", checked_on: '2026-11-09'}
+    note: "田んぼアート(7月中旬〜10月中旬)は花ではないので入れない"
+    flower_windows:
+      - kind: 蓮
+        start: '06-11'
+        end: '08-10'
+        source_url: https://www.city.gyoda.lg.jp/soshiki/kankyokeizaibu/shoko_kanko/gyomu/kanko_joho/8907.html
+        source_host: www.city.gyoda.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2025
+        note: "行田市: 古代蓮の里の蓮は6月中旬から8月上旬にかけて見頃。早朝に開き昼前に閉じる"
+  - id: hana-0063
+    name: 入笠湿原
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 長野県
+      area: 入笠山
+      city: 富士見町
+      terrain: [wetland]
+      flower_kinds: [スズラン]
+      care_note: 木道から外れない。
+      source: Claude Code が付けた(段階68 第2部。出典の公式ページの本文を 2026-11-09 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.town.fujimi.lg.jp/site/kanko/nyukasa.html", title: "富士見町 花の宝庫 入笠湿原・入笠山(2021年12月6日更新)", checked_on: '2026-11-09'}
+    note: "すずらん祭りの期間は行事なので例年の時期に入れない。株数は町とスキー場の運営会社で100万・120万と表記が違う"
+    flower_windows:
+      - kind: スズラン
+        start: '06-01'
+        end: '06-30'
+        source_url: https://www.town.fujimi.lg.jp/site/kanko/nyukasa.html
+        source_host: www.town.fujimi.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2021
+        note: "富士見町: 6月、入笠湿原に100万株のすずらんが咲く"
