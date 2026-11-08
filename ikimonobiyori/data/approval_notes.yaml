@@ -415,3 +415,17 @@ catalog_secondary:
     - {url: "https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html", class: "紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない", terms: "許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認)"}
   hana-0046:
     - {url: "https://www.ashikaga.co.jp/", class: "施設自身の公式ページ(あしかがフラワーパーク)", terms: "トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09)"}
+  hana-0047:
+    - {url: "https://www.town.ninomiya.kanagawa.jp/0000001281.html", class: "自治体の公式ページ(二宮町。公園の管理者の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0048:
+    - {url: "https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html", class: "自治体の公式ページ(松田町。園の運営の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0049:
+    - {url: "https://www.city.atami.lg.jp/hana/1003681/1003692/index.html", class: "自治体の公式ページ(熱海市。梅園の設置者の市自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0050:
+    - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", class: "町の観光協会の公式ページ(越生町観光協会)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0051:
+    - {url: "https://ibaraki-kairakuen.jp/zukan/", class: "施設自身の公式ページ(偕楽園)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0052:
+    - {url: "https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html", class: "自治体の公式ページ(小田原市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0053:
+    - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", class: "自治体の公式ページ(幸手市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}

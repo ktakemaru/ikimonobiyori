@@ -151,7 +151,7 @@ def resolve(question, now, policy=None):
     from . import highlights as HL
     if kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
         route = "highlights"
-    elif kind not in ("event", "normal", "difference", "chat") and SP.is_season_place(q):    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
+    elif (kind not in ("event", "normal", "difference", "chat") or (kind == "normal" and any(w in q for w in SP.cfg().get("over_normal_words") or [])))             and SP.is_season_place(q):                   # 段階65 第2部: 「梅の名所と時期」は平年の目安ではなく、名所と例年の時期    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
         route = "season_place"
     elif kind not in ("event", "normal") and defaulted and SP.is_town_question(q):      # 段階64 第4部 4: 町の名前で聞く場所の質問(「松田で有名なところ」)
         route = "town"

@@ -211,5 +211,25 @@ class Part6Fixes(unittest.TestCase):
         self.assertIn("公開後の説明は題名と何のページか 1 文だけ", s)
 
 
+class Part2WinterFlowers(unittest.TestCase):
+    """第2部: 花のカタログの続き(12〜3月)。"""
+
+    def test_place_and_time_question_wins_over_the_normal_question(self):
+        from ikimonobiyori import answer_run as R
+        from ikimonobiyori import ask
+        self.assertEqual(R.resolve("梅の名所と時期を教えて", ask._clock())["route"], "season_place")
+        self.assertEqual(R.resolve("梅の見られる場所と時期を教えて", ask._clock())["route"], "season_place")
+        self.assertEqual(R.resolve("東京の梅の開花は平年いつ?", ask._clock())["route"], "normal")
+
+    def test_event_periods_are_not_typical_windows(self):
+        from ikimonobiyori import catalog as CM
+        by = {e["id"]: e for e in CM.load_catalog("flowers")["entries"]}
+        for i in ("hana-0050", "hana-0051", "hana-0052", "hana-0053"):       # 行事の期間しか書かれていない名所は、例年の時期を持たない
+            self.assertFalse(by[i].get("flower_windows"), i)
+        for i in ("hana-0047", "hana-0048", "hana-0049"):
+            w = by[i]["flower_windows"][0]
+            self.assertTrue(w["unapproved_host"] and w["source_class"] == "secondary", i)    # 通信先が未承認なので区分つき
+
+
 if __name__ == "__main__":
     unittest.main()

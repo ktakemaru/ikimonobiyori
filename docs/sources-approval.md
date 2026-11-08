@@ -10,7 +10,7 @@
 | 施設（visitor_centers/centers.yaml） | 12 | 19 | 0 |
 | 現況の情報源（sources/） | 42 | 32 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 89 | 14 | 2 |
+| 名所カタログ（catalog/） | 96 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -178,7 +178,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 89件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 96件。うち本人の承認 14件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -199,7 +199,7 @@
 - catalog/autumn_leaves.yaml: 承認した人 claude_code_provisional が 17件
 - catalog/autumn_leaves.yaml: 承認した人 記入なし（段階19 以前の承認） が 20件
 - catalog/birds.yaml: 承認した人 claude_code_provisional が 5件
-- catalog/flowers.yaml: 承認した人 claude_code_provisional が 33件
+- catalog/flowers.yaml: 承認した人 claude_code_provisional が 40件
 
 ## 3. 取り消し・引退（5件）
 
@@ -222,6 +222,13 @@
 | 芦川のすずらん群生地（hana-0044） | https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html | 県の観光公式(やまなし観光推進機構)。群生地の管理者自身のページではない | 「このサイトについて」に引用・転載・自動取得の規定はなく © 表示だけ(台帳 yamanashi-kankou-koyo の確認) |
 | 府中市郷土の森博物館(梅園)（hana-0045） | https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html | 紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない | 許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認) |
 | あしかがフラワーパーク（hana-0046） | https://www.ashikaga.co.jp/ | 施設自身の公式ページ(あしかがフラワーパーク) | トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09) |
+| 吾妻山公園（hana-0047） | https://www.town.ninomiya.kanagawa.jp/0000001281.html | 自治体の公式ページ(二宮町。公園の管理者の町自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
+| 寄ロウバイ園（hana-0048） | https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html | 自治体の公式ページ(松田町。園の運営の町自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
+| 熱海梅園（hana-0049） | https://www.city.atami.lg.jp/hana/1003681/1003692/index.html | 自治体の公式ページ(熱海市。梅園の設置者の市自身のページ) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
+| 越生梅林（hana-0050） | https://ogose-kanko.jp/tourist_attractions/ogose-bairin | 町の観光協会の公式ページ(越生町観光協会) | 規約は未読(段階65 第2部では本文だけ読んだ) |
+| 偕楽園（hana-0051） | https://ibaraki-kairakuen.jp/zukan/ | 施設自身の公式ページ(偕楽園) | 規約は未読(段階65 第2部では本文だけ読んだ) |
+| 曽我梅林（hana-0052） | https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html | 自治体の公式ページ(小田原市) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
+| 権現堂桜堤（hana-0053） | https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html | 自治体の公式ページ(幸手市) | サイトポリシーは未読(段階65 第2部では本文だけ読んだ) |
 
 ## 5. 国営昭和記念公園（showakinen-flower-information・showakinen-flower-information-flowers）の規約
 
