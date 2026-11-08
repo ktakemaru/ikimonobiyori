@@ -75,8 +75,8 @@ sources:
     covers:
       - {site: hana-0004, label: "コスモス", flower_kind: コスモス}
     notation: {style: none, map: {}, updated: none, note: "2026-10-24 は HTTP 504 で読めず、載り方は未確認(紅葉の台帳の showakinen-flower-information と同じページ)"}
-    readable: {status: unconfirmed, checked_on: "2026-10-24", robots: unknown, note: "HTTP 504 Gateway Timeout(段階16 でも応答がなかった)"}
-    terms: {status: not_checked}
+    readable: {status: ok, checked_on: "2026-11-09", robots: allows, observed_latest_update: "2026-11-05", note: "段階67(確認済みの事実の記録): 同じページを紅葉の台帳 showakinen-flower-information で 2026-11-05 に読めた(花だより 11/5 など)。robots.txt は全ロボット向けに /wp-admin/ など管理用の 2 か所だけ拒否(2026-11-09 に読んだ。approval_notes の showakinen)。2026-10-24 は HTTP 504 だった"}
+    terms: {status: no_prohibition_found, url: "https://www.showakinen-koen.jp/about/", note: "『掲載データ・写真について』(2026-11-09 に読んだ): 掲載データ・写真は無断転載を禁じる。複製・自動取得の記載はなく、リンクはフリー。状態の語と日付の短い事実を出典つきで示すだけ(紅葉の台帳と同じ)"}
     approval: {status: pending, reason: "読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う"}
 
   - id: keisei-rose-garden
