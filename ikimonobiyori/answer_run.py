@@ -150,6 +150,8 @@ def resolve(question, now, policy=None):
     from . import season_place as SP
     if kind not in ("event", "normal", "difference", "chat") and SP.is_season_place(q):    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
         route = "season_place"
+    elif kind not in ("event", "normal") and defaulted and SP.is_town_question(q):      # 段階64 第4部 4: 町の名前で聞く場所の質問(「松田で有名なところ」)
+        route = "town"
     elif wild and kind != "event":                       # 野草・高山植物の語は、知識の言い方(「教えて」)でも野草の経路(段階40)
         route = "wildflower"
     elif kind in ("knowledge", "difference", "chat", "normal", "event"):
@@ -305,6 +307,11 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
     try:
         write_log(res, now, env)
     except OSError:
+        pass
+    try:                                                 # 段階64 第4部 3: 計画の型でない答えは、写真つきページのために覚える
+        from . import answer_page as APG
+        APG.remember(res, now, env)
+    except (OSError, KeyError, TypeError):
         pass
     try:
         Path(workdir).mkdir(parents=True, exist_ok=True)
@@ -490,6 +497,40 @@ def _season_place_route(res, cond, now, env):
         res.update(text=text, stage=2, status=STATUS_PASS)
 
 
+def _with_knowledge_tail(text, cond, now, env):
+    """知識の答えの、出典の見出しの前に「いつ・どこで」の短い一覧(名所カタログ・ガイドのカタログ・記録から。最大 5 件)を足す。出典も足す。"""
+    from . import observations as O
+    from . import season_place as SP
+    prefs = None
+    if cond.get("region"):
+        prefs = O.resolve(cond["region"], cond["origin"], O.load_policy()).get("prefectures") or None
+    try:
+        tail, urls = SP.knowledge_tail(cond["question"], today=now.date(), origin=cond["origin"], prefectures=prefs, env=env)
+    except (KeyError, ValueError, TypeError, OSError):
+        return text
+    if not tail:
+        return text
+    head = SP.cfg()["text"]["sources_heading"]
+    lines = text.rstrip(NL).split(NL)
+    i = next((k for k, l in enumerate(lines) if l.strip() == head), len(lines))
+    body, src = lines[:i], lines[i + 1:] if i < len(lines) else []
+    while body and not body[-1].strip():
+        body.pop()
+    src = src + [u for u in urls if u not in src]
+    from . import intent
+    note = intent.cfg().get("secondary_note")
+    j = next((k for k, l in enumerate(body) if note and l.strip() == note), None)   # 確かさの補足(紹介サイトの記載)は最後に
+    if j is not None:
+        rest = [l for l in body[j:] if l.strip()]
+        body = body[:j]
+        while body and not body[-1].strip():
+            body.pop()
+        out = body + [""] + tail + [""] + rest + ["", head] + src
+    else:
+        out = body + [""] + tail + ["", head] + src
+    return NL.join(out) + NL
+
+
 def _other_route(res, cond, now, env, pol):
     """知識・違い・雑談・平年・行事・野草・ガイド型(facts を持たない経路)。"""
     from . import intent
@@ -499,11 +540,24 @@ def _other_route(res, cond, now, env, pol):
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
         return
+    if cond["route"] == "town":
+        from . import answer_gates as AG
+        from . import season_place as SP
+        got = SP.compose_town(q, origin=cond["origin"], env=env)
+        text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
+        res["town"] = {"town": got["town"], "spots": [r["name"] for r in got["spots"]]}
+        if got["needs_research"]:
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
+        else:
+            res.update(text=text, stage=2, status=STATUS_PASS)
+        return
     if cond["route"] in ("knowledge", "difference", "chat", "normal", "event"):
         text = intent.compose(q, today=today)
         if text is not None:
             errs = intent.check_event(text, today) if cond["route"] == "event" else intent.check(text, intent.cards_for(q))
             if not errs:
+                if cond["route"] in ("knowledge", "chat"):
+                    text = _with_knowledge_tail(text, cond, now, env)       # 段階64 第4部: いつ・どこ は最後に短く
                 res.update(text=text, stage=2, status=STATUS_PASS)
                 return
             res["errors"] = [{"code": e["code"], "detail": e.get("detail", "")} for e in errs]

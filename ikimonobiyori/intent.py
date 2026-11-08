@@ -66,7 +66,10 @@ def cards_for(question, cards=None, env=None, month=None):
         if r["title"] not in seen:
             seen.add(r["title"])
             uniq.append(r)
-    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), tp.index(next((t for t in tp if K.place_match(r, t)), tp[0])) if tp else 0, r["title"])):
+    from . import season_place as SP                 # 段階64 第4部: 季節で絞った質問(「冬から春の桜」)は、その季節の種の違い → その季節の種のカードを先に
+    sea = set(SP.season_species_names(question))
+    first = (lambda r: (not (sea and r.get("place") in sea and "違い" in r["title"]), not (sea and r.get("place") in sea))) if sea else (lambda r: (False, False))
+    for r in sorted(hits, key=lambda r: (*first(r), order.get(r.get("category"), len(order)), tp.index(next((t for t in tp if K.place_match(r, t)), tp[0])) if tp else 0, r["title"])):
         if r["title"] not in seen:
             seen.add(r["title"])
             uniq.append(r)

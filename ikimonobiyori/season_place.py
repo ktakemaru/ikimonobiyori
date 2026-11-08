@@ -191,6 +191,9 @@ def gather(sp, origin, c=None, env=None):
         if isinstance(s, str):
             s = {"text": s}
         win = s.get("window") if isinstance(s.get("window"), dict) else {}
+        if not win.get("start") and s.get("text"):                        # 窓のない時期の文(「11月中旬〜12月中旬」)は、読める形だけ窓にする(推測しない)
+            pw = O.parse_typical(s["text"], opol)
+            win = {"start": pw[0], "end": pw[1]} if pw else {}
         by = ((e.get("range") or {}).get("by_origin") or {}).get(origin) or {}
         km, est = (by.get("km"), False) if by.get("km") is not None else _km(None, e.get("municipality"), origin, cat_pol)
         if by.get("status") == "out_of_range":
@@ -382,3 +385,170 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
         lines += ["", t["sources_heading"]] + urls
     return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
             "missing": missing, "needs_research": bool(missing)}
+
+
+# ---- 段階64 第4部: 知識の答えの最後の短い一覧・季節の種 ----
+
+def season_of(question, c=None):
+    """質問に最初に出た季節の語(冬・春・夏・秋)。なければ None。"""
+    c = c or cfg()
+    q = question or ""
+    for w in sorted({w for sp in c["species"] for w in sp["words"]}, key=len, reverse=True):
+        q = q.replace(w, "　" * len(w))                                  # 種の名前の中の字(「冬桜」の「冬」)は季節の語にしない
+    hits = [(q.find(k), k) for k in (c.get("season_species") or {}) if k in q]
+    return min(hits)[1] if hits else None
+
+
+def season_species_names(question, c=None):
+    """季節で絞った質問の、その季節の種の名前(質問の種に含まれるものだけ。「冬から春の桜」→ 冬桜・寒桜・河津桜)。"""
+    c = c or cfg()
+    season = season_of(question, c)
+    if not season:
+        return []
+    names = list(c["season_species"][season])
+    asked = resolve_all(question, c)
+    if not asked:
+        return names
+    allowed = {n for sp in asked for n in [sp["name"]] + list(sp.get("includes") or [])}
+    return [n for n in names if n in allowed and n != next((sp["name"] for sp in asked if sp.get("includes")), None)] or \
+        [n for n in names if n in allowed]
+
+
+def _sp_by_name(name, c):
+    sp = next((x for x in c["species"] if x["name"] == name), None)
+    return _sp_doc(sp) if sp else {"name": name, "match": [name], "words": [name], "includes": []}
+
+
+def knowledge_tail(question, *, today, origin, prefectures=None, env=None):
+    """知識の答えの最後に付ける「いつ・どこで」の短い一覧(最大 max_items 件)。→ (行, 出典の URL)。名所がなければ ([], [])。"""
+    c = cfg()
+    kt = c["knowledge_tail"]
+    t = c["text"]
+    names = season_species_names(question, c)
+    sps = [_sp_by_name(n, c) for n in names] if names else resolve_all(question, c)
+    rows = []
+    for sp in sps:
+        got, _ = select(gather(sp, origin, c, env), origin, prefectures, c)
+        rows += [dict(r, _kind=sp["name"]) for r in got if r["name"] not in {x["name"] for x in rows}]
+    if not rows:
+        return [], []
+    season = season_of(question, c)
+    first = min((int(r["start"][:2]) for r in rows if r["start"]), default=1)
+    if season:                                                            # 季節の始まりの月から数える(冬なら 11 月 → 12 月 → 1 月 …)
+        first = c["season_months"][season][0]
+    off = lambda r: ((int(r["start"][:2]) - first) % 12, r["start"][3:]) if r["start"] else (99, "")
+    rows = sorted(rows, key=lambda r: (off(r), r["km"] if r["km"] is not None else 9999))[: kt["max_items"]]
+    lines = [kt["heading"]]
+    urls = []
+    for r in rows:
+        where = (r.get("prefecture") or "") + (r.get("city") or "")
+        km = t["km"].format(km=r["km"]) if r["km"] is not None else ""
+        fmt = kt["line"] if r["season"] else kt["line_unknown"]
+        lines.append(fmt.format(name=r["name"], where=where, km=km, season=r["season"], kind="・".join(r["kinds"]) or r["_kind"]))
+        if r["url"] and r["url"] not in urls:
+            urls.append(r["url"])
+    return lines, urls
+
+
+# ---- 段階64 第4部 4: 町の名前で聞く場所の質問 ----
+
+def _all_entries():
+    """名所カタログ(花・紅葉・野鳥・冬鳥)とガイドのカタログの名所 → [{name, prefecture, city, kinds, windows, url, official, subject}]"""
+    from . import catalog as CM
+    out = []
+    for sj in ("flowers", "autumn_leaves", "birds", "wintering_birds"):
+        try:
+            doc = CM.load_catalog(sj)
+        except (OSError, ValueError, KeyError):
+            continue
+        for e in doc.get("entries") or []:
+            if e.get("example") or e.get("status") != "approved":
+                continue
+            t = e.get("tags") or {}
+            out.append({"name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "point": e.get("point"),
+                        "kinds": list(t.get("flower_kinds") or []) or ([{"autumn_leaves": "紅葉"}.get(sj)] if sj == "autumn_leaves" else []),
+                        "windows": e.get("flower_windows") or ([dict(e["typical_window"], kind="紅葉")] if e.get("typical_window") else []),
+                        "events": e.get("events"), "url": ((e.get("sources") or [{}])[0]).get("url"), "subject": sj})
+    for e in _guide_entries():
+        s = e.get("season") or {}
+        s = {"text": s} if isinstance(s, str) else s
+        out.append({"name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "point": None,
+                    "kinds": [k["kind"] for k in e.get("kinds") or [] if k.get("shown", True)][:4] or [e.get("theme")],
+                    "season_text": s.get("text"), "url": ((e.get("sources") or [{}])[0]).get("url"), "subject": e.get("theme"),
+                    "range_km": (((e.get("range") or {}).get("by_origin") or {}).get("横浜") or {}).get("km")})
+    return out
+
+
+def resolve_town(question, c=None):
+    """質問の文 → 名所のある市区町村の名前(「松田」→ 松田町)。2 字以上の語だけ。当たりがなければ None。"""
+    c = c or cfg()
+    q = question or ""
+    sfx = c["town"]["suffixes"]
+    cities = sorted({e["city"] for e in _all_entries() if e.get("city")}, key=len, reverse=True)
+    for city in cities:
+        for part in re.split(r"[・、]", city):
+            stem = re.sub("(" + "|".join(sfx) + ")$", "", part)
+            if len(stem) >= 2 and (part in q or stem in q):
+                return part
+    return None
+
+
+def is_town_question(question, c=None):
+    c = c or cfg()
+    q = question or ""
+    if resolve_all(q, c):
+        return False
+    return any(re.search(p, q) for p in c["town"]["patterns"]) and resolve_town(q, c) is not None
+
+
+def compose_town(question, *, origin, env=None):
+    """町の名前の質問 → {text, spots, town}。名所の名前・見どころ・例年の時期・距離・出典(カタログの値だけ)。"""
+    from . import catalog as CM
+    from . import observations as O
+    c = cfg()
+    tc, t = c["town"], c["text"]
+    town = resolve_town(question, c)
+    if not town:
+        return None
+    cat_pol = CM.load_policy()
+    opol = O.load_policy()
+    thirds = t["thirds"]
+    rows, seen = [], set()
+    for e in _all_entries():
+        if not e.get("city") or town not in re.split(r"[・、]", e["city"]):
+            continue
+        k = re.sub(r"[\s()（）・]", "", e["name"])
+        if k in seen:
+            for r in rows:
+                if re.sub(r"[\s()（）・]", "", r["name"]) == k:
+                    r["kinds"] = list(dict.fromkeys(r["kinds"] + [x for x in e["kinds"] if x]))
+            continue
+        seen.add(k)
+        km, _est = _km(e.get("point"), e.get("city"), origin, cat_pol)
+        seasons = []
+        for w in e.get("windows") or []:
+            if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"]):
+                seasons.append((w["start"], window_text(w["start"], w["end"], thirds), w.get("kind")))
+        if e.get("season_text"):
+            seasons.append(("", e["season_text"], "・".join(e["kinds"][:2])))
+        rows.append({"name": e["name"], "prefecture": e["prefecture"], "city": e["city"], "km": km, "kinds": [x for x in e["kinds"] if x],
+                     "seasons": seasons, "url": e.get("url")})
+    if not rows:
+        return {"text": tc["none"].format(town=town) + NL, "spots": [], "town": town, "needs_research": True}
+    rows = sorted(rows, key=lambda r: (min((s[0] for s in r["seasons"] if s[0]), default="99"), r["name"]))[: tc["max_items"]]
+    lines = [tc["lead"].format(town=town), t["origin_line"].format(origin=origin)]
+    urls = []
+    for r in rows:
+        where = (r.get("prefecture") or "") + (r.get("city") or "")
+        km = t["km"].format(km=r["km"]) if r["km"] is not None else ""
+        lines += ["", tc["head"].format(name=r["name"], where=where, km=km)]
+        if r["kinds"]:
+            lines.append(tc["line_kind"].format(kinds="・".join(r["kinds"])))
+        for _s, text, kind in r["seasons"]:
+            lines.append(tc["line_season"].format(season=text, kind=kind or "・".join(r["kinds"][:1])))
+        if r["url"] and r["url"] not in urls:
+            urls.append(r["url"])
+    lines += ["", t["confidence"]]
+    if urls:
+        lines += ["", t["sources_heading"]] + urls
+    return {"text": NL.join(lines) + NL, "spots": rows, "town": town, "needs_research": False}

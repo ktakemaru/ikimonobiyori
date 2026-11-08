@@ -220,5 +220,73 @@ class Part3SeasonPlace(unittest.TestCase):
         self.assertEqual(cond["route"], "season_place")
 
 
+class Part4KnowledgePagePlace(unittest.TestCase):
+    """第4部: 知識の質問・写真つきページ・場所の質問を ask answer につなぐ。"""
+
+    def card(self, title, place, category="種の解説"):
+        return {"title": title, "place": place, "category": category, "facts": ["試験の事実"], "source": {"name": "試験", "url": "https://example.org/" + place}}
+
+    def test_season_question_puts_the_differences_of_that_season_first(self):
+        from ikimonobiyori import intent
+        cards = [self.card("マメザクラの特徴", "マメザクラ"), self.card("ヤマザクラの見分け方", "ヤマザクラ"),
+                 self.card("冬桜とは", "冬桜"), self.card("冬桜と寒桜の違い", "冬桜")]
+        for c in cards:
+            c["place_aliases"] = ["桜"]
+        got = [r["title"] for r in intent.cards_for("冬から春にかけてみられる桜について教えて", cards=cards)]
+        self.assertEqual(got[:2], ["冬桜と寒桜の違い", "冬桜とは"])
+
+    def test_season_species_of_a_question(self):
+        from ikimonobiyori import season_place as SP
+        self.assertEqual(SP.season_species_names("冬から春にかけてみられる桜について教えて"), ["冬桜", "寒桜", "河津桜"])
+        self.assertEqual(SP.season_species_names("桜について教えて"), [])
+
+    def test_knowledge_tail_goes_before_the_sources_and_the_note_stays_last(self):
+        from datetime import datetime
+        from unittest import mock
+        from ikimonobiyori import answer_run as R
+        from ikimonobiyori import intent
+        from ikimonobiyori import season_place as SP
+        note = intent.cfg()["secondary_note"]
+        text = f"冬桜とは: 試験の事実(試験)。\n\n{note}\n\n出典\nhttps://example.org/a\n"
+        cond = {"question": "冬桜について教えて", "origin": "横浜", "region": None}
+        with mock.patch.object(SP, "knowledge_tail", return_value=(["いつ・どこで", "- 試験の公園(試験県) 約30km: 11月中旬〜12月上旬(冬桜)"], ["https://example.org/b"])):
+            out = R._with_knowledge_tail(text, cond, datetime.fromisoformat("2026-11-08T12:00:00+09:00"), None)
+        self.assertEqual(out.splitlines(), ["冬桜とは: 試験の事実(試験)。", "", "いつ・どこで", "- 試験の公園(試験県) 約30km: 11月中旬〜12月上旬(冬桜)", "",
+                                            note, "", "出典", "https://example.org/a", "https://example.org/b"])
+
+    def test_town_question_is_answered_from_the_catalog(self):
+        from ikimonobiyori import season_place as SP
+        q = "神奈川県の松田で有名なところ"
+        self.assertTrue(SP.is_town_question(q))
+        self.assertEqual(SP.resolve_town(q), "松田町")
+        r = SP.compose_town(q, origin="横浜")
+        self.assertIn("西平畑公園", [x["name"] for x in r["spots"]])
+        self.assertFalse(SP.is_town_question("ニッコウキスゲはいつどこへ行けばいい?"))
+
+    def test_answer_page_escapes_and_has_no_script(self):
+        from ikimonobiyori import answer_page as P
+        doc = {"route": "season_place", "question": "試験の花の名所と時期", "season_place": {"species": ["試験の花<script>"]},
+               "text": "試験の花は、例年6月〜7月が目安です。\n\n**試験の公園**(試験県) 約30km\n・例年の時期: 6月中旬〜7月中旬(example.org)\n\n出典\nhttps://example.org/a\njavascript:alert(1)\n"}
+        html, lines, shown = P.build(doc, photo_for=lambda n: None, photo_credit=lambda m: "", csp="default-src 'none'", max_bytes=1000)
+        self.assertNotIn("<script>", html)
+        self.assertIn("&lt;script&gt;", html)
+        self.assertIn('<a href="https://example.org/a"', html)
+        self.assertNotIn('href="javascript:', html)                       # リンクにしない(文字のまま)
+        self.assertEqual(shown, [("試験の花<script>", False)])
+        self.assertIn("<h3>試験の公園(試験県) 約30km</h3>", html)
+
+    def test_last_answer_is_remembered_only_for_the_new_types(self):
+        import tempfile
+        from datetime import datetime
+        from ikimonobiyori import answer_page as P
+        now = datetime.fromisoformat("2026-11-08T12:00:00+09:00")
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            P.remember({"route": "plan", "question": "今日のおすすめ"}, now, env)
+            self.assertIsNone(P.load_last(now, env))
+            P.remember({"route": "season_place", "question": "藤の名所", "text": "x\n"}, now, env)
+            self.assertEqual(P.load_last(now, env)["route"], "season_place")
+
+
 if __name__ == "__main__":
     unittest.main()

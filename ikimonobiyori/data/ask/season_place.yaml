@@ -79,3 +79,45 @@ text:
   table_words: [表, 一覧で, 比べ]
 # 鳥・ホタルなど(「見頃」「咲き具合」と書かない種)
 bird_species: [カワセミ, ハクチョウ]
+
+# 段階64 第4部: 季節で絞った知識の質問(「冬から春にかけて見られる桜について教えて」)。最初に出た季節の語の種を先にする。
+# 種は上の species の name(カードの場所の語と同じ)。Claude Code が、名所カタログ・ガイドのカタログの例年の時期の始まりから分けた。provisional
+season_species:
+  冬: [冬桜, 寒桜, 河津桜, 梅, 水仙, ロウバイ, 菜の花, ハクチョウ]
+  春: [桜, 芝桜, ネモフィラ, 藤, つつじ, バラ, カタクリ]
+  夏: [ニッコウキスゲ, スズラン, アジサイ, 花菖蒲, 蓮, ひまわり, ホタル]
+  秋: [ヒガンバナ, コスモス, 菊, 冬桜]
+# 季節の月(始まりの月から)。冬は 11 月から(冬桜が 11 月に咲く)
+season_months: {冬: [11, 12, 1, 2], 春: [3, 4, 5], 夏: [6, 7, 8], 秋: [9, 10, 11]}
+# 知識の答えの最後に付ける「いつ・どこで」の短い一覧(段階59 の型: いつ・どこ は最後に短く)
+knowledge_tail:
+  heading: いつ・どこで
+  max_items: 5
+  line: "- {name}({where}){km}: {season}({kind})"
+  line_unknown: "- {name}({where}){km}: 例年の時期は分かりません({kind})"
+# 段階64 第4部 4: 町の名前で聞く場所の質問(「神奈川県の松田で有名なところ」)。名所カタログ・ガイドのカタログの市区町村で引く
+town:
+  patterns: ["で有名な", "の有名な", "の見どころ", "の名所", "でおすすめの場所", "で見られるもの", "の見るところ", "で見るところ"]
+  lead: "{town}で、名所の記録がある場所です。"
+  none: "{town}の名所は、確かめられた記録がまだありません。"
+  head: "**{name}**({where}){km}"
+  line_kind: "・見どころ: {kinds}"
+  line_season: "・例年の時期: {season}({kind})"
+  max_items: 8
+  # 市区町村の語の末尾(質問の「松田」を「松田町」に結びつける。2 字以上の語だけ)
+  suffixes: [市, 町, 村, 区]
+# 段階64 第4部 3: 答えの型(時期と場所・町の名前・知識)ごとの写真つきページ(ikimonobiyori/answer_page.py)。答えの本文と同じ内容だけ。
+# 写真は種の代表写真(guide_photos のキャッシュにあるものだけ。通信しない)。手書きの HTML・図で代用しない
+page:
+  file: "answer-{kind}-{date}.html"
+  routes: [season_place, town, knowledge, chat]
+  title: {season_place: "{species}の名所と例年の時期", town: "{town}の名所", knowledge: "{species}について", chat: "{species}について"}
+  title_fallback: "{question}"
+  photo_heading: 写真
+  photo_note: "写真は種の代表写真で、その場所で撮られたものではありません。"
+  no_photo_names: "写真が取れなかった種: {names}"
+  max_species: 6
+  footer: "写真提供: iNaturalist / Wikimedia Commons。"
+  section_words: [いつ・どこで, 出典, 関連して, 行く前に確認すること]
+  last_file: ask/last_answer.json
+  valid_hours: 24
