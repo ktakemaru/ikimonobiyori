@@ -121,3 +121,5 @@ page:
   section_words: [いつ・どこで, 出典, 関連して, 行く前に確認すること]
   last_file: ask/last_answer.json
   valid_hours: 24
+# 段階65 第2部: 平年の目安の語(「時期」「いつ」)があっても、場所を聞く語があれば「いつ・どこ」の答えにする(「梅の名所と時期を教えて」)
+over_normal_words: [名所, 場所, どこ]

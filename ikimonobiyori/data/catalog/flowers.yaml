@@ -1397,3 +1397,173 @@ entries:
         unapproved_host: true
         source_year: null
         note: "公式サイトの季節の一覧(年の記載なし)「4月中旬～5月中旬 藤・ツツジ・シャクナゲ」(2026-11-08 に読んだ)"
+  # 段階65 第2部: 12〜3月の花(本文を読んで確かめたものだけ。座標は未確認で入れない。通信先が台帳で未承認のため source_class: secondary)
+  - id: hana-0047
+    name: 吾妻山公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 二宮
+      city: 二宮町
+      terrain: [garden]
+      flower_kinds: [菜の花, 水仙]
+      care_note: 花畑の中に入らない。園路から見る。
+      source: Claude Code が付けた(段階65 第2部。二宮町の「吾妻山公園花ごよみ」(2022-11-30 更新)と「吾妻山公園花情報2026(1月)」の本文。座標は未確認)
+    sources:
+      - {url: "https://www.town.ninomiya.kanagawa.jp/0000001281.html", title: "二宮町 吾妻山公園花ごよみ(2022年11月30日更新)", checked_on: '2026-11-09'}
+      - {url: "https://www.town.ninomiya.kanagawa.jp/0000003257.html", title: "二宮町 吾妻山公園花情報2026(1月)(2026年1月30日更新。菜の花・スイセンの開花状況)", checked_on: '2026-11-09'}
+    note: "花ごよみの見出しに「菜の花(1～2月)」。2026-01-30 の開花状況は菜の花・スイセンとも9分咲(古い年の状態なので現況には使わない)。行事の期間は公式ページで確認できず"
+    flower_windows:
+      - kind: 菜の花
+        start: '01-01'
+        end: '02-28'
+        source_url: https://www.town.ninomiya.kanagawa.jp/0000001281.html
+        source_host: www.town.ninomiya.kanagawa.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: 2022
+        note: "二宮町の花ごよみの見出し「菜の花(1～2月)」(2026-11-09 に読んだ)"
+  - id: hana-0048
+    name: 寄ロウバイ園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 松田
+      city: 松田町
+      terrain: [garden]
+      flower_kinds: [ロウバイ]
+      care_note: 枝を折らない。園路から見る。
+      source: Claude Code が付けた(段階65 第2部。松田町の「ロウバイ園について」(2021-11-22 更新)の本文。所在地は地名「寄」だけで番地は未確認。座標は未確認)
+    sources:
+      - {url: "https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html", title: "松田町 ロウバイ園について(2021年11月22日更新。ソシンロウバイ約20,000本以上)", checked_on: '2026-11-09'}
+      - {url: "https://town.matsuda.kanagawa.jp/site/roubai10/", title: "松田町 第14回寄ロウバイまつり(2026年。令和8年1月17日(土曜日)から2月15日(日曜日)。終了)", checked_on: '2026-11-09'}
+    note: "本文に「1月から2月にかけて」葉の出る前の枝に花。ソシンロウバイ約20,000本以上・敷地13,000平方メートル以上。2026年のまつり(1/17〜2/15)は行事の期間で例年の時期には使わない。2027年の日程は未確認"
+    flower_windows:
+      - kind: ロウバイ
+        start: '01-01'
+        end: '02-28'
+        source_url: https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html
+        source_host: town.matsuda.kanagawa.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "松田町のページの本文「1月から2月にかけて」(2026-11-09 に読んだ)"
+  - id: hana-0049
+    name: 熱海梅園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 静岡県
+      area: 熱海
+      city: 熱海市
+      terrain: [garden]
+      flower_kinds: [梅, ロウバイ, 水仙]
+      source: Claude Code が付けた(段階65 第2部。熱海市の梅の開花情報(令和6年12月27日更新)と梅園のページ(令和8年3月11日更新)の本文。所在地は未確認。座標は未確認)
+    sources:
+      - {url: "https://www.city.atami.lg.jp/hana/1003681/1003692/index.html", title: "熱海市 熱海梅園 梅 開花情報(令和6年12月27日更新。開花時期 1月から3月)", checked_on: '2026-11-09'}
+      - {url: "https://www.city.atami.lg.jp/kanko/kankoshisetsu/1001832/1001834.html", title: "熱海市 熱海梅園(令和8年3月11日更新。梅 60品種469本)", checked_on: '2026-11-09'}
+    note: "梅は60品種469本。園内の花木にロウバイ・スイセンなど。第82回(令和8年)梅まつりは令和8年1月10日(土曜日)から3月8日(日曜日)で、行事の期間(例年の時期には使わない)。2027年は未確認"
+    flower_windows:
+      - kind: 梅
+        start: '01-01'
+        end: '03-31'
+        source_url: https://www.city.atami.lg.jp/hana/1003681/1003692/index.html
+        source_host: www.city.atami.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "熱海市の梅の開花情報の本文「開花時期 1月から3月」(2026-11-09 に読んだ)"
+  - id: hana-0050
+    name: 越生梅林
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 埼玉県
+      area: 越生
+      city: 越生町
+      terrain: [garden]
+      flower_kinds: [梅]
+      source: Claude Code が付けた(段階65 第2部。越生町観光協会の越生梅林のページの本文。所在地「埼玉県入間郡越生町堂山113」。座標は未確認)
+    sources:
+      - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", title: "越生町観光協会 越生梅林(園内 約1,000本・35種類)", checked_on: '2026-11-09'}
+      - {url: "https://www.town.ogose.saitama.jp/kankonavi/hana/2653.html", title: "越生町 越生観光ナビ 梅", checked_on: '2026-11-09'}
+    note: "園内に約1,000本・35種類。「毎年2月中旬から3月中旬にかけて」は梅まつりの説明文で行事の期間なので、例年の時期(flower_windows)に入れない。令和8年の梅まつりは 2/14(土)〜3/15(日)。2027年は未確認"
+  - id: hana-0051
+    name: 偕楽園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 茨城県
+      area: 水戸
+      city: 水戸市
+      terrain: [garden]
+      flower_kinds: [梅]
+      source: Claude Code が付けた(段階65 第2部。偕楽園の公式サイトの梅図鑑の本文。座標は未確認)
+    sources:
+      - {url: "https://ibaraki-kairakuen.jp/zukan/", title: "偕楽園 梅図鑑(約100品種・3000本)", checked_on: '2026-11-09'}
+    note: "約100品種・3000本。「水戸の梅まつりが毎年2月中旬～3月下旬に開催」は行事の期間なので例年の時期に入れない。2027年の日程は未確認"
+  - id: hana-0052
+    name: 曽我梅林
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 神奈川県
+      area: 小田原
+      city: 小田原市
+      terrain: [garden]
+      flower_kinds: [梅]
+      source: Claude Code が付けた(段階65 第2部。小田原市の「小田原の梅」(2023-03-28 更新)の本文。所在地「小田原市曽我別所ほか」。座標は未確認)
+    sources:
+      - {url: "https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html", title: "小田原市 小田原の梅(2023年3月28日更新。曽我梅林 約3万5千本)", checked_on: '2026-11-09'}
+    note: "約3万5千本。このページに開花時期の記載はなく、市の花暦の2月の欄の「ウメ」は市全体の記載なので、例年の時期に入れない"
+  - id: hana-0053
+    name: 権現堂桜堤
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-09'
+    tags:
+      prefecture: 埼玉県
+      area: 幸手
+      city: 幸手市
+      terrain: [river]
+      flower_kinds: [菜の花, 桜]
+      source: Claude Code が付けた(段階65 第2部。幸手市の権現堂堤のページ(2021-10-01 更新)の本文。座標は未確認)
+    sources:
+      - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", title: "幸手市 権現堂堤(2021年10月1日更新。周囲に広がる菜の花畑)", checked_on: '2026-11-09'}
+    note: "ソメイヨシノと、周囲の菜の花畑。例年の時期の記載は公式ページで確認できず。2026年の幸手桜まつり(3/27〜4/12)は行事の期間"

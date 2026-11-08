@@ -148,7 +148,10 @@ def resolve(question, now, policy=None):
     if kind == "knowledge" and not any(w in q for w in c["knowledge_words"]) and             (region or area_names or not defaulted or any(w in q for w in c["plan_words"])):
         kind = "plan"                                    # 「神奈川と東京で紅葉の見ごろを教えて」は場所・時期の質問
     from . import season_place as SP
-    if kind not in ("event", "normal", "difference", "chat") and SP.is_season_place(q):    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
+    from . import highlights as HL
+    if kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
+        route = "highlights"
+    elif (kind not in ("event", "normal", "difference", "chat") or (kind == "normal" and any(w in q for w in SP.cfg().get("over_normal_words") or [])))             and SP.is_season_place(q):                   # 段階65 第2部: 「梅の名所と時期」は平年の目安ではなく、名所と例年の時期    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
         route = "season_place"
     elif kind not in ("event", "normal") and defaulted and SP.is_town_question(q):      # 段階64 第4部 4: 町の名前で聞く場所の質問(「松田で有名なところ」)
         route = "town"
@@ -539,6 +542,17 @@ def _other_route(res, cond, now, env, pol):
     text = None
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
+        return
+    if cond["route"] == "highlights":
+        from . import answer_gates as AG
+        from . import highlights as HL
+        got = HL.compose(q, today=today, env=env)
+        text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
+        res["highlights"] = {"places": got["places"], "cards": got["cards"], "spots": got["spots"]}
+        if got["needs_research"]:
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="knowledge")
+        else:
+            res.update(text=text, stage=2, status=STATUS_PASS)
         return
     if cond["route"] == "town":
         from . import answer_gates as AG

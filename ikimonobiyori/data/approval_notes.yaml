@@ -1,0 +1,431 @@
+schema: ikimono-approval-notes/1
+note: '段階65 第3部: docs/sources-approval.md を台帳から作るときの、手で書いた推奨と規約メモ(項目の id で引き継ぐ)。承認の状態は台帳だけが正本で、ここには書かない。'
+criteria: '## 推奨の基準
+
+  - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
+
+  - **要判断**: 使えるが、転載禁止の明示がある、または運営主体・利用期間に気になる点がある。
+
+  - **保留**: 今は使えない（更新が古い・シーズンが終わった・読めない・状態の語がない）。事情が変われば見直す。
+
+
+  承認した場合に使う内容は、施設台帳（A）では次のとおり。ほかの項目は使わない（記事や文章を転載しない）。
+
+  > 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。14日以内で、季節内の発信だけ。
+
+  '
+takao_mitake: '### 高尾・御岳ビジターセンター: 施設の自前サイトと、山と溪谷オンライン経由の違い
+
+  | 項目 | 施設の自前サイト（takaovc.ces-net.jp・mitakevc.ces-net.jp） | 山と溪谷オンライン経由（掲載されていた情報） |
+
+  |---|---|---|
+
+  | 発信元 | 東京都の指定管理者（株式会社自然教育研究センター）の公式サイト | 同じ施設が発信した情報を、山と溪谷社が掲載したもの |
+
+  | 内容 | 高尾: 紅葉情報（11/6更新）・近ごろの自然情報（花・実・野鳥の種名）。御岳: 『御岳山の今』に紅葉・花・鳥・実が日付つきで載る | 山の状況の短い記事（状態の語） |
+
+  | 日付 | 日付つき（御岳 2026.11.6 など） | 掲載日による |
+
+  | 規約 | 施設のウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止（転載禁止の明示あり） | 山と溪谷オンライン利用規約 第4条⑧（複製・転載の禁止）。利用者の決定 2026-11-06 で、記事の文章は使わず、状態の語・日付・URL だけに限る取り扱い（承認前 `approved: false`） |
+
+  | 現在の扱い | 承認待ち（台帳）。答えには出ない | 承認待ち。**データから山と溪谷オンラインの URL と、それだけが出どころの事実は削除済み**（段階55 第8部）。承認しても『○○発信』の短い形でしか使えない |
+
+  | 違い | 施設自身の発信なので、出どころが明確で内容も詳しい。ただし規約が無許可利用を禁じている | 第三者による掲載で、二重の規約がかかる。内容は自前サイトの要約にとどまる |
+
+  | 推奨 | **要判断**（短い語・日付・URL だけの利用を許すかを本人が決める）。許すなら自前サイトを使い、山と溪谷オンライン経由は使わない | 使わない（自前サイトで足りるため） |
+
+  '
+yamakei: '## C. 山と溪谷オンライン（取り扱い規則）
+
+  `ikimonobiyori/data/observations/policy.yaml` の `record.restricted_sources`（`approved: false`）。承認しても、状態の語（30字以内）・日付・URL だけを『○○発信（山と溪谷オンライン掲載）』の形で出す。記事の文章・注意・種名・例年の時期などは出さない。現在は**データに山と溪谷オンラインの URL は1件もない**（段階55 第8部）。推奨: **保留**（高尾・御岳は自前サイトで足りる）。
+
+  '
+centers:
+  kitamoto-shizen-gakushu:
+    operator: 指定管理者 公益財団法人埼玉県生態系保護協会（県の案内の原文）
+    page: http://www.saitama-shizen.info/today/index.html
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: 転載禁止の明示なし。プライバシーポリシー・免責事項のみ（転載・自動取得の記載なし）。robots.txt は 404（拒否の記述なし）。ページ全体が Shift_JIS（CP932。文字コードの宣言なし）で、要約の道具では UTF-8 として読まれて日本語が全部文字化けする（2026-11-07 に今日の様子・事業ページ・トップで確認）
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜17:00、休館は月曜（祝日の場合は開館）・祝日の翌日・年末年始'
+    recommendation: '**承認してよい**: 県の施設・公式。最新 2026-11-06。転載禁止の明示なし。robots.txt は拒否なし。**ただしページが CP932（Shift_JIS）で、今の読み取りの道具では日本語が全部文字化けし、状態の語・種名を読めない**（行事のページも同じ）。承認しても、読む手段（CP932 で復号するコードによる取得。実通信は本人の認可が要る）ができるまで現況は出ない'
+  nikko-shizen-hakubutsukan:
+    operator: 株式会社日光自然博物館（個人情報保護方針の原文）
+    page: https://blog.nikko-nsm.co.jp/blog/
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: 転載禁止の明示なし。個人情報保護方針のみ（著作権の記載なし）。フッターは All Rights Reserved のみ。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 4/1〜11/10 9:00〜17:00、11/11〜3/31 10:00〜16:00。休館は5〜11月無休、12〜4月は月曜、12/29〜1/3'
+    recommendation: '**承認してよい**: 県立。最新 2026-11-06。転載禁止の明示なし'
+  yokohama-shizen-kansatsu:
+    operator: 指定管理者 公益財団法人日本野鳥の会（所管 横浜市みどり環境局）
+    page: https://wbsj-yokohama.blog.jp/
+    frequency: 不明（更新日 2026-10-24）
+    form: html
+    terms: 転載禁止の明示なし。専用の規約ページは確認できず。フッターは著作権表示のみ。robots.txt 未確認
+    in_range: はい
+    use: 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない
+    recommendation: '**承認してよい**: 指定管理者は日本野鳥の会で近場。最新 2026-10-24。転載禁止の明示なし（規約ページは確認できず）'
+  sayama-ikimono-fureai:
+    operator: 指定管理者 公益財団法人トトロのふるさと基金（県の案内の原文）
+    page: https://ikifure.info/category/nature/
+    frequency: ふれあいの里だより（令和8年N月号の形式で投稿）
+    form: html
+    terms: 転載禁止の明示なし。個人情報保護方針と免責事項のみ（転載・自動取得の記載なし）。robots.txt は /info2/wp-admin/ のみ拒否
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜17:00、月曜定休（祝日・県民の日を除く）、祝日の翌日、年末年始（12/29〜1/3）'
+    recommendation: '**承認してよい**: 県の施設・公式。ふれあいの里だよりが月ごと。転載禁止の明示なし。robots.txt は拒否なしを確認済み'
+  hadano-vc:
+    operator: 神奈川県立（指定管理者の原文は未確認）
+    page: https://hadanovc.blogspot.com/
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: 転載禁止の明示なし。専用の規約ページは確認できず。丹沢公式トップに『サイト内の写真は無断使用禁止』（写真のみ。要約由来）。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30、休館は年末年始（12/29〜1/3）のみ'
+    recommendation: '**承認してよい**: 県立・公式。最新 2026-11-06。転載禁止の明示なし。運営主体（指定管理者）の原文だけ未確認'
+  nishitanzawa-vc:
+    operator: 神奈川県立（指定管理者の原文は未確認）
+    page: https://nishitanzawashizenkyoushitsu.blogspot.com/
+    frequency: 不明（更新日 2026-11-01）
+    form: html
+    terms: 転載禁止の明示なし。専用の規約ページは確認できず。記載なし（取得した範囲）。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 8:30〜16:30（12月〜3月は16:00まで）、休館は月曜（祝日の場合は翌平日）と年末年始'
+    recommendation: '**承認してよい**: 県立・公式。最新 2026-11-01。転載禁止の明示なし。運営主体（指定管理者）の原文だけ未確認'
+  yatsuhigata-nature-center:
+    operator: 谷津干潟ワイズユース・パートナーズ（代表企業 西武造園株式会社）（指定管理者）
+    page: https://www.seibu-la.co.jp/yatsuhigata/blog/
+    frequency: 月1〜7件（2026年のアーカイブ。最新は10/13）
+    form: html
+    terms: 転載禁止の明示なし。利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜17:00（入館は16:30まで）、休館日は月曜（祝休日の場合は次の平日）・12/28〜1/1'
+    recommendation: '**承認してよい**: 指定管理者の公式。『自然情報』に渡り鳥の観察記録。転載禁止の明示なし。最新は 10/13 で11月分はまだない'
+  nasu-heisei-no-mori:
+    operator: 那須平成の森フィールドセンター（プライバシーポリシーの原文）
+    page: https://nasuheisei-f.jp/nature/
+    frequency: 不明（更新日 2026-10-23）
+    form: html
+    terms: 転載禁止の明示なし。プライバシーポリシーのみ。フッターは Copyright の表示のみ。転載禁止の明示なし。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30（5・7・8月は〜17:00）、休園は水曜（祝日の翌日、GW・お盆・年末年始は無休）'
+    recommendation: '**承認してよい**: 最新 2026-10-23。転載禁止の明示なし'
+  mitake-vc:
+    operator: 指定管理者 株式会社自然教育研究センター（東京都の施設）
+    page: https://mitakevc.ces-net.jp/nowmitake.html
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止）。フッターに All Rights Reserved。robots.txt 未確認'
+    in_range: はい
+    use: '状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名（10種まで）は使わない）。記事や文章は使わない。開館時間: 9:00〜16:30、休館は月曜（祝日の場合は翌日）・年末年始'
+    recommendation: '**要判断**: 転載禁止の明示あり（同上）。『御岳山の今』に紅葉・花・鳥・実が日付つき（11/6）で載り、内容はいちばん有用。許すかは本人の判断'
+  kiryu-shizen-kansatsu:
+    operator: 桐生市 都市整備部 公園緑地課
+    page: https://www.city.kiryu.lg.jp/forest/shizen/ennai/1027794.html
+    frequency: 不明（更新日 2026-11-04）
+    form: html
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（このサイトについて: 文書・画像は許可なく使用・転載を禁止）。自動取得の記載なし。robots.txt 未確認'
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 3〜10月 9:00〜16:30、11〜2月 9:30〜16:00。休園は火曜（祝日の場合は開園）と12/29〜1/3'
+    recommendation: '**要判断**: 転載禁止の明示あり。市の施設で最新 2026-11-04。許すかは本人の判断'
+  hakone-vc:
+    operator: 環境省の施設（ページ上の運営主体の明記なし。イベント告知に自然公園財団箱根支部の表記）
+    page: https://hakonevc.sunnyday.jp/?page_id=160
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: 転載禁止の明示なし。専用の規約ページは確認できず。フッターは All Rights Reserved のみ。転載禁止の明示なし。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜17:00（最終入館16:30）、休館は毎週月曜と12/29〜1/3。2026-12-01〜2027年1月中旬は大規模改修のため休館'
+    recommendation: '**要判断**: 環境省の施設だがページ上に運営主体の明記がない。2026-12-01 から大規模改修で休館（11/30 まで）。使える期間が短い'
+  takao-vc:
+    operator: 指定管理者 株式会社自然教育研究センター（東京都の施設）
+    page: https://takaovc.ces-net.jp/
+    frequency: 不明（更新日 2026-11-04）
+    form: html
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（ウェブサイトポリシー: 出典明記・無許可利用不可・改変禁止。『無断転載を禁ずる』の語そのものはない）。robots.txt 未確認'
+    in_range: はい
+    use: '状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名（10種まで）は使わない）。記事や文章は使わない。開館時間: 10:00〜16:00、休館は月曜（祝日の場合は連休明けの平日）・年末年始'
+    recommendation: '**要判断**: 転載禁止の明示あり（出典明記・無許可利用不可・改変禁止）。短い語・日付・URL だけの利用を許すかは本人の判断。紅葉情報（11/6更新）と自然情報があり、内容は有用'
+  kanagawa-ranger-bloom:
+    operator: 神奈川県 自然環境保全センター 自然保護公園部自然保護課
+    page: https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html
+    frequency: 不明（更新日 2026-06-20）
+    form: html
+    terms: 転載禁止の明示なし。丹沢大山ナビと同じサイトポリシー。転載禁止の明示なし。robots.txt は拒否していない
+    in_range: はい
+    use: 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない
+    recommendation: '**保留**: 開花記録の最新が 2026-06-20 で、今は更新が止まっている。次の開花期に再確認（県の規約は引用自由・出典記載で問題なし）'
+  tanzawa-oyama-navi:
+    operator: 神奈川県 自然環境保全センター（所管）
+    page: https://www.pref.kanagawa.jp/docs/f4y/tanzawaoyama_navi.html
+    frequency: 不明（更新日 2026-06-12）
+    form: html
+    terms: '転載禁止の明示なし。サイトポリシー: 引用は自由・出典を記載・二次利用は所管へ事前問い合わせ。転載禁止の明示なし。自動取得の記載なし。robots.txt は /docs/f4y/ を拒否していない'
+    in_range: はい
+    use: 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない
+    recommendation: '**保留**: ナビの『旬の植物』『開花情報』『紅葉情報』の各ページの URL を本文から確認できていない。最新は 2026-06-12。URL を確認してから'
+  yashima-vc:
+    operator: 町立（ページの記載。町名の文字はページ上で確認できず）
+    page: https://shimosuwaonsen.jp/yashima/category/weekly/
+    frequency: 週1回（2026年は9/4〜10/30の毎週）
+    form: html
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（指示書の調査: PDF に『無断転載を禁ずる』。今回は PDF 本文が読めず確認できていない）。サイトのポリシーページは個人情報の取り扱いのみ。robots.txt は /wp-admin/ のみ拒否'
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 開館 4月下旬〜11月上旬 9:30〜16:30、期間中無休。2026年の営業は 11/3 に終了'
+    recommendation: '**保留**: 今期は 10/30 で終了（冬季閉鎖）。転載禁止の明示あり（PDF）。来季（4月下旬）に再判断'
+  shiobara-vc:
+    operator: 確認できず（トップが文字化けして原文を読めなかった）
+    page: http://www.siobara.or.jp/vc/
+    frequency: 不明（更新日 2026-11-06）
+    form: html
+    terms: 転載禁止の明示なし。規約ページのリンクは見当たらず。フッターは Copyrights (C) 2023 のみ。ページが Shift_JIS 系で文字化けし、確認できていない項目が多い。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30（休館の曜日は確認できず）、12/29〜1/3 休館'
+    recommendation: '**保留**: ページが文字化けして運営主体・規約を読めていない。確認できてから'
+  urabandai-vc:
+    operator: 記載なし
+    page: https://urabandai-vc.jp/nature/
+    frequency: 未確認
+    form: html
+    terms: 利用条件のページ確認できず(段階59 第1部)
+    recommendation: '**保留**: 範囲内か未確認'
+  oze-fnd:
+    operator: 公益財団法人 尾瀬保護財団
+    page: https://oze-fnd.or.jp/archives/category/if/
+    frequency: 未確認
+    form: html
+    terms: '**無断転載を禁じます**'
+    recommendation: '**要判断**: 事実のみの扱いでよいか'
+  kamikochi-vc:
+    operator: 環境省
+    page: https://www.kamikochi-vc.or.jp/whats-new/nature-updates
+    frequency: 未確認
+    form: html
+    terms: 出所明示で引用・転載可、商用は要連絡
+    recommendation: '**要判断**: 範囲内か未確認'
+  picchio:
+    operator: ピッキオ
+    page: https://picchio.co.jp/archives/blog-cat/natureinfo
+    frequency: 未確認
+    form: html
+    terms: 転載の記載は確認できず
+    recommendation: '**保留**: 規約未確認'
+  tanigawa-ic:
+    operator: 環境省
+    page: 個別ページ未確認
+    frequency: 未確認
+    form: 未確認
+    terms: 出典明示で利用可(PDL1.0)
+    recommendation: '**保留**: 個別ページ未確認'
+  komine-vc:
+    operator: 東京都公園協会(サイトの表記)
+    page: https://www.tokyo-park.or.jp/park/komine/news/nature/
+    frequency: 未確認(最新 2026-10-25)
+    form: html
+    terms: サイトポリシー本文は未確認(段階60 第4部)
+    recommendation: '**保留**: 規約(サイトポリシー)未確認。自然情報の更新はある'
+  noro-hirogawara-ic:
+    operator: 環境省
+    page: 自然情報のページなし(施設の案内だけ)
+    frequency: 未確認
+    form: 未確認
+    terms: 環境省の著作権・リンクについて
+    recommendation: '**保留**: 現況の発信が確認できない。11月中旬〜6月上旬は休館'
+  akanuma-ic:
+    operator: 栃木県立日光自然博物館(ページの表記)
+    page: https://blog.nikko-nsm.co.jp/cat_blog/低公害バス自然情報/
+    frequency: 未確認
+    form: html
+    terms: 転載の記載なし(段階60 第4部)
+    recommendation: '**要判断**: 規約の確認と、ブログの更新日の確認。開館は 11/30 まで'
+  kazawa-ic:
+    operator: 環境省
+    page: 自然情報のページなし(施設の案内だけ)
+    frequency: 未確認
+    form: 未確認
+    terms: 環境省の著作権・リンクについて
+    recommendation: '**保留**: 現況の発信が確認できない'
+  tanukiko-shizenjuku:
+    operator: 環境省(サイトの表記)
+    page: https://tanuki-ko.gr.jp/nature-season/
+    frequency: 未確認
+    form: html
+    terms: 転載の記載なし。All Rights Reserved
+    recommendation: '**保留**: 自然情報の日付が未確認'
+  miyagase-vc:
+    operator: 未確認(カードの出典の自然公園だより(2010年1月)は神奈川県公園協会のサイトに掲載)
+    page: なし(公式の施設ページを確認できなかった)
+    frequency: 未確認
+    form: pdf
+    terms: 規約のページなし(公式の施設ページが見つからない)。県の宮ケ瀬湖周辺施設の指定管理のページ(2026-03-27 更新)にも施設名がない
+    in_range: はい
+    use: カード2枚(シモバシラ)の事実と出典だけ
+    recommendation: '**保留**: 段階61 第8部で台帳に承認待ちで追加。公式サイトと現在の運営(2016年に閉館して改装されたとする報道がある。公式では未確認)を確かめられない'
+  okutama-vc:
+    operator: 株式会社自然教育研究センター（CES）（指定管理者）
+    page: https://okutamavc.ces-net.jp/info
+    frequency: 約週1回（2026-09-09〜11-06 の8件）
+    form: html
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可'
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料'
+    recommendation: '**保留**: お知らせはイベント・登山道・クマ情報が中心で、紅葉・花・鳥の状態の語が読めない。複製・転用の無断禁止の明示あり'
+  gyotoku-ainest:
+    operator: 市川市 環境部 自然環境課
+    page: https://www.city.ichikawa.lg.jp/page/1759.html
+    frequency: 年に4回（あいねすと通信）
+    form: pdf
+    terms: '**転載禁止の明示あり**。転載禁止の明示あり（サイトポリシー: 無断で複製・転用することはできない。引用等の例外あり）。自動取得の記載なし。robots.txt 未確認'
+    in_range: はい
+    use: 状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない
+    recommendation: '**保留**: 年4回のPDF（最新 2025-10-27）で現況に向かない。転載禁止の明示あり'
+  nikko-yumoto-vc:
+    operator: 自然公園財団 日光支部（フッターの原文）
+    page: http://www.nikkoyumoto-vc.com/new/nature_l.html
+    frequency: 不明（更新日 2026-11-05）
+    form: html
+    terms: 転載禁止の明示なし。規約ページのリンクなし。フッターは All rights reserved のみ。転載禁止の明示なし。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 2026-09-01〜11-30 毎日 9:00〜16:00'
+    recommendation: '**保留**: 開館は 9/1〜11/30。シーズン終了後は使えない（コードが季節外を除く）。来季に再判断'
+  nasu-kogen-vc:
+    operator: 那須平成の森フィールドセンター（プライバシーポリシーの原文）
+    page: https://nasu-vc.jp/nature/
+    frequency: 随時（ページの記載）
+    form: html
+    terms: 転載禁止の明示なし。プライバシーポリシーのみ（著作権ページは未確認）。転載禁止の明示なし。robots.txt 未確認
+    in_range: はい
+    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 4〜11月 8:30〜17:30、休館は水曜（祝日の場合は翌日。紅葉期などは開館）'
+    recommendation: '**保留**: 最新が 2026-05-09 で更新が古い。次の更新があれば見直し'
+sources:
+  tokyo-park-kouyou-special:
+    recommendation: '**要判断**: ユーザーの承認待ち(段階50)。条件(公式・読めた・利用条件に禁止なし・本文に指示文なし)は満たすが、今は前シーズンの最終版で今年の現況がない。通信先 www.tokyo-park.or.jp は段階47で承認済み。今シ…'
+    read_state: ok（2026-11-05）
+  okuooi-koyo:
+    recommendation: '**保留**: 状態が画像で、エージェントが読めない(読めたとは言えない)'
+    read_state: partial（2026-10-23）
+  nagatoro-kanko-koyo:
+    recommendation: '**保留**: 読めていない(HTTP 503)。状態の書き方も未確認'
+    read_state: unconfirmed（2026-10-23）
+  showakinen-flower-information:
+    recommendation: '**要判断**: 通信先 www.showakinen-koen.jp は段階47の承認ホストの一覧にない。記録は出所の区分 official で残るが、台帳の承認はユーザーの見直しを待つ'
+    read_state: ok（2026-11-05）
+  siobara-kankou:
+    recommendation: '**保留**: メンテナンス中で読めていない。現況のページがあるかも未確認'
+    read_state: unconfirmed（2026-10-23）
+  chichibu-kanko-kouyou:
+    recommendation: '**要判断**: robots.txt で AI エージェントによる取得を拒む意思が読み取れる(この道具は名指しされていないが安全側)。今年の状況もない'
+    read_state: ok（2026-10-23）
+  isehara-oyama-koyo:
+    recommendation: '**保留**: 2024 年公開の古いページで、今年の状態・日程がない(ライトアップ「11月下旬ごろ」だけ)。現況の情報源にせず、例年の時期の参考として人が開く URL にとどめる(ユーザーの見直し 2026-10-23)'
+    read_state: ok（2026-10-23）
+  happo-one-news-green:
+    recommendation: '**要判断**: 状態の決まった語がなく段階が付けられない。人が開く URL として扱う(段階16 の見直し 2026-10-23)'
+    read_state: ok（2026-10-23）
+  yatsu-higata-center:
+    recommendation: '**保留**: 読めなかった(HTTP 503)。利用条件も未確認。人が開く URL として扱う。次に読めたら条件を確かめる'
+    read_state: unconfirmed（2026-10-24）
+  abiko-bird-museum-toridayori:
+    recommendation: '**要判断**: 状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う'
+    read_state: partial（2026-10-24）
+  showakinen-flower-information-flowers:
+    recommendation: '**保留**: 読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う'
+    read_state: unconfirmed（2026-10-24）
+  keisei-rose-garden:
+    recommendation: '**要判断**: 利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う'
+    read_state: ok（2026-10-24）
+  kana-garden-news:
+    recommendation: '**承認済み**(本人の承認 2026-11-08。通信先 kana-garden.com と情報源 kana-garden-news。approved_by: user)'
+    read_state: '規約の確認(段階64 第8部 2026-11-08): robots.txt は /_cms/wp-admin/ だけ拒否。利用規約・著作権のページはなく、プライバシーポリシーと SNS 運用ガイドラインにも転載・複製・引用・自動取得の記載なし(フッターに © 表示のみ)。承認の記入はしていない'
+  gardennecklace-yamate:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  yokohama-nishi-hana:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  gardennecklace-kodomo:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  hakonenavi-gorapark:
+    recommendation: '**保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs…'
+    read_state: unconfirmed（2026-10-31）
+  ayase-rose-garden:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  odawaracastle-kikka:
+    recommendation: '**保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs…'
+    read_state: unconfirmed（2026-10-31）
+  pref-kanagawa-zarugiku:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  kawasakidaishi-kikka:
+    recommendation: '**保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs…'
+    read_state: unconfirmed（2026-10-31）
+  soleil-blooming-info:
+    recommendation: '**保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs…'
+    read_state: unconfirmed（2026-10-31）
+  satoyama-garden-welcome:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  kanagawa-park-sakaigawa:
+    recommendation: '**保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない'
+    read_state: unconfirmed（2026-10-31）
+  kanagawa-park-hadanotokawa:
+    recommendation: '**保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs…'
+    read_state: unconfirmed（2026-10-31）
+  tenki-kouyou-kanagawa:
+    recommendation: '**保留**: 利用規約が、ブラウザ・RSSリーダー以外での取得を禁じているので、読まない(人が開くリンク)。段階34〜45で読んで観察の記録に残した過去の値は、日付つきの参考として残る。今後は新しく読まない'
+    read_state: refused（2026-11-04）
+  weathernews-koyo:
+    recommendation: '**保留**: 複製・転載の禁止が取得に及ぶか判断に迷うため読まない(人が開くリンク)。読んでよいかはユーザーの確認が要る'
+    read_state: unconfirmed（2026-11-04）
+  jorudan-koyo:
+    recommendation: '**保留**: 転送ページしか返らず本文が読めない。回避の工夫(別経路・キャッシュ)はしない'
+    read_state: unconfirmed（2026-11-04）
+  gotokyo-autumn-leaves:
+    recommendation: '**要判断**: 現況でも今年の予想でもなく、固定の時期だけ。通信先として承認されていない(gotokyo.org)ので、人が開くリンクにとどめる'
+    read_state: ok（2026-11-04）
+  yamakei-takao-visitor-center:
+    recommendation: '**要判断**: 承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない'
+    read_state: ok（2026-11-06）
+  yamakei-mitake-visitor-center:
+    recommendation: '**要判断**: 承認待ち(段階53 第3部)。利用規約を読んで利用者が承認するまで、答えの材料にしない'
+    read_state: ok（2026-11-06）
+  sanjo-hakucho-hirai:
+    recommendation: '**要判断**: 利用条件に、利用の前に市へ連絡するよう求める一文がある。個人利用の道具のため、事前連絡はしない。公開を検討するときに利用条件を見直す(ユーザーの判断 2026-10-23)。読まずに、人が開く URL として扱う'
+    read_state: ok（2026-10-23）
+# 段階65 第3部 4: 国営昭和記念公園の規約(2026-11-09 に読んだ。通信 2 回: robots.txt・/about/)
+showakinen: |-
+  - 読んだページ(2026-11-09): https://www.showakinen-koen.jp/about/ の「掲載データ・写真について」と https://www.showakinen-koen.jp/robots.txt。別の利用規約・サイトポリシーのページはない(フッターは個人情報保護方針・リンク集・サイトマップだけ)。
+  - 要約: 掲載データ・写真は「無断転載を禁じます」、著作権は公園に帰属。複製・自動取得の記載はなく、リンクはフリー(トップへ)。robots.txt は全ロボット向けに /wp-admin/ など管理用の 2 か所だけ拒否。
+  - 承認すると出る現況(2026-11-09 の記録): 記録 8 件(状態の読めるもの 7 件)。名所では 紅葉 3 か所(国営昭和記念公園(日本庭園)・カナール・イチョウ並木・かたらいのイチョウ並木)と 花 1 か所(国営昭和記念公園 hana-0004)。どれも状態の日付は 10/31〜11/05 で、新しさの区分は「やや古い」以下。
+  - 推奨: **要判断**。無断転載の禁止はあるが、状態の語・日付・URL の短い事実を出典つきで示す使い方(ほかの承認済みの施設と同じ)を許すかは本人の判断。
+# 段階65 第3部 3: 紹介サイトなど由来の値を持つ名所の出典の区分と規約の要約(名所の id ごと)
+catalog_secondary:
+  hana-0042:
+    - {url: "https://www.pref.saitama.lg.jp/a1008/nigiwai-spot/spot5.html", class: "自治体の公式ページ(埼玉県。情報の出典は日高市と明記)。巾着田の管理者(日高市)自身のページではない", terms: "埼玉県のサイトポリシーは未確認(/site/about/ は 404。2026-11-09)。転載の禁止は確認できていない"}
+  hana-0043:
+    - {url: "https://www.gotokyo.org/jp/spot/ev197/index.html", class: "紹介サイト(東京観光財団 GO TOKYO)。亀戸天神社自身のページではない", terms: "許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認 2026-11-05)"}
+  hana-0044:
+    - {url: "https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html", class: "県の観光公式(やまなし観光推進機構)。群生地の管理者自身のページではない", terms: "「このサイトについて」に引用・転載・自動取得の規定はなく © 表示だけ(台帳 yamanashi-kankou-koyo の確認)"}
+  hana-0045:
+    - {url: "https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html", class: "紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない", terms: "許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認)"}
+  hana-0046:
+    - {url: "https://www.ashikaga.co.jp/", class: "施設自身の公式ページ(あしかがフラワーパーク)", terms: "トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09)"}
+  hana-0047:
+    - {url: "https://www.town.ninomiya.kanagawa.jp/0000001281.html", class: "自治体の公式ページ(二宮町。公園の管理者の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0048:
+    - {url: "https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html", class: "自治体の公式ページ(松田町。園の運営の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0049:
+    - {url: "https://www.city.atami.lg.jp/hana/1003681/1003692/index.html", class: "自治体の公式ページ(熱海市。梅園の設置者の市自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0050:
+    - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", class: "町の観光協会の公式ページ(越生町観光協会)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0051:
+    - {url: "https://ibaraki-kairakuen.jp/zukan/", class: "施設自身の公式ページ(偕楽園)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0052:
+    - {url: "https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html", class: "自治体の公式ページ(小田原市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+  hana-0053:
+    - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", class: "自治体の公式ページ(幸手市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}

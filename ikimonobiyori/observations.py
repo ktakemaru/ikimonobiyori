@@ -151,6 +151,21 @@ def normalize(subject, raw, policy=None):
     return unknown
 
 
+def normalize_with_legend(subject, raw, publisher, policy=None):
+    """段階65 第6部 2: 語で読めない状態のうち、凡例のある発行元の記号で始まるもの(日光市観光協会の「▼ 10/23現在、終わりです」
+    「◎ ５割程度の色付きです」)は、記号を凡例の語(state_symbols.by_publisher)に直して読む。凡例のない記号は読まない(断定しない)。"""
+    policy = policy or load_policy()
+    n = normalize(subject, raw, policy)
+    if n != policy["unknown_state"]:
+        return n
+    cfg = policy.get("state_symbols") or {}
+    legend = next((m for p, m in (cfg.get("by_publisher") or {}).items() if p in (publisher or "")), None)
+    text = (raw or "").strip()
+    if not legend or not text or text[0] not in legend:
+        return n
+    return normalize(subject, legend[text[0]] + " " + text[1:], policy)
+
+
 # ---- 記録 ----
 
 def clock_now():
@@ -502,7 +517,7 @@ def read_records(subject, env=None, policy=None):
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
-        r["state_norm"] = normalize(r.get("subject") or subject, r.get("state"), policy)
+        r["state_norm"] = normalize_with_legend(r.get("subject") or subject, r.get("state"), r.get("publisher"), policy)
         if not r.get("state_date"):             # 段階35: 状態の日付が欄になくても、原文の「10/25現在」を状態の日付として使う(記録のファイルは書き換えない)
             r["state_date_from_text"] = state_date_from_text(r.get("state"), r["read_at"])
         c = conf.get(dup_key_text(r))

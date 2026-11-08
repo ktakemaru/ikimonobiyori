@@ -1,0 +1,41 @@
+# 段階65 第4部: 「見どころ」の型(日付のない、場所の質問)。ikimonobiyori/highlights.py が読む。
+# 「<場所>の見どころ」「<場所>ってどんなところ」「<場所>で何が見られる」。日付の語があれば、これまでの計画の型。
+schema: ikimono-highlights/1
+patterns: ["見どころ", "見所", "ってどんなところ", "はどんなところ", "ってどんな所", "で何が見られる", "で何を見られる", "では何が見られる", "で見られるもの"]
+# 日付・計画の語があれば計画の型(段階65 第4部 1)
+date_words: ["今日", "明日", "あした", "今週", "来週", "週末", "土曜", "日曜", "連休", "今度の", "月\\d+日", "\\d+/\\d+", "\\d+月\\d+日", "今月", "来月", "おすすめ"]
+# 山(data/sites.yaml の地点)の名前で聞かれたとき、地点の座標から名所を集める半径(km)。
+# 理由: 山麓の名所(筑波山神社など)は山頂から数 km にある。隣の市街の名所まで広げないための目安(provisional)
+site_radius_km: 10
+# 知識カード(ガイドの目)の最大の枚数(指示書 第4部 2: 最大5枚。分類の偏りなく)
+max_cards: 5
+# 季節ごとの見どころの、季節あたりの名所の最大数
+max_spots_per_season: 6
+# 今の季節に関係する現況の最大行数(指示書 第4部 2: 1〜2行。主役にしない)と、使う現況の古さの上限(日。承認済みの施設の発信と同じ 14 日)
+max_current_lines: 2
+current_max_age_days: 14
+seasons:
+  - {name: 春, months: [3, 4, 5]}
+  - {name: 夏, months: [6, 7, 8]}
+  - {name: 秋, months: [9, 10, 11]}
+  - {name: 冬, months: [12, 1, 2]}
+# 冒頭に使うカードの分類の優先(自然の特徴を表すもの)
+lead_categories: [季節の仕組み, 地形・地質・火山, 見頃の流れ, 出会い方・歩き方, 種の解説, 痕跡・暮らし, 名前・歴史・文化]
+kind_labels: {autumn_leaves: 紅葉, birds: 野鳥}
+text:
+  title: "**{place}の見どころ**"
+  lead: "{place}の自然: {facts}。"
+  lead_none: "{place}について、確かめられたことをまとめました。"
+  season_heading: "## 季節ごとの見どころ"
+  season_sub: "### {season}"
+  season_line: "・{name}: {kind}(例年 {window}){note}"
+  secondary_note: "。紹介サイトの記載で、公式ではありません"
+  event_line: "・{name}: {event} {start}〜{end}({year}年)"
+  eye_heading: "## ガイドの目"
+  before_heading: "## 行く前に確認すること"
+  facility_heading: "## 施設"
+  facility_line: "・{name}"
+  now_heading: "## 今の時期"
+  now_line: "・{name}: {state}({month}/{day}時点、{publisher})"
+  sources_heading: "出典"
+  none: "{place}の見どころは、確かめられた記録がまだありません。"

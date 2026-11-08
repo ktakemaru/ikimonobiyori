@@ -201,12 +201,46 @@ def _no_this_year(plan, facts, t, max_quote):
     return out[: ty["max_lines"]]
 
 
-def vc_lines(facts, mentioned, t):
+def vc_lines(facts, mentioned, t, prefectures=()):
     """facts の visitor_centers(承認済み・季節内・14日以内。コードが選んだもの)のうち、答えに出た名所の地域に当たる施設だけ。
-    施設 → 地域の語は方針 skeleton.visitor_center_places(名所の名前・市区町村・地域のどれかに語が含まれれば当たり)。"""
+    施設 → 地域の語は方針 skeleton.visitor_center_places(名所の名前・市区町村・地域のどれかに語が含まれれば当たり)。
+    段階65 第6部 1: 質問で都県・エリアを指定したとき(prefectures)は、その都県の承認済みの施設の発信も出す。"""
     places = t.get("visitor_center_places") or {}
     words = " ".join(str(c.get(k) or "") for c in mentioned for k in ("name", "city", "area"))
-    return [r for r in facts.get("visitor_centers") or [] if any(w in words for w in places.get(r.get("center")) or [])]
+    pref_of = {}
+    if prefectures:
+        from . import visitor_centers as VC
+        pref_of = {c["id"]: c.get("prefecture") for c in VC.load_centers()}
+    return [r for r in facts.get("visitor_centers") or [] if any(w in words for w in places.get(r.get("center")) or [])
+            or (prefectures and pref_of.get(r.get("center")) in prefectures)]
+
+
+def avoid_lines(facts, t):
+    """段階65 第6部 2: 公式の現況が見頃過ぎの名所(facts の avoid)→ [(行, URL)]。状態は原文(記号は凡例の語に)と日付。"""
+    from . import observations as O
+    opol = O.load_policy()
+    out, seen = [], set()
+    for sub in (facts.get("subjects") or {}).values():
+        for c in sub.get("avoid") or []:
+            cur = c.get("current") or {}
+            raw, sd = cur.get("state_raw") or cur.get("state"), cur.get("state_date")
+            if not raw or not sd or cur.get("source_class") != "official" or c["name"] in seen:
+                continue
+            disp, sym_only = O.state_display(raw, cur.get("publisher"), opol)
+            if sym_only or not disp:
+                continue
+            seen.add(c["name"])
+            out.append((t["avoid_line"].format(name=c["name"], state=disp.strip(), md=_md(sd), publisher=cur.get("publisher") or ""), cur.get("url")))
+    return out[: t["avoid_max_lines"]]
+
+
+def asked_prefectures(facts):
+    """段階65 第6部 1: 質問で地域を指定したとき(既定の全範囲でないとき)、その地域の候補の都県。指定がなければ空。"""
+    from . import ask
+    reg = facts.get("region")
+    if not reg or reg == ask.load_policy().get("default_region"):
+        return set()
+    return {c.get("prefecture") for sub in (facts.get("subjects") or {}).values() for c in sub.get("candidates") or [] if c.get("prefecture")}
 
 
 def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=None, places=(), env=None):
@@ -280,12 +314,19 @@ def compose(facts, plan, offers=(), defaulted_date=False, extra_lines=(), cards=
     ny = _no_this_year(plan, facts, t, max_quote)
     if ny:
         lines += ["", t["no_this_year_heading"]] + ny
+    av = avoid_lines(facts, t) if asked_prefectures(facts) else []
+    if av:
+        lines += ["", t["avoid_heading"]] + [x[0] for x in av]
+        urls |= {x[1] for x in av if x[1]}
     notices = OP.notice_lines(mentioned)
     month = int(str(facts["dates"][0])[5:7]) if facts.get("dates") else None
+    prefs = asked_prefectures(facts)
     names = list(places) + [c.get("name") for c in mentioned if c.get("name")] + [c.get("city") for c in mentioned if c.get("city")]
+    if prefs:                                                          # 段階65 第6部 1: 地域を指定した質問は、名所のエリアの語でもガイドの目を選ぶ
+        names += [c.get("area") for c in mentioned if c.get("area")]
     chosen = K.select(names, month=month, cards=cards, env=env)
     eye, before_k, card_urls = K.split_lines(chosen)
-    vc = vc_lines(facts, mentioned, t)                                # 段階60 第8部: 質問の場所の承認済み施設の発信(段階55 の 1 行)
+    vc = vc_lines(facts, mentioned, t, prefs)                                # 段階60 第8部: 質問の場所の承認済み施設の発信(段階55 の 1 行)
     if vc:
         lines += [""] + [x for row in vc for x in ([" ".join(row["sentences"])] if row.get("sentences") else [row["line"]]) + [row.get("hours_line")] if x]     # 段階62 第5部: 状態と種名は別の文
         urls |= {row["url"] for row in vc if row.get("url")}
