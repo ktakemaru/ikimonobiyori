@@ -136,7 +136,8 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
         ms = K._months(r)
         return min(((m - today.month) % 12 for m in ms), default=0)
     by_cat = {}
-    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), month_gap(r), r["title"])):
+    exact = {pl.get("label") for pl in pls} | {pl.get("name") for pl in pls}
+    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), r.get("place") not in exact, month_gap(r), r["title"])):   # 段階67: 同じ分類なら、質問の山そのもののカードを先に
         by_cat.setdefault(r.get("category"), []).append(r)
     picked = []
     side = []                                                 # 段階67 第4部 2: 施設・行き方のカードは枚数の外で各分類 1 枚まで(施設の欄・行く前に・歩き方の欄)
@@ -166,7 +167,7 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
     return {"cards": picked + side, "spots": spots, "facilities": vc_names, "vc_rows": vc_rows, "current": current[: c["max_current_lines"]]}
 
 
-_MONTH_RE = re.compile(r"(\d{1,2})(?:〜(\d{1,2}))?月(上旬|中旬|下旬)?(?:〜(\d{1,2})月(上旬|中旬|下旬)?)?")
+_MONTH_RE = re.compile(r"(\d{1,2})(?:〜(\d{1,2}))?月(上旬|中旬|下旬)?(?:〜(?:(\d{1,2})月)?(上旬|中旬|下旬)?)?")
 _KATA_RE = re.compile(r"[ァ-ヶー]{2,}")
 
 
@@ -186,7 +187,7 @@ def card_season_items(cards, c, today=None):
             if not names:
                 continue
             lead = re.match(r"^([^、。0-9０-９]{1,10}?)(は|では)", f)
-            where = lead.group(1) if lead and lead.end() <= m.start() and lead.group(1) not in names and not _KATA_RE.fullmatch(lead.group(1)) else ""
+            where = lead.group(1) if lead and lead.end() <= m.start() and not any(n in lead.group(1) for n in names) and not _KATA_RE.fullmatch(lead.group(1)) else ""
             out.append((_season_of(f"{int(m.group(1)):02d}", c), where, names, m.group(0), r["source"]["name"], r["source"].get("url"), r, f))
     return out
 
