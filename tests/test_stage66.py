@@ -38,6 +38,18 @@ class MountainCards(unittest.TestCase):
         self.assertIn("筑波山の自然: 山麓は落葉広葉樹林。山頂付近にブナ林。", t)
         self.assertIn("ガイドの目: 冬は林で小鳥の群れに出会える", t)
 
+    def test_a_species_card_is_not_found_by_an_alias_inside_a_spot_name(self):
+        cs = [card("試験の外来の鳥", "試験の鳥", "保全・マナー", ["外来の鳥"], aliases=["試験山地"]),
+              card("試験の湖の森", "試験山地の湖", "季節の仕組み", ["湖の森"])]
+        spot = {"id": "t-1", "name": "大山 試験山地の湖", "city": "伊勢原市", "area": None, "prefecture": "神奈川県", "point": None,
+                "typical": [], "events": [], "flower_kinds": []}
+        cands = {"autumn_leaves": [spot], "flowers": [], "birds": []}
+        g = HL.gather(HL.places("大山の見どころ", cs), date(2026, 11, 9), cards=cs, centers=[], reports=[], cands=cands, records=NONE)
+        titles = [c["title"] for c in g["cards"]]
+        self.assertIn("大山 試験山地の湖", [s["name"] for s in g["spots"]])
+        self.assertNotIn("試験の外来の鳥", titles)
+        self.assertIn("試験の湖の森", titles)
+
 
 if __name__ == "__main__":
     unittest.main()

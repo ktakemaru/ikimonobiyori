@@ -41,7 +41,7 @@ def places(question, cards=None):
         if i < 0 or any(a <= i < b or i <= a < i + len(word) for a, b in taken):
             return
         taken.append((i, i + len(word)))
-        out.append((i, item))
+        out.append((i, dict(item, label=word)))                  # 答えの見出しは質問に書かれた語(「高尾山」を辞書の「高尾」にしない)
 
     vocab = []
     for a in AR.load()["areas"]:
@@ -107,10 +107,16 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
         for x in cs:
             if any(_member(x, pl) for pl in pls):
                 spots.append(dict(x, subject=sj, records=by_c.get(x["id"]) or []))
-    terms = [t for pl in pls for t in pl["terms"] if t] + [_strip(s["name"]) for s in spots]
+    terms = [t for pl in pls for t in pl["terms"] if t]
+    spot_terms = [_strip(s["name"]) for s in spots]
     rows = cards if cards is not None else K.load_shown(env)
     sids = {pl.get("site_id") for pl in pls if pl.get("site_id")}
-    hits = [r for r in rows if any(K.place_match(r, t) for t in terms if len(t) >= 2) or sids & set(r.get("sites") or [])]   # 段階66 第3部: 地点 id でも引く
+    by_place = lambda r, ts: any(K.place_match(r, t) for t in ts if len(t) >= 2)
+    # 段階66 第3部: 地点 id でも引く。名所の名前で引くときはカードの主な場所だけで当てる(別名の「丹沢」で外来種のカードが丹沢湖に当たらないように)。
+    # 種の解説(場所が種の名前のカード)は名所の名前では引かない
+    main_place = lambda r, ts: any(K.place_match({"place": r.get("place")}, t) for t in ts if len(t) >= 2)
+    hits = [r for r in rows if by_place(r, terms) or sids & set(r.get("sites") or [])
+            or (main_place(r, spot_terms) and r.get("category") not in c["spot_only_skip_categories"])]
     order = {k: i for i, k in enumerate(K.cfg()["category_priority"])}
 
     def month_gap(r):                                         # 段階66 第3部: 月のあるカード(季節の花など)は、今の月に近いものを先に
@@ -153,7 +159,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     pls = places(question, cards)
     if not pls:
         return None
-    name = "・".join(pl["name"] for pl in pls)
+    name = "・".join(pl.get("label") or pl["name"] for pl in pls)
     g = gather(pls, today, env, cards, centers, reports, cands, records)
     opol = O.load_policy()
     thirds = SP.cfg()["text"]["thirds"]

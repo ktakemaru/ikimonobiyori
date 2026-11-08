@@ -21,6 +21,8 @@ seasons:
   - {name: 冬, months: [12, 1, 2]}
 # 冒頭に使うカードの分類の優先(自然の特徴を表すもの)
 lead_categories: [季節の仕組み, 地形・地質・火山, 見頃の流れ, 種の解説, 痕跡・暮らし, 名前・歴史・文化]   # 段階66: 行き方・歩き方は冒頭(自然の特徴)にしない
+# 段階66: 名所の名前だけで当たったカードのうち、出さない分類(場所が種の名前のカード)
+spot_only_skip_categories: [種の解説]
 kind_labels: {autumn_leaves: 紅葉, birds: 野鳥}
 text:
   title: "**{place}の見どころ**"
