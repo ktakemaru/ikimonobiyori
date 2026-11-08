@@ -67,6 +67,8 @@ def outlook_of(c, d, pol, subject=None):
         if (e - d).days <= o["late_days"]:
             if st in ("色づき始め", "見頃前") and _fresh_official(cur, d, o):     # 段階62 第4部: 公式の新しい「色づき始め」を「終盤」にしない
                 return o["after_window_current"][st]
+            if st in ("色づき始め", "見頃前") and _gap_ok(cur, d, o):            # 段階64 第1部: 見頃より前の現況を、例年の窓だけで「終盤」にしない(袋田の滝)
+                return "toward"
             return "late"
         if st in ("色づき始め", "見頃前"):
             return "toward"
@@ -333,7 +335,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             reject(r, "closed_that_day")
         elif r["aim"] == "other":
             reject(r, "no_aim")
-        elif r["score"] + (pol["this_year"]["penalty"] if r.get("this_year") is False else 0) < pol["selection"]["min_score"]:      # 今年の情報の減点は下で別に扱う
+        elif r["score"] + (pol["this_year"]["penalty"] if r.get("this_year") is False else 0) < _min_score_of(r, pol):      # 今年の情報の減点は下で別に扱う
             reject(r, "no_current" if not r["has_current"] else ("stale_current" if r["stale"] else "no_current"))
     relaxed = _refine_reject(rows, status, refine_rule(refine, pol), pol, reject) if refine else False
     no_year = []
@@ -354,8 +356,11 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     near_by_distance = pol["aims"].get("near_sort") == "distance"
     for aim in order:
         if aim == "near" and near_by_distance:            # 段階60 第3部: 近場の節は、見込みの区分が同じなら出発地に近い順(点数・根拠の強さより距離)
+            cur_first = bool(pol["aims"].get("near_current_first"))       # 段階64 第1部: 同じ区分なら今年の現況がある候補を先に(その中で近い順)
             members = sorted([r for r in ok if r["aim"] == aim],
-                             key=lambda x: (-outlook_rank(x, pol), x["distance_km"] if x["distance_km"] is not None else float("inf"), -x["score"], x["name"]))
+                             key=lambda x: (-outlook_rank(x, pol),       # 距離が見積もりの候補(都県の単位)は、現況があっても先にしない
+                                            (not (x["has_current"] and not x.get("distance_estimated"))) if cur_first else False,
+                                            x["distance_km"] if x["distance_km"] is not None else float("inf"), -x["score"], x["name"]))
         else:
             members = sorted([r for r in ok if r["aim"] == aim], key=lambda x: (-x["score"], x["name"]))
         top = members[: pol["aims"]["section_max"]]
@@ -365,16 +370,19 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         if top:
             sections.append({"aim": aim, "label": pol["aims"]["labels"][aim], "items": [_item(r, oo) for r in top]})
     # 全体の今回のおすすめ: 節の1位から、見込みの高い順(同じなら点数)。狙いと地域が重ならないように
-    firsts = [s["items"][0] for s in sections]
+    fillable = lambda it: _fillable(it, pol)                              # 段階64 第1部: 遠い候補で埋めない(「遠出」の節を除く)
+    firsts = [it for it in (next((x for x in s["items"] if fillable(x)), None) for s in sections) if it is not None]
     key = lambda it: rank_key(it, pol)
     chosen, used_cl = [], set()
-    by_aim = {it["aim"]: it for it in firsts}
-    want = [by_aim[a] for a in pol["selection"]["pick_aims"] if a in by_aim]   # まず、近場・歩く・遠出の各1位(あれば)
+    by_aim = {}
+    for it in firsts:
+        by_aim.setdefault(it["aim"], it)
+    want = [by_aim[a] for a in pol["selection"]["pick_aims"] if a in by_aim]   # まず、近場・ドライブ・歩く・遠出の各1位(あれば)
     for it in sorted(want, key=key) + sorted([f for f in firsts if f not in want], key=key):
         if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl:
             chosen.append(it); used_cl.add(it["cluster"])
     if len(chosen) < pol["selection"]["picks"]:                           # 狙いが足りないときは、節の2位以降から
-        rest = [it for s in sections for it in s["items"][1:]]
+        rest = [it for s in sections for it in s["items"][1:] if fillable(it) and it not in chosen]
         for it in sorted(rest, key=key):
             if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl:
                 chosen.append(it); used_cl.add(it["cluster"])
@@ -389,6 +397,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         pool.remove(cand)
         chosen[chosen.index(out_)] = cand
     chosen = ensure_near_pick(chosen, sections, pol)          # 段階60 第3部: 近場の候補があれば、今回のおすすめに少なくとも 1 件
+    fill_skipped = [] if len(chosen) >= pol["selection"]["picks"] else \
+        sorted({it["name"] for s in sections for it in s["items"] if not fillable(it) and it not in chosen})
     chosen_names = {i["name"] for i in chosen}
     for s in sections:
         for it in s["items"]:
@@ -417,8 +427,28 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             "origin_line": (facts_doc.get("lines") or {}).get("origin_line"),
             "use_headings": len(sections) >= pol["aims"]["min_sections_for_headings"],
             "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or []),
+            **({"fill_skipped": fill_skipped} if fill_skipped else {}),
             "no_this_year": [{"name": r["name"], "typical_line": r.get("typical_line")} for r in sorted(no_year, key=lambda x: (-x["score"], x["name"]))[: pol["this_year"]["max_lines"]]],
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
+
+
+def _fillable(it, pol):
+    """段階64 第1部: 今回のおすすめに入れてよいか。「遠出」以外の狙いで fill_max_km より遠い候補は、今年の現況があるときだけ。"""
+    lim = pol["selection"].get("fill_max_km")
+    km = it.get("distance_km")
+    if lim is None or km is None or it.get("aim") == "far" or km <= lim:
+        return True
+    return bool(it.get("has_current"))
+
+
+def _min_score_of(r, pol):
+    """節に入れる点数の下限。段階64 第1部: 近場で今年の情報(現況・行事)がある候補は near_this_year_min_score。"""
+    sel = pol["selection"]
+    low = sel.get("near_this_year_min_score")
+    km = r.get("distance_km")
+    if low is not None and r.get("this_year") and km is not None and km <= pol["aims"]["near_max_km"] and r.get("aim") == "near":
+        return low
+    return sel["min_score"]
 
 
 def ensure_near_pick(chosen, sections, pol):
@@ -430,10 +460,11 @@ def ensure_near_pick(chosen, sections, pol):
     near = next((s["items"] for s in sections if s["aim"] == "near"), [])
     chosen = list(chosen)
     key = lambda it: rank_key(it, pol)
+    need_cur = bool(pol["selection"].get("min_near_requires_current"))    # 段階64 第1部(段階63 第7部 B): 現況のある近場だけを入れる
     for cand in near:
         if sum(1 for c in chosen if is_near(c)) >= want:
             break
-        if cand in chosen or not is_near(cand):
+        if cand in chosen or not is_near(cand) or (need_cur and not cand.get("has_current")):
             continue
         outs = sorted([c for c in chosen if not is_near(c) and (cand["has_current"] or not c["has_current"]
                        or sum(1 for x in chosen if x["has_current"]) > pol["selection"]["min_with_current"])], key=key)

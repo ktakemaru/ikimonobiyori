@@ -344,6 +344,7 @@ def validate(rec, policy):
     sp = rec.get("species")                     # 段階38: 野鳥の記録に書かれた鳥の名前(書かれたとおり)。任意
     if sp is not None and (not isinstance(sp, list) or not all(isinstance(x, str) and x.strip() and len(x) <= _v(policy["record"]["max_raw_chars"]) for x in sp)):
         errs.append("species は鳥の名前(文字列)の配列")
+    errs += manner_errors(rec, policy)                # 段階64 第5部
     ev = rec.get("event")
     if ev is not None:
         if not isinstance(ev, dict) or not ev.get("name"):
@@ -358,8 +359,51 @@ def validate(rec, policy):
     return errs
 
 
+def manner_errors(rec, policy):
+    """段階64 第5部: 取得の作法。検索の要約だけの事実・範囲の外・紹介サイトだけの強い事実・曜日の合わない行事の日付を記録しない。"""
+    r = policy["record"]
+    errs = []
+    basis = rec.get("basis")
+    if basis is not None and basis not in (r.get("basis_values") or []):
+        errs.append(f"basis は {r.get('basis_values')} のどれか")
+    if basis in (r.get("basis_rejected") or []):
+        errs.append("検索結果の要約は記録しない(ページの本文を読んで、書かれた事実だけを記録する)")
+    need = r.get("basis_required_with") or []
+    if need and all(rec.get(k) for k in need) and basis != "page":
+        errs.append("種と例年の時期の記録は、ページの本文を読んだ印(basis: page)が要る")
+    if rec.get("source_class") != "official":
+        words = r.get("strong_fact_words") or []
+        for k in r.get("strong_fact_fields") or []:
+            v = rec.get(k)
+            if isinstance(v, str) and any(w in v for w in words):
+                errs.append(f"{k}: 災害・閉鎖・規制・休園・料金などの強い事実は、公式ページで確かめたものだけ記録する")
+                break
+    rc = r.get("range_check") or {}
+    if rc and rec.get("prefecture") and rec["prefecture"] not in (rc.get("prefectures") or []):
+        km = None
+        from . import origins
+        p = origins.municipal_point(rec.get("city"))
+        if p:
+            cat_pol = catalog_mod.load_policy()
+            km = catalog_mod.range_from(cat_pol, p, cat_pol["range_limit"]["default_origin"])["km"]
+        if km is None or km > catalog_mod.load_policy()["range_limit"]["max_km"]:
+            errs.append(f"{rec['prefecture']}{rec.get('city') or ''}は範囲(出発地から250km前後)の外か、範囲を確かめられない。記録しない")
+    ev = rec.get("event")
+    if isinstance(ev, dict):
+        wd = ev.get("weekdays")                                     # 原文の曜日(「10月29日(木)〜11月19日(木)」→ [木, 木])。年が正しいかの確かめ
+        names = "月火水木金土日"
+        for k, w in zip(("start", "end"), wd or []):
+            try:
+                d = date.fromisoformat(ev.get(k) or "")
+            except (TypeError, ValueError):
+                continue
+            if w and names[d.weekday()] != w:
+                errs.append(f"event.{k} の曜日が原文({w})と合わない(年が違う可能性。記録しない)")
+    return errs
+
+
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical", "provisional_search", "source_id", "notice")
+          "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis")
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -522,10 +566,14 @@ def record(batch, *, env=None, policy=None, now=None):
 
 # ---- 候補(名所の一覧 + 既存の名所カタログ) ----
 
-def event_derived(w, events, policy=None):
+def event_derived(w, events, policy=None, name=None):
     """例年の時期として置かれた期間が、行事の期間を写したものか(段階35)。
-    同じ月日の行事がある、または注記に「行事の期間」を表す語(policy の typical.event_note_words)がある → True。"""
+    同じ月日の行事がある、または注記に「行事の期間」を表す語(policy の typical.event_note_words)がある → True。
+    段階64 第2部 3: 名所の名前が行事・展示の名前(typical.event_name_words。「平塚八幡宮 菊花展」)なら、その名所の期間も行事の期間。"""
     words = ((policy or {}).get("typical") or {}).get("event_note_words") or ["期間", "フェスタ", "フェスティバル", "まつり", "祭", "開放"]
+    name_words = ((policy or {}).get("typical") or {}).get("event_name_words") or []
+    if name and any(x in name for x in name_words):
+        return True
     for ev in events or []:
         if ev.get("start") and ev.get("end") and str(ev["start"])[5:] == w.get("start") and str(ev["end"])[5:] == w.get("end"):
             return True
@@ -543,7 +591,7 @@ def _typical_from_catalog(e, policy=None):
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
                     "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": urlparse(w["source_url"]).hostname,
                     "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
-                    "event_derived": event_derived(w, e.get("events"), policy)})
+                    "event_derived": event_derived(w, e.get("events"), policy, e.get("name"))})
     return out
 
 

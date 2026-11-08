@@ -449,6 +449,7 @@ def check(text, facts, rules=None, gazetteer=(), plan=None, offers=None):
             if w in text:
                 answer_errors.append({"code": "birds_typical_phrase", "detail": w})
     answer_errors += reread_errors(text, facts, rules) + closed_errors(text, mat, rules) + typical_unknown_errors(text, mat, rules)
+    answer_errors += event_as_typical_errors(text, mat)            # 段階64 第2部 3
     answer_errors += stage51_errors(text, facts, mat, rules, plan=plan, segs=segs)
     answer_errors += restricted_source_errors(facts)
     if plan and segs:                                                        # 段階57 第3部: 節ごとに、計画の今回のおすすめと照合する
@@ -541,11 +542,13 @@ def vc_sentence_errors(text, facts):
     kinds = list((p.get("species_kinds") or {}).keys())
     errs = []
     body = URL_RE.sub(" ", _n(text))
+    for m in re.finditer(r"([^\s、。「」]{2,40}?)発信、\d{1,2}/\d{1,2}時点[:：]", body):     # 段階64 第1部(段階63 第7部): 段階55 の古い 1 行の形も不合格
+        errs.append({"code": "vc_legacy_line", "detail": f"{m.group(1)}: 「○○発信、M/D時点: 状態」の古い形"})
     for r in facts.get("visitor_centers") or []:
         name = _n(r.get("name") or "")
         if not name:
             continue
-        legacy = name + "発信、"                                            # 段階55 の 1 行の形(「○○発信、11/5時点: 状態（種名）」)は既存の決まりのまま(この検査の外)
+        legacy = name + "発信、"                                            # 段階55 の 1 行の形は上の vc_legacy_line で落とす(下の 2 つの決まりは文の形だけを見る)
         lines = [ln for ln in body.splitlines() if legacy not in ln and ((name in ln and "発信" in ln) or ln.strip().startswith(_n(p["line"]["sentence_species"]).split("{")[0]))]
         block = "\n".join(lines)                                            # 施設の発信の行だけを見る(ほかの行の種名は、この決まりの外)
         sp = [s for s in (r.get("species") or []) if s] or [s for s in re.findall(r"[（(]([^）)]+)[）)]", r.get("line") or "") for s in s.split("・")]
@@ -818,6 +821,21 @@ def answer_units(text):
         rest = [ln for ln in para.splitlines() if not any(ln in b.splitlines() for b in blocks)]
         out += blocks + ([chr(10).join(rest)] if any(x.strip() for x in rest) else [])
     return out
+
+
+def event_as_typical_errors(text, mat):
+    """段階64 第2部 3: 「例年の見頃: X」の X が、その候補の行事・まつり・展示の期間を写した値(event_derived)なら不合格。
+    例年の時期としては書かず、「例年の時期は分かりません。今年は○/○〜○/○に(行事名)があります」にする(骨組みはそう作る)。"""
+    from . import observations as O
+    lab = O.load_policy()["typical_labels"]["known"]
+    errs = []
+    for unit in answer_units(text):
+        u = _n(unit)
+        for spot in mat.spots_in(unit):
+            for t in spot.get("typical") or []:
+                if t.get("event_derived") and t.get("text") and _n(lab.format(text=t["text"])) in u:
+                    errs.append({"code": "event_as_typical", "detail": f"{spot.get('name')}: 行事の期間({t['text']})を例年の見頃として書いた"})
+    return errs
 
 
 def typical_unknown_errors(text, mat, rules):

@@ -987,6 +987,16 @@ def main(argv=None, http_get=None):
     a = ap.parse_args(argv)
     pol = load_policy()
     out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
+    if a.step == "page" and not out_dir:                  # 段階64 第4部 3: 直前の答えが計画の型でない(時期と場所・町・知識)なら、その答えのページ
+        from . import answer_page as APG
+        now_ = _clock()
+        la, lp = APG.load_last(now_), load_last_plan(now_)
+        if la and (lp is None or la["saved_at"] >= lp["saved_at"]):
+            doc = APG.make(la, now_)
+            print(doc["line"])
+            if getattr(a, "open", False) and hasattr(os, "startfile"):
+                os.startfile(doc["path"])
+            return 0
     if (a.step in ("page", "photos") or (a.step == "plan" and a.refine)) and not out_dir:      # 段階57 第2部: 「写真つきのページにして」は直前の答えを引き継ぐ。なければ別の内容を作らない
         last = load_last_plan(_clock())
         if last is None:

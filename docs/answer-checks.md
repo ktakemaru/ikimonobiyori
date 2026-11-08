@@ -37,6 +37,8 @@
 | `restricted_source` | 山と溪谷オンライン由来の事実の決まり |
 | `visitor_center_not_approved` | 承認済みで季節内の施設の発信だけ |
 | `visitor_center_field_not_allowed` | 施設ごとに使わない項目(種名・開館時間)を書かない |
+| `vc_legacy_line` | 施設の発信を古い1行の形(○○発信、M/D時点: 状態)で書いた(段階64 第1部) |
+| `event_as_typical` | 行事・まつり・展示の期間を、例年の見頃として書いた(段階64 第2部 3) |
 | `guide_eye_not_from_card` | ガイドの目は知識カードの事実のまま |
 | `ended_phenology_this_year` | 観測を終えた種目に「今年の」と書かない |
 | `jma_normal_source_missing` | 平年の目安に気象庁の出典と加工の行 |

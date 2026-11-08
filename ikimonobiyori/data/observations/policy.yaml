@@ -12,6 +12,19 @@ record:
   max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
   source_classes: [official, secondary]
   required: [url, state, source_class]
+  # 段階64 第5部: 取得の作法の検査(記録の入口)。
+  # basis: 事実の読み方。page = ページの本文を読んだ / search_summary = 検索結果の要約だけ(記録しない)。
+  # 種(kind)と例年の時期(typical)の記録(時期と場所の答えの材料)は、本文を読んだ印(basis: page)が要る
+  basis_values: [page, search_summary]
+  basis_rejected: [search_summary]
+  basis_required_with: [kind, typical]
+  # 強い事実(災害・閉鎖・規制・休園・火事・通行止め・料金)は、公式ページで確かめたものだけ記録する(紹介サイトだけなら記録しない)
+  strong_fact_words: [災害, 閉鎖, 規制, 休園, 閉園, 火事, 火災, 山火事, 焼け, 通行止め, 立入禁止, 立ち入り禁止, 料金, 有料]
+  strong_fact_fields: [state, notice, practical, typical]
+  # 範囲: 次の都県(全域が横浜・東京から 250km 前後に収まる。data/ask/season_place.yaml の unknown_distance_prefectures と同じ考え方)の外の記録は、
+  # 市区町村の代表点で範囲の内と確かめられたときだけ記録する(福島県・新潟県・北海道など)
+  range_check:
+    prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 長野県, 静岡県]
   # 段階47(利用者の決定 2026-11-05): 利用規約が自動取得を禁じるホスト。記録しない・既にある記録も答えの材料にしない(人が開くリンクとしてだけ扱う)
   not_read_hosts: {value: [tenki.jp, weathernews.jp, n-kishou.com, n-kishou.co.jp], source: "tenki.jp 利用規約 第8条 禁止事項 6(ブラウザ・RSSリーダー以外での取得と利用の禁止)", provisional: false}
   # 段階62 第9部: 本人が不採用と決めた情報源のホスト(バードリサーチ。2026-11-08)。読まない・記録できない・答えと知識カードの出典に使わない
@@ -241,7 +254,10 @@ forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台�
 # 段階35(指示書 biyori-hub/docs/stageH9-instructions.md 穴3): 例年の時期と今年の行事の期間を分ける
 typical:
   # 名所カタログの flower_windows の注記にこの語があれば、行事の期間を写したもの(例年の時期として使わない)
-  event_note_words: [期間, フェスタ, フェスティバル, まつり, 祭, 開放]
+  # 段階64 第2部 3: 曜日つきの日付(「10月29日(木)〜11月19日(木)」)・菊花展・展示の期間も行事の期間(川崎大師・横浜市こども植物園の型)
+  event_note_words: [期間, フェスタ, フェスティバル, まつり, 祭, 開放, 曜日, 菊花展, 展示, 開催]
+  # 段階64 第2部 3: 名所の名前がこの語を含むとき(行事・展示そのものの名所)、その期間は例年の見頃ではなく行事の期間
+  event_name_words: [菊花展, 菊まつり, まつり, 祭り, フェスタ, フェスティバル, フェア, ウィーク]
   # 記録の「例年の見頃」の原文にこの語があれば、例年の時期ではなく行事・今年の予定(例年の時期として使わない)
   record_not_typical_words: [開催, 予定, 期間]
   # 段階36(利用者の決定 2026-11-01。評価表 R4 の読み方 (b)): 例年の時期が分からない候補の代わりの材料にする、前の年の同じ時期の記録の幅(対象の日の前後の日数)

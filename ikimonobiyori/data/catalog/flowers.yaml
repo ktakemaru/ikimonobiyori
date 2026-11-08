@@ -1258,3 +1258,142 @@ entries:
         source_class: secondary
         source_year: 2026
         note: "通年(開花の種類は季節で変わる)。指示書 段階62 第7部 1 の扱い。施設の公式サイトだが、情報源が確認中(承認待ち)のため、承認までは公式の扱いにしない"
+  # 段階64 第6部(2026-11-08): ページの本文を読んで確かめた名所(検索の要約は使っていない)。座標は Wikidata・公式の地図で確かめていないので point を入れない。
+  # 発行元は自治体・観光の公的団体・施設だが、通信先が台帳で承認されていないため、決まり(catalog_audit)どおり source_class: secondary(答えでは「公式ではありません」)。承認は本人の判断
+  - id: hana-0042
+    name: 巾着田曼珠沙華公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-08'
+    tags:
+      prefecture: 埼玉県
+      area: 日高
+      city: 日高市
+      terrain: [river]
+      flower_kinds: [曼珠沙華]
+      care_note: 群生地では、花を採らない。柵や順路の外に入って踏み荒らさない。
+      source: Claude Code が付けた(段階64 第6部。埼玉県のページの本文。所在地「日高市大字高麗本郷地内」。座標は未確認)
+    sources:
+      - {url: "https://www.pref.saitama.lg.jp/a1008/nigiwai-spot/spot5.html", title: "埼玉県【日高市】巾着田/高麗川(情報の出典は日高市ホームページと明記)", checked_on: '2026-11-08'}
+    note: "埼玉県のページに「曼珠沙華の例年の見ごろは、9月中旬から10月上旬です。」とある"
+    flower_windows:
+      - kind: 曼珠沙華
+        start: '09-11'
+        end: '10-10'
+        source_url: https://www.pref.saitama.lg.jp/a1008/nigiwai-spot/spot5.html
+        source_host: www.pref.saitama.lg.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "埼玉県のページの本文に「例年の見ごろは、9月中旬から10月上旬」(2026-11-08 に読んだ)"
+  - id: hana-0043
+    name: 亀戸天神社
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-08'
+    tags:
+      prefecture: 東京都
+      area: 江東
+      city: 江東区
+      terrain: [temple_shrine, urban]
+      flower_kinds: [藤]
+      source: Claude Code が付けた(段階64 第6部。GO TOKYO(東京観光財団)のページの本文。所在地「東京都江東区亀戸3丁目6番1号」。座標は未確認)
+    sources:
+      - {url: "https://www.gotokyo.org/jp/spot/ev197/index.html", title: "GO TOKYO 亀戸天神社 藤まつり(東京観光財団。2026年の行事は終了と明記)", checked_on: '2026-11-08'}
+    note: "GO TOKYO に「藤の花は4月上旬から中旬にかけて咲き始めます。」とある(見頃ではなく咲き始めの時期)。2026年の藤まつり(4/4〜4/30)は行事の期間で、例年の時期には使わない。2027年の日程は未確認"
+    flower_windows:
+      - kind: 藤
+        start: '04-01'
+        end: '04-20'
+        source_url: https://www.gotokyo.org/jp/spot/ev197/index.html
+        source_host: www.gotokyo.org
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "東京観光財団のページの本文に「4月上旬から中旬にかけて咲き始めます」(咲き始めの時期。2026-11-08 に読んだ)"
+  - id: hana-0044
+    name: 芦川のすずらん群生地
+    subjects: [flowers]
+    timing_type: calendar
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-08'
+    tags:
+      prefecture: 山梨県
+      area: 芦川
+      city: 笛吹市
+      terrain: [highland]
+      flower_kinds: [スズラン]
+      care_note: 群生地では、花を採らない。踏み荒らさない(スズランは有毒。触れた手で目や口に触れない)。
+      source: Claude Code が付けた(段階64 第6部。やまなし観光推進機構のページの本文。所在地「笛吹市芦川町上芦川 すずらん群生地」。座標は未確認)
+    sources:
+      - {url: "https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html", title: "富士の国やまなし観光ネット すずらんの花見頃(2025年6月6日現在の情報と明記)", checked_on: '2026-11-08'}
+    note: "本文に「例年の見頃は5月中旬～6月上旬。」とある(題名は5月中旬〜5月下旬だが、本文の例年の値を使う)"
+    flower_windows:
+      - kind: スズラン
+        start: '05-11'
+        end: '06-10'
+        source_url: https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html
+        source_host: www.yamanashi-kankou.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "やまなし観光推進機構(山梨県公式観光情報)の本文に「例年の見頃は5月中旬～6月上旬」(2026-11-08 に読んだ)"
+  - id: hana-0045
+    name: 府中市郷土の森博物館(梅園)
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-08'
+    tags:
+      prefecture: 東京都
+      area: 府中
+      city: 府中市
+      terrain: [garden]
+      flower_kinds: [梅]
+      source: Claude Code が付けた(段階64 第6部。GO TOKYO(東京観光財団)のページの本文。所在地「東京都府中市南町6-32」。座標は未確認)
+    sources:
+      - {url: "https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html", title: "GO TOKYO 東京の冬に咲く梅(2026年2月9日作成。約120品種・1,300本以上)", checked_on: '2026-11-08'}
+    note: "梅は約120品種・1,300本以上(GO TOKYO)。ページの「例年2月上旬から3月中旬」は東京全体の記載で、この施設の例年の時期ではないので flower_windows に入れない。梅まつりの期間は今年の行事(2027年は未確認)"
+  - id: hana-0046
+    name: あしかがフラワーパーク
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-08'
+    tags:
+      prefecture: 栃木県
+      area: 足利
+      city: 足利市
+      terrain: [garden]
+      flower_kinds: [藤, ツツジ]
+      source: Claude Code が付けた(段階64 第6部。公式サイトのトップの季節の一覧。所在地「栃木県足利市迫間町607」。座標は未確認)
+    sources:
+      - {url: "https://www.ashikaga.co.jp/", title: "あしかがフラワーパーク公式(季節の一覧「ふじのはな物語」4月中旬～5月中旬 藤・ツツジ・シャクナゲ)", checked_on: '2026-11-08'}
+    note: "公式サイトのトップの季節の一覧に「4月中旬～5月中旬 藤・ツツジ・シャクナゲ」とある(花ごよみのページの時期は画像で、本文の記載なし)。年の記載のない季節の一覧の値"
+    flower_windows:
+      - kind: 藤
+        start: '04-11'
+        end: '05-20'
+        source_url: https://www.ashikaga.co.jp/
+        source_host: www.ashikaga.co.jp
+        source_class: secondary
+        unapproved_host: true
+        source_year: null
+        note: "公式サイトの季節の一覧(年の記載なし)「4月中旬～5月中旬 藤・ツツジ・シャクナゲ」(2026-11-08 に読んだ)"

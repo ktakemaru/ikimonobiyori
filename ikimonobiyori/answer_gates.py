@@ -68,6 +68,8 @@ def _bad_sentence(s, facts, plan, rules, allowed_offers):
         return True
     if any(w in body for w in rules.get("reread_words") or []):
         return True
+    if any(w in body for w in rules.get("answer_old_list_words") or []):     # 段階64 第2部 4: 古い一覧の形(定評・出どころの区分・参照数)
+        return True
     if facts is not None and V.not_tried_errors(body, facts):
         return True
     from . import intent
@@ -103,6 +105,28 @@ def delete_bad_sentences(text, facts=None, plan=None, rules=None, offers=None):
             continue
         out.append(new)
     return "\n".join(out).rstrip() + "\n", removed
+
+
+def strip_old_list(text, rules=None):
+    """段階64 第2部 4: 古い一覧の形の語(定評・出どころの区分・参照数)を含む文と、参照数の凡例を消す(ask answer の答えだけ)。"""
+    rules = rules or V.load_rules()
+    words = rules.get("answer_old_list_words") or []
+    out = []
+    for line in text.splitlines():
+        parts = re.findall(r"[^。]+。?", line) or [line]
+        kept = []
+        for p in parts:
+            q = re.sub(r"[(（]参照数\s*\d+[)）]", "", p)                       # 文末の「(参照数 N)」は、その部分だけ外す
+            if any(w in q for w in words):
+                q = re.sub(r"[、,]?\s*(定評|出どころの区分[:：][^、。]*)", "", q)   # 区分のラベルだけを外す(場所の名前と事実は残す)
+            if any(w in q for w in words):
+                continue
+            kept.append(q)
+        new = "".join(kept)
+        if line.strip() and not new.strip():
+            continue
+        out.append(new)
+    return "\n".join(out).rstrip() + "\n"
 
 
 def rebuild_sources(text, facts, plan, rules=None):
