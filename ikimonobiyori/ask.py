@@ -1002,6 +1002,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--failed", help="--mark のページが読めなかった理由")
     p = sub.add_parser("vc-record", help="施設の発信(ビジターセンター)の読んだ事実を記録する(段階55 の規則。段階63b: 読んだ時刻を取得のキャッシュに残す)")
     p.add_argument("--batch", required=True)
+    sub.add_parser("coverage", help="探索範囲の都県ごとのデータの棚卸し(段階72 第4部 1。通信しない・書き込まない。Markdown の表)")
     p = sub.add_parser("final-check", help="最終メッセージの検査(段階69 第1部): 利用者に送るメッセージ全体から、作業メモ・提案・質問の文を消し、送ってよい文だけを出す。出力を一字一句そのまま送る")
     p.add_argument("--text", help="最終メッセージのファイル(省くと標準入力)")
     p.add_argument("--answer", help="ask answer の出力のファイル(省くと直前の ask answer の答え)")
@@ -1160,6 +1161,10 @@ def main(argv=None, http_get=None):
         PC.note([{"url": r.get("url"), "ok": True, "kind": "visitor_center"} for i, r in enumerate(batch) if i not in bad and isinstance(r, dict)], _clock())
         _out(out)
         return 1 if out["rejected"] else 0
+    if a.step == "coverage":                             # 段階72 第4部 1
+        from . import coverage as CV
+        sys.stdout.flush(); sys.stdout.buffer.write(CV.table().encode("utf-8"))
+        return 0
     if a.step == "final-check":                          # 段階69 第1部
         from . import final_check as FC
         msg = Path(a.text).read_text(encoding="utf-8") if a.text else sys.stdin.read()
