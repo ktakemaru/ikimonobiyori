@@ -556,3 +556,70 @@ sources:
     readable: {status: ok, checked_on: "2026-11-05", robots: allows, note: "ライトアップNIKKO 2026 は 2026-11-06〜11-08(https://www.nikko-kankou.org/event/1246)、華厳滝ライトアップは 2026-11-14〜11-23(https://www.nikko-kankou.org/event/1626)。robots.txt は Disallow が空"}
     terms: {status: no_prohibition_found, url: "https://www.nikko-kankou.org/about-site", note: "『当サイトについて』にプライバシーポリシー・免責事項はあるが、自動取得・転載・引用の規定はない(2026-11-05)"}
     approval: {status: approved, approved_by: user, approved_on: "2026-11-05", reason: "指示書 docs/stage47-sources-instructions.md でホスト www.nikko-kankou.org を承認(2026-11-05)"}
+
+  # 段階73 第3部(福島県): 承認待ちで足した(承認の記入はしない)
+  - id: iwaki-kanko-koyo
+    publisher: 一般社団法人いわき観光まちづくりビューロー(いわき市観光サイト)
+    publisher_kind: tourism_association
+    url: "https://kankou-iwaki.or.jp/feature/autumnleaves/top"
+    kind: status_page
+    covers:
+      - {name: 夏井川渓谷, label: "夏井川渓谷(モミジ群生箇所・籠場の滝周辺)"}
+      - {name: 夏井川渓谷錦展望台, label: "夏井川渓谷錦展望台(アカヤシオ)"}
+      - {name: 鹿又川渓谷, label: 鹿又川渓谷}
+      - {name: 松ヶ岡公園, label: 松ヶ岡公園}
+      - {name: 二ッ箭山, label: 二ッ箭山}
+    notation:
+      style: word
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: observed_date
+      note: "見出しに「2026年11月7日(土)現在」。地点ごとに「色づき始め」「3分程度」「見頃」「青葉」の語"
+    readable: {status: ok, checked_on: "2026-11-10", robots: allows, note: "robots.txt は 404(拒否の記述なし)。2026-11-10 に読んだ"}
+    terms: {status: no_prohibition_found, note: "本文・フッターに利用規約・著作権のページへのリンクはなく、Copyright の表示だけ(運営者について・プライバシーポリシーは未読)"}
+    approval: {status: pending, reason: "段階73 第3部で見つけた公式の紅葉情報(観光協会)。承認は本人"}
+
+  # 段階73 第3部(新潟県): 承認待ちで足した(承認の記入はしない)
+  - id: niigata-kanko-koyo
+    publisher: 公益社団法人新潟県観光協会(にいがた観光ナビ)
+    publisher_kind: tourism_association
+    url: "https://niigata-kankou.or.jp/season/autumn_leaves/"
+    kind: status_page
+    covers:
+      - {name: 清津峡, label: "清津峡(十日町市)"}
+      - {name: 美人林, label: "美人林(十日町市)"}
+      - {name: 奥只見湖, label: "奥只見湖(魚沼市)"}
+      - {name: 高田城址公園, label: "高田城址公園(上越市)"}
+      - {name: いもり池, label: "いもり池(妙高市)"}
+    notation:
+      style: symbol
+      map: {}
+      updated: per_item
+      year_shown: true
+      date_basis: updated_date
+      note: "一覧に名所ごとの見ごろ度(◎○△×)と短い文(「見頃」「色褪せ」など)と最終更新日。記号の凡例がページにないので、記号は段階にしない(文の語だけを使う)。名所ページ(spot/detail_*.html)にも同じ状況と更新日"
+    readable: {status: ok, checked_on: "2026-11-10", robots: unknown, note: "robots.txt は 404。一覧は全78件(2026-11-10 に読んだ)"}
+    terms: {status: not_checked, url: "https://niigata-kankou.or.jp/site-policy/", note: "サイトポリシーは未読"}
+    approval: {status: pending, reason: "段階73 第3部で見つけた公式の紅葉情報(県の観光協会)。承認は本人"}
+
+  # 段階73(福島県・下郷町): 承認待ちで足した(承認の記入はしない)
+  - id: shimogo-kanko-blog
+    publisher: 下郷町観光協会
+    publisher_kind: tourism_association
+    url: "https://shimogo.jp/blog/"
+    kind: status_page
+    covers:
+      - {name: 観音沼森林公園, label: 観音沼森林公園}
+      - {name: 塔のへつり, label: 塔のへつり}
+      - {name: 大内宿, label: 大内宿}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: updated_date
+      note: "ブログ「町内の様子」に写真と短い文(「今が見頃です」「ピークです」「いい感じになってきています」)。決まった状態の語はない。2026年は 10/8・10/22・10/26・10/28・11/2 の記事"
+    readable: {status: ok, checked_on: "2026-11-10", robots: allows, note: "robots.txt は /wp-admin/ だけ拒否"}
+    terms: {status: not_checked, note: "利用規約のページは未読"}
+    approval: {status: pending, reason: "段階73 で見つけた公式の紅葉の発信(町の観光協会のブログ)。承認は本人"}

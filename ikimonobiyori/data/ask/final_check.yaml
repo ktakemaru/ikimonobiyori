@@ -41,6 +41,9 @@ work_words:
   - 一覧を返し
   - 決まりなので
   - 決まりにより
+  # 段階72 第1部: 答えを出さずに止まる文(11/10 の会話)
+  - 答えを用意できていません
+  - 用意できていません
 
 # 作業メモの見出し(この行から次の空行までを消す)
 block_heads:
@@ -79,3 +82,40 @@ zero_offer_words: ["表にして比べられます", "写真つきのページ�
 last_answer_file: logs/last_answer.json
 last_answer_valid_hours: 6
 log_file: logs/answers.jsonl
+
+# 段階72 第1部: 送る前の検査を Claude Code の Stop フックで強制する(ikimonobiyori/stop_hook.py。.claude/settings.json の hooks.Stop)。
+# 直前の応答の文と会話の記録(この回の利用者の文・使った道具)を見て、送ってはいけない文があれば応答の終了を止め、エージェントへの次の手順を返す。
+# 判定の方法と例外は docs/operations.md「送る前の検査(Stop フック)」。
+stop_hook:
+  # 同じ回(利用者の 1 つの文)で止める回数の上限。超えたら止めない(無限の繰り返しを防ぐ。指示書 段階72 第1部 3)
+  max_blocks_per_turn: 2
+  # 止めた回数を数えるファイル(データ置き場)と、残す回の数
+  state_file: logs/stop_hook_state.json
+  state_keep: 200
+  # 理由の文の先頭の印(この印を含む利用者の文は、利用者が打った文として扱わない)
+  reason_marker: "[イキモノビヨリ 送る前の検査]"
+  # 利用者の文として扱わない記録の行(コマンドの記録など)
+  not_prompt_prefixes: ["<local-command", "<command-name", "<command-message", "<system-reminder", "<task-notification", "Stop hook feedback", "[Request interrupted"]
+  # 例外: この語がある回は検査しない(一般知識で答えてよい回。CLAUDE.md の A-6)
+  skip_words: ["イキモノビヨリを使わずに", "イキモノビヨリを使わないで"]
+  # 例外: 仕組み・開発についての質問の回(答えに内部用語を書いてよい回。CLAUDE.md の A-7 の例外)は検査しない
+  mechanism_words: ["仕組み", "台帳", "検査", "コマンド", "コード", "フック", "テスト", "指示書", "commit", "コミット", "ブランチ", "CLAUDE.md", "AGENTS.md", "SKILL.md", "スキル", ".md", ".py", ".yaml", "プログラム", "デバッグ", "実装"]
+  # ask answer の実行(Bash の command)・最終メッセージの検査・記録の道具を見分ける正規表現
+  answer_patterns: ['ikimonobiyori\.ask\s+answer\b', 'ask\.py\s+answer\b']
+  final_check_patterns: ['ikimonobiyori\.ask\s+final-check\b', 'ask\.py\s+final-check\b']
+  record_patterns: ['ikimonobiyori\.ask\s+(record|vc-record|knowledge\s+add|record-unverified)\b', 'ikimonobiyori\.guide\s+record-candidate\b']
+  # 調べたとみなす道具(検索・取得・取得のサブエージェント)
+  research_tools: ["WebSearch", "WebFetch", "Agent", "Task", "mcp__claude-in-chrome__get_page_text"]
+  # ask answer の出力(標準エラー)で、調べる・読む対象があることを示す語
+  research_marks: ["調べる: ", "読むページ: ", "名所の記録が足りません", "資料が足りません"]
+  # 道具を使わずに答えようとしたとき止める、生き物・お出かけの質問の語(この回に道具の呼び出しが 1 つもないときだけ)
+  ikimono_words: ["紅葉", "見ごろ", "見頃", "野鳥", "渡り鳥", "お出かけ", "おすすめ", "花の名所", "咲いて", "開花", "ホタル", "桜", "梅", "ススキ", "観察", "名所", "見どころ", "見られる"]
+  # 消える文を理由に引用するときの字数と件数
+  quote_chars: 40
+  quote_max: 3
+  # 理由の文(エージェントへの次の手順)
+  reasons:
+    research: "ask answer が調べる対象・読むページを出しています。利用者に聞かずに、公式ページを探して読み、ask record で記録し、ask answer を 1 回だけ呼び直してください。"
+    removed: "最終メッセージに送れない文があります(「{sentences}」)。作業の事情・提案・利用者への質問は書かず、足りない事実は利用者に聞かずに調べて記録し、ask answer を呼び直してください。"
+    no_final_check: "最終メッセージを ask final-check --text <ファイル> に通し、その出力を一字一句そのまま送ってください。"
+    no_ask_answer: "生き物・お出かけの質問です。一般知識で答えず、python -X utf8 -m ikimonobiyori.ask answer --question \"<質問の文>\" を実行し、出力を ask final-check に通して送ってください。"

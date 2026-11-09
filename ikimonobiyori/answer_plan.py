@@ -22,6 +22,60 @@ def load_policy(path=None):
     return yamlcache.load((path or PLAN_PATH))
 
 
+def scope_of(question, origin_source, refine=None, policy=None):
+    """段階72 第4部: 質問の範囲の読み取り。→ "wide"(遠くても・エリア全体で・範囲全体・どこでも)/ "no_origin"(出発地も近場の指定もない)/ "normal"。"""
+    sc = (policy or load_policy())["scope"]
+    q = question or ""
+    if any(w in q for w in sc["wide"]["words"]):
+        return "wide"
+    if origin_source == "default" and not refine and not any(w in q for w in sc["no_origin"]["near_words"]):
+        return "no_origin"
+    return "normal"
+
+
+def scope_policy(pol, scope):
+    """段階72 第4部 2〜4: 範囲に合わせた計画の設定(元の設定は変えない)。
+    no_origin: 距離の重みを下げ、近場の候補を今回のおすすめに必ず入れる決まり(min_near)を外す。
+    wide: さらに、狙いの節を地域ごとの節(scope.wide.groups)にし、遠い候補で埋めない決まり(fill_max_km)を外す。"""
+    if not scope or scope == "normal" or pol.get("_scope") == scope:
+        return pol
+    import copy
+    sc = pol["scope"]
+    p = copy.deepcopy(pol)
+    p["_scope"] = scope
+    f = sc["no_origin"]["distance_factor"]
+    for v in p["distance"].values():
+        if isinstance(v, dict) and "weight" in v:
+            v["weight"] = v["weight"] * f
+    p["selection"]["min_near"] = 0
+    p["selection"]["max_same_prefecture"] = sc["max_same_prefecture"]
+    p["aims"]["labels"] = {**p["aims"]["labels"], "near": sc["no_origin"]["near_label"]}    # 出発地の指定がないときは「近場で手軽に」の枠にしない
+    p["aims"]["near_sort"] = None
+    if scope == "wide":
+        w = sc["wide"]
+        groups = w["groups"]
+        p["aims"]["mode"] = "region"
+        p["aims"]["region_groups"] = groups
+        p["aims"]["order"] = [g["key"] for g in groups]
+        p["aims"]["labels"] = {**p["aims"]["labels"], **{g["key"]: g["label"] for g in groups}}
+        p["aims"]["near_sort"] = None
+        p["aims"]["day_trip_max_km"] = w["max_km"]
+        p["aims"]["section_max"] = w["section_max"]
+        for g in groups:
+            p["distance"][g["key"]] = {"weight": w["distance_weight"], "ref_km": w["ref_km"]}
+        p["selection"]["pick_aims"] = [g["key"] for g in groups]
+        p["selection"]["fill_max_km"] = None
+        p["selection"]["birds_fill_max_km"] = None
+    return p
+
+
+def region_group_of(pref, pol):
+    for g in pol["aims"].get("region_groups") or []:
+        if pref in g["prefectures"]:
+            return g["key"]
+    return pol["scope"]["wide"]["fallback_group"]
+
+
 def _d(x):
     return x if isinstance(x, date) else date.fromisoformat(str(x)[:10])
 
@@ -57,7 +111,7 @@ def outlook_of(c, d, pol, subject=None):
         return o["after_window_current"][st]                  # 段階62 第4部: 公式の新しい現況を、例年の時期より優先する
     if c.get("avoid") == "past" or rel == "after_peak" or st == "見頃過ぎ":
         return "past"
-    typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end")), None)
+    typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end") and not O.is_year_round(t)), None)   # 段階72 第6部 2: 通年の窓で見頃にしない
     if st == "青葉":
         return "early"
     if typ:
@@ -161,6 +215,8 @@ def spot_kind_of(c, pol):
 
 def aim_of(c, km, lightup, outlook, pol):
     a = pol["aims"]
+    if a.get("mode") == "region":                          # 段階72 第4部 4: 「遠くても」は地域ごとの節(近場の枠を作らない)
+        return region_group_of(c.get("prefecture"), pol)
     if lightup and outlook in a["night_outlooks"]:
         return "night"
     name = c.get("name") or ""
@@ -298,7 +354,7 @@ def _refine_reject(rows, status, rule, pol, reject):
 
 def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     """facts.json の 1 対象(subjects.<subject>)から計画を作る。同じ入力なら同じ出力。refine: 追質問の語(段階57 第5部)。"""
-    pol = policy or load_policy()
+    pol = scope_policy(policy or load_policy(), facts_doc.get("scope"))      # 段階72 第4部
     sub = facts_doc["subjects"][subject]
     dates = [_d(x) for x in facts_doc["dates"]]
     cands = sub.get("candidates") or []
@@ -307,7 +363,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     rows = []
     for c in cands:
         r = score_candidate(dict(c, _today=facts_doc.get("now"), _origin=facts_doc.get("origin")), dates, pol, subject)
-        r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "current_state": (c.get("current") or {}).get("state"),
+        r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "prefecture": c.get("prefecture"), "current_state": (c.get("current") or {}).get("state"),
                   "current_date": (c.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
@@ -391,13 +447,19 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     for it in firsts:
         by_aim.setdefault(it["aim"], it)
     want = [by_aim[a] for a in pol["selection"]["pick_aims"] if a in by_aim]   # まず、近場・ドライブ・歩く・遠出の各1位(あれば)
-    for it in sorted(want, key=key) + sorted([f for f in firsts if f not in want], key=key):
-        if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl:
+    pref_ok = lambda it, ch: pref_room(it, ch, pol)                      # 段階72 第4部 3: 同じ都県は最大 max_same_prefecture 件(候補があるとき)
+    order_ = sorted(want, key=key) + sorted([f for f in firsts if f not in want], key=key)
+    rest = [it for s in sections for it in s["items"][1:] if fillable(it)]
+    for it in order_:
+        if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl and pref_ok(it, chosen):
             chosen.append(it); used_cl.add(it["cluster"])
     if len(chosen) < pol["selection"]["picks"]:                           # 狙いが足りないときは、節の2位以降から
-        rest = [it for s in sections for it in s["items"][1:] if fillable(it) and it not in chosen]
-        for it in sorted(rest, key=key):
-            if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl:
+        for it in sorted([x for x in rest if x not in chosen], key=key):
+            if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl and pref_ok(it, chosen):
+                chosen.append(it); used_cl.add(it["cluster"])
+    if len(chosen) < pol["selection"]["picks"]:                           # 同じ都県の上限で足りないときは、上限なしで埋める(候補がないとき)
+        for it in order_ + sorted([x for x in rest if x not in chosen], key=key):
+            if len(chosen) < pol["selection"]["picks"] and it["cluster"] not in used_cl and it not in chosen:
                 chosen.append(it); used_cl.add(it["cluster"])
     # 段階57 第12部: 利用できるなら、今回のおすすめの min_with_current 件は今年の現況がある候補にする(いちばん下の現況なしの候補から入れ替える)
     pool = sorted([it for s in sections for it in s["items"] if it["has_current"] and it["name"] not in {c["name"] for c in chosen}], key=key)
@@ -443,6 +505,15 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             **({"fill_skipped": fill_skipped} if fill_skipped else {}),
             "no_this_year": [{"name": r["name"], "typical_line": r.get("typical_line")} for r in sorted(no_year, key=lambda x: (-x["score"], x["name"]))[: pol["this_year"]["max_lines"]]],
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
+
+
+def pref_room(it, chosen, pol):
+    """段階72 第4部 3: 今回のおすすめに、同じ都県の候補がまだ入れられるか(上限 selection.max_same_prefecture。設定がなければ上限なし)。"""
+    mx = pol["selection"].get("max_same_prefecture")
+    p = it.get("prefecture")
+    if not mx or not p:
+        return True
+    return sum(1 for c in chosen if c.get("prefecture") == p) < mx
 
 
 def _fillable(it, pol):
@@ -547,25 +618,23 @@ def _item(r, oo):
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
             "distance_text": f"約{int(round(r['distance_km']))}km" if r["distance_km"] is not None and not r["distance_estimated"] else None,
-            "current_date": r["current_date"], "festivals": r["festivals"], "practical": r["practical"]}
+            "current_date": r["current_date"], "festivals": r["festivals"], "practical": r["practical"], "prefecture": r.get("prefecture")}
 
 
 def build_all(facts_doc, policy=None, overrides=None, refine=None):
     """複数の対象(紅葉・花・野鳥)の質問(総合)。対象ごとの計画を作り、全体の今回のおすすめは各対象の1位から(足りなければ点数の高い順)。"""
-    pol = policy or load_policy()
+    pol = scope_policy(policy or load_policy(), facts_doc.get("scope"))      # 段階72 第4部
     subs = {sj: build(facts_doc, sj, pol, refine=refine) for sj in facts_doc["subjects"]}
     oo = pol["outlook"]
     n = pol["selection"]["picks"]
     firsts = [dict(pl["picks"][0], subject=sj) for sj, pl in subs.items() if pl["picks"]]
     key = lambda it: rank_key(it, pol)
     picks, used = [], set()
-    for it in sorted(firsts, key=key):
-        if len(picks) < n and it["name"] not in used:
-            picks.append(it); used.add(it["name"])
     rest = [dict(it, subject=sj) for sj, pl in subs.items() for it in pl["picks"][1:]]
-    for it in sorted(rest, key=key):
-        if len(picks) < n and it["name"] not in used:
-            picks.append(it); used.add(it["name"])
+    for room in (True, False):                                           # 段階72 第4部 3: まず同じ都県の上限の内で、足りなければ上限なしで
+        for it in sorted(firsts, key=key) + sorted(rest, key=key):
+            if len(picks) < n and it["name"] not in used and (not room or pref_room(it, picks, pol)):
+                picks.append(it); used.add(it["name"])
     picks = [dict(it, rank=i + 1) for i, it in enumerate(sorted(picks, key=lambda it: (is_old_record(it, pol),) + key(it)))]      # 段階62 第3部
     segs = [{"heading": pol["segment_headings"][sj], "key": sj, "subject": sj} for sj in subs]     # 段階57 第3部: 対象別の節(それぞれに今回のおすすめ)で答えるときの見出し
     return {"schema": SCHEMA, "subject": "all", "dates": next(iter(subs.values()))["dates"], "origin": facts_doc.get("origin"), "now": facts_doc.get("now"),

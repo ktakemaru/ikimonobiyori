@@ -51,3 +51,15 @@ def unsupported_reply(what, offers_now=(), doc=None):
     """頼まれたことが今できないとき: 1 行の案内と、確実にできる別のこと(条件を満たす案内)だけ。"""
     doc = doc or load()
     return [doc["messages"]["unsupported_reply"].format(what=what)] + list(texts(offers_now))[:1]
+
+
+def drop_repeated(text, previous, doc=None):
+    """段階72 第6部 3: 案内の文(写真つきのページ・表)は、同じ会話で 1 回だけ。直前の答え(previous)に同じ案内の行があれば、今回の答えから消す。"""
+    if not previous:
+        return text
+    prev = {l.strip() for l in previous.splitlines()}
+    offers = set(all_texts(doc))
+    lines = [l for l in (text or "").splitlines() if not (l.strip() in offers and l.strip() in prev)]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return "\n".join(lines) + "\n"

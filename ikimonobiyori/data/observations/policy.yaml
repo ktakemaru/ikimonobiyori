@@ -280,6 +280,8 @@ typical:
   record_not_typical_words: [開催, 予定, 期間]
   # 段階36(利用者の決定 2026-11-01。評価表 R4 の読み方 (b)): 例年の時期が分からない候補の代わりの材料にする、前の年の同じ時期の記録の幅(対象の日の前後の日数)
   last_year_window_days: {value: 30, source: "仮置き(野鳥の season_window_days と同じ前後ひと月。根拠のある値ではない)", provisional: true}
+# 段階72 第6部 2: 1 年じゅうの窓(通年)。答えでは「通年（咲く花は季節で変わる）」と書き、「今見頃の花」の候補の上位に置かない(見込みは unknown)
+year_round: {start: "01-01", end: "12-31"}
 typical_labels:
   known: "例年の見頃: {text}"
   known_strip: "例年"          # 段階56: 原文に「例年」があるときは、重ねないよう原文の「例年」を外す
@@ -287,6 +289,8 @@ typical_labels:
   unknown_with_event: "例年の時期は分かりません。今年は{start}〜{end}に{name}があります。"
   unknown_with_last_year: "例年の時期は分かりません({year}年{md}の記録({publisher})では「{text}」)"
   unknown: "例年の時期は分かりません"
+  # 段階72 第6部 2: 例年の窓が 1 年じゅう(year_round)の名所(筑波実験植物園など)
+  year_round: "例年の見頃: 通年（咲く花は季節で変わる）"
 
 # 段階57 第4部: 状態の記号を語にする(ページ上の凡例が出どころ)。凡例が読めていない発行元の記号は、そのまま出さず状態を断定しない
 state_symbols:

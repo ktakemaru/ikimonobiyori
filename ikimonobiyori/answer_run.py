@@ -150,7 +150,15 @@ def resolve(question, now, policy=None):
     from . import season_place as SP
     from . import highlights as HL
     from . import combo as CB
-    if kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
+    from . import names as NM
+    from . import place_guard as PG
+    if NM.is_name_question(q) and NM.lookup(q):         # 段階72 第2部 4: 名前を問う質問(「枯れた茎に氷ができる。なんというの?」)
+        route = "name"
+    elif kind != "event" and PG.unknown_places(q):
+        route = "unknown_place"                          # 段階72 第3部: 解決できない地名を、既定の出発地や別のエリアにすり替えない
+    elif NM.is_name_question(q) and kind in ("plan", "place_time") and not area_names and not region and defaulted:
+        route = "knowledge"                              # 名前の辞書にない名前の質問も、知識の型(カードを探す)
+    elif kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
         route = "highlights_dated"
     elif kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
         route = "highlights"
@@ -173,6 +181,24 @@ def resolve(question, now, policy=None):
     return {"question": question, "intent": kind, "route": route, "subjects": subjects or list(_default_subjects()), "guide_word": guide_word,
             "region": region, "area_names": area_names, "origin": origin["origin"], "origin_source": origin["source"],
             "periods": [[d.isoformat() for d in ds] for ds in periods], "defaulted_date": defaulted, "refine": resolve_refine(question, policy)}
+
+
+def _attach_unverified(res, cond, env):
+    """段階72 第5部: 未確認の名所の節を足す。上位 2 件は調べる対象にする(公式ページで確かめられたら通常の名所として記録し、確かめ済みの印を付ける)。"""
+    from . import sources as S
+    from . import unverified as U
+    prefs = None
+    if cond.get("region"):
+        for r in S.load_regions()["regions"]:
+            if cond["region"] in [r["name"], *(r.get("aliases") or [])]:
+                prefs = set((r.get("match") or {}).get("prefectures") or []) or None
+    before = res["text"]
+    res["text"] = U.attach(before, cond["question"], cond.get("subjects") or [], prefs, env)
+    if res["text"] != before:
+        rows = U.lines_for(cond["question"], cond.get("subjects") or [], before, prefs, env)[1:]
+        names = [re.sub(r"^・|\(.*$", "", x) for x in rows][: U.cfg()["verify_top"]]
+        res["research_targets"] = list(res.get("research_targets") or []) + [
+            {"what": "未確認の名所の確認", "where": n, "search": f"{n} 公式"} for n in names]
 
 
 def _default_subjects():
@@ -313,6 +339,11 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
             res["stage"], res["status"] = 4, STATUS_DEGRADED
     if not (res.get("text") or "").strip():
         res["text"], res["stage"], res["status"] = _last_resort(cond, now, pol), 4, STATUS_DEGRADED
+    if cond["route"] in ("plan", "season_place", "guide"):   # 段階72 第5部: 記録で確かめた候補のあとに、一般に知られた名所(未確認)の節
+        try:
+            _attach_unverified(res, cond, env)
+        except (OSError, ValueError, KeyError, TypeError) as ex:
+            res["warnings"].append({"code": "unverified_failed", "detail": f"{type(ex).__name__}: {str(ex)[:80]}"})
     try:                                                 # 段階69 第4部 1: 使わない出典(予想・転載)の URL・文は、どの経路でも答えに出さない
         from . import publisher as P
         txt, gone = P.strip_unused(res["text"])
@@ -331,6 +362,13 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         from . import answer_page as APG
         APG.remember(res, now, env)
     except (OSError, KeyError, TypeError):
+        pass
+    try:                                                 # 段階72 第6部 3: 案内の文は同じ会話で 1 回だけ(直前の答えにあれば出さない)
+        from . import final_check as FC
+        from . import offers as OF
+        if FC.load_question(now, env) != question:      # 同じ質問の答え直し(調べて記録したあと)は、利用者がまだ見ていないので消さない
+            res["text"] = OF.drop_repeated(res["text"], FC.load_answer(now, env))
+    except (OSError, KeyError, TypeError, ValueError):
         pass
     try:                                                 # 段階69 第1部: 最終メッセージの検査(ask final-check)で、答えの本文と添えた文を見分ける
         from . import final_check as FC
@@ -415,6 +453,10 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     subjects = cond["subjects"]
     f.prepare(subjects, region, [d for ds in periods for d in ds], cond["origin"])
     facts_doc = f.facts(subjects, region, dates, cond["origin"], periods=periods if len(periods) > 1 else None)
+    scope = AP.scope_of(cond["question"], cond.get("origin_source"), cond.get("refine"), pol)     # 段階72 第4部: 範囲全体・出発地の指定なし
+    if scope != "normal" and not cond["area_names"] and not cond.get("region"):
+        facts_doc["scope"] = scope
+        f._save("facts.json", facts_doc)
     if cond["area_names"]:
         plan_doc = f.area_plan(cond["area_names"])
     else:
@@ -627,6 +669,21 @@ def _other_route(res, cond, now, env, pol):
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
         return
+    if cond["route"] == "unknown_place":                 # 段階72 第3部: 解決できない地名は調べる対象にする(箱根や横浜の答えにしない)
+        from . import place_guard as PG
+        text, targets, found = PG.compose(q, PG.unknown_places(q, env), cond["subjects"], env=env)
+        if found:                                        # 調べて記録した事実がある: その事実で答える
+            res.update(text=text, stage=2, status=STATUS_PASS)
+        else:
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="place", research_targets=targets)
+        return
+    if cond["route"] == "name":                          # 段階72 第2部 4
+        from . import names as NM
+        text = NM.compose(q, env=env)
+        if text:
+            res.update(text=text, stage=2, status=STATUS_PASS)
+            return
+        cond = dict(cond, route="knowledge")
     if cond["route"] in ("highlights_dated", "species_dated", "combo"):
         _dated_route(res, cond, now, env)
         return
@@ -807,5 +864,5 @@ def print_result(res, out, err, as_json=False):
     if res.get("needs_research") and res.get("research_kind") == "season_place":
         err.write("名所の記録が足りません: 公式ページ(なければ紹介サイト)の本文を読み、ask record で kind(種)と typical(例年の時期)を記録してから、"
                   "もう一度 ask answer を実行します(最大3ページ。検索の要約は記録しない)\n")
-    elif res.get("needs_research"):
+    elif res.get("needs_research") and res.get("research_kind") != "place":      # 段階72 第3部: 地名の調べは「調べる:」だけ
         err.write("資料が足りません: 公的な解説を読んで ask knowledge add で記録すると、次は資料から答えられます\n")

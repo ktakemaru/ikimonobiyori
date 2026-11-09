@@ -416,3 +416,49 @@ answer_run:
   # 知識の質問で、手元の資料(知識カード)も名所の一覧もないときの最低限の答え
   knowledge_none: "{topic}について、イキモノビヨリで確かめた資料はまだありません。"
   knowledge_how: 研究機関・国や自治体・植物園や博物館の解説で確かめてください。
+
+# 段階72 第4部 1: 探索範囲全体のデータの棚卸し(ikimonobiyori/coverage.py。ask coverage)。結果は docs/coverage.md
+coverage:
+  columns: [紅葉, "花(春)", "花(夏)", "花(秋)", "花(冬)", "花(時期不明)", 野鳥, ススキ, ホタル, 行事, 山のカード, 承認済みの情報源, ビジターセンター]
+  seasons:
+    - {name: 春, months: [3, 4, 5]}
+    - {name: 夏, months: [6, 7, 8]}
+    - {name: 秋, months: [9, 10, 11]}
+    - {name: 冬, months: [12, 1, 2]}
+  # ガイドの名所のテーマ → 表の列(花は季節で分ける)
+  guide_themes: {紅葉: 紅葉, 花: 花, 桜: 花, 野鳥: 野鳥, 冬鳥: 野鳥, ホタル: ホタル, ススキ: ススキ}
+  # 観察の名所・読んだ記録の対象 → 表の列
+  subject_themes: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+  # 読んだ記録の種(kind)の語 → 表の列(対象より先に見る)
+  kind_themes: {ホタル: ホタル, ススキ: ススキ, 草紅葉: ススキ}
+
+# 段階72 第4部 2〜4(本人の判断 3。2026-11-10): 探索範囲全体への見直し(answer_plan.scope_of・scope_policy)
+scope:
+  # 今回のおすすめで、同じ都県の候補の上限(候補があるとき。出発地・近場の指定がない質問と「遠くても」の質問)。provisional
+  max_same_prefecture: 2
+  no_origin:
+    # 出発地も近場の指定もない質問では、距離の点数をこの倍率にする(近いことだけで上位にしない)。provisional
+    distance_factor: 0.5
+    # この語があれば近場の指定とみなす(出発地の指定は origins が判定する)
+    near_words: [近場, 近く, 近い, 手軽, 近所, 気軽]
+    # 出発地も近場の指定もないとき、出発地から近い候補の節の見出し(「近場で手軽に」の枠にしない。並びは距離でなく点数)
+    near_label: 手軽に楽しむ
+  wide:
+    # この語があれば、近場の枠を作らず地域ごとの節で答える
+    words: [遠くても, 遠くてもいい, 遠くて構わない, エリア全体, 範囲全体, どこでも, 遠出してもいい]
+    # 地域ごとの節(並びの順)。節の鍵は狙いの鍵と重ならない名前
+    groups:
+      - {key: r_tokyo_kanagawa, label: 東京・神奈川, prefectures: [東京都, 神奈川県]}
+      - {key: r_saitama_chiba_ibaraki, label: 埼玉・千葉・茨城, prefectures: [埼玉県, 千葉県, 茨城県]}
+      - {key: r_tochigi_gunma, label: 栃木・群馬, prefectures: [栃木県, 群馬県]}
+      - {key: r_yamanashi_nagano, label: 山梨・長野, prefectures: [山梨県, 長野県]}
+      - {key: r_shizuoka, label: 静岡, prefectures: [静岡県]}
+      - {key: r_niigata_tohoku, label: 新潟・南東北, prefectures: [新潟県, 福島県, 山形県, 宮城県]}
+      - {key: r_other, label: そのほかの地域, prefectures: []}
+    fallback_group: r_other
+    # 地域の節の距離の点数(重みは小さく。範囲の端まで)
+    distance_weight: 2
+    ref_km: 250
+    # 「遠くても」では日帰りの上限の代わりに範囲の上限(range_limit.max_km)まで
+    max_km: 250
+    section_max: 2

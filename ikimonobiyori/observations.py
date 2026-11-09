@@ -435,7 +435,8 @@ def manner_errors(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis")
+          "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
+          "source_year")                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -1004,6 +1005,25 @@ def prefecture_from_text(*texts, known=None):
         for p in known:
             if t.startswith(p):
                 return p
+    return None
+
+
+def prefecture_of_city(*cities):
+    """段階73 第3部: 市区町村の名前 → 代表点の表(guide/places.yaml)か出発地の辞書の都県。「相模原市緑区」は市で引く。なければ None。"""
+    from . import origins
+    pl = origins.places()
+    for c in cities:
+        c = (c or "").strip()
+        if not c:
+            continue
+        r = pl.get(c)
+        if not r:
+            m = re.match(r"^(.+?市)", c)
+            r = pl.get(m.group(1)) if m else None
+        if not r:
+            r = origins.lookup(c)                              # 出発地の辞書(「飯能市」は飯能の別名)
+        if r and r.get("prefecture"):
+            return r["prefecture"]
     return None
 
 
@@ -1734,10 +1754,18 @@ def last_year_records(rows, dates, policy):
     return out
 
 
+def is_year_round(typ, policy=None):
+    """段階72 第6部 2: 例年の窓が 1 年じゅう(1/1〜12/31)か。"""
+    yr = (policy or load_policy())["year_round"]
+    return bool(typ) and typ.get("start") == yr["start"] and typ.get("end") == yr["end"]
+
+
 def typical_line(typ, c, dates, policy, last_year=None):
     """例年の時期の 1 文の材料(段階35)。例年の時期が分からないときは「分かりません」と明言し、
     代わりに今年の行事の期間か、前の年の同じ時期の記録を添える(段階36。決定1)。"""
     lab = policy["typical_labels"]
+    if typ and is_year_round(typ, policy):                                 # 段階72 第6部 2: 「1/1〜12/31」は通年(咲く花は季節で変わる)
+        return lab["year_round"]
     if typ:
         text = typ["text"]
         if lab.get("known_strip") and lab["known_strip"] in text:            # 段階56: 「例年の見頃: …例年10月…」のように「例年」を重ねない
@@ -1991,6 +2019,8 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
             x["area"] = x["area"] or r.get("area")
         if x["prefecture"] is None:                            # 段階62 第2部: 記録の市区町村・発行元が都県の名前で始まれば、その都県(東京の計画に神奈川の山が入った不具合)
             x["prefecture"] = prefecture_from_text(g["city"], *[r.get("city") for r in g["rows"]], *[r.get("publisher") for r in g["rows"]])
+        if x["prefecture"] is None:                            # 段階73 第3部: 市区町村の代表点の表(guide/places.yaml)に都県があれば、その都県(長野県の答えに飯能市の天覧山が入った不具合)
+            x["prefecture"] = prefecture_of_city(g["city"], *[r.get("city") for r in g["rows"]])
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
     for x in extra.values():
         if x["prefecture"] is None and x["area"] is None and len(reg["prefectures"]) == 1 and not reg["areas"]:

@@ -59,6 +59,10 @@ text:
   lead_one: "{name}は、例年{start}が目安です。"
   lead_birds: "{name}が見られる記録のある場所です。時期は場所ごとに書きました。"
   origin_line: "距離は{origin}からの直線距離です。"
+  # 段階72 第6部 1: 出典が古い年の記載(記録の source_year)の例年の時期
+  old_year_season: "{year}年の記載では、{season}"
+  # 段階72 第6部 2: 1 年じゅうの窓(1/1〜12/31)
+  year_round: "通年（咲く花は季節で変わる）"
   species_heading: "{name}"
   off_season: "今は時期の外で、次は{month}月ごろです。"
   in_season: "今は例年の時期にあたります。今年の様子は、お出かけの前に公式ページで確かめてください。"

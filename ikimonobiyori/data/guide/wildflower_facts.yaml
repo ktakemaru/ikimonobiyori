@@ -1,6 +1,7 @@
 # 野草・高山植物の種の事実と出どころ(段階40)。事実だけ（本文の写し・写真は残さない）。出どころは読んだ日と区分（official / secondary）つき。
 schema: ikimono-wildflower-facts/1
 sources:
+  tkv: {url: 'https://takaovc.ces-net.jp/?page_id=753', publisher: 高尾ビジターセンター(氷の花！シモバシラ), class: official, read_on: '2026-11-10', page_year: null}
   tvc: {url: 'https://www.kanagawa-park.or.jp/tanzawavc/koyomi4.html', publisher: 神奈川県公園協会 丹沢ビジターセンター, class: official, read_on: '2026-11-03', page_year: null}
   kpr: {url: 'https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/bloom/bloomtoppage.html', publisher: 神奈川県(かながわパークレンジャー開花記録), class: official, read_on: '2026-11-03', page_year: 2026}
   fyk: {url: 'https://fujisawa-yamanokai.com/php/grview.php?recid=hana010Tanzawa', publisher: 藤沢山の会, class: secondary, read_on: '2026-11-03', page_year: null}
@@ -136,6 +137,7 @@ species:
   シャガ: {family: アヤメ科, habitat: 沢沿いの湿った林下に群生, tip: 実はできず、地下茎で増える}
   セッコク: {family: ラン科, habitat: 大木の枝や岩に着生, caution: 保護が必要な野草。採らない・林床に入り込まない, protected: true}
   タカオヒゴタイ: {family: キク科, tip: アザミに似るが刺はない。高さ30〜60cm}
+  シモバシラ: {family: シソ科, habitat: 木陰, tip: 秋に白い花。冬は枯れた茎から氷が伸びる(氷の花。高尾ビジターセンター・人と自然の博物館)}
   チゴユリ: {family: ユリ科, habitat: 林の下, tip: 白い小さな花を下向きにつける}
   フタリシズカ: {family: センリョウ科, tip: 高さ30〜50cmでヒトリシズカよりやや高い}
   ヤブデマリ: {family: スイカズラ科, habitat: 沢沿い, tip: 装飾花が縁を囲む。高さ2〜6m}
