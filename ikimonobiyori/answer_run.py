@@ -151,8 +151,11 @@ def resolve(question, now, policy=None):
     from . import highlights as HL
     from . import combo as CB
     from . import names as NM
+    from . import place_guard as PG
     if NM.is_name_question(q) and NM.lookup(q):         # 段階72 第2部 4: 名前を問う質問(「枯れた茎に氷ができる。なんというの?」)
         route = "name"
+    elif kind != "event" and PG.unknown_places(q):
+        route = "unknown_place"                          # 段階72 第3部: 解決できない地名を、既定の出発地や別のエリアにすり替えない
     elif NM.is_name_question(q) and kind in ("plan", "place_time") and not area_names and not region and defaulted:
         route = "knowledge"                              # 名前の辞書にない名前の質問も、知識の型(カードを探す)
     elif kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
@@ -632,6 +635,14 @@ def _other_route(res, cond, now, env, pol):
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
         return
+    if cond["route"] == "unknown_place":                 # 段階72 第3部: 解決できない地名は調べる対象にする(箱根や横浜の答えにしない)
+        from . import place_guard as PG
+        text, targets, found = PG.compose(q, PG.unknown_places(q, env), cond["subjects"], env=env)
+        if found:                                        # 調べて記録した事実がある: その事実で答える
+            res.update(text=text, stage=2, status=STATUS_PASS)
+        else:
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="place", research_targets=targets)
+        return
     if cond["route"] == "name":                          # 段階72 第2部 4
         from . import names as NM
         text = NM.compose(q, env=env)
@@ -819,5 +830,5 @@ def print_result(res, out, err, as_json=False):
     if res.get("needs_research") and res.get("research_kind") == "season_place":
         err.write("名所の記録が足りません: 公式ページ(なければ紹介サイト)の本文を読み、ask record で kind(種)と typical(例年の時期)を記録してから、"
                   "もう一度 ask answer を実行します(最大3ページ。検索の要約は記録しない)\n")
-    elif res.get("needs_research"):
+    elif res.get("needs_research") and res.get("research_kind") != "place":      # 段階72 第3部: 地名の調べは「調べる:」だけ
         err.write("資料が足りません: 公的な解説を読んで ask knowledge add で記録すると、次は資料から答えられます\n")
