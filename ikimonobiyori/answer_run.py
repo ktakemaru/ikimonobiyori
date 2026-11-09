@@ -183,6 +183,24 @@ def resolve(question, now, policy=None):
             "periods": [[d.isoformat() for d in ds] for ds in periods], "defaulted_date": defaulted, "refine": resolve_refine(question, policy)}
 
 
+def _attach_unverified(res, cond, env):
+    """段階72 第5部: 未確認の名所の節を足す。上位 2 件は調べる対象にする(公式ページで確かめられたら通常の名所として記録し、確かめ済みの印を付ける)。"""
+    from . import sources as S
+    from . import unverified as U
+    prefs = None
+    if cond.get("region"):
+        for r in S.load_regions()["regions"]:
+            if cond["region"] in [r["name"], *(r.get("aliases") or [])]:
+                prefs = set((r.get("match") or {}).get("prefectures") or []) or None
+    before = res["text"]
+    res["text"] = U.attach(before, cond["question"], cond.get("subjects") or [], prefs, env)
+    if res["text"] != before:
+        rows = U.lines_for(cond["question"], cond.get("subjects") or [], before, prefs, env)[1:]
+        names = [re.sub(r"^・|\(.*$", "", x) for x in rows][: U.cfg()["verify_top"]]
+        res["research_targets"] = list(res.get("research_targets") or []) + [
+            {"what": "未確認の名所の確認", "where": n, "search": f"{n} 公式"} for n in names]
+
+
 def _default_subjects():
     from . import ask
     return ask.load_policy()["default_subjects"]
@@ -321,6 +339,11 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
             res["stage"], res["status"] = 4, STATUS_DEGRADED
     if not (res.get("text") or "").strip():
         res["text"], res["stage"], res["status"] = _last_resort(cond, now, pol), 4, STATUS_DEGRADED
+    if cond["route"] in ("plan", "season_place", "guide"):   # 段階72 第5部: 記録で確かめた候補のあとに、一般に知られた名所(未確認)の節
+        try:
+            _attach_unverified(res, cond, env)
+        except (OSError, ValueError, KeyError, TypeError) as ex:
+            res["warnings"].append({"code": "unverified_failed", "detail": f"{type(ex).__name__}: {str(ex)[:80]}"})
     try:                                                 # 段階69 第4部 1: 使わない出典(予想・転載)の URL・文は、どの経路でも答えに出さない
         from . import publisher as P
         txt, gone = P.strip_unused(res["text"])

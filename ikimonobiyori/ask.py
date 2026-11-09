@@ -1002,6 +1002,10 @@ def main(argv=None, http_get=None):
     p.add_argument("--failed", help="--mark のページが読めなかった理由")
     p = sub.add_parser("vc-record", help="施設の発信(ビジターセンター)の読んだ事実を記録する(段階55 の規則。段階63b: 読んだ時刻を取得のキャッシュに残す)")
     p.add_argument("--batch", required=True)
+    p = sub.add_parser("record-unverified", help="一般に知られた名所を「未確認」として記録(段階72 第5部。名前・都県・市町村・テーマ・例年の月だけ。データ置き場)。--verify で確かめ済みの印")
+    p.add_argument("--batch", help="記録の JSON(1 件か配列)。項目は name・prefecture(必須)・city・theme・months")
+    p.add_argument("--verify", help="確かめて通常の名所として記録した名前(確かめ済みの印を付ける)")
+    p.add_argument("--prefecture", help="--verify の都県")
     sub.add_parser("coverage", help="探索範囲の都県ごとのデータの棚卸し(段階72 第4部 1。通信しない・書き込まない。Markdown の表)")
     p = sub.add_parser("final-check", help="最終メッセージの検査(段階69 第1部): 利用者に送るメッセージ全体から、作業メモ・提案・質問の文を消し、送ってよい文だけを出す。出力を一字一句そのまま送る")
     p.add_argument("--text", help="最終メッセージのファイル(省くと標準入力)")
@@ -1159,6 +1163,18 @@ def main(argv=None, http_get=None):
         out = VC.record_reports(batch)
         bad = {r["index"] for r in out["rejected"]}
         PC.note([{"url": r.get("url"), "ok": True, "kind": "visitor_center"} for i, r in enumerate(batch) if i not in bad and isinstance(r, dict)], _clock())
+        _out(out)
+        return 1 if out["rejected"] else 0
+    if a.step == "record-unverified":                    # 段階72 第5部
+        from . import unverified as U
+        if a.verify:
+            ok = U.verify(a.verify, a.prefecture, now=now)
+            _out({"verified": ok, "name": a.verify})
+            return 0 if ok else 1
+        if not a.batch:
+            print("--batch か --verify を指定してください", file=sys.stderr)
+            return 2
+        out = U.record(json.loads(Path(a.batch).read_text(encoding="utf-8")), now=now)
         _out(out)
         return 1 if out["rejected"] else 0
     if a.step == "coverage":                             # 段階72 第4部 1

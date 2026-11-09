@@ -1,0 +1,23 @@
+# 段階72 第5部(本人の判断 1。2026-11-10。チャットで「推奨どおり」): 一般に知られた名所を「未確認」として添える(ikimonobiyori/unverified.py)。
+# 記録はデータ置き場(公開リポジトリに入れない)。名前・都県・例年の月だけを出し、電話番号・日付・料金・本数などの細かい事実は書かない。
+schema: ikimono-unverified/1
+file: unverified/spots.jsonl
+# 受け付ける項目(これ以外は拒否)と必須の項目
+fields: [name, prefecture, city, theme, months]
+required: [name, prefecture]
+max_chars: 30
+# 名前・市町村・テーマに細かい事実(電話・時刻・料金・本数・日付)らしい書き方があれば拒否する
+detail_re: '\d{2,}-\d|\d+円|\d+本|\d+株|\d+時|\d+:\d|\d+月\d+日|電話|TEL|tel|料金|入場|駐車'
+source_label: 一般に知られた名所（未確認）
+heading: "ほかに知られている名所（今年の情報・出典は未確認）"
+line: "・{name}({prefecture}{months})"
+months_text: "、例年{months}"
+month_names: [1月, 2月, 3月, 4月, 5月, 6月, 7月, 8月, 9月, 10月, 11月, 12月]
+max_items: 5
+sources_heading: 出典
+# 質問の語 → テーマ(記録の theme と比べる)
+theme_words: {紅葉: 紅葉, もみじ: 紅葉, 梅: 梅, 桜: 桜, さくら: 桜, 菜の花: 菜の花, 紫陽花: 紫陽花, あじさい: 紫陽花, ホタル: ホタル, 蛍: ホタル, ススキ: ススキ, すすき: ススキ, 野鳥: 野鳥, 藤: 藤, 彼岸花: 彼岸花, バラ: バラ, ひまわり: ひまわり}
+# 質問にテーマの語がないとき、計画の対象 → テーマ
+subject_themes: {autumn_leaves: 紅葉, birds: 野鳥}
+# 答えに出したもののうち、この件数を「調べる対象」にする(公式ページで確かめて格上げする。本人の判断 1 の 3)
+verify_top: 2
