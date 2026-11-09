@@ -624,7 +624,7 @@ def _pub_name(url, e):
 def _pub_official(url):
     """段階67 第1部 3(承認欄 C): 町・市・県・国の自身のページは、通信先の承認とは別に「公式」と表示する。"""
     from . import publisher as P
-    return P.is_official(url)
+    return P.shows_official(url)                                     # 段階69 第6部: 当事者のサイトも「公式」と表示
 
 
 def festival_on_dates(f, dates):

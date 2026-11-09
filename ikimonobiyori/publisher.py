@@ -96,13 +96,34 @@ def ledger_kind(url):
     return next((k for h, _, k in _ledger_rows() if h == host and k), None)
 
 
+def party_kind(url, c=None):
+    """段階69 第6部: 設定の表にあるホストの発行元の種類(観光協会・施設の運営者など)。なければ None。"""
+    host = host_of(url)
+    rows = [r for r in ((c or cfg()).get("party_publisher") or {}).get("hosts") or [] if host and _suffix(host, r["suffix"])]
+    return max(rows, key=lambda r: len(r["suffix"]))["kind"] if rows else None
+
+
 def is_official(url, publisher_kind=None, c=None):
-    """発行元の種類で「公式」と表示するか(町・市・県・国の自身のページ)。"""
+    """町・市・県・国の自身のページか(段階67。承認欄 C)。"""
     c = c or cfg()
     kinds = set(c["official_publisher"]["kinds"])
     if publisher_kind in kinds or ledger_kind(url) in kinds:
         return True
     return official_domain(url, c)
+
+
+def is_party(url, publisher_kind=None, c=None):
+    """段階69 第6部(承認 3): 観光協会・公園の管理者・施設の運営者が、当事者として自分で出しているサイトか。"""
+    c = c or cfg()
+    kinds = set((c.get("party_publisher") or {}).get("kinds") or [])
+    return bool(publisher_kind in kinds or ledger_kind(url) in kinds or party_kind(url, c) in kinds)
+
+
+def shows_official(url, publisher_kind=None, c=None):
+    """答えで「公式」と表示するか: 町・市・県・国の自身のページ(段階67)か、当事者のサイト(段階69 第6部)。表示だけの判定で、
+    通信先の承認・source_class・候補の選び方には使わない。"""
+    c = c or cfg()
+    return is_official(url, publisher_kind, c) or is_party(url, publisher_kind, c)
 
 
 def _guide_name(url):

@@ -315,3 +315,75 @@ class Part3Research(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Part5Susuki(unittest.TestCase):
+    """第5部: ススキ・草紅葉のテーマ(別名・秋・穂の様子の文)。名所は今の状態なしで登録でき、「箱根にススキの名所はない?」で出る(合成データ)。"""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.dir}
+
+    REC = {"subject": "flowers", "name": "試験のすすき草原", "city": "箱根町", "prefecture": "神奈川県", "kind": "ススキ",
+           "typical": "9月下旬〜11月上旬", "url": "https://www.example-hakone.test/susuki", "source_class": "official", "basis": "page",
+           "publisher": "試験の観光協会"}
+
+    def test_words_and_season(self):
+        from ikimonobiyori import season_place as SP
+        c = SP.cfg()
+        names = {s["name"]: s for s in c["species"]}
+        self.assertIn("すすき", names["ススキ"]["words"])
+        self.assertIn("草紅葉", names["草紅葉"]["words"])
+        self.assertNotIn("草原", names["ススキ"]["words"])               # 「草原の花」に当たらないよう、単独の「草原」は入れない
+        self.assertIn("ススキ", c["season_species"]["秋"])
+
+    def test_grass_confidence_is_not_bloom(self):
+        from ikimonobiyori import season_place as SP
+        c = SP.cfg()
+        t = SP.confidence_text([{"name": "ススキ"}], c)
+        self.assertIn("穂の様子", t)
+        self.assertNotIn("咲き具合", t)
+
+    def test_hakone_susuki_after_recording_without_state(self):
+        from ikimonobiyori import observations as O
+        from ikimonobiyori import season_place as SP
+        from datetime import date
+        q = "箱根にススキの名所はない?"
+        before = SP.compose(q, today=date(2026, 11, 9), origin="横浜", env=self.env, place=SP.place_filter(q))
+        self.assertEqual(before["research"][0]["what"], "ススキ")
+        out = O.record([dict(self.REC)], env=self.env)
+        self.assertFalse(out.get("rejected"), out)
+        after = SP.compose(q, today=date(2026, 11, 9), origin="横浜", env=self.env, place=SP.place_filter(q))
+        self.assertIn("試験のすすき草原", after["text"])
+        self.assertIn("穂の様子", after["text"])
+        self.assertNotIn("咲き具合", after["text"])
+
+
+class Part6PartyPublisher(unittest.TestCase):
+    """第6部(承認 3): 観光協会・公園の管理者・施設の運営者が当事者として出すサイトは「公式」と表示する。紹介サイトはこれまでどおり。"""
+
+    def test_party_sites_are_official(self):
+        from ikimonobiyori import publisher as P
+        for u in ("https://www.trip-kamakura.com/x", "https://www.tokyo-park.or.jp/x", "https://www.akirunokanko.com/?p=1",
+                  "https://www.yamanashi-kankou.jp/x", "https://www.hakone.or.jp/526", "https://www.fuchu-cpf.or.jp/x"):
+            self.assertTrue(P.shows_official(u), u)
+        for u in ("https://www.walkerplus.com/x", "https://www.jalan.net/x", "https://www.kanaloco.jp/x"):
+            self.assertFalse(P.shows_official(u), u)
+        self.assertTrue(P.shows_official("https://example.test/", publisher_kind="facility_operator"))
+        self.assertFalse(P.is_official("https://example.test/", publisher_kind="facility_operator"))   # 町・市・県・国の判定は段階67 のまま
+
+    def test_secondary_label_has_a_separator(self):
+        from ikimonobiyori import season_place as SP
+        t = SP.cfg()["text"]
+        line = t["typical_secondary"].format(text="6月", publisher="試験の旅行サイト")
+        self.assertIn("紹介サイト「試験の旅行サイト」", line)
+        self.assertNotIn("紹介サイト。", t["typical_secondary"])
+        self.assertEqual(t["typical_secondary_nopub"].format(text="6月"), "・例年の時期: 6月(紹介サイト。公式ではありません)")
+
+    def test_rights_decision_is_recorded_in_catalog(self):
+        import yaml
+        from ikimonobiyori.paths import DATA_FILES_DIR
+        doc = yaml.safe_load((DATA_FILES_DIR / "catalog" / "flowers.yaml").read_text(encoding="utf-8"))
+        rows = {e["name"]: e for e in doc["entries"]}
+        for n in ("吾妻山公園", "寄ロウバイ園", "熱海梅園", "越生梅林", "曽我梅林"):
+            self.assertIn("本人の判断（2026-11-09）", rows[n].get("note", ""), n)
