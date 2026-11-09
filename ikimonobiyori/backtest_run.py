@@ -118,7 +118,7 @@ def main(argv=None, http_get=None, sleep=None):
         print(f"気温が揃っていない({len(missing)} 件): {missing[:5]}…。fetch で取得してから判定する(予測なしと取り違えない)", file=sys.stderr)
         return 3
     res = backtest.evaluate(plan, stations, profile, series, jma_phenology.read_csv(a.normalized))
-    out_dir = Path(a.out_dir) if a.out_dir else paths.data_path("backtest")
+    out_dir = paths.work_path(a.out_dir) or paths.data_path("backtest")      # 段階70 第2部: 相対パスはデータ置き場からの相対
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, sort_keys=True, default=str) + "\n", encoding="utf-8", newline="\n")
     (out_dir / "result.md").write_text(backtest.result_markdown(res), encoding="utf-8", newline="\n")

@@ -52,3 +52,12 @@ def data_dir(env=None, os_name=None, home=None):
 def data_path(rel, env=None):
     """config.yaml の相対パス(cache.dir など)→ 書き込み先の絶対パス。"""
     return data_dir(env) / rel
+
+
+def work_path(p, env=None):
+    """段階70 第2部: 作業フォルダの指定(--out-dir など)→ 絶対パス。相対パスはデータ置き場(data_dir)からの相対として扱う
+    (実行したフォルダ = リポジトリの中に作業フォルダを作らない)。絶対パスはそのまま。空・None は None。"""
+    if p is None or str(p).strip() == "":
+        return None
+    q = Path(str(p).strip()).expanduser()
+    return q if q.is_absolute() else data_dir(env) / q

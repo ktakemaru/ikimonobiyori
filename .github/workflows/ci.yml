@@ -24,8 +24,9 @@ jobs:
       BIYORI_UNDER_TEST: "1"
       PYTHONUTF8: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # 段階70: Node.js 24 で動く版(checkout v7・setup-python v7。どちらも action.yml が using: node24)
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install dependencies
