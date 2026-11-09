@@ -55,6 +55,11 @@ def _has(words, s):
     return any(w in s for w in words)
 
 
+def _unused(s):
+    from . import publisher as P
+    return P.unused_in_text(s)
+
+
 def _is_zero(answer, c):
     return bool(answer) and _has(c["zero_words"], answer)
 
@@ -86,6 +91,9 @@ def check(message, answer=None, c=None):
             removed.append(st)
             skip_block = True
             continue
+        if st and re.match(r"^https?://", st) and _unused(st):           # 段階69 第4部 1: 使わない出典の URL
+            removed.append(st)
+            continue
         if not st or re.match(r"^https?://", st):
             out.append(line)
             continue
@@ -98,7 +106,7 @@ def check(message, answer=None, c=None):
                 kept.append(p)
                 continue
             from_answer = in_answer or _norm(ps) in ans_sents
-            bad = _has(c["work_words"], ps)
+            bad = _has(c["work_words"], ps) or _unused(ps)
             if not bad and zero and _has(c["zero_offer_words"], ps):
                 bad = True
             if not bad and not from_answer and (_has(c["offer_words"], ps) or _is_question(ps, c) or _has(c["zero_offer_words"], ps)):

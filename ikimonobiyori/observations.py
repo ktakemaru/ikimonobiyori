@@ -331,7 +331,12 @@ def validate(rec, policy):
     r = policy["record"]
     errs += untrusted_errors(rec, policy)
     errs += restricted_errors(rec, policy)
+    optional_with = r.get("state_optional_with") or []
     for k in r["required"]:
+        if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
+            continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
+        if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
+            continue                                  # 段階69 第4部 3: 行事の記録は今の状態がなくてよい
         if not rec.get(k):
             errs.append(f"{k} がない")
     if rec.get("source_class") and rec["source_class"] not in r["source_classes"]:
@@ -363,7 +368,8 @@ def validate(rec, policy):
     ev = rec.get("event")
     if ev is not None:
         if not isinstance(ev, dict) or not ev.get("name"):
-            errs.append("event は {name, start, end}")
+            errs.append('event は {"name": "行事の名前", "start": "YYYY-MM-DD", "end": "YYYY-MM-DD"} の形(文字列ではなく)。'
+                        '行事でない記載(花が咲いているなど)は event を省き、state に原文を書く')
         else:
             for k in ("start", "end"):
                 if ev.get(k) is not None:
@@ -469,14 +475,14 @@ def make_record(rec, policy, read_at):
     """検査に通った読んだ事実 → 記録の 1 行(原文は 80 字まで。正規化した語・読んだ時刻はコードが入れる)。"""
     mx = _v(policy["record"]["max_raw_chars"])
     out = {k: rec.get(k) for k in FIELDS if rec.get(k) is not None}
-    out["state"] = str(rec["state"])[:mx]
+    out["state"] = str(rec.get("state") or "")[:mx]          # 段階69 第3部 4: 名所の登録(種と例年の時期)・行事は今の状態がなくてよい(状態不明として持つ)
     if out.get("notice"):                        # 段階58 第2部: 開園日・閉鎖・規制などのお知らせ(短くまとめた語。公式のページのときだけ答えに使う)
         out["notice"] = str(out["notice"])[:mx]
     if out.get("practical"):                     # 段階52: 読めた公式ページの実用情報(アクセス・駐車場・運行・開園時間の変更など)の短い原文
         out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
         out["typical"] = str(out["typical"])[:mx]
-    out["state_norm"] = normalize(rec["subject"], out["state"], policy)
+    out["state_norm"] = normalize(rec["subject"], out["state"], policy) if out["state"] else policy["unknown_state"]
     out.setdefault("state_date", None)
     if out.get("state_date_text"):
         out["state_date_text"] = str(out["state_date_text"])[:mx]

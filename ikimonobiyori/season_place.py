@@ -175,11 +175,12 @@ def gather(sp, origin, c=None, env=None):
     def key(name):
         return re.sub(r"[\s()（）・]", "", name or "")
 
+    from . import publisher as P
     for e in _flower_entries():
         t = e.get("tags") or {}
         kinds = [k for k in (t.get("flower_kinds") or []) if _matches(k, match, sp, c)]
         wins = [w for w in e.get("flower_windows") or [] if _matches(w.get("kind"), match, sp, c)
-                and not O.event_derived(w, e.get("events"), opol, e.get("name"))]
+                and not O.event_derived(w, e.get("events"), opol, e.get("name")) and not P.unused_source(w.get("source_url"))]
         if not kinds and not wins and not _name_matches(e.get("name"), match, sp, c):
             continue
         km, est = _km(e.get("point"), t.get("city"), origin, cat_pol)
@@ -189,7 +190,7 @@ def gather(sp, origin, c=None, env=None):
             "kinds": sorted(set(kinds) | {x["kind"] for x in wins}),
             "start": w["start"] if w else None, "end": w["end"] if w else None,
             "season": window_text(w["start"], w["end"], thirds) if w else None,
-            "url": w["source_url"] if w else ((e.get("sources") or [{}])[0].get("url")),
+            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
             "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
             "publisher": _publisher(w["source_url"], e) if w else "",
             "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
@@ -209,8 +210,12 @@ def gather(sp, origin, c=None, env=None):
         km, est = (by.get("km"), False) if by.get("km") is not None else _km(None, e.get("municipality"), origin, cat_pol)
         if by.get("status") == "out_of_range":
             km = by.get("km")
-        srcs = e.get("sources") or []
-        src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0] if srcs else {})
+        srcs = [x for x in e.get("sources") or [] if not P.unused_source(x.get("url"))]          # 段階69 第4部 1
+        if not srcs:
+            continue
+        if s.get("from_url") and P.unused_source(s.get("from_url")):
+            s, win = {}, {}
+        src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0])
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
             "kinds": kinds, "start": win.get("start"), "end": win.get("end"), "season": s.get("text") if s.get("shown", True) else None,
@@ -239,7 +244,7 @@ def _records(match, env=None, sp=None, c=None):
         except (OSError, ValueError, KeyError):
             continue
         for r in rows:
-            if not _matches(r.get("kind") or "", match, sp, c) or not r.get("name"):
+            if not _matches(r.get("kind") or "", match, sp, c) or not r.get("name") or P.unused_source(r.get("url")):
                 continue
             win = O.parse_typical(r.get("typical"), opol) if r.get("typical") else None
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
@@ -343,10 +348,11 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
             lines += ["", t["head"].format(name=r["name"], where=where, km=km)]
             if r["season"]:
                 pub = r.get("publisher") if r.get("publisher") is not None else _publisher(r["url"])
+                stext = re.sub(r"^例年(の時期は|は)?", "", r["season"]).strip() or r["season"]        # 段階69 第4部 2: 「例年の時期: 例年…」にしない
                 if r["official"]:
-                    ln = t["typical"].format(text=r["season"], publisher=pub) if pub else t["typical_nopub"].format(text=r["season"])
+                    ln = t["typical"].format(text=stext, publisher=pub) if pub else t["typical_nopub"].format(text=stext)
                 else:
-                    ln = t["typical_secondary"].format(text=r["season"], publisher=pub)
+                    ln = t["typical_secondary"].format(text=stext, publisher=pub)
             else:
                 ln = t["typical_unknown"]
             if is_bird:
@@ -368,7 +374,27 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
     return lines, urls, any_secondary
 
 
-def compose(question, *, today, origin, region=None, prefectures=None, env=None, species=None, max_items=None):
+def place_filter(question, c=None):
+    """段階69 第3部: 質問の場所(エリア辞書の名前・別名、または「○○市で」の市区町村)→ {label, cities} か None。"""
+    from . import areas as AR
+    c = c or cfg()
+    q = question or ""
+    for a in AR.load()["areas"]:
+        for n in sorted([a["name"], *(a.get("aliases") or [])], key=len, reverse=True):
+            if n in q:
+                return {"label": n, "cities": list(a.get("cities") or [])}
+    m = re.search(c["place_filter"]["city_re"], q)
+    if m:
+        return {"label": m.group(1), "cities": [m.group(1)]}
+    return None
+
+
+def _in_cities(r, cities):
+    city = r.get("city") or ""
+    return any(ct and (city.startswith(ct) or ct in re.split(r"[・、]", city)) for ct in cities)
+
+
+def compose(question, *, today, origin, region=None, prefectures=None, env=None, species=None, max_items=None, place=None):
     """→ {text, spots, species, species_all, needs_research}。種が 2 つ以上なら種ごとの節。必ず空でない文。
     species: 種の一覧を渡すとき(知識の答えの最後の短い一覧など)。max_items: 1 つの種の名所の上限(既定は設定の max_items)。"""
     c = cfg()
@@ -380,12 +406,29 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
     head = [t["origin_line"].format(origin=origin)]
     body, urls, any_secondary, all_rows, missing = [], [], False, [], []
     birds_only = all(sp["name"] in c.get("bird_species", []) for sp in sps)
+    pf = c["place_filter"]
+    research = []
     for sp in sps:
         is_bird = sp["name"] in c.get("bird_species", [])
         rows, n_out = select(gather(sp, origin, c, env), origin, prefectures, c, by_distance=is_bird)
         if max_items is not None:
             rows = rows[:max_items]
+        place_none = None
+        if place and place.get("cities"):                                # 段階69 第3部: 質問の場所で絞る。なければ 1 文と、ほかの場所の名所
+            own = [r for r in rows if _in_cities(r, place["cities"])]
+            if own:
+                rows = own
+            else:
+                place_none = pf["none"].format(place=place["label"], name=sp["name"])
+                rows = rows[: pf["max_other_items"]]
+                research.append({"what": sp["name"], "where": place["label"], "search": pf["search"].format(place=place["label"], name=sp["name"])})
+        if not rows and not place_none:
+            research.append({"what": sp["name"], "where": (place or {}).get("label") or region,
+                             "search": pf["search"].format(place=(place or {}).get("label") or region, name=sp["name"]) if ((place or {}).get("label") or region)
+                             else pf["search_noplace"].format(name=sp["name"])})
         part, u, sec = _species_part(sp, rows, n_out, today=today, origin=origin, region=region, prefectures=prefectures, table=table, c=c)
+        if place_none:
+            part = [place_none] + ([""] + [pf["others_heading"].format(name=sp["name"])] + part if rows else [])
         if len(sps) > 1:
             body += ["", t["species_heading"].format(name=sp["name"])]
         elif body:
@@ -406,13 +449,13 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
         lines = head + body
     if all_rows:
         lines.append("")
-        lines.append(t["confidence_birds"] if birds_only else t["confidence"])
+        lines.append(confidence_text(sps, c))
         if any_secondary:
             lines.append(t["secondary_note"])
     if urls:
         lines += ["", t["sources_heading"]] + urls
     return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
-            "missing": missing, "needs_research": bool(missing)}
+            "missing": missing, "needs_research": bool(missing or research), "research": research}
 
 
 # ---- 段階69 第2部 3: 種と日付の質問 ----
@@ -547,6 +590,8 @@ def confidence_text(sps, c=None):
     t = c["text"]
     if all(sp["name"] in c.get("bird_species", []) for sp in sps):
         return t["confidence_birds"]
+    if all(sp["name"] in c.get("insect_species", []) for sp in sps):
+        return t["confidence_insects"]
     return t["confidence"]
 
 

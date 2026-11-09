@@ -300,7 +300,7 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         workdir = data_path(ask.load_policy()["work_dir"], env) / (datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6])
     cond = resolve(question, now, pol)
     res = Result(question=question, route=cond["route"], cond=cond, workdir=str(workdir), status=STATUS_PASS, stage=None, errors=[], warnings=[],
-                 removed=[], refresh_pages=[], needs_research=False)
+                 removed=[], refresh_pages=[], needs_research=False, research_targets=[])
     try:
         if cond["route"] == "plan":
             _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0)
@@ -313,6 +313,14 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
             res["stage"], res["status"] = 4, STATUS_DEGRADED
     if not (res.get("text") or "").strip():
         res["text"], res["stage"], res["status"] = _last_resort(cond, now, pol), 4, STATUS_DEGRADED
+    try:                                                 # 段階69 第4部 1: 使わない出典(予想・転載)の URL・文は、どの経路でも答えに出さない
+        from . import publisher as P
+        txt, gone = P.strip_unused(res["text"])
+        if gone and txt.strip():
+            res["text"] = txt
+            res["warnings"].append({"code": "unused_source_removed", "detail": f"{len(gone)}行"})
+    except (OSError, KeyError, TypeError):
+        pass
     res["elapsed_s"] = round(time.monotonic() - t0, 2)
     res["stage_name"] = STAGES.get(res["stage"])
     try:
@@ -423,9 +431,15 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
                                  over_budget=lambda: (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"], workdir=workdir,
                                  names=ask.polish_names(facts_doc)))
     try:
-        res["refresh_pages"] = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
+        pages = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
+        # 段階69 第4部 4: 答えに出た候補のページだけ(字数で外した候補・質問の地域の外の候補のページを読まない)
+        res["refresh_pages"] = [p for p in pages if p.get("name") and p["name"] in (res.get("text") or "")]
     except (KeyError, ValueError, TypeError):
         res["refresh_pages"] = []
+    try:
+        res["refresh_pages"] = _freeze_refresh(cond["question"], res["refresh_pages"], now, env, pol)
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
 
 
 def answer_from_facts(facts_doc, plan_doc, defaulted=False, *, polished=None, gaz=(), policy=None, warnings=None, over_budget=None, workdir=None,
@@ -503,11 +517,15 @@ def _season_place_route(res, cond, now, env):
     if cond.get("region"):
         reg = O.resolve(cond["region"], cond["origin"], O.load_policy())
         prefs = reg.get("prefectures") or None
-    got = SP.compose(cond["question"], today=now.date(), origin=cond["origin"], region=cond.get("region"), prefectures=prefs, env=env)
+    got = SP.compose(cond["question"], today=now.date(), origin=cond["origin"], region=cond.get("region"), prefectures=prefs, env=env,
+                     place=SP.place_filter(cond["question"]))
+    res["research_targets"] = got.get("research") or []                  # 段階69 第3部: 調べる対象(利用者向けの答えには出さない)
     text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
     errs = [e for e in V.generic_check(text)["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
     res["season_place"] = {"species": got["species_all"], "spots": [r["name"] for r in got["spots"]], "missing": got["missing"]}
-    if not got["spots"]:
+    if got.get("research") and got["spots"]:                              # 段階69 第3部: 質問の場所に記録がない(ほかの場所の名所は出した)
+        res.update(text=text, stage=3, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
+    elif not got["spots"]:
         res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
     elif got["needs_research"]:                                           # 一部の種に名所の記録がない(その種は 1 文で書いた)
         res.update(text=text, stage=3, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place", errors=errs)
@@ -570,7 +588,8 @@ def _other_route(res, cond, now, env, pol):
         text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
         res["highlights"] = {"places": got["places"], "cards": got["cards"], "spots": got["spots"]}
         if got["needs_research"]:
-            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="knowledge")
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="knowledge",
+                       research_targets=[{"what": "見どころ", "where": p, "search": f"{p} 自然 見どころ 公式"} for p in got["places"]])
         else:
             res.update(text=text, stage=2, status=STATUS_PASS)
         return
@@ -581,7 +600,8 @@ def _other_route(res, cond, now, env, pol):
         text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
         res["town"] = {"town": got["town"], "spots": [r["name"] for r in got["spots"]]}
         if got["needs_research"]:
-            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
+            res.update(text=text, stage=4, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place",
+                       research_targets=[{"what": "名所", "where": got["town"], "search": f"{got['town']} 名所 自然 公式"}])
         else:
             res.update(text=text, stage=2, status=STATUS_PASS)
         return
@@ -622,8 +642,30 @@ def _other_route(res, cond, now, env, pol):
             return
     m = cfg(pol)
     topic = (cond.get("guide_word") or _first_guide_word(q) or q.strip().rstrip("?？。"))[:20]
+    res["research_targets"] = [{"what": topic, "where": None, "search": f"{topic} 解説 公式"}]
     res.update(text="\n".join([m["knowledge_none"].format(topic=topic), "", m["minimal"]["how_heading"], m["knowledge_how"]]) + "\n",
                stage=4, status=STATUS_DEGRADED, needs_research=True)
+
+
+def _freeze_refresh(question, pages, now, env, pol):
+    """段階69 第4部 4: 同じ質問の 1 回目の答えで読むページを決める。答え直し(有効時間の内)では、1 回目に決めたページの中だけ(新しく足さない)。"""
+    c = cfg(pol)
+    p = data_path(c["refresh_rounds_file"], env)
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        doc = {}
+    key = re.sub(r"\s+", "", question or "")
+    prev = doc.get(key)
+    if prev:
+        at = datetime.fromisoformat(prev["at"])
+        if timedelta(0) <= now - at <= timedelta(hours=c["refresh_rerun_hours"]["value"]):
+            return [x for x in pages if x["url"] in set(prev["urls"])]
+    doc = {k: v for k, v in doc.items() if k != key and now - datetime.fromisoformat(v["at"]) <= timedelta(hours=c["refresh_rerun_hours"]["value"])}
+    doc[key] = {"at": now.isoformat(), "urls": [x["url"] for x in pages]}
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    return pages
 
 
 def _area_zero_route(res, cond, now, env, subjects):
@@ -676,7 +718,9 @@ def _dated_route(res, cond, now, env):
     errs = [e for e in V.generic_check(text)["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
     if nr:
         res.update(text=text, stage=3 if errs else 2, status=STATUS_DEGRADED, needs_research=True,
-                   research_kind="season_place" if cond["route"] == "species_dated" else "knowledge", errors=errs)
+                   research_kind="season_place" if cond["route"] == "species_dated" else "knowledge", errors=errs,
+                   research_targets=[{"what": w, "where": None, "search": f"{w} 名所 時期 公式"} for w in (got.get("missing") or [])]
+                   or [{"what": "見どころ", "where": p, "search": f"{p} 自然 見どころ 公式"} for p in (got.get("places") or [])])
     else:
         res.update(text=text, stage=3 if errs else 2, status=STATUS_DEGRADED if errs else STATUS_PASS, errors=errs)
 
@@ -709,6 +753,8 @@ def print_result(res, out, err, as_json=False):
     err.write(f"状態: {res['status']}(段 {res['stage']}: {res.get('stage_name')})・{res['elapsed_s']}秒・作業フォルダ {res['workdir']}\n")
     for p in res.get("refresh_pages") or []:
         err.write(f"読むページ: {p['url']}({p['name']}。最後に読んだのは {p.get('last_read') or 'まだ'})\n")
+    if res.get("research_targets"):                     # 段階69 第3部: 調べる対象(構造化)。利用者に聞かずに調べて記録し、ask answer をやり直す
+        err.write("調べる: " + json.dumps(res["research_targets"], ensure_ascii=False) + "\n")
     if res.get("needs_research") and res.get("research_kind") == "season_place":
         err.write("名所の記録が足りません: 公式ページ(なければ紹介サイト)の本文を読み、ask record で kind(種)と typical(例年の時期)を記録してから、"
                   "もう一度 ask answer を実行します(最大3ページ。検索の要約は記録しない)\n")

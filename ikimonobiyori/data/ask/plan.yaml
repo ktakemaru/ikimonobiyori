@@ -176,6 +176,8 @@ refine:
 # 段階58 第9部: 答えの骨組み(ikimonobiyori/skeleton.py)の決まり文
 skeleton:
   picks_heading: 今回のおすすめ
+  # 段階69 第4部 3: 段階を語で読めない公式の日付つきの記載は原文と日付で書く。ただし、この語を含む記載(状態が書かれていない)は書かない
+  unknown_skip_words: [記載なし, 記載がない, 情報なし, 状況の記載, 開花状況の記載, 状態の記載, 状態不明]
   confidence_heading: 確かさの補足
   before_heading: 行く前に確認すること
   # 段階65 第6部 2: 地域を指定した質問で、公式の現況が見頃過ぎ・終わりの名所(facts の avoid)を別の欄に事実だけ書く(最大 avoid_max_lines 行)
@@ -389,6 +391,9 @@ answer_run:
   # 段階69 第2部 6: 字数の上限で候補を減らすとき、残す候補の下限(1 つの対象・1 期間)。理由: 「紅葉やススキ、そのほか秋」で、
   # 末尾の補足(今年の情報がない候補・平年・ガイドの目)が字数を使い、おすすめが 3 → 1 件に減っていた(本人の会話の練習 2026-11-09)。
   # おすすめの 3 件は、狙い別の節(歩く・ドライブ・遠出)を 1 件ずつ残せる数(provisional)
+  # 段階69 第4部 4: 読むページは最初の 1 回の答えで決め、答え直したあと(同じ質問をこの時間の内にもう一度)は新しいページを足さない(時間)
+  refresh_rerun_hours: {value: 3, reason: "本人の会話の練習 2026-11-09: 答え直したあと、読むページが新たに3件出た。1回の質問の読み直しは1回まで(段階63b)", provisional: true}
+  refresh_rounds_file: logs/refresh_rounds.json
   min_picks_kept: {value: 3, reason: "本人の会話の練習 2026-11-09: 候補が1件に減った。狙い別の節を1件ずつ残す", provisional: true}
   # 質問の語 → 答える対象(ask の対象)。ガイドの言葉の表(data/guide/policy.yaml の words)のテーマから決める
   subject_by_theme: {紅葉: autumn_leaves, 花: flowers, 野鳥: birds, 冬鳥: birds}

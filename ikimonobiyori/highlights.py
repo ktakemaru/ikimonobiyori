@@ -285,9 +285,12 @@ def outlook_lines(g, on, c, opol, pls=None):
         lines.append(t["now_line"].format(name=s["name"], state=disp, month=d.month, day=d.day, publisher=rec.get("publisher") or ""))
         urls.append(rec.get("url"))
     seen = set()
+    from . import publisher as P
     for s in sorted(g["spots"], key=lambda s: s["name"]):
         for w in s.get("typical") or []:
             if not (w.get("start") and w.get("end")) or w.get("event_derived") or O.event_derived(w, s.get("events"), opol, s["name"]):
+                continue
+            if P.unused_source(w.get("url")):
                 continue
             kind = w.get("kind") or c["kind_labels"].get(s["subject"]) or "・".join(s.get("flower_kinds") or [])
             if not kind or (s["name"], kind) in seen:
@@ -321,6 +324,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     on: その日(日付の一覧)。あれば季節はその日の月の季節を先にし、「今の時期」の代わりに「その日の見込み」を書く(段階69 第2部 2)。"""
     from . import knowledge as K
     from . import observations as O
+    from . import publisher as P
     from . import season_place as SP
     c = cfg()
     t = c["text"]
@@ -356,6 +360,8 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     for s in sorted(g["spots"], key=lambda s: s["name"]):
         for w in s.get("typical") or []:
             if not (w.get("start") and w.get("end")) or w.get("event_derived") or O.event_derived(w, s.get("events"), opol, s["name"]):
+                continue
+            if P.unused_source(w.get("url")):                                 # 段階69 第4部 1: 使わない出典の時期は書かない
                 continue
             kind = w.get("kind") or c["kind_labels"].get(s["subject"]) or "・".join(s.get("flower_kinds") or [])
             if not kind:

@@ -12,6 +12,9 @@ record:
   max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
   source_classes: [official, secondary]
   required: [url, state, source_class]
+  # 段階69 第3部 4: 名所の登録(種 kind と例年の時期 typical。本文を読んだ印 basis: page)は、今の状態(state)がなくても記録できる。
+  # 今の状態は読めたときだけ別に記録する(画像で読めないときは記録しない。推測しない)
+  state_optional_with: [kind, typical]
   # 段階64 第5部: 取得の作法の検査(記録の入口)。
   # basis: 事実の読み方。page = ページの本文を読んだ / search_summary = 検索結果の要約だけ(記録しない)。
   # 種(kind)と例年の時期(typical)の記録(時期と場所の答えの材料)は、本文を読んだ印(basis: page)が要る

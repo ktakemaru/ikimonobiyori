@@ -250,5 +250,61 @@ class Part2FitLength(unittest.TestCase):
         self.assertEqual(AR.cfg()["min_picks_kept"]["value"], 3)
 
 
+class Part3Research(unittest.TestCase):
+    """第3部: 記録がないときは「調べる対象」を構造化して返し、記録したあとは答えが出る。名所の登録は今の状態なしでよい。"""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.dir}
+
+    REC = {"subject": "flowers", "name": "試験のホタルの里", "city": "あきる野市", "prefecture": "東京都", "kind": "ホタル",
+           "typical": "例年6月上旬〜6月下旬", "url": "https://www.city.akiruno.tokyo.jp/test.html", "source_class": "official", "basis": "page",
+           "publisher": "あきる野市"}
+
+    def test_registration_without_state(self):
+        from ikimonobiyori import observations as O
+        pol = O.load_policy()
+        self.assertEqual(O.validate(dict(self.REC), pol), [])
+        self.assertIn("state がない", O.validate({**self.REC, "kind": None}, pol))          # 種と時期のない記録は今の状態が要る
+
+    def test_event_format_error_is_explained(self):
+        from ikimonobiyori import observations as O
+        errs = O.validate({"subject": "flowers", "name": "試験の園", "url": "https://example.org/", "source_class": "official",
+                           "state": "バラが見ごろ", "event": "バラが咲いている"}, O.load_policy())
+        self.assertTrue(any("event を省き" in e for e in errs), errs)
+
+    def test_place_filter(self):
+        from ikimonobiyori import season_place as SP
+        self.assertEqual(SP.place_filter("あきる野市でホタルが見られるところと時期は?")["cities"], ["あきる野市"])
+        self.assertEqual(SP.place_filter("箱根にススキの名所はない?")["cities"], ["箱根町"])
+        self.assertIsNone(SP.place_filter("ホタルが見られる場所"))
+
+    def test_needs_research_then_answer_after_recording(self):
+        from ikimonobiyori import observations as O
+        from ikimonobiyori import season_place as SP
+        from datetime import date
+        q = "あきる野市でホタルが見られるところと時期は?"
+        before = SP.compose(q, today=date(2026, 11, 9), origin="横浜", env=self.env, place=SP.place_filter(q))
+        self.assertEqual(before["research"], [{"what": "ホタル", "where": "あきる野市", "search": "あきる野市 ホタル 公式"}])
+        self.assertIn("あきる野市のホタルは、公式の情報では確かめられませんでした。", before["text"])
+        self.assertNotIn("お答えできません", before["text"])
+        out = O.record([dict(self.REC)], env=self.env)
+        self.assertFalse(out.get("rejected"), out)
+        after = SP.compose(q, today=date(2026, 11, 9), origin="横浜", env=self.env, place=SP.place_filter(q))
+        self.assertEqual(after["research"], [])
+        self.assertIn("試験のホタルの里", after["text"])
+        self.assertNotIn("確かめられませんでした", after["text"])
+
+    def test_stderr_line_and_not_in_the_answer(self):
+        import io
+        from ikimonobiyori import answer_run as AR
+        res = {"text": "答え\n", "status": "DEGRADED", "stage": 3, "elapsed_s": 0.1, "workdir": "x",
+               "research_targets": [{"what": "ホタル", "where": "あきる野市", "search": "あきる野市 ホタル 公式"}]}
+        out, err = io.StringIO(), io.StringIO()
+        AR.print_result(res, out, err)
+        self.assertNotIn("調べる", out.getvalue())
+        self.assertIn('調べる: [{"what": "ホタル", "where": "あきる野市"', err.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
