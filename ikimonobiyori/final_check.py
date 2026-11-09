@@ -150,10 +150,12 @@ def _tidy(text):
         out.pop()
     res = []
     for i, l in enumerate(out):
-        if re.match(r"^#{1,4}\s", l):
+        m = re.match(r"^(#{1,4})\s", l)
+        if m:
             rest = []
             for x in out[i + 1:]:
-                if re.match(r"^#{1,4}\s", x):
+                mx = re.match(r"^(#{1,4})\s", x)
+                if mx and len(mx.group(1)) <= len(m.group(1)):       # 同じか上の見出しで節が終わる(下の見出し「### 秋」は節の中身。段階69 第7部)
                     break
                 rest.append(x)
             if not any(x.strip() for x in rest):

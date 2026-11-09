@@ -435,3 +435,12 @@ class Part7Fixes(unittest.TestCase):
         self.assertTrue(pl[0].get("site_id"), pl)                           # エリア「高尾」(別名 高尾山)より山の地点
         self.assertEqual(pl[0]["label"], "高尾山")
         self.assertEqual(HL.places("日光の見どころ", cards=[])[0]["name"], "日光")   # 地点にない語はエリアのまま
+
+
+class Part7FinalCheckHeadings(unittest.TestCase):
+    def test_heading_followed_by_a_subheading_is_kept(self):
+        from ikimonobiyori import final_check as FC
+        ans = "**試験山の見どころ**\n\n## 季節ごとの見どころ\n### 秋\n・試験山: 紅葉\n\n## 空の節\n\n## 行く前に\n・試験の注意\n\n出典\nhttps://example.org/a\n"
+        out = FC.check(ans, answer=ans)["text"]
+        self.assertIn("## 季節ごとの見どころ\n### 秋\n・試験山: 紅葉", out)
+        self.assertNotIn("## 空の節", out)                                   # 中身のない節はこれまでどおり消す
