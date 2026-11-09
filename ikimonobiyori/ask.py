@@ -10,7 +10,7 @@ biyori-hub の concierge_skill/ask.py(段階H8〜H10)が行っていた生き物
   python -X utf8 -m ikimonobiyori.ask plan --out-dir DIR [--subject S] [--explain 名所] [--override 名所 --reason 理由 [--replace 計画の名所]]   (段階56。facts のあと、答えを書く前に)
   python -X utf8 -m ikimonobiyori.ask verify --out-dir DIR --text answer.txt [--gazetteer names.json ...]
 
-作業フォルダ(--out-dir。省くと IKIMONOBIYORI_DATA_DIR の下の ask/<日時>)に plan.json・records.json・facts.json・check.json・
+作業フォルダ(--out-dir。省くと IKIMONOBIYORI_DATA_DIR の下の ask/<日時>。相対パスは IKIMONOBIYORI_DATA_DIR からの相対。段階70)に plan.json・records.json・facts.json・check.json・
 final.txt と、呼び出しの記録 calls.json を書く。記録そのもの(observations/)も IKIMONOBIYORI_DATA_DIR の下(CLAUDE.md 規則 8)。
 値・語は data/ask/policy.yaml。"""
 import argparse
@@ -29,7 +29,7 @@ from . import offers as OF
 from . import origins
 from . import observations as O
 from . import sources as S
-from .paths import DATA_FILES_DIR, PKG, data_dir, data_path
+from .paths import DATA_FILES_DIR, PKG, data_dir, data_path, work_path
 
 POLICY_PATH = DATA_FILES_DIR / "ask" / "policy.yaml"
 
@@ -1011,6 +1011,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
     a = ap.parse_args(argv)
     pol = load_policy()
+    if getattr(a, "out_dir", None):                # 段階70 第2部: 相対パスはデータ置き場からの相対(リポジトリの中に作業フォルダを作らない)
+        a.out_dir = str(work_path(a.out_dir))
     out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
     if a.step == "page" and not out_dir:                  # 段階64 第4部 3: 直前の答えが計画の型でない(時期と場所・町・知識)なら、その答えのページ
         from . import answer_page as APG

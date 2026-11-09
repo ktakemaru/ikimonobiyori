@@ -130,5 +130,42 @@ class Part1GrassInAutumnPlan(unittest.TestCase):
         self.assertIn("\n出典\n", got["text"])
 
 
+class Part2RelativeOutDir(unittest.TestCase):
+    """第2部: --out-dir の相対パスは、データ置き場からの相対(実行したフォルダ = リポジトリの中に作業フォルダを作らない)。"""
+
+    def test_work_path(self):
+        from ikimonobiyori import paths
+        base = tempfile.mkdtemp()
+        env = {"IKIMONOBIYORI_DATA_DIR": base}
+        self.assertEqual(paths.work_path("ask/試験", env), Path(base) / "ask" / "試験")
+        absolute = Path(tempfile.mkdtemp()) / "wd"
+        self.assertEqual(paths.work_path(str(absolute), env), absolute)
+        self.assertIsNone(paths.work_path(None, env))
+        self.assertIsNone(paths.work_path("  ", env))
+
+    def test_ask_prepare_with_relative_out_dir_writes_under_the_data_dir(self):
+        from ikimonobiyori import ask
+        base = tempfile.mkdtemp()
+        cwd = tempfile.mkdtemp()
+        old = os.getcwd()
+        try:
+            os.chdir(cwd)
+            with mock.patch.dict("os.environ", {"IKIMONOBIYORI_DATA_DIR": base}), redirect_stdout(io.StringIO()):
+                self.assertEqual(ask.main(["prepare", "--out-dir", "work/rel-test", "--subject", "autumn_leaves", "--region", "神奈川",
+                                           "--when", "2026-11-14", "--now", NOW.isoformat()]), 0)
+        finally:
+            os.chdir(old)
+        self.assertTrue((Path(base) / "work" / "rel-test" / "params.json").exists())
+        self.assertFalse((Path(cwd) / "work").exists())
+
+    def test_backtest_out_dir_uses_work_path(self):
+        src = (ROOT / "ikimonobiyori" / "backtest_run.py").read_text(encoding="utf-8")
+        self.assertIn("paths.work_path(a.out_dir)", src)
+
+    def test_help_says_relative_paths_are_under_the_data_dir(self):
+        from ikimonobiyori import ask
+        self.assertIn("相対パスは IKIMONOBIYORI_DATA_DIR からの相対", ask.__doc__)
+
+
 if __name__ == "__main__":
     unittest.main()
