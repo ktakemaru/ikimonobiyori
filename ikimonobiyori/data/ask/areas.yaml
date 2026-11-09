@@ -27,6 +27,11 @@ pending_areas:
   - {name: 霞ヶ浦, aliases: [霞ケ浦, かすみがうら, 霞ヶ浦湖岸, 西浦], kind: 湖, prefectures: [茨城県], center: {lat: 36.040278, lon: 140.394167}, qid: Q1077984, note: 座標は Wikidata(段階73)。湖岸の市町村は未確認}
   - {name: 印旛沼, aliases: [北印旛沼, 西印旛沼], kind: 沼, prefectures: [千葉県], center: {lat: 35.8, lon: 140.25}, qid: Q5120731, note: 座標は Wikidata の優先値(段階73)。沼岸の市町村は未確認}
   - {name: 相模湖, aliases: [], kind: 湖, prefectures: [神奈川県], cities: [相模原市], center: {lat: 35.613889, lon: 139.183333}, qid: Q720883, note: 座標と市(相模原市緑区)は Wikidata(段階73)}
+  - {name: 北浦, aliases: [北浦湖岸], kind: 湖, prefectures: [茨城県], center: {lat: 36.004444, lon: 140.578056}, qid: Q56636334, note: 座標は Wikidata の参照つきの値(段階73。値が2つあり、もう一方は参照なし)。湖岸の市町村は未確認}
+  - {name: 涸沼, aliases: [ひぬま], kind: 湖, prefectures: [茨城県], center: {lat: 36.275, lon: 140.5}, qid: Q11559648, note: 座標は Wikidata(段階73)。観察施設は茨城町(展示施設)と鉾田市(観察棟)}
+  - {name: 手賀沼, aliases: [], kind: 沼, prefectures: [千葉県], center: {lat: 35.8581, lon: 140.027}, qid: Q3215223, note: 座標は Wikidata(段階73)。沼岸の市町村は未確認}
+  - {name: 多々良沼, aliases: [], kind: 沼, prefectures: [群馬県], cities: [館林市, 邑楽町], center: {lat: 36.257778, lon: 139.496944}, qid: Q11430587, note: 座標と市町村(館林市と邑楽町にまたがる)は Wikidata(段階73)}
+  - {name: 渡良瀬遊水地, aliases: [渡良瀬遊水池], kind: 遊水地, prefectures: [栃木県, 群馬県, 埼玉県, 茨城県], note: 範囲・座標は未確認(段階73。Wikidata の項目は検索だけで未読)}
   - {name: 荒川, aliases: [荒川河川敷, 荒川の河川敷], kind: 川, prefectures: [埼玉県, 東京都], note: 川全体は範囲が広い。区間は未確認(段階73)。東京都荒川区とは別}
   - {name: 利根川, aliases: [利根川河川敷], kind: 川, prefectures: [群馬県, 埼玉県, 茨城県, 千葉県], note: 川全体は範囲が広い。区間は未確認(段階73)}
 
