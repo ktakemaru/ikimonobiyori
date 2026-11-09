@@ -602,3 +602,24 @@ sources:
     readable: {status: ok, checked_on: "2026-11-10", robots: unknown, note: "robots.txt は 404。一覧は全78件(2026-11-10 に読んだ)"}
     terms: {status: not_checked, url: "https://niigata-kankou.or.jp/site-policy/", note: "サイトポリシーは未読"}
     approval: {status: pending, reason: "段階73 第3部で見つけた公式の紅葉情報(県の観光協会)。承認は本人"}
+
+  # 段階73(福島県・下郷町): 承認待ちで足した(承認の記入はしない)
+  - id: shimogo-kanko-blog
+    publisher: 下郷町観光協会
+    publisher_kind: tourism_association
+    url: "https://shimogo.jp/blog/"
+    kind: status_page
+    covers:
+      - {name: 観音沼森林公園, label: 観音沼森林公園}
+      - {name: 塔のへつり, label: 塔のへつり}
+      - {name: 大内宿, label: 大内宿}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      date_basis: updated_date
+      note: "ブログ「町内の様子」に写真と短い文(「今が見頃です」「ピークです」「いい感じになってきています」)。決まった状態の語はない。2026年は 10/8・10/22・10/26・10/28・11/2 の記事"
+    readable: {status: ok, checked_on: "2026-11-10", robots: allows, note: "robots.txt は /wp-admin/ だけ拒否"}
+    terms: {status: not_checked, note: "利用規約のページは未読"}
+    approval: {status: pending, reason: "段階73 で見つけた公式の紅葉の発信(町の観光協会のブログ)。承認は本人"}

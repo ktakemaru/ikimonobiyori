@@ -2768,3 +2768,173 @@ entries:
       unapproved_host: true
       source_year: null
       note: '観光いばらき: ロウバイ 例年の見頃 1月中旬〜2月上旬'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0084
+    name: 七二会小坂の福寿草
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 長野県
+      area: 長野市
+      city: 長野市
+      terrain:
+      - mountain
+      flower_kinds:
+      - 福寿草
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      title: Go! NAGANO 長野県の福寿草の名所(2026年3月16日更新。例年の見頃)
+      checked_on: '2026-11-10'
+    note: 福寿草まつり 2026年3月1日〜29日(行事)
+    flower_windows:
+    - kind: 福寿草
+      start: 03-01
+      end: 03-31
+      source_url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      source_host: www.go-nagano.net
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長野県観光機構: 例年の見頃 3月上旬〜下旬(3万本以上)'
+  - id: hana-0085
+    name: 赤怒田福寿草群生地
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 長野県
+      area: 松本市
+      city: 松本市
+      terrain:
+      - mountain
+      flower_kinds:
+      - 福寿草
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      title: Go! NAGANO 長野県の福寿草の名所(2026年3月16日更新。例年の見頃)
+      checked_on: '2026-11-10'
+    note: 松本市四賀福寿草まつり 2026年3月7日〜22日(行事)
+    flower_windows:
+    - kind: 福寿草
+      start: 03-01
+      end: 03-31
+      source_url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      source_host: www.go-nagano.net
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長野県観光機構: 例年3月上旬〜下旬ごろ(50万株)'
+  - id: hana-0086
+    name: 沢底の福寿草
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 長野県
+      area: 辰野町
+      city: 辰野町
+      terrain:
+      - mountain
+      flower_kinds:
+      - 福寿草
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      title: Go! NAGANO 長野県の福寿草の名所(2026年3月16日更新。例年の見頃)
+      checked_on: '2026-11-10'
+    note: コース外への立ち入りは控える
+    flower_windows:
+    - kind: 福寿草
+      start: 02-11
+      end: 02-28
+      source_url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      source_host: www.go-nagano.net
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長野県観光機構: 例年2月中旬〜下旬(2026年の観賞期間は2月15日〜28日)'
+  - id: hana-0087
+    name: 原大沢地区の福寿草群生地
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 長野県
+      area: 木島平村
+      city: 木島平村
+      terrain:
+      - mountain
+      flower_kinds:
+      - 福寿草
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      title: Go! NAGANO 長野県の福寿草の名所(2026年3月16日更新。例年の見頃)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 福寿草
+      start: 03-21
+      end: 04-10
+      source_url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      source_host: www.go-nagano.net
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長野県観光機構: 例年3月下旬〜4月上旬'
+  - id: hana-0088
+    name: 福寿草の里(木祖村)
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 長野県
+      area: 木祖村
+      city: 木祖村
+      terrain:
+      - mountain
+      flower_kinds:
+      - 福寿草
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      title: Go! NAGANO 長野県の福寿草の名所(2026年3月16日更新。例年の見頃)
+      checked_on: '2026-11-10'
+    note: 国道沿いに駐車しない
+    flower_windows:
+    - kind: 福寿草
+      start: 03-11
+      end: 04-10
+      source_url: https://www.go-nagano.net/nature-and-outdoors/id22801
+      source_host: www.go-nagano.net
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長野県観光機構: 例年の見頃は3月中旬〜4月上旬'
