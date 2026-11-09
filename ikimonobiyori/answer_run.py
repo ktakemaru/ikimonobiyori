@@ -316,6 +316,11 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         APG.remember(res, now, env)
     except (OSError, KeyError, TypeError):
         pass
+    try:                                                 # 段階69 第1部: 最終メッセージの検査(ask final-check)で、答えの本文と添えた文を見分ける
+        from . import final_check as FC
+        FC.remember_answer(res["text"], question, now, env)
+    except (OSError, KeyError, TypeError):
+        pass
     try:
         Path(workdir).mkdir(parents=True, exist_ok=True)
         (Path(workdir) / "final.txt").write_text(res["text"], encoding="utf-8")
@@ -356,6 +361,7 @@ def read_log(env=None):
 def report(rows):
     """記録の集計: よく落ちる検査・よく出る警告・フォールバックの段と状態の割合・かかった時間。→ 文字列"""
     from collections import Counter
+    rows = [r for r in rows if not r.get("kind")]        # 段階69: 最終メッセージの検査の記録(kind: final_check)は答えの数に入れない
     n = len(rows)
     if not n:
         return "記録がまだありません。" + NL
