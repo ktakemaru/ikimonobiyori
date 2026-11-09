@@ -53,5 +53,30 @@ class Lakes(unittest.TestCase):
         self.assertIsNotNone(PG.pending_area("西浦"))
 
 
+class CityPrefecture(unittest.TestCase):
+    """段階73 第3部: 都県の書いていない記録を、都県が 1 つの地域の質問にその都県として入れない(長野県の答えに飯能市の天覧山)。"""
+    def test_prefecture_of_city(self):
+        from ikimonobiyori import observations as O
+        self.assertEqual(O.prefecture_of_city("飯能市"), "埼玉県")
+        self.assertEqual(O.prefecture_of_city("", "いわき市"), "福島県")
+        self.assertIsNone(O.prefecture_of_city("試験村"))
+
+    def test_other_prefecture_record_is_not_in_single_prefecture_region(self):
+        import tempfile
+        from datetime import date, datetime, timedelta, timezone
+        from ikimonobiyori import observations as O
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            now = datetime(2026, 11, 10, 9, 0, tzinfo=timezone(timedelta(hours=9)))
+            O.record([{"subject": "autumn_leaves", "name": "試験の山", "city": "飯能市", "kind": "紅葉", "typical": "例年11月下旬",
+                       "state": "", "url": "https://example.org/a", "publisher": "試験の紹介", "source_class": "secondary", "basis": "page"},
+                      {"subject": "autumn_leaves", "name": "試験の村の池", "city": "試験村", "kind": "紅葉", "typical": "例年11月中旬",
+                       "state": "", "url": "https://example.org/b", "publisher": "試験の紹介", "source_class": "secondary", "basis": "page"}], env=env, now=now)
+            f = O.facts("autumn_leaves", region="長野県", dates=[date(2026, 11, 14)], now=now, env=env)
+            names = [c["name"] for c in f["candidates"]]
+            self.assertNotIn("試験の山", names)
+            self.assertIn("試験の村の池", names)          # 手がかりのない記録は従来どおり地域の都県
+
+
 if __name__ == "__main__":
     unittest.main()

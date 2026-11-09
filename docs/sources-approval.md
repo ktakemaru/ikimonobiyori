@@ -8,9 +8,9 @@
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
-| 現況の情報源（sources/） | 44 | 30 | 3 |
+| 現況の情報源（sources/） | 44 | 32 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 108 | 14 | 2 |
+| 名所カタログ（catalog/） | 126 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -45,7 +45,7 @@
 | 田貫湖ふれあい自然塾 | 環境省(サイトの表記) | https://tanuki-ko.gr.jp/nature-season/ | 未確認 | html | 転載の記載なし。All Rights Reserved |  |  | **保留**: 自然情報の日付が未確認 |
 | 神奈川県立宮ヶ瀬ビジターセンター | 未確認(カードの出典の自然公園だより(2010年1月)は神奈川県公園協会のサイトに掲載) | なし(公式の施設ページを確認できなかった) | 未確認 | pdf | 規約のページなし(公式の施設ページが見つからない)。県の宮ケ瀬湖周辺施設の指定管理のページ(2026-03-27 更新)にも施設名がない | はい | カード2枚(シモバシラ)の事実と出典だけ | **保留**: 段階61 第8部で台帳に承認待ちで追加。公式サイトと現在の運営(2016年に閉館して改装されたとする報道がある。公式では未確認)を確かめられない |
 
-### 1-B. 現況の情報源の台帳（承認待ち 30件）
+### 1-B. 現況の情報源の台帳（承認待ち 32件）
 承認の有無にかかわらず読んで記録してよい（段階34。区分は『公式ではない』などで出る）。承認は、台帳上の『公式の現況』扱いにするかどうかの判断。
 
 | 台帳 | 情報源 | 発行元の種類 | 最新情報のページ | 形式 | 読めた状態（確認日） | 推奨と理由 |
@@ -56,6 +56,8 @@
 | autumn_leaves.yaml | 秩父観光協会（chichibu-kanko-kouyou） | tourism_association | https://www.chichibuji.gr.jp/event/kouyou/ | forecast_page | ok（2026-10-23） | **要判断**: robots.txt で AI エージェントによる取得を拒む意思が読み取れる(この道具は名指しされていないが安全側)。今年の状況もない |
 | autumn_leaves.yaml | 伊勢原市（isehara-oyama-koyo） | municipality | https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/ | forecast_page | ok（2026-10-23） | **保留**: 2024 年公開の古いページで、今年の状態・日程がない(ライトアップ「11月下旬ごろ」だけ)。現況の情報源にせず、例年の時期の参考として人が開く URL にとどめる(ユーザーの見直し 2026-10-23) |
 | autumn_leaves.yaml | 八方尾根索道事業者協議会(白馬八方尾根)（happo-one-news-green） | facility_operator | https://www.happo-one.jp/news-green/ | status_page | ok（2026-10-23） | **要判断**: 状態の決まった語がなく段階が付けられない。人が開く URL として扱う(段階16 の見直し 2026-10-23) |
+| autumn_leaves.yaml | 一般社団法人いわき観光まちづくりビューロー(いわき市観光サイト)（iwaki-kanko-koyo） | tourism_association | https://kankou-iwaki.or.jp/feature/autumnleaves/top | status_page | ok（2026-11-10） | **保留**: 段階73 第3部で見つけた公式の紅葉情報(観光協会)。承認は本人 |
+| autumn_leaves.yaml | 公益社団法人新潟県観光協会(にいがた観光ナビ)（niigata-kanko-koyo） | tourism_association | https://niigata-kankou.or.jp/season/autumn_leaves/ | status_page | ok（2026-11-10） | **保留**: 段階73 第3部で見つけた公式の紅葉情報(県の観光協会)。承認は本人 |
 | birds.yaml | 谷津干潟自然観察センター(習志野市の施設)（yatsu-higata-center） | park_manager | https://www.seibu-la.co.jp/yatsuhigata/ | status_page | unconfirmed（2026-10-24） | **保留**: 読めなかった(HTTP 503)。利用条件も未確認。人が開く URL として扱う。次に読めたら条件を確かめる |
 | birds.yaml | 我孫子市(鳥の博物館)（abiko-bird-museum-toridayori） | municipality | https://www.city.abiko.chiba.jp/bird-mus/info2/shupambutsu/toridayori.html | status_page | partial（2026-10-24） | **要判断**: 状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う |
 | flowers.yaml | 京成バラ園芸株式会社(京成バラ園)（keisei-rose-garden） | facility_operator | https://www.keiseirose.co.jp/garden/ | status_page | ok（2026-10-24） | **要判断**: 利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う |
@@ -178,7 +180,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 108件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 126件。うち本人の承認 14件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -199,7 +201,7 @@
 - catalog/autumn_leaves.yaml: 承認した人 claude_code_provisional が 17件
 - catalog/autumn_leaves.yaml: 承認した人 記入なし（段階19 以前の承認） が 20件
 - catalog/birds.yaml: 承認した人 claude_code_provisional が 5件
-- catalog/flowers.yaml: 承認した人 claude_code_provisional が 52件
+- catalog/flowers.yaml: 承認した人 claude_code_provisional が 70件
 
 ## 3. 取り消し・引退（5件）
 

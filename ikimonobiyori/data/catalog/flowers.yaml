@@ -2088,3 +2088,683 @@ entries:
         source_host: kankou.town.kawazu.shizuoka.jp
         source_class: secondary
         note: "河津町観光協会の発表(期間は令和9年2月6日から3月7日)。通信先が公式の一覧にないので verified: false"
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0066
+    name: 桜山公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 群馬県
+      area: 藤岡
+      city: 藤岡市
+      terrain:
+      - garden
+      - mountain
+      flower_kinds:
+      - 冬桜
+      - ロウバイ
+      - 福寿草
+      - 河津桜
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/sakurayamakouenhananokaikazyouhou.html
+      title: 藤岡市 桜山公園の花情報(2026年3月6日更新)
+      checked_on: '2026-11-10'
+    - url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/huyusakura.html
+      title: 藤岡市 冬桜について(2026年10月15日更新。11月中旬から12月初旬が一番良い時期)
+      checked_on: '2026-11-10'
+    note: 桜山まつりは毎年12月上旬(行事。例年の時期とは別)
+    flower_windows:
+    - kind: 冬桜
+      start: 11-11
+      end: 12-20
+      source_url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/sakurayamakouenhananokaikazyouhou.html
+      source_host: www.city.fujioka.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '藤岡市: 冬桜の見頃は11月中旬〜12月中旬(約7,000本)'
+    - kind: ロウバイ
+      start: 12-21
+      end: 02-28
+      source_url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/sakurayamakouenhananokaikazyouhou.html
+      source_host: www.city.fujioka.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '藤岡市: ロウバイの見頃は12月下旬〜2月下旬ごろ(約150本)'
+    - kind: 福寿草
+      start: 02-11
+      end: 03-20
+      source_url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/sakurayamakouenhananokaikazyouhou.html
+      source_host: www.city.fujioka.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '藤岡市: 福寿草は2月中旬〜3月中旬(約300株)'
+    - kind: 河津桜
+      start: 02-21
+      end: 03-20
+      source_url: https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/1/sakurayamakouenhananokaikazyouhou.html
+      source_host: www.city.fujioka.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '藤岡市: 河津桜は2月下旬〜3月中旬(数10本)'
+  - id: hana-0067
+    name: 箕郷梅林
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 群馬県
+      area: 高崎
+      city: 高崎市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.city.takasaki.gunma.jp/site/sightseeing/6436.html
+      title: 高崎市 箕郷梅林(2025年12月24日更新)
+      checked_on: '2026-11-10'
+    note: みさと梅まつりは梅の開花にあわせて開催(日付は未発表)
+    flower_windows:
+    - kind: 梅
+      start: 02-21
+      end: 03-31
+      source_url: https://www.city.takasaki.gunma.jp/site/sightseeing/6436.html
+      source_host: www.city.takasaki.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '高崎市: 開花時期は2月下旬から3月下旬(約10万本)'
+  - id: hana-0068
+    name: 榛名梅林
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 群馬県
+      area: 高崎
+      city: 高崎市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.city.takasaki.gunma.jp/site/sightseeing/4639.html
+      title: 高崎市 榛名梅林(2023年12月18日更新)
+      checked_on: '2026-11-10'
+    note: 榛名の梅祭りは毎年3月第3日曜日(行事)
+    flower_windows:
+    - kind: 梅
+      start: 03-01
+      end: 03-31
+      source_url: https://www.city.takasaki.gunma.jp/site/sightseeing/4639.html
+      source_host: www.city.takasaki.gunma.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '高崎市: 開花時期は3月上旬から下旬(約12万本)'
+  - id: hana-0069
+    name: 秋間梅林
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 群馬県
+      area: 安中
+      city: 安中市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.city.annaka.lg.jp/page/2080.html
+      title: 安中市 秋間梅林、秋間梅林祭(2026年2月16日更新)
+      checked_on: '2026-11-10'
+    - url: https://www.city.annaka.lg.jp/page/2051.html
+      title: 安中市 開花情報
+      checked_on: '2026-11-10'
+    note: 2026年の秋間梅林祭は2月14日〜3月下旬(終わった行事)
+    flower_windows:
+    - kind: 梅
+      start: 03-01
+      end: 03-20
+      source_url: https://www.city.annaka.lg.jp/page/2080.html
+      source_host: www.city.annaka.lg.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '安中市: 例年見頃は3月上旬〜中旬'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0070
+    name: 修善寺梅林
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 静岡県
+      area: 修善寺
+      city: 伊豆市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://kanko.city.izu.shizuoka.jp/annual-events/annual-events-1231/
+      title: 伊豆市観光協会 修善寺梅林
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 梅
+      start: 02-01
+      end: 03-10
+      source_url: https://kanko.city.izu.shizuoka.jp/annual-events/annual-events-1231/
+      source_host: kanko.city.izu.shizuoka.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '伊豆市観光協会: 例年1月下旬頃から咲き始め、2月上旬〜3月上旬に見頃(約20種類1,000本)'
+  - id: hana-0071
+    name: 修禅寺(修善寺寒桜)
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 静岡県
+      area: 修善寺
+      city: 伊豆市
+      terrain:
+      - temple_shrine
+      flower_kinds:
+      - 寒桜
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://kanko.city.izu.shizuoka.jp/news/shuzenjikanzakura_kaika_2026/
+      title: 伊豆市観光協会 修禅寺(修善寺寒桜) 開花状況 2026
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 寒桜
+      start: 02-21
+      end: 03-20
+      source_url: https://kanko.city.izu.shizuoka.jp/news/shuzenjikanzakura_kaika_2026/
+      source_host: kanko.city.izu.shizuoka.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '伊豆市観光協会: 例年の見頃 2月下旬〜3月中旬(2026年は3/4に見頃)'
+  - id: hana-0072
+    name: 佐鳴湖公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 静岡県
+      area: 浜松
+      city: 浜松市
+      terrain:
+      - lake
+      flower_kinds:
+      - 河津桜
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.pref.shizuoka.jp/kurashikankyo/shizenkankyo/sakura/1057743/1058310/1058311.html
+      title: 静岡県 桜の名所 佐鳴湖公園(2025年12月26日更新)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 河津桜
+      start: 02-11
+      end: 02-20
+      source_url: https://www.pref.shizuoka.jp/kurashikankyo/shizenkankyo/sakura/1057743/1058310/1058311.html
+      source_host: www.pref.shizuoka.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '静岡県: カワヅザクラは2月中旬'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0073
+    name: 不老園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 山梨県
+      area: 甲府
+      city: 甲府市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.yamanashi-kankou.jp/special/umenohana.html
+      title: 富士の国やまなし観光ネット 山梨・おすすめ梅の名所(2025年3月1日更新)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 梅
+      start: 02-21
+      end: 02-28
+      source_url: https://www.yamanashi-kankou.jp/special/umenohana.html
+      source_host: www.yamanashi-kankou.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: 'やまなし観光推進機構: 見頃時期 2月下旬(30種類 約2,000本)'
+  - id: hana-0074
+    name: 梅の里(敷島総合公園)
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 山梨県
+      area: 甲斐
+      city: 甲斐市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.yamanashi-kankou.jp/special/umenohana.html
+      title: 富士の国やまなし観光ネット 山梨・おすすめ梅の名所(2025年3月1日更新)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 梅
+      start: 02-11
+      end: 03-20
+      source_url: https://www.yamanashi-kankou.jp/special/umenohana.html
+      source_host: www.yamanashi-kankou.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: 'やまなし観光推進機構: 見頃時期 2月中旬〜3月中旬(本文 約1,000本)'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0075
+    name: とうざんの里
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 山梨県
+      area: 富士五湖
+      city: 西桂町
+      terrain:
+      - garden
+      flower_kinds:
+      - 福寿草
+      - エビネ
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.yamanashi-kankou.jp/kankou/spot/tozannosato.html
+      title: 富士の国やまなし観光ネット とうざんの里(2024年7月22日現在)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 福寿草
+      start: 02-01
+      end: 02-20
+      source_url: https://www.yamanashi-kankou.jp/kankou/spot/tozannosato.html
+      source_host: www.yamanashi-kankou.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: 'やまなし観光推進機構: 福寿草の見ごろ 2月上旬から2月中旬(2024年7月22日現在の情報)'
+    - kind: エビネ
+      start: 04-21
+      end: 05-10
+      source_url: https://www.yamanashi-kankou.jp/kankou/spot/tozannosato.html
+      source_host: www.yamanashi-kankou.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: エビネの見ごろ 4月下旬から5月上旬
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0076
+    name: 江月水仙ロード
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 千葉県
+      area: 鋸南
+      city: 鋸南町
+      terrain:
+      - mountain
+      flower_kinds:
+      - 水仙
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://maruchiba.jp/spot/detail_10367.html
+      title: ちば観光ナビ 江月水仙ロード
+      checked_on: '2026-11-10'
+    - url: https://www.town.kyonan.chiba.jp/site/tourism/2559.html
+      title: 鋸南町 水仙ロード周遊コース(2025年6月11日更新)
+      checked_on: '2026-11-10'
+    - url: https://maruchiba.jp/event/detail_11486.html
+      title: ちば観光ナビ 水仙まつり(2026年12月5日〜2027年1月31日)
+      checked_on: '2026-11-10'
+    note: 水仙まつり(江月水仙ロード・をくづれ水仙郷)は2026年12月5日(土)〜2027年1月31日(日)(行事の期間。例年の時期とは別)
+    flower_windows:
+    - kind: 水仙
+      start: 12-11
+      end: 01-31
+      source_url: https://maruchiba.jp/spot/detail_10367.html
+      source_host: maruchiba.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '千葉県観光物産協会: 例年12月中旬〜1月末にかけてが水仙の見ごろ(鋸南町: 12月下旬から2月上旬まで見ることができる)'
+  - id: hana-0077
+    name: 白間津のお花畑
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 千葉県
+      area: 南房総
+      city: 南房総市
+      terrain:
+      - coast
+      flower_kinds:
+      - 菜の花
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://maruchiba.jp/theme/detail_1________26.html
+      title: ちば観光ナビ 冬の定番
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 菜の花
+      start: 01-01
+      end: 03-20
+      source_url: https://maruchiba.jp/theme/detail_1________26.html
+      source_host: maruchiba.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '千葉県観光物産協会: 菜の花・金魚草・キンセンカ・ストックなどが咲く1月上旬〜3月中旬にお花摘み'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0078
+    name: 城峯公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 埼玉県
+      area: 神川
+      city: 神川町
+      terrain:
+      - mountain
+      flower_kinds:
+      - 冬桜
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.town.kamikawa.saitama.jp/soshiki/chiikisoumu/kankospot/322.html
+      title: 神川町 城峯公園(2025年1月31日更新)
+      checked_on: '2026-11-10'
+    note: 冬桜まつり2026のページは 404 で読めなかった
+    flower_windows:
+    - kind: 冬桜
+      start: 10-21
+      end: 12-10
+      source_url: https://www.town.kamikawa.saitama.jp/soshiki/chiikisoumu/kankospot/322.html
+      source_host: www.town.kamikawa.saitama.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '神川町: 冬桜(約600本)は10月下旬から12月上旬にかけて咲く'
+  - id: hana-0079
+    name: 宝登山ロウバイ園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 埼玉県
+      area: 秩父・長瀞
+      city: 長瀞町
+      terrain:
+      - mountain
+      flower_kinds:
+      - ロウバイ
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.nagatoro.gr.jp/spot/spot_flower/
+      title: 長瀞町観光協会 はなごよみ
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: ロウバイ
+      start: 12-21
+      end: 02-28
+      source_url: https://www.nagatoro.gr.jp/spot/spot_flower/
+      source_host: www.nagatoro.gr.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長瀞町観光協会: 12月下旬から咲き始め、2月下旬まで(3種類3000本)'
+  - id: hana-0080
+    name: 宝登山梅百花園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 埼玉県
+      area: 秩父・長瀞
+      city: 長瀞町
+      terrain:
+      - mountain
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.nagatoro.gr.jp/spot/spot_flower/
+      title: 長瀞町観光協会 はなごよみ
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 梅
+      start: 02-11
+      end: 03-31
+      source_url: https://www.nagatoro.gr.jp/spot/spot_flower/
+      source_host: www.nagatoro.gr.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '長瀞町観光協会: 2月中旬から3月いっぱい(約170種類・約500本)'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0081
+    name: 西渓園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 栃木県
+      area: 足利
+      city: 足利市
+      terrain:
+      - garden
+      flower_kinds:
+      - 梅
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.ashikaga-kankou.jp/spot/seikeien
+      title: 足利市観光協会 西渓園
+      checked_on: '2026-11-10'
+    note: 令和8年(2026年)春は砂防ダム工事で公開中止と足利市観光協会のページにある(2027年の公開は未確認)
+    flower_windows:
+    - kind: 梅
+      start: 02-21
+      end: 03-20
+      source_url: https://www.ashikaga-kankou.jp/spot/seikeien
+      source_host: www.ashikaga-kankou.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '足利市観光協会: 見ごろは例年2月下旬から3月中旬ごろ(約3haに1200本の白梅・紅梅)'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0082
+    name: 蝋梅の里(上永野)
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 栃木県
+      area: 鹿沼
+      city: 鹿沼市
+      terrain:
+      - mountain
+      flower_kinds:
+      - ロウバイ
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://kanuma-kanko.jp/purpose/%E8%9D%8B%E6%A2%85%E3%81%AE%E9%87%8C/
+      title: 鹿沼市観光協会 鹿沼日和 蝋梅の里
+      checked_on: '2026-11-10'
+    note: 開園は例年12月中旬〜3月中旬(運営の期間。2026〜2027年の開園日は未発表)
+    flower_windows:
+    - kind: ロウバイ
+      start: 01-01
+      end: 03-31
+      source_url: https://kanuma-kanko.jp/purpose/%E8%9D%8B%E6%A2%85%E3%81%AE%E9%87%8C/
+      source_host: kanuma-kanko.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '鹿沼市観光協会: 例年のみごろ 基本種1月〜3月(満月11月下旬〜3月・素心12月〜3月・原種2月〜3月)。約500株・4,000本'
+  # 段階73 第3部: 公式ページの本文で確かめた例年の時期(座標は未確認。値は通信先が公式の一覧にないので secondary の印)
+  - id: hana-0083
+    name: 筑波山梅林
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-10'
+    tags:
+      prefecture: 茨城県
+      area: 筑波山
+      city: つくば市
+      terrain:
+      - mountain
+      flower_kinds:
+      - 梅
+      - ロウバイ
+      source: Claude Code が付けた(段階73 第3部。出典の公式ページの本文を 2026-11-10 に読んだ。座標は未確認)
+    sources:
+    - url: https://www.city.tsukuba.lg.jp/tourism/27501.html
+      title: つくば市 筑波山梅林(2026年2月3日更新)
+      checked_on: '2026-11-10'
+    - url: https://ttca.jp/tourisminfo/%E9%81%8A%E3%81%B6/%E3%81%A4%E3%81%8F%E3%81%B0%E3%81%AE%E8%8A%B1%E6%9C%A8%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC/
+      title: つくば観光コンベンション協会 つくばの花木カレンダー
+      checked_on: '2026-11-10'
+    - url: https://www.ibarakiguide.jp/special/flower_views.html
+      title: 観光いばらき 花絶景いばらき(2026年10月27日更新)
+      checked_on: '2026-11-10'
+    flower_windows:
+    - kind: 梅
+      start: 02-11
+      end: 03-31
+      source_url: https://ttca.jp/tourisminfo/%E9%81%8A%E3%81%B6/%E3%81%A4%E3%81%8F%E3%81%B0%E3%81%AE%E8%8A%B1%E6%9C%A8%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80%E3%83%BC/
+      source_host: ttca.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: 'つくば観光コンベンション協会: 梅 2月中旬〜3月下旬(筑波山梅林・梅園公園)。約1,000本'
+    - kind: ロウバイ
+      start: 01-11
+      end: 02-10
+      source_url: https://www.ibarakiguide.jp/special/flower_views.html
+      source_host: www.ibarakiguide.jp
+      source_class: secondary
+      unapproved_host: true
+      source_year: null
+      note: '観光いばらき: ロウバイ 例年の見頃 1月中旬〜2月上旬'

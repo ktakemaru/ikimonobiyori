@@ -1008,6 +1008,25 @@ def prefecture_from_text(*texts, known=None):
     return None
 
 
+def prefecture_of_city(*cities):
+    """段階73 第3部: 市区町村の名前 → 代表点の表(guide/places.yaml)か出発地の辞書の都県。「相模原市緑区」は市で引く。なければ None。"""
+    from . import origins
+    pl = origins.places()
+    for c in cities:
+        c = (c or "").strip()
+        if not c:
+            continue
+        r = pl.get(c)
+        if not r:
+            m = re.match(r"^(.+?市)", c)
+            r = pl.get(m.group(1)) if m else None
+        if not r:
+            r = origins.lookup(c)                              # 出発地の辞書(「飯能市」は飯能の別名)
+        if r and r.get("prefecture"):
+            return r["prefecture"]
+    return None
+
+
 def in_region(c, region, km=None, max_km=None):
     """地域の中か。全範囲（all_range）は、出発地からの直線距離が範囲の上限以内。距離（座標）が分からない名所は、出発地の県のものだけ入れる
     （他県の距離不明の名所は、範囲を確かめられないので入れない）。"""
@@ -2000,6 +2019,8 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
             x["area"] = x["area"] or r.get("area")
         if x["prefecture"] is None:                            # 段階62 第2部: 記録の市区町村・発行元が都県の名前で始まれば、その都県(東京の計画に神奈川の山が入った不具合)
             x["prefecture"] = prefecture_from_text(g["city"], *[r.get("city") for r in g["rows"]], *[r.get("publisher") for r in g["rows"]])
+        if x["prefecture"] is None:                            # 段階73 第3部: 市区町村の代表点の表(guide/places.yaml)に都県があれば、その都県(長野県の答えに飯能市の天覧山が入った不具合)
+            x["prefecture"] = prefecture_of_city(g["city"], *[r.get("city") for r in g["rows"]])
     all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
     for x in extra.values():
         if x["prefecture"] is None and x["area"] is None and len(reg["prefectures"]) == 1 and not reg["areas"]:
