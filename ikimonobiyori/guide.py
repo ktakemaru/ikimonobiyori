@@ -677,9 +677,14 @@ def find(entries, *, themes, kinds=None, on=None, prefectures=None, municipaliti
     up_days = val(policy["upcoming_days"])
     out = {k: [] for k in ("recommend", "upcoming", "other_season", "no_season", "reference", "out_of_range", "kind_notes")}
     order = policy["tiers"]["order"]
+    from . import publisher as P
     for e in entries:
         if e["theme"] not in themes or e["approval"]["state"] == "rejected":
             continue
+        if e.get("sources") and all(P.unused_source(s.get("url")) for s in e["sources"]):
+            continue                                     # 段階69 第4部 1: 使わない出典(予想・転載)だけが根拠の名所は答えに出さない(データは消さない)
+        if (e.get("season") or {}).get("from_url") and P.unused_source(e["season"]["from_url"]):
+            e = {**e, "season": {**e["season"], "shown": False}}       # 時期の文がその出典のものなら、時期は出さない
         if e.get("scope") == "kind":
             if not kinds or any(q in e["name"] or e["name"] in q for q in kinds) or kind_match(e, kinds):
                 out["kind_notes"].append(e)

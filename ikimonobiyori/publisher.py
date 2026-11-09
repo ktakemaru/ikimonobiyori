@@ -30,6 +30,38 @@ def _suffix(host, s):
     return host == s or host.endswith("." + s)
 
 
+def unused_source(url, state=False, c=None):
+    """段階69 第4部 1: 答えに使わない出典か。state=True は今の状態の記録(山と溪谷オンラインは状態の語・日付・URL だけに使える)。"""
+    u = (c or cfg())["unused_sources"]
+    host = host_of(url)
+    if not host:
+        return False
+    if any(_suffix(host, s) for s in u["unused"]):
+        return True
+    from . import observations as O
+    restricted = (O.load_policy().get("record") or {}).get("restricted_sources") or {}
+    hosts = (restricted.get("hosts") or {}).get("value") or []
+    return not state and any(_suffix(host, s) for s in hosts)
+
+
+def unused_in_text(text, c=None):
+    """文に使わない出典のホスト(予想・転載)があるか(URL の行と文の両方)。"""
+    u = (c or cfg())["unused_sources"]
+    return any(h in (text or "") for h in u["unused"])
+
+
+def strip_unused(text, c=None):
+    """答えの文から、使わない出典(予想・転載)の URL の行と、そのホストを含む文を消す。→ (文, 消した行)"""
+    out, removed = [], []
+    for line in (text or "").splitlines():
+        if unused_in_text(line, c):
+            removed.append(line)
+            continue
+        out.append(line)
+    res = "\n".join(out)
+    return (res + "\n" if (text or "").endswith("\n") else res), removed
+
+
 def official_domain(url, c=None):
     """自治体・国のドメインか(町・市・県・国の自身のページ)。"""
     c = (c or cfg())["official_publisher"]
@@ -64,13 +96,34 @@ def ledger_kind(url):
     return next((k for h, _, k in _ledger_rows() if h == host and k), None)
 
 
+def party_kind(url, c=None):
+    """段階69 第6部: 設定の表にあるホストの発行元の種類(観光協会・施設の運営者など)。なければ None。"""
+    host = host_of(url)
+    rows = [r for r in ((c or cfg()).get("party_publisher") or {}).get("hosts") or [] if host and _suffix(host, r["suffix"])]
+    return max(rows, key=lambda r: len(r["suffix"]))["kind"] if rows else None
+
+
 def is_official(url, publisher_kind=None, c=None):
-    """発行元の種類で「公式」と表示するか(町・市・県・国の自身のページ)。"""
+    """町・市・県・国の自身のページか(段階67。承認欄 C)。"""
     c = c or cfg()
     kinds = set(c["official_publisher"]["kinds"])
     if publisher_kind in kinds or ledger_kind(url) in kinds:
         return True
     return official_domain(url, c)
+
+
+def is_party(url, publisher_kind=None, c=None):
+    """段階69 第6部(承認 3): 観光協会・公園の管理者・施設の運営者が、当事者として自分で出しているサイトか。"""
+    c = c or cfg()
+    kinds = set((c.get("party_publisher") or {}).get("kinds") or [])
+    return bool(publisher_kind in kinds or ledger_kind(url) in kinds or party_kind(url, c) in kinds)
+
+
+def shows_official(url, publisher_kind=None, c=None):
+    """答えで「公式」と表示するか: 町・市・県・国の自身のページ(段階67)か、当事者のサイト(段階69 第6部)。表示だけの判定で、
+    通信先の承認・source_class・候補の選び方には使わない。"""
+    c = c or cfg()
+    return is_official(url, publisher_kind, c) or is_party(url, publisher_kind, c)
 
 
 def _guide_name(url):

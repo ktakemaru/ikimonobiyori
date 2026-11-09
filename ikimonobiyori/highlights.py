@@ -58,10 +58,41 @@ def places(question, cards=None):
         for n in [r.get("place") or "", *(r.get("place_aliases") or [])]:
             if len(n) >= 2:
                 vocab.append((n, {"name": r.get("place"), "terms": [r.get("place"), *(r.get("place_aliases") or [])], "cities": [], "center": None, "radius_km": None}))
-    for word, item in sorted(vocab, key=lambda x: -len(x[0])):
+    # 同じ長さの語では、山の地点(半径 site_radius_km)をエリア辞書より先にする(段階69 第7部: 「高尾山」をエリア「高尾」(八王子駅付近から 12km)に
+    # 解決すると、立川の昭和記念公園まで高尾山の見どころに入った)。sorted は安定なので、ほかの順は変わらない
+    for word, item in sorted(vocab, key=lambda x: (-len(x[0]), not x[1].get("site_id"))):
         if word in q and item["name"] not in [o[1]["name"] for o in out]:
             add(word, item)
-    return [x[1] for x in sorted(out, key=lambda x: x[0])]
+    got = [x[1] for x in sorted(out, key=lambda x: x[0])]
+    if c.get("drop_region_names_with_other_places") and len(got) > 1:       # 段階69 第2部 2: 「神奈川 大山」の神奈川は絞り込みの語
+        regs = _region_names()
+        rest = [x for x in got if x.get("label") not in regs and x["name"] not in regs]
+        got = rest or got
+    return got
+
+
+def _region_names():
+    from . import sources as S
+    out = set()
+    for r in S.load_regions()["regions"]:
+        out |= {r["name"], *(r.get("aliases") or [])}
+    return out
+
+
+def is_place_dated(question, cards=None):
+    """段階69 第2部 2: 日付のある場所の質問(「今週末、高尾山の見どころ」)。見どころの言い方・日付の語・山や名所の場所がそろうとき。
+    山・名所・エリア(「今週末の日光の見どころ」も。本人の指示 2026-11-09)が対象。地域全体(都県・関東)だけの質問は計画の型のまま。"""
+    c = cfg()
+    q = question or ""
+    if not any(p in q for p in c["patterns"]):
+        return False
+    if not any(re.search(w, q) for w in c["date_words"]):
+        return False
+    from . import areas as AR
+    area_names = {a["name"] for a in AR.load()["areas"]}             # エリア辞書の場所(日光・箱根など)は、地域の一覧にも名前があっても場所
+    regs = _region_names() - area_names
+    return any(pl["name"] in area_names or pl.get("site_id") or (pl.get("label") not in regs and pl["name"] not in regs)
+               for pl in places(q, cards))
 
 
 def is_highlights_question(question, cards=None):
@@ -208,10 +239,98 @@ def _lead_rank(r, pls, area_names):
     return 2
 
 
-def compose(question, *, today, env=None, cards=None, centers=None, reports=None, cands=None, records=None):
-    """質問の文 → {text, places, cards, spots}。場所が分からなければ None。"""
+def _days(on):
+    return "・".join(f"{d.month}/{d.day}" for d in on)
+
+
+def _md_in(d, start, end, near=0):
+    """日付 d が例年の時期(MM-DD の start〜end。年をまたぐ時期も)の中か。near 日だけ前後に広げる。"""
+    from datetime import timedelta
+    for k in range(-near, near + 1):
+        md = (d + timedelta(days=k)).strftime("%m-%d")
+        if (start <= md <= end) if start <= end else (md >= start or md <= end):
+            return True
+    return False
+
+
+def _seasons_from(c, on):
+    """季節の並び(その日の月の季節を先に)。"""
+    ss = list(c["seasons"])
+    if not on:
+        return ss
+    i = next((k for k, s in enumerate(ss) if on[0].month in s["months"]), 0)
+    return ss[i:] + ss[:i]
+
+
+def _own(s, pls):
+    """名所が、質問の場所そのもの(名前に場所の語・市町村が一致)か(半径の内だけの名所は含めない)。"""
+    names = [s.get("name") or "", s.get("area") or ""]
+    if any(t and len(t) >= 2 and any(t in n for n in names if n) for pl in pls for t in pl["terms"]):
+        return True
+    return bool(s.get("city")) and any(ct in re.split(r"[・、]", s["city"]) for pl in pls for ct in pl["cities"])
+
+
+def outlook_lines(g, on, c, opol, pls=None):
+    """段階69 第2部 2: その日の見込み(その場所の現況・例年の時期・行事)。質問の場所そのものの名所があれば、それだけ。→ (行, URL)"""
+    from . import observations as O
+    from . import season_place as SP
+    if pls:
+        own = [s for s in g["spots"] if _own(s, pls)]
+        if own:
+            ids = {id(s) for s in own}
+            g = dict(g, spots=own, current=[x for x in g["current"] if id(x[1]) in ids])
+    t = c["text"]
+    thirds = SP.cfg()["text"]["thirds"]
+    days = _days(on)
+    lines, urls = [], []
+    for sd, s, rec in g["current"]:
+        d = date.fromisoformat(sd)
+        disp, sym_only = O.state_display(rec.get("state"), rec.get("publisher"), opol)
+        if sym_only or not disp:
+            continue
+        lines.append(t["now_line"].format(name=s["name"], state=disp, month=d.month, day=d.day, publisher=rec.get("publisher") or ""))
+        urls.append(rec.get("url"))
+    seen = set()
+    from . import publisher as P
+    for s in sorted(g["spots"], key=lambda s: s["name"]):
+        for w in s.get("typical") or []:
+            if not (w.get("start") and w.get("end")) or w.get("event_derived") or O.event_derived(w, s.get("events"), opol, s["name"]):
+                continue
+            if P.unused_source(w.get("url")):
+                continue
+            kind = w.get("kind") or c["kind_labels"].get(s["subject"]) or "・".join(s.get("flower_kinds") or [])
+            if not kind or (s["name"], kind) in seen:
+                continue
+            fmt = None
+            if any(_md_in(d, w["start"], w["end"]) for d in on):
+                fmt = t["outlook_window_in"]
+            elif any(_md_in(d, w["start"], w["end"], c["outlook_near_days"]) for d in on):
+                fmt = t["outlook_window_near"]
+            if fmt:
+                seen.add((s["name"], kind))
+                lines.append(fmt.format(name=s["name"], kind=kind, window=SP.window_text(w["start"], w["end"], thirds), days=days))
+                urls.append(w.get("url"))
+        for e in s.get("events") or []:
+            if e.get("source_class") == "secondary" or not e.get("start") or not e.get("end"):
+                continue
+            sd, ed = date.fromisoformat(str(e["start"])[:10]), date.fromisoformat(str(e["end"])[:10])
+            if any(sd <= d <= ed for d in on):
+                ln = t["outlook_event"].format(name=s["name"], event=e["name"], start=f"{sd.month}/{sd.day}", end=f"{ed.month}/{ed.day}")
+                if ln not in lines:
+                    lines.append(ln)
+                    urls.append(e.get("url"))
+    lines = lines[: c["outlook_max_lines"]]
+    if not lines:
+        lines = [t["outlook_none"].format(days=days)]
+    return lines, [u for u in urls if u]
+
+
+def compose(question, *, today, env=None, cards=None, centers=None, reports=None, cands=None, records=None, on=None):
+    """質問の文 → {text, places, cards, spots}。場所が分からなければ None。
+    on: その日(日付の一覧)。あれば季節はその日の月の季節を先にし、「今の時期」の代わりに「その日の見込み」を書く(段階69 第2部 2)。"""
     from . import knowledge as K
     from . import observations as O
+    from . import publisher as P
     from . import season_place as SP
     c = cfg()
     t = c["text"]
@@ -228,7 +347,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
         if u and u not in urls:
             urls.append(u)
 
-    lines = [t["title"].format(place=name)]
+    lines = [t["title_dated"].format(place=name, days=_days(on)) if on else t["title"].format(place=name)]
     lead_pri = {k: i for i, k in enumerate(c["lead_categories"])}
     from . import areas as AR
     area_names = {n for a in AR.load()["areas"] for n in [a["name"], *(a.get("aliases") or [])]}
@@ -247,6 +366,8 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     for s in sorted(g["spots"], key=lambda s: s["name"]):
         for w in s.get("typical") or []:
             if not (w.get("start") and w.get("end")) or w.get("event_derived") or O.event_derived(w, s.get("events"), opol, s["name"]):
+                continue
+            if P.unused_source(w.get("url")):                                 # 段階69 第4部 1: 使わない出典の時期は書かない
                 continue
             kind = w.get("kind") or c["kind_labels"].get(s["subject"]) or "・".join(s.get("flower_kinds") or [])
             if not kind:
@@ -281,7 +402,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
         url(u)
     if by_season:
         lines += ["", t["season_heading"]]
-        for s in c["seasons"]:
+        for s in _seasons_from(c, on):
             if by_season.get(s["name"]):
                 lines += [t["season_sub"].format(season=s["name"])] + by_season[s["name"]][: c["max_spots_per_season"]]
         lines += events
@@ -301,6 +422,11 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     walk = [K.plain_line(r) for r in walk_cards]
     if eye:
         lines += ["", t["eye_heading"]] + eye
+    if on:                                                    # 段階69 第2部 2: その日の見込み(見どころのあと、行く前に確認することの前)
+        ol, ou = outlook_lines(g, on, c, opol, pls)
+        lines += ["", t["outlook_heading"].format(days=_days(on))] + ol + [t["outlook_note"]]
+        for u in ou:
+            url(u)
     if before or walk:
         lines += ["", t["walk_heading"] if walk else t["before_heading"]] + before + walk
     for u in cu + [r["source"].get("url") for r in walk_cards + fac_cards]:
@@ -316,7 +442,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
                 url(r["url"])
         lines += ["・" + K.plain_line(r) for r in fac_cards]
     # 今の時期(主役にしない)
-    if g["current"]:
+    if g["current"] and not on:
         lines += ["", t["now_heading"]]
         for sd, s, rec in g["current"]:
             d = date.fromisoformat(sd)

@@ -43,6 +43,10 @@ def current_line(c, t, phr, today=None, sj=None):
     cur = c.get("current")
     if sj == "birds" and c.get("vc_report") and not AP.has_state_record(c):     # 段階67 第2部(承認欄 D)
         return c["vc_report"]["line"]
+    if not AP.has_state_record(c) and _dated_official_text(cur, t):
+        # 段階69 第4部 3: 公式の日付つきの記載で、語では段階を読めないもの(「バラがとても綺麗に咲いています」)は、原文と日付のまま書く(段階は言わない)
+        state = re.sub(r"[。\s]+$", "", cur.get("display") or cur["state_raw"])
+        return t["current"].format(state=state, md=_md(cur["state_date"]), publisher=cur.get("publisher") or "")
     if not AP.has_state_record(c) or not (cur.get("display") or cur.get("state_raw")):
         return t["no_current_fest"] if c.get("festivals") and sj in (None, "autumn_leaves") else t["no_current"]
     state = cur.get("display") or cur["state_raw"]
@@ -54,6 +58,14 @@ def current_line(c, t, phr, today=None, sj=None):
     if (cur.get("reference_only") or _stale_display(cur, today)) and when:
         return t["reference"].format(state=state, md=when, publisher=who)
     return t["current"].format(state=state, md=when, publisher=who) if when else t["current_nodate"].format(state=state, publisher=who)
+
+
+def _dated_official_text(cur, t):
+    """公式・日付つき・記号だけでなく・「記載なし」の類いでない原文か。"""
+    if not cur or cur.get("source_class") != "official" or not cur.get("state_date") or cur.get("symbol_only"):
+        return False
+    raw = cur.get("display") or cur.get("state_raw") or ""
+    return bool(raw.strip()) and not any(w in raw for w in t.get("unknown_skip_words") or [])     # answer_plan.dated_official_text と同じ判定
 
 
 def season_text(c, sj, t, max_quote):

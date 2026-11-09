@@ -158,7 +158,7 @@ def _publisher(url, entry=None):
 def _official(url, approved):
     """段階67 第1部 3(承認欄 C): 通信先の承認(approved)か、町・市・県・国の自身のページなら「公式」と表示する。"""
     from . import publisher as P
-    return bool(approved) or bool(url and P.is_official(url))
+    return bool(approved) or bool(url and P.shows_official(url))       # 段階69 第6部: 観光協会・公園の管理者・施設の運営者も
 
 
 def gather(sp, origin, c=None, env=None):
@@ -175,11 +175,12 @@ def gather(sp, origin, c=None, env=None):
     def key(name):
         return re.sub(r"[\s()（）・]", "", name or "")
 
+    from . import publisher as P
     for e in _flower_entries():
         t = e.get("tags") or {}
         kinds = [k for k in (t.get("flower_kinds") or []) if _matches(k, match, sp, c)]
         wins = [w for w in e.get("flower_windows") or [] if _matches(w.get("kind"), match, sp, c)
-                and not O.event_derived(w, e.get("events"), opol, e.get("name"))]
+                and not O.event_derived(w, e.get("events"), opol, e.get("name")) and not P.unused_source(w.get("source_url"))]
         if not kinds and not wins and not _name_matches(e.get("name"), match, sp, c):
             continue
         km, est = _km(e.get("point"), t.get("city"), origin, cat_pol)
@@ -189,7 +190,7 @@ def gather(sp, origin, c=None, env=None):
             "kinds": sorted(set(kinds) | {x["kind"] for x in wins}),
             "start": w["start"] if w else None, "end": w["end"] if w else None,
             "season": window_text(w["start"], w["end"], thirds) if w else None,
-            "url": w["source_url"] if w else ((e.get("sources") or [{}])[0].get("url")),
+            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
             "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
             "publisher": _publisher(w["source_url"], e) if w else "",
             "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
@@ -209,8 +210,12 @@ def gather(sp, origin, c=None, env=None):
         km, est = (by.get("km"), False) if by.get("km") is not None else _km(None, e.get("municipality"), origin, cat_pol)
         if by.get("status") == "out_of_range":
             km = by.get("km")
-        srcs = e.get("sources") or []
-        src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0] if srcs else {})
+        srcs = [x for x in e.get("sources") or [] if not P.unused_source(x.get("url"))]          # 段階69 第4部 1
+        if not srcs:
+            continue
+        if s.get("from_url") and P.unused_source(s.get("from_url")):
+            s, win = {}, {}
+        src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0])
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
             "kinds": kinds, "start": win.get("start"), "end": win.get("end"), "season": s.get("text") if s.get("shown", True) else None,
@@ -239,12 +244,12 @@ def _records(match, env=None, sp=None, c=None):
         except (OSError, ValueError, KeyError):
             continue
         for r in rows:
-            if not _matches(r.get("kind") or "", match, sp, c) or not r.get("name"):
+            if not _matches(r.get("kind") or "", match, sp, c) or not r.get("name") or P.unused_source(r.get("url")):
                 continue
             win = O.parse_typical(r.get("typical"), opol) if r.get("typical") else None
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
                         "start": win[0] if win else None, "end": win[1] if win else None,
-                        "season": window_text(win[0], win[1], thirds) if win else None,
+                        "season": window_text(win[0], win[1], thirds) if win else O.end_only_text(r.get("typical")),   # 段階69 第7部: 「7月上旬まで」
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
                         "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
     return out
@@ -343,10 +348,11 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
             lines += ["", t["head"].format(name=r["name"], where=where, km=km)]
             if r["season"]:
                 pub = r.get("publisher") if r.get("publisher") is not None else _publisher(r["url"])
+                stext = re.sub(r"^例年(の時期は|は)?", "", r["season"]).strip() or r["season"]        # 段階69 第4部 2: 「例年の時期: 例年…」にしない
                 if r["official"]:
-                    ln = t["typical"].format(text=r["season"], publisher=pub) if pub else t["typical_nopub"].format(text=r["season"])
+                    ln = t["typical"].format(text=stext, publisher=pub) if pub else t["typical_nopub"].format(text=stext)
                 else:
-                    ln = t["typical_secondary"].format(text=r["season"], publisher=pub)
+                    ln = t["typical_secondary"].format(text=stext, publisher=pub) if pub else t["typical_secondary_nopub"].format(text=stext)
             else:
                 ln = t["typical_unknown"]
             if is_bird:
@@ -368,7 +374,27 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
     return lines, urls, any_secondary
 
 
-def compose(question, *, today, origin, region=None, prefectures=None, env=None, species=None, max_items=None):
+def place_filter(question, c=None):
+    """段階69 第3部: 質問の場所(エリア辞書の名前・別名、または「○○市で」の市区町村)→ {label, cities} か None。"""
+    from . import areas as AR
+    c = c or cfg()
+    q = question or ""
+    for a in AR.load()["areas"]:
+        for n in sorted([a["name"], *(a.get("aliases") or [])], key=len, reverse=True):
+            if n in q:
+                return {"label": n, "cities": list(a.get("cities") or [])}
+    m = re.search(c["place_filter"]["city_re"], q)
+    if m:
+        return {"label": m.group(1), "cities": [m.group(1)]}
+    return None
+
+
+def _in_cities(r, cities):
+    city = r.get("city") or ""
+    return any(ct and (city.startswith(ct) or ct in re.split(r"[・、]", city)) for ct in cities)
+
+
+def compose(question, *, today, origin, region=None, prefectures=None, env=None, species=None, max_items=None, place=None):
     """→ {text, spots, species, species_all, needs_research}。種が 2 つ以上なら種ごとの節。必ず空でない文。
     species: 種の一覧を渡すとき(知識の答えの最後の短い一覧など)。max_items: 1 つの種の名所の上限(既定は設定の max_items)。"""
     c = cfg()
@@ -380,12 +406,29 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
     head = [t["origin_line"].format(origin=origin)]
     body, urls, any_secondary, all_rows, missing = [], [], False, [], []
     birds_only = all(sp["name"] in c.get("bird_species", []) for sp in sps)
+    pf = c["place_filter"]
+    research = []
     for sp in sps:
         is_bird = sp["name"] in c.get("bird_species", [])
         rows, n_out = select(gather(sp, origin, c, env), origin, prefectures, c, by_distance=is_bird)
         if max_items is not None:
             rows = rows[:max_items]
+        place_none = None
+        if place and place.get("cities"):                                # 段階69 第3部: 質問の場所で絞る。なければ 1 文と、ほかの場所の名所
+            own = [r for r in rows if _in_cities(r, place["cities"])]
+            if own:
+                rows = own
+            else:
+                place_none = pf["none"].format(place=place["label"], name=sp["name"])
+                rows = rows[: pf["max_other_items"]]
+                research.append({"what": sp["name"], "where": place["label"], "search": pf["search"].format(place=place["label"], name=sp["name"])})
+        if not rows and not place_none:
+            research.append({"what": sp["name"], "where": (place or {}).get("label") or region,
+                             "search": pf["search"].format(place=(place or {}).get("label") or region, name=sp["name"]) if ((place or {}).get("label") or region)
+                             else pf["search_noplace"].format(name=sp["name"])})
         part, u, sec = _species_part(sp, rows, n_out, today=today, origin=origin, region=region, prefectures=prefectures, table=table, c=c)
+        if place_none:
+            part = [place_none] + ([""] + [pf["others_heading"].format(name=sp["name"])] + part if rows else [])
         if len(sps) > 1:
             body += ["", t["species_heading"].format(name=sp["name"])]
         elif body:
@@ -406,13 +449,152 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
         lines = head + body
     if all_rows:
         lines.append("")
-        lines.append(t["confidence_birds"] if birds_only else t["confidence"])
+        lines.append(confidence_text(sps, c))
+        if any_secondary:
+            lines.append(t["secondary_note"])
+    if urls:
+        lines += ["", t["sources_heading"]] + urls
+    return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
+            "missing": missing, "needs_research": bool(missing or research), "research": research}
+
+
+# ---- 段階69 第2部 3: 種と日付の質問 ----
+
+def is_species_dated(question, c=None):
+    """種の名前があり、日付の語があり、テーマの総称(紅葉・花・野鳥など)が種の語の外にない質問。"""
+    c = c or cfg()
+    q = question or ""
+    if not any(re.search(w, q) for w in c["date_words"]):
+        return False
+    sps = resolve_all(q, c)
+    if not sps:
+        return False
+    rest = q
+    for w in sorted({w for sp in c["species"] for w in sp["words"]} | {k for sp in sps for k in sp["words"]}, key=len, reverse=True):
+        rest = rest.replace(w, " ")
+    return not any(g in rest for g in c["dated"]["generic_words"])
+
+
+def _days(on):
+    return "・".join(f"{d.month}/{d.day}" for d in on)
+
+
+def _near(d, start, end, near):
+    from datetime import timedelta
+    return any(_in_window(d + timedelta(days=k), start, end) for k in range(-near, near + 1))
+
+
+def species_records(sp, on, env=None, c=None, records=None, vc_rows=None, today=None):
+    """野鳥: 公園の観察記録・承認済みの施設の発信のうち、その種の名があるもの(古さの上限の内)。→ [(日付, 名所, 発行元, URL)]"""
+    from . import observations as O
+    from . import visitor_centers as VC
+    c = c or cfg()
+    dc = c["dated"]
+    today = today or on[0]
+    words = list(sp["match"]) + list(sp.get("words") or [])
+    out = []
+    rows = records if records is not None else O.read_records("birds", env)
+    for r in rows:
+        if r.get("source_class") != "official":
+            continue
+        text = " ".join(r.get("species") or []) + " " + (r.get("state") or "")
+        if not any(w in text for w in words):
+            continue
+        sd = O.state_date_of(r)
+        if not sd:
+            continue
+        if 0 <= (today - date.fromisoformat(sd)).days <= dc["record_max_age_days"]:
+            out.append((sd, r.get("name") or r.get("publisher") or "", r.get("publisher") or "", r.get("url")))
+    try:
+        vrows = vc_rows if vc_rows is not None else VC.fact_rows(today, subjects=None, env=env)
+    except (OSError, ValueError, KeyError):
+        vrows = []
+    for v in vrows:
+        if not any(w in " ".join(v.get("species") or []) + " " + (v.get("state") or "") for w in words):
+            continue
+        if v.get("date") and 0 <= (today - date.fromisoformat(v["date"])).days <= dc["record_max_age_days"]:
+            out.append((v["date"], v["name"], v["name"], v.get("url")))
+    seen, uniq = set(), []
+    for x in sorted(out, key=lambda x: x[0], reverse=True):              # 同じ名所は最新の 1 行
+        k = re.sub(r"[(（].*$", "", x[1]).strip()
+        if k in seen:
+            continue
+        seen.add(k)
+        uniq.append(x)
+    return uniq[: dc["record_max_lines"]]
+
+
+def compose_dated(question, *, today, on, origin, region=None, prefectures=None, env=None, records=None, vc_rows=None):
+    """種と日付の質問 → {text, spots, species_all, missing, needs_research}。その日に時期が合う名所を先に、合わないものは「時期の外」の 1 行。"""
+    c = cfg()
+    t, dc = c["text"], c["dated"]
+    sps = resolve_all(question, c)
+    if not sps:
+        return None
+    days = _days(on)
+    lines = [dc["title"].format(days=days, name="・".join(sp["name"] for sp in sps)), dc["date_line"].format(days=days),
+             t["origin_line"].format(origin=origin)]
+    urls, all_rows, missing, any_secondary = [], [], [], False
+    for sp in sps:
+        is_bird = sp["name"] in c.get("bird_species", [])
+        rows, n_out = select(gather(sp, origin, c, env), origin, prefectures, c, by_distance=is_bird)
+        fit = [r for r in rows if not (r["start"] and r["end"]) or any(_near(d, r["start"], r["end"], dc["near_days"]) for d in on)]
+        off = [r for r in rows if r not in fit]
+        if len(sps) > 1:
+            lines += ["", t["species_heading"].format(name=sp["name"])]
+        part, u, sec = _species_part(sp, fit, n_out if not off else 0, today=on[0], origin=origin, region=region, prefectures=prefectures,
+                                     table=False, c=c)
+        if fit:
+            lead = dc["lead_birds"] if is_bird else dc["lead_in"]
+            drop = {t["in_season"], t["lead_birds"].format(name=sp["name"])}
+            part = [lead.format(name=sp["name"], days=days)] + [x for x in part if x not in drop and not x.startswith(sp["name"] + "は、例年")
+                                                               and not x.startswith("今は時期の外")]
+        elif off:
+            nm = _next_month(on[0], off)
+            part = [dc["lead_off"].format(name=sp["name"], days=days, month=nm)] if nm else []
+        lines += part
+        items = [dc["off_item"].format(name=r["name"], season=re.sub(r"^例年", "", r["season"])) for r in off if r["season"]]
+        if items:
+            lines += ["", dc["off_line"].format(items="、".join(items))]
+            for r in off:
+                if r["url"] and r["url"] not in urls:
+                    urls.append(r["url"])
+        urls += [x for x in u if x not in urls]
+        any_secondary = any_secondary or sec or any(not r["official"] for r in off if r["season"])
+        all_rows += fit + off
+        if not fit and not off:
+            missing.append(sp["name"])
+        if is_bird:
+            recs = species_records(sp, on, env, c, records=records, vc_rows=vc_rows, today=today)
+            if recs:
+                lines += ["", dc["records_heading"].format(name=sp["name"])]
+                for sd, name, pub, url in recs:
+                    d = date.fromisoformat(sd)
+                    lines.append(dc["record_line"].format(name=re.sub(r"[(（].*$", "", name).strip() or name, month=d.month, day=d.day,
+                                                          species=sp["name"], publisher=pub))
+                    if url and url not in urls:
+                        urls.append(url)
+    if all_rows:
+        lines += ["", confidence_text(sps, c)]
         if any_secondary:
             lines.append(t["secondary_note"])
     if urls:
         lines += ["", t["sources_heading"]] + urls
     return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
             "missing": missing, "needs_research": bool(missing)}
+
+
+def confidence_text(sps, c=None):
+    """確かさの文(対象ごと。段階69 第4部 2)。"""
+    c = c or cfg()
+    t = c["text"]
+    if all(sp["name"] in c.get("bird_species", []) for sp in sps):
+        return t["confidence_birds"]
+    if all(sp["name"] in c.get("insect_species", []) for sp in sps):
+        return t["confidence_insects"]
+    if all(sp["name"] in c.get("grass_species", []) for sp in sps):
+        return t["confidence_grass"]
+    return t["confidence"]
 
 
 # ---- 段階64 第4部: 知識の答えの最後の短い一覧・季節の種 ----

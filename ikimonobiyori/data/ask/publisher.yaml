@@ -11,6 +11,29 @@ official_publisher:
   # ホストのラベルにこれがあり、末尾が .jp なら自治体のページ(www.town.ninomiya.kanagawa.jp・www.city.odawara.kanagawa.jp・www.pref.saitama.lg.jp など)
   labels: [pref, city, town, village, metro]
 
+# 段階69 第6部(承認 3。本人の判断 2026-11-09「推奨どおり」): 観光協会・公園の管理者・施設の運営者が、その施設・地域の当事者として
+# 自分で出しているサイトも「公式」と表示する(表示だけ。通信先の承認・source_class・候補の選び方は変えない)。
+# 紹介サイト(旅行情報・まとめサイト・新聞・出版社)はこれまでどおり紹介サイト。
+party_publisher:
+  source: "本人の判断(2026-11-09。段階69 指示書の承認 3)"
+  provisional: false
+  # 台帳(data/sources/*.yaml)の publisher_kind のうち、当事者にあたるもの。prefecture_tourism は県の観光の推進団体(例: やまなし観光推進機構。指示書の例)、
+  # temple_shrine は寺社が自分の境内の庭を案内するページ(施設の運営者自身のサイト。Claude Code の判断)
+  kinds: [tourism_association, prefecture_tourism, park_manager, facility_operator, temple_shrine]
+  # 台帳にないホスト(名所カタログ・記録の出典)。種類は指示書の例と、各サイトの発行元の表示による
+  hosts:
+    - {suffix: trip-kamakura.com, kind: tourism_association, note: "鎌倉市観光協会の観光サイト(指示書の例)"}
+    - {suffix: akirunokanko.com, kind: tourism_association, note: "あきる野観光協会(指示書の例)"}
+    - {suffix: fuchu-cpf.or.jp, kind: facility_operator, note: "府中市郷土の森博物館の運営者(指示書の例)"}
+
+# 段階69 第4部 1: 答えに使わない出典。この出典だけが根拠の事実は答えに出さない(データは消さない)。ほかに独立した出典があれば、その出典だけを残す。
+# unused: 予想・転載の扱い(利用規約・本人の決定。data/observations/policy.yaml の not_read_hosts と同じ)
+# 状態の語・日付・URL だけに使う出典(山と溪谷オンライン)は、ここに書かず data/observations/policy.yaml の restricted_sources.hosts を読む
+# (事実データにそのホスト名を置かない。段階55 第8部のテスト)。例年の時期・種・行事・知識の出典にしない
+unused_sources:
+  source: "CLAUDE.md の B「使わない」・本人の決定 2026-11-06。段階69 第4部 1(ホタルの答えに weathernews.jp が入った)"
+  unused: [weathernews.jp, n-kishou.com, n-kishou.co.jp, tenki.jp]
+
 # 答えに出す発行元の名前。ドメインをそのまま出さない(段階67 第1部 4)。
 # 引く順: ガイドの発行元の表(data/guide/policy.yaml の hosts) → 台帳の発行元(data/sources/*.yaml・visitor_centers) →
 # 自治体のドメインなら名所の市区町村・都道府県(ラベル pref は都道府県、ほかは市区町村) → 名所の出典の題名の最初の語 → なし(名前を書かない)

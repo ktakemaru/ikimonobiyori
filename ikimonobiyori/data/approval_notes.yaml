@@ -440,10 +440,10 @@ terms_stage67:
   - {name: 大山観光電鉄, url: "https://www.ooyama-cable.co.jp/", summary: "トップに規約・著作権のページへのリンクがない(© 表示のみ)。転載・自動取得の記載は確認できず"}
   - {name: 立山黒部貫光, url: "https://www.alpen-route.co.jp/policy/", summary: "サイトポリシーの入口はリンク集だけで、本文(s-policy-j)は上限のため未読。転載・自動取得の記載は未確認"}
   - {name: "mtasama.com(浅間山ジオパーク推進協議会)", url: "https://mtasama.com/", summary: "運営は浅間山ジオパーク推進協議会(公的な協議会)。規約のページはなく、転載・複製の記載なし。写真・ロゴの使用は申請制(要綱 PDF は未読)"}
-  - {name: 二宮町, url: "https://www.town.ninomiya.kanagawa.jp/site_policy/0000000003.html", summary: "私的使用の複製・引用など著作権法で認められた場合を除き、無断の複製・転用は不可。自動取得の記載なし", judgement: "無断の複製・転用の禁止あり(事実のみ・自分の言葉・出典明記で使うかは本人の判断)"}
-  - {name: 松田町, url: "https://town.matsuda.kanagawa.jp/site/userguide/08.html", summary: "私的使用・引用などを除き、無断の複製・転載・販売・貸与・改変は不可。自動取得の記載なし", judgement: "無断の複製・転載の禁止あり(同上)"}
-  - {name: 熱海市, url: "https://www.city.atami.lg.jp/about/sitepolicy.html", summary: "著作権は市に帰属。市の許可なく複製・転用・販売などの二次利用を固く禁じる。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり(同上)"}
-  - {name: 越生町観光協会, url: "https://ogose-kanko.jp/", summary: "フッターに「無断転載・複製を禁止」。規約のページはなく、自動取得の記載なし", judgement: "無断転載・複製の禁止あり(同上)"}
+  - {name: 二宮町, url: "https://www.town.ninomiya.kanagawa.jp/site_policy/0000000003.html", summary: "私的使用の複製・引用など著作権法で認められた場合を除き、無断の複製・転用は不可。自動取得の記載なし", judgement: "無断の複製・転用の禁止あり。本人の判断（2026-11-09）: 事実のみ・自分の言葉・出典明記で使用を継続"}
+  - {name: 松田町, url: "https://town.matsuda.kanagawa.jp/site/userguide/08.html", summary: "私的使用・引用などを除き、無断の複製・転載・販売・貸与・改変は不可。自動取得の記載なし", judgement: "無断の複製・転載の禁止あり。本人の判断（2026-11-09）: 事実のみ・自分の言葉・出典明記で使用を継続"}
+  - {name: 熱海市, url: "https://www.city.atami.lg.jp/about/sitepolicy.html", summary: "著作権は市に帰属。市の許可なく複製・転用・販売などの二次利用を固く禁じる。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり。本人の判断（2026-11-09）: 事実のみ・自分の言葉・出典明記で使用を継続"}
+  - {name: 越生町観光協会, url: "https://ogose-kanko.jp/", summary: "フッターに「無断転載・複製を禁止」。規約のページはなく、自動取得の記載なし", judgement: "無断転載・複製の禁止あり。本人の判断（2026-11-09）: 事実のみ・自分の言葉・出典明記で使用を継続"}
   - {name: "偕楽園(茨城県)", url: "https://ibaraki-kairakuen.jp/", summary: "トップに規約・著作権のページへのリンクがない(© 茨城県の表示)。転載・自動取得の記載は確認できず"}
-  - {name: 小田原市, url: "https://www.city.odawara.kanagawa.jp/tyosaku/tyosakuetc.html", summary: "権利者の許可なく複製・転用・販売などの二次利用を固く禁じる。リンクは原則自由。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり(同上)"}
+  - {name: 小田原市, url: "https://www.city.odawara.kanagawa.jp/tyosaku/tyosakuetc.html", summary: "権利者の許可なく複製・転用・販売などの二次利用を固く禁じる。リンクは原則自由。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり。本人の判断（2026-11-09）: 事実のみ・自分の言葉・出典明記で使用を継続"}
   - {name: 幸手市, url: "https://www.city.satte.lg.jp/soshiki/hisyo/7228.html", summary: "「市ホームページについて」は目次だけで、著作権のページ(4091.html)は上限のため未読。転載・自動取得の記載は未確認"}

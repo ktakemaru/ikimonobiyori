@@ -1002,6 +1002,10 @@ def main(argv=None, http_get=None):
     p.add_argument("--failed", help="--mark のページが読めなかった理由")
     p = sub.add_parser("vc-record", help="施設の発信(ビジターセンター)の読んだ事実を記録する(段階55 の規則。段階63b: 読んだ時刻を取得のキャッシュに残す)")
     p.add_argument("--batch", required=True)
+    p = sub.add_parser("final-check", help="最終メッセージの検査(段階69 第1部): 利用者に送るメッセージ全体から、作業メモ・提案・質問の文を消し、送ってよい文だけを出す。出力を一字一句そのまま送る")
+    p.add_argument("--text", help="最終メッセージのファイル(省くと標準入力)")
+    p.add_argument("--answer", help="ask answer の出力のファイル(省くと直前の ask answer の答え)")
+    p.add_argument("--now")
     p = sub.add_parser("unsupported", help="今できないことを頼まれたときの 1 行(と、条件を満たす別の案内)。段階57 第1部")
     p.add_argument("--what", required=True, help="今できないこと(例: 紅葉の写真つきページ)")
     p.add_argument("--out-dir", help="作業フォルダ(あれば、計画の案内を添える)")
@@ -1151,6 +1155,13 @@ def main(argv=None, http_get=None):
         PC.note([{"url": r.get("url"), "ok": True, "kind": "visitor_center"} for i, r in enumerate(batch) if i not in bad and isinstance(r, dict)], _clock())
         _out(out)
         return 1 if out["rejected"] else 0
+    if a.step == "final-check":                          # 段階69 第1部
+        from . import final_check as FC
+        msg = Path(a.text).read_text(encoding="utf-8") if a.text else sys.stdin.read()
+        ans = Path(a.answer).read_text(encoding="utf-8") if a.answer else None
+        r = FC.run(msg, answer=ans, now=now)
+        sys.stdout.flush(); sys.stdout.buffer.write(r["text"].encode("utf-8"))
+        return 0
     if a.step == "unsupported":                          # 段階57 第1部: 1 行の案内と、確実にできる別のことだけ
         plan = {}
         if a.out_dir and Path(a.out_dir, "answer_plan.json").exists():
