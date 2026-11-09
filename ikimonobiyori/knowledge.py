@@ -18,10 +18,51 @@ def path(env=None):
     return Path(data_path(cfg()["file"], env))
 
 
-def validate(card):
-    """→ エラーの一覧(空なら合格)。"""
-    c = cfg()
+def subject_names(card):
+    """段階72 第2部 1: カードの主語(何の話か)の名前。subject・subject_aliases、なければ場所と場所の別名。"""
+    names = [card.get("subject")] + list(card.get("subject_aliases") or [])
+    names = [n for n in names if n]
+    if not names:
+        names = [n for n in [card.get("place")] + list(card.get("place_aliases") or []) if n]
+    return names
+
+
+def subject_errors(card, strict=False):
+    """段階72 第2部 1: 事実の文に、何の話か(生き物・現象の名前)が書いてあるか。
+    主語のない書き出し(policy の subject.subjectless_starts。「例年」「早朝」など)で始まり、主語の名前を含まない文は不合格。
+    strict(新しく足すカード)では、subject が必須で、どの文にも主語の名前(subject・subject_aliases・場所)が要る。"""
+    sc = cfg().get("subject") or {}
+    names = subject_names(card)
     errs = []
+    if strict and not card.get("subject"):
+        errs.append("subject(何の話か。生き物・現象の名前)がない")
+    if strict:
+        names = names + [n for n in [card.get("place")] + list(card.get("place_aliases") or []) if n and n not in names]
+    for f in card.get("facts") or []:
+        if any(n in f for n in names):
+            continue
+        if strict or any(re.match(p, f) for p in sc.get("subjectless_starts") or []):
+            errs.append(f"事実の文に何の話か(主語)がない: {f[:20]}")
+    return errs
+
+
+def subject_audit(cards=None, env=None):
+    """段階72 第2部 1: 既存のカードの点検。主語のない文があるカード → [{title, place, url, facts: [主語のない文]}]。答えに出さないカードは除く。"""
+    rows = cards if cards is not None else load(env)
+    out = []
+    for r in rows:
+        if r.get("retired"):
+            continue
+        bad = [e.split(": ", 1)[1] for e in subject_errors(r) if ": " in e]
+        if bad:
+            out.append({"title": r.get("title"), "place": r.get("place"), "url": (r.get("source") or {}).get("url"), "facts": bad})
+    return out
+
+
+def validate(card, strict_subject=False):
+    """→ エラーの一覧(空なら合格)。strict_subject: 新しく足すカードの主語の決まり(段階72 第2部 1。ask knowledge add)。"""
+    c = cfg()
+    errs = list(subject_errors(card, strict=True)) if strict_subject else []      # 既存のカード(読むとき)は点検の一覧(subject_audit)だけ
     for k in c["required"]:
         if not card.get(k):
             errs.append(f"{k} がない")
@@ -54,9 +95,9 @@ def validate(card):
     return errs
 
 
-def add(card, env=None):
+def add(card, env=None, strict_subject=False):
     """カードを足す。不合格なら ValueError。同じ題・同じ場所のカードは置き換える。"""
-    errs = validate(card)
+    errs = validate(card, strict_subject=strict_subject)
     if errs:
         raise ValueError("; ".join(errs))
     rows = [r for r in load(env) if (r["title"], r.get("place")) != (card["title"], card.get("place"))]

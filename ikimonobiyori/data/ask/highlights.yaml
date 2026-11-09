@@ -54,6 +54,8 @@ text:
   walk_heading: "## 行く前に・歩き方"
   card_season_line: "・{where}{names}(例年{when}、{source})"
   card_season_where: "{where}: "
+  # 段階72 第2部 5: 同じ名前の別のもの(names.yaml の homonyms)のカードの季節の行
+  sense_season_line: "・{name}({when}、{source})"
   facility_heading: "## 施設"
   facility_line: "・{name}"
   now_heading: "## 今の時期"

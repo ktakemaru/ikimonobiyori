@@ -1,0 +1,76 @@
+# 段階72 第2部: 名前の辞書(ikimonobiyori/names.py)。通信しない。
+# - names: 説明の語(clues。どれか 1 組の語がすべて質問にあれば当たり)から、生き物・現象の名前を引く。名前を問う質問(「〜をなんというの?」)の答えの 1 文目。
+# - homonyms: 同じ名前の別のもの(読みが同じ・表記が同じで、指すものが違う)。答えでは、聞かれた対象に答え、別のものは区別のために短く添えるだけ。
+# 事実の出典: 高尾ビジターセンター「氷の花！シモバシラ」https://takaovc.ces-net.jp/?page_id=753(本人が確認。2026-11-10 に読んで確かめた)。
+# 「氷華」の語は上のページにはない(本人の手本の答えの語。2026-11-10)。
+schema: ikimono-names/1
+
+# 名前を問う質問の言い方(正規表現)
+name_question_patterns:
+  - "なんていう"
+  - "なんという"
+  - "何という"
+  - "何ていう"
+  - "なんて言う"
+  - "何て言う"
+  - "なんと呼ぶ"
+  - "何と呼ぶ"
+  - "名前は"
+  - "名前を教えて"
+  - "の名前"
+  - "って何[?？]?$"
+  - "ってなに[?？]?$"
+
+names:
+  - id: ice_flower
+    name: 氷の花（氷華）
+    subject: 氷の花
+    clues:
+      - [茎, 氷]
+      - [枯れ, 氷]
+      - [氷の花]
+      - [氷華]
+    # 手本の答え(本人が賛成した形。2026-11-10)。1 文目はこのまま出す
+    answer: "**氷の花（氷華）**と呼ばれます。高尾山では、シモバシラというシソ科の植物の枯れた茎にできるので、その名前で呼ばれることもあります（地面にできる霜柱とは別のものです）。"
+    homonym: しもばしら
+    sense: ice_flower
+    # 続けて出すカード(知識カードの subject)
+    card_subjects: [氷の花]
+    source_url: https://takaovc.ces-net.jp/?page_id=753
+
+homonyms:
+  しもばしら:
+    words: [シモバシラ, しもばしら, 霜柱]
+    senses:
+      - id: ground_frost
+        name: 霜柱
+        what: 地面にできる霜柱(植物のシモバシラとは別のもの)
+        season: 冬
+      - id: ice_flower
+        name: 氷の花（シモバシラの茎にできる氷）
+        what: 植物シモバシラの枯れた茎から水がしみだして凍った氷
+        season: 冬
+        when: 例年12月中旬〜2月
+        months: [12, 1, 2]
+        source_url: https://takaovc.ces-net.jp/?page_id=753
+      - id: plant
+        name: シモバシラの花
+        what: シソ科の多年草シモバシラ。8月下旬〜10月上旬に白い穂状の花
+        season: 秋
+        when: 8月下旬〜10月上旬
+        months: [8, 9, 10]
+        source_url: https://takaovc.ces-net.jp/?page_id=753
+
+# 写真(段階72 第2部 6): 写真つきページで、植物の花と氷の花の写真を並べる。ライセンスが明確なもの(iNaturalist・Wikimedia Commons。撮影者・ライセンスを表示)だけ。
+# 取得は段階73。高尾ビジターセンターの写真は規約上使わない。
+photos:
+  しもばしら:
+    plant: {inat_taxon_name: Keiskea japonica, note: 植物シモバシラの花(8〜10月の記録)}
+    ice_flower: {commons_search: "Keiskea japonica ice", note: 氷の花(12〜2月)}
+    status: not_fetched
+
+# 写真で見比べられるページ(写真がないときに案内する。写真そのものは規約上使わない)
+compare_pages:
+  しもばしら:
+    label: 写真で見比べられるページ(高尾ビジターセンター)
+    url: https://takaovc.ces-net.jp/?page_id=753

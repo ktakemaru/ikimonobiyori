@@ -150,7 +150,12 @@ def resolve(question, now, policy=None):
     from . import season_place as SP
     from . import highlights as HL
     from . import combo as CB
-    if kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
+    from . import names as NM
+    if NM.is_name_question(q) and NM.lookup(q):         # 段階72 第2部 4: 名前を問う質問(「枯れた茎に氷ができる。なんというの?」)
+        route = "name"
+    elif NM.is_name_question(q) and kind in ("plan", "place_time") and not area_names and not region and defaulted:
+        route = "knowledge"                              # 名前の辞書にない名前の質問も、知識の型(カードを探す)
+    elif kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
         route = "highlights_dated"
     elif kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
         route = "highlights"
@@ -627,6 +632,13 @@ def _other_route(res, cond, now, env, pol):
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
         return
+    if cond["route"] == "name":                          # 段階72 第2部 4
+        from . import names as NM
+        text = NM.compose(q, env=env)
+        if text:
+            res.update(text=text, stage=2, status=STATUS_PASS)
+            return
+        cond = dict(cond, route="knowledge")
     if cond["route"] in ("highlights_dated", "species_dated", "combo"):
         _dated_route(res, cond, now, env)
         return

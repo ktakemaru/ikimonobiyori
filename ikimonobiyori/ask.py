@@ -945,8 +945,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--question", required=True)
     p.add_argument("--month", type=int)
     p.add_argument("--now", help="行事の質問: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
-    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)")
-    p.add_argument("action", choices=["add", "list", "search", "show", "backup"])
+    p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)|audit-subject(段階72。主語のない文の一覧)")
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject"])
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
     p.add_argument("--place")
     p.add_argument("--category")
@@ -1064,12 +1064,15 @@ def main(argv=None, http_get=None):
             for line in lines:
                 print(line)
             return rc
+        if a.action == "audit-subject":                  # 段階72 第2部 1
+            _out(K.subject_audit())
+            return 0
         if a.action == "add":
             doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
             bad = 0
             for card in doc if isinstance(doc, list) else [doc]:
                 try:
-                    K.add(card)
+                    K.add(card, strict_subject=True)             # 段階72 第2部 1: 新しく足すカードは主語(subject)が必須
                 except ValueError as ex:
                     bad += 1
                     print(f"{card.get('title')}: {ex}", file=sys.stderr)

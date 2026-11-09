@@ -390,6 +390,24 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
     # 段階67 第4部 1: 月の書かれたカードから季節の行(名所カタログの花と重なる名前は 1 回だけ)
     card_n = {}
     converted = {}
+    from . import names as NM                                 # 段階72 第2部 5: 同じ名前の別のもの(シモバシラの氷の花と花)は、季節ごとに別の行
+    hcards = [r for r in g["cards"] if r.get("homonym")]
+    if hcards:                                                # 同じ名前の別の意味のカード(同じ場所)も、季節ごとの行に
+        try:
+            shown = K.load_shown(env)
+        except (OSError, ValueError):
+            shown = []
+        for h in list(hcards):
+            for r in shown:
+                if r.get("homonym") == h["homonym"] and r not in hcards and h.get("place") and K.place_match(r, h["place"]):
+                    hcards.append(r)
+    for card in hcards:
+        sense = next((x for x in NM.homonym_senses(card.get("homonym") or "") if x["id"] == card.get("sense")), None)
+        if not sense or not sense.get("season"):
+            continue
+        by_season.setdefault(sense["season"], []).append(t["sense_season_line"].format(name=sense["name"], when=sense.get("when") or "", source=card["source"]["name"]))
+        converted[id(card)] = (card, set(card.get("facts") or []))
+        url(card["source"].get("url"))
     for season, where, names, when, src, u, card, fact in card_season_items(g["cards"], c, today):
         have = " ".join(by_season.get(season) or [])
         names = [n for n in names if n not in have]
