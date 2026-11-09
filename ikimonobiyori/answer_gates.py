@@ -173,7 +173,7 @@ def length_limit(plan, text=None):
     L = contract()["length"]
     segs = AP.split_segments(text, plan) if text is not None else None
     n_seg = len(segs) if segs else max(1, len((plan or {}).get("segments") or []))
-    n_reg = len((plan or {}).get("region_parts") or [])
+    n_reg = len((plan or {}).get("region_parts") or []) or ((plan or {}).get("region_sections") or 0)    # 段階74: 「遠くても」の地域ごとの節も地域の数に数える
     return L["base"] + L["per_segment"] * (n_seg - 1) + L["per_region"] * max(0, n_reg - 1)
 
 

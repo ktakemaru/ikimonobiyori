@@ -1110,10 +1110,11 @@ def _event_hits(c, dates):
     return out
 
 
-def _distance(c, origin, cat_pol):
+def _distance(c, origin, cat_pol, wide=False):
+    """wide: 段階74(本人の指示 2026-11-10)。「遠くても」の質問では、横浜・東京からでも座標のない名所を市区町村の代表点で測る(範囲の中か確かめられる)。"""
     p = c.get("point")
     if not p or p.get("lat") is None:
-        if origin in catalog_mod.origin_names(cat_pol):         # 横浜・東京はこれまでどおり(座標のない名所は距離なし)
+        if origin in catalog_mod.origin_names(cat_pol) and not wide:         # 横浜・東京はこれまでどおり(座標のない名所は距離なし)
             return None
         from . import origins                                   # 段階57 第8部: 新しい出発地は、市区町村の代表点で測る
         p = origins.municipal_point(c.get("city"))
@@ -1798,7 +1799,7 @@ def human_inat_url(api_url):
     return "https://www.inaturalist.org/observations?" + urlencode(q + [("view", "species")])
 
 
-def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
+def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False):
     d = dates[0]
     cur = best_record(rows)
     fr = freshness(cur, today, subject, policy)
@@ -1850,7 +1851,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
         avoid = "too_early"
     elif typ and typ.get("start") and rel == "after_peak" and st is None:
         avoid = "past"
-    dist = _distance(c, origin, cat_pol)
+    dist = _distance(c, origin, cat_pol, wide)
     reasons = []
     if st == "見頃" and fr["class"] == "fresh":
         reasons.append("peak_now")
@@ -1997,8 +1998,8 @@ def _confidence_label(rec):
     return sources.secondary_label(rec.get("url"), rec.get("subject") or "autumn_leaves")
 
 
-def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=None, spots_doc=None, catalogs=None, with_alternatives=True):
-    """地域の質問の答えの材料。記録が古くても空でも、例年の時期で候補を出す。"""
+def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=None, spots_doc=None, catalogs=None, with_alternatives=True, wide=False):
+    """地域の質問の答えの材料。記録が古くても空でも、例年の時期で候補を出す。wide: 「遠くても」の質問(段階74。座標のない名所も市区町村の代表点で測る)。"""
     policy = policy or load_policy()
     cat_pol = catalog_mod.load_policy()
     origin = origin or cat_pol["range_limit"]["default_origin"]
@@ -2021,11 +2022,11 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
             x["prefecture"] = prefecture_from_text(g["city"], *[r.get("city") for r in g["rows"]], *[r.get("publisher") for r in g["rows"]])
         if x["prefecture"] is None:                            # 段階73 第3部: 市区町村の代表点の表(guide/places.yaml)に都県があれば、その都県(長野県の答えに飯能市の天覧山が入った不具合)
             x["prefecture"] = prefecture_of_city(g["city"], *[r.get("city") for r in g["rows"]])
-    all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol) for c in cands]
+    all_f = [fact_for(c, by_c[c["id"]], dates, today, subject, policy, origin, cat_pol, wide) for c in cands]
     for x in extra.values():
         if x["prefecture"] is None and x["area"] is None and len(reg["prefectures"]) == 1 and not reg["areas"]:
             x["prefecture"] = reg["prefectures"][0]         # 都道府県 1 つだけの地域で、記録に場所の手がかりがないとき(従来どおり。複数の都県では、どれか分からないので入れない)
-        f = fact_for(x, x["rows"], dates, today, subject, policy, origin, cat_pol)
+        f = fact_for(x, x["rows"], dates, today, subject, policy, origin, cat_pol, wide)
         f["outside_list"] = True
         all_f.append(f)
     ev_rank = policy["order"]["evidence_rank"]

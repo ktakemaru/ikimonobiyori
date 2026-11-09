@@ -95,7 +95,9 @@ def pick_block(p, i, c, sj, t, max_quote, today=None):
         bits.append(st_)
     if p.get("phrase"):
         bits.append(p["phrase"])
-    if p.get("note") and p["note"] not in " ".join(bits) and "確認できていません" not in bits[0]:
+    if p.get("unconfirmed") and p.get("note"):                        # 段階74: 例年の時期だけで入れた名所は「今年の情報は未確認」を先頭に明記
+        bits = [p["note"]] + [b for b in bits[1:]]
+    elif p.get("note") and p["note"] not in " ".join(bits) and "確認できていません" not in bits[0]:
         bits.append(p["note"])
     lines = [head] + [f"・{x.rstrip('。')}" for x in bits if x]
     for e in c.get("closed_on") or []:
@@ -144,7 +146,7 @@ def _used_urls(c, sj):
 def _subject_part(facts_subject, pl, sj, t, max_quote, urls, mentioned, today=None):
     cands = {c["name"]: c for c in facts_subject.get("candidates") or []}
     picks = pl.get("picks") or []
-    out = [t["picks_heading"]] if picks else []                            # 段階67 第3部 6: 候補のない「今回のおすすめ」の見出しは出さない
+    out = [pl.get("picks_heading") or t["picks_heading"]] if picks else []   # 段階67 第3部 6: 候補のない「今回のおすすめ」の見出しは出さない。段階74: 「遠くても」は地域ごとの候補
     by_name = {p["name"]: p for p in picks}
     used = []
     if pl.get("use_headings"):
@@ -208,15 +210,19 @@ def _no_this_year(plan, facts, t, max_quote):
     for s in plan.get("segments") or []:
         rows += (s.get("plan") or (plan.get("subjects") or {}).get(s.get("subject")) or {}).get("no_this_year") or []
     ty = AP.load_policy()["this_year"]
-    out, seen = [], set()
+    out, seen, region = [], set(), None
+    grouped = any(r.get("region") for r in rows)                      # 段階74: 「遠くても」は地域ごとに分ける(件数は計画が地域ごとに決める)
     for r in rows:
         if r["name"] in seen:
             continue
         seen.add(r["name"])
+        if grouped and r.get("region") != region:
+            region = r.get("region")
+            out.append(region)
         typ = _no_long_quote(r.get("typical_line") or "", max_quote)
         known = typ and not typ.startswith(t["typical_unknown"])
         out.append("・" + (ty["line"].format(name=r["name"], typical=typ) if known else ty["line_no_typical"].format(name=r["name"])))
-    return out[: ty["max_lines"]]
+    return out if grouped else out[: ty["max_lines"]]
 
 
 def vc_lines(facts, mentioned, t, prefectures=()):

@@ -216,6 +216,14 @@ def run(payload, *, env=None, now=None):
     return {"decision": "block", "reason": reason}
 
 
+def to_output(out, mode=None):
+    """段階74: run() の判定 → フックが標準出力に書く JSON(stop_hook.output。block / feedback)。"""
+    mode = mode or cfg().get("output") or "block"
+    if mode == "feedback":
+        return {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": out["reason"]}}
+    return out
+
+
 def main(stdin=None, stdout=None):
     """フックの入口。どんな失敗でも終了コード 0 で通す(応答全体を止めない)。"""
     stdin = stdin or sys.stdin
@@ -227,7 +235,7 @@ def main(stdin=None, stdout=None):
             return 0
         out = run(payload)
         if out:
-            stdout.write(json.dumps(out, ensure_ascii=False))
+            stdout.write(json.dumps(to_output(out), ensure_ascii=False))
             stdout.flush()
     except Exception:                                    # 失敗したら通す
         return 0

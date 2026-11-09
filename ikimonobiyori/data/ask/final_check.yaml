@@ -94,6 +94,11 @@ stop_hook:
   state_keep: 200
   # 理由の文の先頭の印(この印を含む利用者の文は、利用者が打った文として扱わない)
   reason_marker: "[イキモノビヨリ 送る前の検査]"
+  # 段階74: 止めるときの出力の形。block = {"decision": "block", "reason"}(画面では「Stop hook error」と出る)、
+  # feedback = {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext"}}(Claude Code の公式の文書 https://code.claude.com/docs/en/hooks の
+  # Stop decision control: 会話は block と同じように続き、同じ繰り返しの保護(stop_hook_active・8 回の上限)がかかるが、画面では「Stop hook feedback」と出て
+  # フックのエラーの表示が出ない。2026-11-10 に読んだ)。feedback への切り替えは既存のテストの期待値が変わるので、利用者の承認待ち
+  output: block
   # 利用者の文として扱わない記録の行(コマンドの記録など)
   not_prompt_prefixes: ["<local-command", "<command-name", "<command-message", "<system-reminder", "<task-notification", "Stop hook feedback", "[Request interrupted"]
   # 例外: この語がある回は検査しない(一般知識で答えてよい回。CLAUDE.md の A-6)
