@@ -444,3 +444,24 @@ class Part7FinalCheckHeadings(unittest.TestCase):
         out = FC.check(ans, answer=ans)["text"]
         self.assertIn("## 季節ごとの見どころ\n### 秋\n・試験山: 紅葉", out)
         self.assertNotIn("## 空の節", out)                                   # 中身のない節はこれまでどおり消す
+
+
+class Part4GuideUnusedSources(unittest.TestCase):
+    """第4部 1 の続き(第7部で気づいた): ガイド型の答え(guide.find)でも、使わない出典だけが根拠の名所と、その出典の時期は出さない。"""
+
+    def test_entries_only_from_unused_sources_are_not_found(self):
+        from ikimonobiyori import guide
+        from ikimonobiyori import publisher as P
+        pol = guide.load_policy()
+        entries = guide.committed_entries()
+        only = {e["id"] for e in entries if e.get("sources") and all(P.unused_source(s.get("url")) for s in e["sources"])}
+        self.assertTrue(only)                                                 # 写しのデータには残っている(消していない)
+        themes = {e["theme"] for e in entries if e["id"] in only}
+        found = guide.find(entries, themes=themes, policy=pol)
+        got = {e["id"] for k, rows in found.items() for e in rows}
+        self.assertFalse(only & got)
+        for rows in found.values():
+            for e in rows:
+                s = e.get("season") or {}
+                if s.get("from_url") and P.unused_source(s["from_url"]):
+                    self.assertFalse(s.get("shown"), e["name"])
