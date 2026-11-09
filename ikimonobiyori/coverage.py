@@ -132,16 +132,18 @@ def count(env=None, cards=None, records=None):
                 records[sj] = O.read_records(sj, env)
             except (OSError, ValueError, KeyError):
                 records[sj] = []
+    spot_of, city_pref = _spot_index()
     for sj, rows in records.items():
         for r in rows:
             kind = r.get("kind") or ""
             th = next((v for k, v in c["kind_themes"].items() if k in kind), None) or c["subject_themes"].get(sj)
             if th == "花":
                 th = "花(時期不明)"
+            pref, key = _record_pref(r, spot_of, city_pref)
             if th:
-                add(r.get("prefecture") or UNKNOWN, th, r.get("name") or r.get("spot"))
+                add(pref, th, key)
             if r.get("event"):
-                add(r.get("prefecture") or UNKNOWN, "行事", (r.get("name") or "") + str(r.get("event"))[:20])
+                add(pref, "行事", (key or "") + str(r.get("event"))[:20])
     if cards is None:
         from . import knowledge as K
         try:
@@ -172,6 +174,43 @@ def count(env=None, cards=None, records=None):
         if (v.get("approval") or {}).get("status") == "approved" and not v.get("closed"):
             add(v.get("prefecture") or UNKNOWN, "ビジターセンター", v.get("name"))
     return {p: dict(t) for p, t in tab.items()}
+
+
+def _spot_index():
+    """段階73 第1部: 記録の都県を補う索引。名所の id(名所カタログ・観察の名所)→ (名前, 都県)、市町村 → 都県(1つに決まるものだけ)。"""
+    spot_of = {}
+    cities = defaultdict(set)
+    for sub in ("autumn_leaves", "flowers", "birds", "wintering_birds"):
+        for e in (C.load_catalog(sub) or {}).get("entries") or []:
+            p = _pref(e)
+            t = e.get("tags") if isinstance(e.get("tags"), dict) else {}
+            if e.get("id"):
+                spot_of[e["id"]] = (e.get("name"), p)
+            if t.get("city") and p != UNKNOWN:
+                cities[t["city"]].add(p)
+    for s in (yamlcache.load(DATA_FILES_DIR / "observations" / "spots.yaml") or {}).get("spots") or []:
+        if s.get("id"):
+            spot_of.setdefault(s["id"], (s.get("name"), s.get("prefecture") or UNKNOWN))
+        if s.get("city") and s.get("prefecture"):
+            cities[s["city"]].add(s["prefecture"])
+    return spot_of, {k: next(iter(v)) for k, v in cities.items() if len(v) == 1}
+
+
+def _record_pref(r, spot_of, city_pref):
+    """記録 → (都県, 数える名前)。都県の書いていない記録は、名所の id か市町村から補う(決まらなければ都県不明)。"""
+    key = r.get("name") or r.get("spot")
+    pref = r.get("prefecture")
+    hit = spot_of.get(r.get("spot")) or spot_of.get(r.get("name"))
+    if hit:
+        key = hit[0] or key
+        pref = pref or (hit[1] if hit[1] != UNKNOWN else None)
+    city = r.get("city") or ""
+    if not pref and city:
+        pref = next((p for p, _ in range_prefectures() if city.startswith(p)), None) or city_pref.get(city)
+        if not pref:                                      # 「横浜市」と「横浜市中区」のような書き方の違い(都県が1つに決まるときだけ)
+            ps = {p for k, p in city_pref.items() if k.startswith(city) or city.startswith(k)}
+            pref = next(iter(ps)) if len(ps) == 1 else None
+    return pref or UNKNOWN, key
 
 
 _pts = None
