@@ -121,3 +121,24 @@ Claude Code は commit までを行う。push・PR・マージは自分で行う
 - **12月〜2月**: 冬の花（水仙・ロウバイ・梅・河津桜）のイベントの日付（多くは年が明けてから公開）。台帳に冬の花の情報源を足す準備。
 - **2月〜4月**: 桜・梅・春の花に向けて、名所の一覧・台帳・写真の事前取得（`guide photos-prefetch --theme 花 --all`）の準備。
 - **毎月**: 台帳の健全性点検（段階54 第10部の方法。URL が読めるか、前シーズンのままでないか）。結果は `docs\source-health-YYYY-MM.md`。
+
+## 送る前の検査(Stop フック。段階72 第1部)
+
+Claude Code では、エージェントが応答を終えるときに `.claude/settings.json` の `hooks.Stop` が `.claude/hooks/stop_check.py`(本体は `ikimonobiyori/stop_hook.py`)を起動する。語と値は `ikimonobiyori/data/ask/final_check.yaml` の `stop_hook`。
+
+- 入力: Stop フックの JSON(`last_assistant_message` = 直前の応答の文、`transcript_path` = 会話の記録の JSONL、`session_id`)。仕様は Claude Code の公式の文書(https://code.claude.com/docs/en/hooks)で確かめた(2026-11-10)。
+- 「この回」: 会話の記録の、最後に利用者が打った文から後ろ(道具の結果・コマンドの記録・フック自身の理由の文は利用者の文として扱わない)。
+- 止める(`{"decision": "block", "reason": ...}` を標準出力に出す)とき:
+  1. この回に `ask answer` を実行していて、直前の応答に送ってはいけない文がある(`ask final-check` と同じ規則 `final_check.check`)。
+  2. `ask answer` を 1 回だけ実行し、その出力に「調べる:」「読むページ:」「名所の記録が足りません」「資料が足りません」があるのに、そのあと検索・取得・記録(`WebSearch`・`WebFetch`・`Agent`・`ask record` など)をしていない。
+  3. `ask answer` のあとに `ask final-check` を実行していない。
+  4. この回に道具を 1 つも使わず、利用者の文が生き物・お出かけの質問の語を含む(一般知識で答えようとしている)。
+  理由の文はエージェントへの次の手順(「利用者に聞かずに、公式ページを探して読み、記録し、ask answer を呼び直してください」「最終メッセージを ask final-check に通してください」)。先頭に印「[イキモノビヨリ 送る前の検査]」を付ける。
+- 止めない(検査しない)とき:
+  - 利用者の文に「イキモノビヨリを使わずに」(`skip_words`)がある回。
+  - 仕組み・開発についての質問の回: 利用者の文に `mechanism_words`(仕組み・台帳・検査・コマンド・コード・フック・テスト・指示書・commit・.md など)がある。
+  - この回に `ask answer` を実行しておらず、道具を使った回(開発の作業など)。
+  - 同じ回(セッションと利用者の文の組)で、すでに `max_blocks_per_turn`(2)回止めた(数はデータ置き場の `logs/stop_hook_state.json`)。
+  - 入力・会話の記録が読めない、スクリプトが失敗した(どんな失敗でも終了コード 0 で何も出さない = 通す)。
+- テスト: `tests/test_stage72_hook.py`(合成の応答と合成の会話の記録)。
+- 手で試す: `echo '{"session_id":"x","transcript_path":"<記録>.jsonl","last_assistant_message":"調べますか?"}' | python -X utf8 .claude/hooks/stop_check.py`
