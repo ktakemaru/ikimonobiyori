@@ -205,6 +205,15 @@ def has_state_record(c):
     return bool(cur) and not cur.get("symbol_only") and cur.get("state") != O.load_policy()["unknown_state"]
 
 
+def dated_official_text(cur, pol=None):
+    """段階69 第4部 3・第7部: 公式・日付つき・記号だけでなく・「記載なし」の類いでない原文の記載か(状態の語では段階を読めないもの)。"""
+    if not cur or cur.get("source_class") != "official" or not cur.get("state_date") or cur.get("symbol_only"):
+        return False
+    raw = cur.get("display") or cur.get("state_raw") or ""
+    words = ((pol or load_policy())["skeleton"].get("unknown_skip_words")) or []
+    return bool(raw.strip()) and not any(w in raw for w in words)
+
+
 def has_this_year(c, year):
     """今年(今のシーズン)の情報があるか: 状態が読める今年の日付の記録、または今年の行事。「例年の時期」だけでは数えない(段階58 第3部)。"""
     cur = c.get("current")
@@ -304,6 +313,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
                   "target_age_days": _target_age(c, dates[0], facts_doc.get("now")),
                   "has_current": has_current(c), "has_state": has_state_record(c) or (subject == "birds" and bool(c.get("vc_report"))), "this_year": has_this_year(c, dates[0].year),
+                  "dated_text": not has_state_record(c) and dated_official_text(c.get("current"), pol),
                   "has_window": any(t.get("start") and t.get("end") and not t.get("event_derived") for t in c.get("typical") or []), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
@@ -416,7 +426,7 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
         picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
     else:
-        picks = [dict(weaken(it, pol), rank=i + 1, **({} if it["has_state"] else {"note": pol["evidence"]["no_current_note"]}))       # 段階62 第3部: 古い現況は上位に置かない
+        picks = [dict(weaken(it, pol), rank=i + 1, **({} if it["has_state"] or it.get("dated_text") else {"note": pol["evidence"]["no_current_note"]}))       # 段階62 第3部: 古い現況は上位に置かない。段階69 第7部: 公式の日付つきの記載を書いた名所には「今年の状況は確認できていません」を付けない
                  for i, it in enumerate(sorted(chosen, key=lambda it: (is_old_record(it, pol),) + key(it)))]
     ranking = []
     for r in sorted(rows, key=lambda x: (-x["score"], x["name"])):
@@ -532,7 +542,7 @@ def weaken(it, pol):
 
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
-            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "has_window": r.get("has_window", True), "subject": r.get("subject"),
+            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "dated_text": r.get("dated_text", False), "has_window": r.get("has_window", True), "subject": r.get("subject"),
             "current_age_days": r.get("current_age_days"), "target_age_days": r.get("target_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],

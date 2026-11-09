@@ -58,7 +58,9 @@ def places(question, cards=None):
         for n in [r.get("place") or "", *(r.get("place_aliases") or [])]:
             if len(n) >= 2:
                 vocab.append((n, {"name": r.get("place"), "terms": [r.get("place"), *(r.get("place_aliases") or [])], "cities": [], "center": None, "radius_km": None}))
-    for word, item in sorted(vocab, key=lambda x: -len(x[0])):
+    # 同じ長さの語では、山の地点(半径 site_radius_km)をエリア辞書より先にする(段階69 第7部: 「高尾山」をエリア「高尾」(八王子駅付近から 12km)に
+    # 解決すると、立川の昭和記念公園まで高尾山の見どころに入った)。sorted は安定なので、ほかの順は変わらない
+    for word, item in sorted(vocab, key=lambda x: (-len(x[0]), not x[1].get("site_id"))):
         if word in q and item["name"] not in [o[1]["name"] for o in out]:
             add(word, item)
     got = [x[1] for x in sorted(out, key=lambda x: x[0])]

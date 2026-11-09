@@ -65,7 +65,7 @@ def _dated_official_text(cur, t):
     if not cur or cur.get("source_class") != "official" or not cur.get("state_date") or cur.get("symbol_only"):
         return False
     raw = cur.get("display") or cur.get("state_raw") or ""
-    return bool(raw.strip()) and not any(w in raw for w in t.get("unknown_skip_words") or [])
+    return bool(raw.strip()) and not any(w in raw for w in t.get("unknown_skip_words") or [])     # answer_plan.dated_official_text と同じ判定
 
 
 def season_text(c, sj, t, max_quote):

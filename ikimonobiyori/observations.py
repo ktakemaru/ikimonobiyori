@@ -111,8 +111,19 @@ def parse_typical(text, policy):
             parts.append((int(a), int(b), int(a), int(b)))
     if not parts:
         return None
+    if len(parts) == 1 and END_ONLY_RE.search(t):          # 段階69 第7部: 「7月上旬まで」は終わりだけ。始まりを推測しない
+        return None
     s, e = parts[0], parts[-1]
     return f"{s[0]:02d}-{s[1]:02d}", f"{e[2]:02d}-{e[3]:02d}"
+
+
+END_ONLY_RE = re.compile(r"\d{1,2}月(?:上旬|中旬|下旬|\d{1,2}日)?(?:頃|ごろ)?まで")
+
+
+def end_only_text(text):
+    """「例年…7月上旬までホタルをみることができます」→「7月上旬まで」(終わりだけの時期の原文の語)。なければ None。"""
+    m = END_ONLY_RE.search(unicodedata.normalize("NFKC", text or ""))
+    return m.group(0) if m else None
 
 
 def window_dates(start_md, end_md, d):

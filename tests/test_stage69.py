@@ -387,3 +387,51 @@ class Part6PartyPublisher(unittest.TestCase):
         rows = {e["name"]: e for e in doc["entries"]}
         for n in ("吾妻山公園", "寄ロウバイ園", "熱海梅園", "越生梅林", "曽我梅林"):
             self.assertIn("本人の判断（2026-11-09）", rows[n].get("note", ""), n)
+
+
+class Part7Fixes(unittest.TestCase):
+    """第7部の動作確認で見つけて直したもの(合成データ)。"""
+
+    def test_end_only_season_is_not_a_window(self):
+        from ikimonobiyori import observations as O
+        pol = O.load_policy()
+        t = "例年ですと、試験の川全体で7月上旬までホタルをみることができます"
+        self.assertIsNone(O.parse_typical(t, pol))                       # 始まりを推測しない(「7月上旬」の窓にしない)
+        self.assertEqual(O.end_only_text(t), "7月上旬まで")
+        self.assertEqual(O.parse_typical("6月〜7月上旬まで", pol), ("06-01", "07-10"))   # 始まりがあれば、これまでどおり
+        self.assertEqual(O.parse_typical("11月中旬～12月上旬", pol), ("11-11", "12-10"))
+
+    def test_end_only_record_shows_the_original_words(self):
+        from ikimonobiyori import observations as O
+        from ikimonobiyori import season_place as SP
+        from datetime import date
+        d = tempfile.mkdtemp()
+        env = {"IKIMONOBIYORI_DATA_DIR": d}
+        rec = {"subject": "flowers", "name": "試験の沢", "city": "あきる野市", "prefecture": "東京都", "kind": "ホタル",
+               "typical": "例年ですと、試験の沢で7月上旬までホタルをみることができます", "url": "https://www.example-akiruno.test/a",
+               "source_class": "official", "basis": "page", "publisher": "試験の観光協会"}
+        self.assertFalse(O.record([rec], env=env).get("rejected"))
+        q = "あきる野市でホタルが見られるところと時期は?"
+        t = SP.compose(q, today=date(2026, 11, 9), origin="横浜", env=env, place=SP.place_filter(q))["text"]
+        self.assertIn("・例年の時期: 7月上旬まで(試験の観光協会)", t)
+        self.assertNotIn("例年7月が目安", t)
+
+    def test_dated_official_text_has_no_no_current_note(self):
+        from ikimonobiyori import answer_plan as AP
+        cur = {"state": "状態不明", "state_raw": "バラがとても綺麗に咲いています", "display": "バラがとても綺麗に咲いています",
+               "state_date": "2026-11-03", "source_class": "official", "symbol_only": False}
+        self.assertTrue(AP.dated_official_text(cur))
+        self.assertFalse(AP.dated_official_text(dict(cur, source_class="secondary")))
+        self.assertFalse(AP.dated_official_text(dict(cur, state_raw="開花状況の記載なし", display="開花状況の記載なし")))
+        oo = AP.load_policy()["outlook"]
+        r = {"name": "試験の園", "id": "t", "aim": "x", "score": 1, "breakdown": {}, "outlook": next(iter(oo["labels"])), "cluster": "c",
+             "has_current": False, "has_state": False, "dated_text": True, "subject": "flowers", "distance_km": None, "distance_estimated": False,
+             "current_state": None, "current_date": None, "festivals": [], "practical": []}
+        self.assertTrue(AP._item(r, oo)["dated_text"])
+
+    def test_mountain_point_wins_over_the_area_with_the_same_word(self):
+        from ikimonobiyori import highlights as HL
+        pl = HL.places("今週末、高尾山の見どころを教えて", cards=[])
+        self.assertTrue(pl[0].get("site_id"), pl)                           # エリア「高尾」(別名 高尾山)より山の地点
+        self.assertEqual(pl[0]["label"], "高尾山")
+        self.assertEqual(HL.places("日光の見どころ", cards=[])[0]["name"], "日光")   # 地点にない語はエリアのまま

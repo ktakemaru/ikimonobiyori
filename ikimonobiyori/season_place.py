@@ -249,7 +249,7 @@ def _records(match, env=None, sp=None, c=None):
             win = O.parse_typical(r.get("typical"), opol) if r.get("typical") else None
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
                         "start": win[0] if win else None, "end": win[1] if win else None,
-                        "season": window_text(win[0], win[1], thirds) if win else None,
+                        "season": window_text(win[0], win[1], thirds) if win else O.end_only_text(r.get("typical")),   # 段階69 第7部: 「7月上旬まで」
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
                         "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
     return out
