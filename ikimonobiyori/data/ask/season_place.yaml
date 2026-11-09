@@ -48,6 +48,8 @@ species:
 #  静岡県の湖西市は約210km。福島県の北端(新地町)は約270km、新潟県・北海道は範囲の外が多いので、座標で確かめられたものだけ)。provisional
 unknown_distance_prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 長野県, 静岡県]
 max_items: 8
+# 段階67 第3部 8: 時期が分かる名所(max_items まで)のあとに出す、時期が分からない名所の件数
+max_unknown_items: 5
 
 text:
   lead: "{name}は、例年{start}〜{end}が目安です。"
@@ -63,8 +65,12 @@ text:
   head: "**{name}**({where}){km}"
   km: " 約{km}km"
   typical: "・例年の時期: {text}({publisher})"
+  typical_nopub: "・例年の時期: {text}(公式)"
+  # 段階67 第1部 4: 発行元は名前(ドメインは出さない)。名前が分からなければ「紹介サイト。公式ではありません」
   typical_secondary: "・例年の時期: {text}(紹介サイト{publisher}。公式ではありません)"
   typical_unknown: "・例年の時期は分かりません"
+  # 段階67 第3部 8: 公式ページに「毎年」と書かれた行事の期間は行事の行として(例年の見頃ではない。今年・来年の日付として書かない)
+  annual_event: "・{name}は{text}({publisher})"
   # 鳥は「例年の見頃」でなく、見られる時期(段階58 の定型)
   bird_label: {例年の時期: 見られる時期}
   kinds: "・見どころ: {kinds}"

@@ -595,24 +595,67 @@ def event_derived(w, events, policy=None, name=None):
     return any(x in (w.get("note") or "") for x in words)
 
 
+def window_note_text(tw, policy=None):
+    """段階67 第3部 5: 名所カタログの例年の窓の文。備考(note)は最初の文だけ使い、作業のメモ(「記載がない」「確認」「承認」など)なら使わず月日の文にする。"""
+    md = f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}"
+    note = re.split(r"[。\n]", str(tw.get("note") or ""), maxsplit=1)[0].strip()
+    memo = ((policy or load_policy()).get("typical") or {}).get("note_memo_re")
+    paren_memo = ((policy or load_policy()).get("typical") or {}).get("note_paren_memo_re")
+    if paren_memo:                                         # 括弧の中の作業のメモ(「(初旬は上旬として 01 にした)」)は外す
+        note = re.sub(r"[(（][^()（）]*(" + paren_memo + r")[^()（）]*[)）]", "", note).strip()
+    if not note or (memo and re.search(memo, note)):
+        return md
+    return note
+
+
+def _pub_name(url, e):
+    """段階67 第1部 4: 発行元は名前(「二宮町」)。ドメインを答えに出さない。分からなければ None。"""
+    from . import publisher as P
+    title = next((s.get("title") for s in e.get("sources") or [] if s.get("url") == url), None)
+    return P.name(url, e, title)
+
+
+def _pub_official(url):
+    """段階67 第1部 3(承認欄 C): 町・市・県・国の自身のページは、通信先の承認とは別に「公式」と表示する。"""
+    from . import publisher as P
+    return P.is_official(url)
+
+
+def festival_on_dates(f, dates):
+    """段階67 第3部 2: 対象の日と関係のない行事(対象の日より前に終わる・対象の日にない 1 日だけの行事)は出さない。日付が読めなければ残す。"""
+    if not dates:
+        return True
+    try:
+        s, e = date.fromisoformat(str(f["start"])[:10]), date.fromisoformat(str(f["end"])[:10])
+    except (KeyError, TypeError, ValueError):
+        return True
+    ds = [d if isinstance(d, date) else date.fromisoformat(str(d)[:10]) for d in dates]
+    if e < min(ds):
+        return False
+    if s == e and s not in ds:
+        return False
+    return True
+
+
 def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
     if tw:
-        out.append({"text": tw.get("note") or f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}",
-                    "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": urlparse(tw.get("source_url") or "").hostname,
-                    "year": None, "source_class": "official"})
+        out.append({"text": window_note_text(tw, policy),
+                    "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": _pub_name(tw.get("source_url"), e),
+                    "year": None, "source_class": "official", "publisher_official": _pub_official(tw.get("source_url"))})
     for w in e.get("flower_windows") or []:
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
-                    "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": urlparse(w["source_url"]).hostname,
+                    "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": _pub_name(w["source_url"], e),
                     "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
+                    "publisher_official": _pub_official(w["source_url"]),
                     "event_derived": event_derived(w, e.get("events"), policy, e.get("name"))})
     return out
 
 
 def _events_from_catalog(e):
     return [{"name": v["name"], "kind": v.get("kind"), "start": v["start"], "end": v["end"], "url": v["source_url"],
-             "publisher": urlparse(v["source_url"]).hostname,
+             "publisher": _pub_name(v["source_url"], e), "publisher_official": _pub_official(v["source_url"]),
              "source_class": "secondary" if (v.get("source_class") == "secondary" or v.get("unapproved_host")) else "official"}
             for v in e.get("events") or []]
 
@@ -1785,7 +1828,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
-            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class")} for t in real_typ]
+            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class", "publisher_official")} for t in real_typ]
                        + ([] if not typ or typ in real_typ else [typ]),
             "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
                                           for t in c.get("typical") or [] if t.get("event_derived")],
@@ -1818,8 +1861,52 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol):
     return out
 
 
+def short_state(text, policy, word=None):
+    """段階67 第3部 3・4: 状態の原文 → 短い状態の語(30字以内)。日付の言い方を除き、最初の文だけにし、「です」「ます」を外す。
+    word(凡例の語)があれば「凡例の語 1 つ」と短い語の組(同じ語を含むなら短い語だけ)。長すぎれば凡例の語だけ(なければ None)。"""
+    c = policy.get("short_state") or {}
+    if not c:
+        return text
+    mx = _v(c["max_chars"])
+    t = re.sub(c["date_re"], "", str(text or "")).strip(" 　、")
+    t = re.split("[" + c["clause_end"] + r"\n]", t, maxsplit=1)[0].strip(" 　、")
+    t = re.sub(r"[ 　]{2,}", " ", t)
+    if word:
+        rest = t[len(word):].strip(" 　、") if t.startswith(word) else t
+        rest = re.sub(c["tail_re"], "", rest).strip(" 　、")            # 凡例の語に添える語は「です」「ます」を外す
+        if not rest or rest == word:
+            return word
+        if not t.startswith(word) and (word in t or word[:2] in t):
+            return t if len(t) <= mx else word
+        unknown = policy["unknown_state"]
+        is_state = any(normalize(sj, rest, policy) != unknown for sj in ("autumn_leaves", "flowers")) or re.search(c["degree_re"], rest)
+        if not is_state:                                   # 状態の語でない原文(「山肌が美しい」)は写さない。凡例の語だけ
+            return word
+        out = c["pair"].format(word=word, rest=rest)
+        return out if len(out) <= mx else word
+    if not t:
+        return None
+    if len(t) <= mx:
+        return t
+    cut = max((i for i, ch in enumerate(t[:mx]) if ch in c.get("list_sep", "、・,")), default=-1)     # 列挙は区切りの前まで
+    return t[:cut] if cut > 0 else None
+
+
 def state_display(raw, publisher, policy):
-    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。語が続く記号(「◎ 真っ盛り」)は原文のまま。"""
+    """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。
+    段階67 第3部 3・4: 凡例の語 1 つと短い状態の語(30字以内)にする(記号・日付・2文目以降の原文は出さない)。"""
+    disp, sym = _state_display(raw, publisher, policy)
+    if sym or disp is None:
+        return disp, sym
+    legend_word = getattr(_state_display, "_word", None)
+    short = short_state(disp, policy, legend_word)
+    if short is None:
+        return None, True
+    return short, False
+
+
+def _state_display(raw, publisher, policy):
+    _state_display._word = None
     cfg = policy.get("state_symbols") or {}
     chars = cfg.get("chars") or ""
     text = (raw or "").strip()
@@ -1831,9 +1918,13 @@ def state_display(raw, publisher, policy):
         if not legend or m.group(1) not in legend:
             return raw, False
         word, rest = legend[m.group(1)], m.group(2)
-        return (rest if word in rest or word[:2] in rest else f"{word} {rest}"), False
+        _state_display._word = word
+        return rest, False
     if not legend:
         return None, True
+    if text[:1] in legend and not any(ch in text[1:] for ch in chars):        # 段階67: 先頭の記号 1 つは凡例の語にして、残りを短い語に
+        _state_display._word = legend[text[0]]
+        return text[1:].strip(" 　"), False
     for ch, word in legend.items():
         text = text.replace(ch, word)
     return (None, True) if any(ch in text for ch in chars) else (text, False)
@@ -1915,7 +2006,8 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
         f["reasons"].append("near")
     for f in all_f:                                        # 段階53: まつり・イベント（主催者が設定した期間。現況とは別の行）
         _today = now.date() if hasattr(now, "date") else now
-        f["festivals"] = festivals_mod.for_spot(f["id"], _today)
+        f["festivals"] = [x for x in festivals_mod.for_spot(f["id"], _today, subject=subject, tags={"city": f.get("city")})
+                          if festival_on_dates(x, dates)]          # 段階67 第2部・第3部: 同じ町のまつり・対象の合うもの・対象の日に関係するものだけ
         f["practical"] = practical_for_dates((f.get("practical") or []) + festivals_mod.practical_for(f["id"], _today), dates, policy)      # 段階53 第4部: 読めた公式ページの実用情報
     range_warnings = []
     if subject == "birds":

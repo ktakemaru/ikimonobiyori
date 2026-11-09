@@ -198,6 +198,7 @@ centers:
     frequency: 未確認
     form: html
     terms: '**無断転載を禁じます**'
+    use: 状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名は使わない）。知識カードは事実だけ・自分の言葉・出典明記
     recommendation: '**要判断**: 事実のみの扱いでよいか'
   kamikochi-vc:
     operator: 環境省
@@ -271,7 +272,7 @@ centers:
     form: html
     terms: '**転載禁止の明示あり**。転載禁止の明示あり（著作権の項に『著作権法上認められた場合を除き、無断で複製・転用することはできません』。『転載』の語ではなく複製・転用の無断禁止）。リンクは原則自由（リンク先はトップ）。robots.txt は /wp-admin/ のみ拒否で /info は許可'
     in_range: はい
-    use: '状態の語（30字以内）・日付・種名（10種まで）・URL・開館時間。記事や文章は使わない。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料'
+    use: '状態の語（30字以内）・日付・URL・開館時間のみ（台帳の allowed_fields。種名は使わない）。記事や文章は使わない。知識カードは事実だけ・自分の言葉・出典明記。開館時間: 9:00〜16:30、休館日は月曜（祝日の場合は連休明けの平日）・年末年始。入館無料'
     recommendation: '**保留**: お知らせはイベント・登山道・クマ情報が中心で、紅葉・花・鳥の状態の語が読めない。複製・転用の無断禁止の明示あり'
   gyotoku-ainest:
     operator: 市川市 環境部 自然環境課
@@ -311,7 +312,7 @@ sources:
     recommendation: '**保留**: 読めていない(HTTP 503)。状態の書き方も未確認'
     read_state: unconfirmed（2026-10-23）
   showakinen-flower-information:
-    recommendation: '**要判断**: 通信先 www.showakinen-koen.jp は段階47の承認ホストの一覧にない。記録は出所の区分 official で残るが、台帳の承認はユーザーの見直しを待つ'
+    recommendation: '**承認済み**(本人の承認 2026-11-09。承認欄 B。通信先 www.showakinen-koen.jp も公式の扱い。状態の語(30字以内)・日付・URL だけ。approved_by: user)'
     read_state: ok（2026-11-05）
   siobara-kankou:
     recommendation: '**保留**: メンテナンス中で読めていない。現況のページがあるかも未確認'
@@ -332,8 +333,8 @@ sources:
     recommendation: '**要判断**: 状態が PDF の中にあり、日付がない(readable: partial)。利用条件も未確認。人が開く URL として扱う'
     read_state: partial（2026-10-24）
   showakinen-flower-information-flowers:
-    recommendation: '**保留**: 読めなかった(HTTP 504)。利用条件も未確認。人が開く URL として扱う'
-    read_state: unconfirmed（2026-10-24）
+    recommendation: '**承認済み**(本人の承認 2026-11-09。承認欄 B。状態の語(30字以内)・日付・URL だけ。approved_by: user)'
+    read_state: ok（2026-11-09）
   keisei-rose-garden:
     recommendation: '**要判断**: 利用条件を確かめられなかった(規約のページが見つからない)。robots.txt も未確認。人が開く URL として扱う'
     read_state: ok（2026-10-24）
@@ -416,16 +417,33 @@ catalog_secondary:
   hana-0046:
     - {url: "https://www.ashikaga.co.jp/", class: "施設自身の公式ページ(あしかがフラワーパーク)", terms: "トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09)"}
   hana-0047:
-    - {url: "https://www.town.ninomiya.kanagawa.jp/0000001281.html", class: "自治体の公式ページ(二宮町。公園の管理者の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://www.town.ninomiya.kanagawa.jp/0000001281.html", class: "自治体の公式ページ(二宮町。公園の管理者の町自身のページ)", terms: "段階67 第5部(2026-11-09): 無断の複製・転用は不可(私的使用・引用を除く)。自動取得の記載なし"}
   hana-0048:
-    - {url: "https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html", class: "自治体の公式ページ(松田町。園の運営の町自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html", class: "自治体の公式ページ(松田町。園の運営の町自身のページ)", terms: "段階67 第5部(2026-11-09): 無断の複製・転載・販売・貸与・改変は不可(私的使用・引用を除く)。自動取得の記載なし"}
   hana-0049:
-    - {url: "https://www.city.atami.lg.jp/hana/1003681/1003692/index.html", class: "自治体の公式ページ(熱海市。梅園の設置者の市自身のページ)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://www.city.atami.lg.jp/hana/1003681/1003692/index.html", class: "自治体の公式ページ(熱海市。梅園の設置者の市自身のページ)", terms: "段階67 第5部(2026-11-09): 市の許可なく複製・転用・販売などの二次利用を禁じる。自動取得の記載なし"}
   hana-0050:
-    - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", class: "町の観光協会の公式ページ(越生町観光協会)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://ogose-kanko.jp/tourist_attractions/ogose-bairin", class: "町の観光協会の公式ページ(越生町観光協会)", terms: "段階67 第5部(2026-11-09): フッターに「無断転載・複製を禁止」。規約のページはない"}
   hana-0051:
-    - {url: "https://ibaraki-kairakuen.jp/zukan/", class: "施設自身の公式ページ(偕楽園)", terms: "規約は未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://ibaraki-kairakuen.jp/zukan/", class: "施設自身の公式ページ(偕楽園)", terms: "段階67 第5部(2026-11-09): トップに規約のページへのリンクなし(© 茨城県)。転載の記載は確認できず"}
   hana-0052:
-    - {url: "https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html", class: "自治体の公式ページ(小田原市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://www.city.odawara.kanagawa.jp/kanko/Flower/odawaraplum.html", class: "自治体の公式ページ(小田原市)", terms: "段階67 第5部(2026-11-09): 権利者の許可なく複製・転用などの二次利用を禁じる。自動取得の記載なし"}
   hana-0053:
-    - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", class: "自治体の公式ページ(幸手市)", terms: "サイトポリシーは未読(段階65 第2部では本文だけ読んだ)"}
+    - {url: "https://www.city.satte.lg.jp/kanko_bunka_sport/kanko/11763.html", class: "自治体の公式ページ(幸手市)", terms: "段階67 第5部(2026-11-09): 著作権のページ(4091.html)は未読。目次のページに転載の記載なし"}
+# 段階67 第5部: 規約を読めていなかった出典(2026-11-09 に読んだ。通信 30 回。承認の記入はしない)。judgement は禁止の記載があり本人の判断が要るもの
+terms_stage67:
+  - {name: 北杜市観光協会, url: "https://www.hokuto-kanko.jp/policy/", summary: "プライバシーポリシーだけで、転載・複製・引用・自動取得の記載なし。トップに © 表示のみ。robots.txt は未確認"}
+  - {name: 中央アルプス観光, url: "https://chuo-alps.com/privacy/", summary: "規約・著作権のページはなく、プライバシーポリシーにも転載・複製・自動取得の記載なし。© 表示のみ。robots.txt は未確認"}
+  - {name: 駒ヶ根観光協会, url: "https://www.kankou-komagane.com/policy", summary: "プライバシーポリシーだけで、転載・複製・引用・自動取得の記載なし。© 表示のみ。robots.txt は未確認"}
+  - {name: 新潟県観光協会, url: "https://niigata-kankou.or.jp/site-policy/", summary: "著作権は協会か情報提供者に帰属。私的使用・引用の範囲を超える使用は協会へ問い合わせ。自動取得の記載なし"}
+  - {name: 新穂高ロープウェイ(奥飛観光開発), url: "https://shinhotaka-ropeway.jp/privacy/", summary: "規約・著作権のページはなく、プライバシーポリシーにも転載・自動取得の記載なし。© 表示のみ"}
+  - {name: 大山観光電鉄, url: "https://www.ooyama-cable.co.jp/", summary: "トップに規約・著作権のページへのリンクがない(© 表示のみ)。転載・自動取得の記載は確認できず"}
+  - {name: 立山黒部貫光, url: "https://www.alpen-route.co.jp/policy/", summary: "サイトポリシーの入口はリンク集だけで、本文(s-policy-j)は上限のため未読。転載・自動取得の記載は未確認"}
+  - {name: "mtasama.com(浅間山ジオパーク推進協議会)", url: "https://mtasama.com/", summary: "運営は浅間山ジオパーク推進協議会(公的な協議会)。規約のページはなく、転載・複製の記載なし。写真・ロゴの使用は申請制(要綱 PDF は未読)"}
+  - {name: 二宮町, url: "https://www.town.ninomiya.kanagawa.jp/site_policy/0000000003.html", summary: "私的使用の複製・引用など著作権法で認められた場合を除き、無断の複製・転用は不可。自動取得の記載なし", judgement: "無断の複製・転用の禁止あり(事実のみ・自分の言葉・出典明記で使うかは本人の判断)"}
+  - {name: 松田町, url: "https://town.matsuda.kanagawa.jp/site/userguide/08.html", summary: "私的使用・引用などを除き、無断の複製・転載・販売・貸与・改変は不可。自動取得の記載なし", judgement: "無断の複製・転載の禁止あり(同上)"}
+  - {name: 熱海市, url: "https://www.city.atami.lg.jp/about/sitepolicy.html", summary: "著作権は市に帰属。市の許可なく複製・転用・販売などの二次利用を固く禁じる。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり(同上)"}
+  - {name: 越生町観光協会, url: "https://ogose-kanko.jp/", summary: "フッターに「無断転載・複製を禁止」。規約のページはなく、自動取得の記載なし", judgement: "無断転載・複製の禁止あり(同上)"}
+  - {name: "偕楽園(茨城県)", url: "https://ibaraki-kairakuen.jp/", summary: "トップに規約・著作権のページへのリンクがない(© 茨城県の表示)。転載・自動取得の記載は確認できず"}
+  - {name: 小田原市, url: "https://www.city.odawara.kanagawa.jp/tyosaku/tyosakuetc.html", summary: "権利者の許可なく複製・転用・販売などの二次利用を固く禁じる。リンクは原則自由。自動取得の記載なし", judgement: "許可のない二次利用の禁止あり(同上)"}
+  - {name: 幸手市, url: "https://www.city.satte.lg.jp/soshiki/hisyo/7228.html", summary: "「市ホームページについて」は目次だけで、著作権のページ(4091.html)は上限のため未読。転載・自動取得の記載は未確認"}

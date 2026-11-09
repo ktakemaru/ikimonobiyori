@@ -4,11 +4,14 @@
 # - organizer_class: official=主催者自身の発信 / secondary=それ以外(紹介)。迷ったら secondary。
 # - まつりの期間は、主催者が見頃を見込んで設定した運営上の日程で、その時点の色づきを保証しない。現況(色づき状況)とは別の行で出す。
 # - 取得は 2026-11-06 に web-fetch で行った。指示書(docs/stage53-festivals-photos-instructions.md)の調査値と食い違った点は notes に書いた(取得結果を優先)。
+# 段階67 第2部・第3部: targets はまつり・行事の対象(autumn_leaves 紅葉・flowers 花・birds 野鳥・nature 自然観察・light 光の催し・exhibit 展示)。節の対象と合うものだけを候補に付ける。
+# area は会場が町内の複数か所にわたるまつりだけに付ける(名所の tags の同じ項目が同じなら結ぶ。規則は observations/policy.yaml の festivals.area_link)。会場が特定の場所だけのまつりには付けない。
 schema: ikimono-festivals/1
 festivals:
   - id: yamanakako-yuyake-koyo-2026
     name: 山中湖 夕焼けの渚・紅葉まつり2026
     spots: [obs-kouyou-0114]
+    targets: [autumn_leaves]
     organizer: (一社)山中湖観光協会
     organizer_class: secondary
     organizer_note: "2026年の期間は紹介記事(近畿日本ツーリスト系 Tripa)で確認した。山中湖観光協会の公式ページ(https://lake-yamanakako.com/spot/10352)は例年の時期だけで、今年の日付がない"
@@ -26,6 +29,8 @@ festivals:
   - id: nagatoro-koyo-2026
     name: 長瀞紅葉まつり2026
     spots: [kouyou-0013]
+    targets: [autumn_leaves]
+    area: {city: 長瀞町}        # 段階67(承認欄 A(b)。本人の判断 2026-11-09): まつりの会場は町内の複数か所(月の石もみじ公園・自然の博物館・寳登山神社・ロープウエイほか)。同じ町の紅葉の名所にも結ぶ
     organizer: 長瀞町観光協会
     organizer_class: official
     organizer_note: "月の石もみじ公園ライトアップの主催として「(一社)長瀞町観光協会」と明記。まつり全体の主催の明記は記事にない。発行元は長瀞町観光協会"
@@ -45,6 +50,7 @@ festivals:
     umbrella: true
     umbrella_note: "上位の企画。見頃の目安には、同じ名所の「薬師池 紅葉まつり」の期間を使う（段階54）。紅葉まつりがあるときは答えに出さない"
     spots: [obs-kouyou-0087]
+    targets: [autumn_leaves]
     organizer: 町田市
     organizer_class: official
     organizer_note: "町田市のホームページの掲載。主催者の明記はない(町田市観光コンベンション協会のホームページへ案内)"
@@ -62,6 +68,7 @@ festivals:
   - id: machida-yakushiike-momijimatsuri-2026
     name: 薬師池 紅葉まつり
     spots: [obs-kouyou-0087]
+    targets: [autumn_leaves]
     organizer: 町田薬師池公園四季彩の杜グループ指定管理者 NEST Machida
     organizer_class: official
     organizer_note: "指定管理者 NEST Machida の公式サイト(machida-shikisainomori.com)の記事で、主催として明記。町田市のページには紅葉まつりの記載がなく、上位の企画「秋遊び2026」(10/3〜11/29)だけが載る"
@@ -79,6 +86,7 @@ festivals:
   - id: takao-momiji-2026
     name: 高尾山もみじまつり
     spots: [obs-kouyou-0088]
+    targets: [autumn_leaves]
     organizer: 八王子観光コンベンション協会
     organizer_class: official
     organizer_note: "公式ページの発行元は(公社)八王子観光コンベンション協会。「主催」の明記は高尾山口観光案内所の欄にある。もみじまつり自体の主催欄は見当たらない"
@@ -96,6 +104,7 @@ festivals:
   - id: mitake-tenku-momiji-2026
     name: 御岳山 天空もみじまつり
     spots: [obs-kouyou-0089]
+    targets: [autumn_leaves]
     organizer: 御岳山商店組合
     organizer_class: secondary
     organizer_note: "主催者サイト(momiji.tenku-geisha.com。フッターの著作表示が御岳山商店組合)は日付が前年以前の暦で使えない。GO TOKYO のページには主催者名の明記がない。日付は GO TOKYO(東京観光財団)掲載の転記"
@@ -113,6 +122,7 @@ festivals:
   - id: showa-koyo-2026
     name: 黄葉・紅葉まつり＆秋の夜散歩2026
     spots: [kouyou-0024]
+    targets: [autumn_leaves]
     organizer: 国営昭和記念公園
     organizer_class: official
     organizer_note: 公式サイトの掲載
@@ -130,6 +140,7 @@ festivals:
   - id: sankeien-kikka-2026
     name: 三溪園 菊花展2026
     spots: [obs-kouyou-0002, obs-hana-0001]
+    targets: [flowers]
     organizer: 三溪園
     organizer_class: official
     organizer_note: 公式サイトの掲載
@@ -147,6 +158,7 @@ festivals:
   - id: sankeien-koyo-events-2026
     name: 三溪園 紅葉の遊歩道開放ほか紅葉関連イベント
     spots: [obs-kouyou-0002]
+    targets: [autumn_leaves]
     organizer: 三溪園
     organizer_class: official
     organizer_note: 公式サイトの掲載
@@ -165,6 +177,7 @@ festivals:
   - id: koganei-akiirodoro-2026
     name: 花と光のムーブメント 小金井公園「秋彩ものがたり」2026
     spots: [obs-kouyou-0071]
+    targets: [autumn_leaves]
     organizer: 東京都(協力 東京都公園協会)
     organizer_class: official
     organizer_note: "公式ページに【主催】東京都【協力】東京都公園協会と明記"
@@ -182,6 +195,7 @@ festivals:
   - id: sayama-hanahikari-2026
     name: 花と光のムーブメント 狭山公園2026
     spots: [obs-kouyou-0076]
+    targets: [light]
     organizer: 東京都(協力 東京都公園協会)
     organizer_class: official
     organizer_note: "小金井公園のページの注記による(狭山公園の個別ページは未読)"
@@ -198,6 +212,7 @@ festivals:
   - id: koishikawa-miyama-koyo-2026
     name: 小石川後楽園 深山紅葉を楽しむ
     spots: [kouyou-0032]
+    targets: [autumn_leaves]
     organizer: 東京都公園協会(掲載元)
     organizer_class: official
     organizer_note: "都立庭園の指定管理者の発信。主催の別記はない"
@@ -214,6 +229,7 @@ festivals:
   - id: koishikawa-night-2026
     name: 小石川後楽園 夜間特別開園「深山光葉を楽しむ」
     spots: [kouyou-0032]
+    targets: [autumn_leaves]
     organizer: 東京都公園協会(掲載元)
     organizer_class: official
     organizer_note: "都立庭園の指定管理者の一覧の記載。個別ページは未読"
@@ -231,6 +247,7 @@ festivals:
   - id: furukawa-koyo-rose-2026
     name: 旧古河庭園「紅葉とバラ、和と洋の秋」
     spots: [obs-kouyou-0083]
+    targets: [autumn_leaves, flowers]
     organizer: 東京都公園協会(掲載元)
     organizer_class: official
     organizer_note: "都立庭園の指定管理者の一覧の記載。個別ページは未読"
@@ -247,6 +264,7 @@ festivals:
   - id: shinjuku-kikukadan-2026
     name: 菊花壇展（新宿御苑）
     spots: [kouyou-0023]
+    targets: [flowers]
     organizer: 明記なし
     organizer_class: secondary
     organizer_note: "GO TOKYO のページに主催の明記がない(写真提供は環境省新宿御苑管理事務所)"
@@ -263,6 +281,7 @@ festivals:
   - id: hachioji-icho-2026
     name: 八王子いちょう祭り
     spots: [obs-kouyou-0090]
+    targets: [autumn_leaves]
     organizer: 明記なし(八王子いちょう祭り祭典委員会)
     organizer_class: secondary
     organizer_note: "GO TOKYO のページに主催の別記はなく、著作表示が祭典委員会"
@@ -279,6 +298,7 @@ festivals:
   - id: narita-kikuka-2026
     name: 成田山菊花大会
     spots: [obs-hana-0006]
+    targets: [flowers]
     organizer: 明記なし
     organizer_class: secondary
     organizer_note: "ちば観光ナビ（千葉県観光物産協会）のページに主催の明記がない"
@@ -295,6 +315,7 @@ festivals:
   - id: kasama-kiku-2026
     name: 第119回 笠間の菊まつり
     spots: [obs-hana-0007]
+    targets: [flowers]
     organizer: 笠間の菊まつり連絡協議会
     organizer_class: secondary
     organizer_note: "観光いばらきのページに実施主体として記載。公式サイトではなく観光サイトの掲載"
@@ -312,6 +333,7 @@ festivals:
   - id: chiba-kikuka-2026
     name: 菊花展（千葉市都市緑化植物園）
     spots: [obs-hana-0008]
+    targets: [flowers]
     organizer: 明記なし
     organizer_class: secondary
     organizer_note: "ちば観光ナビのページに主催の明記がない"
@@ -328,6 +350,7 @@ festivals:
   - id: shimotsuma-kiku-2026
     name: 下妻市菊まつり
     spots: [obs-hana-0009]
+    targets: [flowers]
     organizer: 下妻市菊花会
     organizer_class: secondary
     organizer_note: "観光いばらきのページに主催として記載(後援: 下妻市・下妻市観光協会)"
@@ -344,6 +367,7 @@ festivals:
   - id: nikko-lightup-2026
     name: ライトアップNIKKO 2026
     spots: [kouyou-0046]
+    targets: [autumn_leaves]
     organizer: "明記なし(問合せ先: 日光商工会議所)"
     organizer_class: secondary
     organizer_note: "日光旅ナビ(日光市観光協会)のページに主催の明記がない"
@@ -361,6 +385,7 @@ festivals:
   - id: kegon-lightup-2026
     name: 華厳滝ライトアップ
     spots: [obs-kouyou-0091]
+    targets: [autumn_leaves]
     organizer: 奥日光観光事業振興会
     organizer_class: secondary
     organizer_note: "日光旅ナビ(日光市観光協会)の別ページに【主催】奥日光観光事業振興会と記載"
@@ -378,6 +403,7 @@ festivals:
   - id: ibaraki-moonlight-rose-2026
     name: Moonlight Rose Garden 2026
     spots: [obs-hana-0010]
+    targets: [flowers]
     organizer: いばらきフラワーパーク
     organizer_class: official
     organizer_note: "施設自身の公式サイトの発信。『主催』の明記はないが、施設の催しとして掲載している"
@@ -395,6 +421,7 @@ festivals:
   - id: yokohama-ikimono-gakkai-2026
     name: 開園40周年記念行事 森の生きもの学会
     spots: [obs-yacho-0003]
+    targets: [nature]
     organizer: 横浜自然観察の森自然観察センター
     organizer_class: official
     organizer_note: "施設自身の公式サイト（40th.html）に主催として明記。指定管理者は日本野鳥の会"
@@ -412,6 +439,7 @@ festivals:
   - id: yokohama-quiz-rally-2026
     name: 秋のクイズラリー（横浜自然観察の森）
     spots: [obs-yacho-0003]
+    targets: [nature]
     organizer: 横浜自然観察の森自然観察センター
     organizer_class: official
     organizer_note: "施設自身の公式サイトのイベント情報（info.html）に掲載"
@@ -429,6 +457,7 @@ festivals:
   - id: kitamoto-birdwatch-2026
     name: 家族で楽しむバードウォッチング（北本自然観察公園）
     spots: [obs-yacho-0008]
+    targets: [birds]
     organizer: 埼玉県自然学習センター
     organizer_class: official
     organizer_note: "施設自身の公式サイト（事業ページ）の掲載。指定管理者は公益財団法人埼玉県生態系保護協会"
@@ -446,6 +475,7 @@ festivals:
   - id: kitamoto-orienteering-2026
     name: 秋の自然観察オリエンテーリング（北本自然観察公園）
     spots: [obs-yacho-0008]
+    targets: [nature]
     organizer: 埼玉県自然学習センター
     organizer_class: official
     organizer_note: "施設自身の公式サイト（事業ページ）の掲載"
@@ -463,6 +493,7 @@ festivals:
   - id: sayama-fuyumomiji-2026
     name: 狭山丘陵自然観察会《湖畔への路 冬紅葉》
     spots: [obs-kouyou-0092]
+    targets: [autumn_leaves]
     organizer: 埼玉県 狭山丘陵いきものふれあいの里センター（指定管理者：公益財団法人トトロのふるさと基金）
     organizer_class: official
     organizer_note: "埼玉県の公式ページの掲載。『主催』の行はなく、問い合わせ先として県みどり自然課と施設が書かれている"
@@ -480,6 +511,7 @@ festivals:
   - id: fujikawaguchiko-koyo-2026
     name: 第28回 富士河口湖紅葉まつり
     spots: [kouyou-0012]
+    targets: [autumn_leaves]
     organizer: 富士河口湖町紅葉まつり運営協議会（発表は山梨県富士河口湖町）
     organizer_class: official
     organizer_note: "町（富士河口湖町）が発表したプレスリリースの掲載。町の観光サイト fujisan.ne.jp への案内あり。リリースは共同通信PRワイヤー経由"

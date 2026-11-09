@@ -81,18 +81,41 @@ def festival_row(f, today, policy=None):
     return {"id": f["id"], "name": f["name"], "state": st["state"], "days": st["days"], "start": str(f["start"]), "end": str(f["end"]),
             "period_label": None if single else p["period_label"], "single_day": single,
             "period_line": period if single else f"{p['period_label']}: {period}", "lightup_line": lu_line,
+            "period_text": period, "targets": list(f.get("targets") or []),
+            "named_line": (p["named_line_single"].format(name=f["name"], period=period) if single
+                           else p["named_line"].format(name=f["name"], label=p["period_label"], period=period)) if f.get("name") else None,
             "organizer": f["organizer"], "organizer_class": f["organizer_class"],
             "organizer_line": p["organizer_line"].format(organizer=f["organizer"], klass=p["class_labels"][f["organizer_class"]]),
             "contact": f.get("contact"), "venue": f.get("venue"), "url": f["url"], "publisher": f.get("publisher"), "published": f.get("published"),
             "taken_on": f.get("taken_on"), "source_class": f["organizer_class"], "no_state_line": p["no_state"]}
 
 
-def for_spot(spot_id, today, doc=None, policy=None):
-    """名所（候補の id）に結びついた、今シーズンのまつり。終了したものは含めない。"""
+def _area_linked(f, tags, p):
+    """段階67 第2部(承認欄 A(b)): まつりの area(会場が町内の複数か所)と名所の tags の同じ項目が同じか。"""
+    area = f.get("area") or {}
+    fields = ((p.get("area_link") or {}).get("fields")) or []
+    return bool(area) and bool(tags) and any(area.get(k) and tags.get(k) == area.get(k) for k in fields)
+
+
+def subject_matches(f, subject, p):
+    """段階67 第3部 1: まつり・行事の対象(targets)が節の対象と合うか。対象の印のないまつり・対象の分からない節は従来どおり付ける。"""
+    targets = f.get("targets")
+    want = (p.get("target_of_subject") or {}).get(subject) if subject else None
+    if not targets or not want:
+        return True
+    return any(t in want for t in targets)
+
+
+def for_spot(spot_id, today, doc=None, policy=None, subject=None, tags=None):
+    """名所（候補の id）に結びついた、今シーズンのまつり。終了したものは含めない。
+    段階67: 同じ町の名所(area)にも結ぶ。対象(targets)が名所の対象と合わないもの・名前のないものは付けない。"""
     doc = doc if doc is not None else load()
+    p = _pol(policy)
     out = []
     for f in doc.get("festivals") or []:
-        if spot_id not in (f.get("spots") or []):
+        if spot_id not in (f.get("spots") or []) and not _area_linked(f, tags, p):
+            continue
+        if not f.get("name") or not subject_matches(f, subject, p):
             continue
         row = festival_row(f, today, policy)
         if row and row["state"] != "ended":

@@ -148,8 +148,17 @@ def _km(point, city, origin, cat_pol):
     return None, False
 
 
-def _publisher(url):
-    return (urlparse(url or "").hostname or "").removeprefix("www.")
+def _publisher(url, entry=None):
+    """段階67 第1部 4: 発行元の名前(「二宮町」)。ドメインは出さない。分からなければ空。"""
+    from . import publisher as P
+    title = next((s.get("title") for s in (entry or {}).get("sources") or [] if s.get("url") == url), None) if entry else None
+    return P.name(url, entry, title) or ""
+
+
+def _official(url, approved):
+    """段階67 第1部 3(承認欄 C): 通信先の承認(approved)か、町・市・県・国の自身のページなら「公式」と表示する。"""
+    from . import publisher as P
+    return bool(approved) or bool(url and P.is_official(url))
 
 
 def gather(sp, origin, c=None, env=None):
@@ -181,8 +190,10 @@ def gather(sp, origin, c=None, env=None):
             "start": w["start"] if w else None, "end": w["end"] if w else None,
             "season": window_text(w["start"], w["end"], thirds) if w else None,
             "url": w["source_url"] if w else ((e.get("sources") or [{}])[0].get("url")),
-            "official": bool(w) and not (w.get("source_class") == "secondary" or w.get("unapproved_host")),
-            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"]})
+            "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
+            "publisher": _publisher(w["source_url"], e) if w else "",
+            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
+            "annual_events": list(e.get("annual_events") or [])})
     for e in _guide_entries():
         kinds = [k["kind"] for k in e.get("kinds") or [] if _matches(k.get("kind"), match, sp, c)]
         if not kinds:
@@ -203,12 +214,12 @@ def gather(sp, origin, c=None, env=None):
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
             "kinds": kinds, "start": win.get("start"), "end": win.get("end"), "season": s.get("text") if s.get("shown", True) else None,
-            "url": src.get("url"), "official": src.get("class") in ("A", "B"), "care": None, "from": "guide", "subject": e.get("theme")})
+            "url": src.get("url"), "official": src.get("class") in ("A", "B"), "publisher": _publisher(src.get("url"), {"tags": {"prefecture": e.get("prefecture"), "city": e.get("municipality")}, "sources": [{"url": src.get("url"), "title": src.get("title")}]}), "care": None, "from": "guide", "subject": e.get("theme")})
     for r in _records(match, env, sp, c):
         k = key(r["name"])
         if k in rows:
             if not rows[k]["season"] and r.get("season"):
-                rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"])
+                rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
@@ -218,6 +229,7 @@ def gather(sp, origin, c=None, env=None):
 def _records(match, env=None, sp=None, c=None):
     """読んだ事実の記録(花・野鳥)のうち、種(kind)が当たり、例年の時期(typical)があるもの。"""
     from . import observations as O
+    from . import publisher as P
     opol = O.load_policy()
     thirds = cfg()["text"]["thirds"]
     out = []
@@ -233,7 +245,8 @@ def _records(match, env=None, sp=None, c=None):
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
                         "start": win[0] if win else None, "end": win[1] if win else None,
                         "season": window_text(win[0], win[1], thirds) if win else None,
-                        "url": r.get("url"), "official": r.get("source_class") == "official", "care": None, "from": "record", "subject": sj})
+                        "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
+                        "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
     return out
 
 
@@ -259,7 +272,13 @@ def select(rows, origin, prefectures=None, c=None, by_distance=False):
     def sk(r):
         km = r["km"] if r["km"] is not None else 9999
         return (km, r["name"]) if by_distance else (r["start"] is None, r["start"] or "", km, r["name"])
-    return sorted(keep, key=sk)[: c["max_items"]], out
+    if by_distance:
+        return sorted(keep, key=sk)[: c["max_items"]], out
+    # 段階67 第3部 8: 時期が分かる名所のあとに、時期が分からない名所を最大 max_unknown_items 件(名所カタログ・毎年の行事のある名所を先に)
+    known = sorted([r for r in keep if r["start"] and r["season"]], key=sk)[: c["max_items"]]
+    unknown = sorted([r for r in keep if not (r["start"] and r["season"])],
+                     key=lambda r: (r.get("from") != "catalog", not r.get("annual_events"), r["km"] if r["km"] is not None else 9999, r["name"]))
+    return known + unknown[: c.get("max_unknown_items", c["max_items"])], out
 
 
 # ---- 文 ----
@@ -323,20 +342,29 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
         else:
             lines += ["", t["head"].format(name=r["name"], where=where, km=km)]
             if r["season"]:
-                ln = (t["typical"] if r["official"] else t["typical_secondary"]).format(text=r["season"], publisher=_publisher(r["url"]))
+                pub = r.get("publisher") if r.get("publisher") is not None else _publisher(r["url"])
+                if r["official"]:
+                    ln = t["typical"].format(text=r["season"], publisher=pub) if pub else t["typical_nopub"].format(text=r["season"])
+                else:
+                    ln = t["typical_secondary"].format(text=r["season"], publisher=pub)
             else:
                 ln = t["typical_unknown"]
             if is_bird:
                 for a, b in (t.get("bird_label") or {}).items():
                     ln = ln.replace(a, b)
             lines.append(ln)
+            if not r["season"]:
+                for ev in r.get("annual_events") or []:              # 段階67 第3部 8: 公式の「毎年」の行事の期間(例年の見頃ではない。年を書かない)
+                    lines.append(t["annual_event"].format(name=ev["name"], text=ev["text"], publisher=ev["publisher"]))
+                    if ev.get("source_url") and ev["source_url"] not in urls:
+                        urls.append(ev["source_url"])
             if r["kinds"]:
                 lines.append(t["kinds"].format(kinds="・".join(r["kinds"])))
             if r.get("care"):
                 lines.append(t["care"].format(care=r["care"]))
         if r["url"] and r["url"] not in urls:
             urls.append(r["url"])
-        any_secondary = any_secondary or not r["official"]
+        any_secondary = any_secondary or (bool(r["season"]) and not r["official"])     # 段階67: 時期を書かない行は紹介サイトの注記の対象にしない
     return lines, urls, any_secondary
 
 

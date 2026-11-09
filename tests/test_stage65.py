@@ -132,7 +132,9 @@ class Part4Highlights(unittest.TestCase):
         r = self.compose("日光の見どころを教えて")
         t = r["text"]
         self.assertTrue(t.startswith("**日光の見どころ**"))
-        self.assertIn("日光の自然: 湿原の草原は秋に黄金色になる。周りの森はカラマツが多い。", t)      # 冒頭はカードの事実
+        # 段階67 第4部 3(指示書: 冒頭は1地点の話より山・エリア全体のカードを優先): エリアの別名(奥日光)のカードが冒頭。1地点(戦場ヶ原)のカードはガイドの目に
+        self.assertIn("日光の自然: 4月下旬に花が咲き始める。", t)      # 冒頭はカードの事実
+        self.assertIn("湿原の草原は秋に黄金色になる。周りの森はカラマツが多い", t)
         self.assertLess(t.index("### 夏"), t.index("### 秋"))                                 # 季節の順
         self.assertIn("・試験の高原: ニッコウキスゲ(例年 6月上旬〜7月上旬)", t)
         self.assertNotIn("よその公園", t)
@@ -183,7 +185,8 @@ class Part6Fixes(unittest.TestCase):
         t = SK.cfg()
         f = self._facts("茨城・栃木")
         self.assertEqual(SK.asked_prefectures(f), {"栃木県"})
-        self.assertEqual(SK.avoid_lines(f, t)[0][0], "・試験の沢: 色褪せ・落葉始め 10/23現在、終わりです。(10/23時点、日光市観光協会)")
+        # 段階67 第3部 3(指示書が「色褪せ・落葉始め 終わりです。」の二重の言い方を崩れとして挙げた): 凡例の語 1 つと短い状態の語にする
+        self.assertEqual(SK.avoid_lines(f, t)[0][0], "・試験の沢: 色褪せ・落葉始め（終わり）(10/23時点、日光市観光協会)")
         self.assertEqual(len(SK.vc_lines(f, [{"name": "試験の公園"}], t, SK.asked_prefectures(f))), 1)    # 地域の承認済みの施設の発信
         self.assertEqual(SK.vc_lines(f, [{"name": "試験の公園"}], t), [])                                  # 地域の指定がなければ名所の地域だけ
         g = self._facts("全範囲")

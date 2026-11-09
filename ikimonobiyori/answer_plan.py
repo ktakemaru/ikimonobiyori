@@ -218,6 +218,8 @@ def has_this_year(c, year):
     for e in c.get("events") or []:
         if str(e.get("start") or "")[:4] == str(year):
             return True
+    if c.get("vc_report"):                                   # 段階67 第2部(承認欄 D): 同じ場所の承認済みの施設の発信(14日以内)
+        return True
     return bool(c.get("park_birds")) and any(b.get("kind") == "recent" for b in c["park_birds"])
 
 
@@ -249,7 +251,7 @@ def score_candidate(c, dates, pol, subject=None):
     }
     if not has_this_year(c, dates[0].year):                   # 段階58 第3部
         parts["no_this_year"] = -pol["this_year"]["penalty"]
-    if subject == "birds" and not cur:                       # 段階57 第4部: 公式の観察の記録がない公園は大きく減点する
+    if subject == "birds" and not cur and not c.get("vc_report"):   # 段階57 第4部: 公式の観察の記録がない公園は大きく減点する(段階67: 同じ場所の施設の発信があれば減点しない)
         parts["no_official"] = -pol["birds_no_current"]["penalty"]
     return {"outlook": out, "aim": aim, "distance_km": km, "distance_estimated": est, "score": round(sum(parts.values()), 1), "breakdown": parts,
             "festival_active": fest_on, "lightup_active": light_on}
@@ -301,7 +303,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
                   "target_age_days": _target_age(c, dates[0], facts_doc.get("now")),
-                  "has_current": has_current(c), "has_state": has_state_record(c), "this_year": has_this_year(c, dates[0].year), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
+                  "has_current": has_current(c), "has_state": has_state_record(c) or (subject == "birds" and bool(c.get("vc_report"))), "this_year": has_this_year(c, dates[0].year),
+                  "has_window": any(t.get("start") and t.get("end") and not t.get("event_derived") for t in c.get("typical") or []), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
                   "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
         rows.append(r)
@@ -434,7 +437,11 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
 
 def _fillable(it, pol):
     """段階64 第1部: 今回のおすすめに入れてよいか。「遠出」以外の狙いで fill_max_km より遠い候補は、今年の現況があるときだけ。"""
+    if it.get("subject") == "autumn_leaves" and not it.get("has_state") and not it.get("has_window", True):
+        return False                                     # 段階67 第3部 1: 紅葉の現況も例年の窓もない候補(行事だけの候補)は今回のおすすめに入れない
     lim = pol["selection"].get("fill_max_km")
+    if it.get("subject") == "birds" and pol["selection"].get("birds_fill_max_km") is not None:     # 段階67 第3部 7
+        lim = pol["selection"]["birds_fill_max_km"]
     km = it.get("distance_km")
     if lim is None or km is None or it.get("aim") == "far" or km <= lim:
         return True
@@ -525,7 +532,7 @@ def weaken(it, pol):
 
 def _item(r, oo):
     return {"name": r["name"], "id": r["id"], "aim": r["aim"], "score": r["score"], "breakdown": r["breakdown"], "outlook": r["outlook"],
-            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "subject": r.get("subject"),
+            "outlook_label": oo["labels"][r["outlook"]], "cluster": r["cluster"], "has_current": r["has_current"], "has_state": r.get("has_state", r["has_current"]), "has_window": r.get("has_window", True), "subject": r.get("subject"),
             "current_age_days": r.get("current_age_days"), "target_age_days": r.get("target_age_days"),
             "phrase": None if r.get("subject") == "birds" else (oo["phrases_typical_only"].get(r["outlook"], oo["phrases"][r["outlook"]]) if not r["has_current"] else oo["phrases"][r["outlook"]]),
             "distance_km": r["distance_km"], "distance_estimated": r["distance_estimated"], "current_state": r["current_state"],
@@ -654,8 +661,9 @@ def target_week_line(c, today, pol=None):
     if not w:
         return None
     t = pol["target_week"]
-    label = t["class_official"] if typ.get("source_class") == "official" else t["class_secondary"]
-    return t["line"].format(s=f"{w[0].month}/{w[0].day}", e=f"{w[1].month}/{w[1].day}", publisher=typ.get("publisher") or "", label=label)
+    label = t["class_official"] if (typ.get("source_class") == "official" or typ.get("publisher_official")) else t["class_secondary"]   # 段階67(承認欄 C)
+    pub = typ.get("publisher") or ""
+    return t["line"].format(s=f"{w[0].month}/{w[0].day}", e=f"{w[1].month}/{w[1].day}", publisher=f"{pub}、" if pub else "", label=label)
 
 
 # ---- 事前取得の対象(段階57 第9部) ----
@@ -893,7 +901,9 @@ def plan_errors(text, plan, mat, blocks, names_of):
     shown = []
     for b in blocks:
         head = re.split(r"[:：]", b, maxsplit=1)[0]
-        hit = next((n for n in cands + list(over) if any(f in head for f in names_of(n))), None)
+        # 段階67: 呼び名がいちばん長く当たる名所(「白鳥橋(長瀞)」を「長瀞(月の石もみじ公園)」の呼び名「長瀞」で取り違えない)
+        best = [(max(len(f) for f in names_of(n) if f in head), -i, n) for i, n in enumerate(cands + list(over)) if any(f in head for f in names_of(n))]
+        hit = max(best)[2] if best else None
         if hit is None:
             continue
         shown.append(hit)

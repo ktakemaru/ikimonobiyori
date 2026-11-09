@@ -92,6 +92,17 @@ festivals:
   organizer_line: "主催: {organizer}({klass})"
   class_labels: {official: 公式, secondary: 公式ではありません}
   no_state: "色づき状況は確認できていません"
+  # 段階67 第2部(承認欄 A(b)。本人の判断 2026-11-09): 会場が町内の複数か所にわたるまつり(festivals.yaml の area)は、名所の tags の同じ項目が同じなら、
+  # 同じ地域の名所にも結ぶ(対象 targets が名所の対象と合うときだけ)。会場が特定の場所だけのまつりには area を付けない
+  area_link:
+    fields: [city]
+    source: "本人の判断(2026-11-09。段階67 指示書の承認欄 A(b))"
+    provisional: false
+  # 段階67 第3部 1・2: まつり・行事の対象(targets)が節の対象と合うものだけ付ける。名前のない行事は出さない。対象の日と重ならない行事は出さない
+  target_of_subject: {autumn_leaves: [autumn_leaves], flowers: [flowers], birds: [birds]}
+  # 答えの行(名前を必ず先に書く)。label は「主催者が設定した期間」(1日だけの行事は付けない)
+  named_line: "{name}({label}): {period}"
+  named_line_single: "{name}: {period}"
   contact_line: "問い合わせ: {contact}"
   dropped:
     other_year: 今シーズンの情報ではない
@@ -254,6 +265,9 @@ forbidden_terms: [snapshot, status_log, proposal, band, max_age_h, pending, 台�
 
 # 段階35(指示書 biyori-hub/docs/stageH9-instructions.md 穴3): 例年の時期と今年の行事の期間を分ける
 typical:
+  # 段階67 第3部 5: 名所カタログの例年の窓の備考(note)の最初の文がこの型なら作業のメモなので答えに使わない(月日の文にする)
+  note_memo_re: '記載|確認|確かめ|承認|推定|代表点|typical_window|ユーザー|ページには|ページに'
+  note_paren_memo_re: 'にした|として|推定|確認|承認'
   # 名所カタログの flower_windows の注記にこの語があれば、行事の期間を写したもの(例年の時期として使わない)
   # 段階64 第2部 3: 曜日つきの日付(「10月29日(木)〜11月19日(木)」)・菊花展・展示の期間も行事の期間(川崎大師・横浜市こども植物園の型)
   event_note_words: [期間, フェスタ, フェスティバル, まつり, 祭, 開放, 曜日, 菊花展, 展示, 開催]
@@ -277,6 +291,15 @@ state_symbols:
   by_publisher:
     日光市観光協会: {"✕": まだ, "×": まだ, "△": 色づき始め, "〇": 見ごろ, "◯": 見ごろ, "○": 見ごろ, "◎": 真っ盛り, "▼": 色褪せ・落葉始め}
 # 段階57 第4部: 対象の日ではない日の開園時間(「11/6の有料エリア 9:30〜21:00」)を出さない。通常の開園時間・休園日は出してよい
+# 段階67 第3部 3・4: 答えに出す状態は「凡例の語 1 つ」と「短い状態の語(30字以内)」だけ。記号・日付の言い方・原文の文(2文目以降)・「です」「ます」は出さない。
+# すべての経路(候補の行・今の時期・避けたほうがよい場所・計画)で同じ処理(observations.short_state)
+short_state:
+  max_chars: {value: 30, source: "利用者の決定 2026-11-06(状態の短い語句 30 字以内)を全経路に(段階67 第3部 4)", provisional: false}
+  date_re: '[(（]?\d{1,2}[/月]\d{1,2}日?(現在|時点)?[)）]?'
+  clause_end: '。！？!?'
+  tail_re: '(です|でした|ます|ました|となっています|となりました)$'
+  pair: "{word}（{rest}）"
+  degree_re: '割|分|％|%|程度'           # 凡例の語に添えてよい、状態の度合いの語
 practical_other_day:
   pattern: '(\d{1,2})/(\d{1,2})の[^。]{0,16}?\d{1,2}:\d{2}'
   replace: 当日の開園情報は公式ページで確認してください

@@ -111,7 +111,20 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
     spot_terms = [_strip(s["name"]) for s in spots]
     rows = cards if cards is not None else K.load_shown(env)
     sids = {pl.get("site_id") for pl in pls if pl.get("site_id")}
-    by_place = lambda r, ts: any(K.place_match(r, t) for t in ts if len(t) >= 2)
+    site_terms = {t for pl in pls if pl.get("site_id") for t in pl["terms"] if t}
+
+    def by_place(r, ts):
+        # 段階67: 山(地点)の名前は、カードの場所・別名が名前の一部(「木曽駒ヶ岳」の中の箱根の「駒ヶ岳」)では当てない
+        names = [r.get("place") or "", *(r.get("place_aliases") or [])]
+        for t in ts:
+            if len(t) < 2:
+                continue
+            if t in site_terms:
+                if any(n == t or (len(n) >= 2 and t in n) for n in names):
+                    return True
+            elif K.place_match(r, t):
+                return True
+        return False
     # 段階66 第3部: 地点 id でも引く。名所の名前で引くときはカードの主な場所だけで当てる(別名の「丹沢」で外来種のカードが丹沢湖に当たらないように)。
     # 種の解説(場所が種の名前のカード)は名所の名前では引かない
     main_place = lambda r, ts: any(K.place_match({"place": r.get("place")}, t) for t in ts if len(t) >= 2)
@@ -123,9 +136,14 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
         ms = K._months(r)
         return min(((m - today.month) % 12 for m in ms), default=0)
     by_cat = {}
-    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), month_gap(r), r["title"])):
+    exact = {pl.get("label") for pl in pls} | {pl.get("name") for pl in pls}
+    for r in sorted(hits, key=lambda r: (order.get(r.get("category"), len(order)), r.get("place") not in exact, month_gap(r), r["title"])):   # 段階67: 同じ分類なら、質問の山そのもののカードを先に
         by_cat.setdefault(r.get("category"), []).append(r)
     picked = []
+    side = []                                                 # 段階67 第4部 2: 施設・行き方のカードは枚数の外で各分類 1 枚まで(施設の欄・行く前に・歩き方の欄)
+    for k in list(c["facility_categories"]) + list(c["walk_categories"]):
+        if by_cat.get(k):
+            side.append(by_cat.pop(k)[0])
     while len(picked) < c["max_cards"] and any(by_cat.values()):         # 分類の偏りなく(分類ごとに 1 枚ずつ順に)
         for k in sorted(by_cat, key=lambda k: order.get(k, len(order))):
             if by_cat[k] and len(picked) < c["max_cards"]:
@@ -146,7 +164,48 @@ def gather(pls, today, env=None, cards=None, centers=None, reports=None, cands=N
         if 0 <= age <= c["current_max_age_days"]:
             current.append((sd, s, rec))
     current.sort(key=lambda x: x[0], reverse=True)
-    return {"cards": picked, "spots": spots, "facilities": vc_names, "vc_rows": vc_rows, "current": current[: c["max_current_lines"]]}
+    lead_cats = set(c["lead_categories"])
+    if not any(r.get("place") in exact and r.get("category") in lead_cats for r in picked):     # 段階67 第4部 3: 冒頭に使える、質問の山そのもののカードを入れる
+        own = next((r for r in hits if r.get("place") in exact and r.get("category") in lead_cats and r not in picked), None)
+        if own:
+            picked = [own] + picked[: max(0, c["max_cards"] - 1)]
+    return {"cards": picked + side, "spots": spots, "facilities": vc_names, "vc_rows": vc_rows, "current": current[: c["max_current_lines"]]}
+
+
+_MONTH_RE = re.compile(r"(\d{1,2})(?:〜(\d{1,2}))?月(上旬|中旬|下旬)?(?:〜(?:(\d{1,2})月)?(上旬|中旬|下旬)?)?")
+_KATA_RE = re.compile(r"[ァ-ヶー]{2,}")
+
+
+def card_season_items(cards, c, today=None):
+    """段階67 第4部 1: 月の書かれたカードの事実 → [(季節, 場所の語, 名前の一覧, 時期の文, 出典名, URL)]。名前は花・紅葉の語(カタカナの語か紅葉)。"""
+    out = []
+    for r in cards:
+        if r.get("category") not in c["card_season_categories"]:
+            continue
+        for f in r.get("facts") or []:
+            m = _MONTH_RE.search(f)
+            if not m:
+                continue
+            names = [w for w in _KATA_RE.findall(f) if w not in c["card_season_not_names"] and not any(w in x and w != x for x in c["card_season_not_names"])]
+            names += [w for w in c["card_season_extra_names"] if w in f and w not in names and not any(w in n for n in names)]
+            names = [n for n in names if not any(n != o and n in o for o in names)]
+            if not names:
+                continue
+            lead = re.match(r"^([^、。0-9０-９]{1,10}?)(は|では)", f)
+            where = lead.group(1) if lead and lead.end() <= m.start() and not any(n in lead.group(1) for n in names) and not _KATA_RE.fullmatch(lead.group(1)) else ""
+            out.append((_season_of(f"{int(m.group(1)):02d}", c), where, names, m.group(0), r["source"]["name"], r["source"].get("url"), r, f))
+    return out
+
+
+def _lead_rank(r, pls, area_names):
+    """段階67 第4部 3: 冒頭のカードの順。カードの場所が質問の場所・エリア全体のものを先に(1地点の話を冒頭にしない)。"""
+    labels = {pl.get("label") for pl in pls} | {pl.get("name") for pl in pls}
+    place = r.get("place") or ""
+    if place in labels:
+        return 0
+    if place in area_names:
+        return 1
+    return 2
 
 
 def compose(question, *, today, env=None, cards=None, centers=None, reports=None, cands=None, records=None):
@@ -171,7 +230,9 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
 
     lines = [t["title"].format(place=name)]
     lead_pri = {k: i for i, k in enumerate(c["lead_categories"])}
-    lead_cards = sorted([r for r in g["cards"] if r.get("category") in lead_pri], key=lambda r: lead_pri[r["category"]])
+    from . import areas as AR
+    area_names = {n for a in AR.load()["areas"] for n in [a["name"], *(a.get("aliases") or [])]}
+    lead_cards = sorted([r for r in g["cards"] if r.get("category") in lead_pri], key=lambda r: (_lead_rank(r, pls, area_names), lead_pri[r["category"]]))
     lead_card = lead_cards[0] if lead_cards else None
     if lead_card:
         lines.append(t["lead"].format(place=name, facts="。".join(f.rstrip("。") for f in lead_card["facts"][:2])))
@@ -194,7 +255,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
             if key in seen:
                 continue
             seen.add(key)
-            note = t["secondary_note"] if w.get("source_class") == "secondary" else ""
+            note = t["secondary_note"] if (w.get("source_class") == "secondary" and not w.get("publisher_official")) else ""   # 段階67(承認欄 C)
             by_season.setdefault(_season_of(w["start"], c), []).append(
                 t["season_line"].format(name=s["name"], kind=kind, window=SP.window_text(w["start"], w["end"], thirds), note=note))
             url(w.get("url"))
@@ -205,6 +266,19 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
                 if ln not in events:
                     events.append(ln)
                     url(e.get("url"))
+    # 段階67 第4部 1: 月の書かれたカードから季節の行(名所カタログの花と重なる名前は 1 回だけ)
+    card_n = {}
+    converted = {}
+    for season, where, names, when, src, u, card, fact in card_season_items(g["cards"], c, today):
+        have = " ".join(by_season.get(season) or [])
+        names = [n for n in names if n not in have]
+        if not names or card_n.get(season, 0) >= c["card_season_max_per_season"]:
+            continue
+        converted.setdefault(id(card), (card, set()))[1].add(fact)
+        card_n[season] = card_n.get(season, 0) + 1
+        by_season.setdefault(season, []).append(t["card_season_line"].format(
+            where=t["card_season_where"].format(where=where) if where else "", names="・".join(names), when=when, source=src))
+        url(u)
     if by_season:
         lines += ["", t["season_heading"]]
         for s in c["seasons"]:
@@ -215,28 +289,41 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
         lines += ["", t["season_heading"]] + events
     # ガイドの目・行く前に
     rest = [r for r in g["cards"] if r is not lead_card]
+    fac_cards = [r for r in rest if r.get("category") in c["facility_categories"]]            # 段階67 第4部 2
+    walk_cards = [r for r in rest if r.get("category") in c["walk_categories"]]
+    rest = [r for r in rest if r not in fac_cards and r not in walk_cards]
+    shown_n = K.cfg()["max_facts_in_answer"]
+    used_for_season = {k for k, (card, fs) in converted.items() if set((card.get("facts") or [])[:shown_n]) <= fs}
+    rest = [r for r in rest if id(r) not in used_for_season]                                # 季節の行にした事実のカードはガイドの目に重ねない
     eye, before, cu = K.split_lines(rest)
+    pre = K.cfg()["line_prefix"]
+    eye = [ln[len(pre):].lstrip() if ln.startswith(pre) else ln for ln in eye]                # 段階67 第4部 5: 見出しがあるので行の先頭に付けない
+    walk = [K.plain_line(r) for r in walk_cards]
     if eye:
         lines += ["", t["eye_heading"]] + eye
-    if before:
-        lines += ["", t["before_heading"]] + before
-    for u in cu:
+    if before or walk:
+        lines += ["", t["walk_heading"] if walk else t["before_heading"]] + before + walk
+    for u in cu + [r["source"].get("url") for r in walk_cards + fac_cards]:
         url(u)
     # 施設
-    if g["facilities"]:
+    if g["facilities"] or fac_cards:
         lines += ["", t["facility_heading"]]
         for x in g["facilities"]:
             lines.append(t["facility_line"].format(name=x["name"]))
             r = g["vc_rows"].get(x["id"])
             if r:
-                lines += ["  " + s for s in r["sentences"]]
+                lines += ["  " + s for s in r["sentences"] if s.strip() != x["name"]]      # 段階67 第3部 6: 名前だけの文は重ねない
                 url(r["url"])
+        lines += ["・" + K.plain_line(r) for r in fac_cards]
     # 今の時期(主役にしない)
     if g["current"]:
         lines += ["", t["now_heading"]]
         for sd, s, rec in g["current"]:
             d = date.fromisoformat(sd)
-            lines.append(t["now_line"].format(name=s["name"], state=rec.get("state"),
+            disp, sym_only = O.state_display(rec.get("state"), rec.get("publisher"), opol)        # 段階67 第3部 3: 全経路で凡例の語と短い語
+            if sym_only or not disp:
+                continue
+            lines.append(t["now_line"].format(name=s["name"], state=disp,
                                               month=d.month, day=d.day, publisher=rec.get("publisher") or ""))
             url(rec.get("url"))
     if len(lines) <= 1:
