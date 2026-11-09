@@ -117,5 +117,138 @@ class Part1FinalCheck(unittest.TestCase):
         self.assertIn("一字一句そのまま", s)
 
 
+def _card(title, place, cat, facts):
+    return {"title": title, "category": cat, "place": place, "place_aliases": [], "facts": list(facts), "condition": {"year_dependent": False},
+            "source": {"name": "試験の自然博物館", "title": "試験の資料", "url": "https://example.org/" + title, "checked_on": "2026-11-01"},
+            "confidence": "紹介", "rights": "確認済み", "usage": "ガイドの目として1行"}
+
+
+def _hcand(cid, name, city, start, end, kind=None, events=()):
+    return {"id": cid, "name": name, "city": city, "area": None, "prefecture": "神奈川県", "point": None, "flower_kinds": [kind] if kind else [],
+            "typical": [{"start": start, "end": end, "text": "例年", "url": "https://example.org/w-" + cid, "kind": kind, "source_class": "official"}],
+            "events": list(events)}
+
+
+class Part2Routing(unittest.TestCase):
+    """第2部: 「何について」×「日付」の振り分け。"""
+
+    def route(self, q):
+        from ikimonobiyori import answer_run as R
+        return R.resolve(q, NOW)["route"]
+
+    def test_place_with_date_is_highlights_not_the_kanto_list(self):
+        for q in ("今週末、高尾山の見どころを教えて", "今週末の陣馬山のみどころを教えて", "今週末、神奈川 大山の見どころ"):
+            self.assertEqual(self.route(q), "highlights_dated", q)
+        self.assertEqual(self.route("高尾山の見どころを教えて"), "highlights")       # 日付なしはこれまでどおり
+
+    def test_species_with_date(self):
+        self.assertEqual(self.route("今週末、カワセミを見たいのだけど。"), "species_dated")
+        self.assertEqual(self.route("今週末の紅葉"), "plan")                           # テーマの総称は計画
+        self.assertEqual(self.route("今週末、見られる花を紹介して"), "plan")
+        self.assertEqual(self.route("11/15に桜を見たい"), "guide")                     # 桜は日付つきのガイド型のまま
+
+    def test_combination(self):
+        from ikimonobiyori import combo
+        self.assertEqual(self.route("冬の渡り鳥と紅葉を見られる場所はある?"), "combo")
+        self.assertEqual([w for w, _ in combo.topics_of("冬の渡り鳥と紅葉を見られる場所はある?")], ["冬の渡り鳥", "紅葉"])
+        self.assertFalse(combo.is_combo_question("紅葉の名所を教えて"))
+
+    def test_area_alias_kaiwai(self):
+        from ikimonobiyori import areas as A
+        self.assertEqual(A.from_question("今週末、富士山界隈で見られる花を紹介して"), ["富士山"])
+        self.assertEqual(A.resolve("富士山界隈")["name"], "富士五湖")
+
+    def test_region_word_next_to_a_place_is_not_a_place(self):
+        from ikimonobiyori import highlights as HL
+        cards = [_card("試験山の森", "試験山", "季節の仕組み", ["試験山はブナの森"]), _card("県の話", "神奈川", "季節の仕組み", ["関係のない事実"])]
+        self.assertEqual([p["name"] for p in HL.places("神奈川 試験山の見どころ", cards)], ["試験山"])
+
+
+class Part2DatedPlace(unittest.TestCase):
+    """第2部 2: 場所 + 日付 → 見どころ + その日の見込み + 行く前に確認すること。"""
+
+    def compose(self, q, on):
+        from datetime import date
+        from ikimonobiyori import highlights as HL
+        cards = [_card("試験山の森", "試験山", "季節の仕組み", ["試験山はブナの森", "秋は黄葉が美しい"]),
+                 _card("試験山のクマ", "試験山", "安全", ["クマに注意して歩く"])]
+        cands = {"autumn_leaves": [_hcand("t-1", "試験山", "試験町", "11-10", "11-30")],
+                 "flowers": [_hcand("t-2", "試験山の草原", "試験町", "06-01", "06-20", kind="ニッコウキスゲ",
+                                    events=[{"name": "試験の山まつり", "start": "2026-11-01", "end": "2026-11-23", "url": "https://example.org/ev",
+                                             "source_class": "official"}])],
+                 "birds": []}
+        return HL.compose(q, today=date(2026, 11, 9), cards=cards, centers=[], reports=[], cands=cands,
+                          records={"autumn_leaves": [], "flowers": [], "birds": []}, on=on)
+
+    def test_outlook_follows_the_highlights(self):
+        from datetime import date
+        t = self.compose("今週末、試験山の見どころ", [date(2026, 11, 14), date(2026, 11, 15)])["text"]
+        self.assertTrue(t.startswith("**試験山の見どころと11/14・11/15の見込み**"))
+        self.assertIn("## 11/14・11/15の見込み", t)
+        self.assertIn("・試験山: 紅葉は例年11月上旬〜11月下旬で、11/14・11/15は例年の時期に入ります", t)
+        self.assertIn("・試験山の草原: 試験の山まつりの期間中です(11/1〜11/23)", t)
+        self.assertNotIn("ニッコウキスゲは例年", t.split("## 11/14")[1])        # 時期の外の花は見込みに書かない
+        self.assertLess(t.index("### 秋"), t.index("### 夏"))                    # 季節はその日の月を先に
+        self.assertLess(t.index("## 11/14"), t.index("## 行く前に確認すること"))
+        self.assertNotIn("今回のおすすめ", t)
+
+    def test_no_record_says_so_in_one_line(self):
+        from datetime import date
+        t = self.compose("試験山の見どころ", [date(2027, 2, 6)])["text"]
+        self.assertIn("2/6の今年の様子は、確認できている公式ページの範囲ではまだ分かりません。", t)
+
+
+class Part2DatedSpecies(unittest.TestCase):
+    """第2部 3: 種 + 日付。野鳥は観察記録・施設の発信に種の名があれば日付つき。"""
+
+    def test_bird_records_with_the_species_name(self):
+        from datetime import date
+        from ikimonobiyori import season_place as SP
+        sp = {"name": "カワセミ", "match": ["カワセミ"], "words": ["カワセミ"], "includes": []}
+        recs = [{"name": "試験の池(試験の会)", "publisher": "試験の会", "source_class": "official", "species": ["カワセミ", "コガモ"],
+                 "state_date": "2026-11-07", "url": "https://example.org/pond"},
+                {"name": "古い池", "publisher": "試験", "source_class": "official", "species": ["カワセミ"], "state_date": "2026-09-01",
+                 "url": "https://example.org/old"},
+                {"name": "紹介の池", "publisher": "紹介", "source_class": "secondary", "species": ["カワセミ"], "state_date": "2026-11-08",
+                 "url": "https://example.org/sec"}]
+        vcs = [{"name": "試験のセンター", "species": ["カワセミ"], "state": "池にカワセミ", "date": "2026-11-06", "url": "https://example.org/vc"}]
+        got = SP.species_records(sp, [date(2026, 11, 14)], records=recs, vc_rows=vcs, today=date(2026, 11, 9))
+        self.assertEqual([x[1] for x in got], ["試験の池(試験の会)", "試験のセンター"])
+
+    def test_is_species_dated(self):
+        from ikimonobiyori import season_place as SP
+        self.assertTrue(SP.is_species_dated("今週末、カワセミを見たい"))
+        self.assertFalse(SP.is_species_dated("カワセミが見られる場所"))
+        self.assertFalse(SP.is_species_dated("今週末、紅葉とカワセミ"))
+
+
+class Part2Combo(unittest.TestCase):
+    def test_same_and_near_pairs_come_first(self):
+        from ikimonobiyori import combo
+        a = [{"name": "試験の森", "point": {"lat": 35.0, "lon": 139.0}}, {"name": "試験の寺", "point": {"lat": 35.05, "lon": 139.0}}]
+        b = [{"name": "試験の森", "point": {"lat": 35.0, "lon": 139.0}}, {"name": "試験の沼", "point": {"lat": 35.06, "lon": 139.01}},
+             {"name": "遠い沼", "point": {"lat": 37.0, "lon": 139.0}}]
+        r = combo.find("autumn_leaves", "birds", cand_a=a, cand_b=b)
+        self.assertEqual(r["same"], ["試験の森"])
+        self.assertEqual([(p["a"], p["b"]) for p in r["near"]], [("試験の寺", "試験の沼")])
+
+
+class Part2FitLength(unittest.TestCase):
+    """第2部 6: 字数の上限で候補を減らすとき、狙い別の節を 1 件ずつ残せる数(3)は残す(「紅葉やススキ、そのほか秋」が 1 件になっていた)。"""
+
+    def test_min_picks_kept(self):
+        from unittest import mock
+        from ikimonobiyori import answer_run as AR
+        from ikimonobiyori import answer_gates as AG
+        from ikimonobiyori import skeleton as SK
+        plan = {"picks": [{"name": n, "score": s} for n, s in (("A", 5), ("B", 4), ("C", 3), ("D", 2), ("E", 1))]}
+        with mock.patch.object(SK, "compose", lambda f, p, o, defaulted_date=False: "あ" * 5000), \
+                mock.patch.object(AG, "length_limit", lambda p, t=None: 10):
+            _text, plan2, dropped = AR.fit_length({}, plan, [], False)
+        self.assertEqual([p["name"] for p in plan2["picks"]], ["A", "B", "C"])
+        self.assertEqual(dropped, ["E", "D"])
+        self.assertEqual(AR.cfg()["min_picks_kept"]["value"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()

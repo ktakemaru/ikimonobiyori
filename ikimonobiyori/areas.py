@@ -51,7 +51,13 @@ def from_question(question):
     q = re.sub(r"(で|の)?(紅葉|花|野鳥|おすすめ).*$", "", question or "")
     d = load()
     if re.search(d["question_re"], question or ""):
-        return split_names(q)
+        names = split_names(q)
+        for m in re.finditer(d["question_re"], question or ""):      # 段階69 第2部 5: 「今週末、富士山界隈で見られる花」の「富士山」
+            w = m.group(1).split("、")[-1]
+            for x in [w, re.sub(r"^(今週末|来週末|今日|明日|週末)の?", "", w)]:
+                if resolve(x) and x not in names:
+                    names.append(x)
+        return [n for n in names if not (resolve(n) is None and any(resolve(m) and m in n for m in names if m != n))]
     names = split_names(q)
     return names if len([n for n in names if resolve(n)]) >= 2 else []
 

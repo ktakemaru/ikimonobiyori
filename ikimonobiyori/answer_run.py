@@ -149,8 +149,15 @@ def resolve(question, now, policy=None):
         kind = "plan"                                    # 「神奈川と東京で紅葉の見ごろを教えて」は場所・時期の質問
     from . import season_place as SP
     from . import highlights as HL
-    if kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
+    from . import combo as CB
+    if kind not in ("event", "difference") and not defaulted and HL.is_place_dated(q):     # 段階69 第2部 2: 場所 + 日付(「今週末、高尾山の見どころ」)
+        route = "highlights_dated"
+    elif kind not in ("event", "normal", "difference") and defaulted and HL.is_highlights_question(q):   # 段階65 第4部: 日付のない場所の質問(「日光の見どころ」)
         route = "highlights"
+    elif kind not in ("event", "difference") and CB.is_combo_question(q):              # 段階69 第2部 4: 「AとBが見られる場所」(日付の有無とも)
+        route = "combo"
+    elif kind not in ("event", "difference") and not defaulted and not guide_word and SP.is_species_dated(q):   # 段階69 第2部 3: 種 + 日付(「今週末、カワセミを見たい」)。桜・ホタルは日付つきのガイド型のまま
+        route = "species_dated"
     elif (kind not in ("event", "normal", "difference", "chat") or (kind == "normal" and any(w in q for w in SP.cfg().get("over_normal_words") or [])))             and SP.is_season_place(q):                   # 段階65 第2部: 「梅の名所と時期」は平年の目安ではなく、名所と例年の時期    # 段階64 第3部: 日付を聞いていない「いつ・どこ」(種の名前で引く)
         route = "season_place"
     elif kind not in ("event", "normal") and defaulted and SP.is_town_question(q):      # 段階64 第4部 4: 町の名前で聞く場所の質問(「松田で有名なところ」)
@@ -238,9 +245,10 @@ def fit_length(facts_doc, plan_doc, offers, defaulted, max_drop=None):
     from . import skeleton as SK
     text = SK.compose(facts_doc, plan_doc, offers, defaulted_date=defaulted)
     dropped = []
+    keep = ((cfg().get("min_picks_kept") or {}).get("value") or 1) * max(1, len(AP.split_segments(text, plan_doc) or [None]))
     while len(text) > AG.length_limit(plan_doc, text):
         picks = SK._flat_picks(plan_doc)
-        if len(picks) <= 1 or (max_drop is not None and len(dropped) >= max_drop):
+        if len(picks) <= max(1, keep) or (max_drop is not None and len(dropped) >= max_drop):
             break
         worst = min(picks, key=lambda x: (x.get("score") is None, x.get("score") or 0, -(x.get("rank") or 0)))
         dropped.append(worst["name"])
@@ -407,6 +415,9 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
         except ValueError:
             plan_doc = f.plan()
     f.save_calls()
+    if cond["area_names"] and not SK._flat_picks(plan_doc):                 # 段階69 第2部 5: エリアで 0 件 → そのエリアの季節の案内(「0件」だけで終わらせない)
+        if _area_zero_route(res, cond, now, env, subjects):
+            return
     gaz = sorted(set(ask.place_names()))
     res.update(answer_from_facts(facts_doc, plan_doc, cond["defaulted_date"], polished=polished, gaz=gaz, policy=pol, warnings=res["warnings"],
                                  over_budget=lambda: (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"], workdir=workdir,
@@ -549,6 +560,9 @@ def _other_route(res, cond, now, env, pol):
     if cond["route"] == "season_place":
         _season_place_route(res, cond, now, env)
         return
+    if cond["route"] in ("highlights_dated", "species_dated", "combo"):
+        _dated_route(res, cond, now, env)
+        return
     if cond["route"] == "highlights":
         from . import answer_gates as AG
         from . import highlights as HL
@@ -610,6 +624,61 @@ def _other_route(res, cond, now, env, pol):
     topic = (cond.get("guide_word") or _first_guide_word(q) or q.strip().rstrip("?？。"))[:20]
     res.update(text="\n".join([m["knowledge_none"].format(topic=topic), "", m["minimal"]["how_heading"], m["knowledge_how"]]) + "\n",
                stage=4, status=STATUS_DEGRADED, needs_research=True)
+
+
+def _area_zero_route(res, cond, now, env, subjects):
+    from . import answer_gates as AG
+    from . import areas as AR
+    from . import highlights as HL
+    names = [n for n in cond["area_names"] if AR.resolve(n)]
+    if not names:
+        return False
+    got = HL.compose("・".join(names), today=now.date(), env=env, on=_on_dates(cond))
+    if not got or got["needs_research"]:
+        return False
+    L = AR.load()["lines"]
+    label = "・".join(L["subject_labels"].get(s, s) for s in subjects)
+    text = L["zero_lead"].format(name="・".join(names), label=label) + NL + got["text"]
+    text, _removed = AG.delete_bad_sentences(text, offers=[])
+    res.update(text=text, stage=2, status=STATUS_DEGRADED, route="area_season", highlights={"places": got["places"], "cards": got["cards"]})
+    return True
+
+
+def _on_dates(cond):
+    return [date.fromisoformat(x) for ds in cond["periods"] for x in ds]
+
+
+def _dated_route(res, cond, now, env):
+    """段階69 第2部: 場所 + 日付(見どころ + その日の見込み)・種 + 日付(その種の名所 + その日の見込み・記録)・組み合わせ。"""
+    from . import answer_gates as AG
+    q = cond["question"]
+    on = _on_dates(cond)
+    if cond["route"] == "highlights_dated":
+        from . import highlights as HL
+        got = HL.compose(q, today=now.date(), env=env, on=on)
+        res["highlights"] = {"places": got["places"], "cards": got["cards"], "spots": got["spots"]}
+        nr = got["needs_research"]
+    elif cond["route"] == "species_dated":
+        from . import observations as O
+        from . import season_place as SP
+        prefs = None
+        if cond.get("region"):
+            prefs = O.resolve(cond["region"], cond["origin"], O.load_policy()).get("prefectures") or None
+        got = SP.compose_dated(q, today=now.date(), on=on, origin=cond["origin"], region=cond.get("region"), prefectures=prefs, env=env)
+        res["season_place"] = {"species": got["species_all"], "spots": [r["name"] for r in got["spots"]], "missing": got["missing"]}
+        nr = got["needs_research"]
+    else:
+        from . import combo as CB
+        got = CB.compose(q, origin=cond["origin"], on=None if cond["defaulted_date"] else on, today=now.date(), env=env)
+        res["combo"] = {"same": got["same"], "near": got["near"]}
+        nr = False
+    text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
+    errs = [e for e in V.generic_check(text)["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
+    if nr:
+        res.update(text=text, stage=3 if errs else 2, status=STATUS_DEGRADED, needs_research=True,
+                   research_kind="season_place" if cond["route"] == "species_dated" else "knowledge", errors=errs)
+    else:
+        res.update(text=text, stage=3 if errs else 2, status=STATUS_DEGRADED if errs else STATUS_PASS, errors=errs)
 
 
 def _first_guide_word(q):

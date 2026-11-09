@@ -237,6 +237,28 @@ combo:
   none_line: "同じ場所、または近く(約{km}km以内)では確認できていません。"
   same_line: "{name}: 同じ場所で楽しめます。"
   near_line: "{a}と{b}: 約{km}km。"
+  # 段階69 第2部 4: 「AとBが見られる場所」の質問の答え(ask answer の組み合わせの経路)。質問の語 → 対象(複数の対象をまとめる語もある)
+  topic_words:
+    紅葉: [autumn_leaves]
+    黄葉: [autumn_leaves]
+    冬の渡り鳥: [birds, wintering_birds]
+    渡り鳥: [birds, wintering_birds]
+    冬鳥: [birds, wintering_birds]
+    白鳥: [wintering_birds]
+    野鳥: [birds]
+    花: [flowers]
+  # 組み合わせの質問の言い方(場所を聞く語)と、2 つのテーマをつなぐ語
+  patterns: [場所, ところ, 所, どこ, スポット, 名所]
+  joins: [と, や, も]
+  title: "**{a}と{b}を楽しめる場所**"
+  title_dated: "**{days}に{a}と{b}を楽しめる場所**"
+  lead: "同じ場所、または近く(約{km}km以内)で両方を楽しめる組み合わせです。距離は直線の目安です。"
+  window_line: "  {name}の{kind}は例年{window}({publisher})"
+  separate_lead: "同じ場所や近くでは確認できていません。それぞれの名所です。"
+  separate_head: "{label}"
+  separate_line: "・{name}{km}"
+  separate_max: 3
+  confidence: "例年の時期は年によって前後します。今年の色づきや飛来・観察の記録は、お出かけの前に公式ページで確かめてください。"
 
 # 段階58 第9部: 日付の既定。計画段階の語で日付の指定がなければ、今週末と来週末の両方。出力の dates に使う
 dates_default:
@@ -364,6 +386,10 @@ place_answer:
 answer_run:
   budget_s: {value: 180, reason: "本人の指示(段階63a 第1部 4): 全体で3分を目安。取得が時間切れなら保存済みの記録で答える"}
   max_rewrites: 1                      # 整える工程の作り直しは最大 1 回(段階63a 第1部 3)
+  # 段階69 第2部 6: 字数の上限で候補を減らすとき、残す候補の下限(1 つの対象・1 期間)。理由: 「紅葉やススキ、そのほか秋」で、
+  # 末尾の補足(今年の情報がない候補・平年・ガイドの目)が字数を使い、おすすめが 3 → 1 件に減っていた(本人の会話の練習 2026-11-09)。
+  # おすすめの 3 件は、狙い別の節(歩く・ドライブ・遠出)を 1 件ずつ残せる数(provisional)
+  min_picks_kept: {value: 3, reason: "本人の会話の練習 2026-11-09: 候補が1件に減った。狙い別の節を1件ずつ残す", provisional: true}
   # 質問の語 → 答える対象(ask の対象)。ガイドの言葉の表(data/guide/policy.yaml の words)のテーマから決める
   subject_by_theme: {紅葉: autumn_leaves, 花: flowers, 野鳥: birds, 冬鳥: birds}
   # 知識の言い方(「教えて」)でも、地域・日付の指定か、この語があれば、場所・時期の答え(計画)にする(「神奈川と東京で紅葉の見ごろを教えて」)。
