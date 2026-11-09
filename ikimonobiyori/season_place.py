@@ -158,7 +158,7 @@ def _publisher(url, entry=None):
 def _official(url, approved):
     """段階67 第1部 3(承認欄 C): 通信先の承認(approved)か、町・市・県・国の自身のページなら「公式」と表示する。"""
     from . import publisher as P
-    return bool(approved) or bool(url and P.is_official(url))
+    return bool(approved) or bool(url and P.shows_official(url))       # 段階69 第6部: 観光協会・公園の管理者・施設の運営者も
 
 
 def gather(sp, origin, c=None, env=None):
@@ -352,7 +352,7 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
                 if r["official"]:
                     ln = t["typical"].format(text=stext, publisher=pub) if pub else t["typical_nopub"].format(text=stext)
                 else:
-                    ln = t["typical_secondary"].format(text=stext, publisher=pub)
+                    ln = t["typical_secondary"].format(text=stext, publisher=pub) if pub else t["typical_secondary_nopub"].format(text=stext)
             else:
                 ln = t["typical_unknown"]
             if is_bird:
@@ -592,6 +592,8 @@ def confidence_text(sps, c=None):
         return t["confidence_birds"]
     if all(sp["name"] in c.get("insect_species", []) for sp in sps):
         return t["confidence_insects"]
+    if all(sp["name"] in c.get("grass_species", []) for sp in sps):
+        return t["confidence_grass"]
     return t["confidence"]
 
 
