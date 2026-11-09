@@ -363,6 +363,13 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         APG.remember(res, now, env)
     except (OSError, KeyError, TypeError):
         pass
+    try:                                                 # 段階72 第6部 3: 案内の文は同じ会話で 1 回だけ(直前の答えにあれば出さない)
+        from . import final_check as FC
+        from . import offers as OF
+        if FC.load_question(now, env) != question:      # 同じ質問の答え直し(調べて記録したあと)は、利用者がまだ見ていないので消さない
+            res["text"] = OF.drop_repeated(res["text"], FC.load_answer(now, env))
+    except (OSError, KeyError, TypeError, ValueError):
+        pass
     try:                                                 # 段階69 第1部: 最終メッセージの検査(ask final-check)で、答えの本文と添えた文を見分ける
         from . import final_check as FC
         FC.remember_answer(res["text"], question, now, env)

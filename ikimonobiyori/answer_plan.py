@@ -111,7 +111,7 @@ def outlook_of(c, d, pol, subject=None):
         return o["after_window_current"][st]                  # 段階62 第4部: 公式の新しい現況を、例年の時期より優先する
     if c.get("avoid") == "past" or rel == "after_peak" or st == "見頃過ぎ":
         return "past"
-    typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end")), None)
+    typ = next((t for t in c.get("typical") or [] if t.get("start") and t.get("end") and not O.is_year_round(t)), None)   # 段階72 第6部 2: 通年の窓で見頃にしない
     if st == "青葉":
         return "early"
     if typ:

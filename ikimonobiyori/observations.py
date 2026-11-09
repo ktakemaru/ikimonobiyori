@@ -435,7 +435,8 @@ def manner_errors(rec, policy):
 
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
-          "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis")
+          "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
+          "source_year")                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -1734,10 +1735,18 @@ def last_year_records(rows, dates, policy):
     return out
 
 
+def is_year_round(typ, policy=None):
+    """段階72 第6部 2: 例年の窓が 1 年じゅう(1/1〜12/31)か。"""
+    yr = (policy or load_policy())["year_round"]
+    return bool(typ) and typ.get("start") == yr["start"] and typ.get("end") == yr["end"]
+
+
 def typical_line(typ, c, dates, policy, last_year=None):
     """例年の時期の 1 文の材料(段階35)。例年の時期が分からないときは「分かりません」と明言し、
     代わりに今年の行事の期間か、前の年の同じ時期の記録を添える(段階36。決定1)。"""
     lab = policy["typical_labels"]
+    if typ and is_year_round(typ, policy):                                 # 段階72 第6部 2: 「1/1〜12/31」は通年(咲く花は季節で変わる)
+        return lab["year_round"]
     if typ:
         text = typ["text"]
         if lab.get("known_strip") and lab["known_strip"] in text:            # 段階56: 「例年の見頃: …例年10月…」のように「例年」を重ねない

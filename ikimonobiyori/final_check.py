@@ -51,6 +51,16 @@ def load_answer(now=None, env=None):
     return doc.get("text")
 
 
+def load_question(now=None, env=None):
+    """段階72 第6部 3: 直前の ask answer の質問の文(有効期間の中だけ)。なければ None。"""
+    if load_answer(now, env) is None:
+        return None
+    try:
+        return json.loads(data_path(cfg()["last_answer_file"], env).read_text(encoding="utf-8")).get("question")
+    except (OSError, ValueError):
+        return None
+
+
 def _has(words, s):
     return any(w in s for w in words)
 

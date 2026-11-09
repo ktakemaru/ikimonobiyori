@@ -132,6 +132,9 @@ def _third(md, thirds):
 
 
 def window_text(start, end, thirds):
+    from . import observations as O
+    if O.is_year_round({"start": start, "end": end}):                  # 段階72 第6部 2: 通年
+        return cfg()["text"]["year_round"]
     a, b = _third(start, thirds), _third(end, thirds)
     return a if a == b else f"{a}〜{b}"
 
@@ -231,6 +234,20 @@ def gather(sp, origin, c=None, env=None):
     return list(rows.values())
 
 
+def _old_year(r, season, c=None):
+    """段階72 第6部 1: 出典が古い年の記載(記録の source_year が読んだ年より前)なら、年を明記する(「2014年の記載では、7月上旬まで」)。"""
+    y = r.get("source_year")
+    if not season or not y:
+        return season
+    try:
+        read_year = int(str(r.get("read_at") or "")[:4])
+    except ValueError:
+        return season
+    if int(y) >= read_year:
+        return season
+    return (c or cfg())["text"]["old_year_season"].format(year=int(y), season=season)
+
+
 def _records(match, env=None, sp=None, c=None):
     """読んだ事実の記録(花・野鳥)のうち、種(kind)が当たり、例年の時期(typical)があるもの。"""
     from . import observations as O
@@ -249,7 +266,7 @@ def _records(match, env=None, sp=None, c=None):
             win = O.parse_typical(r.get("typical"), opol) if r.get("typical") else None
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
                         "start": win[0] if win else None, "end": win[1] if win else None,
-                        "season": window_text(win[0], win[1], thirds) if win else O.end_only_text(r.get("typical")),   # 段階69 第7部: 「7月上旬まで」
+                        "season": _old_year(r, window_text(win[0], win[1], thirds) if win else O.end_only_text(r.get("typical")), c),   # 段階69 第7部: 「7月上旬まで」
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
                         "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
     return out
@@ -439,6 +456,8 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
         all_rows += rows
         if not rows:
             missing.append(sp["name"])
+    if all_rows and all(r.get("km") is None for r in all_rows):          # 段階72 第6部 1: 座標(距離)がない名所だけなら、距離の 1 文を出さない
+        head = []
     if len(sps) == 1:
         lines = body[:1] + body[1:2] if body and not all_rows else []
         if all_rows:                                                      # 1 種: 冒頭の 1〜2 文のあとに距離の 1 文
@@ -447,6 +466,8 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
             lines = lead + head + rest
     else:
         lines = head + body
+    while lines and not lines[0].strip():                               # 段階72 第6部 1: 距離の 1 文を出さないとき、先頭の空行を残さない
+        lines.pop(0)
     if all_rows:
         lines.append("")
         lines.append(confidence_text(sps, c))
