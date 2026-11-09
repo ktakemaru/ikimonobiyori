@@ -61,3 +61,17 @@ def work_path(p, env=None):
         return None
     q = Path(str(p).strip()).expanduser()
     return q if q.is_absolute() else data_dir(env) / q
+
+
+WRITE_ARGS = ("out", "out_dir", "cache_dir", "inputs_out")
+
+
+def resolve_write_args(a, names=WRITE_ARGS, env=None):
+    """段階71: コマンドの引数のうち書き込み先(--out・--out-dir・--cache-dir・--inputs-out)の相対パスを、データ置き場からの相対にする
+    (work_path)。指定がない引数はそのまま。a を書き換えて返す。リポジトリのファイルを作る手入れの道具(catalog_audit・jma_normals・
+    jma_phenology)は呼ばない(出力先がリポジトリの中のファイルのため)。"""
+    for n in names:
+        v = getattr(a, n, None)
+        if v:
+            setattr(a, n, str(work_path(v, env)))
+    return a

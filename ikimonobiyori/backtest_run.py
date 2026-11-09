@@ -45,6 +45,8 @@ def main(argv=None, http_get=None, sleep=None):
     j.add_argument("--normalized", required=True)
     j.add_argument("--out-dir")
     a = ap.parse_args(argv)
+    # 段階71: 書き込み先の相対パスはデータ置き場からの相対(リポジトリの中に書かない)
+    paths.resolve_write_args(a)
     now = datetime.fromisoformat(a.now)
     if now.tzinfo is None:
         print("--now にはオフセットが必要です", file=sys.stderr)

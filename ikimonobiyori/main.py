@@ -11,7 +11,8 @@
   python -X utf8 ikimonobiyori/main.py --request REQ.json --plan-queries --now ISO8601
 
 --live は BIYORI_ALLOW_LIVE=1、明示的な --max-requests、計測フックが有効(環境変数 BIYORI_REQ_LOG)のすべてが必要。
-通信先は config.yaml の live.allowed_hosts(api.open-meteo.com のみ)。--now は必須(オフセットつき)。同じ入力・同じ now なら同じ出力。"""
+通信先は config.yaml の live.allowed_hosts(api.open-meteo.com のみ)。--now は必須(オフセットつき)。同じ入力・同じ now なら同じ出力。
+書き込み先(--out・--inputs-out・--cache-dir)の相対パスは IKIMONOBIYORI_DATA_DIR からの相対(段階71)。"""
 import argparse
 import json
 import os
@@ -53,6 +54,8 @@ def main(argv=None, http_get=None, clock=None):
     ap.add_argument("--out")
     ap.add_argument("--inputs-out", help="取得した入力(ikimono-inputs/1。気温の応答そのもの)の保存先。独立検査・記録フィクスチャ用")
     a = ap.parse_args(argv)
+    # 段階71: 書き込み先の相対パスはデータ置き場からの相対(リポジトリの中に書かない)
+    paths.resolve_write_args(a)
     now = datetime.fromisoformat(a.now)
     if now.tzinfo is None:
         print("--now にはオフセットが必要です", file=sys.stderr)
