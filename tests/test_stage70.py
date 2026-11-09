@@ -167,5 +167,16 @@ class Part2RelativeOutDir(unittest.TestCase):
         self.assertIn("相対パスは IKIMONOBIYORI_DATA_DIR からの相対", ask.__doc__)
 
 
+class Part3CiActions(unittest.TestCase):
+    """第3部: CI の actions/checkout・actions/setup-python は Node.js 24 で動く版(v7)。"""
+
+    def test_versions(self):
+        ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.assertIn("actions/checkout@v7", ci)
+        self.assertIn("actions/setup-python@v7", ci)
+        for old in ("checkout@v4", "setup-python@v5"):
+            self.assertNotIn(old, ci)
+
+
 if __name__ == "__main__":
     unittest.main()
