@@ -34,7 +34,7 @@ from . import catalog as catalog_mod
 from . import livegate
 from . import yamlcache
 from .config import load_config
-from .paths import DATA_FILES_DIR, data_path
+from .paths import DATA_FILES_DIR, data_path, resolve_write_args
 from .profiles import load_profiles
 
 GUIDE_DIR = DATA_FILES_DIR / "guide"
@@ -1526,7 +1526,7 @@ def main(argv=None, http_get=None, http_bytes=None):
     pg.add_argument("--month", type=int, help="野草・高山植物のページの月")
     pg.add_argument("--alpine", action="store_true", help="質問に「高山植物」とあるとき: 高山・亜高山・高原の花を主役にし、山麓〜山地の野草は写真なしの短い一覧にする（段階44）")
     pg.add_argument("--zukan", action="store_true", help="野草・高山植物を図鑑の形で全部見せる（季節ごとにページを分ける）")
-    pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/)")
+    pg.add_argument("--out", help="出力先(省略すると IKIMONOBIYORI_DATA_DIR の下の guide/pages/。相対パスは IKIMONOBIYORI_DATA_DIR からの相対)")
     pg.add_argument("--no-ensure-photos", dest="ensure_photos", action="store_false", help="写真を取りに行かず、キャッシュだけで作る(既定は、キャッシュにない種だけ確認なしで補う。段階39)")
     pg.add_argument("--open", action="store_true", help="ローカルのブラウザでそのファイルを開く(新しい通信はしない)")
     sub.add_parser("photos-clear", help="写真のキャッシュだけを消す(ほかは消さない。段階29)")
@@ -1565,6 +1565,8 @@ def main(argv=None, http_get=None, http_bytes=None):
     bs.add_argument("--unread", action="store_true", help="読めなかったとき")
     sub.add_parser("future-records", help="現況の記録(status_log)のうち、読んだ時刻が未来のもの(書き換えない)")
     a = ap.parse_args(argv)
+    # 段階71: 書き込み先の相対パスはデータ置き場からの相対(リポジトリの中に書かない)
+    resolve_write_args(a)
     policy = load_policy()
 
     if a.cmd == "theme":

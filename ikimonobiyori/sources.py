@@ -32,7 +32,7 @@ from . import yamlcache
 from . import catalog as catalog_mod
 from . import livegate
 from .config import load_config
-from .paths import (REGIONS_PATH, SECONDARY_SOURCES_DIR, SECONDARY_SOURCES_SCHEMA_PATH, SOURCES_DIR, SOURCES_POLICY_PATH,
+from .paths import (resolve_write_args, REGIONS_PATH, SECONDARY_SOURCES_DIR, SECONDARY_SOURCES_SCHEMA_PATH, SOURCES_DIR, SOURCES_POLICY_PATH,
                     SOURCES_SCHEMA_PATH, data_path)
 
 APPROVED = "approved"
@@ -1438,7 +1438,7 @@ def main(argv=None, http_get=None):
     sc.add_argument("--now", required=True, help="読んだ時刻として記録する時刻。ISO 8601(オフセット必須)")
     sc.add_argument("--live", action="store_true")
     sc.add_argument("--max-requests", type=int)
-    sc.add_argument("--out", help="結果(数字・状態だけ。HTML は含まない)の出力先(省略すると標準出力)")
+    sc.add_argument("--out", help="結果(数字・状態だけ。HTML は含まない)の出力先(省略すると標準出力。相対パスは IKIMONOBIYORI_DATA_DIR からの相対)")
     pr = sub.add_parser("proposals", help="同じ日に読んだ記録から biyori-proposal/1 の提案を出す(段階18。通信しない・LLM なし。標準出力、--out のときだけファイル)")
     pr.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     pr.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
@@ -1451,7 +1451,7 @@ def main(argv=None, http_get=None):
     pr.add_argument("--access", action="append")
     pr.add_argument("--flower-kind", action="append")
     pr.add_argument("--request-id", help="文書の request_id(省略すると対象と日から決まった形)")
-    pr.add_argument("--out", help="出力先のファイル(省略すると標準出力)")
+    pr.add_argument("--out", help="出力先のファイル(省略すると標準出力。相対パスは IKIMONOBIYORI_DATA_DIR からの相対)")
     rgl = sub.add_parser("regional", help="地域を指定した花の答え(確度の3段階つき。段階32。通信しない・書き込まない)")
     rgl.add_argument("--now", required=True, help="ISO 8601(オフセット必須)。この暦日に読んだ記録だけを使う")
     rgl.add_argument("--date", action="append", help="対象の日(省略すると次の土日)")
@@ -1459,6 +1459,8 @@ def main(argv=None, http_get=None):
     rgl.add_argument("--flower-kind", action="append", help="花の種類(複数可。名所の tags.flower_kinds)。省くと対象の日から旬の種類を選ぶ(段階33)")
     rgl.add_argument("--origin", help="地域を指定しないときの出発地(省略すると横浜)")
     a = ap.parse_args(argv)
+    # 段階71: 書き込み先の相対パスはデータ置き場からの相対(リポジトリの中に書かない)
+    resolve_write_args(a)
 
     if a.cmd == "check":
         serr = stage_errors(load_policy())
