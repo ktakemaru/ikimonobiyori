@@ -126,7 +126,8 @@ class Part4Highlights(unittest.TestCase):
         from ikimonobiyori import answer_run as R
         from ikimonobiyori import ask
         self.assertEqual(R.resolve("筑波山の見どころを教えて", ask._clock())["route"], "highlights")
-        self.assertEqual(R.resolve("今週末の日光の見どころは?", ask._clock())["route"], "plan")
+        # 段階69 の続き(本人の指示 2026-11-09): エリア + 日付は、見どころ + その日の見込み(新しい経路)
+        self.assertEqual(R.resolve("今週末の日光の見どころは?", ask._clock())["route"], "highlights_dated")
 
     def test_answer_shape(self):
         r = self.compose("日光の見どころを教えて")

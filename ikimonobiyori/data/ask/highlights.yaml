@@ -37,8 +37,7 @@ kind_labels: {autumn_leaves: 紅葉, birds: 野鳥}
 drop_region_names_with_other_places: true
 # 段階69 第2部 2: 「その日の見込み」で、例年の時期の前後とみなす日数(例年の時期の前後 7 日。docs の E「例年の時期は前後 7 日以内も候補」と同じ)
 outlook_near_days: 7
-# 段階69 第2部 2: 日付のある「見どころ」の質問を見どころの型にする場所(山の地点か、語の末尾がこれ)。エリア(日光など)は計画の型のまま
-mountain_suffixes: [山, 岳, 峰, ヶ原, 高原, 湿原]
+# (段階69 第2部の mountain_suffixes は、エリア + 日付も見どころの型にしたため使わなくなった。地域全体だけの質問は計画の型)
 # 「その日の見込み」の最大行数
 outlook_max_lines: 6
 text:

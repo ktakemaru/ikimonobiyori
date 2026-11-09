@@ -79,14 +79,18 @@ def _region_names():
 
 def is_place_dated(question, cards=None):
     """段階69 第2部 2: 日付のある場所の質問(「今週末、高尾山の見どころ」)。見どころの言い方・日付の語・山や名所の場所がそろうとき。
-    エリア(「今週末の日光の見どころ」)は、これまでどおり計画の型(段階65 のテスト)。山・名所は、地点(山)か、語の末尾が山の語のもの。"""
+    山・名所・エリア(「今週末の日光の見どころ」も。本人の指示 2026-11-09)が対象。地域全体(都県・関東)だけの質問は計画の型のまま。"""
     c = cfg()
     q = question or ""
     if not any(p in q for p in c["patterns"]):
         return False
     if not any(re.search(w, q) for w in c["date_words"]):
         return False
-    return any(pl.get("site_id") or (pl.get("label") or "").endswith(tuple(c["mountain_suffixes"])) for pl in places(q, cards))
+    from . import areas as AR
+    area_names = {a["name"] for a in AR.load()["areas"]}             # エリア辞書の場所(日光・箱根など)は、地域の一覧にも名前があっても場所
+    regs = _region_names() - area_names
+    return any(pl["name"] in area_names or pl.get("site_id") or (pl.get("label") not in regs and pl["name"] not in regs)
+               for pl in places(q, cards))
 
 
 def is_highlights_question(question, cards=None):

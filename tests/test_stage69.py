@@ -141,6 +141,13 @@ class Part2Routing(unittest.TestCase):
             self.assertEqual(self.route(q), "highlights_dated", q)
         self.assertEqual(self.route("高尾山の見どころを教えて"), "highlights")       # 日付なしはこれまでどおり
 
+    def test_area_with_date_is_highlights(self):
+        """段階69 の続き(本人の指示 2026-11-09): エリア + 日付も見どころ + その日の見込み。都県・関東だけなら計画のまま。"""
+        for q in ("今週末の日光の見どころは?", "今週末、箱根の見どころを教えて", "来週末の鎌倉の見どころ"):
+            self.assertEqual(self.route(q), "highlights_dated", q)
+        for q in ("今週末の神奈川の見どころ", "今週末、関東の見どころは?", "今週末の日光の紅葉は?"):
+            self.assertEqual(self.route(q), "plan", q)
+
     def test_species_with_date(self):
         self.assertEqual(self.route("今週末、カワセミを見たいのだけど。"), "species_dated")
         self.assertEqual(self.route("今週末の紅葉"), "plan")                           # テーマの総称は計画
