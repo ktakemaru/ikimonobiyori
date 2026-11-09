@@ -524,23 +524,19 @@ def species_records(sp, on, env=None, c=None, records=None, vc_rows=None, today=
     return uniq[: dc["record_max_lines"]]
 
 
-def compose_dated(question, *, today, on, origin, region=None, prefectures=None, env=None, records=None, vc_rows=None):
-    """種と日付の質問 → {text, spots, species_all, missing, needs_research}。その日に時期が合う名所を先に、合わないものは「時期の外」の 1 行。"""
-    c = cfg()
+def _dated_parts(sps, on, *, today, origin, region=None, prefectures=None, env=None, records=None, vc_rows=None, c=None, headings=None):
+    """種ごとの、その日に時期が合う名所と時期の外の 1 行。→ (行, 出典の URL, 名所の行, 名所がなかった種, 紹介サイトを含むか, 時期が合う名所の行)"""
+    c = c or cfg()
     t, dc = c["text"], c["dated"]
-    sps = resolve_all(question, c)
-    if not sps:
-        return None
     days = _days(on)
-    lines = [dc["title"].format(days=days, name="・".join(sp["name"] for sp in sps)), dc["date_line"].format(days=days),
-             t["origin_line"].format(origin=origin)]
-    urls, all_rows, missing, any_secondary = [], [], [], False
+    headings = len(sps) > 1 if headings is None else headings
+    lines, urls, all_rows, missing, any_secondary, fit_rows = [], [], [], [], False, []
     for sp in sps:
         is_bird = sp["name"] in c.get("bird_species", [])
         rows, n_out = select(gather(sp, origin, c, env), origin, prefectures, c, by_distance=is_bird)
         fit = [r for r in rows if not (r["start"] and r["end"]) or any(_near(d, r["start"], r["end"], dc["near_days"]) for d in on)]
         off = [r for r in rows if r not in fit]
-        if len(sps) > 1:
+        if headings:
             lines += ["", t["species_heading"].format(name=sp["name"])]
         part, u, sec = _species_part(sp, fit, n_out if not off else 0, today=on[0], origin=origin, region=region, prefectures=prefectures,
                                      table=False, c=c)
@@ -562,6 +558,7 @@ def compose_dated(question, *, today, on, origin, region=None, prefectures=None,
         urls += [x for x in u if x not in urls]
         any_secondary = any_secondary or sec or any(not r["official"] for r in off if r["season"])
         all_rows += fit + off
+        fit_rows += fit
         if not fit and not off:
             missing.append(sp["name"])
         if is_bird:
@@ -574,6 +571,22 @@ def compose_dated(question, *, today, on, origin, region=None, prefectures=None,
                                                           species=sp["name"], publisher=pub))
                     if url and url not in urls:
                         urls.append(url)
+    return lines, urls, all_rows, missing, any_secondary, fit_rows
+
+
+def compose_dated(question, *, today, on, origin, region=None, prefectures=None, env=None, records=None, vc_rows=None):
+    """種と日付の質問 → {text, spots, species_all, missing, needs_research}。その日に時期が合う名所を先に、合わないものは「時期の外」の 1 行。"""
+    c = cfg()
+    t, dc = c["text"], c["dated"]
+    sps = resolve_all(question, c)
+    if not sps:
+        return None
+    days = _days(on)
+    lines = [dc["title"].format(days=days, name="・".join(sp["name"] for sp in sps)), dc["date_line"].format(days=days),
+             t["origin_line"].format(origin=origin)]
+    part, urls, all_rows, missing, any_secondary, _fit = _dated_parts(sps, on, today=today, origin=origin, region=region, prefectures=prefectures,
+                                                                env=env, records=records, vc_rows=vc_rows, c=c)
+    lines += part
     if all_rows:
         lines += ["", confidence_text(sps, c)]
         if any_secondary:
@@ -582,6 +595,55 @@ def compose_dated(question, *, today, on, origin, region=None, prefectures=None,
         lines += ["", t["sources_heading"]] + urls
     return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
             "missing": missing, "needs_research": bool(missing)}
+
+
+def grass_species_in(question, c=None):
+    """段階70 第1部: 質問に出たススキ・草紅葉の種(grass_species の中だけ。質問に出た順)。"""
+    c = c or cfg()
+    grass = set(c.get("grass_species") or [])
+    return [sp for sp in resolve_all(question, c) if sp["name"] in grass]
+
+
+def grass_tail(question, *, today, on, origin, prefectures=None, env=None):
+    """段階70 第1部: 秋のお出かけの答え(計画の型。紅葉の候補)に足す、ススキ・草紅葉の名所の節。今年の様子の記録はないので、
+    「今回のおすすめ」には入れず別の節に例年の時期の事実だけ。→ (行, 出典の URL)。
+    質問にススキ・草紅葉の語か秋のお出かけの語(grass_tail.autumn_words)があり、対象の日が秋の月のときだけ。
+    質問に名前の出た種は、時期の外でも「時期の外」の 1 行を書く。名前の出ていない種は、その日に時期が合う名所があるときだけ。"""
+    c = cfg()
+    g = c["grass_tail"]
+    q = question or ""
+    named = grass_species_in(q, c)
+    if not named and not any(w in q for w in g["autumn_words"]):
+        return [], []
+    if not on or not any(d.month in c["season_months"][g["season"]] for d in on):
+        return [], []
+    names = [sp["name"] for sp in named]
+    sps = named + [_sp_by_name(n, c) for n in c.get("grass_species") or [] if n not in names]
+    blocks, urls, used, sec = [], [], [], False
+    for sp in sps:
+        part, u, rows, _missing, s2, fit = _dated_parts([sp], on, today=today, origin=origin, prefectures=prefectures, env=env, c=c,
+                                                        headings=False)
+        if not rows or (sp["name"] not in names and not fit):
+            continue
+        body = []
+        for x in part:                                                    # 先頭と連続の空行は除く
+            if x.strip() or (body and body[-1].strip()):
+                body.append(x)
+        while body and not body[-1].strip():
+            body.pop()
+        blocks.append(body)
+        urls += [x for x in u if x not in urls]
+        used.append(sp)
+        sec = sec or s2
+    if not blocks:
+        return [], []
+    lines = [g["heading"].format(names="・".join(sp["name"] for sp in used))]
+    for k, b in enumerate(blocks):
+        lines += ([""] if k else []) + b
+    lines += ["", confidence_text(used, c)]
+    if sec:
+        lines.append(c["text"]["secondary_note"])
+    return lines, urls
 
 
 def confidence_text(sps, c=None):

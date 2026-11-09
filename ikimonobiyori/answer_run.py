@@ -430,6 +430,10 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     res.update(answer_from_facts(facts_doc, plan_doc, cond["defaulted_date"], polished=polished, gaz=gaz, policy=pol, warnings=res["warnings"],
                                  over_budget=lambda: (time.monotonic() - t0) > cfg(pol)["budget_s"]["value"], workdir=workdir,
                                  names=ask.polish_names(facts_doc)))
+    try:                                                 # 段階70 第1部: 「紅葉やススキ」の秋のお出かけに、ススキ・草紅葉の名所の節(例年の時期の事実だけ)
+        res["text"] = _with_grass_tail(res.get("text") or "", cond, now, env)
+    except (KeyError, ValueError, TypeError, OSError):
+        pass
     try:
         pages = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env)
         # 段階69 第4部 4: 答えに出た候補のページだけ(字数で外した候補・質問の地域の外の候補のページを読まない)
@@ -533,6 +537,51 @@ def _season_place_route(res, cond, now, env):
         res.update(text=text, stage=3, status=STATUS_DEGRADED, errors=errs)
     else:
         res.update(text=text, stage=2, status=STATUS_PASS)
+
+
+def _insert_tail(text, tail, urls, head, after=None):
+    """行の塊を足す: after の見出しの節(次の空行まで)の直後、なければ出典の見出しの前。出典の URL の並びの最後に URL を足す
+    (出典のあとの案内の行の前。出典の見出しがなければ、末尾に見出しごと)。"""
+    lines = text.rstrip(NL).split(NL)
+    i = next((k for k, l in enumerate(lines) if l.strip() == head), len(lines))
+    body, src = lines[:i], lines[i + 1:] if i < len(lines) else []
+    j = next((k for k, l in enumerate(body) if after and l.strip() == after), None)
+    if j is not None:
+        e = next((k for k in range(j + 1, len(body)) if not body[k].strip()), len(body))
+        rest = body[e:]
+        while rest and not rest[0].strip():
+            rest.pop(0)
+        body = body[:e] + [""] + tail + ([""] + rest if rest else [])
+    else:
+        while body and not body[-1].strip():
+            body.pop()
+        body = body + [""] + tail
+    while body and not body[-1].strip():
+        body.pop()
+    n = next((k for k, l in enumerate(src) if not l.strip()), len(src))      # 出典の並び(最初の空行まで)
+    new = [u for u in urls if u not in src[:n] and not any(u in l for l in src[:n])]
+    src = src[:n] + new + src[n:]
+    if not src:
+        return NL.join(body) + NL
+    return NL.join(body + ["", head] + src) + NL
+
+
+def _with_grass_tail(text, cond, now, env):
+    """段階70 第1部: 計画の型の答えに、ススキ・草紅葉の名所の節を足す(「今年の情報が確認できていない候補」の節のあと。なければ出典の前)。
+    質問にススキ・草紅葉の語か秋のお出かけの語があり、対象の日が秋の月のときだけ(season_place.grass_tail)。"""
+    from . import observations as O
+    from . import season_place as SP
+    if not text.strip():
+        return text
+    prefs = None
+    if cond.get("region"):
+        prefs = O.resolve(cond["region"], cond["origin"], O.load_policy()).get("prefectures") or None
+    on = [date.fromisoformat(d) for ds in cond["periods"] for d in ds]
+    tail, urls = SP.grass_tail(cond["question"], today=now.date(), on=on, origin=cond["origin"], prefectures=prefs, env=env)
+    if not tail:
+        return text
+    sk = AP.load_policy()["skeleton"]
+    return _insert_tail(text, tail, urls, sk["sources_heading"], after=sk["no_this_year_heading"])
 
 
 def _with_knowledge_tail(text, cond, now, env):
