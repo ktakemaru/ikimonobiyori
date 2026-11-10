@@ -135,7 +135,7 @@ def _source_class(url, given=None):
     from . import publisher as P
     if given in ("official", "secondary"):
         return given
-    if url and (P.shows_official(url) or P.host_of(url) in _OFFICIAL_HOSTS):
+    if url and (P.shows_official(url) or P.host_of(url) in _OFFICIAL_HOSTS or P.host_of(url) in set(cfg().get("official_hosts") or [])):
         return "official"
     return "secondary" if url else None
 
@@ -270,6 +270,11 @@ def host_names(env=None):
                     continue
         except OSError:
             pass
+    try:                                                  # 知識カードの出典(発行元の名前と URL)
+        from . import knowledge as K
+        walk([r.get("source") for r in K.load(env)])
+    except (OSError, ValueError):
+        pass
     _HOSTS = out
     return out
 
@@ -340,45 +345,269 @@ def _line_facts(F, text, c, known_pubs, skip_blocks=False):
         F.add(kind, s, place=place, source=src, url=url, source_class=sc)
 
 
-def _cards(question, res, c):
-    from . import highlights as HL
+def _target_months(cond, now):
+    ms = []
+    for ds in cond.get("periods") or []:
+        for x in ds:
+            try:
+                m = date.fromisoformat(x).month
+            except (TypeError, ValueError):
+                continue
+            if m not in ms:
+                ms.append(m)
+    return ms or [now.month]
+
+
+def _theme_words(question, subjects, c):
+    """質問の語と対象 → テーマの語(カードを引く語)。"""
+    out = []
+    for t in c["card_themes"]:
+        if t.get("subject") in (subjects or []) or any(w in (question or "") for w in t.get("question_words") or []):
+            out += [w for w in t["words"] if w not in out]
+    return out
+
+
+def _is_closure(card):
+    return isinstance(card.get("closure"), dict)
+
+
+def _real_place(name):
+    """名所・エリア・地域・出発地・山の辞書にある場所の名前か、場所の形の名前か(知識カードの場所の名前は数えない)。"""
+    from . import areas as AR
+    from . import guide_verify as GV
+    from . import place_guard as PG
+    if not name:
+        return False
+    if PG._norm(name) in PG.known_names() or AR.resolve(name) or name in GV._site_names():
+        return True
+    return bool(re.search(cfg()["place_suffix_re"], name))
+
+
+def _real_or_asked(p, question):
+    """場所の名前か(辞書にある・場所の形の名前・質問の場所らしい語)。"""
+    from . import place_guard as PG
+    try:
+        asked = p in PG.candidates(question)
+    except (KeyError, TypeError, ValueError):
+        asked = False
+    return _real_place(p) or asked
+
+
+def _general_card(card, c):
+    """一般の話(テーマ)のカードか: 場所の欄がテーマの語(冬桜・野鳥・紅葉・渡り鳥・カモなど)で、場所の名前でない。"""
+    pl = card.get("place") or ""
+    words = {w for t in c["card_themes"] for w in t["words"]} | set(c.get("general_place_words") or [])
+    return any(w in pl for w in words) and not _real_place(pl)
+
+
+def _broad_place(name):
+    """都道府県・地域の呼び名(場所のカードを引くには広すぎる)。"""
+    from . import sources as S
+    if re.search(r"(都|道|府|県)$", name or ""):
+        return True
+    for r in S.load_regions()["regions"]:
+        if name in [r["name"], *(r.get("aliases") or [])]:
+            return True
+    return False
+
+
+def _place_cards(rows, places, c):
+    """場所の名前に結びつくカード(分類の優先の順)。"""
+    from . import knowledge as K
+    pri = {k: i for i, k in enumerate(c.get("brief_category_order") or K.cfg()["category_priority"])}
+    ps = [p for p in places if p and len(p) >= 2]
+    hits = [r for r in rows if not _general_card(r, c) and any(K.place_match(r, p) for p in ps)]
+    return sorted(hits, key=lambda r: (pri.get(r.get("category"), len(pri)), r.get("title") or ""))
+
+
+def _cards(question, res, c, cand_names=(), months=()):
+    """知識カード(最大 max_cards 枚)。場所・種に結びつくカードを先に、続けてテーマと季節のカード。
+    カードごとに結びつき(link): この場所の話 / この種の話 / 一般の話(テーマ)。冬季閉鎖のカードは事実の側に入れるので除く。"""
     from . import intent
     from . import knowledge as K
+    L = c["card_links"]
+    try:
+        shown = [r for r in K.load_shown() if not _is_closure(r)]
+    except (OSError, ValueError):
+        shown = []
     out, seen = [], set()
 
-    def push(rows):
+    def push(rows, link, limit=None):
+        n = 0
         for r in rows or []:
             t = r.get("title")
-            if t and t not in seen and len(out) < c["max_cards"]:
-                seen.add(t)
-                out.append(r)
-    try:
-        push(intent.cards_for(question))
+            if limit is not None and n >= limit:
+                return
+            if t and (t, r.get("place")) not in seen and len(out) < c["max_cards"]:
+                seen.add((t, r.get("place")))
+                out.append((r, link))
+                n += 1
+    themew = {w for t in c["card_themes"] for w in t["words"]}
+    places = [p for p in _question_places(question, res) if len(p) >= 2 and not _broad_place(p) and not any(w in p for w in themew)]
+    pc = _place_cards(shown, places, c)[: c["place_cards_max"]]
+    def is_place(r):
+        return _real_place(r.get("place") or "") or any(K.place_match(r, p) and _real_or_asked(p, question) for p in places)
+    push([r for r in pc if is_place(r)], L["place"])
+    push([r for r in pc if not is_place(r)], L["species"])     # 場所の欄が種・現象の名前(冬桜など)
+    words = [w for w in re.findall(c["species_word_re"], question or "") if w not in c["not_species_words"]]
+    if words:                                             # 質問の種・現象の名前(ニッコウキスゲ・カワセミ・冬桜)
+        sp = [r for r in shown if any(w in " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""]
+                                                     + list(r.get("facts") or [])) for w in words)]
+        sp.sort(key=lambda r: (not any(w in (r.get("subject") or "") + (r.get("title") or "") for w in words), r.get("title") or ""))
+        push(sp, L["species"], c["species_cards_max"])
+    try:                                                  # 質問の話題のカード(種の名前で引けたもの以外は一般の話として扱う)
+        push([r for r in intent.cards_for(question) if _general_card(r, c)], L["theme"], c["species_cards_max"])
     except (OSError, ValueError, KeyError, TypeError):
         pass
-    places = []
-    try:
-        places = [p["name"] for p in HL.places(question)]
-    except (OSError, ValueError, KeyError, TypeError):
-        pass
-    places += list((res.get("cond") or {}).get("area_names") or [])
-    try:
-        push(K.select(places, month=None) if places else [])
-    except (OSError, ValueError, KeyError, TypeError):
-        pass
-    titles = ((res.get("highlights") or {}).get("cards") or [])
-    if titles:
-        allc = {r["title"]: r for r in K.load_shown()}
-        push([allc[t] if isinstance(t, str) else t for t in titles if (t if isinstance(t, str) else t.get("title")) in allc or isinstance(t, dict)])
+    if cand_names:                                        # 答えに選んだ候補の場所のカード(上から)
+        push(_place_cards(shown, list(cand_names)[: c["cand_card_places"]], c), L["place"], c["cand_cards_max"])
+    plan_like = (res.get("route") or (res.get("cond") or {}).get("route")) == "plan"
+    tw = _theme_words(question, (res.get("cond") or {}).get("subjects") or [] if plan_like and not places else [], c)   # 場所・知識の質問は質問の語のテーマだけ
+    if tw and len(out) < c["max_cards"]:
+        theme = []
+        for r in shown:
+            if not _general_card(r, c):
+                continue                                  # 特定の場所のカードは一般の話にしない
+            ms = (r.get("condition") or {}).get("months") or []
+            if ms and months and not set(ms) & set(months):
+                continue
+            blob = " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""] + list(r.get("facts") or []))
+            hit = sum(1 for w in tw if w in blob)
+            if hit:
+                theme.append((-hit, r.get("title") or "", r))
+        push([r for _h, _t, r in sorted(theme, key=lambda x: (x[0], x[1]))], L["theme"])
     rows = []
-    for i, r in enumerate(out, 1):
+    for i, (r, link) in enumerate(out, 1):
         src = r.get("source") or {}
         facts = list(r.get("facts") or [])
-        rows.append({"id": f"K{i:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"),
+        rows.append({"id": f"K{i:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"), "link": link,
                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
     return rows
+
+
+# ---- 例年の目安の候補(段階76 第1部) と 冬季閉鎖(第4部) ----
+
+def _group_of(pref, c):
+    for g in c["region_groups"]:
+        if pref in g["prefectures"]:
+            return g["name"]
+    return None
+
+
+def _covers(window, mds):
+    if not isinstance(window, dict) or not window.get("start") or not window.get("end"):
+        return False
+    s, t = window["start"], window["end"]
+    return any((s <= md <= t) if s <= t else (md >= s or md <= t) for md in mds)
+
+
+def _origin_pref(origin):
+    from . import origins
+    try:
+        o = origins.lookup(origin) or {}
+    except (KeyError, TypeError, ValueError):
+        o = {}
+    return o.get("prefecture") or "神奈川県"
+
+
+def typical_candidates(cond, now, scope, existing, c, pending):
+    """今年の現況はないが、例年の時期が対象の日に当たる名所(ガイドのカタログから)。
+    範囲が広い(wide): 地域の組ごとに最大 per_group 件。そのほか: 出発地の地域の組の外から 1 組 1 件で far_total 件まで。"""
+    from . import guide
+    from . import publisher as P
+    themes = [t for sj in cond.get("subjects") or [] for t in c["typical_themes"].get(sj) or []]
+    if not themes:
+        return []
+    mds = [x[5:10] for ds in cond.get("periods") or [] for x in ds] or [now.strftime("%m-%d")]
+    origin = cond.get("origin")
+    try:
+        entries = guide.build()[0]
+    except (OSError, ValueError, KeyError):
+        return []
+    rows = []
+    for e in entries:
+        if not guide.approved(e) or e.get("scope") != "place" or e.get("theme") not in themes or not e.get("prefecture"):
+            continue
+        if e["name"] in existing:
+            continue
+        season = e.get("season") or {}
+        if not _covers(season.get("window"), mds):
+            continue
+        rng = (e.get("range") or {})
+        by = (rng.get("by_origin") or {}).get(origin) or rng
+        if by.get("status") == "out_of_range":
+            continue
+        src = [x for x in e.get("sources") or [] if x.get("url") and not P.unused_source(x["url"]) and x["url"] not in pending]
+        if not src:
+            continue
+        if season.get("from_url") and (P.unused_source(season["from_url"]) or season["from_url"] in pending):
+            continue                                      # 例年の時期の出どころが使わない情報源
+        best = sorted(src, key=lambda x: (x.get("class") or "Z", x["url"]))[0]
+        kinds = [k["kind"] for k in e.get("kinds") or [] if k.get("shown")]
+        rows.append({"name": e["name"], "prefecture": e["prefecture"], "municipality": e.get("municipality"),
+                     "group": _group_of(e["prefecture"], c), "theme": e.get("theme"), "text": season.get("text"), "kinds": kinds,
+                     "url": best["url"], "publisher": best.get("publisher"),
+                     "source_class": "official" if best.get("class") in ("A", "B") else "secondary", "km": by.get("km")})
+    rows.sort(key=lambda r: (r["group"] or "~", r["source_class"] != "official", r["km"] or 9999, r["name"]))
+    own = _group_of(_origin_pref(origin), c)
+    out, per = [], {}
+    if scope == "wide":
+        for r in rows:
+            if r["group"] and per.get(r["group"], 0) < c["typical_candidates"]["per_group"]:
+                per[r["group"]] = per.get(r["group"], 0) + 1
+                out.append(r)
+    else:
+        far = sorted([r for r in rows if r["group"] and r["group"] != own],
+                     key=lambda r: (r["source_class"] != "official", r["km"] or 9999, r["name"]))
+        seen_g = set()
+        for r in far:
+            if r["group"] not in seen_g and len(out) < c["typical_candidates"]["far_total"]:
+                seen_g.add(r["group"])
+                out.append(r)
+    return out
+
+
+def closures_for(names, months, c):
+    """候補・質問の場所に結びつく冬季閉鎖のカード → [(カード, 対象の月に当たるか)]。"""
+    from . import knowledge as K
+    try:
+        rows = [r for r in K.load() if _is_closure(r) and not r.get("retired")]
+    except (OSError, ValueError):
+        return []
+    out = []
+    for r in rows:
+        keys = [r.get("place")] + list(r.get("place_aliases") or []) + list(r["closure"].get("areas") or [])
+        keys = [k for k in keys if k and len(k) >= 2]
+        if any(k in n or n in k for k in keys for n in names if n and len(n) >= 2):
+            ms = r["closure"].get("typical_months") or []
+            out.append((r, bool(set(ms) & set(months))))
+    return out
+
+
+def AR_scope(question, cond):
+    from . import answer_plan as AP
+    try:
+        return AP.scope_of(question, cond.get("origin_source"), cond.get("refine"))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _question_places(question, res):
+    from . import highlights as HL
+    from . import place_guard as PG
+    out = list((res.get("cond") or {}).get("area_names") or [])
+    try:                                                  # 見どころの場所(質問に名前があるものだけ。「野鳥」の語から箱根にすり替えない)
+        out += [p["name"] for p in HL.places(question) if p["name"] in (question or "") or
+                (p.get("label") in (question or "") and _real_place(p.get("label")))]
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    try:
+        out += PG.candidates(question)
+    except (KeyError, TypeError, ValueError):
+        pass
+    return [x for i, x in enumerate(out) if x and x not in out[:i]]
 
 
 def _dates_block(cond, now):
@@ -522,7 +751,29 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             pb = None
     else:
         pb = None
-    cards = _cards(question, res, c)
+    months = _target_months(cond, now)
+    scope = (json.loads(fpath.read_text(encoding="utf-8")).get("scope") if fpath.exists() else None) or AR_scope(question, cond)
+    typ = typical_candidates(cond, now, scope, {r["name"] for r in cands}, c, pending)
+    for t in typ:
+        F.add("typical", f"{t['name']}({t['prefecture']}{t.get('municipality') or ''}): 例年 {t['text']}"
+              + (f"({'・'.join(t['kinds'])})" if t["kinds"] else ""), place=t["name"], source=t.get("publisher"), url=t["url"],
+              source_class=t["source_class"])
+        cands.append({"subject": None, "rank": None, "name": t["name"], "chosen": False, "basis": "typical", "group": t["group"],
+                      "prefecture": t["prefecture"], "distance_km": t.get("km"), "theme": t.get("theme"),
+                      "reasons": [c["typical_candidates"]["label"]]})
+    for r in cands:
+        r.setdefault("basis", "current" if r.get("current_state") else "typical")
+        r.setdefault("group", _group_of(r.get("prefecture"), c))
+    names = [r["name"] for r in cands] + _question_places(question, res)
+    for card, hit in closures_for(names, months, c):
+        cl = card["closure"]
+        note = c["closure_note"]["in_period"] if hit else c["closure_note"]["out_period"]
+        season_txt = (cl.get("season") or {}).get("text")
+        F.add("safety", f"{card.get('place')}: {cl.get('name')}" + (f"({cl.get('section')})" if cl.get("section") else "")
+              + f" 例年の冬季閉鎖 {cl.get('typical')}" + (f"。{season_txt}" if season_txt else "") + f"。{note}",
+              place=card.get("place"), source=(card.get("source") or {}).get("name"), url=(card.get("source") or {}).get("url"),
+              source_class="official", extra={"in_target": hit})
+    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen")], months=months)
     if pb:
         seen = {k["title"] for k in cards}
         for k in pb.get("cards") or []:
@@ -532,7 +783,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
         "dates": _dates_block(cond, now), "intent": cond.get("intent"), "route": res.get("route") or cond.get("route"),
-        "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else "default",
+        "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else (scope or "default"),
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
@@ -559,7 +810,11 @@ def render_md(doc):
             L.append(doc["candidates_note"])
         for r in doc["candidates"]:
             why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
-            L.append(f"{r['rank']}. [{r.get('subject') or ''}] {r['name']}({r.get('prefecture') or ''} 約{r.get('distance_km')}km・点 {r.get('score')}・"
+            if r.get("rank") is None:
+                L.append(f"- [例年の目安・{r.get('group') or ''}] {r['name']}({r.get('prefecture') or ''} 約{r.get('distance_km')}km)"
+                         + (f"・{r['theme']}" if r.get("theme") else ""))
+                continue
+            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({r.get('prefecture') or ''} 約{r.get('distance_km')}km・点 {r.get('score')}・"
                      f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}")
         L.append("")
     L += ["## 確かめた事実", ""]
@@ -571,7 +826,7 @@ def render_md(doc):
         L.append("(なし)")
     L += ["", "## 知識カード", ""]
     for k in doc["cards"]:
-        L.append(f"- [{k['id']}] {k['title']}({k.get('category') or ''}・{k.get('place') or ''}・{k.get('source')}・{k.get('checked_on')}に確認)")
+        L.append(f"- [{k['id']}] {k['title']}({k.get('link') or ''}・{k.get('category') or ''}・{k.get('place') or ''}・{k.get('source')}・{k.get('checked_on')}に確認)")
         L += [f"  - {x}" for x in k["facts"]]
     if not doc["cards"]:
         L.append("(なし)")

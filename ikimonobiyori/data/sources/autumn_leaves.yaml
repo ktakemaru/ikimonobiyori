@@ -292,6 +292,17 @@ sources:
     terms: {status: no_prohibition_found, url: "https://www.showakinen-koen.jp/about/", note: "『掲載データ・写真について』: 記事・写真の無断転載を禁じる。自動取得の規定はない(2026-11-05)。状態の語と日付の短い事実を出典つきで示すだけ"}
     approval: {status: approved, approved_by: user, approved_on: "2026-11-09", reason: "承認(2026-11-09)。本人の指示による記入（チャットで『A〜Gは推奨どおり』2026-11-09）。通信先 www.showakinen-koen.jp も公式の扱い。条件: 状態の語(30字以内)・日付・URL だけ(「無断転載を禁じます」の記載があるため)"}
 
+  - id: showakinen-hanadayori
+    publisher: 国営昭和記念公園(昭和記念公園管理センター)
+    publisher_kind: park_manager
+    url: "https://www.showakinen-koen.jp/hanadayori/"
+    kind: status_page
+    covers:
+      - {site: kouyou-0024, label: "花だより(イチョウ並木・日本庭園のカエデ類の状態)"}
+    readable: {status: ok, checked_on: "2026-11-10", robots: allows, observed_latest_update: "2026-11-05", note: "段階76(2026-11-10): 花だよりの一覧。2026年は 10/22・10/29・11/05 に更新。記事にイチョウ並木(立川ゲート前・カナール・かたらい)と日本庭園のカエデ類の状態(見頃始め・色づき途中など)と全体の見頃の予想がある"}
+    terms: {status: no_prohibition_found, url: "https://www.showakinen-koen.jp/about/", note: "記事・写真の無断転載を禁じる(2026-11-10 に読んだ)。状態の語と日付の短い事実を出典つきで示すだけ(showakinen-flower-information と同じ)"}
+    approval: {status: pending, reason: "段階76 で足した(承認待ち)。同じ公園の showakinen-flower-information は承認済み。記事の一覧のページを別に台帳に持つかは本人の判断"}
+
   - id: siobara-kankou
     publisher: 塩原温泉観光協会
     publisher_kind: tourism_association

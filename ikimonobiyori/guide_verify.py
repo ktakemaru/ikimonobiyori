@@ -123,7 +123,7 @@ def _event_period(s, v, c):
     return GB.has_any(c["event_words"], s) and (bool(v["dates"] or v["months"] or v["jun"]) or GB.has_any(c["period_words"], s))
 
 
-def check_marked(s, brief, c):
+def check_marked(s, brief, c, allowed=()):
     facts = {f["id"]: f for f in brief.get("facts") or []}
     cards = {k["id"]: k for k in brief.get("cards") or []}
     errs = []
@@ -136,7 +136,7 @@ def check_marked(s, brief, c):
             rows.append(r)
     if not rows:
         return errs
-    v = GB.values(s["clean"], c)
+    v = GB.values(_without_allowed(s["clean"], allowed, keep_point=True), c)   # 今週末・来週末・対象の日の日付は印の事実と照らさない(段階76。「時点」の日付は照らす)
     u = _union(rows)
     for key, label in (("dates", "日付"), ("times", "時刻"), ("money", "料金"), ("phones", "電話"), ("urls", "URL"), ("people", "人数")):
         bad = [x for x in v[key] if x not in u[key]]
@@ -169,11 +169,13 @@ def check_marked(s, brief, c):
     return errs
 
 
-def _without_allowed(text, allowed_dates):
-    """印なしで書いてよい日付(「11/14」「11月14日」「11月14日・15日」)を文から除く(月の表現として数えない)。"""
+def _without_allowed(text, allowed_dates, keep_point=False):
+    """印なしで書いてよい日付(「11/14」「11月14日」「11月14日・15日」)を文から除く(月の表現として数えない)。
+    keep_point: 「○/○時点」「○/○現在」の日付は除かない(印の事実の日付と照らす)。"""
+    tail = r"(?!\s*(?:時点|現在))" if keep_point else ""
     for md in allowed_dates:
         mo, d = md.split("/")
-        text = re.sub(rf"(?<!\d){mo}月{d}日(?:[・、と]\d{{1,2}}日)*|(?<![\d/]){mo}/{d}(?![\d/])", " ", text)
+        text = re.sub(rf"(?<!\d){mo}月{d}日(?:[・、と]\d{{1,2}}日)*{tail}|(?<![\d/]){mo}/{d}(?![\d/]){tail}", " ", text)
     return text
 
 
@@ -285,10 +287,20 @@ def common_errors(final_body, question, c):
         errs.append({"code": e["code"], "line": e.get("line", 0), "sentence": "", "detail": e.get("detail", ""), "fix": "その語・文を書かない"})
     skip = set(c.get("skip_reused_codes") or [])
     for e in V.internal_word_errors(final_body, rules) + V.process_excuse_errors(final_body, rules) + V.source_rule_errors(final_body, rules) + \
-            V.question_errors(final_body, rules) + V.quote_errors(final_body, rules):
+            V.quote_errors(final_body, rules):
         if e["code"] in skip:
             continue
         errs.append({"code": e["code"], "line": 0, "sentence": "", "detail": e.get("detail", ""), "fix": "その文を書かない(質問・作業の事情・使わない情報源・長い引用)"})
+    for ln, line in enumerate(final_body.splitlines(), 1):          # 段階76 第5部 4: 読む人への問いかけだけを止める(案内の文は止めない)
+        for sent in re.findall(r"[^。！？!?]+[。！？!?]?", line):
+            if re.search(c["question_re"], sent.strip()):
+                errs.append({"code": "question_in_answer", "line": ln, "sentence": sent.strip()[:80], "detail": "読む人への問いかけ",
+                             "fix": "問いかけの文を書かない(答えの最後にも途中にも)"})
+    for ln, line in enumerate(final_body.splitlines(), 1):          # 段階76 第5部 2: 公式でない出典の長い断りを文中に入れない
+        for w in c.get("long_disclaimers") or []:
+            if w in line:
+                errs.append({"code": "long_disclaimer", "line": ln, "sentence": line[:80], "detail": f"文中の長い断り「{w}」",
+                             "fix": "「紹介サイトによると」のように短く書く(公式かどうかは最後の出典で分かる)"})
     if P.unused_in_text(final_body):
         errs.append({"code": "unused_source", "line": 0, "sentence": "", "detail": "使わない情報源の名前がある", "fix": "その情報源を書かない"})
     for w in c.get("guide_internal_words") or []:
@@ -315,8 +327,8 @@ def final_sources(cited, c):
     f = c["final"]
     out, seen = [], set()
     for r in cited:
-        key = r.get("url") or r.get("source")
-        if not key or key in seen or not (r.get("source") or r.get("url")):
+        key = r.get("url")
+        if not key or key in seen:                       # 段階76 第5部 1: URL のない出典は出さない
             continue
         seen.add(key)
         if r["id"].startswith("K"):
@@ -381,7 +393,7 @@ def check(draft, brief, c=None, env=None):
     for s in sents:
         if s["ids"]:
             marked += 1
-            errs += check_marked(s, brief, c)
+            errs += check_marked(s, brief, c, [d for d in allowed if d != _md((brief.get("dates") or {}).get("today"))])
             cited_ids += [i for i in s["ids"] if i not in cited_ids]
         else:
             errs += check_unmarked(s, rec_places, c, allowed)

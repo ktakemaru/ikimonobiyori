@@ -367,7 +367,7 @@ entries:
     typical_window: {start: "10-21", end: "12-10", source_url: "https://www.showakinen-koen.jp/flower-information/", note: "公式: モミジ類 10月下旬〜12月上旬(日本庭園など)。ユーザーが公式ページで確認(2026-10-22)"}
     status: approved
     tags: {prefecture: 東京都, area: 多摩, terrain: [garden], access: [walk_from_station], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
-    status_sources: [showakinen-flower-information]
+    status_sources: [showakinen-flower-information, showakinen-hanadayori]
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花・植物"}
