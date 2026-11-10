@@ -75,7 +75,7 @@ ask verify <下書き> --brief <id> に通す(不合格なら理由に従って�
 - 手順: ① 公式ページの URL を Web 検索で探す(検索の要約を事実にしない) ② `python -X utf8 -m ikimonobiyori.ask research fetch <URL> --brief <id>`(本文が標準出力に出る) ③ 本文で確かめた事実だけを JSON にして `ask research record --brief <id> --file <JSON>` ④ `ask brief` を作り直して、いつもの手順。
 - 読んでよいページ: 発行元の区分が「公式」のもの(自治体・観光協会・公園管理者・施設運営者(指定管理者を含む)・国や県の機関)。紹介サイト・使わない情報源は読まない(コードが止める)。観光協会などの独自のドメインで「公式の発行元のページではない」と止まったときは、`--publisher <発行元の名前>` を付ける(名前が公式の形で、読んだ本文にその名前があるときだけ読める)。同じサイトへの転送(www の有無など)は 1 回だけ追う。
 - 上限: 1 つの質問で 3 ページ・最初の取得から 2 分まで(超えたら、そこまでの記録で答える)。robots.txt を先に読み、拒否なら読まない。同じホストへ 1 秒以上。同じ URL は 7 日のあいだ控え(データ置き場の `research/pages/`)を使う。実行ごとの記録は `netlog/requests.jsonl`。
-- 記録してよい項目: 名所の名前・都県と市町村・見られる種(kind)・例年の時期(typical)・行く前の注意(notice)・出典(url・publisher)。**今年の現況は記録しない**(情報源の承認が要る)。座標は記録しない(市町村まで)。記録には「その場で調べた」印 `research: {at, brief, question}` が付く。
+- 記録してよい項目: 名所の名前・都県と市町村・見られる種(kind)・例年の時期(typical)・行く前の注意(notice)・出典(url・publisher)。**今年の現況は記録しない**(情報源の承認が要る)。**行事の期間(まつりの開催日など)を例年の時期にしない**(本文に「例年の見頃」などの記載があるときだけ。コードが止める)。座標は記録しない(市町村まで)。記録には「その場で調べた」印 `research: {at, brief, question}` が付く。
 - JSON の 1 件の例: `{"subject": "flowers", "name": "○○公園", "prefecture": "静岡県", "city": "○○町", "kind": "菜の花", "typical": "例年1月中旬〜2月下旬", "url": "<読んだ URL>", "publisher": "○○町観光協会", "current_status_page": false}`(`current_status_page: true` は、そのページが今年の現況を出しているとき。承認待ちの情報源の候補として `research/pending_sources.jsonl` に残る。答えには使わない)。
 - 見直し: `ask research list`(調べた記録と、承認待ちの情報源の候補の一覧)。
 - 足りなかったことの記録(第5部): `ask verify` に合格した答えの「確かめられていません」などの文と、資料の「足りないもの」が `logs/gaps.jsonl` に貯まる。`ask gaps` で対象×場所ごとの回数。次のデータ集めはこの一覧から。

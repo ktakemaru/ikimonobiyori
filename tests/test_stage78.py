@@ -270,6 +270,8 @@ class Research(unittest.TestCase):
         self.assertTrue(RS.fetch(u, "b-d1", now=NOW, http_get=get, publisher="試験町観光協会")["ok"])
         res = RS.record([{"subject": "flowers", "name": "試験の畑", "kind": "菜の花", "typical": "例年2月", "url": u}], "b-d1", now=NOW)
         self.assertEqual(res["written"], 1, res)
+        bad = RS.record([{"subject": "flowers", "name": "試験の畑2", "kind": "菜の花", "typical": "例年2月10日〜3月10日(まつり期間)", "url": u}], "b-d1", now=NOW)
+        self.assertEqual(bad["written"], 0, bad)
 
     def test_fetch_limits_and_record(self):
         pages = []

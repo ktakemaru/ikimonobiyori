@@ -398,6 +398,8 @@ def record(items, bid, *, question=None, env=None, now=None):
             errs.append(f"subject は {R['kinds']} のどれか")
         if not it.get("name") or not it.get("kind"):
             errs.append("name と kind(見られる種)が要る")
+        if it.get("typical") and re.search(R["event_period_re"], it["typical"]):
+            errs.append("行事の期間(まつり・開催日)を例年の時期にしない。本文に「例年の見頃」などの記載があるときだけ typical に書く")
         if not it.get("typical") and not it.get("notice"):
             errs.append("typical(例年の時期)か notice(行く前の注意)が要る")
         if errs:
