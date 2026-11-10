@@ -120,9 +120,13 @@ class StopHookOutput(unittest.TestCase):
         out = SH.to_output({"decision": "block", "reason": "[印] 理由"}, "feedback")
         self.assertEqual(out, {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "[印] 理由"}})
 
-    def test_block_form_is_default(self):
+    def test_block_form(self):
         o = {"decision": "block", "reason": "r"}
         self.assertEqual(SH.to_output(o, "block"), o)
+
+    def test_feedback_is_configured(self):                   # 段階74(利用者の承認 2026-11-10)
+        self.assertEqual(SH.cfg()["output"], "feedback")
+        self.assertIn("hookSpecificOutput", SH.to_output({"decision": "block", "reason": "r"}))
 
 
 class Acceptance(unittest.TestCase):

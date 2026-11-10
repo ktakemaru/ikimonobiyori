@@ -13,15 +13,16 @@
 3. **冒頭の文**: 「遠くても」では「範囲全体から選びました。」(`data/ask/origins.yaml` の `lines.wide`)。
 4. **Stop フックの表示**: Claude Code の公式の文書(https://code.claude.com/docs/en/hooks の Stop decision control。2026-11-10 に読んだ)によると、`{"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": "..."}}` を返すと、会話は `decision: "block"` と同じように続き(同じ繰り返しの保護)、画面では「Stop hook feedback」と出てフックのエラーの表示が出ない。
    - 出力の形を `data/ask/final_check.yaml` の `stop_hook.output`(`block` / `feedback`)で選べるようにした(`stop_hook.to_output`)。
-   - **既定は `block` のまま**。`feedback` にすると既存のテスト `tests/test_stage72_hook.py` の `test_hook_script_blocks_via_child_process`(子プロセスの出力が `decision: block`)の期待値が変わるため、利用者の承認待ち。
+   - 利用者の承認(2026-11-10。チャット)を得て、既定を `feedback` に切り替えた。既存のテスト `tests/test_stage72_hook.py` の `test_hook_script_blocks_via_child_process` は、出力の形の部分だけ(`decision: block` → `hookSpecificOutput.hookEventName: Stop`)書き換えた(承認の範囲)。止める判定・回数の上限は変えていない。
 
 ## 値(すべて provisional。出典なし、指示の形に合わせた値)
 `data/ask/plan.yaml` の `scope.wide`: `window.outlooks`・`window.codes`・`window.section_max`・`window.note`・`window.note_kind`・`max_items`・`heading`・`no_this_year_per_group`。
 
 ## テスト
-- 追加: `tests/test_stage74_wide.py`(12 件。受け入れの確認「遠くても構いません。今見られる花と場所を教えて」で群馬の桜山公園・埼玉の城峯公園の冬桜が出ることを含む)。
+- 追加: `tests/test_stage74_wide.py`(13 件。受け入れの確認「遠くても構いません。今見られる花と場所を教えて」で群馬の桜山公園・埼玉の城峯公園の冬桜が出ることを含む)。
 - 既存のテストの期待値は変えていない。
 - 全テストを4分割で実行: 470+519+481+424 = 1894件(数えた全体 1894件)すべて OK。CI は push していないので未実行。
+- Stop フックの切り替えのあと: 全テストを4分割で実行: 471+519+481+424 = 1895件(前回の 1894件 + 出力の形の設定の確認 1件)すべて OK。
 
 ## 残り
 - 総合(複数の対象)の計画 `build_all` には、この節の作り方を入れていない(花だけ・紅葉だけの質問が対象)。
