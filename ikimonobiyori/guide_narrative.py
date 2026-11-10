@@ -9,6 +9,7 @@
 (分けられない文は「その他」で、材料にしない)。材料がない種類は「材料なし」と資料に書く(AI が無理に作らないため)。
 値と語は data/ask/guide_mode.yaml の narrative。"""
 import re
+from functools import lru_cache
 
 
 def cfg():
@@ -61,7 +62,7 @@ def materials(cards, N=None):
     for k in cards or []:
         for text, kind in zip(k.get("facts") or [], k.get("narrative_kinds") or kinds_of(k, N)):
             if kind in pool:
-                pool[kind].append({"kind": kind, "card": k.get("id"), "title": k.get("title"), "place": k.get("place"), "text": text})
+                pool[kind].append({"kind": kind, "card": k.get("id"), "title": k.get("title"), "place": k.get("where") or place_label(k), "text": text})
     items = []
     for rnd in range(N["per_kind_max"]):
         for kind in N["kinds"]:
@@ -100,6 +101,88 @@ def extra_cards(shown, have, names, words, months, N=None, require_words=()):
             scored.append((-score, -len(set(kinds)), r.get("title") or "", r))
     scored.sort(key=lambda x: x[:3])
     return [r for *_x, r in scored[: N["extra_cards"]]]
+
+
+def _norm(s):
+    return re.sub(r"[\s()（）・]", "", s or "")
+
+
+def _walk_places(o, idx):
+    if isinstance(o, dict):
+        n, t = o.get("name"), o.get("tags") if isinstance(o.get("tags"), dict) else {}
+        city = o.get("city") or o.get("municipality") or t.get("city")
+        pref = o.get("prefecture") or t.get("prefecture")
+        if isinstance(n, str) and isinstance(city, str) and city.strip():
+            idx.setdefault(_norm(n), (pref if isinstance(pref, str) else None, city.strip()))
+        for v in o.values():
+            _walk_places(v, idx)
+    elif isinstance(o, list):
+        for v in o:
+            _walk_places(v, idx)
+
+
+@lru_cache(maxsize=4)
+def _place_index(data_dir_key):
+    """名所の名前 → (都県, 市区町村)。名所カタログ・ガイドの記録・観察の名所(リポジトリ)と、読んだ事実の記録(データ置き場)から。"""
+    import json
+    from pathlib import Path
+    from . import yamlcache
+    idx = {}
+    root = Path(__file__).resolve().parent / "data"
+    for p in sorted(root.rglob("*.yaml")):
+        if "regress" in p.parts:
+            continue
+        try:
+            _walk_places(yamlcache.load(p), idx)
+        except (OSError, ValueError, TypeError):
+            continue
+    for p in sorted((Path(data_dir_key) / "observations").glob("*.jsonl")):
+        try:
+            lines = p.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            try:
+                _walk_places(json.loads(line), idx)
+            except ValueError:
+                continue
+    return idx
+
+
+def place_label(card, N=None):
+    """段階79 第1部 4: 語りの材料の場所に、どこの話か(都県と市区町村)を付ける。
+    カードの項目 → 名所の名前・別名(別名で当たったら、その名前で書く)→ 別名が市区町村の名前(「あきる野」→ あきる野市)。
+    広い山域・湖(wide_place_re)は都県だけ。分からなければ場所の名前だけ(種の一般の話など)。"""
+    from . import paths
+    N = N or cfg()
+    place = (card or {}).get("place") or ""
+    if not place:
+        return ""
+    pref, city, label = card.get("prefecture"), card.get("city"), place
+    idx = _place_index(str(paths.data_dir()))
+    if not city:
+        for i, x in enumerate([place] + [a for a in card.get("place_aliases") or [] if isinstance(a, str)]):
+            if _norm(x) in idx:
+                hit = idx[_norm(x)]
+                pref, city = pref or hit[0], hit[1]
+                label = place if i == 0 else x
+                break
+    if not city:
+        by_city = {}
+        for pf, ct in idx.values():
+            by_city.setdefault(_norm(ct), (pf, ct))
+        for a in card.get("place_aliases") or []:
+            hit = next((by_city.get(_norm(a) + s) for s in ("市", "町", "村", "区") if by_city.get(_norm(a) + s)), None)
+            if hit:
+                pref, city = pref or hit[0], hit[1]
+                break
+    wide = re.search(N.get("wide_place_re") or r"(?!)", label)
+    if wide or (pref and "・" in pref):
+        return f"{label}・{pref}" if pref and pref not in label else label
+    if city:
+        where = city if not pref or city.startswith(pref) else f"{pref}{city}"
+        return f"{label}・{where}" if city not in label else label
+    return label
 
 
 def render(mat, N=None):

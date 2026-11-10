@@ -187,17 +187,15 @@ def gather(sp, origin, c=None, env=None):
         if not kinds and not wins and not _name_matches(e.get("name"), match, sp, c):
             continue
         km, est = _km(e.get("point"), t.get("city"), origin, cat_pol)
-        w = wins[0] if wins else None
-        rows.setdefault(key(e["name"]), {
-            "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
-            "kinds": sorted(set(kinds) | {x["kind"] for x in wins}),
-            "start": w["start"] if w else None, "end": w["end"] if w else None,
-            "season": window_text(w["start"], w["end"], thirds) if w else None,
-            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
-            "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
-            "publisher": _publisher(w["source_url"], e) if w else "",
-            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
-            "annual_events": list(e.get("annual_events") or [])})
+        # 段階79 第1部 2: 時期の違う種(桜山公園の冬桜 11月〜・河津桜 2月〜)は種ごとの行にし、行にはその時期に当たる種だけを書く。
+        # 時期の窓のない種(上野恩賜公園の寒桜)は、窓のある種の行に混ぜない(窓が 1 つもないときだけ、時期なしの行に入れる)
+        spans = {}
+        for x in wins:
+            spans.setdefault((x.get("start"), x.get("end")), []).append(x)
+        for i, ws in enumerate(spans.values() if spans else [[None]]):
+            w = ws[0]
+            row_kinds = sorted({x["kind"] for x in ws}) if w else sorted(set(kinds))
+            _catalog_row(rows, (key(e["name"]) if i == 0 else key(e["name"]) + "|" + str(w.get("start"))), e, t, km, est, w, row_kinds, thirds, P)
     for e in _guide_entries():
         kinds = [k["kind"] for k in e.get("kinds") or [] if _matches(k.get("kind"), match, sp, c)]
         if not kinds:
@@ -228,6 +226,11 @@ def gather(sp, origin, c=None, env=None):
     for r in _records(match, env, sp, c):
         k = key(r["name"])
         if k in rows:
+            if _other_kind(r, rows[k], sp):                             # 段階79 第1部 2: 同じ名所のほかの種の時期は、その種の行にする(行の種と時期を混ぜない)
+                k2 = k + "|" + r["kinds"][0]
+                if r.get("season") and k2 not in rows:
+                    rows[k2] = {**r, "km": rows[k]["km"], "km_estimated": rows[k]["km_estimated"]}
+                continue
             if not rows[k]["season"] and r.get("season"):
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
             continue
@@ -235,6 +238,30 @@ def gather(sp, origin, c=None, env=None):
         rows[k] = {**r, "km": km, "km_estimated": est}
     return list(rows.values())
 
+
+
+def _catalog_row(rows, k, e, t, km, est, w, kinds, thirds, P):
+    """名所カタログの 1 行(段階79 第1部 2 で gather から分けた。中身は今までと同じ)。"""
+    rows.setdefault(k, {
+            "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
+            "kinds": kinds,
+            "start": w["start"] if w else None, "end": w["end"] if w else None,
+            "season": window_text(w["start"], w["end"], thirds) if w else None,
+            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
+            "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
+            "publisher": _publisher(w["source_url"], e) if w else "",
+            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
+            "annual_events": list(e.get("annual_events") or [])})
+
+
+
+def _other_kind(rec, row, sp):
+    """記録の種と行の種が、どちらも種の名前そのもの(「桜」)でなく、重ならないとき True(上野恩賜公園の寒桜の行に、ソメイヨシノの時期を入れない)。"""
+    general = {(sp or {}).get("name")}
+    a, b = set(rec.get("kinds") or []), set(row.get("kinds") or [])
+    if not a or not b or a & b or a & general or b & general:
+        return False
+    return True
 
 def _season_of_other_kind(text, kinds, entry_kinds):
     """ガイドの記録の時期の文が、名所のほかの種の名前で始まる(「梅は1月上旬から…」「梅の見頃は…」)のに、

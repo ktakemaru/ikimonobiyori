@@ -206,7 +206,8 @@ def _candidate_facts(F, c_row, pick=None):
     if cur.get("state") or cur.get("state_raw"):
         md = _md(cur.get("state_date"))
         st = cur.get("display") or cur.get("state_raw") or cur.get("state")
-        F.add("current", f"{name}: {st}" + (f"({md}時点、{cur.get('publisher')})" if md else f"({cur.get('publisher')}。日付なし)"),
+        F.add("current", f"{name}: {st}({md}時点、{cur.get('publisher')})" if md else          # 段階79 第1部 5: 日付のない発信は、いつの記録か分からないと書く
+              F.c["current_undated"].format(name=name, state=st, publisher=cur.get("publisher")),
               place=name, source=cur.get("publisher"), url=cur.get("url"), source_class=cur.get("source_class"),
               observed=cur.get("state_date"), read_at=cur.get("read_at"),
               extra={"state": cur.get("state_raw") or cur.get("state"), "state_norm": cur.get("state"),
@@ -713,7 +714,7 @@ def _narrative(cards, question, cond, cands, sprows, months, c):
         src = r.get("source") or {}
         facts = [seireki(x) for x in r.get("facts") or []]
         cards.append({"id": f"K{len(cards) + 1:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"),
-                      "link": c["card_links"]["theme"] if _general_card(r, c) else c["card_links"]["place"], "narrative": r.get("narrative"),
+                      "link": c["card_links"]["theme"] if _general_card(r, c) else c["card_links"]["place"], "narrative": r.get("narrative"), "where": _where(r),
                       "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                       "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
                       "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
@@ -731,13 +732,22 @@ def _card_topic_hit(card, topics):
     return any(any(w in blob for w in t["card_words"]) for t in topics)
 
 
+def _where(card):
+    """段階79 第1部 4: カードの場所に、どこの話か(都県と市区町村)を付けた語。"""
+    from . import guide_narrative as GN
+    try:
+        return GN.place_label(card)
+    except (OSError, ValueError, KeyError, TypeError):
+        return card.get("place")
+
+
 def _card_rows(out, c):
     rows = []
     for i, (r, link) in enumerate(out, 1):
         src = r.get("source") or {}
         facts = [seireki(x) for x in r.get("facts") or []]
         rows.append({"id": f"K{i:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"), "link": link,
-                     "narrative": r.get("narrative"),
+                     "narrative": r.get("narrative"), "where": _where(r),
                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
@@ -1010,7 +1020,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     from . import guide_materials as GM
     sprows = GM.species_rows(question, cond, env, c)           # 段階78 第2部 2・3: 種の名所の一覧
     _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands),
-                skip_names={r["name"] for r in sprows})
+                skip_names={r["name"] for r in sprows} | set(getattr(sprows, "dropped", ()) or ()))
     _species_facts(F, sprows, cands, cond, c)
     if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
         _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
@@ -1122,7 +1132,7 @@ def render_md(doc):
         L.append("(なし)")
     L += ["", "## 知識カード", ""]
     for k in doc["cards"]:
-        L.append(f"- [{k['id']}] {k['title']}({k.get('link') or ''}・{k.get('category') or ''}・{k.get('place') or ''}・{k.get('source')}・{k.get('checked_on')}に確認)")
+        L.append(f"- [{k['id']}] {k['title']}({k.get('link') or ''}・{k.get('category') or ''}・{k.get('where') or k.get('place') or ''}・{k.get('source')}・{k.get('checked_on')}に確認)")
         L += [f"  - {x}" for x in k["facts"]]
     if not doc["cards"]:
         L.append("(なし)")

@@ -138,7 +138,7 @@ def species_rows(question, cond, env=None, c=None):
     except (KeyError, TypeError, ValueError):
         sps = []
     if not sps:
-        return []
+        return SpeciesRows()
     spread = bool(cond.get("defaulted_date")) and bool(R.get("spread"))      # 段階78 の追記: 日付の指定がない種の質問は、まとまりごとに枠を分ける
     spc = dict(SP.cfg(), max_items=(10 ** 6 if spread else R["max_known"]), max_unknown_items=R["max_unknown"])
     prefs = None
@@ -149,7 +149,7 @@ def species_rows(question, cond, env=None, c=None):
             prefs = None
     place = SP.place_filter(question)
     origin = cond.get("origin")
-    out = []
+    out, dropped = SpeciesRows(), []
     for sp in sps:
         is_bird = sp["name"] in (spc.get("bird_species") or [])
         try:
@@ -162,6 +162,10 @@ def species_rows(question, cond, env=None, c=None):
             else:
                 known = [r for r in rows if r.get("start") and r.get("season")]
                 rows = spread_rows(known, sp["name"], R["max_known"], R["spread"]) + [r for r in rows if r not in known]
+        if R.get("drop_unknown_when_known") and sum(1 for r in rows if r.get("season")) >= R["drop_unknown_when_known"]:
+            keep = [r for r in rows if r.get("season") or (place and place.get("cities") and SP._in_cities(r, place["cities"]))]   # 段階79 第1部 3: 時期の分かる名所が十分あれば、時期の記載のない名所は入れない(聞かれた場所の名所は残す)
+            dropped += [r["name"] for r in rows if r not in keep]
+            rows = keep
         if place and place.get("cities"):
             own = [r for r in rows if SP._in_cities(r, place["cities"])]
             rows = own + [r for r in rows if r not in own]
@@ -176,7 +180,13 @@ def species_rows(question, cond, env=None, c=None):
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
+    out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
+
+
+class SpeciesRows(list):
+    """種の名所の行の一覧。dropped は、時期の記載がないので外した名所の名前(段階79 第1部 3。資料のほかの節にも入れない)。"""
+    dropped = ()
 
 
 def _md_in(md, lo, hi):
