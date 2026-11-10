@@ -8,9 +8,9 @@
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
-| 現況の情報源（sources/） | 44 | 34 | 3 |
+| 現況の情報源（sources/） | 44 | 35 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 134 | 14 | 2 |
+| 名所カタログ（catalog/） | 135 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -45,7 +45,7 @@
 | 田貫湖ふれあい自然塾 | 環境省(サイトの表記) | https://tanuki-ko.gr.jp/nature-season/ | 未確認 | html | 転載の記載なし。All Rights Reserved |  |  | **保留**: 自然情報の日付が未確認 |
 | 神奈川県立宮ヶ瀬ビジターセンター | 未確認(カードの出典の自然公園だより(2010年1月)は神奈川県公園協会のサイトに掲載) | なし(公式の施設ページを確認できなかった) | 未確認 | pdf | 規約のページなし(公式の施設ページが見つからない)。県の宮ケ瀬湖周辺施設の指定管理のページ(2026-03-27 更新)にも施設名がない | はい | カード2枚(シモバシラ)の事実と出典だけ | **保留**: 段階61 第8部で台帳に承認待ちで追加。公式サイトと現在の運営(2016年に閉館して改装されたとする報道がある。公式では未確認)を確かめられない |
 
-### 1-B. 現況の情報源の台帳（承認待ち 34件）
+### 1-B. 現況の情報源の台帳（承認待ち 35件）
 承認の有無にかかわらず読んで記録してよい（段階34。区分は『公式ではない』などで出る）。承認は、台帳上の『公式の現況』扱いにするかどうかの判断。
 
 | 台帳 | 情報源 | 発行元の種類 | 最新情報のページ | 形式 | 読めた状態（確認日） | 推奨と理由 |
@@ -75,6 +75,7 @@
 | flowers.yaml | 横浜市(里山ガーデン実行委員会)（satoyama-garden-welcome） | municipality | https://www.satoyama-garden.jp/welcome/ | reference_link | unconfirmed（2026-10-31） | **保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない |
 | flowers.yaml | 神奈川県公園協会・サカタのタネグリーンサービスグループ（kanagawa-park-sakaigawa） | park_manager | https://kanagawa-park.or.jp/sakaigawa/ | reference_link | unconfirmed（2026-10-31） | **保留**: 参考リンク(現況の情報源に数えない)。通信先が承認した4ホストにない。docs/pending-hosts.md に載せ、読まない |
 | flowers.yaml | 神奈川県公園協会・小田急電鉄共同事業体(秦野戸川公園)（kanagawa-park-hadanotokawa） | park_manager | https://www.kanagawa-park.or.jp/hadanotokawa/kaika.html | status_page | unconfirmed（2026-10-31） | **保留**: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs… |
+| flowers.yaml | 秩父観光協会（chichibu-kanko-hotaru） | tourism_association | https://www.chichibuji.gr.jp/news/hotaru2026/ | status_page | ok（2026-11-11） | **保留**: 段階78 第6部で見つけたホタルの今年の情報のページ。年ごとに URL が変わる。本人の承認を待つ |
 | secondary/autumn_leaves.yaml | tenki.jp(日本気象協会。紹介サイト)（tenki-kouyou-kanagawa） | weather_company | https://tenki.jp/kouyou/3/17/ | reference_link | refused（2026-11-04） | **保留**: 利用規約が、ブラウザ・RSSリーダー以外での取得を禁じているので、読まない(人が開くリンク)。段階34〜45で読んで観察の記録に残した過去の値は、日付つきの参考として残る。今後は新しく読まない |
 | secondary/autumn_leaves.yaml | ウェザーニュース(人が開くリンク)（weathernews-koyo） | weather_company | https://weathernews.jp/koyo/ | reference_link | unconfirmed（2026-11-04） | **保留**: 複製・転載の禁止が取得に及ぶか判断に迷うため読まない(人が開くリンク)。読んでよいかはユーザーの確認が要る |
 | secondary/autumn_leaves.yaml | ジョルダン(紹介サイト)（jorudan-koyo） | portal_media | https://www.jorudan.co.jp/koyo/ | reference_link | unconfirmed（2026-11-04） | **保留**: 転送ページしか返らず本文が読めない。回避の工夫(別経路・キャッシュ)はしない |
@@ -182,7 +183,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 134件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 135件。うち本人の承認 14件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -203,7 +204,7 @@
 - catalog/autumn_leaves.yaml: 承認した人 claude_code_provisional が 17件
 - catalog/autumn_leaves.yaml: 承認した人 記入なし（段階19 以前の承認） が 20件
 - catalog/birds.yaml: 承認した人 claude_code_provisional が 5件
-- catalog/flowers.yaml: 承認した人 claude_code_provisional が 78件
+- catalog/flowers.yaml: 承認した人 claude_code_provisional が 79件
 
 ## 3. 取り消し・引退（5件）
 

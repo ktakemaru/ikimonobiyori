@@ -3003,3 +3003,22 @@ entries:
       - {url: "https://www.kensetsu.metro.tokyo.lg.jp/jimusho/toubuk/ueno/midokoro/shizen", title: "上野恩賜公園 公式ホームページ(東京都建設局) 自然がいっぱい(桜の種類ごとの見頃)", checked_on: '2026-11-11'}
     flower_windows:
       - {kind: ソメイヨシノ, start: '03-21', end: '04-10', source_url: "https://www.kensetsu.metro.tokyo.lg.jp/jimusho/toubuk/ueno/midokoro/shizen", source_host: www.kensetsu.metro.tokyo.lg.jp, source_class: secondary, unapproved_host: true, source_year: null, note: "東京都建設局: 染井吉野 3月下旬〜4月上旬が見頃"}
+  - id: hana-0092
+    name: 秩父市上町(押堀川沿い)
+    subjects: [flowers]
+    timing_type: calendar
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-11'
+    tags:
+      prefecture: 埼玉県
+      area: 秩父
+      city: 秩父市
+      terrain: [river]
+      flower_kinds: [ゲンジボタル]
+      source: Claude Code が付けた(段階78 第6部の続き。ホタルの今年の情報のページを台帳に承認待ちで足すために、その地点として載せた。例年の時期は記録(ask research record)にある。座標は未確認)
+    status_sources: [chichibu-kanko-hotaru]
+    sources:
+      - {url: "https://www.chichibuji.gr.jp/news/hotaru2026/", title: "秩父観光協会 ホタル飛翔情報2026年(概ね6月中旬〜7月上旬に飛翔)", checked_on: '2026-11-11'}

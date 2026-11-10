@@ -229,6 +229,7 @@ research:
   fields: [name, prefecture, city, kind, typical, notice, url, publisher]   # 記録してよい項目(今年の現況は記録しない)
   forbidden_fields: [state, state_date, state_date_text, current, practical]
   event_period_re: 'まつり|祭|開催|イベント|ライトアップ|期間中'   # 段階78 第7部: 行事の期間を例年の時期として記録しない
+  omitted_month_re: '\d+月(上旬|中旬|下旬|初旬|末)〜(上旬|中旬|下旬|末)'   # 段階78 第6部の続き: 「4月上旬〜下旬」は前半しか読まれないので、後ろの月を省かない(「4月上旬〜4月下旬」)
   step_lines:
     - '1. 公式ページの URL を Web 検索で探す(検索の要約を事実にしない。行き先探しだけ)。読んでよいのは自治体・観光協会・公園管理者・施設運営者(指定管理者を含む)・国や県の機関のページ。'
     - '2. python -X utf8 -m ikimonobiyori.ask research fetch <URL> --brief {id} で本文を読む(1 つの質問で 3 ページ・2 分まで。robots.txt で拒否されたページ・公式でないページは読まない)。'

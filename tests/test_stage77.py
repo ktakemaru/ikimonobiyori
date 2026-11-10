@@ -78,7 +78,10 @@ class Sources(unittest.TestCase):
     def test_class_is_decided_by_the_host_only(self):
         for u in ("https://kanagawa-kankou.or.jp/spot/471", "https://www.kanagawa-kankou.or.jp/event/7882"):
             self.assertEqual(GB._source_class(u, "secondary"), GB._source_class(u, "official"))
-        self.assertEqual(GB._source_class("https://www.gotokyo.org/jp/spot/1/", "official"), "secondary")
+        # 本人の判断(2026-11-11。段階78 の報告書「本人の判断が要る事項」2): 東京観光財団は公式。ホストで決まり、渡した区分に左右されない
+        for given in ("official", "secondary"):
+            self.assertEqual(GB._source_class("https://www.gotokyo.org/jp/spot/1/", given), "official")
+        self.assertEqual(GB._source_class("https://www.example.org/spot/1/", "official"), "secondary")
         self.assertEqual(GB._source_class(None, "official"), "official")
 
 

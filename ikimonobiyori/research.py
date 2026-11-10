@@ -379,7 +379,7 @@ def record(items, bid, *, question=None, env=None, now=None):
     st = _load_state(bid, env)
     read_urls = {p["url"] for p in st["pages"]}
     verified = {p["url"]: p["publisher_verified"] for p in st["pages"] if p.get("publisher_verified")}
-    ok, rejected, pend = [], [], []
+    ok, rejected, pend, src_index, cand = [], [], [], [], []
     for i, it in enumerate(items or []):
         errs = []
         if not isinstance(it, dict):
@@ -400,21 +400,32 @@ def record(items, bid, *, question=None, env=None, now=None):
             errs.append("name と kind(見られる種)が要る")
         if it.get("typical") and re.search(R["event_period_re"], it["typical"]):
             errs.append("行事の期間(まつり・開催日)を例年の時期にしない。本文に「例年の見頃」などの記載があるときだけ typical に書く")
-        if not it.get("typical") and not it.get("notice"):
-            errs.append("typical(例年の時期)か notice(行く前の注意)が要る")
+        if it.get("typical") and re.search(R["omitted_month_re"], it["typical"]):
+            errs.append("例年の時期の範囲で後ろの月を省かない(「4月上旬〜下旬」ではなく「4月上旬〜4月下旬」)")
+        if not it.get("typical"):                       # 名所の記録は種と例年の時期が要る(observations の決まり。notice は添えるだけ)
+            errs.append("typical(例年の時期)が要る(notice は添えるだけ)")
         if errs:
             rejected.append({"index": i, "errors": errs})
             continue
         rec = {k: it[k] for k in R["fields"] if it.get(k)}
-        rec.update(subject=it.get("subject", "flowers"), source_class="official", basis="page",
-                   research={"at": now.isoformat(), "brief": bid, "question": (question or "")[:80]})
+        mark = {"at": now.isoformat(), "brief": bid, "question": (question or "")[:80]}
+        if it["url"] in verified:                       # 本人の判断(2026-11-11): 独自ドメインを発行元の名前で読んだ記録には印を付ける
+            mark["declared_publisher"] = verified[it["url"]]
+        rec.update(subject=it.get("subject", "flowers"), source_class="official", basis="page", research=mark)
         ok.append(rec)
-        if it.get("current_status_page"):
-            pend.append({"url": it["url"], "publisher": it.get("publisher"), "name": it.get("name"), "kind": it.get("kind"),
-                         "found_at": now.isoformat(), "brief": bid, "approval": "pending"})
+        src_index.append(i)
+        cand.append({"url": it["url"], "publisher": it.get("publisher"), "name": it.get("name"), "kind": it.get("kind"),
+                     "found_at": now.isoformat(), "brief": bid, "approval": "pending"} if it.get("current_status_page") else None)
     res = O.record(ok, env=env, now=now) if ok else {"written": 0, "rejected": []}
+    bad_rows = set()
     for r in res.get("rejected") or []:
-        rejected.append({"index": r["index"], "errors": r["errors"]})
+        bad_rows.add(r["index"])
+        rejected.append({"index": src_index[r["index"]], "errors": r["errors"]})
+    known = {x.get("url") for x in _pending_rows(env)}
+    for j, x in enumerate(cand):                       # 記録が拒否された件・すでにある URL は、承認待ちの候補に足さない
+        if x and j not in bad_rows and x["url"] not in known:
+            pend.append(x)
+            known.add(x["url"])
     if pend:
         p = rdir(env) / "pending_sources.jsonl"
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -440,9 +451,20 @@ def listing(env=None):
             if isinstance(r.get("research"), dict):
                 out.append({"at": r["research"].get("at"), "subject": sj, "name": r.get("name"), "prefecture": r.get("prefecture"),
                             "city": r.get("city"), "kind": r.get("kind"), "typical": r.get("typical"), "notice": r.get("notice"),
-                            "url": r.get("url"), "publisher": r.get("publisher"), "question": r["research"].get("question")})
-    pend = []
+                            "url": r.get("url"), "publisher": r.get("publisher"), "question": r["research"].get("question"),
+                            "declared_publisher": r["research"].get("declared_publisher"),
+                            "via": "独自ドメイン(本文の発行元の名前で確かめた)" if r["research"].get("declared_publisher") else "公式の一覧のホスト"})
+    return {"records": sorted(out, key=lambda r: r.get("at") or ""), "pending_sources": _pending_rows(env)}
+
+
+def _pending_rows(env=None):
     p = rdir(env) / "pending_sources.jsonl"
-    if p.exists():
-        pend = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
-    return {"records": sorted(out, key=lambda r: r.get("at") or ""), "pending_sources": pend}
+    if not p.exists():
+        return []
+    out = []
+    for l in p.read_text(encoding="utf-8").splitlines():
+        try:
+            out.append(json.loads(l))
+        except ValueError:
+            continue
+    return out

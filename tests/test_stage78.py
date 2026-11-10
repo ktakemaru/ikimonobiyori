@@ -112,8 +112,10 @@ class SourceNames(unittest.TestCase):
     def test_designated_manager_is_official(self):
         self.assertEqual(GB._source_class("https://machida-shikisainomori.com/news/"), "official")
 
-    def test_transport_operator_stays_not_official(self):
-        self.assertEqual(GB._source_class("https://www.ooyama-cable.co.jp/"), "secondary")
+    def test_transport_operator_is_official(self):
+        # 本人の判断(2026-11-11。段階78 の報告書「本人の判断が要る事項」2): 交通機関の運営者は公式にそろえる(表示の区分だけ)
+        for u in ("https://www.ooyama-cable.co.jp/", "https://shinhotaka-ropeway.jp/", "https://www.takaotozan.co.jp/", "https://www.gotokyo.org/jp/"):
+            self.assertEqual(GB._source_class(u), "official", u)
 
 
 class PendingArticle(unittest.TestCase):
@@ -270,6 +272,9 @@ class Research(unittest.TestCase):
         self.assertTrue(RS.fetch(u, "b-d1", now=NOW, http_get=get, publisher="試験町観光協会")["ok"])
         res = RS.record([{"subject": "flowers", "name": "試験の畑", "kind": "菜の花", "typical": "例年2月", "url": u}], "b-d1", now=NOW)
         self.assertEqual(res["written"], 1, res)
+        row = [r for r in RS.listing()["records"] if r["name"] == "試験の畑"][0]   # 本人の判断(2026-11-11): 独自ドメインの印が一覧で分かる
+        self.assertEqual(row["declared_publisher"], "試験町観光協会")
+        self.assertIn("独自ドメイン", row["via"])
         bad = RS.record([{"subject": "flowers", "name": "試験の畑2", "kind": "菜の花", "typical": "例年2月10日〜3月10日(まつり期間)", "url": u}], "b-d1", now=NOW)
         self.assertEqual(bad["written"], 0, bad)
 
@@ -301,6 +306,7 @@ class Research(unittest.TestCase):
         self.assertEqual(sorted(x["index"] for x in res["rejected"]), [1, 2])
         rows = RS.listing()["records"]
         self.assertTrue(any(r["name"] == "試験の菜の花畑" and r["question"].startswith("南伊豆") for r in rows))
+        self.assertTrue(all(r["declared_publisher"] is None for r in rows if r["name"] == "試験の菜の花畑"))
 
 
 class PlaceRecords(unittest.TestCase):
@@ -343,6 +349,38 @@ class Gaps(unittest.TestCase):
         top = GP.summary()[0]
         self.assertEqual(top["count"], 4)
         self.assertIn("|", GP.render(GP.summary()))
+
+
+class AfterReview(unittest.TestCase):
+    """段階78 の報告書への本人の判断(2026-11-11)のあと: 例年の時期のない記録は拒否し、拒否した件・同じ URL は承認待ちの候補に足さない。"""
+
+    def _get(self, url):
+        if url.endswith("/robots.txt"):
+            return 404, b"", {}
+        return 200, "<p>試験町 ホタル 例年6月中旬</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+
+    def test_notice_only_is_rejected_and_not_pending(self):
+        u = "https://www.town.shiken.example.lg.jp/hotaru"
+        self.assertTrue(RS.fetch(u, "b-ar1", now=NOW, http_get=self._get, sleep=lambda s: None)["ok"])
+        res = RS.record([{"subject": "flowers", "name": "試験の里", "kind": "ゲンジボタル", "notice": "草むらに入らない", "url": u,
+                          "current_status_page": True}], "b-ar1", now=NOW)
+        self.assertEqual(res["written"], 0, res)
+        self.assertEqual(res["pending_sources"], 0, res)
+
+    def test_omitted_month_is_rejected(self):
+        u = "https://www.town.shiken.example.lg.jp/hotaru3"
+        self.assertTrue(RS.fetch(u, "b-ar3", now=NOW, http_get=self._get, sleep=lambda s: None)["ok"])
+        it = {"subject": "flowers", "name": "試験の里3", "kind": "ゲンジボタル", "url": u}
+        self.assertEqual(RS.record([dict(it, typical="6月中旬〜下旬")], "b-ar3", now=NOW)["written"], 0)
+        self.assertEqual(RS.record([dict(it, typical="6月中旬〜6月下旬")], "b-ar3", now=NOW)["written"], 1)
+
+    def test_pending_url_is_added_once(self):
+        u = "https://www.town.shiken.example.lg.jp/hotaru2"
+        self.assertTrue(RS.fetch(u, "b-ar2", now=NOW, http_get=self._get, sleep=lambda s: None)["ok"])
+        it = {"subject": "flowers", "name": "試験の里2", "kind": "ゲンジボタル", "typical": "例年6月中旬", "url": u, "current_status_page": True}
+        self.assertEqual(RS.record([it], "b-ar2", now=NOW)["pending_sources"], 1)
+        self.assertEqual(RS.record([dict(it, kind="ヘイケボタル")], "b-ar2", now=NOW)["pending_sources"], 0)
+        self.assertEqual(sum(1 for x in RS.listing()["pending_sources"] if x["url"] == u), 1)
 
 
 if __name__ == "__main__":
