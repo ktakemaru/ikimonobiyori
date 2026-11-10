@@ -320,6 +320,45 @@ def _month_of(md):
     return int(md[:2])
 
 
+def months_of(start, end):
+    """「MM-DD」の始まり・終わり → その期間にかかる月(年をまたぐ期間は 12 月から 1 月へ続ける)。"""
+    a, b = int(start[:2]), int(end[:2])
+    out = [a]
+    while out[-1] != b:
+        out.append(out[-1] % 12 + 1)
+    return out
+
+
+def month_span(rows):
+    """名所の行の例年の時期 → (始まりの月, 終わりの月)。どの名所の時期も含む、いちばん短い月の幅(年をまたいでよい。
+    12〜1月の名所と 3〜4月の名所があれば 12月〜4月)。全部の月にかかるなら (1, 12)。時期のある行がなければ None。
+    段階78 の追記(本人の指示 2026-11-11): 新しい形の資料と今までの形の答えで同じ計算を使う。"""
+    wins = [r for r in rows if r.get("start") and r.get("end")]
+    if not wins:
+        return None
+    have = set()
+    for r in wins:
+        have |= set(months_of(r["start"], r["end"]))
+    if len(have) == 12:
+        return 1, 12
+    best = None                                     # いちばん長い「かからない月」の並びのすぐあとが始まり
+    for m in range(1, 13):
+        if m in have:
+            continue
+        n, x = 0, m
+        while x not in have:
+            n, x = n + 1, x % 12 + 1
+        if best is None or n > best[0]:
+            best = (n, x)
+    start = best[1]
+    end = start
+    for k in range(12):
+        x = (start - 1 + k) % 12 + 1
+        if x in have:
+            end = x
+    return start, end
+
+
 def _in_window(today, start, end):
     md = today.strftime("%m-%d")
     return start <= md <= end if start <= end else (md >= start or md <= end)
@@ -351,13 +390,12 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
         else:
             lines.append(t["none"].format(name=sp["name"]))
         return lines, urls, False
-    wins = [r for r in rows if r["start"] and r["end"]]
+    wins = [r for r in rows if r["start"] and r["end"] and r.get("season")]   # 段階78 の追記 4: 時期を書く名所だけ(資料の側と同じ)
     if is_bird:                                                           # 鳥は場所ごとに時期が違う(通年・秋〜春)。月の幅の 1 文にしない
         lines.append(t["lead_birds"].format(name=sp["name"]))
     elif wins:
-        start_m = min(wins, key=lambda r: r["start"])["start"]
-        end_m = max(wins, key=lambda r: r["end"] if r["end"] >= r["start"] else "99")["end"]
-        a, b = f"{_month_of(start_m)}月", f"{_month_of(end_m)}月"
+        ma, mb = month_span(wins)                                         # 段階78 の追記 4: 年をまたぐ時期も(資料の側と同じ計算)
+        a, b = f"{ma}月", f"{mb}月"
         lines.append(t["lead_one"].format(name=sp["name"], start=a) if a == b else t["lead"].format(name=sp["name"], start=a, end=b))
         if any(_in_window(today, r["start"], r["end"]) for r in wins):
             lines.append(t["in_season"])

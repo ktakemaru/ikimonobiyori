@@ -102,5 +102,32 @@ class Leads(unittest.TestCase):
         self.assertFalse(SP._season_of_other_kind("梅と桜が3月に", ["桜"], kinds))
 
 
+class ClassicLead(unittest.TestCase):
+    """段階78 の追記 4(本人の指示 2026-11-11): 今までの形の答えの全体の目安も、資料の側と同じ計算(年をまたぐ時期・時期を書く名所だけ)。"""
+
+    def _part(self, rows, name="水仙"):
+        from datetime import date
+        from ikimonobiyori import season_place as SP
+        lines, _u, _s = SP._species_part({"name": name}, rows, 0, today=date(2026, 11, 11), origin="横浜", region=None,
+                                         prefectures=None, table=False, c=SP.cfg())
+        return lines
+
+    def test_over_the_new_year(self):
+        rows = [dict(_row("a", "12-01", ["水仙"]), end="01-31"), dict(_row("b", "03-21", ["スイセン"]), end="04-20")]
+        self.assertEqual(self._part(rows)[0], "水仙は、例年12月〜4月が目安です。")
+
+    def test_rows_without_shown_season_are_not_counted(self):
+        rows = [dict(_row("a", "04-11", ["つつじ"]), end="05-20"), dict(_row("b", "11-01", ["つつじ"]), end="11-30", season=None)]
+        lines = self._part(rows, "つつじ")
+        self.assertEqual(lines[0], "つつじは、例年4月〜5月が目安です。")
+        self.assertEqual(lines[1], "今は時期の外で、次は4月ごろです。")
+
+    def test_same_calculation_as_the_brief(self):
+        from ikimonobiyori import season_place as SP
+        rows = [dict(_row("a", "12-21", ["ロウバイ"]), end="01-31"), dict(_row("b", "02-01", ["ロウバイ"]), end="03-10")]
+        self.assertEqual(GM._span(rows), SP.month_span(rows))
+        self.assertEqual(SP.month_span(rows), (12, 3))
+
+
 if __name__ == "__main__":
     unittest.main()

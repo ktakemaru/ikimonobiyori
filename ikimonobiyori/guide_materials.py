@@ -219,41 +219,14 @@ def spread_rows(rows, species, limit, conf):
 
 
 def months_of(start, end):
-    """「MM-DD」の始まり・終わり → その期間にかかる月(年をまたぐ期間は 12 月から 1 月へ続ける)。"""
-    a, b = int(start[:2]), int(end[:2])
-    out = [a]
-    while out[-1] != b:
-        out.append(out[-1] % 12 + 1)
-    return out
+    from . import season_place as SP
+    return SP.months_of(start, end)
 
 
 def _span(rows):
-    """名所の行の例年の時期 → (始まりの月, 終わりの月)。どの名所の時期も含む、いちばん短い月の幅(年をまたいでよい。
-    12〜1月の名所と 3〜4月の名所があれば 12月〜4月)。全部の月にかかるなら (1, 12)。"""
-    wins = [r for r in rows if r.get("start") and r.get("end")]
-    if not wins:
-        return None
-    have = set()
-    for r in wins:
-        have |= set(months_of(r["start"], r["end"]))
-    if len(have) == 12:
-        return 1, 12
-    best = None                                     # いちばん長い「かからない月」の並びのすぐあとが始まり
-    for m in range(1, 13):
-        if m in have:
-            continue
-        n, x = 0, m
-        while x not in have:
-            n, x = n + 1, x % 12 + 1
-        if best is None or n > best[0]:
-            best = (n, x)
-    start = best[1]
-    end = start
-    for k in range(12):
-        x = (start - 1 + k) % 12 + 1
-        if x in have:
-            end = x
-    return start, end
+    """名所の行の例年の時期 → (始まりの月, 終わりの月)。今までの形の答えと同じ計算(season_place.month_span)。"""
+    from . import season_place as SP
+    return SP.month_span(rows)
 
 
 def species_leads(sprows, today, c=None):
