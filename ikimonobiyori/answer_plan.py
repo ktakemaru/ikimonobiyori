@@ -372,7 +372,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                   "dated_text": not has_state_record(c) and dated_official_text(c.get("current"), pol),
                   "has_window": any(t.get("start") and t.get("end") and not t.get("event_derived") for t in c.get("typical") or []), "typical_line": c.get("typical_line"), "closed": bool(c.get("closed_on")) and all(x.get("closed") for x in c["closed_on"]),
                   "practical": [p["text"] for p in c.get("practical") or []][:1],
-                  "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []]})
+                  "festivals": [{"name": f["name"], "period_line": f.get("period_line"), "lightup_line": f.get("lightup_line")} for f in c.get("festivals") or []],
+                  "window_kind": window_kind(c, dates[0])})
         rows.append(r)
     for c in sub.get("avoid") or []:                                     # facts が「避けたほうがよい」に分けたもの(見頃過ぎ)
         r = score_candidate(dict(c, relation="after_peak", _origin=facts_doc.get("origin")), dates, pol, subject)
@@ -420,6 +421,12 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
                      "festival_active": False, "lightup_active": False})
         status[c["name"]] = {"code": "out_of_range", "label": rs["out_of_range"]}
     ok = [r for r in rows if r["name"] not in status]
+    region_mode = pol["aims"].get("mode") == "region"
+    if region_mode:                                                       # 段階74: 例年の時期に入っている名所(今年の情報は未確認)を地域の節に足す
+        wv = pol["scope"]["wide"]["window"]
+        win_rows = sorted([r for r in rows if (status.get(r["name"]) or {}).get("code") in wv["codes"] and r["outlook"] in wv["outlooks"]
+                           and r.get("has_window") and not r.get("this_year") and r.get("aim") in pol["aims"]["order"]],
+                          key=lambda x: (-x["score"], x["name"]))
     order = pol["aims"]["order"]
     sections = []
     near_by_distance = pol["aims"].get("near_sort") == "distance"
@@ -436,8 +443,15 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         for i, r in enumerate(members):
             if i >= len(top):
                 reject(r, "same_aim_has_better", better=top[-1]["name"])
-        if top:
-            sections.append({"aim": aim, "label": pol["aims"]["labels"][aim], "items": [_item(r, oo) for r in top]})
+        items = [_item(r, oo) for r in top]
+        if region_mode:                                                   # 段階74: 今年の現況がある候補が先、例年の時期に入っている名所(今年の情報は未確認)が後
+            unconf = lambda r: not r.get("this_year") and r["outlook"] in wv["outlooks"] and r.get("has_window") and not r.get("has_state") and not r.get("dated_text")
+            items = [_item(r, oo) for r in top if not unconf(r)] + [dict(_item(r, oo), unconfirmed=True, window_kind=r.get("window_kind")) for r in top if unconf(r)]
+            for r in [x for x in win_rows if x["aim"] == aim][: wv["section_max"]]:
+                status.pop(r["name"], None)
+                items.append(dict(_item(r, oo), unconfirmed=True, window_kind=r.get("window_kind")))
+        if items:
+            sections.append({"aim": aim, "label": pol["aims"]["labels"][aim], "items": items})
     # 全体の今回のおすすめ: 節の1位から、見込みの高い順(同じなら点数)。狙いと地域が重ならないように
     fillable = lambda it: _fillable(it, pol)                              # 段階64 第1部: 遠い候補で埋めない(「遠出」の節を除く)
     firsts = [it for it in (next((x for x in s["items"] if fillable(x)), None) for s in sections) if it is not None]
@@ -472,6 +486,8 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
         pool.remove(cand)
         chosen[chosen.index(out_)] = cand
     chosen = ensure_near_pick(chosen, sections, pol)          # 段階60 第3部: 近場の候補があれば、今回のおすすめに少なくとも 1 件
+    if region_mode:                                           # 段階74: 「遠くても」は地域ごとの節の候補をすべて(節の順・節の中の順のまま。上限 max_items)
+        chosen = [it for s in sections for it in s["items"]][: pol["scope"]["wide"]["max_items"]]
     fill_skipped = [] if len(chosen) >= pol["selection"]["picks"] else \
         sorted({it["name"] for s in sections for it in s["items"] if not fillable(it) and it not in chosen})
     chosen_names = {i["name"] for i in chosen}
@@ -487,6 +503,10 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     if subject == "birds":                                   # 段階57 第4部: 記録のない公園を上位にしない。選ぶときは明記の文を添える
         chosen = sorted(chosen, key=lambda it: (not it["has_current"],) + key(it))
         picks = [dict(it, rank=i + 1, **({} if it["has_state"] else {"note": pol["birds_no_current"]["note"]})) for i, it in enumerate(chosen)]
+    elif region_mode:                                        # 段階74: 並びは節の順のまま。例年の時期だけの名所は「今年の情報は未確認」と明記
+        picks = [dict(weaken(it, pol), rank=i + 1, **({"note": wv["note_kind"].format(kind=it["window_kind"]) if it.get("window_kind") else wv["note"]} if it.get("unconfirmed") else
+                                                      ({} if it["has_state"] or it.get("dated_text") else {"note": pol["evidence"]["no_current_note"]})))
+                 for i, it in enumerate(chosen)]
     else:
         picks = [dict(weaken(it, pol), rank=i + 1, **({} if it["has_state"] or it.get("dated_text") else {"note": pol["evidence"]["no_current_note"]}))       # 段階62 第3部: 古い現況は上位に置かない。段階69 第7部: 公式の日付つきの記載を書いた名所には「今年の状況は確認できていません」を付けない
                  for i, it in enumerate(sorted(chosen, key=lambda it: (is_old_record(it, pol),) + key(it)))]
@@ -503,8 +523,32 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
             "use_headings": len(sections) >= pol["aims"]["min_sections_for_headings"],
             "sections": sections, "picks": picks, "ranking": ranking, "overrides": list(overrides or []),
             **({"fill_skipped": fill_skipped} if fill_skipped else {}),
-            "no_this_year": [{"name": r["name"], "typical_line": r.get("typical_line")} for r in sorted(no_year, key=lambda x: (-x["score"], x["name"]))[: pol["this_year"]["max_lines"]]],
+            "no_this_year": _no_this_year_rows([r for r in no_year if r["name"] in status], pol, region_mode),
+            **({"picks_heading": pol["scope"]["wide"]["heading"], "region_sections": len(sections)} if region_mode else {}),
             **({"refine": refine, "refine_relaxed": relaxed} if refine else {})}
+
+
+def window_kind(c, d):
+    """段階74: 対象日 d を含む例年の時期の花の種類(名所カタログの flower_windows の kind)。なければ None。"""
+    for t in c.get("typical") or []:
+        if t.get("kind") and t.get("start") and t.get("end") and not t.get("event_derived") and not O.is_year_round(t):
+            s, e = O.window_dates(t["start"], t["end"], d)
+            if s <= d <= e:
+                return t["kind"]
+    return None
+
+
+def _no_this_year_rows(no_year, pol, region_mode=False):
+    """別枠「今年の情報が確認できていない候補」の行。region_mode(段階74): 地域ごとに分け(地域の順)、地域の中は距離を除いた点数の順。"""
+    if not region_mode:
+        return [{"name": r["name"], "typical_line": r.get("typical_line")} for r in sorted(no_year, key=lambda x: (-x["score"], x["name"]))[: pol["this_year"]["max_lines"]]]
+    order = pol["aims"]["order"]
+    out = []
+    for aim in order:
+        rs = sorted([r for r in no_year if r.get("aim") == aim], key=lambda x: (-(x["score"] - (x.get("breakdown") or {}).get("distance", 0)), x["name"]))
+        out += [{"name": r["name"], "typical_line": r.get("typical_line"), "region": pol["aims"]["labels"][aim]}
+                for r in rs[: pol["scope"]["wide"]["no_this_year_per_group"]]]
+    return out
 
 
 def pref_room(it, chosen, pol):

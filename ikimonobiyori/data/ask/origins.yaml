@@ -7,6 +7,8 @@ stop_words: [ここ, そこ, どこ, 今, いま, 今日, 明日, 来週, 今週
 lines:
   named: "{origin}からの距離で選びました。"
   default: "{origin}からの距離で選びました。"
+  # 段階74(本人の指示 2026-11-10): 「遠くても」の質問(answer_plan.scope_of が wide)では、距離で選ばず範囲全体から選ぶ
+  wide: "範囲全体から選びました。"
   follow_up: "先ほどの{origin}のままです。"
   unknown: "{name}の位置を特定できませんでした。{origin}からの距離で選びます。"
 origins:

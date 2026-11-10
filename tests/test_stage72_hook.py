@@ -176,7 +176,8 @@ class RunAndLimit(unittest.TestCase):
         r = H.run_child_env(cmd, self.env, input=payload, **kw)
         self.assertEqual(r.returncode, 0)
         out = json.loads(r.stdout)
-        self.assertEqual(out["decision"], "block")
+        self.assertEqual(out["hookSpecificOutput"]["hookEventName"], "Stop")      # 段階74(利用者の承認 2026-11-10): 出力の形を feedback(additionalContext)に
+        self.assertTrue(out["hookSpecificOutput"]["additionalContext"].startswith(SH.cfg()["reason_marker"]))
         r2 = H.run_child_env(cmd, self.env, input="{broken", **kw)
         self.assertEqual((r2.returncode, r2.stdout.strip()), (0, ""))
 

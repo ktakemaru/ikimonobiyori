@@ -462,10 +462,11 @@ class Flow:
         return out
 
     # 3. 材料
-    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None, periods=None):
+    def facts(self, subjects, region, dates, origin=None, fetch_log=None, plan_doc=None, periods=None, wide=False):
         origin = origin or self.policy["default_origin"]
         plan_doc = plan_doc if plan_doc is not None else self._load("plan.json", None)
-        subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
+        wkw = {"wide": True} if wide else {}                     # 段階74: 「遠くても」の質問
+        subj = {s: O.facts(s, region=region, dates=dates, now=self.now, origin=origin, env=self.env, **self.obs_kw, **wkw) for s in subjects}
         mark_stale_display(subj, self.policy)
         rnd = this_round(self._load("records.json", []), fetch_log or {}, plan_doc)
         mark_fetched([r.get("url") for r in (fetch_log or {}).get("read") or []], self.now, self.env)
@@ -484,7 +485,7 @@ class Flow:
                "summary_pages": [p for pl in ((plan_doc or {}).get("subjects") or {}).values() for p in pl.get("summary_pages") or []],
                "this_round": rnd,
                "lines": {"fetch": fetch_line(rnd, self.now, self.policy),
-                         "origin_line": origins.line_for(origin),         # 段階57 第8部: 使った出発地の 1 文(答えに書く)
+                         "origin_line": origins.line_for(origin, wide=wide),         # 段階57 第8部: 使った出発地の 1 文(答えに書く)。段階74: 「遠くても」は範囲全体の文
                          "practical_rules": True,                        # 段階52: 実用情報の決まり（出た候補の実用情報を書く／なければ決まった一文）を当てる印
                          "answer_rules": "stage51",                      # 段階51: 答えの検査の新しい決まりを当てる印（作業の報告を答えに出さない など）
                          "open_urls": open_urls_line(rnd, self.policy),   # 答えに出してよい唯一の取得の結果: 読めなかったページ（利用者が自分で開く）
@@ -493,7 +494,7 @@ class Flow:
         if periods:                                       # 段階57 第9部: 期間ごとの材料(同じ記録から。通信しない)
             doc["periods"] = []
             for ds in periods:
-                psub = {s: O.facts(s, region=region, dates=ds, now=self.now, origin=origin, env=self.env, **self.obs_kw) for s in subjects}
+                psub = {s: O.facts(s, region=region, dates=ds, now=self.now, origin=origin, env=self.env, **self.obs_kw, **wkw) for s in subjects}
                 mark_stale_display(psub, self.policy)
                 doc["periods"].append({"dates": [d.isoformat() for d in ds], "subjects": psub})
             doc["dates"] = [d.isoformat() for ds in periods for d in ds]

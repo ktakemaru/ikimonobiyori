@@ -114,6 +114,6 @@ def choose(question=None, follow_up=False, last_origin=None, env=None):
     return {"origin": dflt, "line": L["default"].format(origin=dflt), "source": "default"}
 
 
-def line_for(origin):
-    """facts に載せる 1 文(使った出発地)。"""
-    return load()["lines"]["named"].format(origin=origin)
+def line_for(origin, wide=False):
+    """facts に載せる 1 文(使った出発地)。wide: 「遠くても」の質問(段階74。範囲全体から選んだ文)。"""
+    return load()["lines"]["wide" if wide else "named"].format(origin=origin)

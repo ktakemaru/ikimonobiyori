@@ -452,9 +452,11 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     region = cond["region"] if cond["region"] is not None else ask.load_policy().get("default_region")
     subjects = cond["subjects"]
     f.prepare(subjects, region, [d for ds in periods for d in ds], cond["origin"])
-    facts_doc = f.facts(subjects, region, dates, cond["origin"], periods=periods if len(periods) > 1 else None)
     scope = AP.scope_of(cond["question"], cond.get("origin_source"), cond.get("refine"), pol)     # 段階72 第4部: 範囲全体・出発地の指定なし
-    if scope != "normal" and not cond["area_names"] and not cond.get("region"):
+    scoped = scope != "normal" and not cond["area_names"] and not cond.get("region")
+    facts_doc = f.facts(subjects, region, dates, cond["origin"], periods=periods if len(periods) > 1 else None,
+                        wide=scoped and scope == "wide")                                       # 段階74: 「遠くても」は座標のない名所も市区町村の代表点で範囲を確かめる
+    if scoped:
         facts_doc["scope"] = scope
         f._save("facts.json", facts_doc)
     if cond["area_names"]:
