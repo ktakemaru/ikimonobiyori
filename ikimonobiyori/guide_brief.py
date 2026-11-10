@@ -417,6 +417,34 @@ def _species_facts(F, sprows, cands, cond, c):
                       "reasons": [R["label"]] + ([r["note"]] if r.get("note") else [])})
 
 
+def _species_leads(F, sprows, now, c):
+    """日付の指定がない種の質問: コードの答えから写した全体の目安の文(「桜は、例年1月〜3月が目安です。」・「今は時期の外で…」)を、
+    資料に入った名所の時期から作った文に置き換える(コードの答えの名所は資料の名所より少ないので、時期の幅が食い違う)。"""
+    from . import guide_materials as GM
+    from . import season_place as SP
+    t = SP.cfg()["text"]
+    today = now.date() if hasattr(now, "date") else now
+    placed = {f["place"] for f in F.rows if f.get("place") and f["kind"] == "typical"}
+    rows = [r for r in sprows if r["name"] in placed]            # 事実として資料に入った名所だけ(出典が使えない名所の時期を混ぜない)
+    for sp, lines in GM.species_leads(rows or [dict(r, start=None, end=None) for r in sprows], today, c).items():
+        lead_re = re.compile("^" + re.escape(sp) + "は、例年.+が目安です。$")
+        old_lead = [f for f in F.rows if lead_re.match(f["content"])]
+        old_when = [f for f in F.rows if f["content"] == t["in_season"] or re.match("^" + re.escape(t["off_season"]).replace(r"\{month\}", r"\d+") + "$", f["content"])]
+        for olds, new in ((old_lead, lines[0]), (old_when, lines[1] if len(lines) > 1 else "")):
+            if new is None or (not new and not olds):
+                continue
+            if not new:                                  # 時期の分かる名所がない: 「今は時期の外で…」も書かない(行を外して番号を振り直す)
+                F.rows[:] = [f for f in F.rows if f not in olds[:1]]
+                for i, f in enumerate(F.rows):
+                    f["id"] = f"F{i + 1:03d}"
+                continue
+            if olds:
+                for f in olds[:1]:
+                    f["content"], f["values"] = new, values(new, c)
+            else:
+                F.add("typical", new)
+
+
 def _place_records(F, question, cands, cond, c, env=None):
     """段階78 第4部: 利用者が挙げた場所(「南伊豆」「松田町」)の、読んだ事実の記録のうち種と例年の時期のあるもの → 候補と事実。
     その場で調べて記録した名所が、作り直した資料に入るように。今年の現況は入れない(例年の時期・注意だけ)。"""
@@ -984,6 +1012,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands),
                 skip_names={r["name"] for r in sprows})
     _species_facts(F, sprows, cands, cond, c)
+    if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
+        _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
     _place_records(F, question, cands, cond, c, env)          # 段階78 第4部: 質問の場所の記録(その場で調べた名所を含む)
     if prev:
         try:

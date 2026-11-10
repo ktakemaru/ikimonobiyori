@@ -218,6 +218,8 @@ def gather(sp, origin, c=None, env=None):
             continue
         if s.get("from_url") and P.unused_source(s.get("from_url")):
             s, win = {}, {}
+        if _season_of_other_kind(s.get("text"), kinds, e.get("kinds")):   # 段階78 の追記: 「梅は1月上旬から…」を桜の時期にしない
+            s, win = {}, {}
         src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0])
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
@@ -232,6 +234,15 @@ def gather(sp, origin, c=None, env=None):
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
     return list(rows.values())
+
+
+def _season_of_other_kind(text, kinds, entry_kinds):
+    """ガイドの記録の時期の文が、名所のほかの種の名前で始まる(「梅は1月上旬から…」「梅の見頃は…」)のに、
+    聞かれた種(kinds)の名前を含まないとき True(本人の指示 2026-11-11。その時期は聞かれた種の時期ではない)。"""
+    if not text:
+        return False
+    others = [k.get("kind") for k in entry_kinds or [] if isinstance(k, dict) and k.get("kind") and k.get("kind") not in kinds]
+    return any(text.startswith(o) for o in others) and not any(k in text for k in kinds)
 
 
 def _old_year(r, season, c=None):

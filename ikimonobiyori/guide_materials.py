@@ -173,6 +173,7 @@ def species_rows(question, cond, env=None, c=None):
                 note = R["vague_note"]
             out.append({"species": sp["name"], "name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"),
                         "km": r.get("km"), "km_estimated": r.get("km_estimated"), "season": r.get("season"), "kinds": r.get("kinds") or [],
+                        "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
     return out
@@ -215,6 +216,83 @@ def spread_rows(rows, species, limit, conf):
                 picked.append(bins[k][i])
         i += 1
     return [r for k in order for r in bins[k] if r in picked]
+
+
+def months_of(start, end):
+    """「MM-DD」の始まり・終わり → その期間にかかる月(年をまたぐ期間は 12 月から 1 月へ続ける)。"""
+    a, b = int(start[:2]), int(end[:2])
+    out = [a]
+    while out[-1] != b:
+        out.append(out[-1] % 12 + 1)
+    return out
+
+
+def _span(rows):
+    """名所の行の例年の時期 → (始まりの月, 終わりの月)。どの名所の時期も含む、いちばん短い月の幅(年をまたいでよい。
+    12〜1月の名所と 3〜4月の名所があれば 12月〜4月)。全部の月にかかるなら (1, 12)。"""
+    wins = [r for r in rows if r.get("start") and r.get("end")]
+    if not wins:
+        return None
+    have = set()
+    for r in wins:
+        have |= set(months_of(r["start"], r["end"]))
+    if len(have) == 12:
+        return 1, 12
+    best = None                                     # いちばん長い「かからない月」の並びのすぐあとが始まり
+    for m in range(1, 13):
+        if m in have:
+            continue
+        n, x = 0, m
+        while x not in have:
+            n, x = n + 1, x % 12 + 1
+        if best is None or n > best[0]:
+            best = (n, x)
+    start = best[1]
+    end = start
+    for k in range(12):
+        x = (start - 1 + k) % 12 + 1
+        if x in have:
+            end = x
+    return start, end
+
+
+def species_leads(sprows, today, c=None):
+    """段階78 の追記(本人の指示 2026-11-11): 日付の指定がない種の質問の全体の目安を、資料に入った名所の時期から作る。
+    → {種: [文]}。種の表(まとまり)があれば、まとまりごとの時期。今が例年の時期か・次はいつかも同じ名所から。"""
+    from . import season_place as SP
+    c = c or cfg()
+    conf = c["species_rows"].get("spread") or {}
+    T = conf["text"]
+    t = SP.cfg()["text"]
+    out = {}
+    for sp in dict.fromkeys(r["species"] for r in sprows):
+        rows = [r for r in sprows if r["species"] == sp and r.get("start") and r.get("end")]
+        if sp in (SP.cfg().get("bird_species") or []):
+            continue
+        if not rows:                                  # 資料の名所に時期の分かるものがない: コードの答えの時期(ほかの名所から)は書かない
+            out[sp] = [T["none"].format(name=sp)]
+            continue
+        groups = (conf.get("groups") or {}).get(sp)
+        lines = []
+        if groups:
+            parts = []
+            for g in groups:
+                sp_ = _span([r for r in rows if row_group(r, groups) == g["name"]])
+                if sp_:
+                    parts.append(T["part_one"].format(group=g["name"], start=sp_[0]) if sp_[0] == sp_[1]
+                                 else T["part"].format(group=g["name"], start=sp_[0], end=sp_[1]))
+            lines.append(T["lead_groups"].format(name=sp, parts=T["sep"].join(parts)))
+        else:
+            a, b = _span(rows)
+            lines.append(t["lead_one"].format(name=sp, start=f"{a}月") if a == b else t["lead"].format(name=sp, start=f"{a}月", end=f"{b}月"))
+        if any(SP._in_window(today, r["start"], r["end"]) for r in rows):
+            lines.append(t["in_season"])
+        else:
+            nm = SP._next_month(today, rows)
+            if nm:
+                lines.append(t["off_season"].format(month=nm))
+        out[sp] = lines
+    return out
 
 
 def species_names(question):
