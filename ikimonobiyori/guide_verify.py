@@ -159,9 +159,12 @@ def check_marked(s, brief, c, allowed=()):
         else:
             us = _union(cur)["states"]
             bad = [x for x in v["states"] if x not in us]
-            if bad:
+            if bad and not GB.has_any(c["stale_as_target"]["hedge_words"], s["clean"]):     # 段階77: 見込みの文の状態の語は今の状態ではない
                 errs.append(_err("state_mismatch", s, f"状態の語 {'・'.join(bad)} が今年の現況の事実({'・'.join(r['id'] for r in cur)})にない",
                                  f"事実の状態の語のまま書く(事実: {'・'.join(r['content'][:40] for r in cur)})"))
+    err = _stale_as_target(s, v, rows, brief, c)
+    if err:
+        errs.append(err)
     if _event_period(s["clean"], v, c) and not any(r.get("kind") in ("event", "facility") or r["id"].startswith("K") for r in rows):
         errs.append(_err("event_not_event_fact", s, "行事と期間の文の根拠が行事の事実ではない", "行事の事実の印を付ける。なければ行事を書かない"))
     if GB.has_any(c["closure_words"], s["clean"]) and not any(r.get("kind") in ("safety", "facility", "event") or r["id"].startswith("K") for r in rows):
@@ -177,6 +180,32 @@ def _without_allowed(text, allowed_dates, keep_point=False):
         mo, d = md.split("/")
         text = re.sub(rf"(?<!\d){mo}月{d}日(?:[・、と]\d{{1,2}}日)*{tail}|(?<![\d/]){mo}/{d}(?![\d/]){tail}", " ", text)
     return text
+
+
+def _target_first(brief):
+    d = brief.get("dates") or {}
+    xs = sorted(x for p in d.get("periods") or [] for x in p)
+    return xs[0] if xs else None
+
+
+def _stale_as_target(s, v, rows, brief, c):
+    """段階77 第1部 1: 対象の日より前の現況を、対象の日の状態として言い切る文。時点を示した報告と見込みの言い回しは通す。"""
+    first = _target_first(brief)
+    t = c["stale_as_target"]
+    if not first or not v["states"]:
+        return None
+    old = [r for r in rows if r.get("kind") == "current" and r.get("observed") and str(r["observed"])[:10] < first]
+    if not old:
+        return None
+    text = s["clean"]
+    target_md = {m for m in (_md(x) for p in (brief.get("dates") or {}).get("periods") or [] for x in p) if m}
+    says_target = GB.has_any(t["target_words"], text) or any(
+        re.search(rf"(?<!\d){md.split('/')[0]}月{md.split('/')[1]}日|(?<![\d/]){md}(?![\d/])", text) for md in target_md)
+    if not says_target or GB.has_any(t["hedge_words"], text) or GB.has_any(t["point_words"], text):
+        return None
+    when = "・".join(sorted({_md(r["observed"]) for r in old if _md(r["observed"])}))
+    return _err("stale_as_target", s, f"{when}時点の状態を、対象の日({_md(first)}〜)の状態として言い切っている",
+                f"「{when}時点では…でした」と時点を書くか、「…の見込みです」「…かもしれません」と見込みで書く")
 
 
 def check_unmarked(s, places, c, allowed_dates=()):
@@ -337,9 +366,14 @@ def final_sources(cited, c):
             d = _md(r.get("observed")) or _md(r.get("read_at"))
             note = f["fact_note"].format(date=d) if d else None
         cls = f["official"] if r.get("source_class") == "official" else f["not_official"]
-        name = r.get("source") or ""
+        name = r.get("source") or _domain(r.get("url"))                 # 段階77: 名前がないときはサイトのドメイン名
         out.append("・" + name + "(" + "、".join(x for x in (note, cls) if x) + ")" + (" " + r["url"] if r.get("url") else ""))
     return out
+
+
+def _domain(url):
+    from . import publisher as P
+    return P.host_of(url) if url else ""
 
 
 def _md(iso):

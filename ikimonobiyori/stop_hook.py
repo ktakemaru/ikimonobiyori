@@ -154,7 +154,9 @@ def decide(payload, turn, answer=None, c=None, guide_ok=None):
         return _decide_guide(msg, calls, briefs[-1], c, guide_ok)
     if not answers:
         if not calls and any(w in prompt for w in c["ikimono_words"]) and msg.strip():
-            return {"block": True, "why": "no_ask_answer", "reasons": [c["reasons"]["no_ask_answer"]]}
+            from . import guide_brief as GB                  # 段階77: 新しい形が既定のときは、新しい形の手順を案内する
+            key = "no_ask_answer_guide" if GB.answer_form() == "guide" and c["reasons"].get("no_ask_answer_guide") else "no_ask_answer"
+            return {"block": True, "why": "no_ask_answer", "reasons": [c["reasons"][key]]}
         return {"block": False, "reasons": [], "why": "not_ikimono_turn"}
     reasons = []
     last = answers[-1]

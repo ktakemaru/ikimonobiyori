@@ -33,14 +33,11 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
 - 対象を足すとき: プロファイルを足す(スキーマ `ikimonobiyori/schemas/ikimono-profile.schema.json` に通る)。骨組み(`status: skeleton`)は `not_applicable: profile_skeleton` を返す。実装済みにするには手法とテストが要る。
 - `ikimonobiyori/sources.py` 現況の情報源の台帳(`data/sources/<対象>.yaml`)の検査・状態の書き方の対応・候補の絞り込み(地域 `data/regions.yaml`・名所の `tags`)・読んだ結果の記録(`IKIMONOBIYORI_DATA_DIR` の下の `status_log/`)・答えの材料(`summary`)。段階の並びはプロファイルの `stages`。段階15・16。
-- `ikimonobiyori/fetch/spot_coords.py` 公式のスポットのページ(日光市観光協会・箱根町観光協会だけ)の、地図の埋め込み(iframe の src)の座標の数字の組だけを読む小さなコード(`sources spot-coords`。段階19 の続き。HTML・本文は保存しない。数字がなければ「座標なし」で推測しない。計測フックの下・robots.txt を先に・2 秒以上空ける・429 で止める)。名所カタログの座標は、これで確認できたものだけを承認する(推定の座標は使わない)。
-- `ikimonobiyori/proposals.py` 同じ日に読んだ記録・名所カタログ・情報源の一覧から `biyori-proposal/1` の提案を組み立てる(`sources proposals`。段階18。通信しない・LLM なし・`go` を出さない。対応と規則は `docs/proposal-mapping.md`、値は `policy.yaml` の `proposals`)。`answer` と同じ記録・同じ使える行の判定(`sources.usable_status_row`)を使う。
-- `ikimonobiyori/regional.py` 地域(都道府県)を必須の絞り込みにした花の答え(`sources regional`。段階32。通信しない・書き込まない)。確度の 3 段階(公式の現況・今年のイベント期間つき・例年の時期のみ)・見頃を過ぎたものと状態を読み取れなかったものの除外・近隣(県外)の分離・内部用語の自己検査。値と文は `ikimonobiyori/data/regional/policy.yaml`。既存の `answer`(`answer.py`)は変えない。花の名所は `flower_windows`(種類ごとの例年の時期。取得元の年つき)・`events`(今年のイベント期間。`verified` は公式の通信先の年つきの記載。紹介サイトの値は `source_class: secondary`)・`tags.city` を持てる。
-- `ikimonobiyori/catalog_audit.py` 花の名所の、紹介サイトなど(公式ではない)由来の値(出所の区分 `source_class: secondary`。旧い印 `unapproved_host` も同じ)を一覧にする監査(`python -X utf8 -m ikimonobiyori.catalog_audit`。通信しない・書き込まない)。区分の漏れ(公式の通信先の外なのに区分がない値)は終了コード 1(出所の記録のため。値は使う)。
+- 名所の座標・提案・地域の花の答え・紹介サイト由来の値の監査のモジュール(`fetch/spot_coords.py`・`proposals.py`・`regional.py`・`catalog_audit.py`)の説明は `docs/structure.md`(段階77 で移した。内容は同じ)。
 - `ikimonobiyori/observations.py` Web から読んだ事実の記録(`record`)・取りに行く対象(`plan`)・地域の質問の答えの材料(`facts`)(段階34。通信しない)。値と語は `ikimonobiyori/data/observations/policy.yaml`、名所は `spots.yaml`。
 - `ikimonobiyori/ask.py` 生き物の質問に答える手順(段階37。`python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。biyori-hub の `concierge_skill/ask.py` から移した)。`ikimonobiyori/ask_verify.py` は答えの文章の検査器(ハブの `verify_text.py` から移した。語は `data/ask/policy.yaml`、評価表は `docs/ask-rubric.md`)。`ikimonobiyori/migrate_data.py` は記録の置き場所を 1 か所にまとめる 1 回だけの移行。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
-- `ikimonobiyori/guide_brief.py`・`guide_verify.py` 段階75 の試作「ガイドが書き、コードが裏を取る」(`ask brief`・`ask verify <下書き> --brief <id>`)。既定は今までの形(`data/ask/guide_mode.yaml` の `answer_form: classic`)。手順は `docs/guide-mode.md`、書き方は `docs/guide-voice.md`。
+- `ikimonobiyori/guide_brief.py`・`guide_verify.py` 「ガイドが書き、コードが裏を取る」形(段階75〜77。`ask brief`・`ask verify <下書き> --brief <id>`)。**段階77 から既定**(`data/ask/guide_mode.yaml` の `answer_form: guide`。`classic` で今までの形に戻る)。手順は `docs/guide-mode.md`、書き方は `docs/guide-voice.md`。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
 
 ## 生き物の見頃・おすすめ(対象によらない手順)
@@ -48,6 +45,10 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 
 <!-- ikimono-weekend:begin -->
 今有効な決まりの一覧(段階63b。経緯は `docs/rules-history.md`。食い違うときはこの一覧に従う)。
+
+### 0. 答えの形(段階77。既定は新しい形。戻し方は `docs/guide-mode.md` の先頭)
+- 生き物・お出かけの質問は `python -X utf8 -m ikimonobiyori.ask brief "<質問の文>"` で資料を作り、資料と `docs/guide-voice.md` だけで下書きを書き(Web 検索・ほかのコマンドで事実を足さない)、`ask verify <下書き> --brief <id>` の標準出力を**一字一句そのまま**送る。不合格は 2 回まで書き直し、3 回目に出る答え(今までの形の答え)を送る。続けて聞く質問は `--prev <前の資料の id>`。
+- 今までの形(下の A〜E)が受け持つもの: `answer_form: classic` に戻したとき、単体の実行(`ask answer` を直接使う)、表にして比べる・写真つきのページ、新しい形の控え。新しい形の答えに「表にできます」などの案内を足さない。
 
 ### A. ふだんの手順(段階63a)
 1. 生き物・お出かけの質問は `python -X utf8 -m ikimonobiyori.ask answer --question "<質問の文>"` を 1 回実行し、出力の本文を**そのまま**答えにする(整えるのは任意で 1 回まで。`ask polish-check` に通らなければ出力のまま)。

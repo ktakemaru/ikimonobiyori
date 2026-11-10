@@ -133,6 +133,9 @@ def generated_text(g, case=None):
     if g["kind"] == "overview":
         from . import wildflower
         return wildflower.overview(date_=g["date"], area=g.get("area"), site=g.get("site"))["text"]
+    if g["kind"] == "short_state":                   # 段階77: 状態の原文 → 答えに出す短い語(「今の状況はの活動で13種(…」の崩れ)
+        from . import observations as O
+        return O.short_state(g["raw"], O.load_policy()) or ""
     raise ValueError(g["kind"])
 
 
@@ -144,6 +147,13 @@ def _plan_for(case, facts):
 
 def run_case(case, words, min_lead=0):
     text = case["answer"] if "answer" in case else generated_text(case["generate"], case)
+    if (case.get("generate") or {}).get("kind") == "short_state":      # 段階77: 短い語の形だけを見る(答えの検査は当てない)
+        errs = [{"code": "broken_state_line", "detail": text} for pat in case.get("expect_absent_re") or [] if re.search(pat, text)]
+        if case.get("expect_text") is not None and text != case["expect_text"]:
+            errs.append({"code": "state_line_mismatch", "detail": text})
+        got = sorted({e["code"] for e in errs})
+        ok = not got if case.get("expect") == "ok" else all(c in got for c in case["expect_fail"])
+        return {"id": case["id"], "question": case["question"], "ok": ok, "codes": got, "why": None if ok else f"短い語: {text}"}
     facts = build_facts(case)
     errs = common_checks(text, case, facts, words, min_lead)
     gk = (case.get("generate") or {}).get("kind")

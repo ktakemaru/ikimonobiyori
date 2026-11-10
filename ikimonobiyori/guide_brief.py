@@ -48,10 +48,22 @@ def norm_state(w, c=None):
     return w
 
 
+_ERA = {"令和": 2018, "平成": 1988, "昭和": 1925}
+
+
+def seireki(text):
+    """和暦の年(令和8年・平成27年度・令和元年)を西暦(2026年)にする(段階77 第1部 4)。"""
+    def rep(m):
+        n = 1 if m.group(2) == "元" else int(m.group(2))
+        return f"{_ERA[m.group(1)] + n}年" + (m.group(3) or "")
+    return re.sub(r"(令和|平成|昭和)(元|\d{1,2})年(度)?", rep, text or "")
+
+
 def values(text, c=None):
-    """文 → 照らす値 {dates: [M/D], years, months: [M], jun: [M月上旬…], times: [H:MM], money: [数], phones: [数字], urls, states}。"""
+    """文 → 照らす値 {dates: [M/D], years, months: [M], jun: [M月上旬…], times: [H:MM], money: [数], phones: [数字], urls, states}。
+    和暦は西暦として読む(段階77)。"""
     c = c or cfg()
-    raw = text or ""
+    raw = seireki(text or "")
     urls = sorted(set(URL_RE.findall(raw)))
     t = _h(URL_RE.sub(" ", raw))
     dates, years, months, jun, times, money, phones = set(), set(), set(), set(), set(), set(), set()
@@ -75,6 +87,9 @@ def values(text, c=None):
             months.add(str(mo))
     for m in re.finditer(r"(?<![\d.])(\d{1,2})月(?!\d)", t3):
         months.add(str(int(m.group(1))))
+    for m in re.finditer(r"(?<![\d./])(\d{1,2})\s*[〜~～\-ー]\s*(\d{1,2})月", t3):      # 段階77: 「11〜2月」の前の月も月として読む
+        if 1 <= int(m.group(1)) <= 12:
+            months.add(str(int(m.group(1))))
     for m in re.finditer(r"(?<![\d.])(\d{1,2})月(上旬|中旬|下旬)", t3):
         jun.add(f"{int(m.group(1))}月{m.group(2)}")
     for m in re.finditer(r"(?<!\d)(\d{1,2}):(\d{2})(?!\d)", t3):
@@ -132,9 +147,15 @@ def _usable_url(url, pending):
 
 
 def _source_class(url, given=None):
+    """発行元の区分。URL があれば、ホストだけで決める(記録ごとの区分の違いで、同じ発行元が答えによって分かれないように。段階77)。
+    公式: 町・市・県・国のページ・当事者のサイト(publisher.shows_official)、台帳・施設・行事の一覧で class: official のホスト、
+    承認済みの情報源のホスト、guide_mode.yaml の official_hosts。URL がなければ渡された区分。"""
     from . import publisher as P
-    if given in ("official", "secondary"):
-        return given
+    if not url:
+        return given if given in ("official", "secondary") else None
+    host_names()
+    if P.host_of(url) in _approved_hosts():
+        return "official"
     if url and (P.shows_official(url) or P.host_of(url) in _OFFICIAL_HOSTS or P.host_of(url) in set(cfg().get("official_hosts") or [])):
         return "official"
     return "secondary" if url else None
@@ -145,7 +166,7 @@ class _Facts:
         self.c, self.pending, self.rows, self.keys = c, pending, [], set()
 
     def add(self, kind, content, *, place=None, source=None, url=None, source_class=None, observed=None, read_at=None, extra=None):
-        content = re.sub(r"\s+", " ", (content or "").strip())
+        content = seireki(re.sub(r"\s+", " ", (content or "").strip()))
         if not content or not _usable_url(url, self.pending):
             return None
         key = (kind, content, url)
@@ -225,6 +246,28 @@ def split_body(text, heading):
 
 _HOSTS = None
 _OFFICIAL_HOSTS = set()
+_APPROVED = None
+
+
+def _approved_hosts():
+    """承認済みの情報源(台帳)のホスト。"""
+    global _APPROVED
+    if _APPROVED is None:
+        from . import publisher as P
+        from . import sources as S
+        out = set()
+        for p in sorted((DATA_FILES_DIR / "sources").glob("*.yaml")):
+            if p.name == "policy.yaml":
+                continue
+            try:
+                doc = yamlcache.load(p) or {}
+            except (OSError, ValueError):
+                continue
+            for src in doc.get("sources") or []:
+                if src.get("url") and S.is_approved(src) and src.get("publisher_kind") not in ("introduction", "secondary", "media"):
+                    out.add(P.host_of(src["url"]))
+        _APPROVED = out
+    return _APPROVED
 
 
 def host_names(env=None):
@@ -420,7 +463,7 @@ def _place_cards(rows, places, c):
     return sorted(hits, key=lambda r: (pri.get(r.get("category"), len(pri)), r.get("title") or ""))
 
 
-def _cards(question, res, c, cand_names=(), months=()):
+def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     """知識カード(最大 max_cards 枚)。場所・種に結びつくカードを先に、続けてテーマと季節のカード。
     カードごとに結びつき(link): この場所の話 / この種の話 / 一般の話(テーマ)。冬季閉鎖のカードは事実の側に入れるので除く。"""
     from . import intent
@@ -442,6 +485,12 @@ def _cards(question, res, c, cand_names=(), months=()):
                 seen.add((t, r.get("place")))
                 out.append((r, link))
                 n += 1
+    event_q = (res.get("route") or (res.get("cond") or {}).get("route")) == "event" or (res.get("cond") or {}).get("intent") == "event"
+    if event_q:                                           # 段階77 第1部 2: 行事の質問は、行事の場所・対象に直接結びつくカードだけ
+        from . import guide_verify as GV
+        names = sorted({n for n in GV._dictionary_places() for f in event_texts if n in f}, key=len, reverse=True)
+        push([r for r in _place_cards(shown, names, c) if _real_place(r.get("place") or "")], L["place"], c["place_cards_max"])
+        return _card_rows(out, c)
     themew = {w for t in c["card_themes"] for w in t["words"]}
     places = [p for p in _question_places(question, res) if len(p) >= 2 and not _broad_place(p) and not any(w in p for w in themew)]
     pc = _place_cards(shown, places, c)[: c["place_cards_max"]]
@@ -476,10 +525,14 @@ def _cards(question, res, c, cand_names=(), months=()):
             if hit:
                 theme.append((-hit, r.get("title") or "", r))
         push([r for _h, _t, r in sorted(theme, key=lambda x: (x[0], x[1]))], L["theme"])
+    return _card_rows(out, c)
+
+
+def _card_rows(out, c):
     rows = []
     for i, (r, link) in enumerate(out, 1):
         src = r.get("source") or {}
-        facts = list(r.get("facts") or [])
+        facts = [seireki(x) for x in r.get("facts") or []]
         rows.append({"id": f"K{i:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"), "link": link,
                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
@@ -565,6 +618,10 @@ def typical_candidates(cond, now, scope, existing, c, pending):
         for r in far:
             if r["group"] not in seen_g and len(out) < c["typical_candidates"]["far_total"]:
                 seen_g.add(r["group"])
+                out.append(r)
+        themes_in = {r["theme"] for r in out}
+        for r in sorted(far, key=lambda r: (r["theme"] in themes_in, r["source_class"] != "official", r["km"] or 9999, r["name"])):
+            if r not in out and len(out) < c["typical_candidates"]["far_total"]:     # 段階77: 3 件まで埋める(別のテーマ(冬鳥の白鳥など)を先に)
                 out.append(r)
     return out
 
@@ -773,7 +830,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
               + f" 例年の冬季閉鎖 {cl.get('typical')}" + (f"。{season_txt}" if season_txt else "") + f"。{note}",
               place=card.get("place"), source=(card.get("source") or {}).get("name"), url=(card.get("source") or {}).get("url"),
               source_class="official", extra={"in_target": hit})
-    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen")], months=months)
+    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen")], months=months,
+                   event_texts=[f["content"] for f in F.rows if f["kind"] == "event"])
     if pb:
         seen = {k["title"] for k in cards}
         for k in pb.get("cards") or []:

@@ -1914,6 +1914,8 @@ def short_state(text, policy, word=None):
         return text
     mx = _v(c["max_chars"])
     t = re.sub(c["date_re"], "", str(text or "")).strip(" 　、")
+    if c.get("lead_particle_re") and t != str(text or "").strip(" 　、"):          # 段階77: 日付を除いたときだけ、頭に残った助詞を外す
+        t = re.sub(c["lead_particle_re"], "", t)
     t = re.split("[" + c["clause_end"] + r"\n]", t, maxsplit=1)[0].strip(" 　、")
     t = re.sub(r"[ 　]{2,}", " ", t)
     if word:
@@ -1934,7 +1936,13 @@ def short_state(text, policy, word=None):
     if len(t) <= mx:
         return t
     cut = max((i for i, ch in enumerate(t[:mx]) if ch in c.get("list_sep", "、・,")), default=-1)     # 列挙は区切りの前まで
-    return t[:cut] if cut > 0 else None
+    if cut > 0:
+        head = t[:cut]
+        opens = [i for i, ch in enumerate(head) if ch in "(（"]
+        if opens and head.count("(") + head.count("（") > head.count(")") + head.count("）"):      # 段階77: 閉じない括弧を残さない
+            head = head[:opens[-1]].rstrip(" 　、")
+        return head or None
+    return None
 
 
 def state_display(raw, publisher, policy):
