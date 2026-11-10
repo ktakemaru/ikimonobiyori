@@ -28,6 +28,13 @@ card_themes:
   - {subject: birds, question_words: [野鳥, 鳥, 冬鳥, 渡り, カモ, カワセミ, 白鳥], words: [冬鳥, 渡り, カモ, 野鳥]}
   - {question_words: [観察会, 観察, 野鳥, 鳥], words: [観察の作法, 野鳥との接し方, 近づきすぎ, マナー]}
   - {question_words: [地形, 地質, 火山, 成り立ち], words: [地形, 地質, 火山, 付加体, 成り立ち]}
+# 行事の質問のカードを、行事の対象で絞る語(段階77 の判断 3)。行事の本文に event_words があれば、その対象の card_words を題・主語・分類に含むカードだけ
+event_topics:
+  - {name: 地質, event_words: [地形, 地質, 岩石, 化石, 火山, 石ころ], card_words: [地形, 地質, 岩石, 化石, 火山, 成り立ち, 地層, 地塊, プレート]}
+  - {name: 野鳥, event_words: [野鳥, 鳥, バード, 探鳥], card_words: [野鳥, 鳥, 冬鳥, 夏鳥, カモ, 猛禽, 渡り]}
+  - {name: 植物, event_words: [植物観察, 野草, 樹木, 花の観察], card_words: [植物, 野草, 樹木, 花]}   # 「森」は施設名(横浜自然観察の森)に当たるので使わない
+  - {name: 昆虫, event_words: [昆虫, 虫, チョウ, ホタル], card_words: [昆虫, 虫, チョウ, ホタル]}
+
 # 例年の目安の候補(段階76 第1部)。ガイドのカタログのテーマ(対象ごと)
 typical_themes:
   autumn_leaves: [紅葉]

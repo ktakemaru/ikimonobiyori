@@ -489,7 +489,9 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     if event_q:                                           # 段階77 第1部 2: 行事の質問は、行事の場所・対象に直接結びつくカードだけ
         from . import guide_verify as GV
         names = sorted({n for n in GV._dictionary_places() for f in event_texts if n in f}, key=len, reverse=True)
-        push([r for r in _place_cards(shown, names, c) if _real_place(r.get("place") or "")], L["place"], c["place_cards_max"])
+        topics = _event_topics(event_texts, c)          # 段階77 の判断 3: 行事の対象(地質・野鳥など)まで絞る。地名の一致だけでは入れない
+        push([r for r in _place_cards(shown, names, c) if _card_topic_hit(r, topics)],
+             L["place"], c["place_cards_max"])
         return _card_rows(out, c)
     themew = {w for t in c["card_themes"] for w in t["words"]}
     places = [p for p in _question_places(question, res) if len(p) >= 2 and not _broad_place(p) and not any(w in p for w in themew)]
@@ -526,6 +528,17 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
                 theme.append((-hit, r.get("title") or "", r))
         push([r for _h, _t, r in sorted(theme, key=lambda x: (x[0], x[1]))], L["theme"])
     return _card_rows(out, c)
+
+
+def _event_topics(event_texts, c):
+    """行事の本文 → 行事の対象の語の組(地質・野鳥など。event_topics の語が行事の本文にあるもの)。"""
+    blob = " ".join(event_texts or [])
+    return [t for t in c["event_topics"] if any(w in blob for w in t["event_words"])]
+
+
+def _card_topic_hit(card, topics):
+    blob = " ".join([card.get("title") or "", card.get("subject") or "", card.get("category") or ""])     # 事実の文の語では選ばない(何の話かで選ぶ)
+    return any(any(w in blob for w in t["card_words"]) for t in topics)
 
 
 def _card_rows(out, c):

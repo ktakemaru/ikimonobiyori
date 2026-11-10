@@ -82,6 +82,31 @@ class Sources(unittest.TestCase):
         self.assertEqual(GB._source_class(None, "official"), "official")
 
 
+class Decisions(unittest.TestCase):
+    """段階77 の報告書 §5 への本人の判断(2026-11-10)。"""
+    def test_park_operator_page_is_official(self):
+        self.assertEqual(GB._source_class("https://www.tptc.co.jp/park/03_08/guide", "secondary"), "official")
+
+    def test_empty_name_uses_the_ledger_publisher_then_the_domain(self):
+        c = GB.cfg()
+        r = {"id": "F001", "source": None, "url": "https://www.kanagawa-park.or.jp/sakaigawa/guide.html", "source_class": "official",
+             "observed": None, "read_at": None}
+        got = GV.final_sources([r], c)[0]
+        self.assertTrue(got.startswith("・神奈川県公園協会"), got)
+        r2 = dict(r, url="https://www.example.org/a")
+        self.assertTrue(GV.final_sources([r2], c)[0].startswith("・example.org("))
+
+    def test_event_cards_need_the_event_topic(self):
+        c = GB.cfg()
+        topics = GB._event_topics(["試験の博物館の観察会「冬の地形地質観察会」: 2026年12月5日"], c)
+        self.assertEqual([t["name"] for t in topics], ["地質"])
+        geo = {"title": "丹沢の成り立ち", "subject": "丹沢", "category": "地形・地質・火山"}
+        bloom = {"title": "檜洞丸のシロヤシオ", "subject": "檜洞丸", "category": "見頃の流れ", "facts": ["岩の多い尾根に咲く"]}
+        self.assertTrue(GB._card_topic_hit(geo, topics))
+        self.assertFalse(GB._card_topic_hit(bloom, topics))                     # 地名が合っても、行事の対象でなければ入れない
+        self.assertEqual(GB._event_topics(["横浜自然観察の森のイベント「秋のクイズラリー」"], c), [])   # 施設名の「森」では植物にしない
+
+
 class StateLine(unittest.TestCase):
     def test_date_head_does_not_leave_a_particle_or_open_paren(self):
         pol = O.load_policy()

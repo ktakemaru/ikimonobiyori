@@ -366,9 +366,18 @@ def final_sources(cited, c):
             d = _md(r.get("observed")) or _md(r.get("read_at"))
             note = f["fact_note"].format(date=d) if d else None
         cls = f["official"] if r.get("source_class") == "official" else f["not_official"]
-        name = r.get("source") or _domain(r.get("url"))                 # 段階77: 名前がないときはサイトのドメイン名
+        name = r.get("source") or _ledger_name(r.get("url")) or _domain(r.get("url"))   # 段階77: 台帳の発行元の名前、なければドメイン名
         out.append("・" + name + "(" + "、".join(x for x in (note, cls) if x) + ")" + (" " + r["url"] if r.get("url") else ""))
     return out
+
+
+def _ledger_name(url):
+    """台帳(情報源・施設)とガイドの発行元の表にある、URL のホストの発行元の名前。なければ None(台帳には足さない)。"""
+    from . import publisher as P
+    try:
+        return P.name(url) if url else None
+    except (OSError, KeyError, TypeError, ValueError):
+        return None
 
 
 def _domain(url):

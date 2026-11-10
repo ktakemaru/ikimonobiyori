@@ -25,6 +25,7 @@ party_publisher:
     - {suffix: trip-kamakura.com, kind: tourism_association, note: "鎌倉市観光協会の観光サイト(指示書の例)"}
     - {suffix: akirunokanko.com, kind: tourism_association, note: "あきる野観光協会(指示書の例)"}
     - {suffix: fuchu-cpf.or.jp, kind: facility_operator, note: "府中市郷土の森博物館の運営者(指示書の例)"}
+    - {suffix: tptc.co.jp, kind: facility_operator, note: "東京港野鳥公園の指定管理者(東京港埠頭株式会社)。本人の判断(2026-11-10。段階77 の報告書 §5-1): 表示の区分だけで、情報源の承認ではない"}
 
 # 段階69 第4部 1: 答えに使わない出典。この出典だけが根拠の事実は答えに出さない(データは消さない)。ほかに独立した出典があれば、その出典だけを残す。
 # unused: 予想・転載の扱い(利用規約・本人の決定。data/observations/policy.yaml の not_read_hosts と同じ)
