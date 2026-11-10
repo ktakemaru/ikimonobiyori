@@ -91,7 +91,8 @@ def extra_cards(shown, have, names, words, months, N=None, require_words=()):
         if ms and months and not set(ms) & set(months):
             continue
         blob = " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""] + list(r.get("facts") or []))
-        if require_words and not any(w in blob for w in require_words):
+        from . import guide_brief as GB
+        if require_words and not GB.species_hit(require_words, blob):      # 段階79: 「梅雨」の梅は数えない
             continue                                     # 種の質問: その種の話のカードだけ
         score = 0
         if any(K.place_match(r, n) for n in names if n and len(n) >= 2):

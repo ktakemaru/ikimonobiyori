@@ -665,6 +665,12 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
                                                      + list(r.get("facts") or [])) for w in words)]
         sp.sort(key=lambda r: (not any(w in (r.get("subject") or "") + (r.get("title") or "") for w in words), r.get("title") or ""))
         push(sp, L["species"], c["species_cards_max"])
+    from . import guide_materials as GM
+    spw = GM.species_match_words(question)
+    if spw:                                               # 段階79 第3部: 種の名前(梅・桜など)で、種のカード(場所の欄が「<種>一般」)を先に引く
+        sp = [r for r in shown if species_hit(spw, " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""]), c)]
+        sp.sort(key=lambda r: (not str(r.get("place") or "").endswith(c["species_card_place_suffix"]), r.get("title") or ""))
+        push(sp, L["species"], c["species_cards_max"])
     try:                                                  # 質問の話題のカード(種の名前で引けたもの以外は一般の話として扱う)
         push([r for r in intent.cards_for(question) if _general_card(r, c)], L["theme"], c["species_cards_max"])
     except (OSError, ValueError, KeyError, TypeError):
@@ -689,6 +695,13 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     return _card_rows(out, c)
 
 
+def species_hit(words, blob, c=None):
+    """段階79 第3部: 種の名前が文にあるか。別の語の一部(「梅雨」の梅)は数えない(guide_mode.yaml の species_blob_exclude_re)。"""
+    c = c or cfg()
+    b = re.sub(c.get("species_blob_exclude_re") or r"(?!)", "", blob or "")
+    return any(w and w in b for w in words)
+
+
 def _narrative(cards, question, cond, cands, sprows, months, c):
     """段階78 第3部 1: 語りの材料。少なければ、候補の場所・種・テーマに結びつくカードを足す(cards に追記。id は続きの番号)。"""
     from . import guide_materials as GM
@@ -700,7 +713,7 @@ def _narrative(cards, question, cond, cands, sprows, months, c):
     def pool():                                           # 種の質問は、その種の話のカードだけを材料にする(関係のない種の話で語らない)
         if not spw:
             return cards
-        return [k for k in cards if any(w in " ".join([k.get("title") or "", k.get("place") or ""] + list(k.get("facts") or [])) for w in spw)]
+        return [k for k in cards if species_hit(spw, " ".join([k.get("title") or "", k.get("place") or ""] + list(k.get("facts") or [])), c)]
     mat = GN.materials(pool(), N)
     if len(mat["items"]) >= N["min_items"] or cond.get("route") in N["skip_routes"] or cond.get("intent") == "event":
         return mat

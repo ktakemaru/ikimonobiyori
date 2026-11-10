@@ -158,3 +158,21 @@ class BirdHighlights(unittest.TestCase):
 class BirdHighlightsWords(BirdHighlights):
     def test_migrant_word_is_not_a_place(self):
         self.assertGreaterEqual(len(self._run("渡り鳥はどこで見られる?", {"subjects": ["birds"]})), 4)
+
+
+class SpeciesCards(unittest.TestCase):
+    """第3部: 種の名前(1 字の「梅」を含む)で種のカード(「<種>一般」)を引く。別の語の一部(梅雨・青梅)は数えない。"""
+
+    def test_species_hit_excludes_compounds(self):
+        from ikimonobiyori import guide_brief as GB
+        self.assertFalse(GB.species_hit(["梅"], "梅雨明けのころ・旧青梅街道"))
+        self.assertTrue(GB.species_hit(["梅"], "梅の開花の前線"))
+
+    def test_species_card_is_picked(self):
+        from ikimonobiyori import guide_brief as GB
+        from ikimonobiyori import knowledge as K
+        card = {"title": "梅前線の試験", "category": "見頃の流れ", "place": "梅一般", "place_aliases": [], "subject": "梅",
+                "facts": ["梅の前線は試験の文"], "condition": {"months": []}, "source": {"name": "試験", "url": "https://x.example.lg.jp/", "checked_on": "2026-11-11"}}
+        with mock.patch.object(K, "load_shown", return_value=[card]):
+            got = GB._cards("梅はいつどこで見られますか?", {"cond": {}}, GB.cfg())
+        self.assertIn("梅前線の試験", [k["title"] for k in got])
