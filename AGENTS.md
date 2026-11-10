@@ -40,6 +40,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 - `ikimonobiyori/observations.py` Web から読んだ事実の記録(`record`)・取りに行く対象(`plan`)・地域の質問の答えの材料(`facts`)(段階34。通信しない)。値と語は `ikimonobiyori/data/observations/policy.yaml`、名所は `spots.yaml`。
 - `ikimonobiyori/ask.py` 生き物の質問に答える手順(段階37。`python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。biyori-hub の `concierge_skill/ask.py` から移した)。`ikimonobiyori/ask_verify.py` は答えの文章の検査器(ハブの `verify_text.py` から移した。語は `data/ask/policy.yaml`、評価表は `docs/ask-rubric.md`)。`ikimonobiyori/migrate_data.py` は記録の置き場所を 1 か所にまとめる 1 回だけの移行。
 - `ikimonobiyori/fetch/status_pages.py` 台帳で `reader: code` の情報源(日光市観光協会・箱根町観光協会)だけを、決まった形で読むコード(段階16 A-4。計測フックの下・許可ホスト `live.allowed_hosts_by_subject.autumn_leaves_status`・robots.txt を先に読む・本文を保存しない)。ほかの情報源はエージェントが読む。
+- `ikimonobiyori/guide_brief.py`・`guide_verify.py` 段階75 の試作「ガイドが書き、コードが裏を取る」(`ask brief`・`ask verify <下書き> --brief <id>`)。既定は今までの形(`data/ask/guide_mode.yaml` の `answer_form: classic`)。手順は `docs/guide-mode.md`、書き方は `docs/guide-voice.md`。
 - 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
 
 ## 生き物の見頃・おすすめ(対象によらない手順)

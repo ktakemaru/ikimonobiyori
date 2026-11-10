@@ -723,7 +723,8 @@ class Flow:
         doc["area_unknown"] = d["unknown"]
         doc["offers"] = []
         self._save("answer_plan.json", doc)
-        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+        if not getattr(self, "quiet", False):
+            save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
         self.call("plan", subject="areas", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
         return doc
 
@@ -737,7 +738,8 @@ class Flow:
             doc["offers"] = []
             AP.attach_region_parts(doc, facts_doc)                       # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
             self._save("answer_plan.json", doc)
-            save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
+            if not getattr(self, "quiet", False):          # 段階75: ガイドの資料を作るときは直前の計画・履歴を残さない
+                save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)
             self.call("plan", subject="periods", picks=len(doc["picks"]), sections=len(doc["segments"]), overrides=0)
             return doc
         sj = subject or ("all" if len(subs) > 1 else subs[0])         # 対象が複数の質問(総合)は all
@@ -750,7 +752,8 @@ class Flow:
         AP.attach_region_parts(doc, facts_doc)                           # 段階62 第2部: 複数の都県の指定は、地域ごとの節(1 つの計画)
         doc["offers"] = self.offers_now(facts_doc, doc)               # 段階57 第1部: この答えの末尾に付けてよい案内(条件を満たすものだけ)
         self._save("answer_plan.json", doc)
-        save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)
+        if not getattr(self, "quiet", False):
+            save_last_plan(self.workdir, facts_doc, doc, self.now, self.env)   # 段階57 第2部: 直前の答えの計画(ページ・追質問が引き継ぐ)
         self.call("plan", subject=sj, picks=len(doc["picks"]), sections=len(doc["sections"]), overrides=len(doc["overrides"]))
         return doc
 
@@ -919,8 +922,10 @@ def main(argv=None, http_get=None):
     p.add_argument("--reason")
     p.add_argument("--replace", help="--override で差し替える計画の名所")
     p = sub.add_parser("verify")
+    p.add_argument("draft", nargs="?", help="段階75: ガイドが書いた答えの下書きのファイル(--brief と使う)")
+    p.add_argument("--brief", help="段階75: 資料の id(ask brief の出力)。下書きを資料と照らし、合格なら最終の文を出す")
     p.add_argument("--out-dir")
-    p.add_argument("--text", required=True)
+    p.add_argument("--text")
     p.add_argument("--generic", action="store_true", help="facts を持たない経路(桜・梅などの guide find の出力・検索だけの答え)の検査。--out-dir は不要(段階39 B-1)")
     p.add_argument("--reply", action="store_true", help="利用者への返事の全文を検査する(答えの本文の外の文も。ページの場所の 1 行は外す)")
     p.add_argument("--gazetteer", action="append", default=[], help="地名の一覧(JSON の文字列の配列)。名所カタログの名前に足す")
@@ -929,6 +934,12 @@ def main(argv=None, http_get=None):
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask place の行で作った答え)。計画の照合と候補数の下限を当てない(段階60)")
     p.add_argument("--question", help="--generic のとき: 質問の文。意図が行事(観察会・講座・展示)なら、行事用の検査(台帳との照合。候補数の下限は当てない)")
     p.add_argument("--now", help="--generic --question の行事の検査: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
+    p = sub.add_parser("brief", help="段階75: ガイドの資料(候補と順位・確かめた事実・知識カード・足りないもの・決まり)を作る。通信しない。標準出力は id とパスだけ")
+    p.add_argument("question_pos", nargs="?", metavar="question", help="質問の文")
+    p.add_argument("--question")
+    p.add_argument("--prev", help="続けて聞く質問: 前の質問の資料の id")
+    p.add_argument("--now")
+    p.add_argument("--out-dir", help=argparse.SUPPRESS)
     p = sub.add_parser("polish-check", help="整えた文章と骨組みの事実の一致検査 + 通常の検査(段階60)。整えなおしは 1 回まで。通らなければ骨組みのまま final.txt に書く")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--text", required=True, help="整えた文章")
@@ -1136,7 +1147,34 @@ def main(argv=None, http_get=None):
         pol_text = Path(a.polished).read_text(encoding="utf-8") if a.polished else None
         res = AR.run(a.question, now=now, workdir=Path(a.out_dir) if a.out_dir else None, polished=pol_text)
         AR.print_result(res, sys.stdout, sys.stderr, as_json=a.json)
+        from . import guide_brief as GB
+        if GB.answer_form() == "guide":                  # 段階75: 新しい形に切り替えたとき(既定は今までの形)。答えの本文は変えない
+            print("答えの形: guide。docs/guide-mode.md の手順(ask brief → 書く → ask verify --brief)で答えてください", file=sys.stderr)
         return 0
+    if a.step == "brief":                                # 段階75 第1部
+        from . import guide_brief as GB
+        q = a.question or a.question_pos
+        if not q:
+            print("質問の文がありません", file=sys.stderr)
+            return 2
+        doc = GB.build(q, now=now or _clock(), prev=a.prev)
+        jp, mp = GB.save(doc)
+        print(doc["id"])
+        print(jp)
+        print(mp)
+        return 0
+    if a.step == "verify" and a.brief:                   # 段階75 第3部: ガイドの答えの裏取り
+        from . import guide_verify as GV
+        if not a.draft:
+            print("下書きのファイルがありません", file=sys.stderr)
+            return 2
+        res = GV.run(Path(a.draft).read_text(encoding="utf-8"), a.brief, now=now or _clock())
+        sys.stderr.write(GV.report(res))
+        if res["text"]:
+            sys.stdout.flush(); sys.stdout.buffer.write(res["text"].encode("utf-8"))
+        return 1 if res["status"] == "FAIL" else 0
+    if a.step == "verify" and not a.text:
+        ap.error("ask verify: --text が要ります(段階75 の形は <下書き> --brief <id>)")
     if a.step == "checks":                               # 段階63a 第5部
         from . import answer_run as AR
         rows = AR.read_log()
