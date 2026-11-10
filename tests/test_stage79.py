@@ -107,3 +107,54 @@ class UndatedCurrent(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _card(place, months, facts, title=None):
+    return {"title": title or f"{place}の試験", "category": "シーズンの目安", "place": place, "place_aliases": [], "facts": facts,
+            "condition": {"months": months}, "source": {"name": "試験", "url": "https://www.city.example.lg.jp/x", "checked_on": "2026-11-11"}}
+
+
+class BirdHighlights(unittest.TestCase):
+    """第2部: 範囲の指定がない野鳥の質問に、季節の目玉がある観察地(地域の組が偏らないように 4〜6 件)と目玉の材料。"""
+
+    def setUp(self):
+        from ikimonobiyori import guide_brief as GB
+        self.GB = GB
+        self.c = GB.cfg()
+        self.cards = [_card(s["card_place"], [11, 12, 1, 2], [f"{s['card_place']}では冬に{s['label']}が見られる"]) for s in self.c["bird_highlights"]["sites"]]
+
+    def _run(self, question, cond):
+        from ikimonobiyori import knowledge as K
+        with mock.patch.object(K, "load_shown", return_value=self.cards):
+            return self.GB.bird_highlights(question, cond, {}, [11], [], self.c)
+
+    def test_groups_spread(self):
+        hl = self._run("野鳥のおすすめを教えて", {"subjects": ["birds"]})
+        self.assertGreaterEqual(len(hl), 4)
+        self.assertLessEqual(len(hl), 6)
+        self.assertGreaterEqual(len({h["group"] for h in hl}), 3)
+        self.assertGreaterEqual(len({h["theme"] for h in hl}), 4)
+        self.assertTrue(all(h["cards"] for h in hl))
+
+    def test_not_for_region_or_species(self):
+        self.assertEqual(self._run("千葉の野鳥のおすすめ", {"subjects": ["birds"], "region": "千葉"}), [])
+        self.assertEqual(self._run("紅葉のおすすめ", {"subjects": ["autumn_leaves"]}), [])
+
+    def test_out_of_season_sites_are_skipped(self):
+        self.cards = [_card(s["card_place"], [6], ["夏の話"]) for s in self.c["bird_highlights"]["sites"]]
+        self.assertEqual(self._run("野鳥のおすすめを教えて", {"subjects": ["birds"]}), [])
+
+    def test_materials_one_per_site(self):
+        hl = self._run("野鳥のおすすめを教えて", {"subjects": ["birds"]})
+        cards = self.GB._add_highlight_cards([], hl, self.c)
+        mat = self.GB._highlight_materials({"items": [], "missing": []}, cards, hl, self.c)
+        kind = self.c["bird_highlights"]["material_kind"]
+        got = [i for i in mat["items"] if i["kind"] == kind]
+        self.assertEqual(len(got), len(hl))
+        self.assertIn("・", got[0]["place"])
+        self.assertIn(f"### {kind}", "\n".join(GN.render(mat)))
+
+
+class BirdHighlightsWords(BirdHighlights):
+    def test_migrant_word_is_not_a_place(self):
+        self.assertGreaterEqual(len(self._run("渡り鳥はどこで見られる?", {"subjects": ["birds"]})), 4)

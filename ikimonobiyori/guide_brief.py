@@ -840,6 +840,97 @@ def typical_candidates(cond, now, scope, existing, c, pending):
     return out
 
 
+def bird_highlights(question, cond, res, months, cands, c):
+    """段階79 第2部: 範囲の指定がない野鳥の質問 → 季節の目玉がある観察地(最大 max 件。地域の組と目玉の種類が偏らないように)。
+    → [{name, prefecture, city, group, theme, label, cards}]。範囲・場所・種の指定がある質問、野鳥以外の質問は []。"""
+    from . import guide_materials as GM
+    from . import knowledge as K
+    H = c.get("bird_highlights") or {}
+    if not H.get("sites") or (cond.get("subjects") or []) != ["birds"]:
+        return []
+    qp = [x for x in _question_places(question, res) if not _general_card({"place": x}, c)]     # 「渡り鳥は…」はテーマの語で場所ではない
+    if cond.get("region") or cond.get("area_names") or GM.species_match_words(question) or qp:
+        return []
+    try:
+        shown = [r for r in K.load_shown() if not r.get("retired")]
+    except (OSError, ValueError):
+        return []
+    pri = {k: i for i, k in enumerate(c.get("brief_category_order") or K.cfg()["category_priority"])}
+    months = sorted({(m - 1 + d) % 12 + 1 for m in months for d in range(H.get("months_ahead", 0) + 1)})   # この季節(対象の月と、そのすぐあと)
+    rows = []
+    for s in H["sites"]:
+        cs = [r for r in shown if r.get("place") == s["card_place"] and not isinstance(r.get("closure"), dict)]
+        ms = {m for r in cs for m in (r.get("condition") or {}).get("months") or []}
+        if not cs or not ms & set(months):
+            continue                                       # その場所のカードの月が対象の月に当たらない(季節の外)
+        cs = [r for r in cs if not (r.get("condition") or {}).get("months") or set(r["condition"]["months"]) & set(months)]
+        cs.sort(key=lambda r: (pri.get(r.get("category"), len(pri)), r.get("title") or ""))
+        rows.append({**s, "group": _group_of(s["prefecture"], c), "cards": cs[: H.get("cards_per_site", 2)]})
+    have = {r["name"] for r in cands if r.get("chosen")}
+    rows = [r for r in rows if r["name"] not in have]
+    groups = []
+    for r in rows:
+        if r["group"] not in groups:
+            groups.append(r["group"])
+    out, seen_t = [], set()
+    while len(out) < min(H["max"], len(rows)):
+        took = False
+        for g in groups:
+            pool = [r for r in rows if r["group"] == g and r not in out]
+            if not pool or len(out) >= H["max"]:
+                continue
+            pick = next((r for r in pool if r["theme"] not in seen_t), pool[0])
+            out.append(pick)
+            seen_t.add(pick["theme"])
+            took = True
+        if not took:
+            break
+    return out if len(out) >= H.get("min", 1) else []
+
+
+def _add_highlight_cards(cards, hl, c):
+    """観察地の目玉のカードを資料のカードに足す(すでにあるカードは足さない)。"""
+    seen = {k.get("title") for k in cards}
+    add = []
+    for h in hl:
+        for r in h["cards"]:
+            if r.get("title") not in seen:
+                seen.add(r.get("title"))
+                add.append((r, c["card_links"]["place"]))
+    if not add:
+        return cards
+    rows = _card_rows(add, c)
+    for i, k in enumerate(rows, len(cards) + 1):
+        k["id"] = f"K{i:03d}"
+    return cards + rows
+
+
+def _highlight_materials(mat, cards, hl, c):
+    """語りの材料に、観察地ごとの目玉の文を 1 点ずつ足す(種類「観察地の目玉」。カードの文のうち、その他でない文を先に)。"""
+    from . import guide_narrative as GN
+    N = c["narrative"]
+    by_title = {k.get("title"): k for k in cards}
+    items = list(mat.get("items") or [])
+    have = {(i.get("card"), i.get("text")) for i in items}
+    for h in hl:
+        birds = [w for w in re.split(r"[・()（）とな冬のど\s]+", h.get("label") or "") if len(w) >= 2]
+        best = None
+        for title in [k.get("title") for k in h["cards"]]:
+            k = by_title.get(title)
+            if not k:
+                continue
+            for text, kind in zip(k.get("facts") or [], GN.kinds_of(k, N)):
+                if re.search(N["not_material_re"], text) or (k.get("id"), text) in have:
+                    continue
+                score = (-sum(1 for w in birds if w in text), kind == N["other"])      # 目玉の鳥の名前がある文を先に、続けて語りの種類のある文
+                if best is None or score < best[0]:
+                    best = (score, k, text)
+        if best:
+            items.append({"kind": c["bird_highlights"]["material_kind"], "card": best[1].get("id"), "title": best[1].get("title"),
+                          "place": f"{h['name']}・{h['prefecture']}{h['city']}", "text": best[2]})
+    return {**mat, "items": items}
+
+
 def _alt_filter(typ, question, cond, cands, clos, c):
     """段階78 第1部 4: 例年の目安の候補(遠くの代わりの行き先)を添えるか。
     種を聞く質問: 聞かれた種の候補だけ(ほかの種の行き先は付けない)。場所を聞く質問: その場所が今は楽しめない
@@ -1050,6 +1141,11 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         cands.append({"subject": None, "rank": None, "name": t["name"], "chosen": False, "basis": "typical", "group": t["group"],
                       "prefecture": t["prefecture"], "city": t.get("municipality"), "distance_km": t.get("km"), "theme": t.get("theme"),
                       "reasons": [c["typical_candidates"]["label"]]})
+    hl = bird_highlights(question, cond, res, months, cands, c)         # 段階79 第2部: 季節の目玉がある観察地
+    for h in hl:
+        cands.append({"subject": "birds", "rank": None, "name": h["name"], "chosen": False, "basis": "highlight", "group": h["group"],
+                      "prefecture": h["prefecture"], "city": h["city"], "theme": h["label"], "highlight_cards": [k.get("title") for k in h["cards"]],
+                      "reasons": [c["bird_highlights"]["label"]]})
     from . import guide_materials as GM
     for r in cands:
         r.setdefault("basis", "current" if r.get("current_state") else "typical")
@@ -1074,7 +1170,11 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         for k in pb.get("cards") or []:
             if k["title"] not in seen and len(cards) < c["max_cards"]:
                 cards.append({**k, "id": f"K{len(cards) + 1:03d}"})
+    if hl:
+        cards = _add_highlight_cards(cards, hl, c)
     mat = _narrative(cards, question, cond, cands, sprows, months, c)     # 段階78 第3部 1: 語りの材料
+    if hl:
+        mat = _highlight_materials(mat, cards, hl, c)
     from . import research as RS
     targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, cands, cards, F.rows, c)   # 段階78 第4部 1
     doc = {
@@ -1116,7 +1216,7 @@ def render_md(doc):
         for r in doc["candidates"]:
             why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
             if r.get("rank") is None:
-                tag = "種の名所" if r.get("basis") == "species" else "例年の目安"
+                tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
                 L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({r.get('prefecture') or ''}{r.get('city') or ''} {_dist(r)})"
                          + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else ""))
                 continue

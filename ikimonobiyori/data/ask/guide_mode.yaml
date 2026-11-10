@@ -44,6 +44,26 @@ typical_candidates:
   per_group: 2                    # 範囲が広い(wide)とき、地域の組ごとの件数
   far_total: 3                    # 範囲の指定がないとき、出発地の地域の組の外から合わせた件数
   label: 例年の目安の候補(今年の現況はない)
+# 段階79 第2部: 範囲の指定がない野鳥の質問(「野鳥のおすすめ」「渡り鳥」)に、季節の目玉がある観察地を、地域の組が偏らないように入れる。
+# 観察地は段階76 第3部で目玉のカード(環境省・国土交通省・県・市町村・施設の管理者の本文で確かめたもの)を集めた場所。
+# 季節は、その場所のカードの月(condition.months)を合わせたもので決める(この表に月を書かない)。theme は目玉の種類(偏りを避けるための語)、
+# label は資料に書く目玉の語(カードの本文にある鳥の名前だけ)。card_place はカードの場所の欄。名所カタログ(catalog/birds.yaml)は変えない(判断: 報告書)
+bird_highlights:
+  min: 4
+  max: 6
+  label: 季節の目玉がある観察地
+  cards_per_site: 2                 # 観察地ごとに資料に足すカードの上限
+  material_kind: 観察地の目玉         # 語りの材料に足す種類の名前(観察地ごとに 1 点)
+  months_ahead: 1                   # この季節 = 対象の月と、そのあとこの月数(11 月の質問なら 12 月の目玉も)
+  sites:
+    - {name: 葛西臨海公園 鳥類園, prefecture: 東京都, city: 江戸川区, theme: 猛禽, label: "冬の猛禽(ノスリ・オオタカ・ハイタカ)", card_place: 葛西臨海公園}
+    - {name: 谷津干潟, prefecture: 千葉県, city: 習志野市, theme: 干潟の鳥, label: "干潟のシギ・チドリとカモ", card_place: 谷津干潟}
+    - {name: 多々良沼, prefecture: 群馬県, city: 館林市, theme: 白鳥, label: "冬の白鳥", card_place: 多々良沼}
+    - {name: 霞ヶ浦(妙岐ノ鼻・稲波干拓), prefecture: 茨城県, city: 稲敷市, theme: ガン, label: "オオヒシクイとチュウヒ", card_place: 霞ヶ浦}
+    - {name: 渡良瀬遊水地, prefecture: 栃木県, city: 栃木市, theme: 猛禽, label: "冬の猛禽(チュウヒ・ハイイロチュウヒ・コミミズク)", card_place: 渡良瀬遊水地}
+    - {name: 涸沼, prefecture: 茨城県, city: 鉾田市, theme: 冬のカモ, label: "スズガモなど冬のカモ", card_place: 涸沼}
+    - {name: 本埜白鳥の郷, prefecture: 千葉県, city: 印西市, theme: 白鳥, label: "コハクチョウ", card_place: 本埜白鳥の郷}
+    - {name: 手賀沼, prefecture: 千葉県, city: 我孫子市, theme: 冬のカモ, label: "冬のカモとオオバン", card_place: 手賀沼}
 region_groups:                    # 地域の組(指示書 段階76 第1部 3)
   - {name: 東京・神奈川, prefectures: [東京都, 神奈川県]}
   - {name: 埼玉・千葉・茨城, prefectures: [埼玉県, 千葉県, 茨城県]}

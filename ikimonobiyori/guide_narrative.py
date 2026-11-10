@@ -198,4 +198,7 @@ def render(mat, N=None):
             L += [f"- [{it['card']}] {it['text']}({it.get('place') or ''})" for it in by[kind]]
         else:
             L.append(f"- {N['none']}")
+    for kind in [k for k in by if k not in N["kinds"]]:       # 段階79 第2部: 観察地の目玉(観察地ごとに 1 点)
+        L.append(f"### {kind}")
+        L += [f"- [{it['card']}] {it['text']}({it.get('place') or ''})" for it in by[kind]]
     return L + [""]
