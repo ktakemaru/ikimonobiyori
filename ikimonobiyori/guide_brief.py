@@ -137,6 +137,15 @@ def _pending_urls():
     return out
 
 
+def _ledger_pending(url):
+    """台帳で承認待ちの情報源のページか(同じホストでパスがいちばん長く一致する項目の状態。observations.ledger_status_of と同じ判定)。"""
+    from . import observations as O
+    try:
+        return O.ledger_status_of(url) == "pending"
+    except (OSError, ValueError, KeyError):
+        return False
+
+
 def _usable_url(url, pending):
     from . import publisher as P
     if not url:
@@ -169,6 +178,14 @@ class _Facts:
         content = seireki(re.sub(r"\s+", " ", (content or "").strip()))
         if not content or not _usable_url(url, self.pending):
             return None
+        if kind == "current" and url and _ledger_pending(url) and _source_class(url, source_class) == "official":   # 段階78 第1部 7: 承認待ちの一覧の下の記事(/hanadayori/76765/ など。observations._ledger_gated と同じ)
+            return None
+        if url or source:
+            from . import guide_materials as GM
+            source = GM.source_name(url, source, prefecture=(extra or {}).get("_pref"), city=(extra or {}).get("_city")) or (
+                None if source and GM._HOSTISH.match(str(source)) else source)
+        if extra:
+            extra = {k: v for k, v in extra.items() if not k.startswith("_")} or None
         key = (kind, content, url)
         if key in self.keys:
             return None
@@ -326,7 +343,81 @@ def _official_name(name, c):
     return bool(name) and bool(re.search(c.get("official_name_re") or r"$^", name))
 
 
-def _line_facts(F, text, c, known_pubs, skip_blocks=False):
+def _plan_facts(F, work, cands, picks, extra):
+    """計画の作業フォルダの facts.json → 候補の事実(F に足す)。→ 発行元の名前 → URL。"""
+    fpath = Path(work) / "facts.json"
+    known_pubs = {}
+    if not fpath.exists():
+        return known_pubs
+    facts_doc = json.loads(fpath.read_text(encoding="utf-8"))
+    by = {}
+    for sj, sub in (facts_doc.get("subjects") or {}).items():
+        for cr in sub.get("candidates") or []:
+            by.setdefault(cr["name"], cr)
+            cur = cr.get("current") or {}
+            if cur.get("publisher") and cur.get("url"):
+                known_pubs.setdefault(cur["publisher"], cur["url"])
+    for name in [r["name"] for r in cands] + list((extra or {}).get("no_this_year") or []):
+        if name in by:
+            _candidate_facts(F, by[name], picks.get(name))
+    return known_pubs
+
+
+def _area_plan(F, question, cond, now, env, work, c, clock, obs_kw, known_pubs):
+    """段階78 第2部 1: エリア・山域を聞く質問(見どころの経路)で、そのエリアの名所の計画(紅葉・花・野鳥の今年の現況と例年の時期)を作り、
+    候補と事実を足す。→ 候補の行。"""
+    from . import answer_run as AR
+    ds = (cond.get("periods") or [[]])[0]
+    try:
+        d = date.fromisoformat(ds[0])
+        when = f"{d.month}月{d.day}日"
+    except (IndexError, TypeError, ValueError):
+        when = "今週末"
+    area = (cond.get("area_names") or [""])[0]
+    sub = Path(work) / "area"
+    try:
+        AR.run(c["area_plan_question"].format(date=when, area=area), now=now, env=env, workdir=sub, quiet=True, clock=clock, obs_kw=obs_kw)
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+    rows, picks, extra = _candidates(sub, c)
+    rows = rows[: c["area_plan_max"]]
+    known_pubs.update(_plan_facts(F, sub, rows, picks, {"no_this_year": []}))
+    for r in rows:
+        r["reasons"] = list(r.get("reasons") or []) + [f"{area}の名所"]
+    return rows
+
+
+def _species_facts(F, sprows, cands, cond, c):
+    """種の名所の一覧 → 候補(例年の目安)と事実。"""
+    from . import guide_materials as GM
+    R = c["species_rows"]
+    have = {r["name"] for r in cands}
+    for r in sprows:
+        loc = f"{r.get('prefecture') or ''}{r.get('city') or ''}"
+        kinds = "・".join(r.get("kinds") or [])
+        if r.get("season"):
+            body = f"{r['name']}({loc}): {r['species']}の例年の時期 {r['season']}" + (f"(見られる種: {kinds})" if kinds else "")
+        else:
+            body = f"{r['name']}({loc}): {r['species']}" + (f"(見られる種: {kinds})" if kinds else "") + "。例年の時期の記載なし"
+        if r.get("note"):
+            body += f"。{r['note']}"
+        F.add("typical", body, place=r["name"], source=r.get("publisher"), url=r.get("url"),
+              source_class="official" if r.get("official") else ("secondary" if r.get("url") else None),
+              extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
+        if r.get("care"):
+            F.add("facility", f"{r['name']}: 行く前に: {r['care']}", place=r["name"])
+        if r["name"] in have:
+            continue
+        have.add(r["name"])
+        km, label = GM.distance_text(r["name"], r.get("km"), cond.get("origin"), estimated=bool(r.get("km_estimated")),
+                                     prefecture=r.get("prefecture"), city=r.get("city"), c=c)
+        cands.append({"subject": None, "rank": None, "name": r["name"], "chosen": False, "basis": "species", "group": _group_of(r.get("prefecture"), c),
+                      "prefecture": r.get("prefecture"), "city": r.get("city"), "distance_km": km, "distance_text": label,
+                      "theme": r["species"], "season": r.get("season"), "note": r.get("note"),
+                      "reasons": [R["label"]] + ([r["note"]] if r.get("note") else [])})
+
+
+def _line_facts(F, text, c, known_pubs, skip_blocks=False, skip_names=()):
     """コードの答え(4つの検査に通った文)の行のうち、腐りやすい値を含む行を事実にする。出典は行の中の発行元の名前から。
     skip_blocks: 計画の答えの候補の塊(①〜の行から空行まで)は、候補の事実(構造化)と重なるので入れない。
     見込み・選び方の文(line_skip_words)は事実ではないので入れない。"""
@@ -362,6 +453,8 @@ def _line_facts(F, text, c, known_pubs, skip_blocks=False):
         s = re.sub(r"\*\*", "", st).lstrip("・-# ").strip()
         s = re.sub(r"^[①-⑳]\s*", "", s)
         if not s or s.startswith("http") or has_any(c.get("line_skip_words") or [], s):
+            continue
+        if skip_names and ((ctx and ctx in skip_names) or any(n in s for n in skip_names)):
             continue
         if not _perishable(s, c) and len(s) < c.get("min_plain_line_chars", 0):
             continue
@@ -639,6 +732,21 @@ def typical_candidates(cond, now, scope, existing, c, pending):
     return out
 
 
+def _alt_filter(typ, question, cond, cands, clos, c):
+    """段階78 第1部 4: 例年の目安の候補(遠くの代わりの行き先)を添えるか。
+    種を聞く質問: 聞かれた種の候補だけ(ほかの種の行き先は付けない)。場所を聞く質問: その場所が今は楽しめない
+    (対象の日が冬季閉鎖の時期に当たる・その場所の候補がない)ときだけ。そのほか(「今週末の紅葉」「今見られる花」)は今までどおり。"""
+    from . import guide_materials as GM
+    words = GM.species_match_words(question)
+    if words:
+        return [t for t in typ if any(w in " ".join([t.get("theme") or "", *(t.get("kinds") or []), t.get("name") or ""]) for w in words)]
+    if cond.get("route") in (c.get("alt_place_routes") or []) or cond.get("area_names"):
+        closed = any(hit for _card, hit in clos)
+        has_now = any(r.get("current_state") or r.get("basis") == "current" for r in cands)
+        return typ if (not has_now and (closed or not cands)) else []
+    return typ
+
+
 def closures_for(names, months, c):
     """候補・質問の場所に結びつく冬季閉鎖のカード → [(カード, 対象の月に当たるか)]。"""
     from . import knowledge as K
@@ -729,7 +837,8 @@ def _candidates(workdir, c):
             px = picks.get(r["name"]) or {}
             rows.append({"subject": r.get("subject") or px.get("subject") or sj, "rank": r.get("rank"), "name": r["name"],
                          "chosen": r["name"] in picks, "aim": r.get("aim"),
-                         "distance_km": r.get("distance_km"), "score": r.get("score"), "breakdown": r.get("breakdown"),
+                         "distance_km": r.get("distance_km"), "distance_estimated": bool(r.get("distance_estimated")),
+                         "score": r.get("score"), "breakdown": r.get("breakdown"),
                          "outlook": r.get("outlook_label"), "phrase": px.get("phrase"), "current_state": r.get("current_state"),
                          "current_date": r.get("current_date"), "prefecture": px.get("prefecture"),
                          "not_chosen_reason": r.get("reason_label"), "reasons": list(px.get("reason_labels") or [])})
@@ -797,26 +906,22 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     F = _Facts(c, pending)
     cands, picks, extra = _candidates(work, c)
     fpath = work / "facts.json"
-    known_pubs = {}
-    if fpath.exists():
-        facts_doc = json.loads(fpath.read_text(encoding="utf-8"))
-        by = {}
-        for sj, sub in (facts_doc.get("subjects") or {}).items():
-            for cr in sub.get("candidates") or []:
-                by.setdefault(cr["name"], cr)
-                cur = cr.get("current") or {}
-                if cur.get("publisher") and cur.get("url"):
-                    known_pubs.setdefault(cur["publisher"], cur["url"])
-        for name in [r["name"] for r in cands] + list((extra or {}).get("no_this_year") or []):
-            if name in by:
-                _candidate_facts(F, by[name], picks.get(name))
-    _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands))
+    known_pubs = _plan_facts(F, work, cands, picks, extra)
+    if (cond.get("route") in (c.get("alt_place_routes") or [])) and cond.get("area_names") and not cands:
+        cands += _area_plan(F, question, cond, now, env, work, c, clock, obs_kw, known_pubs)   # 段階78 第2部 1: エリア・山域の名所の計画
+    from . import guide_materials as GM
+    sprows = GM.species_rows(question, cond, env, c)           # 段階78 第2部 2・3: 種の名所の一覧
+    _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands),
+                skip_names={r["name"] for r in sprows})
+    _species_facts(F, sprows, cands, cond, c)
     if prev:
         try:
             pb = load(prev, env)
-            for f in pb.get("facts", [])[: c["max_prev_facts"]]:
-                F.add(f["kind"], f["content"], place=f.get("place"), source=f.get("source"), url=f.get("url"),
+            for f in [x for x in pb.get("facts", []) if not (c.get("prev_one_level") and x.get("inherited"))][: c["max_prev_facts"]]:
+                row = F.add(f["kind"], f["content"], place=f.get("place"), source=f.get("source"), url=f.get("url"),
                       source_class=f.get("source_class"), observed=f.get("observed"), read_at=f.get("read_at"), extra=f.get("fields"))
+                if row:
+                    row["inherited"] = True
         except (OSError, ValueError, KeyError):
             pb = None
     else:
@@ -824,16 +929,24 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     months = _target_months(cond, now)
     scope = (json.loads(fpath.read_text(encoding="utf-8")).get("scope") if fpath.exists() else None) or AR_scope(question, cond)
     typ = typical_candidates(cond, now, scope, {r["name"] for r in cands}, c, pending)
+    names = [r["name"] for r in cands] + _question_places(question, res)
+    clos = closures_for(names, months, c)
+    typ = _alt_filter(typ, question, cond, cands, clos, c)       # 段階78 第1部 4: 関係のない代わりの行き先を付けない
     for t in typ:
         F.add("typical", f"{t['name']}({t['prefecture']}{t.get('municipality') or ''}): 例年 {t['text']}"
               + (f"({'・'.join(t['kinds'])})" if t["kinds"] else ""), place=t["name"], source=t.get("publisher"), url=t["url"],
-              source_class=t["source_class"])
+              source_class=t["source_class"], extra={"_pref": t["prefecture"], "_city": t.get("municipality")})
         cands.append({"subject": None, "rank": None, "name": t["name"], "chosen": False, "basis": "typical", "group": t["group"],
-                      "prefecture": t["prefecture"], "distance_km": t.get("km"), "theme": t.get("theme"),
+                      "prefecture": t["prefecture"], "city": t.get("municipality"), "distance_km": t.get("km"), "theme": t.get("theme"),
                       "reasons": [c["typical_candidates"]["label"]]})
+    from . import guide_materials as GM
     for r in cands:
         r.setdefault("basis", "current" if r.get("current_state") else "typical")
         r.setdefault("group", _group_of(r.get("prefecture"), c))
+        if "distance_text" not in r:                          # 段階78 第1部 2・3: 直線と明記。見積もりの距離は出さない。東京湾の向こう側は数字なし
+            km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), estimated=bool(r.get("distance_estimated")),
+                                         prefecture=r.get("prefecture"), city=r.get("city"), c=c)
+            r["distance_km"], r["distance_text"] = km, label
     names = [r["name"] for r in cands] + _question_places(question, res)
     for card, hit in closures_for(names, months, c):
         cl = card["closure"]
@@ -866,6 +979,12 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     return doc
 
 
+def _dist(r):
+    if r.get("distance_text"):
+        return r["distance_text"]
+    return f"直線で約{r['distance_km']}km" if r.get("distance_km") is not None else "距離は未計算"
+
+
 def render_md(doc):
     L = [f"# ガイドの資料 {doc['id']}", "", f"- 質問: {doc['question']}"]
     if doc.get("previous"):
@@ -882,10 +1001,11 @@ def render_md(doc):
         for r in doc["candidates"]:
             why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
             if r.get("rank") is None:
-                L.append(f"- [例年の目安・{r.get('group') or ''}] {r['name']}({r.get('prefecture') or ''} 約{r.get('distance_km')}km)"
-                         + (f"・{r['theme']}" if r.get("theme") else ""))
+                tag = "種の名所" if r.get("basis") == "species" else "例年の目安"
+                L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({r.get('prefecture') or ''}{r.get('city') or ''} {_dist(r)})"
+                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else ""))
                 continue
-            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({r.get('prefecture') or ''} 約{r.get('distance_km')}km・点 {r.get('score')}・"
+            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({r.get('prefecture') or ''} {_dist(r)}・点 {r.get('score')}・"
                      f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}")
         L.append("")
     L += ["## 確かめた事実", ""]

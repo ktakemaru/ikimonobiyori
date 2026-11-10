@@ -19,6 +19,7 @@ import re
 from datetime import date, datetime
 
 from . import guide_brief as GB
+from .guide_brief import URL_RE
 from .paths import data_path
 
 NL = "\n"
@@ -366,7 +367,8 @@ def final_sources(cited, c):
             d = _md(r.get("observed")) or _md(r.get("read_at"))
             note = f["fact_note"].format(date=d) if d else None
         cls = f["official"] if r.get("source_class") == "official" else f["not_official"]
-        name = r.get("source") or _ledger_name(r.get("url")) or _domain(r.get("url"))   # 段階77: 台帳の発行元の名前、なければドメイン名
+        from . import guide_materials as GM                # 段階78 第1部 5: ドメインのままの名前は使わず、台帳・自治体の名前で
+        name = GM.source_name(r.get("url"), r.get("source")) or _ledger_name(r.get("url")) or _domain(r.get("url"))   # 段階77: 台帳の発行元の名前、なければドメイン名
         out.append("・" + name + "(" + "、".join(x for x in (note, cls) if x) + ")" + (" " + r["url"] if r.get("url") else ""))
     return out
 
@@ -441,8 +443,11 @@ def check(draft, brief, c=None, env=None):
         else:
             errs += check_unmarked(s, rec_places, c, allowed)
     errs += check_places(parsed, sents, brief, c, env)
-    body = strip_markers(parsed["body"], c)
+    body = fix_bold(strip_markers(parsed["body"], c))      # 段階78 第1部 8: 太字の記号が文字のまま見えないように
     errs += common_errors(body, brief.get("question") or "", c)
+    errs += distance_errors(sents, brief, c)               # 段階78 第1部 3
+    errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
+    errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
@@ -453,6 +458,82 @@ def check(draft, brief, c=None, env=None):
         warns.append(f"長さ {n} 字(目安 {c['length']['min']}〜{c['length']['max']} 字)")
     return {"ok": not errs, "errors": errs, "final": final, "checked": len(sents), "marked": marked, "cited": cited_ids, "warnings": warns,
             "knowledge_places": parsed["knowledge"]}
+
+
+# ---- 段階78 ----
+
+def _is_punct(ch):
+    import unicodedata
+    return bool(ch) and unicodedata.category(ch)[0] in "PS"
+
+
+def fix_bold(text):
+    """太字(**…**)が CommonMark で閉じない形(「**南沢あじさい山(…)**は」)を直す。
+    閉じの ** の前が記号で後ろが文字のとき、末尾の括弧を外に出す(「**南沢あじさい山**(…)は」)。それでも閉じない形は記号を外す。
+    開きの ** の後ろが記号で前が文字のときも同じ。"""
+    out = []
+    for line in (text or "").split(NL):
+        def rep(m):
+            inner, pre, post = m.group(1), line[m.start() - 1] if m.start() else "", line[m.end()] if m.end() < len(line) else ""
+            close_bad = _is_punct(inner[-1:]) and post and not post.isspace() and not _is_punct(post)
+            open_bad = _is_punct(inner[:1]) and pre and not pre.isspace() and not _is_punct(pre)
+            if close_bad and not open_bad:
+                mm = re.match(r"^(.*?[^(（\s])([(（][^()（）]*[)）])$", inner)
+                if mm and not _is_punct(mm.group(1)[-1:]):
+                    return f"**{mm.group(1)}**{mm.group(2)}"
+            if close_bad or open_bad:
+                return inner
+            return m.group(0)
+        out.append(re.sub(r"\*\*([^*\n]+?)\*\*", rep, line))
+    return NL.join(out)
+
+
+def distance_errors(sents, brief, c):
+    """距離の書き方: 東京湾の向こう側の候補に距離の数字を書かない。ほかは「直線で約○km」(「直線」を付ける)。"""
+    errs = []
+    bay = [r["name"] for r in brief.get("candidates") or [] if r.get("distance_text") == c["distance"]["across_bay_label"]]
+    for s in sents:
+        t = s["clean"]
+        if not re.search(r"\d+\s*(?:km|キロ)", t):
+            continue
+        hit = [n for n in bay if n in t]
+        if hit:
+            errs.append(_err("bay_distance", s, f"東京湾の向こう側の「{hit[0]}」に距離の数字", "距離の数字を書かず「東京湾の向こう側」のように書く"))
+        elif "直線" not in t:
+            errs.append(_err("straight_distance", s, "距離に「直線」がない", "「直線で約○km」と書く(道のりではない)"))
+    return errs
+
+
+def edge_note_errors(body, c):
+    """答えの先頭・末尾の段落に、作業の説明(下書き・合格・送ります など)や英語の文がある。"""
+    paras = [p for p in re.split(r"\n\s*\n", (body or "").strip()) if p.strip()]
+    if not paras:
+        return []
+    errs = []
+    for where, p in (("先頭", paras[0]), ("末尾", paras[-1])) if len(paras) > 1 else (("先頭", paras[0]),):
+        txt = URL_RE.sub(" ", p)
+        w = next((x for x in c.get("work_note_words") or [] if x in txt), None)
+        if w:
+            errs.append({"code": "work_note", "line": 0, "sentence": p[:80], "detail": f"{where}に作業の説明「{w}」", "fix": "作業の説明を書かない(答えだけを書く)"})
+        if re.search(c["english_re"], txt):
+            errs.append({"code": "english_note", "line": 0, "sentence": p[:80], "detail": f"{where}に英語の文", "fix": "英語のメモを書かない"})
+    return errs
+
+
+def narrative_errors(sents, brief, c):
+    """資料に語りの材料が 2 点以上あるのに、答えが 1 点も使っていない(印で数える)。行事の質問・名前だけを聞く短い質問は除く。"""
+    N = c.get("narrative") or {}
+    mats = brief.get("narrative") or {}
+    ids = {i for k in (mats.get("items") or []) for i in [k.get("card")] if i}
+    if len(ids) < N.get("min_items_to_require", 2):
+        return []
+    if (brief.get("route") in (N.get("skip_routes") or [])) or brief.get("intent") == "event":
+        return []
+    used = {i for s in sents for i in s["ids"] if i in ids}
+    if used:
+        return []
+    return [{"code": "no_narrative", "line": 0, "sentence": "", "detail": f"語りの材料({len(ids)} 点)を 1 つも使っていない",
+             "fix": "「語りの材料」から、なぜ今・どこをどう見る などを 1〜3 点選んで、文にして印 [K…] を付ける"}]
 
 
 # ---- 書き直しの回数・記録・最終の文 ----

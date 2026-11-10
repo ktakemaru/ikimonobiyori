@@ -157,3 +157,82 @@ rules:
   - 確かめた事実にないことは「今年の状況は確かめられていません」のように書くか、書かない。
   - 内部の言葉(資料・カード・記録・検査・id など)と作業の事情を答えに書かない。答えの最後に質問を書かない。
   - '答えの最後に [場所] の一覧を書く(記録: 確かめた場所 / 知識: 自分の知識で添えた場所(都県)。3か所まで)。'
+
+# ---- 段階78 ----
+# 第1部 3: 距離は直線と明記する。東京湾をはさむ場所(千葉県の内房・外房・南房総)は距離の数字を書かない。
+#   北緯 max_lat より南の千葉県を「東京湾の向こう側」とする(木更津 35.38・館山 34.99・勝浦 35.15、市原 35.50 は含めない。Claude Code が市役所の位置で概算。provisional)
+distance:
+  straight_label: 直線で約{km}km
+  across_bay_label: 東京湾の向こう側(距離の数字は書かない)
+  across_bay:
+    prefecture: 千葉県
+    max_lat: 35.45                # 座標があるとき
+    origin_prefectures_not: [千葉県]
+    # 市町村(座標がないとき)。内房・外房・南房総(Claude Code が地図の一般的な区分で選んだ。provisional)
+    municipalities: [木更津市, 君津市, 富津市, 袖ケ浦市, 館山市, 南房総市, 鋸南町, 鴨川市, 勝浦市, いすみ市, 御宿町, 大多喜町, 一宮町, 睦沢町, 長生村, 白子町, 長柄町, 長南町, 茂原市]
+  estimated_label: 距離は未計算
+# 第2部 2・3: 種の質問の名所の一覧(資料に入れる数。古い・あいまいな時期の名所も入れて、その旨を書く)
+species_rows:
+  routes_skip: [difference, name, event, species_dated, highlights_dated]
+  max_known: 12
+  max_unknown: 8
+  vague_note: 例年の時期の記載があいまい
+  old_note: 古い年の記載
+  label: 種の名所(例年の時期)
+# 第1部 4: 代わりの行き先(例年の目安の候補)を添えるのは、場所を聞いていて、その場所が今は楽しめないときだけ。種を聞く質問には付けない
+alt_place_routes: [highlights, highlights_dated, town, unknown_place]
+# --prev: 引き継いだ事実は、次の質問にはもう引き継がない(質問をまたいで関係のない事実が積もらないように)
+prev_one_level: true
+# 第1部 5: 都道府県のドメイン(pref.<ローマ字>.lg.jp / pref.<ローマ字>.jp)の名前
+pref_romaji: {hokkaido: 北海道, aomori: 青森県, iwate: 岩手県, miyagi: 宮城県, akita: 秋田県, yamagata: 山形県, fukushima: 福島県, ibaraki: 茨城県,
+  tochigi: 栃木県, gunma: 群馬県, saitama: 埼玉県, chiba: 千葉県, tokyo: 東京都, kanagawa: 神奈川県, niigata: 新潟県, toyama: 富山県, ishikawa: 石川県,
+  fukui: 福井県, yamanashi: 山梨県, nagano: 長野県, gifu: 岐阜県, shizuoka: 静岡県, aichi: 愛知県, mie: 三重県}
+# 第2部 1: エリア・山域の質問(見どころの経路)では、そのエリアの名所の計画(今年の現況・例年の時期)も資料に入れる。計画を作る質問の形
+area_plan_question: '{date}、{area}の紅葉や花や野鳥のおすすめ'
+area_plan_max: 8
+# 第1部 1・第3部 3: 答えの先頭・末尾の作業の説明と英語の文
+work_note_words: [下書き, 合格, そのまま送, 送ります, 照合, 書き直, 検査に, 資料から, ask verify, ask brief]
+english_re: '[A-Za-z]{2,}(?:[ ,;:\-]+[A-Za-z]{2,}){2,}'
+# 第3部 1: 語りの材料。カードの文を種類に分ける語(上から順に当てる)と、分類の既定(Claude Code が分類の意味から決めた。provisional)
+narrative:
+  kinds: [なぜ今, どこをどう見る, 見分け方, 次の季節]
+  other: その他
+  none: 材料なし
+  max_items: 8
+  min_items: 4
+  per_kind_max: 3
+  extra_cards: 4                 # 材料が min_items より少ないときに足すカードの上限
+  min_items_to_require: 2        # 第3部 3: この数以上の材料があるのに 1 点も使わない答えは不合格
+  skip_routes: [name, event]     # 行事の質問と、名前だけを聞く短い質問は除く
+  md_note: 'ここから選んで文にする(1つの答えで2〜4点。使ったら文の終わりに [K…])。「材料なし」の種類は書かない。'
+  word_rules:
+    - {kind: 見分け方, words: [違い, とは違, 見分け, 区別, 似て, 比べ, 異なる, 見た目, 特徴は, とは別, 別の種, ではなく]}
+    - {kind: 次の季節, words: [このあと, その後, 続いて, やがて, 翌年, 翌春, 冬になると, 春になると, 夏になると, 秋になると, 散ったあと, 終わると, 終わったあと, 次は, 落葉後, 冬を越]}
+    - {kind: どこをどう見る, words: [朝, 夕方, 夕暮れ, 時間帯, 足元, 梢, 水面, 双眼鏡, 見上げ, 見下ろ, 探す, 探し, 歩くと, 歩き, 近づかず, 観察する, 見つけ, 耳を, が見える, 見渡せ, 沿いで]}
+    - {kind: なぜ今, words: ['ため(に)?', 寒さ, 気温, 標高, 渡って, 渡り, 越冬, 冷え込み, 日照, 寒暖, 霜, 雪解け, 北から, 南から, 凍って, 凍る, 仕組み]}
+  by_category: {季節の仕組み: なぜ今, 夜・天気・自然現象: なぜ今, 見頃の流れ: 次の季節, 出会い方・歩き方: どこをどう見る, 行き方・歩き方: どこをどう見る, 痕跡・暮らし: どこをどう見る}
+# 第4部: その場で調べる(本人の判断 2026-11-11。段階78 指示書 4)
+research:
+  dir: research                      # データ置き場の下(取得の控え・調べた記録の一覧・承認待ちの情報源の候補)
+  max_pages_per_question: 3          # 1 つの質問で取得するページの上限
+  max_seconds_per_question: 120      # 1 つの質問で、最初の取得からこの秒数を過ぎたら取得しない
+  min_interval_s: 1                  # 同じホストへの間隔
+  cache_days: 7                      # 同じ URL の取得の控えを使う日数
+  max_bytes: 3000000                 # 1 ページの大きさの上限
+  max_text_chars: 12000              # 標準出力に出す本文の字数の上限(全文は控えのファイル)
+  min_species_rows: 2                # 聞かれた種の名所がこの数より少ないと「調べる」
+  kinds: [flowers, birds]            # 記録の対象(observations の subject)
+  fields: [name, prefecture, city, kind, typical, notice, url, publisher]   # 記録してよい項目(今年の現況は記録しない)
+  forbidden_fields: [state, state_date, state_date_text, current, practical]
+  step_lines:
+    - '1. 公式ページの URL を Web 検索で探す(検索の要約を事実にしない。行き先探しだけ)。読んでよいのは自治体・観光協会・公園管理者・施設運営者(指定管理者を含む)・国や県の機関のページ。'
+    - '2. python -X utf8 -m ikimonobiyori.ask research fetch <URL> --brief {id} で本文を読む(1 つの質問で 3 ページ・2 分まで。robots.txt で拒否されたページ・公式でないページは読まない)。'
+    - '3. 本文で確かめた名所の名前・都県と市町村・見られる種・例年の時期・行く前の注意だけを、ask research record --brief {id} --file <JSON> で記録する(今年の現況・行事の今年の日付は記録しない)。'
+    - '4. ask brief を作り直して(同じ質問)、いつもの手順で書く → ask verify。Web を使えない環境では、この節を飛ばして今の資料で答える。'
+# 第5部: 足りなかったことの記録
+gaps:
+  file: logs/gaps.jsonl
+  sources_heading: 出典
+  answer_words: [確かめられていません, 確かめていません, 分かっていません, 分かりません, 確認できていません, 確認していません, 記録は多くありません]
+  skip_missing_re: 'についての確かめた事実は [1-9][0-9]* 件'    # 事実が 1 件以上ある場所の数の報告は、足りないものにしない
+  max_chars: 120
