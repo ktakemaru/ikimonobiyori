@@ -623,6 +623,38 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     return _card_rows(out, c)
 
 
+def _narrative(cards, question, cond, cands, sprows, months, c):
+    """段階78 第3部 1: 語りの材料。少なければ、候補の場所・種・テーマに結びつくカードを足す(cards に追記。id は続きの番号)。"""
+    from . import guide_materials as GM
+    from . import guide_narrative as GN
+    from . import knowledge as K
+    N = c["narrative"]
+    spw = GM.species_match_words(question)
+
+    def pool():                                           # 種の質問は、その種の話のカードだけを材料にする(関係のない種の話で語らない)
+        if not spw:
+            return cards
+        return [k for k in cards if any(w in " ".join([k.get("title") or "", k.get("place") or ""] + list(k.get("facts") or [])) for w in spw)]
+    mat = GN.materials(pool(), N)
+    if len(mat["items"]) >= N["min_items"] or cond.get("route") in N["skip_routes"] or cond.get("intent") == "event":
+        return mat
+    try:
+        shown = K.load_shown()
+    except (OSError, ValueError):
+        return mat
+    names = [r["name"] for r in cands if r.get("chosen")][:5] + [r["name"] for r in sprows][:5] + list(_question_places(question, {"cond": cond}))
+    words = GM.species_match_words(question) + _theme_words(question, cond.get("subjects") or [], c)
+    for r in GN.extra_cards(shown, cards, names, words, months, N, require_words=spw):
+        src = r.get("source") or {}
+        facts = [seireki(x) for x in r.get("facts") or []]
+        cards.append({"id": f"K{len(cards) + 1:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"),
+                      "link": c["card_links"]["theme"] if _general_card(r, c) else c["card_links"]["place"], "narrative": r.get("narrative"),
+                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
+                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
+                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
+    return GN.materials(pool(), N)
+
+
 def _event_topics(event_texts, c):
     """行事の本文 → 行事の対象の語の組(地質・野鳥など。event_topics の語が行事の本文にあるもの)。"""
     blob = " ".join(event_texts or [])
@@ -640,6 +672,7 @@ def _card_rows(out, c):
         src = r.get("source") or {}
         facts = [seireki(x) for x in r.get("facts") or []]
         rows.append({"id": f"K{i:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"), "link": link,
+                     "narrative": r.get("narrative"),
                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
@@ -963,6 +996,9 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         for k in pb.get("cards") or []:
             if k["title"] not in seen and len(cards) < c["max_cards"]:
                 cards.append({**k, "id": f"K{len(cards) + 1:03d}"})
+    mat = _narrative(cards, question, cond, cands, sprows, months, c)     # 段階78 第3部 1: 語りの材料
+    from . import research as RS
+    targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, cands, cards, F.rows, c)   # 段階78 第4部 1
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
@@ -971,8 +1007,9 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
-        "facts": F.rows, "cards": cards,
-        "missing": _missing(question, res, cands, F.rows, cards, extra),
+        "facts": F.rows, "cards": cards, "narrative": mat,
+        "missing": _missing(question, res, cands, F.rows, cards, extra) + [f"調べる: {t['why']}" for t in targets],
+        "research": {"targets": targets},
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
@@ -1021,7 +1058,13 @@ def render_md(doc):
         L += [f"  - {x}" for x in k["facts"]]
     if not doc["cards"]:
         L.append("(なし)")
+    if doc.get("narrative") is not None:
+        from . import guide_narrative as GN
+        L += [""] + GN.render(doc["narrative"])
     L += ["", "## 足りないもの", ""] + [f"- {x}" for x in doc["missing"] or ["(なし)"]]
+    if (doc.get("research") or {}).get("targets"):
+        from . import research as RS
+        L += [""] + RS.lines_for(doc["id"], doc["research"]["targets"])
     L += ["", "## 決まり", ""] + [f"- {x}" for x in doc["rules"]]
     return NL.join(L) + NL
 

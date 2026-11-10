@@ -940,6 +940,14 @@ def main(argv=None, http_get=None):
     p.add_argument("--prev", help="続けて聞く質問: 前の質問の資料の id")
     p.add_argument("--now")
     p.add_argument("--out-dir", help=argparse.SUPPRESS)
+    p = sub.add_parser("research", help="段階78 第4部: その場で調べる。fetch <URL> --brief <id>(公式ページの本文を読む。1 つの質問で 3 ページ・2 分まで)|record --brief <id> --file <JSON>|list")
+    p.add_argument("action", choices=["fetch", "record", "list"])
+    p.add_argument("url", nargs="?")
+    p.add_argument("--brief")
+    p.add_argument("--file")
+    p.add_argument("--now")
+    p = sub.add_parser("gaps", help="段階78 第5部: 足りなかったことの回数(対象×場所)。--json で JSON")
+    p.add_argument("--json", action="store_true")
     p = sub.add_parser("polish-check", help="整えた文章と骨組みの事実の一致検査 + 通常の検査(段階60)。整えなおしは 1 回まで。通らなければ骨組みのまま final.txt に書く")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--text", required=True, help="整えた文章")
@@ -957,7 +965,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--month", type=int)
     p.add_argument("--now", help="行事の質問: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
     p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)|audit-subject(段階72。主語のない文の一覧)")
-    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject"])
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject", "narrative"])   # 段階78: narrative = カードの文に語りの種類の項目を足す
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
     p.add_argument("--place")
     p.add_argument("--category")
@@ -1080,6 +1088,12 @@ def main(argv=None, http_get=None):
             for line in lines:
                 print(line)
             return rc
+        if a.action == "narrative":                      # 段階78 第3部 1: カードの文ごとの語りの種類(なぜ今・どこをどう見る・見分け方・次の季節・その他)
+            from . import guide_narrative as GN
+            rows, n = GN.annotate(K.load())
+            K.path().write_text("".join(json.dumps(r, ensure_ascii=False) + chr(10) for r in rows), encoding="utf-8")
+            print(f"{n} 枚に語りの種類を足しました(全 {len(rows)} 枚)")
+            return 0
         if a.action == "audit-subject":                  # 段階72 第2部 1
             _out(K.subject_audit())
             return 0
@@ -1162,6 +1176,43 @@ def main(argv=None, http_get=None):
         print(doc["id"])
         print(jp)
         print(mp)
+        return 0
+    if a.step == "research":                             # 段階78 第4部
+        from . import research as RS
+        if a.action == "list":
+            _out(RS.listing())
+            return 0
+        if not a.brief:
+            print("--brief <資料の id> が要ります", file=sys.stderr)
+            return 2
+        if a.action == "fetch":
+            if not a.url:
+                print("URL がありません", file=sys.stderr)
+                return 2
+            r = RS.fetch(a.url, a.brief, now=now)
+            if not r["ok"]:
+                print(f"読みませんでした: {r.get('reason')}", file=sys.stderr)
+                return 1
+            lim = RS.cfg()["max_text_chars"]
+            tail = f"\n…(続きは {r['path']})\n" if len(r["text"]) > lim else "\n"
+            sys.stdout.flush(); sys.stdout.buffer.write((r["text"][:lim] + tail).encode("utf-8"))
+            return 0
+        from . import guide_brief as GB
+        try:
+            q = GB.load(a.brief).get("question")
+        except (OSError, ValueError):
+            q = None
+        doc = json.loads(Path(a.file).read_text(encoding="utf-8")) if a.file else []
+        res = RS.record(doc if isinstance(doc, list) else (doc.get("places") or [doc]), a.brief, question=q, now=now)
+        _out(res)
+        return 1 if res["rejected"] and not res["written"] else 0
+    if a.step == "gaps":                                 # 段階78 第5部
+        from . import gaps as GP
+        rows = GP.summary()
+        if a.json:
+            _out(rows)
+        else:
+            sys.stdout.flush(); sys.stdout.buffer.write(GP.render(rows).encode("utf-8"))
         return 0
     if a.step == "verify" and a.brief:                   # 段階75 第3部: ガイドの答えの裏取り
         from . import guide_verify as GV

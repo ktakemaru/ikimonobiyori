@@ -436,7 +436,8 @@ def manner_errors(rec, policy):
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
           "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
-          "source_year")                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
+          "source_year",                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
+          "research")                            # 段階78 第4部: その場で調べた印 {at, brief, question}
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))

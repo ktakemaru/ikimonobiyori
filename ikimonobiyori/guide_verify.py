@@ -612,6 +612,12 @@ def run(draft, bid, *, now, env=None):
     if status in ("PASS", "FALLBACK") and text:
         (GB.brief_dir(env) / f"{bid}.final.txt").write_text(text, encoding="utf-8")
         remember_final(text, brief.get("question"), bid, now, env)
+    if status == "PASS":                                 # 段階78 第5部: 足りなかったことの記録
+        try:
+            from . import gaps as GP
+            GP.append(text, brief, now, env)
+        except (OSError, ValueError, KeyError):
+            pass
     if status == "PASS" and r["knowledge_places"]:
         from . import unverified as U
         batch = [{"name": n, "prefecture": p_, **({"city": ci} if ci else {}), "theme": c["knowledge_places"]["theme_default"]}

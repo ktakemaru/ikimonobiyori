@@ -173,5 +173,137 @@ class SpeciesRoute(unittest.TestCase):
         self.assertEqual(notes["試験の里"], GB.cfg()["species_rows"]["vague_note"])
 
 
+# ---- 第3部・第4部・第5部 ----
+
+from ikimonobiyori import gaps as GP           # noqa: E402
+from ikimonobiyori import guide_narrative as GN   # noqa: E402
+from ikimonobiyori import research as RS       # noqa: E402
+
+
+class Narrative(unittest.TestCase):
+    """第3部 1・3: 語りの材料と、使っていない答えを止める照合。"""
+
+    def test_classify(self):
+        self.assertEqual(GN.classify_fact("冬鳥は秋に北から渡来して越冬する"), "なぜ今")
+        self.assertEqual(GN.classify_fact("朝の早い時間に水面を探すと見つけやすい"), "どこをどう見る")
+        self.assertEqual(GN.classify_fact("寒桜は冬桜とは別の種"), "見分け方")
+        self.assertEqual(GN.classify_fact("花が終わると実をつける"), "次の季節")
+        self.assertEqual(GN.classify_fact("ライトアップは2025年は20時まで"), "その他")
+        self.assertEqual(GN.classify_fact("駐車場は30台"), "その他")
+
+    def test_card_field_is_used(self):
+        card = {"facts": ["文A", "文B"], "narrative": ["見分け方", "その他"]}
+        self.assertEqual(GN.kinds_of(card), ["見分け方", "その他"])
+
+    def test_materials_and_missing(self):
+        cards = [{"id": "K001", "title": "t", "place": "p", "facts": ["冬鳥は北から渡ってくる", "駐車場は30台"]},
+                 {"id": "K002", "title": "u", "place": "q", "facts": ["双眼鏡で水面を探す"]}]
+        m = GN.materials(cards)
+        self.assertEqual([(x["kind"], x["card"]) for x in m["items"]], [("なぜ今", "K001"), ("どこをどう見る", "K002")])
+        self.assertEqual(m["missing"], ["見分け方", "次の季節"])
+        self.assertIn("材料なし", "\n".join(GN.render(m)))
+
+    def _b(self, **kw):
+        items = [{"kind": "なぜ今", "card": "K001", "text": "a"}, {"kind": "どこをどう見る", "card": "K002", "text": "b"}]
+        return brief(narrative={"items": items, "missing": []},
+                     cards=[{"id": "K001", "title": "t", "facts": ["a"], "values": GB.values("a")},
+                            {"id": "K002", "title": "u", "facts": ["b"], "values": GB.values("b")}], **kw)
+
+    def test_unused_materials_fail(self):
+        r = GV.check("試験の渓谷は例年11月中旬〜下旬が見頃です。[F001]" + PL, self._b())
+        self.assertIn("no_narrative", [e["code"] for e in r["errors"]])
+
+    def test_used_material_passes(self):
+        r = GV.check("試験の渓谷は例年11月中旬〜下旬が見頃です。[F001] 谷の上から色づきます。[K001]" + PL, self._b())
+        self.assertNotIn("no_narrative", [e["code"] for e in r["errors"]])
+
+    def test_event_and_name_questions_are_skipped(self):
+        for kw in ({"intent": "event"}, {"route": "name"}):
+            r = GV.check("試験の渓谷は例年11月中旬〜下旬が見頃です。[F001]" + PL, self._b(**kw))
+            self.assertNotIn("no_narrative", [e["code"] for e in r["errors"]], kw)
+
+
+class Research(unittest.TestCase):
+    """第4部: その場で調べる(通信しない。取得は偽の関数)。"""
+
+    def test_only_official_pages(self):
+        self.assertIsNone(RS.allowed_page("https://www.town.minamiizu.shizuoka.jp/x"))
+        self.assertIsNotNone(RS.allowed_page("https://matcha-jp.com/jp/1"))
+        self.assertIsNotNone(RS.allowed_page("https://weathernews.jp/x"))
+
+    def test_robots(self):
+        txt = "User-agent: *\nDisallow: /private/\nAllow: /private/open/\n"
+        self.assertTrue(RS.robots_allows(txt, "https://a.example/news/1"))
+        self.assertFalse(RS.robots_allows(txt, "https://a.example/private/x"))
+        self.assertTrue(RS.robots_allows(txt, "https://a.example/private/open/x"))
+
+    def test_html_text(self):
+        self.assertEqual(RS.html_text("<html><head><title>x</title></head><body><p>菜の花</p><script>a()</script><p>例年1月</p></body></html>"),
+                         "菜の花\n例年1月")
+
+    def test_question_places(self):
+        with mock.patch.object(RS, "_municipalities", return_value={"南伊豆町", "河津町", "松田町"}):
+            self.assertEqual(RS.question_places("南伊豆や河津は菜の花や桜で有名です"), ["南伊豆", "河津"])
+            self.assertEqual(RS.question_places("神奈川県松田町にも菜の花はありますか"), ["松田町"])
+            self.assertEqual(RS.question_places("今週末の紅葉の情報は?"), [])
+
+    def test_no_network_under_test(self):
+        r = RS.fetch("https://www.town.minamiizu.shizuoka.jp/x", "b-t1", now=NOW)
+        self.assertFalse(r["ok"])
+
+    def _get(self, pages):
+        def get(url):
+            pages.append(url)
+            if url.endswith("/robots.txt"):
+                return 200, b"User-agent: *\nDisallow: /no/\n", {}
+            return 200, "<p>試験の菜の花畑 例年1月中旬〜2月下旬</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        return get
+
+    def test_fetch_limits_and_record(self):
+        pages = []
+        url = "https://www.town.minamiizu.shizuoka.jp/a"
+        r = RS.fetch(url, "b-t2", now=NOW, http_get=self._get(pages), sleep=lambda s: None)
+        self.assertTrue(r["ok"], r)
+        self.assertIn("例年1月中旬", r["text"])
+        self.assertEqual(pages[0], "https://www.town.minamiizu.shizuoka.jp/robots.txt")
+        self.assertTrue(RS.fetch(url, "b-t2", now=NOW, http_get=self._get(pages))["from_cache"])
+        self.assertFalse(RS.fetch("https://www.town.minamiizu.shizuoka.jp/no/x", "b-t2", now=NOW, http_get=self._get(pages), sleep=lambda s: None)["ok"])
+        for i in range(3):
+            RS.fetch(f"https://www.town.minamiizu.shizuoka.jp/p{i}", "b-t2", now=NOW, http_get=self._get(pages), sleep=lambda s: None)
+        over = RS.fetch("https://www.town.minamiizu.shizuoka.jp/p9", "b-t2", now=NOW, http_get=self._get(pages), sleep=lambda s: None)
+        self.assertFalse(over["ok"])
+        late = RS.fetch("https://www.town.minamiizu.shizuoka.jp/q", "b-t3", now=NOW, http_get=self._get(pages), sleep=lambda s: None)
+        self.assertTrue(late["ok"])
+        later = RS.fetch("https://www.town.minamiizu.shizuoka.jp/q2", "b-t3", now=NOW + timedelta(seconds=200), http_get=self._get(pages),
+                         sleep=lambda s: None)
+        self.assertFalse(later["ok"])
+        res = RS.record([{"subject": "flowers", "name": "試験の菜の花畑", "prefecture": "静岡県", "city": "南伊豆町", "kind": "菜の花",
+                          "typical": "例年1月中旬〜2月下旬", "url": url, "publisher": "南伊豆町"},
+                         {"subject": "flowers", "name": "試験の菜の花畑", "kind": "菜の花", "state": "見頃", "typical": "例年1月", "url": url,
+                          "publisher": "南伊豆町"},
+                         {"subject": "flowers", "name": "よそ", "kind": "菜の花", "typical": "例年1月", "url": "https://www.town.minamiizu.shizuoka.jp/zz",
+                          "publisher": "南伊豆町"}], "b-t2", question="南伊豆で見られる花を教えて", now=NOW)
+        self.assertEqual(res["written"], 1, res)
+        self.assertEqual(sorted(x["index"] for x in res["rejected"]), [1, 2])
+        rows = RS.listing()["records"]
+        self.assertTrue(any(r["name"] == "試験の菜の花畑" and r["question"].startswith("南伊豆") for r in rows))
+
+
+class Gaps(unittest.TestCase):
+    """第5部: 足りなかったことの記録と、対象×場所ごとの回数。"""
+
+    def test_rows_and_summary(self):
+        b = {"id": "b-g", "question": "南伊豆で見られる花を教えて", "subjects": ["flowers"], "areas": [], "region": None,
+             "missing": ["今年の現況の記録がある候補がない", "「南伊豆」についての確かめた事実は 2 件"]}
+        txt = "南伊豆の今年の状況は確かめられていません。例年は1月です。\n\n出典\n・南伊豆町 https://x\n"
+        rows = GP.rows_for(txt, b, NOW)
+        self.assertEqual([r["kind"] for r in rows], ["answer", "missing"])
+        GP.append(txt, b, NOW)
+        GP.append(txt, b, NOW)
+        top = GP.summary()[0]
+        self.assertEqual(top["count"], 4)
+        self.assertIn("|", GP.render(GP.summary()))
+
+
 if __name__ == "__main__":
     unittest.main()
