@@ -943,6 +943,7 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("research", help="段階78 第4部: その場で調べる。fetch <URL> --brief <id>(公式ページの本文を読む。1 つの質問で 3 ページ・2 分まで)|record --brief <id> --file <JSON>|list")
     p.add_argument("action", choices=["fetch", "record", "list"])
     p.add_argument("url", nargs="?")
+    p.add_argument("--publisher", help="fetch: 公式の一覧にないホスト(観光協会の独自ドメインなど)の発行元の名前。本文にその名前があるときだけ読む")
     p.add_argument("--brief")
     p.add_argument("--file")
     p.add_argument("--now")
@@ -1189,7 +1190,7 @@ def main(argv=None, http_get=None):
             if not a.url:
                 print("URL がありません", file=sys.stderr)
                 return 2
-            r = RS.fetch(a.url, a.brief, now=now)
+            r = RS.fetch(a.url, a.brief, now=now, publisher=a.publisher)
             if not r["ok"]:
                 print(f"読みませんでした: {r.get('reason')}", file=sys.stderr)
                 return 1

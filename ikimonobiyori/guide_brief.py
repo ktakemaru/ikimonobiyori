@@ -417,6 +417,43 @@ def _species_facts(F, sprows, cands, cond, c):
                       "reasons": [R["label"]] + ([r["note"]] if r.get("note") else [])})
 
 
+def _place_records(F, question, cands, cond, c, env=None):
+    """段階78 第4部: 利用者が挙げた場所(「南伊豆」「松田町」)の、読んだ事実の記録のうち種と例年の時期のあるもの → 候補と事実。
+    その場で調べて記録した名所が、作り直した資料に入るように。今年の現況は入れない(例年の時期・注意だけ)。"""
+    from . import guide_materials as GM
+    from . import observations as O
+    from . import research as RS
+    places = RS.question_places(question)
+    if not places:
+        return
+    have = {r["name"] for r in cands}
+    for sj in ("flowers", "birds"):
+        try:
+            rows = O.read_records(sj, env)
+        except (OSError, ValueError, KeyError):
+            continue
+        for r in rows:
+            if not r.get("name") or not r.get("kind") or not (r.get("typical") or r.get("notice")):
+                continue
+            city = r.get("city") or ""
+            if not any(p in city or p in r["name"] for p in places):
+                continue
+            loc = f"{r.get('prefecture') or ''}{city}"
+            if r.get("typical"):
+                F.add("typical", f"{r['name']}({loc}): {r['kind']} {r['typical']}", place=r["name"], source=r.get("publisher"), url=r.get("url"),
+                      source_class=r.get("source_class"), extra={"_pref": r.get("prefecture"), "_city": city})
+            if r.get("notice"):
+                F.add("facility", f"{r['name']}: 行く前に: {r['notice']}", place=r["name"], source=r.get("publisher"), url=r.get("url"),
+                      source_class=r.get("source_class"))
+            if r["name"] in have:
+                continue
+            have.add(r["name"])
+            km, label = GM.distance_text(r["name"], None, cond.get("origin"), prefecture=r.get("prefecture"), city=city, c=c)
+            cands.append({"subject": sj, "rank": None, "name": r["name"], "chosen": False, "basis": "species", "group": _group_of(r.get("prefecture"), c),
+                          "prefecture": r.get("prefecture"), "city": city, "distance_km": km, "distance_text": label, "theme": r["kind"],
+                          "reasons": [c["species_rows"]["label"]]})
+
+
 def _line_facts(F, text, c, known_pubs, skip_blocks=False, skip_names=()):
     """コードの答え(4つの検査に通った文)の行のうち、腐りやすい値を含む行を事実にする。出典は行の中の発行元の名前から。
     skip_blocks: 計画の答えの候補の塊(①〜の行から空行まで)は、候補の事実(構造化)と重なるので入れない。
@@ -947,6 +984,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands),
                 skip_names={r["name"] for r in sprows})
     _species_facts(F, sprows, cands, cond, c)
+    _place_records(F, question, cands, cond, c, env)          # 段階78 第4部: 質問の場所の記録(その場で調べた名所を含む)
     if prev:
         try:
             pb = load(prev, env)

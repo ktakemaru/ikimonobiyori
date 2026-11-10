@@ -402,7 +402,8 @@ def place_filter(question, c=None):
                 return {"label": n, "cities": list(a.get("cities") or [])}
     m = re.search(c["place_filter"]["city_re"], q)
     if m:
-        return {"label": m.group(1), "cities": [m.group(1)]}
+        city = re.sub(r"^.+?[都道府県](?=.{2,})", "", m.group(1))      # 段階78: 「神奈川県松田町」は町の名前で絞る(記録の city は「松田町」)
+        return {"label": city, "cities": [city]}
     return None
 
 

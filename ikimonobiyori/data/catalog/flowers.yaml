@@ -169,6 +169,10 @@ entries:
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花情報", checked_on: "2026-10-24"}
     note: "花情報のページは段階16 では応答がなく、2026-10-24 の再確認でも HTTP 504 で読めなかった。名所として載せ、情報源は承認待ち(人が開く URL)。段階67 で情報源は承認済み"
+    # 段階78 第6部: 花・植物のページの花ごよみ(公園の見頃の目安。2026-11-11 に本文を読んだ)
+    flower_windows:
+      - {kind: ロウバイ, start: '12-21', end: '02-20', source_url: "https://www.showakinen-koen.jp/flower-information/", source_host: www.showakinen-koen.jp, source_class: official, source_year: null, note: "国営昭和記念公園: ソシンロウバイ 12月下旬〜2月中旬(こもれびの池・バーベキューガーデン南側)"}
+      - {kind: 梅, start: '01-11', end: '03-20', source_url: "https://www.showakinen-koen.jp/flower-information/", source_host: www.showakinen-koen.jp, source_class: official, source_year: null, note: "国営昭和記念公園: ウメ 1月中旬〜3月中旬(花木園梅園・こもれびの池など)"}
   - id: hana-0005
     name: 京成バラ園
     subjects: [flowers]
@@ -2938,3 +2942,64 @@ entries:
       unapproved_host: true
       source_year: null
       note: '長野県観光機構: 例年の見頃は3月中旬〜4月上旬'
+  # ---- 段階78 第6部(2026-11-11): 春の桜(ソメイヨシノ)の代表的な名所。例年の時期は公式ページの本文の記載だけ(行事の期間は入れない)。座標は未確認 ----
+  - id: hana-0089
+    name: 熊谷桜堤
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-11'
+    tags:
+      prefecture: 埼玉県
+      area: 熊谷
+      city: 熊谷市
+      terrain: [river]
+      flower_kinds: [ソメイヨシノ]
+      source: Claude Code が付けた(段階78 第6部。出典の公式ページの本文を 2026-11-11 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.kumagaya.lg.jp/kanko/midokoro/sakuratutumi.html", title: "熊谷市 熊谷桜堤(開花時期 例年3月下旬から4月上旬。約500本のソメイヨシノ)", checked_on: '2026-11-11'}
+    flower_windows:
+      - {kind: ソメイヨシノ, start: '03-21', end: '04-10', source_url: "https://www.city.kumagaya.lg.jp/kanko/midokoro/sakuratutumi.html", source_host: www.city.kumagaya.lg.jp, source_class: secondary, unapproved_host: true, source_year: null, note: "熊谷市: 開花時期 例年3月下旬から4月上旬"}
+  - id: hana-0090
+    name: 赤城南面千本桜
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-11'
+    tags:
+      prefecture: 群馬県
+      area: 前橋
+      city: 前橋市
+      terrain: [mountain]
+      flower_kinds: [ソメイヨシノ]
+      source: Claude Code が付けた(段階78 第6部。出典の公式ページの本文を 2026-11-11 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.city.maebashi.gunma.jp/shitsumon/7/1/13657.html", title: "前橋市 赤城南面千本桜の見ごろはいつごろですか(例年4月の第1週に開花し、第2週が見頃)", checked_on: '2026-11-11'}
+    flower_windows:
+      - {kind: ソメイヨシノ, start: '04-01', end: '04-20', source_url: "https://www.city.maebashi.gunma.jp/shitsumon/7/1/13657.html", source_host: www.city.maebashi.gunma.jp, source_class: secondary, unapproved_host: true, source_year: null, note: "前橋市: 例年4月の第1週に開花し、第2週が見頃(年によって前後)"}
+  - id: hana-0091
+    name: 上野恩賜公園
+    subjects: [flowers]
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: claude_code_provisional
+    approved_at: '2026-11-11'
+    tags:
+      prefecture: 東京都
+      area: 上野
+      city: 台東区
+      terrain: [urban]
+      flower_kinds: [ソメイヨシノ, 寒桜]
+      source: Claude Code が付けた(段階78 第6部。出典の公式ページの本文を 2026-11-11 に読んだ。座標は未確認)
+    sources:
+      - {url: "https://www.kensetsu.metro.tokyo.lg.jp/jimusho/toubuk/ueno/midokoro/shizen", title: "上野恩賜公園 公式ホームページ(東京都建設局) 自然がいっぱい(桜の種類ごとの見頃)", checked_on: '2026-11-11'}
+    flower_windows:
+      - {kind: ソメイヨシノ, start: '03-21', end: '04-10', source_url: "https://www.kensetsu.metro.tokyo.lg.jp/jimusho/toubuk/ueno/midokoro/shizen", source_host: www.kensetsu.metro.tokyo.lg.jp, source_class: secondary, unapproved_host: true, source_year: null, note: "東京都建設局: 染井吉野 3月下旬〜4月上旬が見頃"}

@@ -10,7 +10,7 @@
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
 | 現況の情報源（sources/） | 44 | 34 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 131 | 14 | 2 |
+| 名所カタログ（catalog/） | 134 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -182,7 +182,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 131件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 134件。うち本人の承認 14件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -203,7 +203,7 @@
 - catalog/autumn_leaves.yaml: 承認した人 claude_code_provisional が 17件
 - catalog/autumn_leaves.yaml: 承認した人 記入なし（段階19 以前の承認） が 20件
 - catalog/birds.yaml: 承認した人 claude_code_provisional が 5件
-- catalog/flowers.yaml: 承認した人 claude_code_provisional が 75件
+- catalog/flowers.yaml: 承認した人 claude_code_provisional が 78件
 
 ## 3. 取り消し・引退（5件）
 

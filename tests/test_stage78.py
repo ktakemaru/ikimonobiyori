@@ -259,6 +259,18 @@ class Research(unittest.TestCase):
             return 200, "<p>試験の菜の花畑 例年1月中旬〜2月下旬</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
         return get
 
+    def test_declared_publisher_must_be_in_the_text(self):
+        def get(url):
+            if url.endswith("/robots.txt"):
+                return 404, b"", {}
+            return 200, "<p>試験町観光協会 例年2月に菜の花</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        u = "https://kanko.example.jp/a"
+        self.assertFalse(RS.fetch(u, "b-d1", now=NOW, http_get=get)["ok"])                      # 名前なし: 公式の一覧にないホストは読まない
+        self.assertFalse(RS.fetch(u, "b-d1", now=NOW, http_get=get, publisher="別の町観光協会")["ok"])  # 本文に名前がない
+        self.assertTrue(RS.fetch(u, "b-d1", now=NOW, http_get=get, publisher="試験町観光協会")["ok"])
+        res = RS.record([{"subject": "flowers", "name": "試験の畑", "kind": "菜の花", "typical": "例年2月", "url": u}], "b-d1", now=NOW)
+        self.assertEqual(res["written"], 1, res)
+
     def test_fetch_limits_and_record(self):
         pages = []
         url = "https://www.town.minamiizu.shizuoka.jp/a"
@@ -287,6 +299,32 @@ class Research(unittest.TestCase):
         self.assertEqual(sorted(x["index"] for x in res["rejected"]), [1, 2])
         rows = RS.listing()["records"]
         self.assertTrue(any(r["name"] == "試験の菜の花畑" and r["question"].startswith("南伊豆") for r in rows))
+
+
+class PlaceRecords(unittest.TestCase):
+    """第4部: その場で調べて記録した名所が、作り直した資料(利用者が挙げた場所の質問)に入る。"""
+
+    def test_records_of_the_named_place(self):
+        from ikimonobiyori import observations as O
+        rec = {"subject": "flowers", "name": "試験の菜の花畑", "prefecture": "静岡県", "city": "南伊豆町", "kind": "菜の花",
+               "typical": "例年2月", "url": "https://www.town.minamiizu.shizuoka.jp/a", "publisher": "南伊豆町", "source_class": "official"}
+        F, cands = GB._Facts(GB.cfg(), set()), []
+        with mock.patch.object(RS, "question_places", return_value=["南伊豆"]), \
+                mock.patch.object(O, "read_records", side_effect=lambda sj, env=None: [rec] if sj == "flowers" else []):
+            GB._place_records(F, "南伊豆で見られる花を教えて", cands, {"origin": "横浜"}, GB.cfg())
+        self.assertEqual([r["name"] for r in cands], ["試験の菜の花畑"])
+        self.assertTrue(any("例年2月" in f["content"] for f in F.rows))
+
+
+class Part7Fixes(unittest.TestCase):
+    """第7部の確かめで見つかったもの: 県名つきの町の名前・崩れた断り。"""
+
+    def test_prefecture_prefix_is_removed_from_the_town(self):
+        from ikimonobiyori import season_place as SP
+        self.assertEqual(SP.place_filter("神奈川県松田町にも菜の花はありますか")["cities"], ["松田町"])
+
+    def test_broken_disclaimer_fails(self):
+        self.assertIn("long_disclaimer", codes("紹介サイトによると、とのことで、公式ではありません。試験の渓谷は例年11月中旬〜下旬が見頃です。[F001]"))
 
 
 class Gaps(unittest.TestCase):

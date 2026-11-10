@@ -21,7 +21,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from .paths import data_path
 
@@ -226,19 +226,36 @@ def allowed_page(url):
     return None
 
 
-def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep):
-    """1 ページを読む。→ {ok, status, text, path, reason, from_cache}。テスト中は通信しない(http_get を渡したときだけ)。"""
+def _declared_ok(publisher):
+    """発行元の名前が、公式に当たる形(観光協会・自治体・公園の管理者など)か。"""
+    return bool(publisher) and bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
+
+
+def _verified(text, publisher):
+    """本文に発行元の名前があるか(空白の違いは見ない)。"""
+    return bool(publisher) and re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", text or "")
+
+
+def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep, publisher=None):
+    """1 ページを読む。→ {ok, status, text, path, reason, from_cache}。テスト中は通信しない(http_get を渡したときだけ)。
+    publisher: 公式の一覧にないホスト(観光協会の独自ドメインなど)のとき、発行元の名前(「湯河原温泉観光協会」)。
+    名前が公式の形で、読んだ本文にその名前があるときだけ、公式のページとして読む(なければ本文を捨てて読まなかったことにする)。"""
     from . import netbudget as NB
     R = cfg()
     now = now or datetime.now().astimezone().replace(microsecond=0)
     why = allowed_page(url)
+    declared = None
+    if why and why.startswith("公式の発行元") and _declared_ok(publisher):
+        declared, why = publisher.strip(), None
     if why:
-        return {"ok": False, "reason": why}
+        return {"ok": False, "reason": why + ("。観光協会などの独自のドメインなら --publisher に発行元の名前を渡す" if why.startswith("公式の発行元") else "")}
     cp = _cache_path(url, env)
     try:
         cached = json.loads(cp.read_text(encoding="utf-8"))
         if now - datetime.fromisoformat(cached["fetched_at"]) <= timedelta(days=R["cache_days"]):
-            _note_page(bid, url, now, env, cached=True)
+            if declared and not _verified(cached["text"], declared):
+                return {"ok": False, "reason": f"本文に発行元の名前「{declared}」がない。公式のページとして読まない"}
+            _note_page(bid, url, now, env, cached=True, publisher=declared)
             return {"ok": True, "status": cached.get("status"), "text": cached["text"], "path": str(cp), "from_cache": True}
     except (OSError, ValueError, KeyError):
         pass
@@ -253,7 +270,8 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
         if ref:
             return {"ok": False, "reason": f"通信しない({ref})"}
     host = urlsplit(url).hostname.lower()
-    budget = NB.Budget("research", [host], 2, R["min_interval_s"], env=env, clock=clock, sleep=sleep)
+    bare = host[4:] if host.startswith("www.") else host
+    budget = NB.Budget("research", [bare, "www." + bare], R["max_requests_per_page"], R["min_interval_s"], env=env, clock=clock, sleep=sleep)
     getter = http_get
     closer = None
     if getter is None:
@@ -266,7 +284,17 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
         sg = SessionGetter(user_agent=live.get("user_agent") or "ikimonobiyori", connect_s=t.get("connect_s", 10), read_s=t.get("read_s", 30))
         getter = lambda u: sg.get_bytes(u, R["max_bytes"])        # noqa: E731
         closer = sg.close
-    g = budget(getter)
+    g0 = budget(getter)
+
+    def g(u):                                            # 同じサイト(www の有無・http/https の違いだけ)への転送は 1 回だけ追う
+        res = g0(u)
+        if res[0] in (301, 302, 303, 307, 308):
+            loc = ((res[2] or {}).get("Location") or (res[2] or {}).get("location") or "")
+            nu = urljoin(u, loc)
+            nh = (urlsplit(nu).hostname or "").lower()
+            if loc and urlsplit(nu).scheme in ("http", "https") and (nh[4:] if nh.startswith("www.") else nh) == bare:
+                res = g0(nu)
+        return res
     try:
         p = urlsplit(url)
         rs, rbody, _h = g(urlunsplit((p.scheme, p.netloc, "/robots.txt", "", "")))
@@ -297,6 +325,11 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
         text = html_text(raw.decode(_charset(ctype, raw), errors="replace"))
     cp.parent.mkdir(parents=True, exist_ok=True)
     cp.write_text(json.dumps({"url": url, "fetched_at": now.isoformat(), "status": status, "text": text}, ensure_ascii=False), encoding="utf-8")
+    if declared:
+        if not _verified(text, declared):
+            return {"ok": False, "reason": f"本文に発行元の名前「{declared}」がない。公式のページとして読まない"}
+        st["pages"][-1]["publisher_verified"] = declared
+        _save_state(bid, st, env)
     return {"ok": True, "status": status, "text": text, "path": str(cp), "from_cache": False}
 
 
@@ -329,9 +362,9 @@ def _pdf_text(raw, env=None):
             pass
 
 
-def _note_page(bid, url, now, env, cached=False):
+def _note_page(bid, url, now, env, cached=False, publisher=None):
     st = _load_state(bid, env)
-    st["pages"].append({"url": url, "at": now.isoformat(), "cached": cached})
+    st["pages"].append({"url": url, "at": now.isoformat(), "cached": cached, **({"publisher_verified": publisher} if publisher else {})})
     _save_state(bid, st, env)
 
 
@@ -345,6 +378,7 @@ def record(items, bid, *, question=None, env=None, now=None):
     now = now or datetime.now().astimezone().replace(microsecond=0)
     st = _load_state(bid, env)
     read_urls = {p["url"] for p in st["pages"]}
+    verified = {p["url"]: p["publisher_verified"] for p in st["pages"] if p.get("publisher_verified")}
     ok, rejected, pend = [], [], []
     for i, it in enumerate(items or []):
         errs = []
@@ -356,8 +390,10 @@ def record(items, bid, *, question=None, env=None, now=None):
             errs.append(f"今年の現況・実用情報は記録しない: {bad}")
         if it.get("url") not in read_urls:
             errs.append("この質問で ask research fetch で読んだページの URL ではない")
-        elif allowed_page(it["url"]):
+        elif allowed_page(it["url"]) and it["url"] not in verified:
             errs.append(allowed_page(it["url"]))
+        elif it["url"] in verified and not it.get("publisher"):
+            it = {**it, "publisher": verified[it["url"]]}
         if it.get("subject", "flowers") not in R["kinds"]:
             errs.append(f"subject は {R['kinds']} のどれか")
         if not it.get("name") or not it.get("kind"):
