@@ -139,7 +139,8 @@ def species_rows(question, cond, env=None, c=None):
         sps = []
     if not sps:
         return []
-    spc = dict(SP.cfg(), max_items=R["max_known"], max_unknown_items=R["max_unknown"])
+    spread = bool(cond.get("defaulted_date")) and bool(R.get("spread"))      # 段階78 の追記: 日付の指定がない種の質問は、まとまりごとに枠を分ける
+    spc = dict(SP.cfg(), max_items=(10 ** 6 if spread else R["max_known"]), max_unknown_items=R["max_unknown"])
     prefs = None
     if cond.get("region"):
         try:
@@ -155,6 +156,12 @@ def species_rows(question, cond, env=None, c=None):
             rows, _n = SP.select(SP.gather(sp, origin, spc, env), origin, prefs, spc, by_distance=is_bird)
         except (OSError, ValueError, KeyError, TypeError):
             rows = []
+        if spread:
+            if is_bird:
+                rows = rows[: R["max_known"]]
+            else:
+                known = [r for r in rows if r.get("start") and r.get("season")]
+                rows = spread_rows(known, sp["name"], R["max_known"], R["spread"]) + [r for r in rows if r not in known]
         if place and place.get("cities"):
             own = [r for r in rows if SP._in_cities(r, place["cities"])]
             rows = own + [r for r in rows if r not in own]
@@ -169,6 +176,45 @@ def species_rows(question, cond, env=None, c=None):
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
     return out
+
+
+def _md_in(md, lo, hi):
+    return lo <= md <= hi if lo <= hi else (md >= lo or md <= hi)
+
+
+def row_group(r, groups):
+    """名所の行 → まとまりの名前。種がまとまりの種に当たり、始まりの月日がその範囲に入るものを先に。なければ月日だけで。"""
+    kinds = set(r.get("kinds") or [])
+    md = r.get("start") or ""
+    for g in groups:
+        if kinds & set(g.get("kinds") or []) and _md_in(md, g["from"], g["to"]):
+            return g["name"]
+    for g in groups:
+        if _md_in(md, g["from"], g["to"]):
+            return g["name"]
+    return groups[-1]["name"]
+
+
+def spread_rows(rows, species, limit, conf):
+    """時期の分かる名所の行(今から近い順に並んでいる)を、まとまりごとに順に 1 件ずつ取って limit 件まで(段階78 の追記。本人の指示 2026-11-11)。
+    種の表がなければ、始まりの月ごとのまとまり。まとまりの並びは表の順(表がなければ月の順)、まとまりの中は元の順。"""
+    groups = (conf.get("groups") or {}).get(species)
+    if groups:
+        order = [g["name"] for g in groups]
+        key = lambda r: row_group(r, groups)          # noqa: E731
+    else:
+        order = sorted({(r.get("start") or "")[:2] for r in rows})
+        key = lambda r: (r.get("start") or "")[:2]    # noqa: E731
+    bins = {k: [] for k in order}
+    for r in rows:
+        bins.setdefault(key(r), []).append(r)
+    picked, i = [], 0
+    while len(picked) < limit and any(len(b) > i for b in bins.values()):
+        for k in order:
+            if len(picked) < limit and len(bins[k]) > i:
+                picked.append(bins[k][i])
+        i += 1
+    return [r for k in order for r in bins[k] if r in picked]
 
 
 def species_names(question):

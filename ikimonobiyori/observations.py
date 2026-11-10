@@ -88,6 +88,7 @@ def parse_typical(text, policy):
         return None
     t = unicodedata.normalize("NFKC", text).replace("〜", "~").replace("～", "~").replace("-", "~")
     thirds = policy["month_thirds"]
+    t = _fill_omitted_month(t, thirds)
     parts = []
     for m, rest in re.findall(r"(\d{1,2})月(上旬|中旬|下旬|\d{1,2}日|)", t):
         mm = int(m)
@@ -115,6 +116,19 @@ def parse_typical(text, policy):
         return None
     s, e = parts[0], parts[-1]
     return f"{s[0]:02d}-{s[1]:02d}", f"{e[2]:02d}-{e[3]:02d}"
+
+
+OMITTED_MONTH_RE = re.compile(r"(\d{1,2})月(上旬|中旬|下旬)\s*(~|から)\s*(上旬|中旬|下旬)")
+
+
+def _fill_omitted_month(t, thirds):
+    """段階78 の追記(本人の指示 2026-11-11): 「4月上旬~下旬」「4月上旬から中旬」は後半も同じ月(「4月上旬~4月下旬」)。
+    後半の旬が前半より前(「12月下旬~上旬」)は月が分からないので補わない(推測しない)。"""
+    def rep(m):
+        if thirds[m.group(4)][0] < thirds[m.group(2)][0]:
+            return m.group(0)
+        return f"{m.group(1)}月{m.group(2)}{m.group(3)}{m.group(1)}月{m.group(4)}"
+    return OMITTED_MONTH_RE.sub(rep, t)
 
 
 END_ONLY_RE = re.compile(r"\d{1,2}月(?:上旬|中旬|下旬|\d{1,2}日)?(?:頃|ごろ)?まで")
