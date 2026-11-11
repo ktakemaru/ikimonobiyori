@@ -15,6 +15,8 @@ record:
   # 段階69 第3部 4: 名所の登録(種 kind と例年の時期 typical。本文を読んだ印 basis: page)は、今の状態(state)がなくても記録できる。
   # 今の状態は読めたときだけ別に記録する(画像で読めないときは記録しない。推測しない)
   state_optional_with: [kind, typical]
+  # 段階80 F(提案7): 「行く前に」(notice。台風の被害で一部開園など)だけの記録も、公式のページの本文を読んだもの(source_class: official・basis: page)なら、今の状態なしで記録できる
+  state_optional_notice: true
   # 段階64 第5部: 取得の作法の検査(記録の入口)。
   # basis: 事実の読み方。page = ページの本文を読んだ / search_summary = 検索結果の要約だけ(記録しない)。
   # 種(kind)と例年の時期(typical)の記録(時期と場所の答えの材料)は、本文を読んだ印(basis: page)が要る

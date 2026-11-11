@@ -84,8 +84,8 @@ def across_bay(prefecture, city=None, point=None, origin=None, c=None):
     return bool(city) and any(city.startswith(m) for m in ab["municipalities"])
 
 
-def straight_km(name, origin, *, prefecture=None, city=None):
-    """名所 → (km, 根拠: point / city / None, point)。座標 → 市区町村の代表点 → (None, None, None)。"""
+def straight_range(name, origin, *, prefecture=None, city=None):
+    """名所 → (範囲 {origin, km, status} か None, 根拠: point / city / None, point)。座標 → 市区町村の代表点の順。"""
     from . import catalog as CM
     from . import origins
     info = place_info(name)
@@ -93,14 +93,20 @@ def straight_km(name, origin, *, prefecture=None, city=None):
     pol = CM.load_policy()
     try:
         if pt:
-            return CM.range_from(pol, pt, origin)["km"], "point", pt
+            return CM.range_from(pol, pt, origin), "point", pt
         city = city or info.get("city")
         mp = origins.municipal_point(city) if city else None
         if mp:
-            return CM.range_from(pol, mp, origin)["km"], "city", None
+            return CM.range_from(pol, mp, origin), "city", None
     except (KeyError, TypeError, ValueError, StopIteration):
         pass
     return None, None, None
+
+
+def straight_km(name, origin, *, prefecture=None, city=None):
+    """名所 → (km, 根拠: point / city / None, point)。座標 → 市区町村の代表点 → (None, None, None)。"""
+    rg, basis, pt = straight_range(name, origin, prefecture=prefecture, city=city)
+    return (rg["km"] if rg else None), basis, pt
 
 
 def distance_text(name, km, origin, *, estimated=False, prefecture=None, city=None, c=None):
@@ -180,8 +186,20 @@ def species_rows(question, cond, env=None, c=None):
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
+    merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
+
+
+def merge_same_places(rows):
+    """段階80 E(提案6): 「爪木崎」と「爪木崎の水仙」は同じ名所(同じ種・同じ市町村で、名前が「<短い名前>の…」)。
+    長い名前の行を短い名前にそろえる(時期と出典はそれぞれの行に残す。元の名前は merged_from)。"""
+    for r in rows:
+        same = [o for o in rows if o is not r and o["species"] == r["species"] and (o.get("city") or "") == (r.get("city") or "")
+                and len(o["name"]) >= 2 and r["name"].startswith(o["name"] + "の")]
+        if same:
+            r["merged_from"], r["name"] = r["name"], min(same, key=lambda o: len(o["name"]))["name"]
+    return rows
 
 
 class SpeciesRows(list):

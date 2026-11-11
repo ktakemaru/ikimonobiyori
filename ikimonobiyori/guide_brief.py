@@ -138,10 +138,10 @@ def _pending_urls():
 
 
 def _ledger_pending(url):
-    """台帳で承認待ちの情報源のページか(同じホストでパスがいちばん長く一致する項目の状態。observations.ledger_status_of と同じ判定)。"""
+    """台帳で承認待ちの情報源のページか(情報源の URL の範囲で判定する。observations._ledger_gated と同じ。段階80 D)。"""
     from . import observations as O
     try:
-        return O.ledger_status_of(url) == "pending"
+        return O.ledger_status_in_range(url) == "pending"
     except (OSError, ValueError, KeyError):
         return False
 
@@ -462,8 +462,8 @@ def _place_records(F, question, cands, cond, c, env=None):
         except (OSError, ValueError, KeyError):
             continue
         for r in rows:
-            if not r.get("name") or not r.get("kind") or not (r.get("typical") or r.get("notice")):
-                continue
+            if not r.get("name") or not (r.get("typical") or r.get("notice")) or (r.get("typical") and not r.get("kind")):
+                continue                                  # 段階80 F: 「行く前に」だけの記録(種なし)も入れる
             city = r.get("city") or ""
             if not any(p in city or p in r["name"] for p in places):
                 continue
@@ -474,8 +474,8 @@ def _place_records(F, question, cands, cond, c, env=None):
             if r.get("notice"):
                 F.add("facility", f"{r['name']}: 行く前に: {r['notice']}", place=r["name"], source=r.get("publisher"), url=r.get("url"),
                       source_class=r.get("source_class"))
-            if r["name"] in have:
-                continue
+            if r["name"] in have or not r.get("typical"):
+                continue                                  # 「行く前に」だけの記録は候補にしない(事実だけ)
             have.add(r["name"])
             km, label = GM.distance_text(r["name"], None, cond.get("origin"), prefecture=r.get("prefecture"), city=city, c=c)
             cands.append({"subject": sj, "rank": None, "name": r["name"], "chosen": False, "basis": "species", "group": _group_of(r.get("prefecture"), c),
@@ -561,10 +561,12 @@ def _target_months(cond, now):
 
 
 def _theme_words(question, subjects, c):
-    """質問の語と対象 → テーマの語(カードを引く語)。"""
+    """質問の語と対象 → テーマの語(カードを引く語)。
+    段階80 E(提案1): 種の名前を含む別の語(芝桜・秋桜など。species_blob_exclude_re)は、質問の語として数えない(芝桜の質問で桜のテーマにしない)。"""
     out = []
+    q = re.sub(c.get("species_blob_exclude_re") or r"(?!)", "", question or "")
     for t in c["card_themes"]:
-        if t.get("subject") in (subjects or []) or any(w in (question or "") for w in t.get("question_words") or []):
+        if t.get("subject") in (subjects or []) or any(w in q for w in t.get("question_words") or []):
             out += [w for w in t["words"] if w not in out]
     return out
 
@@ -600,6 +602,14 @@ def _general_card(card, c):
     pl = card.get("place") or ""
     words = {w for t in c["card_themes"] for w in t["words"]} | set(c.get("general_place_words") or [])
     return any(w in pl for w in words) and not _real_place(pl)
+
+
+def _plain_general_card(card, c):
+    """段階80 A: 場所に結びつかない一般の話のカード(場所の欄が「桜一般」やテーマの語そのもので、ほかの場所の名前を添えていない)。"""
+    pl = card.get("place") or ""
+    words = {w for t in c["card_themes"] for w in t["words"]} | set(c.get("general_place_words") or [])
+    plain = pl.endswith(c.get("species_card_place_suffix") or "一般") or pl in words
+    return plain and _general_card(card, c) and (card.get("where") or pl) == pl
 
 
 def _broad_place(name):
@@ -669,7 +679,7 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     if route not in (c.get("species_card_skip_routes") or []):
         push(_species_cards(question, shown, c, route), L["species"], c["species_cards_max"])   # 段階79 第3部: 種のカード(「<種>一般」)
     try:                                                  # 質問の話題のカード(種の名前で引けたもの以外は一般の話として扱う)
-        push([r for r in intent.cards_for(question) if _general_card(r, c)], L["theme"], c["species_cards_max"])
+        push([r for r in intent.cards_for(question) if _general_card(r, c) and not _excluded_topic(r, question, c)], L["theme"], c["species_cards_max"])
     except (OSError, ValueError, KeyError, TypeError):
         pass
     if cand_names:                                        # 答えに選んだ候補の場所のカード(上から)
@@ -685,7 +695,7 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
             if ms and months and not set(ms) & set(months):
                 continue
             blob = " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""] + list(r.get("facts") or []))
-            hit = sum(1 for w in tw if w in blob)
+            hit = sum(1 for w in tw if species_hit([w], blob, c))      # 段階80 E(提案1): 桜の語で芝桜のカードを引かない
             if hit:
                 theme.append((-hit, r.get("title") or "", r))
         push([r for _h, _t, r in sorted(theme, key=lambda x: (x[0], x[1]))], L["theme"])
@@ -719,6 +729,16 @@ def _species_cards(question, shown, c, route=None):
                 seen.add((g[i].get("title"), g[i].get("place")))
                 out.append(g[i])
     return out
+
+
+def _excluded_topic(card, question, c):
+    """段階80 E(提案1): カードの題名・主題・場所の欄に、種の名前を含む別の語(芝桜・秋桜・梅雨など)があり、その語が質問にないか
+    (桜の質問に芝桜のカードを一般の話として入れない)。"""
+    ex = c.get("species_blob_exclude_re")
+    if not ex:
+        return False
+    head = " ".join([card.get("title") or "", card.get("subject") or "", card.get("place") or ""])
+    return any(m.group(0) not in (question or "") for m in re.finditer(ex, head))
 
 
 def species_hit(words, blob, c=None):
@@ -844,7 +864,11 @@ def typical_candidates(cond, now, scope, existing, c, pending):
         if not _covers(season.get("window"), mds):
             continue
         rng = (e.get("range") or {})
-        by = (rng.get("by_origin") or {}).get(origin) or rng
+        by = (rng.get("by_origin") or {}).get(origin)
+        if by is None and origin and rng.get("from") != origin:     # 段階80 C(提案8): 出発地の距離がないときは、既定の出発地の距離を使わず出し直す
+            from . import guide_materials as GM
+            by = GM.straight_range(e["name"], origin, prefecture=e.get("prefecture"), city=e.get("municipality"))[0] or {"km": None}
+        by = by or rng
         if by.get("status") == "out_of_range":
             continue
         src = [x for x in e.get("sources") or [] if x.get("url") and not P.unused_source(x["url"]) and x["url"] not in pending]
@@ -977,6 +1001,8 @@ def _alt_filter(typ, question, cond, cands, clos, c):
     種を聞く質問: 聞かれた種の候補だけ(ほかの種の行き先は付けない)。場所を聞く質問: その場所が今は楽しめない
     (対象の日が冬季閉鎖の時期に当たる・その場所の候補がない)ときだけ。そのほか(「今週末の紅葉」「今見られる花」)は今までどおり。"""
     from . import guide_materials as GM
+    if cond.get("route") == "unknown_place":           # 段階80 A(提案4): 辞書にない地名は、別の場所の候補に置き換えない(調べる対象にする)
+        return []
     words = GM.species_match_words(question)
     if words:
         return [t for t in typ if any(w in " ".join([t.get("theme") or "", *(t.get("kinds") or []), t.get("name") or ""]) for w in words)]
@@ -1110,6 +1136,13 @@ def _missing(question, res, cands, facts, cards, extra):
     for p in qplaces:
         n = sum(1 for f in facts if p in f["content"])
         out.append(f"「{p}」についての確かめた事実は {n} 件")
+    if (res.get("route") or (res.get("cond") or {}).get("route")) == "unknown_place":    # 段階80 A(提案4)
+        line = cfg()["unknown_place_missing"]
+        try:
+            unk = PG.unknown_places(question)
+        except (KeyError, TypeError, ValueError):
+            unk = []
+        out += [line.format(name=p) for p in unk]
     if not cards:
         out.append("この質問に結びつく知識カードがない")
     if not facts:
@@ -1152,7 +1185,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     from . import guide_materials as GM
     sprows = GM.species_rows(question, cond, env, c)           # 段階78 第2部 2・3: 種の名所の一覧
     _line_facts(F, res.get("text") or "", c, known_pubs, skip_blocks=bool(cands),
-                skip_names={r["name"] for r in sprows} | set(getattr(sprows, "dropped", ()) or ()))
+                skip_names={r["name"] for r in sprows} | {r["merged_from"] for r in sprows if r.get("merged_from")}
+                | set(getattr(sprows, "dropped", ()) or ()))
     _species_facts(F, sprows, cands, cond, c)
     if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
         _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
@@ -1189,6 +1223,10 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                       "reasons": [c["bird_highlights"]["label"]]})
     from . import guide_materials as GM
     for r in cands:
+        if not r.get("prefecture") or not r.get("city"):      # 段階80 E(提案11): 場所の欄が空の候補は、名所の辞書の都県・市町村で補う
+            info = GM.place_info(r["name"])
+            r["prefecture"] = r.get("prefecture") or info.get("prefecture")
+            r["city"] = r.get("city") or info.get("city")
         r.setdefault("basis", "current" if r.get("current_state") else "typical")
         r.setdefault("group", _group_of(r.get("prefecture"), c))
         if "distance_text" not in r:                          # 段階78 第1部 2・3: 直線と明記。見積もりの距離は出さない。東京湾の向こう側は数字なし
@@ -1213,6 +1251,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                 cards.append({**k, "id": f"K{len(cards) + 1:03d}"})
     if hl:
         cards = _add_highlight_cards(cards, hl, c)
+    if (res.get("route") or cond.get("route")) == "unknown_place":   # 段階80 A(提案4): 辞書にない地名の質問では、ほかの場所の話のカードを使わない(一般の話だけ)
+        cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if _plain_general_card(k, c))]
     mat = _narrative(cards, question, cond, cands, sprows, months, c)     # 段階78 第3部 1: 語りの材料
     if hl:
         mat = _highlight_materials(mat, cards, hl, c)
@@ -1241,6 +1281,20 @@ def _dist(r):
     return f"直線で約{r['distance_km']}km" if r.get("distance_km") is not None else "距離は未計算"
 
 
+def _loc(r):
+    """段階80 E(提案11): 候補の場所の書き方(都県と市町村)。名所の名前が都県・市町村の名前で始まるときは重ねない
+    (「埼玉県立自然の博物館(埼玉県…)」→「埼玉県立自然の博物館(長瀞町…)」)。"""
+    name = r.get("name") or ""
+    pref, city = r.get("prefecture") or "", r.get("city") or ""
+    pref_stem = re.sub(r"(都|道|府|県)$", "", pref)
+    city_stem = re.sub(r"(市|町|村|区)$", "", city)
+    if pref and name.startswith(pref_stem):
+        pref = ""
+    if city and city_stem and name.startswith(city_stem):
+        city = ""
+    return f"{pref}{city}"
+
+
 def render_md(doc):
     L = [f"# ガイドの資料 {doc['id']}", "", f"- 質問: {doc['question']}"]
     if doc.get("previous"):
@@ -1258,10 +1312,10 @@ def render_md(doc):
             why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
             if r.get("rank") is None:
                 tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
-                L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({r.get('prefecture') or ''}{r.get('city') or ''} {_dist(r)})"
+                L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({_loc(r)} {_dist(r)})"
                          + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else ""))
                 continue
-            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({r.get('prefecture') or ''} {_dist(r)}・点 {r.get('score')}・"
+            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({_loc(r)} {_dist(r)}・点 {r.get('score')}・"
                      f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}")
         L.append("")
     L += ["## 確かめた事実", ""]

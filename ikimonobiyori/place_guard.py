@@ -111,9 +111,31 @@ def is_known(name, env=None, extra=()):
     return False
 
 
+def unknown_towns(question, env=None, extra=()):
+    """段階80 A(提案4): 「南伊豆で」のような市区町村の名前(略称を含む)で、場所の辞書(エリア・地域・出発地・名所の名前・
+    名所のある市区町村)で解決できないもの。別の場所(既定の出発地の近く)の候補に置き換えず、調べる対象にする。"""
+    from . import guide_verify as GV
+    from . import research as RS
+    from . import season_place as SP
+    out = []
+    dic = GV._dictionary_places()
+    for w in RS.question_places(question):
+        if w in dic or is_known(w, env, extra):          # 名所・エリア・山の辞書の名前は知っている場所
+            continue
+        t = SP.resolve_town(w)
+        if t and (t == w or re.sub(r"[市町村区]$", "", t) == w):
+            continue
+        out.append(w)
+    return out
+
+
 def unknown_places(question, env=None, extra=()):
     """解決できない場所の語の一覧(範囲を決めていない大きな地名を含む)。"""
-    return [w for w in candidates(question) if pending_area(w) or not is_known(w, env, extra)]
+    out = [w for w in candidates(question) if pending_area(w) or not is_known(w, env, extra)]
+    for w in unknown_towns(question, env, extra):
+        if not any(w in x or x in w for x in out):
+            out.append(w)
+    return out
 
 
 def subject_label(subjects, question, c=None):

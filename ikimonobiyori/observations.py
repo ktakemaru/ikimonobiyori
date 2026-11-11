@@ -285,6 +285,15 @@ def ledger_status_of(url):
     return "approved" if any(r[2] == "approved" for r in rows) else "pending"
 
 
+def ledger_status_in_range(url):
+    """段階80 D(提案2): 記録の URL が台帳の情報源の URL の範囲(同じホストで、情報源のパスの下)にあるときだけ、その項目の承認の状態。
+    範囲の外(同じホストの別のページ)は None(ホスト単位にしない。横浜市の西区のページが承認待ちでも、市のほかのページは隠さない)。"""
+    u = urlparse(url or "")
+    host, path = _bare_host(u.hostname), unquote(u.path or "/")
+    hits = sorted([r for r in _ledger_urls() if r[0] == host and path.startswith(r[1].rstrip("/") or "/")], key=lambda r: -len(r[1]))
+    return hits[0][2] if hits else None
+
+
 def _ledger_gated(r, subject, policy):
     """段階60 第9部: 公式の台帳で承認待ちの情報源の、公式としての記録は、承認されるまで答えの材料にしない(記録は残る)。
     紹介サイトなど(source_class secondary)は段階34 の方針どおり使う。対象の台帳は方針 record.gated_ledgers。"""
@@ -292,7 +301,7 @@ def _ledger_gated(r, subject, policy):
         return False
     if r.get("source_class") != "official":
         return False
-    return ledger_status_of(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
+    return ledger_status_in_range(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
 
 
 def restricted_cfg(host, policy):
@@ -360,6 +369,8 @@ def validate(rec, policy):
     for k in r["required"]:
         if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
             continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
+        if k == "state" and r.get("state_optional_notice") and rec.get("notice") and rec.get("basis") == "page" and rec.get("source_class") == "official":
+            continue                                  # 段階80 F(提案7): 公式のページで読んだ「行く前に」だけの記録
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
             continue                                  # 段階69 第4部 3: 行事の記録は今の状態がなくてよい
         if not rec.get(k):

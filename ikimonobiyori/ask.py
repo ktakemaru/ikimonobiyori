@@ -966,7 +966,9 @@ def main(argv=None, http_get=None):
     p.add_argument("--month", type=int)
     p.add_argument("--now", help="行事の質問: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
     p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)|audit-subject(段階72。主語のない文の一覧)")
-    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject", "narrative"])   # 段階78: narrative = カードの文に語りの種類の項目を足す
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject", "narrative", "rename", "retire"])   # 段階78: narrative = カードの文に語りの種類の項目を足す。段階80: rename・retire(控えを残す)
+    p.add_argument("--new-title", help="rename: 新しい題名")
+    p.add_argument("--reason", help="retire: 取り下げの理由(rename では控えに残すメモ)")
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
     p.add_argument("--place")
     p.add_argument("--category")
@@ -1094,6 +1096,21 @@ def main(argv=None, http_get=None):
             rows, n = GN.annotate(K.load())
             K.path().write_text("".join(json.dumps(r, ensure_ascii=False) + chr(10) for r in rows), encoding="utf-8")
             print(f"{n} 枚に語りの種類を足しました(全 {len(rows)} 枚)")
+            return 0
+        if a.action in ("rename", "retire"):              # 段階80 F(提案5): 題名の変更・取り下げ(データ置き場の控え knowledge/card_changes.jsonl)
+            if not a.title:
+                print("--title <今の題名> が要ります", file=sys.stderr)
+                return 1
+            at = _clock().isoformat()
+            try:
+                if a.action == "rename":
+                    card = K.rename(a.title, a.new_title, at=at, place=a.place, note=a.reason)
+                else:
+                    card = K.retire(a.title, a.reason, at=at, place=a.place)
+            except ValueError as ex:
+                print(str(ex), file=sys.stderr)
+                return 1
+            _out({"action": a.action, "title": card["title"], "place": card.get("place"), "retired": bool(card.get("retired"))})
             return 0
         if a.action == "audit-subject":                  # 段階72 第2部 1
             _out(K.subject_audit())

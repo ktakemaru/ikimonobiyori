@@ -1,0 +1,246 @@
+"""段階80: 段階79 の提案の直し(A 知らない地名 / B 発行元の確かめ / C 出発地の距離 / D 承認待ちの範囲 / E テーマの語・重複・場所の書き方 /
+F カードの題名の変更・取り下げ・「行く前に」だけの記録・上限の文)。合成データ(通信しない)。"""
+import json
+import tempfile
+import unittest
+from datetime import datetime, timedelta, timezone
+from unittest import mock
+
+import helpers as H  # noqa: F401  (通信禁止)
+
+from ikimonobiyori import guide_brief as GB
+from ikimonobiyori import guide_materials as GM
+from ikimonobiyori import knowledge as K
+from ikimonobiyori import observations as O
+from ikimonobiyori import place_guard as PG
+from ikimonobiyori import research as RS
+
+JST = timezone(timedelta(hours=9))
+NOW = datetime(2026, 11, 11, 9, 0, tzinfo=JST)
+
+
+class UnknownTown(unittest.TestCase):
+    """A(提案4): 場所の辞書にない市町村の名前(「南伊豆」)を、別の場所の候補に置き換えない。"""
+
+    def test_town_not_in_dictionary_is_unknown(self):
+        with mock.patch.object(RS, "question_places", return_value=["試験伊豆"]), \
+                mock.patch.object(PG, "is_known", return_value=False):
+            self.assertEqual(PG.unknown_places("試験伊豆で見られる花"), ["試験伊豆"])
+
+    def test_town_resolved_by_town_dictionary_is_known(self):
+        from ikimonobiyori import season_place as SP
+        with mock.patch.object(RS, "question_places", return_value=["試験津"]), \
+                mock.patch.object(PG, "is_known", return_value=False), mock.patch.object(SP, "resolve_town", return_value="試験津町"):
+            self.assertEqual(PG.unknown_towns("試験津で見られる花"), [])
+        with mock.patch.object(RS, "question_places", return_value=["南試験"]), \
+                mock.patch.object(PG, "is_known", return_value=False), mock.patch.object(SP, "resolve_town", return_value="試験市"):
+            self.assertEqual(PG.unknown_towns("南試験で見られる花"), ["南試験"])     # 「伊豆市」の部分の一致では解決しない
+
+    def test_known_questions_stay(self):
+        for q in ("今週末の紅葉の情報は?", "野鳥のおすすめを教えて", "梅と桜の見分け方を教えて", "白鳥を見たい"):
+            self.assertEqual(PG.unknown_places(q), [], q)
+
+    def test_no_alternative_places_for_unknown_place(self):
+        typ = [{"name": "試験の遠い公園", "theme": "花", "kinds": []}]
+        self.assertEqual(GB._alt_filter(typ, "試験伊豆で見られる花", {"route": "unknown_place"}, [], [], GB.cfg()), [])
+
+    def test_only_plain_general_cards(self):
+        c = GB.cfg()
+        self.assertTrue(GB._plain_general_card({"place": "桜一般", "where": "桜一般"}, c))
+        self.assertFalse(GB._plain_general_card({"place": "冬桜", "where": "桜山公園・群馬県藤岡市"}, c))      # ほかの場所の話
+        self.assertFalse(GB._plain_general_card({"place": "試験町建具会館の花畑", "where": "試験町建具会館の花畑"}, c))
+
+    def test_missing_line(self):
+        with mock.patch.object(PG, "unknown_places", return_value=["試験伊豆"]), mock.patch.object(PG, "candidates", return_value=[]):
+            out = GB._missing("試験伊豆で見られる花", {"route": "unknown_place"}, [], [], [], None)
+        self.assertTrue(any("場所の辞書にない地名「試験伊豆」" in x for x in out), out)
+
+    def test_research_ignores_lines_without_source(self):
+        facts = [{"content": "確認できている公式ページの範囲では、試験伊豆の花の情報はまだ見つかっていません。", "url": None}]
+        with mock.patch.object(RS, "question_places", return_value=["試験伊豆"]), mock.patch.object(PG, "candidates", return_value=[]):
+            t = RS.needs("試験伊豆で見られる花", {}, [], [], [], facts)
+        self.assertEqual([x["where"] for x in t], ["試験伊豆"])
+
+
+class DeclaredPublisher(unittest.TestCase):
+    """B(提案9): --publisher の名前は、ページの運営者の欄(フッター・著作権表示・運営者情報)で探す。"""
+
+    PAGE = ("<html><head><meta name='author' content='試験ナビ株式会社'></head><body><p>試験県の紅葉の名所 例年11月</p>"
+            "<footer><p>運営: 試験ナビ株式会社</p><small>Copyright 試験ナビ</small></footer></body></html>")
+
+    def test_operator_text(self):
+        op = RS.operator_text(self.PAGE)
+        self.assertIn("試験ナビ株式会社", op)
+        self.assertNotIn("試験県の紅葉", op)
+
+    def test_name_only_in_body_is_not_enough(self):
+        t = RS.html_text(self.PAGE)
+        op = RS.operator_text(self.PAGE, t)
+        self.assertFalse(RS._verified(t, "試験県", op))
+        self.assertTrue(RS._verified(t, "試験ナビ株式会社", op))
+
+    def test_copyright_line_and_class(self):
+        h = "<div class='site-footer'><div>(C) 試験温泉観光協会<div>x</div></div></div><p>本文 試験県</p>"
+        self.assertIn("試験温泉観光協会", RS.operator_text(h))
+        self.assertIn("試験町観光協会", RS.operator_text(None, "本文\n© 2026 試験町観光協会\n"))
+
+    def test_fetch_rejects_body_only_name(self):
+        def get(url):
+            if url.endswith("/robots.txt"):
+                return 404, b"", {}
+            return 200, self.PAGE.encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            r = RS.fetch("https://navi.example.jp/a", "b-80b", now=NOW, http_get=get, publisher="試験県", env=env, sleep=lambda s: None)
+            self.assertFalse(r["ok"])
+            self.assertIn("運営者の欄", r["reason"])
+            r2 = RS.fetch("https://navi.example.jp/a", "b-80b", now=NOW, http_get=get, publisher="試験県", env=env)    # 控えでも同じ
+            self.assertFalse(r2["ok"])
+
+
+class OriginDistance(unittest.TestCase):
+    """C(提案8): 例年の目安の候補の距離は、出発地の距離がないとき出発地から出し直す(東京の距離をそのまま使わない)。"""
+
+    def test_recomputed_for_other_origin(self):
+        from ikimonobiyori import guide
+        e = {"name": "試験の濠", "scope": "place", "theme": "野鳥", "prefecture": "東京都", "municipality": "千代田区",
+             "season": {"window": {"start": "10-01", "end": "03-31"}, "text": "秋〜冬"},
+             "range": {"status": "in_range", "km": 0, "from": "東京", "by_origin": {"東京": {"km": 2}, "横浜": {"km": 27}}},
+             "sources": [{"url": "https://www.env.go.jp/x", "class": "A", "publisher": "環境省"}], "kinds": []}
+        c = GB.cfg()
+        theme = (c["typical_themes"].get("birds") or ["野鳥"])[0]
+        e["theme"] = theme
+        cond = {"subjects": ["birds"], "periods": [["2026-11-14"]], "origin": "大宮"}
+        with mock.patch.object(guide, "build", return_value=([e], None)), mock.patch.object(guide, "approved", return_value=True), \
+                mock.patch.object(GM, "straight_range", return_value=({"origin": "大宮", "km": 27, "status": "in_range"}, "city", None)) as sr:
+            rows = GB.typical_candidates(cond, NOW, "wide", set(), c, set())
+        sr.assert_called()
+        self.assertEqual([r["km"] for r in rows if r["name"] == "試験の濠"], [27])
+        with mock.patch.object(guide, "build", return_value=([e], None)), mock.patch.object(guide, "approved", return_value=True), \
+                mock.patch.object(GM, "straight_range") as sr2:
+            rows = GB.typical_candidates(dict(cond, origin="横浜"), NOW, "wide", set(), c, set())
+        sr2.assert_not_called()                                                   # 出発地の距離がある
+        self.assertEqual([r["km"] for r in rows if r["name"] == "試験の濠"], [27])
+
+
+class LedgerRange(unittest.TestCase):
+    """D(提案2): 承認待ちの判定は、情報源の URL の範囲で(ホスト単位にしない)。"""
+
+    def test_same_host_other_page_is_not_gated(self):
+        rows = [("city.example.lg.jp", "/nishi/spot/hana.html", "pending", "flowers", "t-n")]
+        P = O.load_policy()
+        with mock.patch.object(O, "_ledger_urls", return_value=rows):
+            self.assertEqual(O.ledger_status_in_range("https://www.city.example.lg.jp/nishi/spot/hana.html"), "pending")
+            self.assertIsNone(O.ledger_status_in_range("https://www.city.example.lg.jp/city-info/koho/rose.html"))
+            self.assertTrue(O._ledger_gated({"url": "https://www.city.example.lg.jp/nishi/spot/hana.html", "source_class": "official"}, "flowers", P))
+            self.assertFalse(O._ledger_gated({"url": "https://www.city.example.lg.jp/city-info/koho/rose.html", "source_class": "official"}, "flowers", P))
+            self.assertFalse(GB._ledger_pending("https://www.city.example.lg.jp/city-info/koho/rose.html"))
+
+
+class ThemeAndPlaces(unittest.TestCase):
+    """E(提案1・6・11)。"""
+
+    def test_theme_words_skip_excluded_terms(self):
+        c = GB.cfg()
+        self.assertNotIn("冬桜", GB._theme_words("芝桜の名所を教えて", [], c))
+        self.assertIn("冬桜", GB._theme_words("桜の名所を教えて", [], c))
+
+    def test_excluded_topic(self):
+        c = GB.cfg()
+        card = {"title": "芝桜は北アメリカ原産", "subject": "芝桜", "place": "芝桜一般"}
+        self.assertTrue(GB._excluded_topic(card, "桜の見られる時期", c))
+        self.assertFalse(GB._excluded_topic(card, "芝桜の名所", c))
+        self.assertFalse(GB._excluded_topic({"title": "冬桜とは", "place": "冬桜"}, "桜の見られる時期", c))
+
+    def test_merge_same_places(self):
+        rows = [{"species": "スイセン", "name": "試験崎", "city": "試験市"}, {"species": "スイセン", "name": "試験崎の水仙", "city": "試験市"},
+                {"species": "スイセン", "name": "試験崎の水仙", "city": "別の市"}]
+        GM.merge_same_places(rows)
+        self.assertEqual([r["name"] for r in rows], ["試験崎", "試験崎", "試験崎の水仙"])
+        self.assertEqual(rows[1]["merged_from"], "試験崎の水仙")
+
+    def test_location_not_doubled(self):
+        self.assertEqual(GB._loc({"name": "試験県立自然の博物館", "prefecture": "試験県", "city": "長生町"}), "長生町")
+        self.assertEqual(GB._loc({"name": "長生(月の石公園)", "prefecture": "試験県", "city": "長生町"}), "試験県")
+        self.assertEqual(GB._loc({"name": "金石橋", "prefecture": "試験県", "city": "試験町"}), "試験県試験町")
+
+
+class KnowledgeCommands(unittest.TestCase):
+    """F(提案5): カードの題名の変更・取り下げ(控えを残す)。"""
+
+    CARD = {"title": "試験の鳥(オオバンとバン)", "category": "種の解説", "place": "冬鳥一般", "subject": "オオバン",
+            "facts": ["オオバンは全体が黒く、額が白い"], "condition": {"months": [12]},
+            "source": {"name": "試験県", "url": "https://www.pref.example.lg.jp/x", "checked_on": "2026-11-11"},
+            "confidence": "公的資料", "rights": "確認済み(試験)。事実のみ", "usage": "そのまま"}
+
+    def test_rename_and_retire(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            K.add(dict(self.CARD), env=env)
+            K.rename("試験の鳥(オオバンとバン)", "オオバンの見分け方", at=NOW.isoformat(), env=env)
+            self.assertEqual([r["title"] for r in K.load(env)], ["オオバンの見分け方"])
+            with self.assertRaises(ValueError):
+                K.rename("ないカード", "x", at=NOW.isoformat(), env=env)
+            with self.assertRaises(ValueError):
+                K.retire("オオバンの見分け方", "", at=NOW.isoformat(), env=env)          # 理由が要る
+            K.retire("オオバンの見分け方", "同じ出典の重複", at=NOW.isoformat(), env=env)
+            rows = K.load(env)
+            self.assertEqual(len(rows), 1)                                              # 消さない
+            self.assertTrue(rows[0]["retired"])
+            self.assertEqual(K.load_shown(env, centers=[]), [])                         # 答えには出ない
+            log = [json.loads(x) for x in (K.path(env).parent / "card_changes.jsonl").read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([x["action"] for x in log], ["rename", "retire"])
+            self.assertEqual(log[0]["before"]["title"], "試験の鳥(オオバンとバン)")
+
+    def test_rename_collision(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            K.add(dict(self.CARD), env=env)
+            K.add(dict(self.CARD, title="オオバンの見分け方"), env=env)
+            with self.assertRaises(ValueError):
+                K.rename("試験の鳥(オオバンとバン)", "オオバンの見分け方", at=NOW.isoformat(), env=env)
+
+
+class NoticeOnly(unittest.TestCase):
+    """F(提案7): 公式ページで読んだ「行く前に」だけの記録。"""
+
+    def test_observation_record(self):
+        P = O.load_policy()
+        rec = {"subject": "flowers", "name": "試験の花の国", "url": "https://www.example.lg.jp/a", "source_class": "official",
+               "notice": "台風の被害で一部開園", "basis": "page"}
+        self.assertEqual(O.validate(rec, P), [])
+        self.assertIn("state がない", O.validate(dict(rec, source_class="secondary"), P))
+        self.assertIn("state がない", O.validate({k: v for k, v in rec.items() if k != "notice"}, P))
+
+    def test_ask_record_writes_notice_only(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            res = O.record([{"subject": "flowers", "name": "試験の花の国", "city": "横須賀市", "prefecture": "神奈川県",
+                             "url": "https://www.kanagawaparks.com/kurihama/", "source_class": "official", "notice": "台風の被害で一部開園",
+                             "basis": "page"}], env=env, now=NOW)
+            self.assertEqual(res["written"], 1, res)
+            rows = [r for r in O.read_records("flowers", env) if r.get("name") == "試験の花の国"]
+            self.assertEqual(rows[0]["notice"], "台風の被害で一部開園")
+            F = GB._Facts(GB.cfg(), set())
+            with mock.patch.object(RS, "question_places", return_value=["横須賀"]):
+                cands = []
+                GB._place_records(F, "横須賀で見られる花", cands, {"origin": "横浜"}, GB.cfg(), env)
+            self.assertEqual(cands, [])                                                    # 候補にはしない(事実だけ)
+            self.assertTrue(any("行く前に: 台風の被害で一部開園" in f["content"] for f in F.rows), F.rows)
+
+    def test_limit_message_has_first_time(self):
+        def get(url):
+            if url.endswith("/robots.txt"):
+                return 404, b"", {}
+            return 200, "<p>x</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            RS.fetch("https://www.town.minamiizu.shizuoka.jp/t1", "b-80t", now=NOW, http_get=get, env=env, sleep=lambda s: None)
+            late = RS.fetch("https://www.town.minamiizu.shizuoka.jp/t2", "b-80t", now=NOW + timedelta(seconds=500), http_get=get, env=env,
+                            sleep=lambda s: None)
+        self.assertFalse(late["ok"])
+        self.assertIn(NOW.isoformat(), late["reason"])
+
+
+if __name__ == "__main__":
+    unittest.main()

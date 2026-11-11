@@ -4,6 +4,7 @@ publications_file: knowledge/publications.jsonl
 # 知識カード(段階59 第2部)。本体はリポジトリの外。出典の規約が厳しい施設のカードも、事実のみ・自分の言葉・出典明記
 cards:
   file: knowledge/cards.jsonl
+  changes_file: knowledge/card_changes.jsonl   # 段階80 F(提案5): 題名の変更・取り下げの控え(変更の前と後のカード。1 行 1 件)
   required: [title, category, place, facts, condition, source, confidence, rights, usage]
   source_required: [name, url, checked_on]
   # 段階67 第4部 2: 施設(ビジターセンター・山小屋の開館・営業)と行き方・歩き方(ロープウェイ・登山口・所要時間)を分けた。出会い方・歩き方は生き物との出会い方

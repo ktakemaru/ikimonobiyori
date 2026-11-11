@@ -65,7 +65,7 @@ def needs(question, cond, sprows, cands, cards, facts, c=None):
         if any(o["where"] == p for o in out):
             continue
         n_c = sum(1 for r in cands if p in (r.get("name") or "") or p in (r.get("city") or ""))
-        n_f = sum(1 for f in facts if p in (f.get("content") or ""))
+        n_f = sum(1 for f in facts if p in (f.get("content") or "") and f.get("url"))     # 段階80 A: 出どころのない行(「まだ見つかっていません」)は事実に数えない
         n_k = sum(1 for k in cards if p in " ".join([k.get("place") or "", k.get("title") or ""]))
         if n_c == 0 and n_k == 0 and n_f == 0:
             out.append({"what": "、".join(sps) or None, "where": p, "why": f"「{p}」の名所・カード・事実がない"})
@@ -151,6 +151,58 @@ class _Text(HTMLParser):
             self.out.append(data)
 
 
+class _Operator(HTMLParser):
+    """段階80 B(提案9): ページの運営者の欄(<footer>・id/class に footer・copyright を含む要素・meta の author/copyright)の文字。"""
+
+    def __init__(self, cls_re):
+        super().__init__(convert_charrefs=True)
+        self.cls_re, self.stack, self.out, self.skip = cls_re, [], [], 0
+
+    def handle_starttag(self, tag, attrs):
+        a = {k: (v or "") for k, v in attrs}
+        if tag == "meta" and (a.get("name") or "").lower() in ("author", "copyright") and a.get("content"):
+            self.out.append(a["content"])
+            return
+        if tag in _Text.SKIP:
+            self.skip += 1
+            return
+        if self.stack and tag == self.stack[-1][0]:
+            self.stack[-1][1] += 1
+        elif tag == "footer" or re.search(self.cls_re, " ".join([a.get("id", ""), a.get("class", "")]), re.I):
+            self.stack.append([tag, 1])
+
+    def handle_endtag(self, tag):
+        if tag in _Text.SKIP and self.skip:
+            self.skip -= 1
+            return
+        if self.stack and tag == self.stack[-1][0]:
+            self.stack[-1][1] -= 1
+            if self.stack[-1][1] == 0:
+                self.stack.pop()
+                self.out.append(NL)
+
+    def handle_data(self, data):
+        if self.stack and not self.skip:
+            self.out.append(data)
+
+
+def operator_text(html, text=None):
+    """運営者の欄の文字(フッター・著作権表示・運営者情報の行)。欄が見つからなければ空。"""
+    R = cfg()
+    out = []
+    if html:
+        p = _Operator(R["operator_class_re"])
+        try:
+            p.feed(html)
+        except Exception:
+            pass
+        out.append("".join(p.out))
+    for line in (text if text is not None else html_text(html or "")).splitlines():
+        if re.search(R["operator_line_re"], line):
+            out.append(line)
+    return re.sub(r"\s+", " ", NL.join(x for x in out if x and x.strip())).strip()
+
+
 def html_text(html):
     p = _Text()
     try:
@@ -231,9 +283,13 @@ def _declared_ok(publisher):
     return bool(publisher) and bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
 
 
-def _verified(text, publisher):
-    """本文に発行元の名前があるか(空白の違いは見ない)。"""
-    return bool(publisher) and re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", text or "")
+def _verified(text, publisher, operator=None):
+    """発行元の名前がページの運営者の欄(フッター・著作権表示・運営者情報)にあるか(空白の違いは見ない)。
+    段階80 B(提案9): 本文のどこかにあるだけでは通さない。運営者の欄が一つも見つからないページだけ、本文で探す(段階78 の形)。"""
+    if not publisher:
+        return False
+    hay = operator if operator else text
+    return re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", hay or "")
 
 
 def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep, publisher=None):
@@ -253,8 +309,8 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
     try:
         cached = json.loads(cp.read_text(encoding="utf-8"))
         if now - datetime.fromisoformat(cached["fetched_at"]) <= timedelta(days=R["cache_days"]):
-            if declared and not _verified(cached["text"], declared):
-                return {"ok": False, "reason": f"本文に発行元の名前「{declared}」がない。公式のページとして読まない"}
+            if declared and not _verified(cached["text"], declared, cached.get("operator", operator_text(None, cached["text"]))):
+                return {"ok": False, "reason": f"ページの運営者の欄(フッター・著作権表示・運営者情報)に発行元の名前「{declared}」がない。公式のページとして読まない"}
             _note_page(bid, url, now, env, cached=True, publisher=declared)
             return {"ok": True, "status": cached.get("status"), "text": cached["text"], "path": str(cp), "from_cache": True}
     except (OSError, ValueError, KeyError):
@@ -262,9 +318,11 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
     st = _load_state(bid, env)
     live_pages = [p for p in st["pages"] if not p.get("cached")]
     if len(live_pages) >= R["max_pages_per_question"]:
-        return {"ok": False, "reason": f"1 つの質問の上限({R['max_pages_per_question']} ページ)に達した。ここまでの記録で答える"}
+        return {"ok": False, "reason": f"1 つの質問の上限({R['max_pages_per_question']} ページ)に達した(この資料の番号で最初に取得した時刻 {st.get('first_at') or '不明'})。"
+                                        "ここまでの記録で答える。別の質問なら資料を作り直して新しい番号で"}
     if st.get("first_at") and (now - datetime.fromisoformat(st["first_at"])).total_seconds() > R["max_seconds_per_question"]:
-        return {"ok": False, "reason": f"1 つの質問の時間の上限({R['max_seconds_per_question']} 秒)を過ぎた。ここまでの記録で答える"}
+        return {"ok": False, "reason": f"1 つの質問の時間の上限({R['max_seconds_per_question']} 秒)を過ぎた(この資料の番号で最初に取得した時刻 {st['first_at']})。"
+                                        "ここまでの記録で答える。別の質問なら資料を作り直して新しい番号で"}
     if http_get is None:
         ref = NB.refusal(env)
         if ref:
@@ -321,13 +379,16 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
         return {"ok": False, "reason": "大きすぎるページ"}
     if "pdf" in ctype.lower() or url.lower().endswith(".pdf"):
         text = _pdf_text(raw, env)
+        op = operator_text(None, text)
     else:
-        text = html_text(raw.decode(_charset(ctype, raw), errors="replace"))
+        html = raw.decode(_charset(ctype, raw), errors="replace")
+        text = html_text(html)
+        op = operator_text(html, text)
     cp.parent.mkdir(parents=True, exist_ok=True)
-    cp.write_text(json.dumps({"url": url, "fetched_at": now.isoformat(), "status": status, "text": text}, ensure_ascii=False), encoding="utf-8")
+    cp.write_text(json.dumps({"url": url, "fetched_at": now.isoformat(), "status": status, "text": text, "operator": op}, ensure_ascii=False), encoding="utf-8")
     if declared:
-        if not _verified(text, declared):
-            return {"ok": False, "reason": f"本文に発行元の名前「{declared}」がない。公式のページとして読まない"}
+        if not _verified(text, declared, op):
+            return {"ok": False, "reason": f"ページの運営者の欄(フッター・著作権表示・運営者情報)に発行元の名前「{declared}」がない。公式のページとして読まない"}
         st["pages"][-1]["publisher_verified"] = declared
         _save_state(bid, st, env)
     return {"ok": True, "status": status, "text": text, "path": str(cp), "from_cache": False}
@@ -403,7 +464,7 @@ def record(items, bid, *, question=None, env=None, now=None):
         if it.get("typical") and re.search(R["omitted_month_re"], it["typical"]):
             errs.append("例年の時期の範囲で後ろの月を省かない(「4月上旬〜下旬」ではなく「4月上旬〜4月下旬」)")
         if not it.get("typical"):                       # 名所の記録は種と例年の時期が要る(observations の決まり。notice は添えるだけ)
-            errs.append("typical(例年の時期)が要る(notice は添えるだけ)")
+            errs.append("typical(例年の時期)が要る(notice は添えるだけ。「行く前に」だけなら ask record で basis: page)")
         if errs:
             rejected.append({"index": i, "errors": errs})
             continue

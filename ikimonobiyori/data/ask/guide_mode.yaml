@@ -227,6 +227,8 @@ species_rows:
         - {name: 遅咲き, from: '04-16', to: '06-30', kinds: [八重桜, 里桜, 御衣黄, 鬱金, 関山, 普賢象, 一葉]}
 # 第1部 4: 代わりの行き先(例年の目安の候補)を添えるのは、場所を聞いていて、その場所が今は楽しめないときだけ。種を聞く質問には付けない
 alt_place_routes: [highlights, highlights_dated, town, unknown_place]
+# 段階80 A(提案4): 場所の辞書にない地名の質問(経路 unknown_place)。既定の出発地の近くの候補に置き換えず、足りないものに出す(調べる対象は research)
+unknown_place_missing: "場所の辞書にない地名「{name}」: ほかの場所の候補に置き換えていない(その場で調べる対象)"
 # --prev: 引き継いだ事実は、次の質問にはもう引き継がない(質問をまたいで関係のない事実が積もらないように)
 prev_one_level: true
 # 第1部 5: 都道府県のドメイン(pref.<ローマ字>.lg.jp / pref.<ローマ字>.jp)の名前
@@ -268,6 +270,9 @@ research:
   max_seconds_per_question: 120      # 1 つの質問で、最初の取得からこの秒数を過ぎたら取得しない
   min_interval_s: 1                  # 同じホストへの間隔
   declared_publisher_re: '(観光協会|観光連盟|観光推進機構|観光物産協会|観光コンベンション協会|市|町|村|県|都|府|省|庁|事務所|公園|管理センター|管理事務所|ビジターセンター|博物館|植物園|財団)$'   # --publisher の名前の形(公式に当たる発行元)
+  # 段階80 B(提案9): --publisher の名前を探すのは、ページの運営者の欄だけ(本文にあるだけでは通さない)
+  operator_class_re: 'footer|copyright'                  # id・class にこの語を含む要素は運営者の欄
+  operator_line_re: '©|Ⓒ|[Cc]opyright|COPYRIGHT|\([Cc]\)|（[Cc]）|著作権|All [Rr]ights [Rr]eserved|運営者|運営[:：]|運営元|サイト運営|発行者|発行[:：]|発行元|このサイトについて'   # 著作権表示・運営者情報の行
   max_requests_per_page: 4           # 1 ページの取得の通信の上限(robots.txt と本文、同じサイトへの転送を 1 回ずつ)
   cache_days: 7                      # 同じ URL の取得の控えを使う日数
   max_bytes: 3000000                 # 1 ページの大きさの上限

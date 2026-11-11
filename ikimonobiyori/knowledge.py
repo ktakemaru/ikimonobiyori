@@ -9,6 +9,8 @@ from pathlib import Path
 from . import pdf_text as PT
 from .paths import data_path
 
+NL = chr(10)
+
 
 def cfg():
     return PT.policy()["cards"]
@@ -106,6 +108,55 @@ def add(card, env=None, strict_subject=False):
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
     return card
+
+
+def _change(title, place, fn, action, *, at, note=None, env=None):
+    """段階80 F(提案5): 1 枚のカード(題名と、指定があれば場所で 1 枚に絞る)を fn で直して書き戻す。
+    変更の前と後のカードを控え(changes_file)に残す。当たるカードが 1 枚でなければ ValueError。"""
+    rows = load(env)
+    hits = [i for i, r in enumerate(rows) if r.get("title") == title and (place is None or r.get("place") == place)]
+    if len(hits) != 1:
+        raise ValueError(f"題名「{title}」" + (f"・場所「{place}」" if place is not None else "") + f"のカードが {len(hits)} 枚(1 枚に絞る。場所は --place)")
+    before = rows[hits[0]]
+    after = fn(json.loads(json.dumps(before, ensure_ascii=False)))
+    rows[hits[0]] = after
+    log = Path(data_path(cfg()["changes_file"], env))
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("a", encoding="utf-8") as f:
+        f.write(json.dumps({"at": at, "action": action, "note": note, "before": before, "after": after}, ensure_ascii=False) + NL)
+    p = path(env)
+    p.write_text("".join(json.dumps(r, ensure_ascii=False) + NL for r in rows), encoding="utf-8")
+    return after
+
+
+def rename(title, new_title, *, at, place=None, note=None, env=None):
+    """カードの題名を変える(控えを残す)。同じ場所に同じ題名のカードがあれば ValueError。"""
+    new_title = (new_title or "").strip()
+    if not new_title or new_title == title:
+        raise ValueError("新しい題名がない・元と同じ")
+
+    def fn(card):
+        if any(r.get("title") == new_title and r.get("place") == card.get("place") for r in load(env)):
+            raise ValueError(f"同じ場所に題名「{new_title}」のカードがすでにある")
+        card["title"] = new_title
+        errs = validate(card)
+        if errs:
+            raise ValueError("; ".join(errs))
+        return card
+    return _change(title, place, fn, "rename", at=at, note=note, env=env)
+
+
+def retire(title, reason, *, at, place=None, env=None):
+    """カードを取り下げる(消さずに retired の印。答えには出なくなる。控えを残す)。"""
+    if not (reason or "").strip():
+        raise ValueError("取り下げの理由(--reason)が要る")
+
+    def fn(card):
+        card["retired"] = True
+        card["retired_reason"] = reason.strip()
+        card["retired_at"] = at
+        return card
+    return _change(title, place, fn, "retire", at=at, note=reason, env=env)
 
 
 def load(env=None):
