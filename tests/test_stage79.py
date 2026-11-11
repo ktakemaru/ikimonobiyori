@@ -167,6 +167,9 @@ class SpeciesCards(unittest.TestCase):
         from ikimonobiyori import guide_brief as GB
         self.assertFalse(GB.species_hit(["梅"], "梅雨明けのころ・旧青梅街道"))
         self.assertTrue(GB.species_hit(["梅"], "梅の開花の前線"))
+        # 第4部の追記: 桜の名を含む別の植物(秋桜・サクラソウ・芝桜)は桜の話として数えない
+        self.assertFalse(GB.species_hit(["桜"], "コスモス(秋桜)の名の由来・サクラソウと桜草・芝桜"))
+        self.assertTrue(GB.species_hit(["桜"], "ソメイヨシノと八重桜"))
 
     def test_species_card_is_picked(self):
         from ikimonobiyori import guide_brief as GB
@@ -198,3 +201,9 @@ class SpeciesCardsRoundRobin(unittest.TestCase):
         with mock.patch.object(K, "load_shown", return_value=[card]):
             got = GB._cards("梅はいつどこで見られますか?", {"route": "plan", "cond": {}}, GB.cfg())
         self.assertNotIn("梅前線の試験", [k["title"] for k in got if k.get("link") == GB.cfg()["card_links"]["species"]])
+
+
+class OperatorHost(unittest.TestCase):
+    def test_chichibu_railway_is_facility_operator(self):
+        # 第4部の追記: 交通機関の運営者が自分の施設について書いたページ(段階78 の本人の判断)を公式の区分に
+        self.assertTrue(P.is_party("https://www.chichibu-railway.co.jp/nagatorowinter/"))
