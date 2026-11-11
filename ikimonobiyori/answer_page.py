@@ -153,8 +153,56 @@ def _linkify(escaped):
     return linkify(escaped)
 
 
+_HEAD = re.compile(r"^(#{1,6})\s+(.*\S)\s*$")
+
+
+def md_blocks(text):
+    """段階81 の続き 2: Markdown の答えの文 → 塊の一覧 [{kind: h2|h3|p|ul, texts: [文]}]。
+    「## 見出し」は見出し、「- 」「・」は箇条、それ以外の行は段落。太字の印(**)は外す(文は書き換えない)。"""
+    c = cfg()
+    out, items = [], []
+
+    def flush():
+        if items:
+            out.append({"kind": "ul", "texts": list(items)})
+            items.clear()
+    for raw in (text or "").splitlines():
+        line = re.sub(r"\*\*(.+?)\*\*", r"\1", raw.strip())
+        if not line:
+            flush()
+            continue
+        m = _HEAD.match(line)
+        if m:
+            flush()
+            out.append({"kind": "h2" if len(m.group(1)) <= 2 else "h3", "texts": [m.group(2)]})
+        elif line in c["section_words"]:
+            flush()
+            out.append({"kind": "h2", "texts": [line]})
+        elif URL_RE.fullmatch(line):
+            if safe_url(line):
+                items.append(line)
+        elif line.startswith(("・", "- ", "* ")):
+            items.append(line.lstrip("・-* ").strip())
+        else:
+            flush()
+            out.append({"kind": "p", "texts": [line]})
+    flush()
+    return out
+
+
+def _block_html(b, say):
+    if b["kind"] == "ul":
+        return '<ul class="park-facts">' + "".join(f"<li>{_linkify(say(t))}</li>" for t in b["texts"]) + "</ul>"
+    t = b["texts"][0]
+    return f"<{b['kind']}>{_linkify(say(t)) if b['kind'] == 'p' else say(t)}</{b['kind']}>"
+
+
 def build(doc, *, photo_for, photo_credit, csp, max_bytes, linkify=False):
-    """→ (HTML, 検査用の文の一覧, 載せた種 [(種名, 写真あり)])。photo_for(和名) → (メタ, バイト列) か None。"""
+    """→ (HTML, 検査用の文の一覧, 載せた種 [(種名, 写真あり)])。photo_for(和名) → (メタ, バイト列) か None。
+    doc["markdown"] が真(ガイドの答え。段階81 の続き)なら、見出し・箇条を Markdown として読み、
+    写真は種の名前が出る段落のすぐ後ろに置く(doc["species_words"] {種名: [文の中の語]})。どの段落にもない種の写真はまとめて本文の前。"""
+    if doc.get("markdown"):
+        return _build_md(doc, photo_for=photo_for, photo_credit=photo_credit, csp=csp, max_bytes=max_bytes)
     c = cfg()
     lines = []
 
@@ -192,6 +240,76 @@ def build(doc, *, photo_for, photo_credit, csp, max_bytes, linkify=False):
             f"<title>{esc(title)}</title>\n<style>{CSS}\n{pool.css()}</style>\n</head>\n<body>\n<main>\n"
             + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
     return page, lines, shown
+
+
+def _cards_for(names, photo_for, photo_credit, pool, say, shown, nophoto, over):
+    cards = []
+    for name in names:
+        got, rep = photo_with_representative(name, photo_for)
+        img = pool.tag(got[0], got[1], name) if got else None
+        if img is None:
+            (over if got else nophoto).append(name)
+            shown.append((name, False))
+            continue
+        cards.append(photo_card(name, got, rep, img, photo_credit, say))
+        shown.append((name, True))
+    return cards
+
+
+def _build_md(doc, *, photo_for, photo_credit, csp, max_bytes):
+    c = cfg()
+    lines = []
+
+    def say(s):
+        lines.append(s)
+        return esc(s)
+    title = doc.get("title") or title_of(doc)
+    names = species_for(doc)
+    words = doc.get("species_words") or {}
+    stops = set(doc.get("stop_headings") or ())
+    blocks = md_blocks(doc.get("text") or "")
+    placed, at = set(), {}                                      # 種 → その名前が最初に出る塊の番号(出典などの見出しより前だけ)
+    for i, b in enumerate(blocks):
+        if b["kind"] in ("h2", "h3") and b["texts"][0] in stops:
+            break
+        if b["kind"] in ("h2", "h3"):
+            continue
+        blob = "".join(b["texts"])
+        for n in names:
+            if n not in placed and any(w and w in blob for w in (words.get(n) or [n])):
+                placed.add(n)
+                at.setdefault(i, []).append(n)
+    rest = [n for n in names if n not in placed]
+    pool = PhotoPool(max_bytes)
+    shown, nophoto, over = [], [], list(species_over(doc))
+    body = [f"<h1>{say(title)}</h1>"]
+    top_cards = _cards_for(rest, photo_for, photo_credit, pool, say, shown, nophoto, over)
+    inline = {i: _cards_for(ns, photo_for, photo_credit, pool, say, shown, nophoto, over) for i, ns in at.items()}
+    if top_cards or any(inline.values()) or nophoto or over:
+        body.append(f'<p class="note">{say(c["photo_note"])}</p>')
+    if top_cards:
+        body.append(f"<h2>{say(c['photo_heading'])}</h2>")
+        body.append('<ul class="birds">' + "".join(top_cards) + "</ul>")
+    if over:
+        body.append(f'<p class="note">{say(c["over_limit_names"].format(names="・".join(over)))}</p>')
+    if nophoto:
+        body.append(f'<p class="note">{say(c["no_photo_names"].format(names="・".join(nophoto)))}</p>')
+    for i, b in enumerate(blocks):
+        body.append(_block_html(b, say))
+        if inline.get(i):
+            body.append('<ul class="birds">' + "".join(inline[i]) + "</ul>")
+    body.append(f'<p class="note">{say(c["footer"])}</p>')
+    order = {n: k for k, n in enumerate(names)}
+    shown.sort(key=lambda x: order.get(x[0], len(order)))
+    return _page(title, body, csp, pool), lines, shown
+
+
+def _page(title, body, csp, pool):
+    return ("<!DOCTYPE html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+            f'<meta http-equiv="Content-Security-Policy" content="{esc(csp)}">\n'
+            f"<title>{esc(title)}</title>\n<style>{CSS}\n{pool.css()}</style>\n</head>\n<body>\n<main>\n"
+            + "\n".join(body) + "\n</main>\n</body>\n</html>\n")
 
 
 def make(doc, now, env=None):

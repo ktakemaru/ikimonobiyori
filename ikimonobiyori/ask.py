@@ -912,6 +912,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画。24時間より前・なければ作らない)")
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
+    p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
+    p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
     p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
@@ -1304,6 +1306,15 @@ def main(argv=None, http_get=None):
     if a.step == "coverage":                             # 段階72 第4部 1
         from . import coverage as CV
         sys.stdout.flush(); sys.stdout.buffer.write(CV.table().encode("utf-8"))
+        return 0
+    if a.step == "page-reply":                           # 段階81 の続き 1
+        from . import guide_answer_page as GAP
+        try:
+            text = GAP.page_reply(a.url, _clock())
+        except GAP.ReplyError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
         return 0
     if a.step == "final-check":                          # 段階69 第1部
         from . import final_check as FC

@@ -77,6 +77,22 @@ def species(doc, env=None):
 
 def species_all(doc, env=None):
     """最終の文 → 文に出る種 [(和名, テーマ)](文に出た順。重複なし。上限なし)。"""
+    return [(n, th) for n, th, _w in _found(doc, env)]
+
+
+def species_words(doc, env=None):
+    """段階81 の続き 4: {和名: [文の中で見つけた語]}(写真を、その語が出る段落のそばに置くため)。
+    名所の記録から足した種(文に種の名前がない)は、和名そのものだけ。"""
+    out = {}
+    for n, _th, w in _found(doc, env, all_hits=True):
+        ws = out.setdefault(n, [n])
+        if w and w not in ws:
+            ws.append(w)
+    return out
+
+
+def _found(doc, env=None, all_hits=False):
+    """→ [(和名, テーマ, 文の中の語)](文に出た順。all_hits が偽なら和名の重複なし)。"""
     from . import ask, guide_photos
     from .plan_page import species_of
     from . import answer_page as APG
@@ -89,7 +105,7 @@ def species_all(doc, env=None):
         if pos < 0:
             continue
         for i, n in enumerate(species_of(cand, sj, pp)):
-            found.append((pos + i / 100, n, c["subject_themes"].get(sj)))
+            found.append((pos + i / 100, n, c["subject_themes"].get(sj), None))
     table = guide_photos.load_table(env) if env else guide_photos.load_table()
     themes = _table_themes(env)
     reps = APG.cfg().get("representatives") or {}                     # 段階81 の追記: 総称の種(ツツジ・バラなど)も文から探す(写真は代表の種)
@@ -100,7 +116,7 @@ def species_all(doc, env=None):
             continue
         for m in re.finditer(re.escape(w), rest):
             n = words[w]
-            found.append((m.start(), n, themes.get(n) or c["alias_themes"].get(w)))
+            found.append((m.start(), n, themes.get(n) or c["alias_themes"].get(w), w))
         rest = rest.replace(w, "\0" * len(w))
     if not found:                                                     # 紅葉の答えで樹種の分からない名所だけ: 代表的な紅葉の木(その場所の写真ではない。注記は page.photo_note)
         from . import guide_brief as GB
@@ -110,12 +126,12 @@ def species_all(doc, env=None):
             subjects = []
         for sj in subjects:
             for i, n in enumerate((c.get("subject_fallback") or {}).get(sj) or []):
-                found.append((i, n, c["subject_themes"].get(sj)))
+                found.append((i, n, c["subject_themes"].get(sj), None))
     out, seen = [], set()
-    for _pos, n, th in sorted(found, key=lambda x: x[0]):
-        if n and n not in seen and n not in (pp.get("skip_names") or []):
+    for _pos, n, th, w in sorted(found, key=lambda x: x[0]):
+        if n and (all_hits or n not in seen) and n not in (pp.get("skip_names") or []):
             seen.add(n)
-            out.append((n, th))
+            out.append((n, th, w))
     return out
 
 
@@ -191,7 +207,9 @@ def make(doc, now, env=None, fetch=True, http_get=None, http_bytes=None):
 
     def credit(meta):
         return plan_page.author_credit(meta, gp)                 # 状態(開花など)は出さない(段階81 の追記)
-    page_doc = {"route": "guide", "question": doc.get("question"), "text": clean_text(doc.get("text")), "species": [n for n, _ in sp_all]}
+    title = title_for(doc, env)
+    page_doc = {"route": "guide", "question": doc.get("question"), "text": doc.get("text"), "species": [n for n, _ in sp_all],
+                "markdown": True, "title": title, "species_words": species_words(doc, env), "stop_headings": cfg()["stop_headings"]}
     mx = pp["max_embed_bytes"]
     html_text, _lines, shown = APG.build(page_doc, photo_for=photo_for, photo_credit=credit, csp=pp["csp"],
                                          max_bytes=mx["value"] if isinstance(mx, dict) else mx, linkify=True)
@@ -199,8 +217,103 @@ def make(doc, now, env=None, fetch=True, http_get=None, http_bytes=None):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html_text, encoding="utf-8", newline="\n")
     path = str(Path(out).resolve())
-    return {"path": path, "line": pp["reply_line"].format(path=path), "species": [{"name": n, "photo": x} for n, x in shown],
+    remember_page(doc, title, path, now, env)
+    return {"path": path, "title": title, "line": pp["reply_line"].format(path=path), "species": [{"name": n, "photo": x} for n, x in shown],
             "photos": sum(1 for _n, x in shown if x), "fetched": fetched}
+
+
+# ---- 段階81 の続き 5: ページの題(資料から決める。AI に書かせない) ----
+
+def _longest_in(text, names):
+    hits = [n for n in names if n and len(n) >= cfg()["min_word_chars"] and n in text]
+    return max(hits, key=len) if hits else None
+
+
+def title_for(doc, env=None):
+    """資料(質問の文・候補の名所・対象・日付の語)から、ページの題を決める。
+    「<場所> <日付の語>の<テーマ>の<見どころ・おすすめなど>」の形(ないものは省く)。字数の上限を超えたら質問の文。"""
+    from . import guide_brief as GB
+    t = cfg()["title"]
+    q = (doc.get("question") or "").strip()
+    try:
+        brief = GB.load(doc.get("brief"), env) or {}
+    except (OSError, ValueError, TypeError):
+        brief = {}
+    q = (brief.get("question") or q).strip()
+    cands = [x.get("name") for x in brief.get("candidates") or [] if isinstance(x, dict)]
+    place = _longest_in(q, cands)
+    if not place:
+        from . import ask
+        place = _longest_in(q, ask.place_names())
+    rest = q.replace(place, "") if place else q
+    date = next((w for w in t["date_words"] if w in rest), None)
+    topic = next((w for w in t["topic_words"] if w in rest), None) or t["default_topic"]
+    from . import guide_photos
+    table = guide_photos.load_table(env) if env else guide_photos.load_table()
+    theme = _longest_in(rest, list(t["theme_words"]) + list(cfg().get("aliases") or {}) + list(table))
+    if not theme and not place:
+        subs = brief.get("subjects") or []
+        theme = t["subject_words"].get(subs[0]) if len(subs) == 1 else None
+    tail = "の".join(x for x in (date, theme if theme != topic else None, topic) if x)
+    title = " ".join(x for x in (place, tail) if x)
+    return title if len(title) <= t["max_chars"] else (q or title)
+
+
+# ---- 段階81 の続き 1: ページを頼まれたときの最後の文(決まった短い案内 + ページのリンク) ----
+
+def last_page_path(env=None):
+    from .paths import data_path
+    return data_path(cfg()["reply"]["last_file"], env)
+
+
+def remember_page(doc, title, path, now, env=None):
+    """ページを、合格した最終の文(doc)から作ったことを覚える(案内の文を受け入れる条件)。"""
+    p = last_page_path(env)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"saved_at": now.isoformat(), "brief": doc.get("brief"), "final_saved_at": doc.get("saved_at"),
+                             "title": title, "path": path, "reply": None}, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def _load_page(now, env=None):
+    """直前のページの記録。合格した最終の文(いま有効なもの)から作ったものだけ。なければ None。"""
+    try:
+        d = json.loads(last_page_path(env).read_text(encoding="utf-8"))
+        saved = datetime.fromisoformat(d["saved_at"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    g = load_last(now, env)
+    if not g or g.get("brief") != d.get("brief") or g.get("saved_at") != d.get("final_saved_at"):
+        return None                                      # ページのあとに別の答えを作った・最終の文が古い
+    if now < saved or saved < datetime.fromisoformat(g["saved_at"]):
+        return None
+    return d
+
+
+class ReplyError(ValueError):
+    pass
+
+
+def page_reply(url, now, env=None):
+    """→ 利用者に送る最後の文(決まった案内 + リンク)。url を省くとページのファイルの場所。覚えて、検査で受け入れる。"""
+    r = cfg()["reply"]
+    d = _load_page(now, env)
+    if d is None:
+        raise ReplyError(r["no_page"])
+    if url:
+        url = url.strip()
+        if not re.fullmatch(r["url_re"], url):
+            raise ReplyError(r["bad_url"])
+    text = r["text"].format(title=d["title"], url=url or d["path"])
+    d["reply"] = text
+    last_page_path(env).write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+    return text
+
+
+def accepts_reply(message, now=None, env=None):
+    """送るメッセージが、ask page-reply が出した案内の文と一致するか(空白の違いは見ない)。"""
+    d = _load_page(now or datetime.now().astimezone(), env)
+    t = (d or {}).get("reply")
+    return bool(t) and re.sub(r"\s+", "", t) == re.sub(r"\s+", "", message or "")
 
 
 def linkify(escaped):
@@ -211,4 +324,4 @@ def linkify(escaped):
     return URL_RE.sub(rep, escaped)
 
 
-__all__ = ["load_last", "newest", "species", "make", "esc"]
+__all__ = ["load_last", "newest", "species", "make", "esc", "title_for", "page_reply", "accepts_reply"]

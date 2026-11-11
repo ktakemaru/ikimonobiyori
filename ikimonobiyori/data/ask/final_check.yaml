@@ -111,6 +111,8 @@ stop_hook:
   # 段階75: ガイドの形(ask brief → 書く → ask verify --brief)の呼び出し
   brief_patterns: ['ikimonobiyori\.ask\s+brief\b', 'ask\.py\s+brief\b']
   guide_verify_patterns: ['ikimonobiyori\.ask\s+verify\b.*--brief\b', 'ask\.py\s+verify\b.*--brief\b']
+  # 段階81 の続き 1: 写真つきのページを作る呼び出し(ask page。page-reply は含めない)
+  page_patterns: ['ikimonobiyori\.ask\s+page(\s|$)', 'ask\.py\s+page(\s|$)']
   record_patterns: ['ikimonobiyori\.ask\s+(record|vc-record|knowledge\s+add|record-unverified)\b', 'ikimonobiyori\.guide\s+record-candidate\b']
   # 調べたとみなす道具(検索・取得・取得のサブエージェント)
   research_tools: ["WebSearch", "WebFetch", "Agent", "Task", "mcp__claude-in-chrome__get_page_text"]
