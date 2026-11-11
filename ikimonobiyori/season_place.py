@@ -302,9 +302,15 @@ def _records(match, env=None, sp=None, c=None):
             if not _matches(r.get("kind") or "", match, sp, c) or not r.get("name") or P.unused_source(r.get("url")):
                 continue
             win = O.parse_typical(r.get("typical"), opol) if r.get("typical") else None
+            seen = window_text(win[0], win[1], thirds) if win else O.end_only_text(O.split_peak(r.get("typical"), opol)[0])   # 段階69 第7部: 「7月上旬まで」
+            peak = O.peak_text(r.get("typical"), opol)
+            season = seen
+            if peak:                                  # 段階81 第1部 2: 見られる期間と、数が多い時期を分けて書く
+                T = cfg()["text"]
+                season = T["season_peak"].format(season=seen, peak=peak) if seen else T["peak_only"].format(peak=peak)
             out.append({"name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"), "kinds": [r["kind"]],
-                        "start": win[0] if win else None, "end": win[1] if win else None,
-                        "season": _old_year(r, window_text(win[0], win[1], thirds) if win else O.end_only_text(r.get("typical")), c),   # 段階69 第7部: 「7月上旬まで」
+                        "start": win[0] if win else None, "end": win[1] if win else None, "peak": peak,
+                        "season": _old_year(r, season, c),
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
                         "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
     return out

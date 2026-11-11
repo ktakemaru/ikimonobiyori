@@ -26,6 +26,8 @@ general_place_words: [鳥, 花, 桜, 外来種, 生き物, 植物, 森, 天気, 
 not_species_words: [イキモノビヨリ, ドライブ, イベント, ライトアップ]
 card_links: {place: この場所の話, species: この種の話, theme: 一般の話(テーマ)}
 # テーマのカードを引く語(対象か質問の語で選ぶ。特定の場所のカードは引かない。季節は対象の日の月)
+# 段階81 第1部 3: 場所を聞く質問で、候補にない種の一般の話を落とすとき、この対象のテーマの語は「残す理由」にしない(花の語には桜・バラがあるので)
+species_drop_subjects: [flowers]
 card_themes:
   - {subject: autumn_leaves, question_words: [紅葉, 黄葉, 色づ], words: [紅葉, 黄葉, 色づ, カエデ, イチョウ]}
   - {subject: flowers, question_words: [花, 桜, 咲], words: [冬桜, 寒桜, 桜, バラ, 菊, 花]}

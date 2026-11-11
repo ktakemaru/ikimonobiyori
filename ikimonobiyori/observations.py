@@ -82,8 +82,64 @@ def _num(s):
     return KANJI_NUM.get(s)
 
 
+def split_peak(text, policy):
+    """段階81 第1部 2: 例年の時期の文 → (見られる期間の文, 数が多い時期の文のリスト)。文・読点で区切り、
+    数が多い時期の語(policy typical.peak_re)を含む部分を分ける。語がなければ (text, [])。"""
+    rx = ((policy or {}).get("typical") or {}).get("peak_re")
+    if not text or not rx or not re.search(rx, text):
+        return text, []
+    segs = [x for x in re.split(r"(?<=[。])", str(text)) if x.strip()]
+    peak = [x for x in segs if re.search(rx, x)]
+    rest = "".join(x for x in segs if not re.search(rx, x))
+    return rest, peak
+
+
+def peak_text(text, policy):
+    """段階81 第1部 2: 数が多い時期(「1月下旬〜2月上旬」)の文。数が多い時期の語の部分に時期がなければ None。"""
+    rest, peak = split_peak(text, policy)
+    if not _parse_parts(rest, policy):                  # 時期がピークの文にしかない(「見頃ピークは例年10月下旬〜11月中旬」)は、その時期が例年の時期(分けない)
+        return None
+    rx = ((policy or {}).get("typical") or {}).get("peak_re")
+    for sent in peak:                                   # 数が多い時期の語のある句(読点まで)だけを読む(「…で、例年100羽ほど(令和7年度は1月12日に…)」を混ぜない)
+        seg = next((x for x in re.split(r"(?<=[、,，])", sent) if re.search(rx, x)), sent)
+        w = _parse_typical(seg, policy)
+        if w:
+            return _third_text(w[0], w[1])
+    return None
+
+
+def _third_text(s, e):
+    """月日の窓 → 旬の文。1 か月まるごと(「1月」「1月中下旬」と読んだ窓)は「1月」。"""
+    from . import season_place as SP
+    if s[:2] == e[:2] and s[3:] == "01" and int(e[3:]) == calendar.monthrange(2024, int(e[:2]))[1]:
+        return f"{int(s[:2])}月"
+    return SP.window_text(s, e, SP.cfg()["text"]["thirds"])
+
+
 def parse_typical(text, policy):
-    """「11月中旬～12月上旬」「11月中旬」「11月20日頃」「10/15〜11/15」→ ("MM-DD", "MM-DD")。読めなければ None(推測しない)。"""
+    """「11月中旬～12月上旬」「11月中旬」「11月20日頃」「10/15〜11/15」→ ("MM-DD", "MM-DD")。読めなければ None(推測しない)。
+    段階81 第1部 2: 数が多い時期(ピーク)の文があれば、その部分を見られる期間にしない(「近年は1月下旬〜2月上旬がピーク。3月上旬頃まで」は
+    始まりが分からないので None。「11月下旬から3月上旬。ピークは1月」は 11/21〜3/10)。ピークの文しか時期がなければ今までどおり。"""
+    if not text:
+        return None
+    rest, peak = split_peak(text, policy)
+    aside = ((policy or {}).get("typical") or {}).get("aside_re")
+    if aside and re.search(aside, rest or ""):            # 早咲き・遅咲きの文も、見頃の文があれば窓に混ぜない
+        segs = [x for x in re.split(r"(?<=[。])", str(rest)) if x.strip()]
+        main = "".join(x for x in segs if not re.search(aside, x))
+        if _parse_parts(main, policy):
+            rest, peak = main, peak + [x for x in segs if re.search(aside, x)]
+    if peak and _parse_parts(rest, policy):
+        return _parse_typical(rest, policy)
+    return _parse_typical(text, policy)
+
+
+def _parse_parts(text, policy):
+    t = unicodedata.normalize("NFKC", text or "")
+    return re.findall(r"(\d{1,2})月", t) or re.findall(r"(\d{1,2})/(\d{1,2})", t)
+
+
+def _parse_typical(text, policy):
     if not text:
         return None
     t = unicodedata.normalize("NFKC", text).replace("〜", "~").replace("～", "~").replace("-", "~")
@@ -639,8 +695,40 @@ def event_derived(w, events, policy=None, name=None):
     return any(x in (w.get("note") or "") for x in words)
 
 
+_NOTE_DAY_RE = re.compile(r"\d{1,2}\s*月\s*\d{1,2}\s*日|\d{1,2}/\d{1,2}")
+
+
+def _window_md(tw):
+    return f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}"
+
+
+def window_plain_text(tw):
+    """段階81 第1部 1: 名所カタログの例年の窓の、ガイドの資料に出す文(typical の text_thirds。今までの形の text は月日のまま)。
+    窓の端が旬の区切り(始まり 1・11・21 日、終わり 10・20 日・月末)にそろい、備考(原文)に日付(「12月21日」「12/21」)がなければ、
+    旬で書く(「12月下旬〜2月下旬」)。記録が旬なのに答えで日付(「12月21日から」)にならないように。それ以外は月日(「12/21〜2/28」)。"""
+    s, e = str(tw["start"]), str(tw["end"])
+    md = f"{int(s[:2])}/{int(s[3:])}〜{int(e[:2])}/{int(e[3:])}"
+    try:
+        sm, sd, em, ed = int(s[:2]), int(s[3:]), int(e[:2]), int(e[3:])
+    except ValueError:
+        return md
+    if _NOTE_DAY_RE.search(str(tw.get("note") or "")):
+        return md
+    from . import season_place as SP
+    if is_year_round({"start": s, "end": e}):
+        return SP.window_text(s, e, SP.cfg()["text"]["thirds"])
+    thirds = SP.cfg()["text"]["thirds"]
+    starts = {int(a) for a, _ in thirds.values()}
+    ends = {int(b) for _, b in thirds.values() if int(b) < 28}
+    month_ends = {calendar.monthrange(y, em)[1] for y in (2023, 2024)}          # 平年・うるう年の月末(2 月は 28・29)
+    if sd in starts and (ed in ends or ed in month_ends):
+        return _third_text(s, e)
+    return md
+
+
 def window_note_text(tw, policy=None):
-    """段階67 第3部 5: 名所カタログの例年の窓の文。備考(note)は最初の文だけ使い、作業のメモ(「記載がない」「確認」「承認」など)なら使わず月日の文にする。"""
+    """段階67 第3部 5: 名所カタログの例年の窓の文。備考(note)は最初の文だけ使い、作業のメモ(「記載がない」「確認」「承認」など)なら使わず月日の文にする。
+    """
     md = f"{int(tw['start'][:2])}/{int(tw['start'][3:])}〜{int(tw['end'][:2])}/{int(tw['end'][3:])}"
     note = re.split(r"[。\n]", str(tw.get("note") or ""), maxsplit=1)[0].strip()
     memo = ((policy or load_policy()).get("typical") or {}).get("note_memo_re")
@@ -685,11 +773,12 @@ def _typical_from_catalog(e, policy=None):
     out = []
     tw = e.get("typical_window")
     if tw:
-        out.append({"text": window_note_text(tw, policy),
+        out.append({"text": window_note_text(tw, policy), "text_thirds": window_note_text(tw, policy) if tw.get("note") and window_note_text(tw, policy) != _window_md(tw) else window_plain_text(tw),
                     "start": tw["start"], "end": tw["end"], "url": tw.get("source_url"), "publisher": _pub_name(tw.get("source_url"), e),
                     "year": None, "source_class": "official", "publisher_official": _pub_official(tw.get("source_url"))})
     for w in e.get("flower_windows") or []:
         out.append({"text": f"{int(w['start'][:2])}/{int(w['start'][3:])}〜{int(w['end'][:2])}/{int(w['end'][3:])}", "kind": w["kind"],
+                    "text_thirds": window_plain_text(w),        # 段階81 第1部 1: ガイドの資料は旬で書く(記録が旬のとき日付にしない)
                     "start": w["start"], "end": w["end"], "url": w["source_url"], "publisher": _pub_name(w["source_url"], e),
                     "year": w.get("source_year"), "source_class": "secondary" if (w.get("source_class") == "secondary" or w.get("unapproved_host")) else "official",
                     "publisher_official": _pub_official(w["source_url"]),
@@ -1900,7 +1989,8 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False
             "current": current, "current_unknown": cur is None,
             "history": [{"state": r["state_norm"], "state_raw": r["state"], "state_date": r.get("state_date"), "publisher": r.get("publisher"),
                          "url": r["url"], "source_class": r["source_class"]} for r in sorted(rows, key=lambda r: (basis_date(r), r["read_at"]), reverse=True)[1:4]],
-            "typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class", "publisher_official")} for t in real_typ]
+            "typical": [{**{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year", "source_class", "publisher_official")},
+                         **({"text_thirds": t["text_thirds"]} if t.get("text_thirds") and t["text_thirds"] != t.get("text") else {})} for t in real_typ]   # 段階81 第1部 1
                        + ([] if not typ or typ in real_typ else [typ]),
             "event_periods_not_typical": [{k: t.get(k) for k in ("text", "kind", "start", "end", "publisher", "url", "year")}
                                           for t in c.get("typical") or [] if t.get("event_derived")],
@@ -1972,6 +2062,20 @@ def short_state(text, policy, word=None):
     return None
 
 
+def dated_short(raw, short, policy):
+    """段階81 第1部 4: 状態の原文の頭の日付が次の語にかかる(「10/21の活動で13種…」)とき、短い語(「活動で13種…」)の頭に
+    日付を戻す(「10月21日の活動で13種…」)。それ以外は短い語のまま。state_display が使う(答えの文で「…では活動で13種」と崩れないように)。"""
+    c = (policy or {}).get("short_state") or {}
+    raw = str(raw or "").strip(" 　、")
+    if not short or not c.get("modifier_date"):
+        return short
+    m0 = re.match(r"(?:" + c["date_re"] + r")の", raw)
+    md = re.search(r"(\d{1,2})[/月](\d{1,2})", m0.group(0)) if m0 else None
+    if not md or not raw[m0.end():].startswith(short[:2]) or short.startswith(tuple("0123456789")):
+        return short
+    return c["modifier_date"].format(m=int(md.group(1)), d=int(md.group(2))) + short
+
+
 def state_display(raw, publisher, policy):
     """段階57 第4部: 状態の原文 → 答えに出す語、記号だけで読めないか。凡例のある発行元の記号は語に直す。
     段階67 第3部 3・4: 凡例の語 1 つと短い状態の語(30字以内)にする(記号・日付・2文目以降の原文は出さない)。"""
@@ -1982,6 +2086,10 @@ def state_display(raw, publisher, policy):
     short = short_state(disp, policy, legend_word)
     if short is None:
         return None, True
+    if not legend_word:                                  # 段階81 第1部 4: 「10/21の活動で13種」→「10月21日の活動で13種」(「活動で13種」と崩さない)
+        dated = dated_short(disp, short, policy)
+        if len(dated) <= _v((policy.get("short_state") or {})["max_chars"]):
+            short = dated
     return short, False
 
 
