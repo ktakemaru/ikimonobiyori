@@ -506,6 +506,8 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
                     reeval.append(r)
             elif str(r["taxon_id"]) in review or (n in none and none_active(none[n], today, policy)):
                 result[n] = "none"
+            elif int(r["taxon_id"]) >= ph["phenology"]["pseudo_taxon_min"]["value"]:
+                result[n] = "none"                       # 段階81: 学名で Commons から取った種(仮の id)は iNaturalist で探さない(学名の Commons で取り直す)
             else:
                 rows.append(r)
         elif n in none and none_active(none[n], today, policy):

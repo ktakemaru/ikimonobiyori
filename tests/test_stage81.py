@@ -143,5 +143,62 @@ class GuideAnswerPage(unittest.TestCase):
         self.assertIn("写真が取れなかった種: カワヅザクラ", html)          # 写真がなければ名前だけ(手書きの図にしない)
 
 
+class CommonsDomesticFirst(unittest.TestCase):
+    """第3部: 学名で Commons を探すとき、撮影地が国内と分かる写真を先に選ぶ(なければ今までの順)。"""
+
+    def info(self, text):
+        return {"descriptionurl": "https://commons.wikimedia.org/wiki/File:x.jpg",
+                "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/x.jpg/500px-x.jpg",
+                "mime": "image/jpeg", "license_short": "CC BY-SA 4.0", "artist": "A", "restrictions": "", "categories": text, "description": text}
+
+    def pick(self, items):
+        from ikimonobiyori import guide
+        from ikimonobiyori.fetch import commons_photos as CP
+        cm = guide.load_policy()["photos"]["commons"]
+        pages = [(t, self.info(txt)) for t, txt in items]
+        return CP.scientific_pick(pages, {"scientific": "Testus avis"}, cm, [t for t, _ in items])[0]
+
+    def test_domestic_first(self):
+        got = self.pick([("File:a.jpg", "Testus avis in Iceland"), ("File:b.jpg", "Testus avis in Chiba, Japan")])
+        self.assertEqual(got["title"], "File:b.jpg")
+
+    def test_foreign_only_keeps_the_order(self):
+        got = self.pick([("File:a.jpg", "Testus avis in Iceland"), ("File:b.jpg", "Testus avis in Spain")])
+        self.assertEqual(got["title"], "File:a.jpg")
+
+
+class IceFlowerIsNotTheFlower(unittest.TestCase):
+    """第3部・第4部: 「氷の花」(シモバシラの茎の氷)とシモバシラの花の写真を取り違えない。"""
+
+    def test_names(self):
+        from unittest import mock
+        from ikimonobiyori import guide_answer_page as GAP
+        from ikimonobiyori import guide_photos as GP
+        table = {"シモバシラ": {"name": "シモバシラ", "scientific": "Keiskea japonica", "taxon_id": 1}}
+        with mock.patch.object(GP, "load_table", return_value=table):
+            names = [n for n, _ in GAP.species({"brief": "x", "text": "試験山ではシモバシラの花が終わり、冬はシモバシラの氷の花が見られます。"})]
+        self.assertEqual(names[:2], ["シモバシラ", "シモバシラ(氷の花)"])
+
+
+class PseudoTaxonIsNotAskedToINaturalist(unittest.TestCase):
+    """第3部: 学名で Commons から取った種(仮の id)の写真がキャッシュにないとき、iNaturalist に問い合わせない。"""
+
+    def test_no_request(self):
+        import tempfile
+        from ikimonobiyori import guide, guide_photos as GP
+        policy = guide.load_policy()
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            GP.add_to_table([{"name": "試験ザクラ", "scientific": "Testus-zakura", "taxon_id": policy["photos"]["phenology"]["pseudo_taxon_min"]["value"] + 5,
+                              "checked_on": "2026-11-12"}], "花", env, policy)
+            calls = []
+
+            def get(url):
+                calls.append(url)
+                raise AssertionError("通信しない")
+            r = GP.ensure(["試験ザクラ"], theme="花", env=env, policy=policy, http_get=get, http_bytes=get, max_requests=0)
+        self.assertEqual((r["results"], calls), ({"試験ザクラ": "none"}, []))
+
+
 if __name__ == "__main__":
     unittest.main()
