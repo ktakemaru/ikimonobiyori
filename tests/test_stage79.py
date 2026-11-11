@@ -170,6 +170,8 @@ class SpeciesCards(unittest.TestCase):
         # 第4部の追記: 桜の名を含む別の植物(秋桜・サクラソウ・芝桜)は桜の話として数えない
         self.assertFalse(GB.species_hit(["桜"], "コスモス(秋桜)の名の由来・サクラソウと桜草・芝桜"))
         self.assertTrue(GB.species_hit(["桜"], "ソメイヨシノと八重桜"))
+        self.assertTrue(GB.species_hit(["芝桜", "シバザクラ"], "羊山公園の芝桜の丘"))   # 芝桜そのものの質問では外さない
+        self.assertTrue(GB.species_hit(["コスモス", "秋桜"], "秋桜の名の由来"))
 
     def test_species_card_is_picked(self):
         from ikimonobiyori import guide_brief as GB
@@ -226,3 +228,12 @@ class SpeciesCardOrder(unittest.TestCase):
         got = [r["title"] for r in GB._species_cards("梅の見分け方を教えて", shown, GB.cfg(), "difference")]
         self.assertEqual(got[0], "う 梅の見分け方")
         self.assertLess(got.index("い 梅の一年"), got.index("あ ロウバイ(梅の仲間ではない)") if "あ ロウバイ(梅の仲間ではない)" in got else 99)
+
+
+class FukujusoAlias(unittest.TestCase):
+    """第4部の追記: 質問の「福寿草」で、カードの「フクジュソウ」の種の話を引けるように(別名の表)。"""
+
+    def test_kanji_question_matches_katakana_card(self):
+        sp = SP.resolve_all("福寿草はいつどこで見られますか?")
+        self.assertEqual([x["name"] for x in sp], ["福寿草"])
+        self.assertIn("フクジュソウ", sp[0]["match"])

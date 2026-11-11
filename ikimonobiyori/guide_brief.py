@@ -724,8 +724,10 @@ def _species_cards(question, shown, c, route=None):
 def species_hit(words, blob, c=None):
     """段階79 第3部: 種の名前が文にあるか。別の語の一部(「梅雨」の梅)は数えない(guide_mode.yaml の species_blob_exclude_re)。"""
     c = c or cfg()
-    b = re.sub(c.get("species_blob_exclude_re") or r"(?!)", "", blob or "")
-    return any(w and w in b for w in words)
+    ws = [w for w in words if w]
+    # 聞かれた種の名前そのものに当たる語(「芝桜」の質問の芝桜)は外さない(段階79 第4部の追記)
+    b = re.sub(c.get("species_blob_exclude_re") or r"(?!)", lambda m: m.group(0) if any(m.group(0) in w for w in ws) else "", blob or "")
+    return any(w in b for w in ws)
 
 
 def _narrative(cards, question, cond, cands, sprows, months, c):
