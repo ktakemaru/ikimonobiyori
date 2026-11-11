@@ -472,10 +472,9 @@ def place_filter(question, c=None):
     from . import areas as AR
     c = c or cfg()
     q = question or ""
-    for a in AR.load()["areas"]:
-        for n in sorted([a["name"], *(a.get("aliases") or [])], key=len, reverse=True):
-            if n in q:
-                return {"label": n, "cities": list(a.get("cities") or [])}
+    a, n = AR.find_in(q)                                  # 段階80 の追記2: 「南伊豆」「伊豆市」の「伊豆」はエリアにしない
+    if a:
+        return {"label": n, "cities": list(a.get("cities") or [])}
     m = re.search(c["place_filter"]["city_re"], q)
     if m:
         city = re.sub(r"^.+?[都道府県](?=.{2,})", "", m.group(1))      # 段階78: 「神奈川県松田町」は町の名前で絞る(記録の city は「松田町」)

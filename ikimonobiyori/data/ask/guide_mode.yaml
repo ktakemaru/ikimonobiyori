@@ -232,6 +232,10 @@ town_candidates:
   label: "{town}の名所(例年の時期)"
   tentative_label: 仮(検索で集めたもの)
   tentative_note: "(検索で集めた名所。仮)"
+  # 段階80 の追記2(本人の判断 2026-11-11): 候補が仮の名所だけのときの、調べる対象の理由
+  tentative_why: "「{where}」の名所が仮(検索で集めたもの)だけ"
+  # 段階80 の追記2: 名所の対象(名所カタログの区分・ガイドのテーマ・記録の区分)→ 質問の対象。ここにないもの(ホタルなど)は、対象を絞った質問では出さない
+  subject_of: {flowers: flowers, autumn_leaves: autumn_leaves, birds: birds, wintering_birds: birds, 花: flowers, 桜: flowers, 紅葉: autumn_leaves, 野鳥: birds, 冬鳥: birds}
 # 段階80 A(提案4): 場所の辞書にない地名の質問(経路 unknown_place)。既定の出発地の近くの候補に置き換えず、足りないものに出す(調べる対象は research)
 unknown_place_missing: "場所の辞書にない地名「{name}」: ほかの場所の候補に置き換えていない(その場で調べる対象)"
 # --prev: 引き継いだ事実は、次の質問にはもう引き継がない(質問をまたいで関係のない事実が積もらないように)

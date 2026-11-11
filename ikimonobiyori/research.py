@@ -64,7 +64,9 @@ def needs(question, cond, sprows, cands, cards, facts, c=None):
     for p in qplaces:
         if any(o["where"] == p for o in out):
             continue
-        n_c = sum(1 for r in cands if p in (r.get("name") or "") or p in (r.get("city") or ""))
+        in_area = bool(place and p == place.get("label") and place.get("cities"))     # 段階80 の追記2: エリア(「伊豆半島」)はその市区町村の候補も数える
+        n_c = sum(1 for r in cands if p in (r.get("name") or "") or p in (r.get("city") or "")
+                  or (in_area and any((r.get("city") or "").startswith(x) for x in place["cities"])))
         n_f = sum(1 for f in facts if p in (f.get("content") or "") and f.get("url"))     # 段階80 A: 出どころのない行(「まだ見つかっていません」)は事実に数えない
         n_k = sum(1 for k in cards if p in " ".join([k.get("place") or "", k.get("title") or ""]))
         if n_c == 0 and n_k == 0 and n_f == 0:

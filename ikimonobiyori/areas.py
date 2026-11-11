@@ -28,6 +28,43 @@ def resolve(name):
     return None
 
 
+def _longer_towns(name):
+    """name を含む、より長い市区町村の名前(と末尾の 市・町・村・区 を除いた形)。「伊豆」→ 南伊豆町・南伊豆・伊豆市・伊豆の国…
+    記録にない名前は、辞書の not_within(「那須塩原」「北軽井沢」)で足す。"""
+    from . import guide_materials as GM
+    from . import research as RS
+    extra = {x for a in load()["areas"] for x in a.get("not_within") or []}
+    out = set()
+    for m in set(GM._town_names()) | set(RS._municipalities()) | extra:
+        for x in (m, re.sub(r"(市|町|村|区)$", "", m)):
+            if name in x and x != name:
+                out.add(x)
+    return sorted(out, key=len, reverse=True)
+
+
+def mentioned(name, text):
+    """段階80 の追記2: name が text に、より長い市区町村の名前の一部としてでなく出てくるか(「南伊豆」「伊豆市」の「伊豆」は数えない)。"""
+    t = text or ""
+    if not name or name not in t:
+        return False
+    for x in _longer_towns(name):
+        t = t.replace(x, "_" * len(x))
+    for m in re.finditer(re.escape(name), t):             # 前に漢字・カタカナが続く語(「試験伊豆」「中伊豆」)の一部は数えない(都道府県の名前のあとはよい)
+        before = t[m.start() - 1] if m.start() else ""
+        if not before or not re.match(r"[一-龥ァ-ヶー々]", before) or before in "都道府県":
+            return True
+    return False
+
+
+def find_in(question):
+    """段階80 の追記2: 質問の文にあるエリア(名前・別名。長い市区町村の名前の一部は除く)→ (エリア, 当たった名前) か (None, None)。"""
+    for a in load()["areas"]:
+        for n in sorted([a["name"], *(a.get("aliases") or [])], key=len, reverse=True):
+            if mentioned(n, question):
+                return a, n
+    return None, None
+
+
 def near_names(name):
     """確実に近い名前だけ(辞書の名前を含む・含まれる)。"""
     n = (name or "").strip()

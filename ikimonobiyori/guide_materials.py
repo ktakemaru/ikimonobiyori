@@ -153,7 +153,8 @@ def town_spots(town, origin=None):
         url = e.get("url")
         seen[k] = {"name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("city"), "seasons": seasons,
                    "kinds": [x for x in e["kinds"] if x], "url": url, "publisher": None,
-                   "source_class": "official" if url and P.shows_official(url) else ("secondary" if url else None), "tentative": False}
+                   "source_class": "official" if url and P.shows_official(url) else ("secondary" if url else None), "tentative": False,
+                   "subject": e.get("subject")}
         rows.append(seen[k])
     try:
         entries = guide.build()[0]
@@ -171,10 +172,41 @@ def town_spots(town, origin=None):
         r = {"name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"),
              "seasons": [(season["text"], "・".join(kinds[:2]))] if season.get("text") else [], "kinds": kinds,
              "url": best["url"], "publisher": best.get("publisher"),
-             "source_class": "official" if best.get("class") in ("A", "B") else "secondary", "tentative": not guide.approved(e)}
+             "source_class": "official" if best.get("class") in ("A", "B") else "secondary", "tentative": not guide.approved(e),
+             "subject": e.get("theme")}
         seen[key(e["name"])] = r
         rows.append(r)
+    _confirm_with_records(rows, town, key)
     return rows
+
+
+def _confirm_with_records(rows, town, key):
+    """段階80 の追記2(本人の判断 2026-11-11): 公式ページで確かめて記録した名所(読んだ事実の記録。公式・種と例年の時期つき)で、仮の名所の印を外す
+    (出典を確かめたページにする)。名前は記号を除いて一致するか、片方がもう片方を含むとき同じ名所とみなす。記録だけにある名所は仮でない行として足す。
+    確かめられなかった名所は仮のまま。"""
+    from . import observations as O
+    for sj in ("flowers", "birds"):
+        try:
+            recs = O.read_records(sj)
+        except (OSError, ValueError, KeyError):
+            continue
+        for rec in recs:
+            if (rec.get("source_class") != "official" or not rec.get("name") or not rec.get("typical") or not rec.get("kind")
+                    or town not in _city_parts(rec.get("city"))):
+                continue
+            k = key(rec["name"])
+            same = [r for r in rows if k and (key(r["name"]) == k or (key(r["name"]) and (key(r["name"]) in k or k in key(r["name"]))))]
+            season = (rec["typical"], rec["kind"])
+            if not same:
+                rows.append({"name": rec["name"], "prefecture": rec.get("prefecture"), "city": rec.get("city"), "seasons": [season],
+                             "kinds": [rec["kind"]], "url": rec.get("url"), "publisher": rec.get("publisher"), "source_class": "official",
+                             "tentative": False, "confirmed_by": rec.get("url"), "subject": sj})
+                continue
+            for r in same:
+                if not r["tentative"]:
+                    continue
+                r.update(tentative=False, url=rec.get("url"), publisher=rec.get("publisher"), source_class="official",
+                         seasons=[season], confirmed_by=rec.get("url"))
 
 
 def place_info(name):

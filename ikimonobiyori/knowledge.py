@@ -159,6 +159,26 @@ def retire(title, reason, *, at, place=None, env=None):
     return _change(title, place, fn, "retire", at=at, note=reason, env=env)
 
 
+def add_fact(title, fact, narrative, *, at, place=None, note=None, env=None):
+    """段階80 の追記2(本人の判断 2026-11-11): カードに事実を 1 行足す(語りの種類も 1 つ。控えを残す)。
+    事実は出典の本文と照らしてから足す(照らすのは足す人。同じ文がすでにあれば ValueError)。"""
+    fact = (fact or "").strip()
+    if not fact or not (narrative or "").strip():
+        raise ValueError("足す事実(--fact)と語りの種類(--narrative)が要る")
+
+    def fn(card):
+        if fact in (card.get("facts") or []):
+            raise ValueError("同じ事実がすでにある")
+        card["facts"] = list(card.get("facts") or []) + [fact]
+        if card.get("narrative") is not None:
+            card["narrative"] = list(card["narrative"]) + [narrative.strip()]
+        errs = validate(card)
+        if errs:
+            raise ValueError("; ".join(errs))
+        return card
+    return _change(title, place, fn, "add_fact", at=at, note=note, env=env)
+
+
 def load(env=None):
     p = path(env)
     if not p.exists():

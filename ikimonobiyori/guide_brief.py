@@ -137,15 +137,18 @@ def _pending_urls():
     return out
 
 
-def _town_candidates(F, cands, towns, cond, c):
-    """段階80 の追記: 質問の市区町村の名所を候補と事実に足し、ほかの市区町村の候補(既定の出発地の近くの名所など)と、その事実を外す。"""
+def _town_candidates(F, cands, towns, cond, c, label=None):
+    """段階80 の追記: 質問の市区町村の名所を候補と事実に足し、ほかの市区町村の候補(既定の出発地の近くの名所など)と、その事実を外す。
+    label: 広い地域の名前で聞かれたとき(「伊豆」)の地域の名前(候補の理由に出す。段階80 の追記2)。"""
     from . import guide_materials as GM
     T = c["town_candidates"]
     have = {r["name"] for r in cands}
     for town in towns:
-        for s in GM.town_spots(town, cond.get("origin")):
+        for s in _subject_spots(GM.town_spots(town, cond.get("origin")), cond, c):
             loc = f"{s.get('prefecture') or ''}{s.get('city') or ''}"
             for text, kind in s["seasons"]:
+                if any(f.get("place") == s["name"] and f.get("url") == s.get("url") and f["kind"] == "typical" for f in F.rows):
+                    continue                              # 同じ名所・同じ出典の例年の時期がもうある(読んだ事実の記録の行)
                 F.add("typical", f"{s['name']}({loc}): " + ("" if text.startswith("例年") else "例年 ") + f"{text}" + (f"({kind})" if kind else "") + (T["tentative_note"] if s["tentative"] else ""),
                       place=s["name"], source=s.get("publisher"), url=s.get("url"), source_class=s.get("source_class"),
                       extra={"_pref": s.get("prefecture"), "_city": s.get("city")})
@@ -155,11 +158,11 @@ def _town_candidates(F, cands, towns, cond, c):
             cands.append({"subject": None, "rank": None, "name": s["name"], "chosen": False, "basis": "town",
                           "group": _group_of(s.get("prefecture"), c), "prefecture": s.get("prefecture"), "city": s.get("city"),
                           "theme": "・".join(s["kinds"][:3]) or None,
-                          "reasons": [T["label"].format(town=town)] + ([T["tentative_label"]] if s["tentative"] else [])})
+                          "reasons": [T["label"].format(town=label or town)] + ([T["tentative_label"]] if s["tentative"] else [])})
     keep = [r for r in cands if GM.in_town(r["name"], r.get("city"), towns)]
     kept = {r["name"] for r in keep}
     dropped = {r["name"] for r in cands} - kept
-    words = list(kept) + towns + [re.sub(r"(市|町|村|区)$", "", t) for t in towns]
+    words = list(kept) + towns + [re.sub(r"(市|町|村|区)$", "", t) for t in towns] + ([label] if label else [])
 
     def stays(f):
         pl = f.get("place")
@@ -170,6 +173,50 @@ def _town_candidates(F, cands, towns, cond, c):
     for i, f in enumerate(F.rows):                        # 番号を振り直す(このあと足す事実と重ならないように)
         f["id"] = f"F{i + 1:03d}"
     return keep, dropped
+
+
+def _subject_spots(spots, cond, c):
+    """段階80 の追記2: 市区町村の名所を、質問の対象(紅葉・花・野鳥。既定の全部のときは絞らない)と、聞かれた種の名前で絞る。"""
+    from . import ask
+    from . import guide_materials as GM
+    T = c["town_candidates"]
+    subs = set(cond.get("subjects") or [])
+    if subs and subs != set(ask.load_policy()["default_subjects"]):
+        spots = [s for s in spots if T["subject_of"].get(s.get("subject")) in subs]
+    sps = GM.species_names(cond.get("question") or "")
+    if sps:
+        spots = [s for s in spots if species_hit(sps, " ".join([s["name"], *(s.get("kinds") or [])]), c)]
+    return spots
+
+
+def _area_towns(question, cands, cond):
+    """段階80 の追記2(本人の判断 2026-11-11): 広い地域の名前(エリア辞書。「伊豆」= 伊豆半島)だけで聞かれ、地域として扱われなかったとき
+    (「伊豆で見られる花」)→ (地域の市区町村の一覧, 地域の名前)。今の候補に地域の名所があるとき(日光・箱根など、今までの道で答えられる)
+    と、地域の市区町村に名所の記録が 1 件もないときは ([], None)(今までどおり)。"""
+    from . import areas as AR
+    from . import guide_materials as GM
+    a, _n = AR.find_in(question)
+    if not a or not a.get("cities"):
+        return [], None
+    cities = list(a["cities"])
+    if any(GM.in_town(r["name"], r.get("city"), cities) for r in cands):
+        return [], None
+    if not any(_subject_spots(GM.town_spots(t, cond.get("origin")), cond, cfg()) for t in cities):
+        return [], None
+    return cities, a["name"]
+
+
+def _tentative_targets(question, towns, label, cands, targets, c):
+    """段階80 の追記2(本人の判断 2026-11-11): 市区町村(地域)の候補が、検索で集めた仮の名所だけ(か 0 件)なら、公式ページを調べる対象にする。
+    公式で確かめて記録すると、その名所は仮でなくなる(guide_materials.town_spots)。"""
+    from . import guide_materials as GM
+    T = c["town_candidates"]
+    if any(T["tentative_label"] not in (r.get("reasons") or []) for r in cands):
+        return []
+    where = label or "・".join(towns)
+    if any(t.get("where") == where for t in targets):
+        return []
+    return [{"what": "、".join(GM.species_names(question)) or None, "where": where, "why": T["tentative_why"].format(where=where)}]
 
 
 def _ledger_pending(url):
@@ -1258,8 +1305,11 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                       "reasons": [c["bird_highlights"]["label"]]})
     from . import guide_materials as GM
     towns = [] if (cond.get("area_names") or cond.get("region")) else GM.question_towns(question)
+    area_label = None
+    if not towns and not (cond.get("area_names") or cond.get("region")):
+        towns, area_label = _area_towns(question, cands, cond)
     if towns:                                             # 段階80 の追記(本人の判断 2026-11-11): 市区町村の名前の質問は、その市区町村の名所を候補にする
-        cands, dropped = _town_candidates(F, cands, towns, cond, c)
+        cands, dropped = _town_candidates(F, cands, towns, cond, c, label=area_label)
         if extra and extra.get("no_this_year"):
             extra = {**extra, "no_this_year": [n for n in extra["no_this_year"] if n not in dropped]}
         if extra and dropped:
@@ -1302,6 +1352,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         mat = _highlight_materials(mat, cards, hl, c)
     from . import research as RS
     targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, cands, cards, F.rows, c)   # 段階78 第4部 1
+    if towns and cond.get("route") not in c["species_rows"]["routes_skip"]:
+        targets += _tentative_targets(question, towns, area_label, cands, targets, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,

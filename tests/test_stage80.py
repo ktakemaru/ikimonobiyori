@@ -286,5 +286,105 @@ class AfterReview80(unittest.TestCase):
         self.assertIn(c["town_candidates"]["tentative_label"], keep[1]["reasons"])
 
 
+
+class AfterReview80b(unittest.TestCase):
+    """段階80 の追記への本人の判断(2026-11-11)のあと: 仮の名所の確かめ・広い地域の名前・カードに事実を足す。"""
+
+    def _names(self):
+        return mock.patch.object(GM, "_town_names", return_value={"南伊豆町", "伊豆市", "伊豆の国市", "日光市"}),             mock.patch.object(RS, "_municipalities", return_value={"南伊豆町", "伊豆市"})
+
+    def test_confirm_tentative_with_official_record(self):              # 判断 1
+        key = lambda n: n.replace("・", "")
+        rows = [{"name": "試験の菜の花畑", "city": "試験伊豆町", "seasons": [("例年1月〜2月", "菜の花")], "kinds": ["菜の花"],
+                 "url": "https://kanko.example.jp/a", "publisher": "試験紹介", "source_class": "secondary", "tentative": True},
+                {"name": "試験の桜並木", "city": "試験伊豆町", "seasons": [], "kinds": ["河津桜"], "url": "https://kanko.example.jp/b",
+                 "publisher": "試験紹介", "source_class": "secondary", "tentative": True}]
+        recs = [{"name": "試験の菜の花畑(日野)", "city": "試験伊豆町", "kind": "菜の花", "typical": "例年1月中旬〜2月下旬",
+                 "url": "https://www.town.example.lg.jp/n", "publisher": "試験伊豆町", "source_class": "official"},
+                {"name": "試験の桜並木", "city": "試験伊豆町", "kind": "河津桜", "typical": "例年2月", "url": "https://blog.example.jp/x",
+                 "source_class": "secondary"},                                 # 公式でない記録では外さない
+                {"name": "試験の梅林", "city": "試験伊豆町", "kind": "梅", "typical": "例年2月", "url": "https://www.town.example.lg.jp/u",
+                 "publisher": "試験伊豆町", "source_class": "official"}]
+        with mock.patch.object(O, "read_records", side_effect=lambda sj, *a, **k: recs if sj == "flowers" else []):
+            GM._confirm_with_records(rows, "試験伊豆町", key)
+        self.assertFalse(rows[0]["tentative"])
+        self.assertEqual((rows[0]["url"], rows[0]["source_class"], rows[0]["confirmed_by"]),
+                         ("https://www.town.example.lg.jp/n", "official", "https://www.town.example.lg.jp/n"))
+        self.assertEqual(rows[0]["seasons"], [("例年1月中旬〜2月下旬", "菜の花")])
+        self.assertTrue(rows[1]["tentative"])                                   # 確かめられなければ仮のまま
+        self.assertEqual([r["name"] for r in rows[2:]], ["試験の梅林"])
+        self.assertFalse(rows[2]["tentative"])
+
+    def test_tentative_only_town_is_research_target(self):              # 判断 1
+        c = GB.cfg()
+        T = c["town_candidates"]
+        cands = [{"name": "試験の菜の花畑", "reasons": [T["label"].format(town="試験伊豆町"), T["tentative_label"]]}]
+        t = GB._tentative_targets("試験伊豆で見られる花", ["試験伊豆町"], None, cands, [], c)
+        self.assertEqual([x["where"] for x in t], ["試験伊豆町"])
+        self.assertIn("仮", t[0]["why"])
+        cands.append({"name": "試験の梅林", "reasons": [T["label"].format(town="試験伊豆町")]})
+        self.assertEqual(GB._tentative_targets("試験伊豆で見られる花", ["試験伊豆町"], None, cands, [], c), [])
+
+    def test_izu_is_peninsula(self):                                     # 判断 2
+        from ikimonobiyori import areas as AR
+        a = AR.resolve("伊豆")
+        self.assertIsNotNone(a)
+        self.assertGreater(len(a["cities"]), 1)
+        self.assertIn("南伊豆町", a["cities"])
+        self.assertIs(AR.resolve("伊豆半島"), a)
+        n1, n2 = self._names()
+        with n1, n2:
+            self.assertTrue(AR.mentioned("伊豆", "伊豆で見られる花"))
+            self.assertFalse(AR.mentioned("伊豆", "南伊豆で見られる花"))
+            self.assertFalse(AR.mentioned("伊豆", "伊豆市で見られる花"))
+            self.assertFalse(AR.mentioned("伊豆", "伊豆の国市の花"))
+            self.assertFalse(AR.mentioned("那須", "那須塩原の紅葉"))          # 記録にない長い地名は not_within
+            self.assertEqual(AR.find_in("伊豆で見られる花")[0]["name"], "伊豆")
+            self.assertEqual(AR.find_in("日光の紅葉")[0]["name"], "日光")
+            self.assertIsNone(AR.find_in("伊豆市で見られる花")[0])
+            from ikimonobiyori import season_place as SP
+            self.assertEqual(SP.place_filter("伊豆で見られる花")["cities"], a["cities"])
+            self.assertEqual(SP.place_filter("伊豆市で見られる花")["cities"], ["伊豆市"])
+
+    def test_area_towns(self):                                           # 判断 2: 地域の名前だけの質問は地域の名所を候補に
+        from ikimonobiyori import areas as AR
+        a = AR.resolve("伊豆")
+        spot = {"name": "試験の梅林", "subject": "花", "kinds": ["梅"]}
+        n1, n2 = self._names()
+        with n1, n2, mock.patch.object(GM, "town_spots", return_value=[spot]):
+            self.assertEqual(GB._area_towns("伊豆で見られる花", [{"name": "横浜の庭", "city": "横浜市中区"}], {}), (a["cities"], "伊豆"))
+            self.assertEqual(GB._area_towns("伊豆で見られる花", [{"name": "x", "city": "南伊豆町"}], {}), ([], None))   # 今までの道で答えられる
+        with n1, n2, mock.patch.object(GM, "town_spots", return_value=[]):
+            self.assertEqual(GB._area_towns("伊豆で見られる花", [], {}), ([], None))
+
+    def test_subject_spots(self):
+        from ikimonobiyori import ask
+        c = GB.cfg()
+        spots = [{"name": "試験の梅林", "subject": "花", "kinds": ["梅"]}, {"name": "試験の渓谷", "subject": "autumn_leaves", "kinds": ["紅葉"]},
+                 {"name": "試験の沢", "subject": "ホタル", "kinds": ["ホタル"]}]
+        self.assertEqual([s["name"] for s in GB._subject_spots(spots, {"subjects": ["autumn_leaves"], "question": "試験の紅葉"}, c)], ["試験の渓谷"])
+        dflt = list(ask.load_policy()["default_subjects"])
+        self.assertEqual(len(GB._subject_spots(spots, {"subjects": dflt, "question": "試験で見られるもの"}, c)), 3)
+
+    def test_needs_counts_area_cities(self):
+        from ikimonobiyori import season_place as SP
+        pf = {"label": "試験半島", "cities": ["試験伊豆町"]}
+        with mock.patch.object(SP, "place_filter", return_value=pf), mock.patch.object(PG, "candidates", return_value=[]),                 mock.patch.object(RS, "question_places", return_value=[]), mock.patch.object(GM, "species_names", return_value=[]):
+            self.assertEqual(RS.needs("試験半島の花", {}, [], [{"name": "試験の梅林", "city": "試験伊豆町"}], [], [], GB.cfg()), [])
+            self.assertEqual(len(RS.needs("試験半島の花", {}, [], [], [], [], GB.cfg())), 1)
+
+    def test_add_fact(self):                                             # 判断 3
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            K.add(dict(KnowledgeCommands.CARD), env=env)
+            K.add_fact("試験の鳥(オオバンとバン)", "オオバンは冬に池で見られる", "次の季節", at=NOW.isoformat(), env=env)
+            self.assertEqual(K.load(env)[0]["facts"][-1], "オオバンは冬に池で見られる")
+            with self.assertRaises(ValueError):
+                K.add_fact("試験の鳥(オオバンとバン)", "オオバンは冬に池で見られる", "次の季節", at=NOW.isoformat(), env=env)   # 同じ文
+            with self.assertRaises(ValueError):
+                K.add_fact("試験の鳥(オオバンとバン)", "x", "", at=NOW.isoformat(), env=env)
+            log = [json.loads(x) for x in (K.path(env).parent / "card_changes.jsonl").read_text(encoding="utf-8").splitlines()]
+            self.assertEqual([x["action"] for x in log], ["add_fact"])
+
 if __name__ == "__main__":
     unittest.main()
