@@ -516,5 +516,29 @@ class AfterReview80e(unittest.TestCase):
         self.assertEqual(merges, [])
         self.assertEqual(conflicts[0]["names"], ["長瀞宝登山臘梅園", "宝登山ロウバイ園"])
 
+
+class AfterReview80f(unittest.TestCase):
+    """段階80 の追記6: 名所の名前の括弧の中の種が、その記録の種と合わない名所をなくす(花の名所カタログ)。"""
+
+    def test_paren_species_match_kinds(self):
+        import re
+        from ikimonobiyori import catalog as CM
+        bad = []
+        for e in CM.load_catalog("flowers").get("entries") or []:
+            if e.get("example"):
+                continue
+            kinds = set((e.get("tags") or {}).get("flower_kinds") or []) | {w.get("kind") for w in e.get("flower_windows") or [] if w.get("kind")}
+            ks = {x for k in kinds if k for x in GM.species_names(k)}
+            for m in re.finditer(r"[(（]([^)）]+)[)）]", e["name"]):
+                ps = set(GM.species_names(m.group(1)))
+                if ps and ps != ks:                       # 括弧の種が記録の種と違う・記録にほかの種もある
+                    bad.append((e["id"], e["name"], sorted(ps), sorted(ks)))
+        self.assertEqual(bad, [])
+
+    def test_fuchu_name(self):
+        from ikimonobiyori import catalog as CM
+        e = [x for x in CM.load_catalog("flowers")["entries"] if x.get("id") == "hana-0045"][0]
+        self.assertEqual(e["name"], "府中市郷土の森博物館")
+
 if __name__ == "__main__":
     unittest.main()

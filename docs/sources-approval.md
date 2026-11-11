@@ -225,7 +225,7 @@
 | 巾着田曼珠沙華公園（hana-0042） | https://www.pref.saitama.lg.jp/a1008/nigiwai-spot/spot5.html | 自治体の公式ページ(埼玉県。情報の出典は日高市と明記)。巾着田の管理者(日高市)自身のページではない | 埼玉県のサイトポリシーは未確認(/site/about/ は 404。2026-11-09)。転載の禁止は確認できていない |
 | 亀戸天神社（hana-0043） | https://www.gotokyo.org/jp/spot/ev197/index.html | 紹介サイト(東京観光財団 GO TOKYO)。亀戸天神社自身のページではない | 許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認 2026-11-05) |
 | 芦川のすずらん群生地（hana-0044） | https://www.yamanashi-kankou.jp/fuefuki/event/ashigawa-suzuran.html | 県の観光公式(やまなし観光推進機構)。群生地の管理者自身のページではない | 「このサイトについて」に引用・転載・自動取得の規定はなく © 表示だけ(台帳 yamanashi-kankou-koyo の確認) |
-| 府中市郷土の森博物館(梅園)（hana-0045） | https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html | 紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない | 許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認) |
+| 府中市郷土の森博物館（hana-0045） | https://www.gotokyo.org/jp/new-and-now/new-and-trending/260209/topics.html | 紹介サイト(東京観光財団 GO TOKYO)。施設自身のページではない | 許可なく複製・転載・配布などに使うことを禁じる。自動取得の規定はない(台帳 gotokyo-autumn-leaves-ja の確認) |
 | あしかがフラワーパーク（hana-0046） | https://www.ashikaga.co.jp/ | 施設自身の公式ページ(あしかがフラワーパーク) | トップに著作権・無断転載・利用規約の記載やリンクはない(個人情報保護方針・運営会社・特商法の表示だけ。2026-11-09) |
 | 吾妻山公園（hana-0047） | https://www.town.ninomiya.kanagawa.jp/0000001281.html | 自治体の公式ページ(二宮町。公園の管理者の町自身のページ) | 段階67 第5部(2026-11-09): 無断の複製・転用は不可(私的使用・引用を除く)。自動取得の記載なし |
 | 寄ロウバイ園（hana-0048） | https://town.matsuda.kanagawa.jp/soshiki/9/roubaimatsuri.html | 自治体の公式ページ(松田町。園の運営の町自身のページ) | 段階67 第5部(2026-11-09): 無断の複製・転載・販売・貸与・改変は不可(私的使用・引用を除く)。自動取得の記載なし |
