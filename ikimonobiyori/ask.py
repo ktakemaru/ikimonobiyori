@@ -1044,6 +1044,18 @@ def main(argv=None, http_get=None):
     if getattr(a, "out_dir", None):                # 段階70 第2部: 相対パスはデータ置き場からの相対(リポジトリの中に作業フォルダを作らない)
         a.out_dir = str(work_path(a.out_dir))
     out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
+    if a.step in ("page", "photos") and not out_dir:      # 段階81 第2部: 直前の答えが新しい形(ガイド)なら、その最終の文と資料からページを作る(計画を作り直さない)
+        from . import guide_answer_page as GAP
+        g = GAP.newest(_clock())
+        if g:
+            if a.step == "photos":
+                _out(GAP.ensure_photos(GAP.species(g)))
+                return 0
+            doc = GAP.make(g, _clock())
+            print(doc["line"])
+            if getattr(a, "open", False) and hasattr(os, "startfile"):
+                os.startfile(doc["path"])
+            return 0
     if a.step == "page" and not out_dir:                  # 段階64 第4部 3: 直前の答えが計画の型でない(時期と場所・町・知識)なら、その答えのページ
         from . import answer_page as APG
         now_ = _clock()

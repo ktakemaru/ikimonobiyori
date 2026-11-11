@@ -51,6 +51,8 @@ def species_for(doc):
     """ページに写真を載せる種(答えの型ごと)。季節で絞った知識の質問は、その季節の種だけ。"""
     from . import season_place as SP
     q = doc.get("question") or ""
+    if doc.get("species") is not None:                    # 段階81 第2部: ガイドの答え(新しい形)は、文に出る種を呼び出し側が決める
+        return list(doc["species"])[: cfg()["max_species"]]
     if doc.get("route") in ("knowledge", "chat"):
         names = SP.season_species_names(q) or [x["name"] for x in SP.resolve_all(q)]
     elif doc.get("route") == "season_place":
@@ -69,7 +71,7 @@ def title_of(doc):
     return fmt.format(species="・".join(sp), town=(doc.get("town") or {}).get("town") or "")
 
 
-def body_html(text, say):
+def body_html(text, say, linkify=False):
     """答えの本文 → HTML(見出し・箇条・段落・リンク)。文はそのまま(書き換えない)。"""
     c = cfg()
     out, items = [], []
@@ -94,7 +96,7 @@ def body_html(text, say):
             if safe_url(line):
                 items.append(link(line, line))
         elif line.startswith(("・", "- ")):
-            items.append(say(line.lstrip("・- ").strip()))
+            items.append(_linkify(say(line.lstrip("・- ").strip())) if linkify else say(line.lstrip("・- ").strip()))
         elif line.startswith("|"):
             if not re.fullmatch(r"\|[-|\s]+\|", line):
                 items.append(say(" ".join(x.strip() for x in line.strip("|").split("|"))))
@@ -105,7 +107,12 @@ def body_html(text, say):
     return "\n".join(out)
 
 
-def build(doc, *, photo_for, photo_credit, csp, max_bytes):
+def _linkify(escaped):
+    from .guide_answer_page import linkify
+    return linkify(escaped)
+
+
+def build(doc, *, photo_for, photo_credit, csp, max_bytes, linkify=False):
     """→ (HTML, 検査用の文の一覧, 載せた種 [(種名, 写真あり)])。photo_for(和名) → (メタ, バイト列) か None。"""
     c = cfg()
     lines = []
@@ -126,7 +133,7 @@ def build(doc, *, photo_for, photo_credit, csp, max_bytes):
             continue
         cards.append(f'<li class="bird">{img}<h3>{say(name)}</h3><p class="credit">{esc(photo_credit(got[0]))}</p></li>')
         shown.append((name, True))
-    text_html = body_html(doc.get("text") or "", say)
+    text_html = body_html(doc.get("text") or "", say, linkify=linkify)
     if cards or nophoto:                                       # 写真は本文の前(本文の最後は出典)
         body.append(f"<h2>{say(c['photo_heading'])}</h2>")
         body.append(f'<p class="note">{say(c["photo_note"])}</p>')
