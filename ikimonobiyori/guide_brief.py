@@ -137,7 +137,7 @@ def _pending_urls():
     return out
 
 
-def _town_candidates(F, cands, towns, cond, c, label=None):
+def _town_candidates(F, cands, towns, cond, c, label=None, areas=()):
     """段階80 の追記: 質問の市区町村の名所を候補と事実に足し、ほかの市区町村の候補(既定の出発地の近くの名所など)と、その事実を外す。
     label: 広い地域の名前で聞かれたとき(「伊豆」)の地域の名前(候補の理由に出す。段階80 の追記2)。"""
     from . import guide_materials as GM
@@ -159,7 +159,7 @@ def _town_candidates(F, cands, towns, cond, c, label=None):
                           "group": _group_of(s.get("prefecture"), c), "prefecture": s.get("prefecture"), "city": s.get("city"),
                           "theme": "・".join(s["kinds"][:3]) or None,
                           "reasons": [T["label"].format(town=label or town)] + ([T["tentative_label"]] if s["tentative"] else [])})
-    keep = [r for r in cands if GM.in_town(r["name"], r.get("city"), towns)]
+    keep = [r for r in cands if GM.in_town(r["name"], r.get("city"), towns) or (areas and _in_areas(r, areas))]
     kept = {r["name"] for r in keep}
     dropped = {r["name"] for r in cands} - kept
     words = list(kept) + towns + [re.sub(r"(市|町|村|区)$", "", t) for t in towns] + ([label] if label else [])
@@ -189,21 +189,25 @@ def _subject_spots(spots, cond, c):
     return spots
 
 
-def _area_towns(question, cands, cond):
-    """段階80 の追記2(本人の判断 2026-11-11): 広い地域の名前(エリア辞書。「伊豆」= 伊豆半島)だけで聞かれ、地域として扱われなかったとき
-    (「伊豆で見られる花」)→ (地域の市区町村の一覧, 地域の名前)。今の候補に地域の名所があるとき(日光・箱根など、今までの道で答えられる)
-    と、地域の市区町村に名所の記録が 1 件もないときは ([], None)(今までどおり)。"""
+def _question_areas(question, cond):
+    """段階80 の追記3(本人の判断 2026-11-11): 質問に挙げたエリア(「秩父」「日光」「伊豆」「富士」、「〜のエリア」の形の area_names)→ エリアの一覧。
+    出発地として挙げた名前(「秩父から」「秩父発」)は除く(出発地の質問は今までどおり)。"""
+    from . import areas as AR
+    if cond.get("area_names"):
+        return [a for a in (AR.resolve(n) for n in cond["area_names"]) if a and a.get("cities")]
+    a, n = AR.find_in(question)
+    if not a or not a.get("cities") or re.search(re.escape(n) + r"\s*(駅)?(から|発)", question or ""):
+        return []
+    return [a]
+
+
+def _in_areas(r, areas):
+    """候補がエリアの内か(市区町村が一致、または名所の辞書の座標がエリアの半径の内。areas.members と同じ)。"""
     from . import areas as AR
     from . import guide_materials as GM
-    a, _n = AR.find_in(question)
-    if not a or not a.get("cities"):
-        return [], None
-    cities = list(a["cities"])
-    if any(GM.in_town(r["name"], r.get("city"), cities) for r in cands):
-        return [], None
-    if not any(_subject_spots(GM.town_spots(t, cond.get("origin")), cond, cfg()) for t in cities):
-        return [], None
-    return cities, a["name"]
+    info = GM.place_info(r["name"])
+    row = {"city": r.get("city") or info.get("city"), "point": r.get("point") or info.get("point")}
+    return any(AR.members(a, [row]) or GM.in_town(r["name"], row["city"], list(a["cities"])) for a in areas)
 
 
 def _tentative_targets(question, towns, label, cands, targets, c):
@@ -216,7 +220,8 @@ def _tentative_targets(question, towns, label, cands, targets, c):
     where = label or "・".join(towns)
     if any(t.get("where") == where for t in targets):
         return []
-    return [{"what": "、".join(GM.species_names(question)) or None, "where": where, "why": T["tentative_why"].format(where=where)}]
+    why = (T["tentative_why"] if cands else T["none_why"]).format(where=where)
+    return [{"what": "、".join(GM.species_names(question)) or None, "where": where, "why": why}]
 
 
 def _ledger_pending(url):
@@ -1304,12 +1309,14 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                       "prefecture": h["prefecture"], "city": h["city"], "theme": h["label"], "highlight_cards": [k.get("title") for k in h["cards"]],
                       "reasons": [c["bird_highlights"]["label"]]})
     from . import guide_materials as GM
-    towns = [] if (cond.get("area_names") or cond.get("region")) else GM.question_towns(question)
-    area_label = None
-    if not towns and not (cond.get("area_names") or cond.get("region")):
-        towns, area_label = _area_towns(question, cands, cond)
+    q_areas = _question_areas(question, cond)              # 段階80 の追記3(本人の判断 2026-11-11): エリアの質問は、そのエリアの名所だけ
+    area_label = "・".join(a["name"] for a in q_areas) or None
+    if q_areas:
+        towns = list(dict.fromkeys(ct for a in q_areas for ct in a["cities"]))
+    else:
+        towns = [] if (cond.get("area_names") or cond.get("region")) else GM.question_towns(question)
     if towns:                                             # 段階80 の追記(本人の判断 2026-11-11): 市区町村の名前の質問は、その市区町村の名所を候補にする
-        cands, dropped = _town_candidates(F, cands, towns, cond, c, label=area_label)
+        cands, dropped = _town_candidates(F, cands, towns, cond, c, label=area_label, areas=q_areas)
         if extra and extra.get("no_this_year"):
             extra = {**extra, "no_this_year": [n for n in extra["no_this_year"] if n not in dropped]}
         if extra and dropped:
@@ -1363,7 +1370,9 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
         "facts": F.rows, "cards": cards, "narrative": mat,
-        "missing": _missing(question, res, cands, F.rows, cards, extra) + [f"調べる: {t['why']}" for t in targets],
+        "missing": _missing(question, res, cands, F.rows, cards, extra)
+        + ([c["town_candidates"]["none_missing"].format(where=area_label or "・".join(towns))] if towns and not cands else [])
+        + [f"調べる: {t['why']}" for t in targets],
         "research": {"targets": targets},
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},

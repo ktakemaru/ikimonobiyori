@@ -346,16 +346,48 @@ class AfterReview80b(unittest.TestCase):
             self.assertEqual(SP.place_filter("伊豆で見られる花")["cities"], a["cities"])
             self.assertEqual(SP.place_filter("伊豆市で見られる花")["cities"], ["伊豆市"])
 
-    def test_area_towns(self):                                           # 判断 2: 地域の名前だけの質問は地域の名所を候補に
+    def test_question_areas(self):                                       # 追記3 の判断 1 で置き換えた(エリアの質問は、いつもエリアの名所だけ)
         from ikimonobiyori import areas as AR
-        a = AR.resolve("伊豆")
-        spot = {"name": "試験の梅林", "subject": "花", "kinds": ["梅"]}
         n1, n2 = self._names()
-        with n1, n2, mock.patch.object(GM, "town_spots", return_value=[spot]):
-            self.assertEqual(GB._area_towns("伊豆で見られる花", [{"name": "横浜の庭", "city": "横浜市中区"}], {}), (a["cities"], "伊豆"))
-            self.assertEqual(GB._area_towns("伊豆で見られる花", [{"name": "x", "city": "南伊豆町"}], {}), ([], None))   # 今までの道で答えられる
-        with n1, n2, mock.patch.object(GM, "town_spots", return_value=[]):
-            self.assertEqual(GB._area_towns("伊豆で見られる花", [], {}), ([], None))
+        with n1, n2:
+            self.assertEqual([a["name"] for a in GB._question_areas("伊豆で見られる花", {})], ["伊豆"])
+            self.assertEqual([a["name"] for a in GB._question_areas("秩父で見られる花は?", {"region": "秩父"})], ["秩父"])
+            self.assertEqual(GB._question_areas("秩父から近い花の名所は?", {}), [])          # 出発地は今までどおり
+            self.assertEqual(GB._question_areas("伊豆市で見られる花", {}), [])
+            self.assertEqual([a["name"] for a in GB._question_areas("x", {"area_names": ["秩父", "長瀞"]})], ["秩父", "長瀞"])
+        nikko = AR.resolve("日光")
+        with mock.patch.object(GM, "place_info", return_value={"point": {"lat": 36.75, "lon": 139.6}}):
+            self.assertTrue(GB._in_areas({"name": "試験の滝"}, [nikko]))                    # 市区町村の欄がなくても座標で
+        with mock.patch.object(GM, "place_info", return_value={}):
+            self.assertFalse(GB._in_areas({"name": "試験公園", "city": "藤岡市"}, [nikko]))
+
+    def test_area_drops_other_places(self):                              # 追記3 の判断 1
+        from ikimonobiyori import areas as AR
+        c = GB.cfg()
+        F = GB._Facts(c, set())
+        cands = [{"name": "横浜の試験庭園", "city": "横浜市中区"}, {"name": "試験の梅林", "city": "秩父市"}]
+        with mock.patch.object(GM, "town_spots", return_value=[]), mock.patch.object(GM, "place_info", return_value={}):
+            keep, dropped = GB._town_candidates(F, cands, ["秩父市"], {}, c, label="秩父", areas=[AR.resolve("秩父")])
+        self.assertEqual([r["name"] for r in keep], ["試験の梅林"])
+        t = GB._tentative_targets("那須で見られる紅葉", ["那須町"], "那須", [], [], c)       # 0 件は調べる対象
+        self.assertEqual(t[0]["why"], c["town_candidates"]["none_why"].format(where="那須"))
+
+    def test_izu_and_fuji_dictionary(self):                               # 追記3 の判断 2・3
+        from ikimonobiyori import areas as AR
+        izu = AR.resolve("伊豆")
+        self.assertIn("沼津市", izu["cities"])
+        self.assertFalse({"三島市", "清水町", "長泉町"} & set(izu["cities"]))
+        self.assertTrue(izu["sources"])
+        fuji = AR.resolve("富士")
+        self.assertTrue({"富士河口湖町", "富士宮市", "御殿場市"} <= set(fuji["cities"]))
+        n1, n2 = self._names()
+        with n1, n2:
+            self.assertEqual(AR.find_in("富士で見られる花")[0]["name"], "富士")
+            self.assertEqual(AR.find_in("富士山周辺で見られる花")[0]["name"], "富士五湖")
+            self.assertFalse(AR.mentioned("富士", "富士市で見られる花"))
+            self.assertFalse(AR.mentioned("富士", "富士宮の花"))
+        from ikimonobiyori import season_place as SP
+        self.assertEqual(SP.place_filter("富士市で見られる花は?")["cities"], ["富士市"])
 
     def test_subject_spots(self):
         from ikimonobiyori import ask
