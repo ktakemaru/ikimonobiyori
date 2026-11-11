@@ -612,3 +612,24 @@ sources:
     approval:
       status: pending
       reason: 通信先がユーザーが承認した4ホスト(kanagawaparks.com・sankeien.or.jp・kanagawa-kankou.or.jp・www.welcome.city.yokohama.jp)にない。docs/pending-hosts.md に載せ、読まない(人が開く URL)
+
+  # 段階78 第6部(2026-11-11): ホタルの今年の発生・飛翔の情報を出している公式ページ。承認待ち(本人の承認の記入はしていない)。
+  # 台帳に花以外のホタルの区分がないので、花の台帳に入れた(Claude Code の判断)。読んだのは ask research fetch(robots.txt を先に読む)
+  # 地点は名所カタログ(hana-0092)。みなかみ町のページは、カタログに載せると今の例年の時期の出どころが消えるので、ask research list の承認待ちの候補にした
+  - id: chichibu-kanko-hotaru
+    publisher: 秩父観光協会
+    publisher_kind: tourism_association
+    url: "https://www.chichibuji.gr.jp/news/hotaru2026/"
+    kind: status_page
+    flower_kinds: [ゲンジボタル]
+    covers:
+      - {site: hana-0092, label: "2026年のホタル飛翔状況", flower_kind: ゲンジボタル}
+    notation:
+      style: none
+      map: {}
+      updated: per_article
+      year_shown: true
+      note: "2026-11-11 に読んだ。年ごとのページ(news/hotaru<年>/)で、毎年新しい URL になる。状態の書き方は確かめていない(map は空)"
+    readable: {status: ok, checked_on: "2026-11-11", robots: unknown, observed_latest_update: "2026-06-04"}
+    terms: {status: not_checked}
+    approval: {status: pending, reason: "段階78 第6部で見つけたホタルの今年の情報のページ。年ごとに URL が変わる。本人の承認を待つ"}

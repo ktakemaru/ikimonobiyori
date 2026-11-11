@@ -394,3 +394,10 @@ cases:
         - {name: 試験の道の駅, city: 試験市, pref: 山梨県, kind: park, state: 色づき始め, date: '2026-11-06', cls: official, window: ['10-01', '10-31'], km: 74, rel: after_peak, age: 2, typ: 10月上旬～10月下旬}
         - {name: 試験の古い山, city: 試験村, pref: 神奈川県, state: 見頃, date: '2026-10-28', cls: official, window: ['10-20', '11-20'], km: 40, rel: in_peak, age: 11, typ: 10月下旬～11月中旬}
         - {name: 試験の公園, city: 試験区, pref: 東京都, kind: park, state: 色づき始め, date: '2026-11-07', cls: official, window: ['11-10', '12-05'], km: 25, rel: before_peak, age: 1, typ: 11月中旬～12月上旬}
+  # ---- 段階77 第1部 5: 日付で始まる状態の原文の短い語(「今の状況はの活動で13種(カルガモ・…」の崩れ) ----
+  - id: s77-state-line-date-head
+    question: 渡り鳥が来ているとききました(境川遊水地の記録の 1 行)
+    expect: ok
+    generate: {kind: short_state, raw: "10/21の活動で13種(カルガモ・コガモ・オオバン・カイツブリ・カワウ・コサギ・アオサギ・ダイサギ・ツバメ・ドバト・スズメ)。強い風"}
+    expect_text: 活動で13種
+    expect_absent_re: ['^[のにはでが]', '[(（][^)）]*$']

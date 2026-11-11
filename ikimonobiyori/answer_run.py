@@ -315,8 +315,9 @@ def _log_path(env=None):
     return data_path("logs/answers.jsonl", env)
 
 
-def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=None, clock=None, policy=None):
-    """質問の文 → Result(text・status・stage・route・errors・warnings・removed・elapsed_s・refresh_pages・workdir など)。"""
+def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=None, clock=None, policy=None, quiet=False):
+    """質問の文 → Result(text・status・stage・route・errors・warnings・removed・elapsed_s・refresh_pages・workdir など)。
+    quiet=True(段階75 ガイドの資料): 答えの記録・直前の答え・読むページの固定・写真つきページの覚えを残さない(答えそのものは同じ)。"""
     from . import ask
     t0 = time.monotonic()
     pol = policy or AP.load_policy()
@@ -327,6 +328,8 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
     cond = resolve(question, now, pol)
     res = Result(question=question, route=cond["route"], cond=cond, workdir=str(workdir), status=STATUS_PASS, stage=None, errors=[], warnings=[],
                  removed=[], refresh_pages=[], needs_research=False, research_targets=[])
+    if quiet:
+        res["quiet"] = True
     try:
         if cond["route"] == "plan":
             _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0)
@@ -354,6 +357,9 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         pass
     res["elapsed_s"] = round(time.monotonic() - t0, 2)
     res["stage_name"] = STAGES.get(res["stage"])
+    if quiet:
+        _write_work(res, workdir)
+        return res
     try:
         write_log(res, now, env)
     except OSError:
@@ -375,6 +381,11 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
         FC.remember_answer(res["text"], question, now, env)
     except (OSError, KeyError, TypeError):
         pass
+    _write_work(res, workdir)
+    return res
+
+
+def _write_work(res, workdir):
     try:
         Path(workdir).mkdir(parents=True, exist_ok=True)
         (Path(workdir) / "final.txt").write_text(res["text"], encoding="utf-8")
@@ -382,7 +393,6 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
                                                    encoding="utf-8")
     except OSError:
         pass
-    return res
 
 
 def log_row(res, now):
@@ -447,6 +457,7 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     from . import ask
     from . import skeleton as SK
     f = ask.Flow(workdir, now=now, env=env, clock=clock, obs_kw=obs_kw)
+    f.quiet = bool(res.get("quiet"))                     # 段階75: 直前の計画・計画の履歴を残さない
     periods = [[date.fromisoformat(x) for x in ds] for ds in cond["periods"]]
     dates = periods[0]
     region = cond["region"] if cond["region"] is not None else ask.load_policy().get("default_region")
@@ -485,7 +496,8 @@ def _plan_route(res, cond, now, env, workdir, polished, obs_kw, clock, pol, t0):
     except (KeyError, ValueError, TypeError):
         res["refresh_pages"] = []
     try:
-        res["refresh_pages"] = _freeze_refresh(cond["question"], res["refresh_pages"], now, env, pol)
+        if not res.get("quiet"):
+            res["refresh_pages"] = _freeze_refresh(cond["question"], res["refresh_pages"], now, env, pol)
     except (OSError, ValueError, KeyError, TypeError):
         pass
 

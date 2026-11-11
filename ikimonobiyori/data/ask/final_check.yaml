@@ -108,6 +108,9 @@ stop_hook:
   # ask answer の実行(Bash の command)・最終メッセージの検査・記録の道具を見分ける正規表現
   answer_patterns: ['ikimonobiyori\.ask\s+answer\b', 'ask\.py\s+answer\b']
   final_check_patterns: ['ikimonobiyori\.ask\s+final-check\b', 'ask\.py\s+final-check\b']
+  # 段階75: ガイドの形(ask brief → 書く → ask verify --brief)の呼び出し
+  brief_patterns: ['ikimonobiyori\.ask\s+brief\b', 'ask\.py\s+brief\b']
+  guide_verify_patterns: ['ikimonobiyori\.ask\s+verify\b.*--brief\b', 'ask\.py\s+verify\b.*--brief\b']
   record_patterns: ['ikimonobiyori\.ask\s+(record|vc-record|knowledge\s+add|record-unverified)\b', 'ikimonobiyori\.guide\s+record-candidate\b']
   # 調べたとみなす道具(検索・取得・取得のサブエージェント)
   research_tools: ["WebSearch", "WebFetch", "Agent", "Task", "mcp__claude-in-chrome__get_page_text"]
@@ -123,4 +126,7 @@ stop_hook:
     research: "ask answer が調べる対象・読むページを出しています。利用者に聞かずに、公式ページを探して読み、ask record で記録し、ask answer を 1 回だけ呼び直してください。"
     removed: "最終メッセージに送れない文があります(「{sentences}」)。作業の事情・提案・利用者への質問は書かず、足りない事実は利用者に聞かずに調べて記録し、ask answer を呼び直してください。"
     no_final_check: "最終メッセージを ask final-check --text <ファイル> に通し、その出力を一字一句そのまま送ってください。"
+    guide_no_verify: "ask brief を使った答えです。書いた下書きを ask verify <下書き> --brief <id> に通し、合格した最終の文(不合格が続いたときは出された答え)だけを送ってください。"
+    guide_mismatch: "最終メッセージが ask verify の出した最終の文と一致しません。ask verify の標準出力を一字一句そのまま送ってください(前後に文を足さない)。"
+    no_ask_answer_guide: "生き物・お出かけの質問です。一般知識で答えず、python -X utf8 -m ikimonobiyori.ask brief \"<質問の文>\" で資料を作り、資料と docs/guide-voice.md だけで下書きを書き、ask verify <下書き> --brief <id> の出力をそのまま送ってください(今までの形に戻しているときは ask answer を実行し、出力を ask final-check に通して送る)。"
     no_ask_answer: "生き物・お出かけの質問です。一般知識で答えず、python -X utf8 -m ikimonobiyori.ask answer --question \"<質問の文>\" を実行し、出力を ask final-check に通して送ってください。"

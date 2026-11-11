@@ -88,6 +88,7 @@ def parse_typical(text, policy):
         return None
     t = unicodedata.normalize("NFKC", text).replace("〜", "~").replace("～", "~").replace("-", "~")
     thirds = policy["month_thirds"]
+    t = _fill_omitted_month(t, thirds)
     parts = []
     for m, rest in re.findall(r"(\d{1,2})月(上旬|中旬|下旬|\d{1,2}日|)", t):
         mm = int(m)
@@ -115,6 +116,19 @@ def parse_typical(text, policy):
         return None
     s, e = parts[0], parts[-1]
     return f"{s[0]:02d}-{s[1]:02d}", f"{e[2]:02d}-{e[3]:02d}"
+
+
+OMITTED_MONTH_RE = re.compile(r"(\d{1,2})月(上旬|中旬|下旬)\s*(~|から)\s*(上旬|中旬|下旬)")
+
+
+def _fill_omitted_month(t, thirds):
+    """段階78 の追記(本人の指示 2026-11-11): 「4月上旬~下旬」「4月上旬から中旬」は後半も同じ月(「4月上旬~4月下旬」)。
+    後半の旬が前半より前(「12月下旬~上旬」)は月が分からないので補わない(推測しない)。"""
+    def rep(m):
+        if thirds[m.group(4)][0] < thirds[m.group(2)][0]:
+            return m.group(0)
+        return f"{m.group(1)}月{m.group(2)}{m.group(3)}{m.group(1)}月{m.group(4)}"
+    return OMITTED_MONTH_RE.sub(rep, t)
 
 
 END_ONLY_RE = re.compile(r"\d{1,2}月(?:上旬|中旬|下旬|\d{1,2}日)?(?:頃|ごろ)?まで")
@@ -271,6 +285,15 @@ def ledger_status_of(url):
     return "approved" if any(r[2] == "approved" for r in rows) else "pending"
 
 
+def ledger_status_in_range(url):
+    """段階80 D(提案2): 記録の URL が台帳の情報源の URL の範囲(同じホストで、情報源のパスの下)にあるときだけ、その項目の承認の状態。
+    範囲の外(同じホストの別のページ)は None(ホスト単位にしない。横浜市の西区のページが承認待ちでも、市のほかのページは隠さない)。"""
+    u = urlparse(url or "")
+    host, path = _bare_host(u.hostname), unquote(u.path or "/")
+    hits = sorted([r for r in _ledger_urls() if r[0] == host and path.startswith(r[1].rstrip("/") or "/")], key=lambda r: -len(r[1]))
+    return hits[0][2] if hits else None
+
+
 def _ledger_gated(r, subject, policy):
     """段階60 第9部: 公式の台帳で承認待ちの情報源の、公式としての記録は、承認されるまで答えの材料にしない(記録は残る)。
     紹介サイトなど(source_class secondary)は段階34 の方針どおり使う。対象の台帳は方針 record.gated_ledgers。"""
@@ -278,7 +301,7 @@ def _ledger_gated(r, subject, policy):
         return False
     if r.get("source_class") != "official":
         return False
-    return ledger_status_of(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
+    return ledger_status_in_range(r.get("url")) in (policy["record"]["gated_ledgers"][subject] or [])
 
 
 def restricted_cfg(host, policy):
@@ -346,6 +369,8 @@ def validate(rec, policy):
     for k in r["required"]:
         if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
             continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
+        if k == "state" and r.get("state_optional_notice") and rec.get("notice") and rec.get("basis") == "page" and rec.get("source_class") == "official":
+            continue                                  # 段階80 F(提案7): 公式のページで読んだ「行く前に」だけの記録
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
             continue                                  # 段階69 第4部 3: 行事の記録は今の状態がなくてよい
         if not rec.get(k):
@@ -436,7 +461,8 @@ def manner_errors(rec, policy):
 
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
           "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
-          "source_year")                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
+          "source_year",                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
+          "research")                            # 段階78 第4部: その場で調べた印 {at, brief, question}
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -1915,6 +1941,8 @@ def short_state(text, policy, word=None):
         return text
     mx = _v(c["max_chars"])
     t = re.sub(c["date_re"], "", str(text or "")).strip(" 　、")
+    if c.get("lead_particle_re") and t != str(text or "").strip(" 　、"):          # 段階77: 日付を除いたときだけ、頭に残った助詞を外す
+        t = re.sub(c["lead_particle_re"], "", t)
     t = re.split("[" + c["clause_end"] + r"\n]", t, maxsplit=1)[0].strip(" 　、")
     t = re.sub(r"[ 　]{2,}", " ", t)
     if word:
@@ -1935,7 +1963,13 @@ def short_state(text, policy, word=None):
     if len(t) <= mx:
         return t
     cut = max((i for i, ch in enumerate(t[:mx]) if ch in c.get("list_sep", "、・,")), default=-1)     # 列挙は区切りの前まで
-    return t[:cut] if cut > 0 else None
+    if cut > 0:
+        head = t[:cut]
+        opens = [i for i, ch in enumerate(head) if ch in "(（"]
+        if opens and head.count("(") + head.count("（") > head.count(")") + head.count("）"):      # 段階77: 閉じない括弧を残さない
+            head = head[:opens[-1]].rstrip(" 　、")
+        return head or None
+    return None
 
 
 def state_display(raw, publisher, policy):

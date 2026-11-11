@@ -188,6 +188,12 @@ def log_removed(removed, now, question=None, env=None):
 def run(message, *, answer=None, now=None, env=None):
     """最終メッセージ → 送ってよい文(必ず空でない)。answer を省くと、直前の ask answer の答えを使う。"""
     now = now or datetime.now().astimezone()
+    try:                                                 # 段階75: ask verify --brief が出した最終の文と一致するなら、そのまま受け入れる
+        from . import guide_verify as GV
+        if answer is None and GV.accepts(message, now, env):
+            return {"text": (message or "").rstrip(NL) + NL, "removed": [], "fallback": False, "guide": True}
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     if answer is None:
         answer = load_answer(now, env)
     r = check(message, answer)

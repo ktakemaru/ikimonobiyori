@@ -129,8 +129,19 @@ def _is_research(call, c):
     return _matches(call, c["record_patterns"])
 
 
-def decide(payload, turn, answer=None, c=None):
-    """→ {"block": bool, "reasons": [エージェントへの次の手順], "why": 判定の語}。"""
+def _decide_guide(msg, calls, at, c, guide_ok):
+    """段階75: ガイドの形の回。ask verify --brief が合格(または今の形の答え)を出し、最終メッセージがその文と一致するときだけ通す。"""
+    after = calls[at + 1:]
+    if not any(_matches(k, c["guide_verify_patterns"]) for k in after):
+        return {"block": True, "why": "guide_no_verify", "reasons": [c["reasons"]["guide_no_verify"]]}
+    if msg.strip() and not (guide_ok(msg) if guide_ok else False):
+        return {"block": True, "why": "guide_mismatch", "reasons": [c["reasons"]["guide_mismatch"]]}
+    return {"block": False, "reasons": [], "why": "guide_checked"}
+
+
+def decide(payload, turn, answer=None, c=None, guide_ok=None):
+    """→ {"block": bool, "reasons": [エージェントへの次の手順], "why": 判定の語}。
+    guide_ok(段階75): 最終メッセージが ask verify --brief の最終の文と一致するかを返す関数。"""
     c = c or cfg()
     msg = payload.get("last_assistant_message") or ""
     prompt, calls = turn.get("prompt") or "", turn.get("calls") or []
@@ -138,9 +149,14 @@ def decide(payload, turn, answer=None, c=None):
     if ex:
         return {"block": False, "reasons": [], "why": ex}
     answers = [i for i, k in enumerate(calls) if _matches(k, c["answer_patterns"])]
+    briefs = [i for i, k in enumerate(calls) if _matches(k, c.get("brief_patterns") or [])]
+    if briefs and (not answers or briefs[-1] > answers[-1]):        # 段階75: ガイドの形(ask brief → 書く → ask verify --brief)
+        return _decide_guide(msg, calls, briefs[-1], c, guide_ok)
     if not answers:
         if not calls and any(w in prompt for w in c["ikimono_words"]) and msg.strip():
-            return {"block": True, "why": "no_ask_answer", "reasons": [c["reasons"]["no_ask_answer"]]}
+            from . import guide_brief as GB                  # 段階77: 新しい形が既定のときは、新しい形の手順を案内する
+            key = "no_ask_answer_guide" if GB.answer_form() == "guide" and c["reasons"].get("no_ask_answer_guide") else "no_ask_answer"
+            return {"block": True, "why": "no_ask_answer", "reasons": [c["reasons"][key]]}
         return {"block": False, "reasons": [], "why": "not_ikimono_turn"}
     reasons = []
     last = answers[-1]
@@ -207,8 +223,10 @@ def run(payload, *, env=None, now=None):
     key = _key(payload, turn["prompt"])
     if blocks_so_far(key, env) >= c["max_blocks_per_turn"]:
         return None
-    answer = FC.load_answer(now or datetime.now().astimezone(), env)
-    d = decide(payload, turn, answer, c)
+    t = now or datetime.now().astimezone()
+    answer = FC.load_answer(t, env)
+    from . import guide_verify as GV
+    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env))
     if not d["block"]:
         return None
     note_block(key, env)

@@ -187,17 +187,15 @@ def gather(sp, origin, c=None, env=None):
         if not kinds and not wins and not _name_matches(e.get("name"), match, sp, c):
             continue
         km, est = _km(e.get("point"), t.get("city"), origin, cat_pol)
-        w = wins[0] if wins else None
-        rows.setdefault(key(e["name"]), {
-            "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
-            "kinds": sorted(set(kinds) | {x["kind"] for x in wins}),
-            "start": w["start"] if w else None, "end": w["end"] if w else None,
-            "season": window_text(w["start"], w["end"], thirds) if w else None,
-            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
-            "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
-            "publisher": _publisher(w["source_url"], e) if w else "",
-            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
-            "annual_events": list(e.get("annual_events") or [])})
+        # 段階79 第1部 2: 時期の違う種(桜山公園の冬桜 11月〜・河津桜 2月〜)は種ごとの行にし、行にはその時期に当たる種だけを書く。
+        # 時期の窓のない種(上野恩賜公園の寒桜)は、窓のある種の行に混ぜない(窓が 1 つもないときだけ、時期なしの行に入れる)
+        spans = {}
+        for x in wins:
+            spans.setdefault((x.get("start"), x.get("end")), []).append(x)
+        for i, ws in enumerate(spans.values() if spans else [[None]]):
+            w = ws[0]
+            row_kinds = sorted({x["kind"] for x in ws}) if w else sorted(set(kinds))
+            _catalog_row(rows, (key(e["name"]) if i == 0 else key(e["name"]) + "|" + str(w.get("start"))), e, t, km, est, w, row_kinds, thirds, P)
     for e in _guide_entries():
         kinds = [k["kind"] for k in e.get("kinds") or [] if _matches(k.get("kind"), match, sp, c)]
         if not kinds:
@@ -218,6 +216,8 @@ def gather(sp, origin, c=None, env=None):
             continue
         if s.get("from_url") and P.unused_source(s.get("from_url")):
             s, win = {}, {}
+        if _season_of_other_kind(s.get("text"), kinds, e.get("kinds")):   # 段階78 の追記: 「梅は1月上旬から…」を桜の時期にしない
+            s, win = {}, {}
         src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0])
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
@@ -226,12 +226,50 @@ def gather(sp, origin, c=None, env=None):
     for r in _records(match, env, sp, c):
         k = key(r["name"])
         if k in rows:
+            if _other_kind(r, rows[k], sp):                             # 段階79 第1部 2: 同じ名所のほかの種の時期は、その種の行にする(行の種と時期を混ぜない)
+                k2 = k + "|" + r["kinds"][0]
+                if r.get("season") and k2 not in rows:
+                    rows[k2] = {**r, "km": rows[k]["km"], "km_estimated": rows[k]["km_estimated"]}
+                continue
             if not rows[k]["season"] and r.get("season"):
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
     return list(rows.values())
+
+
+
+def _catalog_row(rows, k, e, t, km, est, w, kinds, thirds, P):
+    """名所カタログの 1 行(段階79 第1部 2 で gather から分けた。中身は今までと同じ)。"""
+    rows.setdefault(k, {
+            "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
+            "kinds": kinds,
+            "start": w["start"] if w else None, "end": w["end"] if w else None,
+            "season": window_text(w["start"], w["end"], thirds) if w else None,
+            "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
+            "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
+            "publisher": _publisher(w["source_url"], e) if w else "",
+            "care": t.get("care_note"), "from": "catalog", "subject": e["_subject"],
+            "annual_events": list(e.get("annual_events") or [])})
+
+
+
+def _other_kind(rec, row, sp):
+    """記録の種と行の種が、どちらも種の名前そのもの(「桜」)でなく、重ならないとき True(上野恩賜公園の寒桜の行に、ソメイヨシノの時期を入れない)。"""
+    general = {(sp or {}).get("name")}
+    a, b = set(rec.get("kinds") or []), set(row.get("kinds") or [])
+    if not a or not b or a & b or a & general or b & general:
+        return False
+    return True
+
+def _season_of_other_kind(text, kinds, entry_kinds):
+    """ガイドの記録の時期の文が、名所のほかの種の名前で始まる(「梅は1月上旬から…」「梅の見頃は…」)のに、
+    聞かれた種(kinds)の名前を含まないとき True(本人の指示 2026-11-11。その時期は聞かれた種の時期ではない)。"""
+    if not text:
+        return False
+    others = [k.get("kind") for k in entry_kinds or [] if isinstance(k, dict) and k.get("kind") and k.get("kind") not in kinds]
+    return any(text.startswith(o) for o in others) and not any(k in text for k in kinds)
 
 
 def _old_year(r, season, c=None):
@@ -309,6 +347,45 @@ def _month_of(md):
     return int(md[:2])
 
 
+def months_of(start, end):
+    """「MM-DD」の始まり・終わり → その期間にかかる月(年をまたぐ期間は 12 月から 1 月へ続ける)。"""
+    a, b = int(start[:2]), int(end[:2])
+    out = [a]
+    while out[-1] != b:
+        out.append(out[-1] % 12 + 1)
+    return out
+
+
+def month_span(rows):
+    """名所の行の例年の時期 → (始まりの月, 終わりの月)。どの名所の時期も含む、いちばん短い月の幅(年をまたいでよい。
+    12〜1月の名所と 3〜4月の名所があれば 12月〜4月)。全部の月にかかるなら (1, 12)。時期のある行がなければ None。
+    段階78 の追記(本人の指示 2026-11-11): 新しい形の資料と今までの形の答えで同じ計算を使う。"""
+    wins = [r for r in rows if r.get("start") and r.get("end")]
+    if not wins:
+        return None
+    have = set()
+    for r in wins:
+        have |= set(months_of(r["start"], r["end"]))
+    if len(have) == 12:
+        return 1, 12
+    best = None                                     # いちばん長い「かからない月」の並びのすぐあとが始まり
+    for m in range(1, 13):
+        if m in have:
+            continue
+        n, x = 0, m
+        while x not in have:
+            n, x = n + 1, x % 12 + 1
+        if best is None or n > best[0]:
+            best = (n, x)
+    start = best[1]
+    end = start
+    for k in range(12):
+        x = (start - 1 + k) % 12 + 1
+        if x in have:
+            end = x
+    return start, end
+
+
 def _in_window(today, start, end):
     md = today.strftime("%m-%d")
     return start <= md <= end if start <= end else (md >= start or md <= end)
@@ -340,13 +417,12 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
         else:
             lines.append(t["none"].format(name=sp["name"]))
         return lines, urls, False
-    wins = [r for r in rows if r["start"] and r["end"]]
+    wins = [r for r in rows if r["start"] and r["end"] and r.get("season")]   # 段階78 の追記 4: 時期を書く名所だけ(資料の側と同じ)
     if is_bird:                                                           # 鳥は場所ごとに時期が違う(通年・秋〜春)。月の幅の 1 文にしない
         lines.append(t["lead_birds"].format(name=sp["name"]))
     elif wins:
-        start_m = min(wins, key=lambda r: r["start"])["start"]
-        end_m = max(wins, key=lambda r: r["end"] if r["end"] >= r["start"] else "99")["end"]
-        a, b = f"{_month_of(start_m)}月", f"{_month_of(end_m)}月"
+        ma, mb = month_span(wins)                                         # 段階78 の追記 4: 年をまたぐ時期も(資料の側と同じ計算)
+        a, b = f"{ma}月", f"{mb}月"
         lines.append(t["lead_one"].format(name=sp["name"], start=a) if a == b else t["lead"].format(name=sp["name"], start=a, end=b))
         if any(_in_window(today, r["start"], r["end"]) for r in wins):
             lines.append(t["in_season"])
@@ -396,13 +472,13 @@ def place_filter(question, c=None):
     from . import areas as AR
     c = c or cfg()
     q = question or ""
-    for a in AR.load()["areas"]:
-        for n in sorted([a["name"], *(a.get("aliases") or [])], key=len, reverse=True):
-            if n in q:
-                return {"label": n, "cities": list(a.get("cities") or [])}
+    a, n = AR.find_in(q)                                  # 段階80 の追記2: 「南伊豆」「伊豆市」の「伊豆」はエリアにしない
+    if a:
+        return {"label": n, "cities": list(a.get("cities") or [])}
     m = re.search(c["place_filter"]["city_re"], q)
     if m:
-        return {"label": m.group(1), "cities": [m.group(1)]}
+        city = re.sub(r"^.+?[都道府県](?=.{2,})", "", m.group(1))      # 段階78: 「神奈川県松田町」は町の名前で絞る(記録の city は「松田町」)
+        return {"label": city, "cities": [city]}
     return None
 
 

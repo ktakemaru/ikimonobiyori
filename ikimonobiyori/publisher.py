@@ -112,11 +112,75 @@ def is_official(url, publisher_kind=None, c=None):
     return official_domain(url, c)
 
 
+def _name_head(s, field):
+    """発行元の欄はそのまま、題名は最初の語(空白・括弧・コロンの前)。"""
+    s = str(s or "").strip()
+    if field == "title":
+        s = re.split(r"[\s　(（:：「『|｜]", s, maxsplit=1)[0]
+    return s
+
+
+def _walk_names(o, out):
+    if isinstance(o, dict):
+        u = o.get("url")
+        if isinstance(u, str) and u.startswith("http"):
+            for f in ("publisher", "title", "name"):                 # name: 知識カードの出典の発行元
+                if isinstance(o.get(f), str):
+                    out.append((host_of(u), _name_head(o[f], "publisher" if f == "publisher" else "title")))
+        for v in o.values():
+            _walk_names(v, out)
+    elif isinstance(o, list):
+        for v in o:
+            _walk_names(v, out)
+
+
+@lru_cache(maxsize=4)
+def _association_hosts(data_dir_key):
+    """段階79 第1部 1: 台帳・名所カタログ・ガイドの記録・観察の記録・知識カードの発行元の名前が観光協会の語で終わるホストの集合。"""
+    import json
+    a = cfg().get("association_names") or {}
+    pat = re.compile(a.get("pattern") or r"(?!)")
+    prefixes = sorted(a.get("prefixes") or [], key=len, reverse=True)
+    pairs = []
+    for p in sorted((ROOT / "data").rglob("*.yaml")):
+        try:
+            _walk_names(yamlcache.load(p), pairs)
+        except (OSError, ValueError, TypeError):
+            continue
+    files = [p for sub in ("observations", "knowledge", "guide") for p in sorted((Path(data_dir_key) / sub).glob("*.jsonl"))]
+    for p in files:
+        try:
+            lines = p.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            try:
+                _walk_names(json.loads(line), pairs)
+            except ValueError:
+                continue
+    hosts = set()
+    for h, n in pairs:
+        for pre in prefixes:
+            if n.startswith(pre):
+                n = n[len(pre):]
+                break
+        if h and n and pat.search(n) and not _HOSTISH.match(n):
+            hosts.add(h)
+    return frozenset(hosts)
+
+
+def association_host(url):
+    """段階79 第1部 1: 市区町村・都県の観光協会(観光物産協会・観光連盟・観光コンベンション協会を含む)のホストか。"""
+    from . import paths
+    host = host_of(url)
+    return bool(host) and host in _association_hosts(str(paths.data_dir()))
+
+
 def is_party(url, publisher_kind=None, c=None):
     """段階69 第6部(承認 3): 観光協会・公園の管理者・施設の運営者が、当事者として自分で出しているサイトか。"""
     c = c or cfg()
     kinds = set((c.get("party_publisher") or {}).get("kinds") or [])
-    return bool(publisher_kind in kinds or ledger_kind(url) in kinds or party_kind(url, c) in kinds)
+    return bool(publisher_kind in kinds or ledger_kind(url) in kinds or party_kind(url, c) in kinds or association_host(url))
 
 
 def shows_official(url, publisher_kind=None, c=None):
