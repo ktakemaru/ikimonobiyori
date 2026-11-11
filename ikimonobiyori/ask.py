@@ -642,7 +642,7 @@ class Flow:
             return guide_photos.load_photo(row["taxon_id"], self.env) if self.env else guide_photos.load_photo(row["taxon_id"])
 
         def credit(meta):
-            return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
+            return plan_page.author_credit(meta, gp)             # 状態(開花など)は出さない(段階81 の追記)
         pp = self.policy["plan_page"]
         ap = Path(answer_path) if answer_path else next((self.workdir / n for n in ("final.txt", "answer.txt") if (self.workdir / n).is_file()), None)
         answer = ap.read_text(encoding="utf-8") if ap and ap.is_file() else None

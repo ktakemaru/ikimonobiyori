@@ -87,7 +87,7 @@ def _region_label(facts):
 
 def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
     """→ (HTML, 検査用の文の一覧, 載せた種 {名所: [(種名, 写真あり)]})。photo_for(和名) → (メタ, バイト列) か None。
-    photo_credit(メタ) → 表示の文字列(撮影者・ライセンス・学名・状態)。"""
+    photo_credit(メタ) → 表示の文字列(撮影者・ライセンス)。元のページのリンクは answer_page.photo_card が付ける。"""
     t = policy["text"]
     lines = []
 
@@ -143,14 +143,15 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
             pf.append(esc(t["sources"]) + " " + " ".join(link(u, urlsplit(u).hostname) for u in urls))
         out.append('<ul class="park-facts">' + "".join(f"<li>{x}</li>" for x in pf) + "</ul>")
         cards, nophoto = [], []
+        from . import answer_page as APG
         for name in species_of(c, sj, policy):
-            got = photo_for(name)
+            got, rep = APG.photo_with_representative(name, photo_for)   # 段階81 の追記: 総称の種は代表の写真(説明に「写真は○○」)
             img = pool.tag(got[0], got[1], name) if got else None
             if img is None:                                      # 写真が取れなかった種は枠を出さず、名前だけの行(手描きの図にしない)
                 nophoto.append(name)
                 shown.setdefault(it["name"], []).append((name, False))
                 continue
-            cards.append(f'<li class="bird">{img}<h3>{say(name)}</h3><p class="credit">{esc(photo_credit(got[0]))}</p></li>')
+            cards.append(APG.photo_card(name, got, rep, img, photo_credit, say))
             shown.setdefault(it["name"], []).append((name, True))
         if cards:
             out.append('<ul class="birds">' + "".join(cards) + "</ul>")
@@ -178,6 +179,6 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
 
 
 def author_credit(meta, gp, state_line=None):
-    """写真の下の 1 行(撮影者・ライセンス。花は学名と状態も)。"""
+    """写真の下の 1 行(撮影者・ライセンス)。段階81 の追記から、呼び出し側は状態を渡さない(state_line は互換のため残す)。"""
     text = gp["html"]["photo_credit"].format(author=short_author(meta, gp["html"]["author_re"]), license=meta["license"])
     return text + (" " + state_line if state_line else "")

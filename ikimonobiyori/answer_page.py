@@ -48,18 +48,59 @@ def load_last(now, env=None):
 
 
 def species_for(doc):
-    """ページに写真を載せる種(答えの型ごと)。季節で絞った知識の質問は、その季節の種だけ。"""
+    """ページに写真を載せる種(答えの型ごと。最大 page.max_species)。季節で絞った知識の質問は、その季節の種だけ。"""
+    return species_all(doc)[: cfg()["max_species"]]
+
+
+def species_over(doc):
+    """上限(page.max_species)を超えて載せなかった種。"""
+    return species_all(doc)[cfg()["max_species"]:]
+
+
+def species_all(doc):
     from . import season_place as SP
     q = doc.get("question") or ""
     if doc.get("species") is not None:                    # 段階81 第2部: ガイドの答え(新しい形)は、文に出る種を呼び出し側が決める
-        return list(doc["species"])[: cfg()["max_species"]]
+        return list(doc["species"])
     if doc.get("route") in ("knowledge", "chat"):
         names = SP.season_species_names(q) or [x["name"] for x in SP.resolve_all(q)]
     elif doc.get("route") == "season_place":
         names = list((doc.get("season_place") or {}).get("species") or [])
     else:
         names = []
-    return names[: cfg()["max_species"]]
+    return list(names)
+
+
+def representative(name):
+    """段階81 の追記: 総称の種(ツツジ・バラなど)の代表の種・品種 {name, label, reason}。なければ None。"""
+    return (cfg().get("representatives") or {}).get(name)
+
+
+def photo_with_representative(name, photo_for):
+    """→ (写真 (メタ, バイト列) か None, 代表 {name, label} か None)。その名前の写真がなく、代表の写真があるときだけ代表。"""
+    got = photo_for(name)
+    if got:
+        return got, None
+    r = representative(name)
+    if r:
+        got = photo_for(r["name"])
+        if got:
+            return got, r
+    return None, None
+
+
+def photo_card(name, got, rep, img, photo_credit, say):
+    """写真のカード: 見出しは種の名前、説明は(代表なら「写真は○○」)撮影者・ライセンスと元のページのリンク。状態(開花など)は出さない(段階81 の追記)。"""
+    from . import guide
+    c = cfg()
+    meta = got[0]
+    commons = meta.get("source") == guide.load_policy()["photos"]["commons"]["source_id"]
+    cap = esc(photo_credit(meta))
+    if rep:
+        cap = esc(c["representative_caption"].format(label=rep["label"])) + "。" + cap
+    if meta.get("photo_page"):
+        cap += "(" + link(meta["photo_page"], c["photo_link_commons"] if commons else c["photo_link"]) + ")"
+    return f'<li class="bird">{img}<h3>{say(name)}</h3><p class="credit">{cap}</p></li>'
 
 
 def title_of(doc):
@@ -123,22 +164,24 @@ def build(doc, *, photo_for, photo_credit, csp, max_bytes, linkify=False):
     title = title_of(doc)
     body = [f"<h1>{say(title)}</h1>"]
     pool = PhotoPool(max_bytes)
-    shown, cards, nophoto = [], [], []
+    shown, cards, nophoto, over = [], [], [], list(species_over(doc))
     for name in species_for(doc):
-        got = photo_for(name)
+        got, rep = photo_with_representative(name, photo_for)
         img = pool.tag(got[0], got[1], name) if got else None
-        if img is None:                                        # 写真が取れなかった種は名前だけの行(手描きの図にしない)
-            nophoto.append(name)
+        if img is None:                                        # 写真が取れなかった種は名前だけの行(手描きの図にしない)。埋め込む大きさの上限で載せなかった種は上限の行
+            (over if got else nophoto).append(name)
             shown.append((name, False))
             continue
-        cards.append(f'<li class="bird">{img}<h3>{say(name)}</h3><p class="credit">{esc(photo_credit(got[0]))}</p></li>')
+        cards.append(photo_card(name, got, rep, img, photo_credit, say))
         shown.append((name, True))
     text_html = body_html(doc.get("text") or "", say, linkify=linkify)
-    if cards or nophoto:                                       # 写真は本文の前(本文の最後は出典)
+    if cards or nophoto or over:                               # 写真は本文の前(本文の最後は出典)
         body.append(f"<h2>{say(c['photo_heading'])}</h2>")
         body.append(f'<p class="note">{say(c["photo_note"])}</p>')
         if cards:
             body.append('<ul class="birds">' + "".join(cards) + "</ul>")
+        if over:
+            body.append(f'<p class="note">{say(c["over_limit_names"].format(names="・".join(over)))}</p>')
         if nophoto:
             body.append(f'<p class="note">{say(c["no_photo_names"].format(names="・".join(nophoto)))}</p>')
     body.append(text_html)
@@ -167,7 +210,7 @@ def make(doc, now, env=None):
         return guide_photos.load_photo(row["taxon_id"], env) if env else guide_photos.load_photo(row["taxon_id"])
 
     def credit(meta):
-        return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
+        return plan_page.author_credit(meta, gp)                 # 状態(開花など)は出さない(段階81 の追記)
     mx = pp["max_embed_bytes"]
     html_text, _lines, shown = build(doc, photo_for=photo_for, photo_credit=credit, csp=pp["csp"], max_bytes=mx["value"] if isinstance(mx, dict) else mx)
     out = (guide_photos.page_dir(env) if env else guide_photos.page_dir()) / cfg()["file"].format(kind=doc.get("route"), date=now.date().isoformat())

@@ -202,3 +202,89 @@ class PseudoTaxonIsNotAskedToINaturalist(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PageAfterReview81(unittest.TestCase):
+    """段階81 の追記(本人の判断 2026-11-12): 載せる種は 12 まで・上限で載せなかった種と写真が取れなかった種を分ける・
+    写真の説明に状態を出さない(種の名前・撮影者・ライセンス・元のページ)・総称の種は代表の写真で「写真は○○」。合成データ。"""
+
+    def _meta(self, i, source=None):
+        return {"image_type": "jpeg", "license": "CC BY", "attribution": f"撮影者{i}", "photo_page": f"https://www.inaturalist.org/photos/{i}",
+                "source": source, "state": "開花", "scientific": "Testus testus", "rule": 1}
+
+    def _build(self, names, have, max_bytes=None):
+        from ikimonobiyori import answer_page as APG
+        photos = {n: (self._meta(i), b"\xff\xd8\xff" + bytes([i]) * 100) for i, n in enumerate(have, start=1)}
+        doc = {"route": "guide", "question": "試験?", "text": "試験の文です。", "species": names}
+        return APG.build(doc, photo_for=photos.get, photo_credit=lambda m: f"写真: {m['attribution']}・{m['license']}",
+                         csp="default-src 'none'", max_bytes=max_bytes)
+
+    def test_cap_is_twelve_and_over_is_its_own_line(self):
+        from ikimonobiyori import answer_page as APG
+        c = APG.cfg()
+        self.assertEqual(c["max_species"], 12)
+        names = [f"種{i:02d}" for i in range(1, 15)]                      # 14 種。13・14 種目は上限の行
+        html, _l, shown = self._build(names + ["写真なし種"], names)
+        self.assertEqual(sum(1 for _n, x in shown if x), 12)
+        self.assertIn(c["over_limit_names"].format(names="種13・種14・写真なし種"), html)
+        self.assertNotIn(c["no_photo_names"].split("{")[0], html)
+
+    def test_no_photo_and_over_are_separate(self):
+        from ikimonobiyori import answer_page as APG
+        c = APG.cfg()
+        html, _l, _s = self._build(["種01", "種02"], ["種01"])
+        self.assertIn(c["no_photo_names"].format(names="種02"), html)
+        self.assertNotIn(c["over_limit_names"].split("{")[0], html)
+
+    def test_embed_budget_goes_to_the_over_line(self):
+        from ikimonobiyori import answer_page as APG
+        c = APG.cfg()
+        html, _l, _s = self._build(["種01", "種02"], ["種01", "種02"], max_bytes=150)   # 2 枚目は大きさの上限で載らない(写真はある)
+        self.assertIn(c["over_limit_names"].format(names="種02"), html)
+        self.assertNotIn(c["no_photo_names"].split("{")[0], html)
+
+    def test_caption_has_no_state_and_links_the_source(self):
+        html, _l, _s = self._build(["種01"], ["種01"])
+        self.assertNotIn("状態", html)
+        self.assertNotIn("Testus testus", html)
+        self.assertIn('<a href="https://www.inaturalist.org/photos/1"', html)
+        self.assertIn("写真: 撮影者1・CC BY", html)
+
+    def test_generic_name_uses_the_representative_and_says_so(self):
+        from ikimonobiyori import answer_page as APG
+        c = APG.cfg()
+        r = APG.representative("ツツジ")
+        self.assertIsNotNone(r)
+        html, _l, shown = self._build(["ツツジ"], [r["name"]])
+        self.assertEqual(shown, [("ツツジ", True)])
+        self.assertIn(c["representative_caption"].format(label=r["label"]), html)
+        self.assertIn("<h3>ツツジ</h3>", html)
+        html2, _l, _s = self._build(["ヤマツツジ"], [r["name"]])           # 代表の種そのものの写真には「写真は○○」を付けない
+        self.assertNotIn(c["representative_caption"].format(label=r["label"]), html2)
+
+    def test_every_representative_has_a_reason_and_label(self):
+        from ikimonobiyori import answer_page as APG
+        reps = APG.cfg()["representatives"]
+        self.assertTrue({"ツツジ", "シャクナゲ", "バラ", "スイレン", "ヤエザクラ"} <= set(reps))
+        for k, v in reps.items():
+            self.assertTrue(v.get("name") and v.get("label") and v.get("reason"), k)
+
+    def test_generic_word_in_the_guide_text_is_found(self):
+        import json
+        import tempfile
+        from ikimonobiyori import guide_answer_page as GAP
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {"IKIMONOBIYORI_DATA_DIR": tmp}
+            doc = {"brief": "b-none", "text": "試験園のツツジとバラが見どころです。"}
+            names = [n for n, _ in GAP.species_all(doc, env)]
+            self.assertEqual(names[:2], ["ツツジ", "バラ"])
+            json.dumps(names)
+
+    def test_guide_page_and_wildflower_captions_have_no_state(self):
+        import inspect
+        from ikimonobiyori import answer_page, ask, guide_answer_page, guide_page, plan_page, wildflower_page
+        for m in (answer_page, ask, guide_answer_page, guide_page, plan_page, wildflower_page):
+            import re
+            src = inspect.getsource(m)
+            calls = re.findall(r"(?<!def )state_text\(meta", src)
+            self.assertFalse(calls, m.__name__)                              # 写真の説明に状態を出す呼び出しがない(関数の定義は残す)

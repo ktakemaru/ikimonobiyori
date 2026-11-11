@@ -71,6 +71,12 @@ def _facts_candidates(bid, env=None):
 
 def species(doc, env=None):
     """最終の文 → 写真に載せる種 [(和名, テーマ)](文に出た順。重複なし。最大 page.max_species)。"""
+    from . import answer_page as APG
+    return species_all(doc, env)[: APG.cfg()["max_species"]]
+
+
+def species_all(doc, env=None):
+    """最終の文 → 文に出る種 [(和名, テーマ)](文に出た順。重複なし。上限なし)。"""
     from . import ask, guide_photos
     from .plan_page import species_of
     from . import answer_page as APG
@@ -86,7 +92,8 @@ def species(doc, env=None):
             found.append((pos + i / 100, n, c["subject_themes"].get(sj)))
     table = guide_photos.load_table(env) if env else guide_photos.load_table()
     themes = _table_themes(env)
-    words = {**{n: n for n in table}, **(c.get("aliases") or {}), **(pp.get("photo_aliases") or {})}
+    reps = APG.cfg().get("representatives") or {}                     # 段階81 の追記: 総称の種(ツツジ・バラなど)も文から探す(写真は代表の種)
+    words = {**{n: n for n in reps}, **{n: n for n in table}, **(c.get("aliases") or {}), **(pp.get("photo_aliases") or {})}
     rest = text
     for w in sorted(words, key=len, reverse=True):                    # 文に名前の出る種(長い語から。「河津桜」の中の「桜」は数えない)
         if len(w) < c["min_word_chars"] or w in (pp.get("skip_names") or []):
@@ -109,7 +116,7 @@ def species(doc, env=None):
         if n and n not in seen and n not in (pp.get("skip_names") or []):
             seen.add(n)
             out.append((n, th))
-    return out[: APG.cfg()["max_species"]]
+    return out
 
 
 def _table_themes(env=None):
@@ -166,8 +173,11 @@ def make(doc, now, env=None, fetch=True, http_get=None, http_bytes=None):
     """直前のガイドの答えのページを作ってデータ置き場に書く。→ {path, line, species, photos, fetched}"""
     from . import answer_page as APG
     from . import ask, guide, guide_page, guide_photos, plan_page
-    sp = species(doc, env)
-    fetched = ensure_photos(sp, env, http_get, http_bytes) if fetch and sp else {"ran": False, "requests": 0, "results": {}}
+    sp_all = species_all(doc, env)
+    sp = sp_all[: APG.cfg()["max_species"]]
+    table0 = guide_photos.load_table(env) if env else guide_photos.load_table()
+    want = [((APG.representative(n) or {}).get("name") if n not in table0 and APG.representative(n) else n, th) for n, th in sp]   # 総称の種は代表の種の写真を補う
+    fetched = ensure_photos(want, env, http_get, http_bytes) if fetch and sp else {"ran": False, "requests": 0, "results": {}}
     pol = guide.load_policy()
     gp = pol["photos"]
     pp = ask.load_policy()["plan_page"]
@@ -180,8 +190,8 @@ def make(doc, now, env=None, fetch=True, http_get=None, http_bytes=None):
         return guide_photos.load_photo(row["taxon_id"], env) if env else guide_photos.load_photo(row["taxon_id"])
 
     def credit(meta):
-        return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
-    page_doc = {"route": "guide", "question": doc.get("question"), "text": clean_text(doc.get("text")), "species": [n for n, _ in sp]}
+        return plan_page.author_credit(meta, gp)                 # 状態(開花など)は出さない(段階81 の追記)
+    page_doc = {"route": "guide", "question": doc.get("question"), "text": clean_text(doc.get("text")), "species": [n for n, _ in sp_all]}
     mx = pp["max_embed_bytes"]
     html_text, _lines, shown = APG.build(page_doc, photo_for=photo_for, photo_credit=credit, csp=pp["csp"],
                                          max_bytes=mx["value"] if isinstance(mx, dict) else mx, linkify=True)

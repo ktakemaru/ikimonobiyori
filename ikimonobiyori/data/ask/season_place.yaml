@@ -146,7 +146,21 @@ page:
   photo_heading: 写真
   photo_note: "写真は種の代表写真で、その場所で撮られたものではありません。"
   no_photo_names: "写真が取れなかった種: {names}"
-  max_species: 6
+  # 段階81 の追記(本人の判断 2026-11-12): 載せる種は 12 まで。上限(種の数・埋め込む写真の大きさ)で載せなかった種は、写真が取れなかった種と分けて 1 行で示す
+  max_species: 12
+  over_limit_names: "上限のため写真を載せなかった種: {names}"
+  # 写真の説明(種の名前は見出し。撮影者・ライセンス・元のページ)。状態(開花など)は出さない(本人の判断 2026-11-12)
+  photo_link: 写真のページ(iNaturalist)
+  photo_link_commons: ファイルのページ(Wikimedia Commons)
+  # 総称の種(種が一つに決まらない語)には代表の種・品種の写真を載せ、説明に何の写真かを必ず書く(本人の判断 2026-11-12)。
+  # 代表の写真も、ライセンス・同定の決まりは今までどおり(guide_photos のキャッシュにあるものだけ)
+  representative_caption: "写真は{label}"
+  representatives:
+    ツツジ: {name: ヤマツツジ, label: ヤマツツジ, reason: "日本の山野にもっとも普通な野生のツツジ。名所の多くの躑躅とは品種が違うことがある"}
+    シャクナゲ: {name: アズマシャクナゲ, label: アズマシャクナゲ, reason: "関東・東北の山に自生するシャクナゲ"}
+    バラ: {name: ノイバラ, label: ノイバラ(日本の野生のバラ), reason: "バラ園の園芸品種は種が決まらないので、日本の野生のバラの代表"}
+    スイレン: {name: ヒツジグサ, label: ヒツジグサ(日本の在来のスイレン), reason: "日本に自生する唯一のスイレン属"}
+    ヤエザクラ: {name: カンザン, label: 関山(八重桜の代表的な品種), reason: "八重桜の名所に多い里桜の品種"}
   footer: "写真提供: iNaturalist / Wikimedia Commons。"
   section_words: [いつ・どこで, 出典, 関連して, 行く前に確認すること]
   last_file: ask/last_answer.json
