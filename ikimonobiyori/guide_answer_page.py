@@ -229,9 +229,41 @@ def _longest_in(text, names):
     return max(hits, key=len) if hits else None
 
 
+def _themes_in(text, t, env=None):
+    """質問の文に出るテーマの語(長い語から、重ならないように。文に出た順)。テーマの語の一覧は 1 字の語も見る。"""
+    from . import guide_photos
+    table = guide_photos.load_table(env) if env else guide_photos.load_table()
+    mc = cfg()["min_word_chars"]
+    words = set(t["theme_words"]) | {w for w in list(cfg().get("aliases") or {}) + list(table) if len(w) >= mc}
+    rest, found = text, []
+    for w in sorted(words, key=len, reverse=True):
+        for m in re.finditer(re.escape(w), rest):
+            found.append((m.start(), w))
+        rest = rest.replace(w, "\0" * len(w))
+    return [w for _p, w in sorted(found)]
+
+
+def _place_of(q, brief, t, env=None):
+    """質問の文の場所: 候補の名所(括弧の前の名前も)・名所の辞書の最長の名前。なければ文頭の地名らしい語(日付・テーマの語は除く)。"""
+    names = []
+    for x in brief.get("candidates") or []:
+        if isinstance(x, dict) and x.get("name"):
+            names += [x["name"], re.split(r"[(（]", x["name"])[0]]
+    place = _longest_in(q, names)
+    if not place:
+        from . import ask
+        place = _longest_in(q, ask.place_names())
+    if not place:
+        m = re.match(t["lead_place_re"], q)
+        w = m.group(1) if m else None
+        if w and not any(d in w for d in t["date_words"]) and not _themes_in(w, t, env):
+            place = w
+    return place
+
+
 def title_for(doc, env=None):
-    """資料(質問の文・候補の名所・対象・日付の語)から、ページの題を決める。
-    「<場所> <日付の語>の<テーマ>の<見どころ・おすすめなど>」の形(ないものは省く)。字数の上限を超えたら質問の文。"""
+    """資料(質問の文・候補の名所・対象・出発地・質問の型)から、ページの題を決める(語と形は guide_page.title)。
+    既定の形は「<出発地から> <場所> <日付の語>の<テーマ>の<見どころ・おすすめなど>」(ないものは省く)。字数の上限を超えたら質問の文。"""
     from . import guide_brief as GB
     t = cfg()["title"]
     q = (doc.get("question") or "").strip()
@@ -240,22 +272,32 @@ def title_for(doc, env=None):
     except (OSError, ValueError, TypeError):
         brief = {}
     q = (brief.get("question") or q).strip()
-    cands = [x.get("name") for x in brief.get("candidates") or [] if isinstance(x, dict)]
-    place = _longest_in(q, cands)
-    if not place:
-        from . import ask
-        place = _longest_in(q, ask.place_names())
+    place = _place_of(q, brief, t, env)
     rest = q.replace(place, "") if place else q
+    origin = brief.get("origin") if brief.get("origin_source") in t["origin_sources"] and brief.get("origin") in rest else None
+    if origin:
+        rest = rest.replace(origin, "")
     date = next((w for w in t["date_words"] if w in rest), None)
-    topic = next((w for w in t["topic_words"] if w in rest), None) or t["default_topic"]
-    from . import guide_photos
-    table = guide_photos.load_table(env) if env else guide_photos.load_table()
-    theme = _longest_in(rest, list(t["theme_words"]) + list(cfg().get("aliases") or {}) + list(table))
-    if not theme and not place:
-        subs = brief.get("subjects") or []
-        theme = t["subject_words"].get(subs[0]) if len(subs) == 1 else None
-    tail = "の".join(x for x in (date, theme if theme != topic else None, topic) if x)
-    title = " ".join(x for x in (place, tail) if x)
+    topic = next((w for w in t["topic_words"] if w in rest), None)
+    themes = _themes_in(rest, t, env)
+    subs = brief.get("subjects") or []
+    theme = themes[0] if themes else (t["subject_words"].get(subs[0]) if len(subs) == 1 and not place else None)   # 場所の質問に聞かれていないテーマを足さない
+    fmt = t["by_kind"].get(brief.get("intent")) or t["by_kind"].get(brief.get("route"))
+    title = None
+    if fmt and ("{theme" not in fmt or theme) and ("{themes}" not in fmt or len(themes) >= 2) and ("{place_no}" not in fmt or place or theme):
+        event = next((w for w in t["event_words"] if w in rest), t["event_words"][-1])
+        title = fmt.format(place_sp=(place + " ") if place else "", place_no=(place + "の") if place else "", theme=theme or "",
+                           theme_no=(theme + "の") if theme else "", themes="と".join(themes),
+                           themes_dot=("・".join(themes) + "の") if themes else ((theme + "の") if theme else ""), event=event).strip()
+    if not title:
+        head = " ".join(x for x in ((t["origin_fmt"].format(origin=origin) if origin else None), place) if x)
+        if theme and any(w in rest for w in t["seen_words"]):
+            tail = (date if date == t["date_words"][-1] else "") + t["seen_fmt"].format(theme=theme)
+            joint = "で" if place else " "
+        else:
+            tail = "の".join(x for x in (date, theme if theme != topic else None, topic or t["default_topic"]) if x)
+            joint = " " if (date or not place) else "の"             # 「高尾山 今週末の見どころ」「八ヶ岳の見どころ」
+        title = (head + joint + tail) if head else tail
     return title if len(title) <= t["max_chars"] else (q or title)
 
 

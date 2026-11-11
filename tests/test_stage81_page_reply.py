@@ -50,7 +50,7 @@ class Markdown(Base):
         self.assertIn("<h2>試験の谷で</h2>", html)
         self.assertNotIn("##", html)
         self.assertNotIn("**", html)
-        self.assertIn("<li>試験の道は一方通行です。</li>", html)
+        self.assertIn("<li><strong>試験の道</strong>は一方通行です。</li>", html)     # 太字は太字で表示(本人の判断 2026-11-12)
         self.assertIn('<a href="https://example.org/a"', html)
 
     def test_blocks(self):
@@ -91,6 +91,24 @@ class Title(Base):
     def test_single_subject_without_place(self):
         g = self.save(question="野鳥のおすすめを教えて", cands=[], subjects=["birds"])
         self.assertEqual(GAP.title_for(g, self.env), "野鳥のおすすめ")
+
+    def kind(self, q, intent, route=None, subjects=None, cands=(), origin=None):
+        g = self.save(question=q, cands=list(cands), subjects=subjects or ["autumn_leaves", "flowers", "birds"])
+        p = GB.brief_dir(self.env) / f"{g['brief']}.json"
+        d = json.loads(p.read_text(encoding="utf-8"))
+        d.update({"intent": intent, "route": route or intent, "origin": origin or "横浜", "origin_source": "question" if origin else "default"})
+        p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        return GAP.title_for(g, self.env)
+
+    def test_titles_by_question_type(self):                                # 段階81 の続き 2(本人の指示 2026-11-12)
+        self.assertEqual(self.kind("冬桜と寒桜の違いを教えて", "difference"), "冬桜と寒桜の違い")
+        self.assertEqual(self.kind("試験浦にはどんな野鳥がいるの?", "knowledge", "unknown_place", ["birds"]), "試験浦の野鳥")
+        self.assertEqual(self.kind("試験県で、野鳥や地形の観察会はある?", "event", subjects=["birds"]), "試験県 野鳥・地形の観察会")
+        self.assertEqual(self.kind("桜の見られる時期と場所を教えて", "normal", "season_place"), "桜の名所と時期")
+        self.assertEqual(self.kind("試験浜で見られる花を教えて", "plan", subjects=["flowers"]), "試験浜で見られる花")
+        self.assertEqual(self.kind("今の見頃のものを教えて", "now", "plan"), "今の見頃")
+        self.assertEqual(self.kind("試験岳の見どころを教えて", "knowledge", "highlights"), "試験岳の見どころ")
+        self.assertEqual(self.kind("来週末、試験宮から行きやすい場所でおすすめある?", "plan", origin="試験宮"), "試験宮から 来週末のおすすめ")
 
     def test_subject_word_when_question_has_none(self):
         g = self.save(question="おすすめを教えて", cands=[], subjects=["birds"])

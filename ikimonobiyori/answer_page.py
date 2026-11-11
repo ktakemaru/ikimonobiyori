@@ -158,7 +158,7 @@ _HEAD = re.compile(r"^(#{1,6})\s+(.*\S)\s*$")
 
 def md_blocks(text):
     """段階81 の続き 2: Markdown の答えの文 → 塊の一覧 [{kind: h2|h3|p|ul, texts: [文]}]。
-    「## 見出し」は見出し、「- 」「・」は箇条、それ以外の行は段落。太字の印(**)は外す(文は書き換えない)。"""
+    「## 見出し」は見出し、「- 」「・」は箇条、それ以外の行は段落。太字の印(**)は残し、表示で太字にする(見出しでは外す)。"""
     c = cfg()
     out, items = [], []
 
@@ -167,14 +167,14 @@ def md_blocks(text):
             out.append({"kind": "ul", "texts": list(items)})
             items.clear()
     for raw in (text or "").splitlines():
-        line = re.sub(r"\*\*(.+?)\*\*", r"\1", raw.strip())
+        line = raw.strip()
         if not line:
             flush()
             continue
         m = _HEAD.match(line)
         if m:
             flush()
-            out.append({"kind": "h2" if len(m.group(1)) <= 2 else "h3", "texts": [m.group(2)]})
+            out.append({"kind": "h2" if len(m.group(1)) <= 2 else "h3", "texts": [_unbold(m.group(2))]})
         elif line in c["section_words"]:
             flush()
             out.append({"kind": "h2", "texts": [line]})
@@ -182,7 +182,7 @@ def md_blocks(text):
             if safe_url(line):
                 items.append(line)
         elif line.startswith(("・", "- ", "* ")):
-            items.append(line.lstrip("・-* ").strip())
+            items.append(re.sub(r"^(・|- |\* )\s*", "", line))
         else:
             flush()
             out.append({"kind": "p", "texts": [line]})
@@ -190,11 +190,22 @@ def md_blocks(text):
     return out
 
 
+def _unbold(t):
+    return re.sub(r"\*\*(.+?)\*\*", r"\1", t or "")
+
+
+def _inline(t, say):
+    """段階81 の続き(本人の判断 2026-11-12): **…** を太字にする。検査用の文の一覧には印を外した文を残す。"""
+    say(_unbold(t))
+    parts = re.split(r"\*\*(.+?)\*\*", t)
+    return _linkify("".join(f"<strong>{esc(x)}</strong>" if i % 2 else esc(x) for i, x in enumerate(parts)))
+
+
 def _block_html(b, say):
     if b["kind"] == "ul":
-        return '<ul class="park-facts">' + "".join(f"<li>{_linkify(say(t))}</li>" for t in b["texts"]) + "</ul>"
+        return '<ul class="park-facts">' + "".join(f"<li>{_inline(t, say)}</li>" for t in b["texts"]) + "</ul>"
     t = b["texts"][0]
-    return f"<{b['kind']}>{_linkify(say(t)) if b['kind'] == 'p' else say(t)}</{b['kind']}>"
+    return f"<{b['kind']}>{_inline(t, say) if b['kind'] == 'p' else say(t)}</{b['kind']}>"
 
 
 def build(doc, *, photo_for, photo_credit, csp, max_bytes, linkify=False):
@@ -274,7 +285,7 @@ def _build_md(doc, *, photo_for, photo_credit, csp, max_bytes):
             break
         if b["kind"] in ("h2", "h3"):
             continue
-        blob = "".join(b["texts"])
+        blob = _unbold("".join(b["texts"]))
         for n in names:
             if n not in placed and any(w and w in blob for w in (words.get(n) or [n])):
                 placed.add(n)

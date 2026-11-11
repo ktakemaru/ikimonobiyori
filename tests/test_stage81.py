@@ -137,7 +137,8 @@ class GuideAnswerPage(unittest.TestCase):
         r = GAP.make(GAP.newest(now, self.env), now, self.env, fetch=False)
         html = Path(r["path"]).read_text(encoding="utf-8")
         self.assertIn("試験川の河津桜が見どころです。", html)
-        self.assertIn("試験川: 例年2月上旬〜3月上旬", html)
+        import re                                                          # 段階81 の続き(本人の承認 2026-11-12): 太字はタグになるので、タグを除いた文字で比べる
+        self.assertIn("試験川: 例年2月上旬〜3月上旬", re.sub(r"<[^>]+>", "", html))
         self.assertNotIn("**", html)
         self.assertIn('<a href="https://example.org/a"', html)
         self.assertIn("写真が取れなかった種: カワヅザクラ", html)          # 写真がなければ名前だけ(手書きの図にしない)
