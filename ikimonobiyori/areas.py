@@ -42,6 +42,18 @@ def _longer_towns(name):
     return sorted(out, key=len, reverse=True)
 
 
+def _known_names():
+    from . import guide_materials as GM
+    from . import research as RS
+    return set(GM._town_names()) | set(RS._municipalities())
+
+
+def _known_city(city, names):
+    """市区町村の欄が、名所の記録・出発地の辞書で分かる市区町村の名前か(「横浜市中区」「伊東市・伊豆市」も)。"""
+    from . import guide_materials as GM
+    return bool(city) and any(p in names for p in GM._city_parts(city))
+
+
 def mentioned(name, text):
     """段階80 の追記2: name が text に、より長い市区町村の名前の一部としてでなく出てくるか(「南伊豆」「伊豆市」の「伊豆」は数えない)。"""
     t = text or ""
@@ -103,14 +115,22 @@ def members(area, candidates, policy=None):
     """エリアの名所(市区町村が一致、または中心から半径の内)。"""
     policy = policy or C.load_policy()
     r = policy["range_limit"]["earth_radius_km"]
+    by_cities = area.get("membership") == "cities"       # 段階80 の追記4: 市区町村で決めるエリア(秩父・那須・伊豆・富士)
+    subs = [a for a in load()["areas"] if a is not area and a.get("cities") and set(a["cities"]) <= set(area.get("cities") or [])] if by_cities else []
+    names = None
     out = []
     for c in candidates:
         city = c.get("city") or ""
-        if any(city.startswith(x) for x in area.get("cities") or []):
+        if any(city.startswith(x) or x in re.split(r"[・、]", city) for x in area.get("cities") or []):
             out.append(c)
             continue
+        if by_cities and city and names is None:
+            names = _known_names()                        # 1 回の呼び出しで 1 回だけ読む
+        if by_cities and _known_city(city, names or set()):
+            continue                                      # 分かる市区町村の欄があれば、それだけで決める(分からない欄は半径で)
         p = c.get("point")
-        if p and p.get("lat") is not None and C.distance_km(p["lat"], p["lon"], area["center"]["lat"], area["center"]["lon"], r) <= area["radius_km"]:
+        if p and p.get("lat") is not None and any(
+                C.distance_km(p["lat"], p["lon"], a["center"]["lat"], a["center"]["lon"], r) <= a["radius_km"] for a in [area, *subs]):
             out.append(c)
     return out
 

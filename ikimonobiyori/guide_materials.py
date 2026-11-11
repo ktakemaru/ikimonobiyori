@@ -82,7 +82,26 @@ def _city_parts(city):
 
 def _town_names():
     """段階80 の追記(本人の判断 2026-11-11): 名所の記録にある市区町村の名前の集合(名所カタログ・観察の名所・ガイドのカタログ)。"""
-    return {p for v in _index().values() for p in _city_parts(v.get("city"))}
+    out = {p for v in _index().values() for p in _city_parts(v.get("city"))}
+    out |= {p for r in _official_records() for p in _city_parts(r.get("city"))}    # 段階80 の追記4: 読んだ事実の記録だけにある市区町村(那須塩原市の紅葉)
+    return out
+
+
+RECORD_SUBJECTS = ("flowers", "birds", "autumn_leaves")
+
+
+def _official_records():
+    """読んだ事実の記録のうち、公式・名前・市区町村・種・例年の時期のそろったもの(名所の記録として使えるもの)。[(subject, record)] ではなく record に _subject を付ける。"""
+    from . import observations as O
+    out = []
+    for sj in RECORD_SUBJECTS:
+        try:
+            recs = O.read_records(sj)
+        except (OSError, ValueError, KeyError):
+            continue
+        out += [{**r, "_subject": sj} for r in recs if r.get("source_class") == "official" and r.get("name") and r.get("city")
+                and r.get("typical") and r.get("kind")]
+    return out
 
 
 def town_of(word, names=None):
@@ -184,29 +203,23 @@ def _confirm_with_records(rows, town, key):
     """段階80 の追記2(本人の判断 2026-11-11): 公式ページで確かめて記録した名所(読んだ事実の記録。公式・種と例年の時期つき)で、仮の名所の印を外す
     (出典を確かめたページにする)。名前は記号を除いて一致するか、片方がもう片方を含むとき同じ名所とみなす。記録だけにある名所は仮でない行として足す。
     確かめられなかった名所は仮のまま。"""
-    from . import observations as O
-    for sj in ("flowers", "birds"):
-        try:
-            recs = O.read_records(sj)
-        except (OSError, ValueError, KeyError):
+    for rec in _official_records():
+        sj = rec["_subject"]
+        if town not in _city_parts(rec.get("city")):
             continue
-        for rec in recs:
-            if (rec.get("source_class") != "official" or not rec.get("name") or not rec.get("typical") or not rec.get("kind")
-                    or town not in _city_parts(rec.get("city"))):
+        k = key(rec["name"])
+        same = [r for r in rows if k and (key(r["name"]) == k or (key(r["name"]) and (key(r["name"]) in k or k in key(r["name"]))))]
+        season = (rec["typical"], rec["kind"])
+        if not same:
+            rows.append({"name": rec["name"], "prefecture": rec.get("prefecture"), "city": rec.get("city"), "seasons": [season],
+                         "kinds": [rec["kind"]], "url": rec.get("url"), "publisher": rec.get("publisher"), "source_class": "official",
+                         "tentative": False, "confirmed_by": rec.get("url"), "subject": sj})
+            continue
+        for r in same:
+            if not r["tentative"]:
                 continue
-            k = key(rec["name"])
-            same = [r for r in rows if k and (key(r["name"]) == k or (key(r["name"]) and (key(r["name"]) in k or k in key(r["name"]))))]
-            season = (rec["typical"], rec["kind"])
-            if not same:
-                rows.append({"name": rec["name"], "prefecture": rec.get("prefecture"), "city": rec.get("city"), "seasons": [season],
-                             "kinds": [rec["kind"]], "url": rec.get("url"), "publisher": rec.get("publisher"), "source_class": "official",
-                             "tentative": False, "confirmed_by": rec.get("url"), "subject": sj})
-                continue
-            for r in same:
-                if not r["tentative"]:
-                    continue
-                r.update(tentative=False, url=rec.get("url"), publisher=rec.get("publisher"), source_class="official",
-                         seasons=[season], confirmed_by=rec.get("url"))
+            r.update(tentative=False, url=rec.get("url"), publisher=rec.get("publisher"), source_class="official",
+                     seasons=[season], confirmed_by=rec.get("url"))
 
 
 def place_info(name):

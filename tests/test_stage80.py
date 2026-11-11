@@ -376,7 +376,8 @@ class AfterReview80b(unittest.TestCase):
         from ikimonobiyori import areas as AR
         izu = AR.resolve("伊豆")
         self.assertIn("沼津市", izu["cities"])
-        self.assertFalse({"三島市", "清水町", "長泉町"} & set(izu["cities"]))
+        self.assertTrue({"三島市", "清水町", "長泉町"} <= set(izu["cities"]))    # 追記4 の判断 3: 全体構想の 15 市町にそろえた
+        self.assertEqual(len(izu["cities"]), 15)
         self.assertTrue(izu["sources"])
         fuji = AR.resolve("富士")
         self.assertTrue({"富士河口湖町", "富士宮市", "御殿場市"} <= set(fuji["cities"]))
@@ -417,6 +418,44 @@ class AfterReview80b(unittest.TestCase):
                 K.add_fact("試験の鳥(オオバンとバン)", "x", "", at=NOW.isoformat(), env=env)
             log = [json.loads(x) for x in (K.path(env).parent / "card_changes.jsonl").read_text(encoding="utf-8").splitlines()]
             self.assertEqual([x["action"] for x in log], ["add_fact"])
+
+
+class AfterReview80d(unittest.TestCase):
+    """段階80 の追記4: エリアを市町で決める(秩父・那須・伊豆・富士)・記録だけにある市区町村(那須塩原市)。"""
+
+    def test_chichibu_by_cities(self):                                     # 判断 2
+        from ikimonobiyori import areas as AR
+        ch = AR.resolve("秩父")
+        self.assertEqual(ch["cities"], ["秩父市", "横瀬町", "皆野町", "長瀞町", "小鹿野町"])
+        self.assertEqual(len(AR.members(ch, [{"name": "宝登山", "city": "長瀞町"}])), 1)
+        near = {"name": "隣町の公園", "city": "神川町", "point": dict(ch["center"])}
+        self.assertEqual(AR.members(ch, [near]), [])                       # 市町の欄があれば半径では入れない
+        nag = AR.resolve("長瀞")
+        self.assertEqual(len(AR.members(ch, [{"name": "欄なし", "point": dict(nag["center"])}])), 1)   # 欄なしは中の長瀞の半径で
+        self.assertEqual(nag["cities"], ["長瀞町"])                       # 長瀞は今までどおり
+
+    def test_nasu_region(self):                                            # 判断 4
+        from ikimonobiyori import areas as AR
+        self.assertEqual(AR.resolve("那須")["cities"], ["那須町", "那須塩原市"])
+        self.assertFalse(AR.mentioned("那須", "那須塩原で見られる紅葉"))
+        recs = [{"name": "試験の吊橋", "city": "那須塩原市", "kind": "紅葉", "typical": "見ごろは11月上旬から11月中旬まで",
+                 "url": "https://www.city.example.lg.jp/k", "source_class": "official"},
+                {"name": "試験の茶屋", "city": "那須塩原市", "kind": "紅葉", "url": "https://www.city.example.lg.jp/k", "source_class": "official"}]
+        with mock.patch.object(O, "read_records", side_effect=lambda sj, *a, **k: recs if sj == "autumn_leaves" else []):
+            got = GM._official_records()
+            self.assertEqual([(r["name"], r["_subject"]) for r in got], [("試験の吊橋", "autumn_leaves")])   # 例年の時期のないものは使わない
+            with mock.patch.object(GM, "_index", return_value={}):
+                self.assertIn("那須塩原市", GM._town_names())
+            rows = []
+            GM._confirm_with_records(rows, "那須塩原市", lambda n: n)
+            self.assertEqual([(r["name"], r["subject"], r["tentative"]) for r in rows], [("試験の吊橋", "autumn_leaves", False)])
+
+    def test_fuji_source(self):                                            # 判断 1
+        from ikimonobiyori import areas as AR
+        f = AR.resolve("富士")
+        self.assertEqual(f.get("membership"), "cities")
+        self.assertIn("裾野市", f["sources"][0]["lists"])
+        self.assertEqual({a["name"] for a in AR.load()["areas"] if a.get("membership") == "cities"}, {"秩父", "那須", "伊豆", "富士"})
 
 if __name__ == "__main__":
     unittest.main()

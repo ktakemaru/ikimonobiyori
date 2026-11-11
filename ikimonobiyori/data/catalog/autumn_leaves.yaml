@@ -87,7 +87,7 @@ entries:
     typical_window: {start: "11-01", end: "11-20", source_url: "https://www.city.nasushiobara.tochigi.jp/soshikikarasagasu/tsuishin/hana/2755.html", note: "那須塩原市: 紅の吊橋 11月上旬〜中旬(塩原渓谷 10月下旬〜11月中旬、日塩もみじライン 10月中旬〜11月上旬)"}
     access_notes: "西那須野塩原ICから車で約20分(塩原もの語り館の近く)"
     status: approved
-    tags: {prefecture: 栃木県, area: 塩原, terrain: [valley], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
+    tags: {prefecture: 栃木県, area: 塩原, city: 那須塩原市, terrain: [valley], source: "段階80 の追記4: city は出典(那須塩原市の紅葉のページ。紅の吊橋・塩原渓谷を載せる)の市。Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
     status_sources: [siobara-kankou]
     approved_at: "2026-10-22"
     sources:
@@ -732,7 +732,7 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: "2026-10-24"
-    tags: {prefecture: 栃木県, area: 日光, terrain: [wetland, highland], source: "Claude Code が付けた(地形・行き方は名前と公式ページの記載から。座標は公式ページの地図の埋め込み。段階19 の続き)"}
+    tags: {prefecture: 栃木県, area: 日光, city: 日光市, terrain: [wetland, highland], source: "段階80 の追記4: city は出典(日光市観光協会の鬼怒沼のページ。奥鬼怒)の市。Claude Code が付けた(地形・行き方は名前と公式ページの記載から。座標は公式ページの地図の埋め込み。段階19 の続き)"}
     status_sources: [nikko-kankou-autumn-leaves]
     sources:
       - {url: "https://www.nikko-kankou.org/spot/59", title: "日光市観光協会 鬼怒沼(地図の埋め込みの座標)", checked_on: "2026-10-24"}
