@@ -137,6 +137,41 @@ def _pending_urls():
     return out
 
 
+def _town_candidates(F, cands, towns, cond, c):
+    """段階80 の追記: 質問の市区町村の名所を候補と事実に足し、ほかの市区町村の候補(既定の出発地の近くの名所など)と、その事実を外す。"""
+    from . import guide_materials as GM
+    T = c["town_candidates"]
+    have = {r["name"] for r in cands}
+    for town in towns:
+        for s in GM.town_spots(town, cond.get("origin")):
+            loc = f"{s.get('prefecture') or ''}{s.get('city') or ''}"
+            for text, kind in s["seasons"]:
+                F.add("typical", f"{s['name']}({loc}): " + ("" if text.startswith("例年") else "例年 ") + f"{text}" + (f"({kind})" if kind else "") + (T["tentative_note"] if s["tentative"] else ""),
+                      place=s["name"], source=s.get("publisher"), url=s.get("url"), source_class=s.get("source_class"),
+                      extra={"_pref": s.get("prefecture"), "_city": s.get("city")})
+            if s["name"] in have:
+                continue
+            have.add(s["name"])
+            cands.append({"subject": None, "rank": None, "name": s["name"], "chosen": False, "basis": "town",
+                          "group": _group_of(s.get("prefecture"), c), "prefecture": s.get("prefecture"), "city": s.get("city"),
+                          "theme": "・".join(s["kinds"][:3]) or None,
+                          "reasons": [T["label"].format(town=town)] + ([T["tentative_label"]] if s["tentative"] else [])})
+    keep = [r for r in cands if GM.in_town(r["name"], r.get("city"), towns)]
+    kept = {r["name"] for r in keep}
+    dropped = {r["name"] for r in cands} - kept
+    words = list(kept) + towns + [re.sub(r"(市|町|村|区)$", "", t) for t in towns]
+
+    def stays(f):
+        pl = f.get("place")
+        if pl:
+            return not (pl in dropped or re.sub(r"\(.*$", "", pl) in dropped)
+        return any(w and w in (f.get("content") or "") for w in words)      # 場所の欄のない行(コードの答えの行)は、その市区町村の話だけ
+    F.rows[:] = [f for f in F.rows if stays(f)]
+    for i, f in enumerate(F.rows):                        # 番号を振り直す(このあと足す事実と重ならないように)
+        f["id"] = f"F{i + 1:03d}"
+    return keep, dropped
+
+
 def _ledger_pending(url):
     """台帳で承認待ちの情報源のページか(情報源の URL の範囲で判定する。observations._ledger_gated と同じ。段階80 D)。"""
     from . import observations as O
@@ -1222,6 +1257,13 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                       "prefecture": h["prefecture"], "city": h["city"], "theme": h["label"], "highlight_cards": [k.get("title") for k in h["cards"]],
                       "reasons": [c["bird_highlights"]["label"]]})
     from . import guide_materials as GM
+    towns = [] if (cond.get("area_names") or cond.get("region")) else GM.question_towns(question)
+    if towns:                                             # 段階80 の追記(本人の判断 2026-11-11): 市区町村の名前の質問は、その市区町村の名所を候補にする
+        cands, dropped = _town_candidates(F, cands, towns, cond, c)
+        if extra and extra.get("no_this_year"):
+            extra = {**extra, "no_this_year": [n for n in extra["no_this_year"] if n not in dropped]}
+        if extra and dropped:
+            extra = {**extra, "origin_line": None}
     for r in cands:
         if not r.get("prefecture") or not r.get("city"):      # 段階80 E(提案11): 場所の欄が空の候補は、名所の辞書の都県・市町村で補う
             info = GM.place_info(r["name"])
@@ -1242,7 +1284,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
               + f" 例年の冬季閉鎖 {cl.get('typical')}" + (f"。{season_txt}" if season_txt else "") + f"。{note}",
               place=card.get("place"), source=(card.get("source") or {}).get("name"), url=(card.get("source") or {}).get("url"),
               source_class="official", extra={"in_target": hit})
-    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen")], months=months,
+    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen") or r.get("basis") == "town"], months=months,
                    event_texts=[f["content"] for f in F.rows if f["kind"] == "event"])
     if pb:
         seen = {k["title"] for k in cards}
@@ -1251,6 +1293,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                 cards.append({**k, "id": f"K{len(cards) + 1:03d}"})
     if hl:
         cards = _add_highlight_cards(cards, hl, c)
+    if towns:                                             # 段階80 の追記: 市区町村の質問では、ほかの場所の話のカードを一般の話として使わない
+        cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if k.get("link") != c["card_links"]["theme"] or _plain_general_card(k, c))]
     if (res.get("route") or cond.get("route")) == "unknown_place":   # 段階80 A(提案4): 辞書にない地名の質問では、ほかの場所の話のカードを使わない(一般の話だけ)
         cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if _plain_general_card(k, c))]
     mat = _narrative(cards, question, cond, cands, sprows, months, c)     # 段階78 第3部 1: 語りの材料

@@ -285,11 +285,11 @@ def _declared_ok(publisher):
 
 def _verified(text, publisher, operator=None):
     """発行元の名前がページの運営者の欄(フッター・著作権表示・運営者情報)にあるか(空白の違いは見ない)。
-    段階80 B(提案9): 本文のどこかにあるだけでは通さない。運営者の欄が一つも見つからないページだけ、本文で探す(段階78 の形)。"""
-    if not publisher:
+    段階80 B(提案9): 本文のどこかにあるだけでは通さない。運営者の欄が一つも見つからないページも読まない(本人の判断 2026-11-11)。
+    text は使わない(呼び出しの形を変えないために残している)。"""
+    if not publisher or not operator:
         return False
-    hay = operator if operator else text
-    return re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", hay or "")
+    return re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", operator)
 
 
 def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep, publisher=None):

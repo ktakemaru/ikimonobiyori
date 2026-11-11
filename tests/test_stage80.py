@@ -242,5 +242,49 @@ class NoticeOnly(unittest.TestCase):
         self.assertIn(NOW.isoformat(), late["reason"])
 
 
+class AfterReview80(unittest.TestCase):
+    """段階80 の報告書への本人の判断(2026-11-11)のあと。"""
+
+    def test_no_operator_section_is_not_read(self):                       # 判断 3: B の例外をなくす
+        h = "<p>試験町観光協会 例年2月に菜の花</p>"
+        t = RS.html_text(h)
+        self.assertEqual(RS.operator_text(h, t), "")
+        self.assertFalse(RS._verified(t, "試験町観光協会", RS.operator_text(h, t)))
+
+    def test_card_changes_are_backed_up(self):                             # 判断 2
+        from ikimonobiyori import knowledge_backup as KB
+        self.assertIn("card_changes.jsonl", KB.cfg()["allowed_files"])
+
+    def test_town_of(self):                                                # 判断 4: 市町村の名前で名所を引く
+        names = {"南伊豆町", "伊豆市", "松田町", "中区"}
+        self.assertEqual(GM.town_of("南伊豆", names), "南伊豆町")
+        self.assertEqual(GM.town_of("松田町", names), "松田町")
+        self.assertIsNone(GM.town_of("南試験", names))
+        self.assertIsNone(GM.town_of("中", names))                          # 1 字は引かない
+        self.assertEqual(GM._city_parts("横浜市中区・伊豆市"), ["横浜市中区", "中区", "伊豆市"])
+
+    def test_town_is_not_unknown(self):
+        with mock.patch.object(RS, "question_places", return_value=["試験伊豆"]),                 mock.patch.object(PG, "is_known", return_value=False), mock.patch.object(GM, "town_of", return_value="試験伊豆町"):
+            self.assertEqual(PG.unknown_towns("試験伊豆で見られる花"), [])
+
+    def test_town_candidates_replace_other_places(self):
+        c = GB.cfg()
+        F = GB._Facts(c, set())
+        F.add("typical", "横浜の試験庭園: 例年 11月", place="横浜の試験庭園", url="https://www.city.example.lg.jp/a", source_class="official")
+        F.add("other", "日付の指定がなかったので、11/14・11/15で探しました。")
+        F.add("typical", "試験の畑(試験県試験伊豆町): 菜の花 2月", place="試験の畑", url="https://www.town.example.lg.jp/b", source_class="official")
+        cands = [{"name": "横浜の試験庭園", "city": "横浜市中区", "chosen": True}, {"name": "試験の畑", "city": "試験伊豆町", "basis": "species"}]
+        spot = {"name": "試験の桜並木", "prefecture": "試験県", "city": "試験伊豆町", "seasons": [("例年2月上旬〜3月上旬", "河津桜")], "kinds": ["河津桜"],
+                "url": "https://kanko.example.jp/c", "publisher": "試験紹介", "source_class": "secondary", "tentative": True}
+        with mock.patch.object(GM, "town_spots", return_value=[spot]):
+            keep, dropped = GB._town_candidates(F, cands, ["試験伊豆町"], {"origin": "横浜"}, c)
+        self.assertEqual([r["name"] for r in keep], ["試験の畑", "試験の桜並木"])
+        self.assertEqual(dropped, {"横浜の試験庭園"})
+        self.assertEqual([f["id"] for f in F.rows], ["F001", "F002"])           # 番号は振り直す
+        self.assertTrue(all("横浜" not in f["content"] and "日付の指定" not in f["content"] for f in F.rows))
+        self.assertIn("試験の桜並木(試験県試験伊豆町): 例年2月上旬〜3月上旬(河津桜)(検索で集めた名所。仮)", [f["content"] for f in F.rows])
+        self.assertIn(c["town_candidates"]["tentative_label"], keep[1]["reasons"])
+
+
 if __name__ == "__main__":
     unittest.main()

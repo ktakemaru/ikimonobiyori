@@ -265,7 +265,10 @@ class Research(unittest.TestCase):
         def get(url):
             if url.endswith("/robots.txt"):
                 return 404, b"", {}
-            return 200, "<p>試験町観光協会 例年2月に菜の花</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+            if url.endswith("/nofooter"):                # 段階80 の本人の判断(2026-11-11): 運営者の欄のないページは --publisher では読まない
+                return 200, "<p>試験町観光協会 例年2月に菜の花</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+            return 200, "<p>例年2月に菜の花</p><footer>© 試験町観光協会</footer>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        self.assertFalse(RS.fetch("https://kanko.example.jp/nofooter", "b-d0", now=NOW, http_get=get, publisher="試験町観光協会")["ok"])
         u = "https://kanko.example.jp/a"
         self.assertFalse(RS.fetch(u, "b-d1", now=NOW, http_get=get)["ok"])                      # 名前なし: 公式の一覧にないホストは読まない
         self.assertFalse(RS.fetch(u, "b-d1", now=NOW, http_get=get, publisher="別の町観光協会")["ok"])  # 本文に名前がない

@@ -70,7 +70,7 @@ backup:
   dir: knowledge                       # IKIMONOBIYORI_DATA_DIR の下(非公開リポジトリ ikimonobiyori-knowledge の作業ツリー)
   allowed_remote_re: '^(https://github\.com/|git@github\.com:)ktakemaru/ikimonobiyori-knowledge(\.git)?$'
   # add してよいファイル(このうち .gitignore の許可の一覧(! の行)にあるものだけ)
-  allowed_files: [cards.jsonl, publications.jsonl, README.md, .gitignore, .gitattributes]
+  allowed_files: [cards.jsonl, publications.jsonl, card_changes.jsonl, README.md, .gitignore, .gitattributes]   # 段階80 の追記: card_changes.jsonl(題名の変更・取り下げの控え。本人の判断 2026-11-11)
   # この形の文字列を含むファイルは add しない(手元の絶対パス・トークン)
   forbidden_content_re: '([A-Za-z]:[\\/]+Users[\\/]|/home/[a-z]|ghp_[A-Za-z0-9]{20,}|github_pat_|xox[bp]-|AKIA[0-9A-Z]{16})'
   commit_message: "知識カードのバックアップ（{date}）"

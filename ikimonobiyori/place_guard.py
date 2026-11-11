@@ -122,6 +122,9 @@ def unknown_towns(question, env=None, extra=()):
     for w in RS.question_places(question):
         if w in dic or is_known(w, env, extra):          # 名所・エリア・山の辞書の名前は知っている場所
             continue
+        from . import guide_materials as GM
+        if GM.town_of(w):                                 # 段階80 の追記: 名所の記録にある市区町村(その市区町村の名所を候補にする)
+            continue
         t = SP.resolve_town(w)
         if t and (t == w or re.sub(r"[市町村区]$", "", t) == w):
             continue

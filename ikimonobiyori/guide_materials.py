@@ -66,6 +66,117 @@ def _index():
     return out
 
 
+def _city_parts(city):
+    """市区町村の欄 → 名前の一覧(「横浜市中区」→ 横浜市中区・中区。「伊東市・伊豆市」は分ける)。"""
+    out = []
+    for part in re.split(r"[・、]", city or ""):
+        part = part.strip()
+        if not part:
+            continue
+        out.append(part)
+        m = re.match(r"^(.+?[市郡])(.+[町村区])$", part)
+        if m:
+            out.append(m.group(2))
+    return out
+
+
+def _town_names():
+    """段階80 の追記(本人の判断 2026-11-11): 名所の記録にある市区町村の名前の集合(名所カタログ・観察の名所・ガイドのカタログ)。"""
+    return {p for v in _index().values() for p in _city_parts(v.get("city"))}
+
+
+def town_of(word, names=None):
+    """質問の地名(「南伊豆」「松田町」)→ 名所の記録にある市区町村の名前(「南伊豆町」)か None。
+    名前そのもの、または末尾の 市・町・村・区 を除いた形(2 字以上)が一致するときだけ(「南伊豆」を「伊豆市」にしない)。"""
+    w = (word or "").strip()
+    if len(w) < 2:
+        return None
+    names = _town_names() if names is None else names
+    if w in names:
+        return w
+    for n in sorted(names, key=lambda x: (-len(x), x)):
+        stem = re.sub(r"(市|町|村|区)$", "", n)
+        if len(stem) >= 2 and stem == w:
+            return n
+    return None
+
+
+def question_towns(question):
+    """質問の文 → 名所の記録にある市区町村の名前の一覧。エリア・地域・出発地・名所の辞書で分かる地名(箱根・横浜・秩父など)は除く
+    (今までどおりエリアや出発地として扱う)。"""
+    from . import guide_verify as GV
+    from . import place_guard as PG
+    from . import research as RS
+    dic = GV._dictionary_places()
+    out = []
+    for w in RS.question_places(question):
+        if w in dic or PG.is_known(w):
+            continue
+        t = town_of(w)
+        if t and t not in out:
+            out.append(t)
+    return out
+
+
+def in_town(name, city, towns):
+    """名所が市区町村の一覧のどれかにあるか(名所の欄の市区町村、なければ名所の辞書の市区町村)。"""
+    parts = _city_parts(city or place_info(name).get("city"))
+    return any(t in parts for t in towns)
+
+
+def town_spots(town, origin=None):
+    """段階80 の追記: 市区町村 → その名所の一覧 [{name, prefecture, city, seasons: [(text, kind)], kinds, url, publisher, source_class, tentative}]。
+    名所カタログ(承認済み)・ガイドのカタログ(承認済みと、検索で集めた仮の名所)。行事の期間は例年の時期にしない。"""
+    from . import guide
+    from . import observations as O
+    from . import publisher as P
+    from . import season_place as SP
+    opol = O.load_policy()
+    thirds = SP.cfg()["text"]["thirds"]
+    rows, seen = [], {}
+
+    def key(n):
+        return re.sub(r"[\s()（）・]", "", n or "")
+    for e in SP._all_entries():
+        if not e.get("city") or town not in _city_parts(e["city"]):
+            continue
+        seasons = [(SP.window_text(w["start"], w["end"], thirds), w.get("kind")) for w in e.get("windows") or []
+                   if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"])]
+        if e.get("season_text"):
+            seasons.append((e["season_text"], "・".join(x for x in e["kinds"][:2] if x)))
+        k = key(e["name"])
+        if k in seen:
+            r = seen[k]
+            r["seasons"] += [x for x in seasons if x not in r["seasons"]]
+            r["kinds"] = list(dict.fromkeys(r["kinds"] + [x for x in e["kinds"] if x]))
+            continue
+        url = e.get("url")
+        seen[k] = {"name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("city"), "seasons": seasons,
+                   "kinds": [x for x in e["kinds"] if x], "url": url, "publisher": None,
+                   "source_class": "official" if url and P.shows_official(url) else ("secondary" if url else None), "tentative": False}
+        rows.append(seen[k])
+    try:
+        entries = guide.build()[0]
+    except (OSError, ValueError, KeyError):
+        entries = []
+    for e in entries:
+        if e.get("scope") != "place" or town not in _city_parts(e.get("municipality")) or key(e.get("name")) in seen:
+            continue
+        src = [x for x in e.get("sources") or [] if x.get("url") and not P.unused_source(x["url"])]
+        if not src:
+            continue
+        best = sorted(src, key=lambda x: (x.get("class") or "Z", x["url"]))[0]
+        season = e.get("season") or {}
+        kinds = [k["kind"] for k in e.get("kinds") or [] if k.get("kind")]
+        r = {"name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"),
+             "seasons": [(season["text"], "・".join(kinds[:2]))] if season.get("text") else [], "kinds": kinds,
+             "url": best["url"], "publisher": best.get("publisher"),
+             "source_class": "official" if best.get("class") in ("A", "B") else "secondary", "tentative": not guide.approved(e)}
+        seen[key(e["name"])] = r
+        rows.append(r)
+    return rows
+
+
 def place_info(name):
     return dict(_index().get(name) or {})
 
