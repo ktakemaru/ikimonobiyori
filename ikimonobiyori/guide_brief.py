@@ -224,6 +224,102 @@ def _tentative_targets(question, towns, label, cands, targets, c):
     return [{"what": "、".join(GM.species_names(question)) or None, "where": where, "why": why}]
 
 
+def _main_name(name, city):
+    """名前の主な部分(段階80 の追記5): 括弧の中・空白・「の」を除き、都道府県と市区町村の名前(末尾の 市・町・村・区 を除いた形も)が頭にあれば除き、
+    種の別名(臘梅・蝋梅)を種の名前(ロウバイ)にそろえる。"""
+    from . import guide_materials as GM
+    from . import season_place as SP
+    n = re.sub(r"[(（][^)）]*[)）]", "", name or "")
+    n = re.sub(r"[\s・]", "", n)
+    n = re.sub(r"^(東京都|北海道|(京都|大阪)府|.{2,3}県)", "", n)
+    for part in GM._city_parts(city):
+        for x in sorted({part, re.sub(r"(市|町|村|区)$", "", part)}, key=len, reverse=True):
+            if len(x) >= 2 and n.startswith(x) and len(n) > len(x):
+                n = n[len(x):]
+                break
+    for sp in SP.cfg()["species"]:
+        for w in sorted(set(sp.get("words") or []) - {sp["name"]}, key=len, reverse=True):
+            if len(w) >= 2:
+                n = n.replace(w, sp["name"])
+    return n.replace("の", "")
+
+
+def _cand_species(r):
+    from . import guide_materials as GM
+    return frozenset(GM.species_names(r["name"]) + GM.species_names(r.get("theme") or ""))
+
+
+def _months(text):
+    """例年の時期の文 → 月の集合(「12月下旬〜2月下旬」「12/21〜2/28」→ {12, 1, 2})。月がなければ空。"""
+    ms = [int(a or b) for a, b in re.findall(r"(\d{1,2})月|(\d{1,2})/\d{1,2}", text or "")]
+    ms = [m for m in ms if 1 <= m <= 12]
+    if not ms:
+        return set()
+    lo, hi = ms[0], ms[-1]
+    return set(range(lo, hi + 1)) if lo <= hi else set(range(lo, 13)) | set(range(1, hi + 1))
+
+
+def same_place(a, b, c=None):
+    """段階80 の追記5(本人の判断 2026-11-12): 2 つの候補が同じ場所か。同じ市区町村・同じ種(種が分かること)で、
+    両方に座標があれば merge_same.max_m 以内、なければ名前の主な部分が同じ。"""
+    from . import catalog as CM
+    from . import guide_materials as GM
+    c = c or cfg()
+    ca, cb = set(GM._city_parts(a.get("city"))), set(GM._city_parts(b.get("city")))
+    if not ca or not (ca & cb):
+        return False
+    sa, sb = _cand_species(a), _cand_species(b)
+    if not sa or sa != sb:
+        return False
+    pa = a.get("point") or GM.place_info(a["name"]).get("point")
+    pb = b.get("point") or GM.place_info(b["name"]).get("point")
+    if pa and pb and pa.get("lat") is not None and pb.get("lat") is not None:
+        r = CM.load_policy()["range_limit"]["earth_radius_km"]
+        return CM.distance_km(pa["lat"], pa["lon"], pb["lat"], pb["lon"], r) * 1000 <= c["merge_same"]["max_m"]
+    ma, mb = _main_name(a["name"], a.get("city")), _main_name(b["name"], b.get("city"))
+    return bool(ma) and ma == mb
+
+
+def merge_same_candidates(cands, F, c):
+    """名前の形が違う同じ場所の候補を 1 つにまとめる(段階80 の追記5)。→ (候補, まとめた組, まとめなかった組(事実の食い違い))。
+    表に出す名前は公式の出典の事実を持つ候補の名前(なければ先の候補)。事実は両方の候補のものを残し、場所を表に出す名前にそろえる。
+    例年の時期の月が重ならない事実の組は食い違いとしてまとめない。記録そのものは変えない。"""
+    out, merges, conflicts, used = [], [], [], set()
+    for i, r in enumerate(cands):
+        if i in used:
+            continue
+        group = [i] + [j for j in range(i + 1, len(cands)) if j not in used and same_place(r, cands[j], c)]
+        if len(group) == 1:
+            out.append(r)
+            continue
+        names = [cands[j]["name"] for j in group]
+        typ = {n: [_months(f["content"]) for f in F.rows if f.get("place") == n and f["kind"] == "typical"] for n in names}
+        bad = [(x, y) for k, x in enumerate(names) for y in names[k + 1:]
+               if typ[x] and typ[y] and not any(mx & my for mx in typ[x] for my in typ[y] if mx and my) and any(typ[x]) and any(typ[y])]
+        if bad:
+            conflicts.append({"names": names, "reason": c["merge_same"]["conflict_reason"]})
+            out.append(r)
+            continue
+        used.update(group)
+        official = [n for n in names if any(f.get("place") == n and f.get("source_class") == "official" for f in F.rows)]
+        main = official[0] if official else names[0]
+        keep = dict(cands[group[names.index(main)]])
+        keep["merged_from"] = list(dict.fromkeys(list(keep.get("merged_from") or []) + [n for n in names if n != main]))
+        for j in group:                                   # 種・理由・現況はまとめた候補のものも残す
+            o = cands[j]
+            keep["reasons"] = list(dict.fromkeys(list(keep.get("reasons") or []) + list(o.get("reasons") or [])))
+            for k, v in o.items():
+                if keep.get(k) in (None, "", []) and v not in (None, "", []):
+                    keep[k] = v
+        keep["chosen"] = any(cands[j].get("chosen") for j in group)
+        for f in F.rows:
+            if f.get("place") in names and f.get("place") != main:
+                f["place"] = main
+        merges.append({"name": main, "merged_from": keep["merged_from"]})
+        out.append(keep)
+    return out, merges, conflicts
+
+
 def _ledger_pending(url):
     """台帳で承認待ちの情報源のページか(情報源の URL の範囲で判定する。observations._ledger_gated と同じ。段階80 D)。"""
     from . import observations as O
@@ -1332,7 +1428,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), estimated=bool(r.get("distance_estimated")),
                                          prefecture=r.get("prefecture"), city=r.get("city"), c=c)
             r["distance_km"], r["distance_text"] = km, label
-    names = [r["name"] for r in cands] + _question_places(question, res)
+    cands, merges, merge_conflicts = merge_same_candidates(cands, F, c)    # 段階80 の追記5(本人の判断 2026-11-12): 名前の形が違う同じ場所を 1 つに
+    names = [r["name"] for r in cands] + [n for r in cands for n in r.get("merged_from") or []] + _question_places(question, res)
     for card, hit in closures_for(names, months, c):
         cl = card["closure"]
         note = c["closure_note"]["in_period"] if hit else c["closure_note"]["out_period"]
@@ -1341,7 +1438,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
               + f" 例年の冬季閉鎖 {cl.get('typical')}" + (f"。{season_txt}" if season_txt else "") + f"。{note}",
               place=card.get("place"), source=(card.get("source") or {}).get("name"), url=(card.get("source") or {}).get("url"),
               source_class="official", extra={"in_target": hit})
-    cards = _cards(question, res, c, cand_names=[r["name"] for r in cands if r.get("chosen") or r.get("basis") == "town"], months=months,
+    cards = _cards(question, res, c, cand_names=[n for r in cands if r.get("chosen") or r.get("basis") == "town" for n in [r["name"], *(r.get("merged_from") or [])]], months=months,
                    event_texts=[f["content"] for f in F.rows if f["kind"] == "event"])
     if pb:
         seen = {k["title"] for k in cards}
@@ -1369,6 +1466,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
+        "candidate_merges": merges, "candidate_merge_conflicts": merge_conflicts,
         "facts": F.rows, "cards": cards, "narrative": mat,
         "missing": _missing(question, res, cands, F.rows, cards, extra)
         + ([c["town_candidates"]["none_missing"].format(where=area_label or "・".join(towns))] if towns and not cands else [])

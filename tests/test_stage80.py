@@ -457,5 +457,64 @@ class AfterReview80d(unittest.TestCase):
         self.assertIn("裾野市", f["sources"][0]["lists"])
         self.assertEqual({a["name"] for a in AR.load()["areas"] if a.get("membership") == "cities"}, {"秩父", "那須", "伊豆", "富士"})
 
+
+class AfterReview80e(unittest.TestCase):
+    """段階80 の追記5(本人の判断 2026-11-12): 名前の形が違う同じ場所を、資料の候補で 1 つにまとめる。"""
+
+    def setUp(self):
+        self.c = GB.cfg()
+        self.noinfo = mock.patch.object(GM, "place_info", return_value={})
+
+    def test_same_place_by_name(self):
+        with self.noinfo:
+            a = {"name": "宝登山ロウバイ園", "city": "長瀞町"}
+            self.assertTrue(GB.same_place(a, {"name": "長瀞宝登山臘梅園", "city": "長瀞町"}, self.c))       # 町の名前・種の別名を除いて同じ
+            self.assertFalse(GB.same_place(a, {"name": "宝登山梅百花園", "city": "長瀞町"}, self.c))       # 種が違う
+            self.assertFalse(GB.same_place(a, {"name": "宝登山ロウバイ園", "city": "秩父市"}, self.c))     # 市区町村が違う
+            self.assertFalse(GB.same_place(a, {"name": "宝登山山頂ロウバイ園", "city": "長瀞町"}, self.c))  # 迷うものはまとめない
+            self.assertFalse(GB.same_place({"name": "試験公園", "city": "長瀞町"}, {"name": "長瀞試験公園", "city": "長瀞町"}, self.c))   # 種が分からない
+        self.assertEqual(self.c["merge_same"]["max_m"], 200)
+
+    def test_same_place_by_point(self):
+        a = {"name": "試験の梅林", "city": "試験市", "point": {"lat": 35.0, "lon": 139.0}}
+        near = {"name": "試験梅園", "city": "試験市", "point": {"lat": 35.0015, "lon": 139.0}}      # 約 167m
+        far = {"name": "試験の梅林", "city": "試験市", "point": {"lat": 35.003, "lon": 139.0}}      # 約 333m
+        with self.noinfo:
+            self.assertTrue(GB.same_place(a, near, self.c))
+            self.assertFalse(GB.same_place(a, far, self.c))                  # 座標があれば名前が同じでも距離で
+
+    def test_months(self):
+        self.assertEqual(GB._months("例年 12/21〜2/28"), {12, 1, 2})
+        self.assertEqual(GB._months("1月中旬〜2月下旬ごろ"), {1, 2})
+        self.assertEqual(GB._months("例年の時期は未確認"), set())
+
+    def test_merge_candidates(self):
+        F = GB._Facts(self.c, set())
+        F.add("typical", "長瀞宝登山臘梅園(埼玉県長瀞町): 例年 1月中旬〜2月下旬ごろ(ロウバイ)", place="長瀞宝登山臘梅園", url="https://news.example.jp/a", source_class="secondary")
+        F.add("typical", "宝登山ロウバイ園: 例年 12/21〜2/28", place="宝登山ロウバイ園", url="https://www.town.example.lg.jp/b", source_class="official")
+        cands = [{"name": "長瀞宝登山臘梅園", "city": "長瀞町", "theme": "ロウバイ", "reasons": ["町の名所"]},
+                 {"name": "宝登山梅百花園", "city": "長瀞町", "theme": "梅"},
+                 {"name": "宝登山ロウバイ園", "city": "長瀞町", "reasons": ["例年の目安"], "distance_text": "約80km"}]
+        with self.noinfo:
+            out, merges, conflicts = GB.merge_same_candidates(cands, F, self.c)
+        self.assertEqual([r["name"] for r in out], ["宝登山ロウバイ園", "宝登山梅百花園"])     # 公式の出典の名前
+        self.assertEqual(out[0]["merged_from"], ["長瀞宝登山臘梅園"])
+        self.assertEqual(out[0]["reasons"], ["例年の目安", "町の名所"])
+        self.assertEqual(out[0]["theme"], "ロウバイ")
+        self.assertEqual({f["place"] for f in F.rows}, {"宝登山ロウバイ園"})          # 事実は両方を残す
+        self.assertEqual(len(F.rows), 2)
+        self.assertEqual((merges, conflicts), ([{"name": "宝登山ロウバイ園", "merged_from": ["長瀞宝登山臘梅園"]}], []))
+
+    def test_conflicting_facts_are_not_merged(self):
+        F = GB._Facts(self.c, set())
+        F.add("typical", "長瀞宝登山臘梅園: 例年 6月", place="長瀞宝登山臘梅園", url="https://news.example.jp/a", source_class="secondary")
+        F.add("typical", "宝登山ロウバイ園: 例年 12/21〜2/28", place="宝登山ロウバイ園", url="https://www.town.example.lg.jp/b", source_class="official")
+        cands = [{"name": "長瀞宝登山臘梅園", "city": "長瀞町"}, {"name": "宝登山ロウバイ園", "city": "長瀞町"}]
+        with self.noinfo:
+            out, merges, conflicts = GB.merge_same_candidates(cands, F, self.c)
+        self.assertEqual(len(out), 2)
+        self.assertEqual(merges, [])
+        self.assertEqual(conflicts[0]["names"], ["長瀞宝登山臘梅園", "宝登山ロウバイ園"])
+
 if __name__ == "__main__":
     unittest.main()
