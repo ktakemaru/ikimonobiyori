@@ -176,3 +176,25 @@ class SpeciesCards(unittest.TestCase):
         with mock.patch.object(K, "load_shown", return_value=[card]):
             got = GB._cards("梅はいつどこで見られますか?", {"cond": {}}, GB.cfg())
         self.assertIn("梅前線の試験", [k["title"] for k in got])
+
+
+class SpeciesCardsRoundRobin(unittest.TestCase):
+    """第3部: 2 つの種を聞く質問(梅と桜の見分け方)では、種ごとに順にカードを取る。計画の質問では種のカードを先に引かない。"""
+
+    def _card(self, title, place, subject):
+        return {"title": title, "category": "種の解説", "place": place, "place_aliases": [], "subject": subject,
+                "facts": [f"{subject}の試験の文"], "condition": {"months": []}, "source": {"name": "試験", "url": "https://x.example.lg.jp/", "checked_on": "2026-11-11"}}
+
+    def test_both_species(self):
+        from ikimonobiyori import guide_brief as GB
+        shown = [self._card(f"桜の試験{i}", "桜一般", "桜") for i in range(5)] + [self._card("梅の試験", "梅一般", "梅")]
+        got = GB._species_cards("梅と桜の見分け方を教えて", shown, GB.cfg())
+        self.assertIn("梅の試験", [r["title"] for r in got[:2]])
+
+    def test_skip_for_plan(self):
+        from ikimonobiyori import guide_brief as GB
+        from ikimonobiyori import knowledge as K
+        card = self._card("梅前線の試験", "梅一般", "梅")
+        with mock.patch.object(K, "load_shown", return_value=[card]):
+            got = GB._cards("梅はいつどこで見られますか?", {"route": "plan", "cond": {}}, GB.cfg())
+        self.assertNotIn("梅前線の試験", [k["title"] for k in got if k.get("link") == GB.cfg()["card_links"]["species"]])

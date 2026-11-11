@@ -665,12 +665,9 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
                                                      + list(r.get("facts") or [])) for w in words)]
         sp.sort(key=lambda r: (not any(w in (r.get("subject") or "") + (r.get("title") or "") for w in words), r.get("title") or ""))
         push(sp, L["species"], c["species_cards_max"])
-    from . import guide_materials as GM
-    spw = GM.species_match_words(question)
-    if spw:                                               # 段階79 第3部: 種の名前(梅・桜など)で、種のカード(場所の欄が「<種>一般」)を先に引く
-        sp = [r for r in shown if species_hit(spw, " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""]), c)]
-        sp.sort(key=lambda r: (not str(r.get("place") or "").endswith(c["species_card_place_suffix"]), r.get("title") or ""))
-        push(sp, L["species"], c["species_cards_max"])
+    route = res.get("route") or (res.get("cond") or {}).get("route")
+    if route not in (c.get("species_card_skip_routes") or []):
+        push(_species_cards(question, shown, c), L["species"], c["species_cards_max"])   # 段階79 第3部: 種のカード(「<種>一般」)
     try:                                                  # 質問の話題のカード(種の名前で引けたもの以外は一般の話として扱う)
         push([r for r in intent.cards_for(question) if _general_card(r, c)], L["theme"], c["species_cards_max"])
     except (OSError, ValueError, KeyError, TypeError):
@@ -693,6 +690,29 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
                 theme.append((-hit, r.get("title") or "", r))
         push([r for _h, _t, r in sorted(theme, key=lambda x: (x[0], x[1]))], L["theme"])
     return _card_rows(out, c)
+
+
+def _species_cards(question, shown, c):
+    """種の名前(梅・桜など)に当たるカードを、場所の欄が「<種>一般」のものを先に、聞かれた種ごとに順に 1 枚ずつ並べる
+    (「梅と桜の見分け方」で桜のカードだけにならないように)。"""
+    from . import season_place as SP
+    try:
+        sps = SP.resolve_all(question)
+    except (KeyError, TypeError, ValueError):
+        return []
+    groups = []
+    for sp in sps:
+        words = [w for w in list(sp.get("match") or []) + list(sp.get("includes") or []) + list(sp.get("words") or [])]
+        g = [r for r in shown if species_hit(words, " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""]), c)]
+        g.sort(key=lambda r: (not str(r.get("place") or "").endswith(c["species_card_place_suffix"]), r.get("title") or ""))
+        groups.append(g)
+    out, seen = [], set()
+    for i in range(max((len(g) for g in groups), default=0)):
+        for g in groups:
+            if i < len(g) and (g[i].get("title"), g[i].get("place")) not in seen:
+                seen.add((g[i].get("title"), g[i].get("place")))
+                out.append(g[i])
+    return out
 
 
 def species_hit(words, blob, c=None):
