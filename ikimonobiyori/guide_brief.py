@@ -667,7 +667,7 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
         push(sp, L["species"], c["species_cards_max"])
     route = res.get("route") or (res.get("cond") or {}).get("route")
     if route not in (c.get("species_card_skip_routes") or []):
-        push(_species_cards(question, shown, c), L["species"], c["species_cards_max"])   # 段階79 第3部: 種のカード(「<種>一般」)
+        push(_species_cards(question, shown, c, route), L["species"], c["species_cards_max"])   # 段階79 第3部: 種のカード(「<種>一般」)
     try:                                                  # 質問の話題のカード(種の名前で引けたもの以外は一般の話として扱う)
         push([r for r in intent.cards_for(question) if _general_card(r, c)], L["theme"], c["species_cards_max"])
     except (OSError, ValueError, KeyError, TypeError):
@@ -692,9 +692,12 @@ def _cards(question, res, c, cand_names=(), months=(), event_texts=()):
     return _card_rows(out, c)
 
 
-def _species_cards(question, shown, c):
+def _species_cards(question, shown, c, route=None):
     """種の名前(梅・桜など)に当たるカードを、場所の欄が「<種>一般」のものを先に、聞かれた種ごとに順に 1 枚ずつ並べる
-    (「梅と桜の見分け方」で桜のカードだけにならないように)。"""
+    (「梅と桜の見分け方」で桜のカードだけにならないように)。
+    段階79 第4部の追記: 主題か場所の欄で種に当たるものを、題名だけで当たるもの(「ロウバイ(梅の仲間ではない)」)より先に。
+    質問の経路に合う語りの種類(違いの質問なら「見分け方」。guide_mode.yaml の species_card_prefer)の文が多いものを先に。"""
+    prefer = (c.get("species_card_prefer") or {}).get(route or "")
     from . import season_place as SP
     try:
         sps = SP.resolve_all(question)
@@ -704,7 +707,10 @@ def _species_cards(question, shown, c):
     for sp in sps:
         words = [w for w in list(sp.get("match") or []) + list(sp.get("includes") or []) + list(sp.get("words") or [])]
         g = [r for r in shown if species_hit(words, " ".join([r.get("title") or "", r.get("subject") or "", r.get("place") or ""]), c)]
-        g.sort(key=lambda r: (not str(r.get("place") or "").endswith(c["species_card_place_suffix"]), r.get("title") or ""))
+        g.sort(key=lambda r: (not str(r.get("place") or "").endswith(c["species_card_place_suffix"]),
+                              not species_hit(words, " ".join([r.get("subject") or "", r.get("place") or ""]), c),
+                              -sum(1 for n in (r.get("narrative") or []) if prefer and n == prefer),
+                              r.get("title") or ""))
         groups.append(g)
     out, seen = [], set()
     for i in range(max((len(g) for g in groups), default=0)):

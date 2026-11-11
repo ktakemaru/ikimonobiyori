@@ -207,3 +207,22 @@ class OperatorHost(unittest.TestCase):
     def test_chichibu_railway_is_facility_operator(self):
         # 第4部の追記: 交通機関の運営者が自分の施設について書いたページ(段階78 の本人の判断)を公式の区分に
         self.assertTrue(P.is_party("https://www.chichibu-railway.co.jp/nagatorowinter/"))
+
+
+class SpeciesCardOrder(unittest.TestCase):
+    """第4部の追記: 種のカードは、主題か場所で種に当たるものを先に。違いの質問は見分け方の文が多いものを先に。"""
+
+    def _c(self, title, subject, narrative):
+        return {"title": title, "category": "種の解説", "place": "梅一般" if subject == "梅" else f"{subject}一般", "place_aliases": [],
+                "subject": subject, "facts": [f"{subject}の試験の文"] * len(narrative), "narrative": narrative,
+                "condition": {"months": []}, "source": {"name": "試験", "url": "https://x.example.lg.jp/", "checked_on": "2026-11-11"}}
+
+    def test_subject_hit_before_title_only_and_prefer_difference(self):
+        from ikimonobiyori import guide_brief as GB
+        shown = [self._c("あ ロウバイ(梅の仲間ではない)", "ロウバイ", ["見分け方"]),
+                 self._c("い 梅の一年", "梅", ["次の季節", "その他"]),
+                 self._c("う 梅の見分け方", "梅", ["見分け方", "見分け方"])]
+        shown[0]["place"] = "ロウバイ一般"
+        got = [r["title"] for r in GB._species_cards("梅の見分け方を教えて", shown, GB.cfg(), "difference")]
+        self.assertEqual(got[0], "う 梅の見分け方")
+        self.assertLess(got.index("い 梅の一年"), got.index("あ ロウバイ(梅の仲間ではない)") if "あ ロウバイ(梅の仲間ではない)" in got else 99)
