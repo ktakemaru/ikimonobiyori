@@ -308,7 +308,7 @@ def outlook_lines(g, on, c, opol, pls=None):
                 fmt = t["outlook_window_near"]
             if fmt:
                 seen.add((s["name"], kind))
-                lines.append(fmt.format(name=s["name"], kind=kind, window=SP.window_text(w["start"], w["end"], thirds), days=days))
+                lines.append(fmt.format(name=s["name"], kind=kind, window=SP.catalog_window_text(w, thirds), days=days))
                 urls.append(w.get("url"))
         for e in s.get("events") or []:
             if e.get("source_class") == "secondary" or not e.get("start") or not e.get("end"):
@@ -378,7 +378,7 @@ def compose(question, *, today, env=None, cards=None, centers=None, reports=None
             seen.add(key)
             note = t["secondary_note"] if (w.get("source_class") == "secondary" and not w.get("publisher_official")) else ""   # 段階67(承認欄 C)
             by_season.setdefault(_season_of(w["start"], c), []).append(
-                t["season_line"].format(name=s["name"], kind=kind, window=SP.window_text(w["start"], w["end"], thirds), note=note))
+                t["season_line"].format(name=s["name"], kind=kind, window=SP.catalog_window_text(w, thirds), note=note))
             url(w.get("url"))
         for e in s.get("events") or []:
             if str(e.get("start") or "")[:4] == str(year) and e.get("source_class") != "secondary":

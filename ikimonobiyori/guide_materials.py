@@ -159,7 +159,7 @@ def town_spots(town, origin=None):
     for e in SP._all_entries():
         if not e.get("city") or town not in _city_parts(e["city"]):
             continue
-        seasons = [(SP.window_text(w["start"], w["end"], thirds), w.get("kind")) for w in e.get("windows") or []
+        seasons = [(SP.catalog_window_text(w, thirds), w.get("kind")) for w in e.get("windows") or []
                    if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"])]
         if e.get("season_text"):
             seasons.append((e["season_text"], "・".join(x for x in e["kinds"][:2] if x)))

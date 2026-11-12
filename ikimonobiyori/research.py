@@ -319,7 +319,11 @@ def allowed_page(url):
 
 def _declared_ok(publisher):
     """発行元の名前が、公式に当たる形(観光協会・自治体・公園の管理者など)か。"""
-    return bool(publisher) and bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
+    if not publisher:
+        return False
+    if publisher.strip() in (cfg().get("declared_publishers_approved") or []):   # 段階83 第1部: 本人が名指しで公式に含めた運営会社
+        return True
+    return bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
 
 
 def _verified(text, publisher, operator=None):

@@ -287,6 +287,7 @@ research:
   max_seconds_per_question: 120      # 1 つの質問で、最初の取得からこの秒数を過ぎたら取得しない
   min_interval_s: 1                  # 同じホストへの間隔
   declared_publisher_re: '(観光協会|観光連盟|観光推進機構|観光物産協会|観光コンベンション協会|市|町|村|県|都|府|省|庁|事務所|公園|管理センター|管理事務所|ビジターセンター|博物館|植物園|財団)$'   # --publisher の名前の形(公式に当たる発行元)
+  declared_publishers_approved: [中央アルプス観光株式会社, "Chuo Alps Kanko Co., Ltd."]   # 段階83 第1部(本人の判断 2026-11-13 の 1): 駒ヶ岳ロープウェイの運営会社を公式の発行元として読む(名前の形の決まりの例外。運営者の欄で名前を確かめるのは同じ)
   # 段階80 B(提案9): --publisher の名前を探すのは、ページの運営者の欄だけ(本文にあるだけでは通さない)
   operator_class_re: 'footer|copyright'                  # id・class にこの語を含む要素は運営者の欄
   operator_line_re: '©|Ⓒ|[Cc]opyright|COPYRIGHT|\([Cc]\)|（[Cc]）|著作権|All [Rr]ights [Rr]eserved|運営者|運営[:：]|運営元|サイト運営|発行者|発行[:：]|発行元|このサイトについて'   # 著作権表示・運営者情報の行

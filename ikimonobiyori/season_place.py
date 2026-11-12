@@ -144,6 +144,21 @@ def window_text(start, end, thirds):
     return a if a == b else f"{a}〜{b}"
 
 
+def catalog_window_text(w, thirds):
+    """段階83 第1部(段階82 の続き 2 の本人の判断 5): 名所カタログの窓が月まるごと(1 日〜末日)で、元の記載(note)に旬の語がないときは、
+    月だけの書き方(「1月〜3月」)。それ以外は window_text と同じ。"""
+    import calendar
+    s, e = str(w.get("start") or ""), str(w.get("end") or "")
+    note = w.get("note") or ""
+    if (len(s) == 5 and len(e) == 5 and s.endswith("-01") and note and "旬" not in note
+            and int(e[3:]) == calendar.monthrange(2001, int(e[:2]))[1]):
+        from . import observations as O
+        if not O.is_year_round({"start": s, "end": e}):
+            a, b = int(s[:2]), int(e[:2])
+            return f"{a}月" if a == b else f"{a}月〜{b}月"
+    return window_text(w["start"], w["end"], thirds)
+
+
 def _km(point, city, origin, cat_pol):
     """(km, 見積もりか)。座標 → 市区町村の代表点 → (None, False)。"""
     from . import catalog as CM
@@ -261,7 +276,7 @@ def _catalog_row(rows, k, e, t, km, est, w, kinds, thirds, P):
             "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
             "kinds": kinds,
             "start": w["start"] if w else None, "end": w["end"] if w else None,
-            "season": window_text(w["start"], w["end"], thirds) if w else None,
+            "season": catalog_window_text(w, thirds) if w else None,
             "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
             "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
             "publisher": _publisher(w["source_url"], e) if w else "",
@@ -958,7 +973,7 @@ def compose_town(question, *, origin, env=None):
         seasons = []
         for w in e.get("windows") or []:
             if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"]):
-                seasons.append((w["start"], window_text(w["start"], w["end"], thirds), w.get("kind")))
+                seasons.append((w["start"], catalog_window_text(w, thirds), w.get("kind")))
         if e.get("season_text"):
             seasons.append(("", e["season_text"], "・".join(e["kinds"][:2])))
         rows.append({"name": e["name"], "prefecture": e["prefecture"], "city": e["city"], "km": km, "kinds": [x for x in e["kinds"] if x],

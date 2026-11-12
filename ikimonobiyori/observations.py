@@ -122,6 +122,7 @@ def parse_typical(text, policy):
     始まりが分からないので None。「11月下旬から3月上旬。ピークは1月」は 11/21〜3/10)。ピークの文しか時期がなければ今までどおり。"""
     if not text:
         return None
+    text = strip_as_of(text)                              # 段階83 第1部(本人の判断 6): 「2021年1月現在」は時期ではない
     rest, peak = split_peak(text, policy)
     aside = ((policy or {}).get("typical") or {}).get("aside_re")
     if aside and re.search(aside, rest or ""):            # 早咲き・遅咲きの文も、見頃の文があれば窓に混ぜない
@@ -132,6 +133,14 @@ def parse_typical(text, policy):
     if peak and _parse_parts(rest, policy):
         return _parse_typical(rest, policy)
     return _parse_typical(text, policy)
+
+
+AS_OF_RE = re.compile(r"(?:\d{4}|(?:令和|平成|昭和)(?:\d{1,2}|元))\s*年\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?\s*(?:現在|時点)")
+
+
+def strip_as_of(text):
+    """段階83 第1部(段階82 の続き 2 の本人の判断 6): 「2021年1月現在」「令和7年3月時点」(資料の時点の書き方)を、例年の時期として読まないように除く。"""
+    return AS_OF_RE.sub("", unicodedata.normalize("NFKC", text)) if text else text
 
 
 def _parse_parts(text, policy):
