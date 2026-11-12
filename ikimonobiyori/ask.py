@@ -642,7 +642,7 @@ class Flow:
             return guide_photos.load_photo(row["taxon_id"], self.env) if self.env else guide_photos.load_photo(row["taxon_id"])
 
         def credit(meta):
-            return plan_page.author_credit(meta, gp, guide_page.state_text(meta, pol) if meta.get("rule") else None)
+            return plan_page.author_credit(meta, gp)             # 状態(開花など)は出さない(段階81 の追記)
         pp = self.policy["plan_page"]
         ap = Path(answer_path) if answer_path else next((self.workdir / n for n in ("final.txt", "answer.txt") if (self.workdir / n).is_file()), None)
         answer = ap.read_text(encoding="utf-8") if ap and ap.is_file() else None
@@ -912,6 +912,8 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画。24時間より前・なければ作らない)")
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
+    p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
+    p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
     p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
@@ -1044,6 +1046,18 @@ def main(argv=None, http_get=None):
     if getattr(a, "out_dir", None):                # 段階70 第2部: 相対パスはデータ置き場からの相対(リポジトリの中に作業フォルダを作らない)
         a.out_dir = str(work_path(a.out_dir))
     out_dir = getattr(a, "out_dir", None)          # origin・dates には作業フォルダがない
+    if a.step in ("page", "photos") and not out_dir:      # 段階81 第2部: 直前の答えが新しい形(ガイド)なら、その最終の文と資料からページを作る(計画を作り直さない)
+        from . import guide_answer_page as GAP
+        g = GAP.newest(_clock())
+        if g:
+            if a.step == "photos":
+                _out(GAP.ensure_photos(GAP.species(g)))
+                return 0
+            doc = GAP.make(g, _clock())
+            print(doc["line"])
+            if getattr(a, "open", False) and hasattr(os, "startfile"):
+                os.startfile(doc["path"])
+            return 0
     if a.step == "page" and not out_dir:                  # 段階64 第4部 3: 直前の答えが計画の型でない(時期と場所・町・知識)なら、その答えのページ
         from . import answer_page as APG
         now_ = _clock()
@@ -1292,6 +1306,15 @@ def main(argv=None, http_get=None):
     if a.step == "coverage":                             # 段階72 第4部 1
         from . import coverage as CV
         sys.stdout.flush(); sys.stdout.buffer.write(CV.table().encode("utf-8"))
+        return 0
+    if a.step == "page-reply":                           # 段階81 の続き 1
+        from . import guide_answer_page as GAP
+        try:
+            text = GAP.page_reply(a.url, _clock())
+        except GAP.ReplyError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
         return 0
     if a.step == "final-check":                          # 段階69 第1部
         from . import final_check as FC

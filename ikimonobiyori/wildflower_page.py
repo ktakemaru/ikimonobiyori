@@ -142,7 +142,7 @@ def build_overview(r, *, policy, now, photo_for):
     def card(e, got):
         meta = got[0]
         cr = h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"])
-        return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span><span class="credit">{esc(state_text(meta, policy))}</span>{links(e)}</li>'
+        return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span>{links(e)}</li>'   # 段階81 の追記: 状態は出さない
     kind = r.get("kind")
     if kind == "mountain":
         title = w["title_mountain"].format(place=r["area"])
@@ -222,7 +222,7 @@ def build_overview(r, *, policy, now, photo_for):
         for n in sorted(shown):
             meta = shown[n][0]
             commons = meta.get("source") == policy["photos"]["commons"]["source_id"]
-            items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} {esc(state_text(meta, policy))} '
+            items.append(f'<li>{esc(h["credit_line"].format(name=n, attribution=meta["attribution"], license=meta["license"]))} '
                          f'({link(meta["photo_page"], h["photo_link_commons"] if commons else h["photo_link"], policy)})</li>')
         body.append(f'<details class="credits"><summary>{esc(h["credits_summary"])}</summary><ul class="note">{"".join(items)}</ul></details>')
     body.append(f'<p class="note">{esc(h["credit"])}</p>')

@@ -192,6 +192,9 @@ def run(message, *, answer=None, now=None, env=None):
         from . import guide_verify as GV
         if answer is None and GV.accepts(message, now, env):
             return {"text": (message or "").rstrip(NL) + NL, "removed": [], "fallback": False, "guide": True}
+        from . import guide_answer_page as GAP          # 段階81 の続き 1: 合格した答えから作ったページの案内の文(ask page-reply)
+        if answer is None and GAP.accepts_reply(message, now, env):
+            return {"text": (message or "").rstrip(NL) + NL, "removed": [], "fallback": False, "guide": True, "page": True}
     except (OSError, ValueError, KeyError, TypeError):
         pass
     if answer is None:

@@ -397,7 +397,7 @@ def _candidate_facts(F, c_row, pick=None):
                      "freshness": cur.get("freshness_label")})
     for t in c_row.get("typical") or []:
         if t.get("text"):
-            F.add("typical", f"{name}: 例年 {t['text']}", place=name, source=t.get("publisher"), url=t.get("url"),
+            F.add("typical", f"{name}: 例年 {t.get('text_thirds') or t['text']}", place=name, source=t.get("publisher"), url=t.get("url"),   # 段階81 第1部 1: 旬で書く
                   source_class=t.get("source_class"), extra={"year": t.get("year")})
     for fe in (pick or {}).get("festivals") or c_row.get("festivals") or []:
         if isinstance(fe, dict) and fe.get("name"):
@@ -795,6 +795,58 @@ def _plain_general_card(card, c):
     return plain and _general_card(card, c) and (card.get("where") or pl) == pl
 
 
+def _card_species(card):
+    """一般の話のカードの種(場所の欄・題名の種の語。「桜一般」→ 桜、「冬桜」→ 冬桜)。分からなければ空。"""
+    from . import season_place as SP
+    for text in (card.get("place"), card.get("subject"), card.get("title")):
+        got = [x["name"] for x in SP.resolve_all(text or "")]
+        if got:
+            return set(got)
+    return set()
+
+
+def _drop_unrelated_general(cards, question, cands, F, c, subjects=()):
+    """段階81 第1部 3(本人の会話 2026-11-12): 場所を聞く質問(「秩父で見られる花は?」)では、
+    その場所の候補にも質問にもない種の「一般の話」のカード(冬桜・バラの解説)を資料に入れない。種の分からない一般の話は残す。"""
+    from . import season_place as SP
+    blob = " ".join([question or ""] + [str(r.get("theme") or "") + " " + str(r.get("name") or "") for r in cands]
+                    + [f["content"] for f in F.rows if f["kind"] == "typical"])
+    have = {x["name"] for x in SP.resolve_all(blob)}
+    kinds = set(SP._catalog_kinds()) | {w for sp in SP.cfg()["species"] for w in sp["words"]}
+    rest = blob
+    for k in sorted(kinds, key=len, reverse=True):          # 長い語から(「芝桜」の中の「桜」は数えない)
+        if k in rest:
+            have.add(k)
+            rest = rest.replace(k, " ")
+    have |= {x["name"] for k in list(have) for x in SP.resolve_all(k)}
+    subject_words = [w for t in c["card_themes"] if t.get("subject") in (subjects or []) and t.get("subject") not in (c.get("species_drop_subjects") or [])
+                     for w in t["words"]]                 # 紅葉・野鳥の質問は、候補が名所(種でない)なので、その対象の話(イチョウ・カエデ・カモ)は残す
+    keep = []
+    for k in cards:
+        if k.get("link") == c["card_links"]["theme"]:
+            sp = _card_species(k)
+            blob = " ".join([k.get("title") or "", k.get("place") or "", k.get("subject") or ""])
+            if sp and not sp & have and not any(w in blob for w in subject_words):
+                continue
+        keep.append(k)
+    return [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(keep)]
+
+
+def _place_extra_ok(question, res, cands, towns, F, c, subjects=()):
+    """段階81 第1部 3: 場所を聞く質問で、語りの材料を足すときに使ってよいカードか。
+    一般の話は候補・質問の種のものだけ(_drop_unrelated_general と同じ判定)。場所の話は、質問の場所・市区町村・候補の名所に結びつくものだけ。"""
+    from . import knowledge as K
+    names = [n for n in list(_question_places(question, res)) + list(towns or []) + [r["name"] for r in cands]
+             + [n for r in cands for n in r.get("merged_from") or []] if n and len(n) >= 2]
+
+    def ok(r):
+        if _general_card(r, c):
+            k = {**r, "link": c["card_links"]["theme"]}
+            return bool(_drop_unrelated_general([k], question, cands, F, c, subjects))
+        return any(K.place_match(r, n) for n in names)
+    return ok
+
+
 def _broad_place(name):
     """都道府県・地域の呼び名(場所のカードを引くには広すぎる)。"""
     from . import sources as S
@@ -933,7 +985,7 @@ def species_hit(words, blob, c=None):
     return any(w in b for w in ws)
 
 
-def _narrative(cards, question, cond, cands, sprows, months, c):
+def _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=None):
     """段階78 第3部 1: 語りの材料。少なければ、候補の場所・種・テーマに結びつくカードを足す(cards に追記。id は続きの番号)。"""
     from . import guide_materials as GM
     from . import guide_narrative as GN
@@ -955,6 +1007,8 @@ def _narrative(cards, question, cond, cands, sprows, months, c):
     names = [r["name"] for r in cands if r.get("chosen")][:5] + [r["name"] for r in sprows][:5] + list(_question_places(question, {"cond": cond}))
     words = GM.species_match_words(question) + _theme_words(question, cond.get("subjects") or [], c)
     for r in GN.extra_cards(shown, cards, names, words, months, N, require_words=spw):
+        if extra_ok and not extra_ok(r):                  # 段階81 第1部 3: 場所を聞く質問では、聞かれていない場所・種の話を足さない
+            continue
         src = r.get("source") or {}
         facts = [seireki(x) for x in r.get("facts") or []]
         cards.append({"id": f"K{len(cards) + 1:03d}", "title": r.get("title"), "category": r.get("category"), "place": r.get("place"),
@@ -1449,9 +1503,13 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         cards = _add_highlight_cards(cards, hl, c)
     if towns:                                             # 段階80 の追記: 市区町村の質問では、ほかの場所の話のカードを一般の話として使わない
         cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if k.get("link") != c["card_links"]["theme"] or _plain_general_card(k, c))]
+    extra_ok = None
+    if towns or q_areas or cond.get("region") or cond.get("area_names"):   # 段階81 第1部 3: 場所を聞く質問では、候補にない種の一般の話を入れない
+        cards = _drop_unrelated_general(cards, question, cands, F, c, cond.get("subjects") or [])
+        extra_ok = _place_extra_ok(question, res, cands, towns, F, c, cond.get("subjects") or [])
     if (res.get("route") or cond.get("route")) == "unknown_place":   # 段階80 A(提案4): 辞書にない地名の質問では、ほかの場所の話のカードを使わない(一般の話だけ)
         cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if _plain_general_card(k, c))]
-    mat = _narrative(cards, question, cond, cands, sprows, months, c)     # 段階78 第3部 1: 語りの材料
+    mat = _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=extra_ok)     # 段階78 第3部 1: 語りの材料
     if hl:
         mat = _highlight_materials(mat, cards, hl, c)
     from . import research as RS

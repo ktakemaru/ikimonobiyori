@@ -129,19 +129,25 @@ def _is_research(call, c):
     return _matches(call, c["record_patterns"])
 
 
-def _decide_guide(msg, calls, at, c, guide_ok):
-    """段階75: ガイドの形の回。ask verify --brief が合格(または今の形の答え)を出し、最終メッセージがその文と一致するときだけ通す。"""
+def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
+    """段階75: ガイドの形の回。ask verify --brief が合格(または今の形の答え)を出し、最終メッセージがその文と一致するときだけ通す。
+    段階81 の続き 1: この回に ask verify のあとで写真つきのページを作り(ask page)、最終メッセージが ask page-reply の案内の文と一致するときも通す。"""
     after = calls[at + 1:]
-    if not any(_matches(k, c["guide_verify_patterns"]) for k in after):
+    verifies = [i for i, k in enumerate(after) if _matches(k, c["guide_verify_patterns"])]
+    if not verifies:
         return {"block": True, "why": "guide_no_verify", "reasons": [c["reasons"]["guide_no_verify"]]}
+    pages = [i for i, k in enumerate(after) if _matches(k, c.get("page_patterns") or [])]
+    if msg.strip() and page_ok and pages and pages[-1] > verifies[-1] and page_ok(msg):
+        return {"block": False, "reasons": [], "why": "guide_page"}
     if msg.strip() and not (guide_ok(msg) if guide_ok else False):
         return {"block": True, "why": "guide_mismatch", "reasons": [c["reasons"]["guide_mismatch"]]}
     return {"block": False, "reasons": [], "why": "guide_checked"}
 
 
-def decide(payload, turn, answer=None, c=None, guide_ok=None):
+def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
     """→ {"block": bool, "reasons": [エージェントへの次の手順], "why": 判定の語}。
-    guide_ok(段階75): 最終メッセージが ask verify --brief の最終の文と一致するかを返す関数。"""
+    guide_ok(段階75): 最終メッセージが ask verify --brief の最終の文と一致するかを返す関数。
+    page_ok(段階81 の続き): 最終メッセージが ask page-reply の案内の文と一致するかを返す関数。"""
     c = c or cfg()
     msg = payload.get("last_assistant_message") or ""
     prompt, calls = turn.get("prompt") or "", turn.get("calls") or []
@@ -151,7 +157,7 @@ def decide(payload, turn, answer=None, c=None, guide_ok=None):
     answers = [i for i, k in enumerate(calls) if _matches(k, c["answer_patterns"])]
     briefs = [i for i, k in enumerate(calls) if _matches(k, c.get("brief_patterns") or [])]
     if briefs and (not answers or briefs[-1] > answers[-1]):        # 段階75: ガイドの形(ask brief → 書く → ask verify --brief)
-        return _decide_guide(msg, calls, briefs[-1], c, guide_ok)
+        return _decide_guide(msg, calls, briefs[-1], c, guide_ok, page_ok)
     if not answers:
         if not calls and any(w in prompt for w in c["ikimono_words"]) and msg.strip():
             from . import guide_brief as GB                  # 段階77: 新しい形が既定のときは、新しい形の手順を案内する
@@ -226,7 +232,8 @@ def run(payload, *, env=None, now=None):
     t = now or datetime.now().astimezone()
     answer = FC.load_answer(t, env)
     from . import guide_verify as GV
-    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env))
+    from . import guide_answer_page as GAP
+    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env), page_ok=lambda m: GAP.accepts_reply(m, t, env))
     if not d["block"]:
         return None
     note_block(key, env)

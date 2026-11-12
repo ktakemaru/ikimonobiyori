@@ -317,6 +317,12 @@ def scientific_pick(pages, row, cm, ordered_titles, pp=None):
     by_title = {t: i for t, i in pages}
     seen = []
     best = {}
+    dom = cm.get("domestic_re")
+    if dom:                                                       # 段階81 第3部: 撮影地が国内と分かる写真を先に見る(外国の別亜種・園芸品種で代用しない)
+        def is_dom(t):
+            i = by_title.get(t) or {}
+            return bool(re.search(dom, " ".join([t, i.get("categories") or "", i.get("description") or ""])))
+        ordered_titles = sorted(ordered_titles, key=lambda t: not is_dom(t))
     for t in ordered_titles:
         info = by_title.get(t)
         ok, why = usable(info, cm)
