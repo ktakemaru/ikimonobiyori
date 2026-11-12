@@ -515,11 +515,11 @@ def _attributed(clause, pos, ments, X, end=None):
     """特徴の語(pos の位置)が、節のどちらの側の種のことか。確かなときだけ側を返す(分からなければ None)。
     比べる相手の書き方(「ツバキより」「ツバキと違って」「ツバキのように」)は数えない。両方の側があれば、主語の印(は・が・も)のある側が 1 つのときだけ。"""
     if end is not None:                                  # 段階82 の続き(本人の判断 2026-11-13 の 3): 特徴の語のすぐ後ろに種の名前が続く形(「花ごと落ちるサザンカ」)
-        gap = re.match(X["modifier_gap_re"], clause[end:])
-        at = end + (gap.end() if gap else 0)
-        hit = [s for a, _b, s in ments if a == at]
-        if hit:
-            return hit[0]
+        for e in X["modifier_endings"]:                 # 連体の語尾だけ(「落ちる」の「る」)。「落ちるが」「大きく」「湿地に」のつなぎは数えない
+            if clause.startswith(e, end):
+                hit = [s for a, _b, s in ments if a == end + len(e)]
+                if hit:
+                    return hit[0]
     own = [(a, b, s) for a, b, s in ments if not re.match(X["compare_re"], clause[b:])]
     sides = {s for _a, _b, s in own}
     if not sides:

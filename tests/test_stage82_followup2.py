@@ -82,6 +82,14 @@ class ModifierForm(unittest.TestCase):
         self.assertEqual(self.codes("花びらが1枚ずつ散るサザンカと、花ごと落ちるツバキ。[K004]"), [])
         self.assertEqual(self.codes("花ごと落ちないサザンカです。[K004]"), [])
 
+    def test_conjunctions_are_not_the_modifier_form(self):
+        self.assertEqual(self.codes("ツバキは花ごと落ちるがサザンカは花びらが1枚ずつ散ります。[K004]"), [])
+        self.assertEqual(self.codes("サザンカは花びらが1枚ずつ散るがツバキは花ごと落ちます。[K004]"), [])
+        hotaru = {"id": "K001", "title": "ホタル", "facts": [], "contrasts": [{"a": ["ゲンジボタル"], "a_re": "(ほう|方)が大き", "b": ["ヘイケボタル"], "b_re": ""}]}
+        ogi = {"id": "K002", "title": "オギ", "facts": [], "contrasts": [{"a": ["オギ"], "a_re": "湿地", "b": ["ススキ"], "b_re": "乾いた"}]}
+        for card, text in ((hotaru, "ゲンジボタルのほうが大きくヘイケボタルは小さめです。[K001]"), (ogi, "オギは湿地にススキは乾いた所に生えます。[K002]")):
+            self.assertEqual(GV.contrast_errors(GV.sentences([text], C), {"cards": [card]}, C), [], text)
+
 
 class WhenQuestions(unittest.TestCase):
     def route(self, q):
