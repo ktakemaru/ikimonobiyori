@@ -380,6 +380,8 @@ photos:
     unknown_label: 不明
     quality_grade: research
     per_page: {value: 5, source: "仮置き(段階53)。1 回の検索で見る観察の数", provisional: true}
+    # 段階82 第4部 4.1: 見どころが花でない種(株・穂・葉の姿)。開花の写真を先に選ぶ規則を当てない(代表の写真で、見どころの姿を点検で確かめる)
+    non_flower_species: {value: [コキア, ススキ, 草紅葉], source: "段階82 指示書 4.1(コキアの株・ススキの穂)", provisional: false}
     flower_words: [flower, bloom, blossom, 花, 開花]
     bud_words: [bud, つぼみ, 蕾]
     avoid_words: [fruit, seed, 果実, 枯れ, withered, "dead ", capsule, 種子]

@@ -662,6 +662,17 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
                 none[r["name"]] = {"on": today.isoformat(), "reason": un4.get(r["name"]) or "日本・東アジアの写真がない"}
             if r4["status"] != "ok":
                 rep["status"], rep["stopped"] = r4["status"], r4["stopped"]
+        nf = set(((pp or {}).get("non_flower_species") or {}).get("value") or [])
+        if todo and left >= 2 and rep["status"] == "ok" and nf & {r["name"] for r in todo}:     # 段階82: 見どころが花でない種は開花の規則なし
+            g5, un5, r5 = _fetch_for_theme([r for r in todo if r["name"] in nf], None, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left,
+                                           has=has, skip=load_skip_photos(env, policy), sleep=sleep, today=today)
+            used += r5["requests"]
+            left -= r5["requests"]
+            for item in g5:
+                save_photo(item, env, policy)
+                result[item["row"]["name"]] = "saved"
+            rep["saved"] += [i["row"]["name"] for i in g5]
+            todo = [r for r in todo if r["name"] not in nf or r["name"] in un5]
         if todo and left >= 2 and rep["status"] == "ok":
             got, unused, r2 = _fetch_for_theme(todo, pp, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left, has=has,
                                                skip=load_skip_photos(env, policy), sleep=sleep, today=today)

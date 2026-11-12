@@ -116,3 +116,13 @@ class MoreMixUps(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CardQuestion(unittest.TestCase):
+    """段階82 第1部 6: カードを引く文では、漢字・ひらがなの書き方をカタカナの名前に(場所の名前の一部は置き換えない)。"""
+
+    def test_card_question(self):
+        self.assertEqual(GB._card_question("彼岸花の名所と時期"), "ヒガンバナの名所と時期")
+        self.assertEqual(GB._card_question("紫陽花の見頃"), "アジサイの見頃")
+        self.assertEqual(GB._card_question("梅の名所"), "梅の名所")                     # 2 字のカタカナ名(ウメ)は今までどおり
+        self.assertEqual(GB._card_question("本埜白鳥の郷の白鳥"), "本埜白鳥の郷のハクチョウ")

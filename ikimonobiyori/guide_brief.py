@@ -1571,13 +1571,18 @@ def _card_question(question):
     from . import season_place as SP
     from . import species_alias as SA
     al = (SP.cfg().get("guide_page") or {}).get("aliases") or {}
-    extra = []
+    groups = SA.word_groups()
+    q = question
     for n in SA.species_in(question):
         k = al.get(n, n)
-        if k != n or not re.search(re.escape(k), question):
-            if k not in question and k not in extra and re.fullmatch(cfg()["species_word_re"], k):   # カタカナ 3 字以上の名前だけ(ウメ・フジは今までどおり)
-                extra.append(k)
-    return question + ("　" + "・".join(extra) if extra else "")
+        if k in q or not re.fullmatch(cfg()["species_word_re"], k):   # カタカナ 3 字以上の名前だけ(ウメ・フジは今までどおり)
+            continue
+        for w in sorted(groups.get(n, {n}), key=len, reverse=True):   # 漢字・ひらがなの書き方をカタカナの名前に置き換える(「彼岸花」の「花」で花の一般の話を引かない)
+            if w and w != k and w in q:
+                # 場所の名前の一部(「本埜白鳥の郷」「犀川白鳥湖」)は置き換えない: 前が漢字・カタカナの字か、後ろが場所の語のもの
+                q = re.sub(r"(?<![一-龥々ァ-ヶー])" + re.escape(w) + r"(?!の郷|湖|沼|橋|公苑|公園|池)", k, q)
+                break
+    return q
 
 
 def _asked_themes(question):
