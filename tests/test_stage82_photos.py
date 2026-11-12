@@ -100,3 +100,24 @@ class PhotoFixHook(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CheckedPhotosAreKept(unittest.TestCase):
+    """段階82 第5部で見つけた不具合: 花の写真の規則の再評価が、点検済みで可の写真を未点検の写真に置き換えていた。"""
+
+    def test_checked_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            c = GP.cache_dir(env)
+            c.mkdir(parents=True)
+            (c / "7.jpeg").write_bytes(b"\xff\xd8\xff" + b"0" * 20)
+            (c / "7.json").write_text(json.dumps({"name": "試験の花", "taxon_id": 7, "image_type": "jpeg", "source": "wikimedia_commons",
+                                                  "photo_page": "https://commons.wikimedia.org/wiki/File:A.jpg"}), encoding="utf-8")
+            self.assertFalse(GP.checked_ok(7, env))
+            GP.set_check(7, "ok", None, today=TODAY, env=env)
+            self.assertTrue(GP.checked_ok(7, env))
+            pp = GP.phenology_cfg("花")
+            self.assertTrue(GP.stale_for_rule(7, pp, env))       # 規則の版の印がない写真でも
+            res = GP.ensure(["試験の花"], theme="花", env=env, http_get=lambda *a, **k: (_ for _ in ()).throw(AssertionError("通信しない")),
+                            http_bytes=None, phenology=True, max_requests=0)
+            self.assertTrue(GP.checked_ok(7, env))              # 置き換えない

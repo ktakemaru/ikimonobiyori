@@ -126,3 +126,10 @@ class CardQuestion(unittest.TestCase):
         self.assertEqual(GB._card_question("紫陽花の見頃"), "アジサイの見頃")
         self.assertEqual(GB._card_question("梅の名所"), "梅の名所")                     # 2 字のカタカナ名(ウメ)は今までどおり
         self.assertEqual(GB._card_question("本埜白鳥の郷の白鳥"), "本埜白鳥の郷のハクチョウ")
+
+
+class RaptorTitle(unittest.TestCase):
+    """段階82 第5部: 「猛禽類を見たい」の題のテーマが「猛禽」にならない。"""
+
+    def test_raptor(self):
+        self.assertEqual(GAP._themes_in("猛禽類を見たい。場所と時期を教えて", GAP.cfg()["title"]), ["猛禽類"])

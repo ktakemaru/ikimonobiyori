@@ -299,6 +299,17 @@ def commons_title(meta):
     return unquote("File:" + (meta.get("photo_page") or "").rsplit("File:", 1)[-1]).replace("_", " ")
 
 
+def checked_ok(taxon_id, env=None, policy=None):
+    """今のキャッシュの写真が、点検済みで可か(点検の記録の元のページが今の写真と同じ)。"""
+    mp = _meta_path(taxon_id, env, policy)
+    try:
+        meta = json.loads(mp.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    c = load_checks(env, policy).get(str(int(taxon_id)))
+    return bool(c and c.get("verdict") == "ok" and c.get("photo_page") == meta.get("photo_page"))
+
+
 def set_check(taxon_id, verdict, reason=None, *, today, env=None, policy=None):
     """写真を見て点検した結果を残す。verdict は ok / ng。ng のときは写真を消さずに控え(check_archive_dir)へ写し、
     iNaturalist の写真なら写真の id を、Commons ならファイル名を、次に選ばない一覧に入れてから、キャッシュから外す(次の取得で別の候補)。
@@ -604,7 +615,7 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             r = table[n]
             if has(r["taxon_id"]):
                 result[n] = "cached"
-                if pp and stale_for_rule(r["taxon_id"], pp, env, policy):          # 段階53: 古い規則の写真は再評価する
+                if pp and stale_for_rule(r["taxon_id"], pp, env, policy) and not checked_ok(r["taxon_id"], env, policy):   # 段階53: 古い規則の写真は再評価する(段階82: 点検済みで可の写真は置き換えない)
                     reeval.append(r)
             elif str(r["taxon_id"]) in review or (n in none and none_active(none[n], today, policy)):
                 result[n] = "none"
