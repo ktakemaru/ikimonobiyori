@@ -1026,7 +1026,8 @@ def _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=None):
                       "link": c["card_links"]["theme"] if _general_card(r, c) else c["card_links"]["place"], "narrative": r.get("narrative"), "where": _where(r),
                       "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                       "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
-                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
+                      "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c),
+                     **({"contrasts": r["contrasts"]} if r.get("contrasts") else {})})   # 段階82 の続き: 2 つの種の見分け方(照合が読む)
     return GN.materials(pool(), N)
 
 
@@ -1059,7 +1060,8 @@ def _card_rows(out, c):
                      "narrative": r.get("narrative"), "where": _where(r),
                      "facts": facts, "months": (r.get("condition") or {}).get("months"), "confidence": r.get("confidence"),
                      "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
-                     "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)})
+                     "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c),
+                     **({"contrasts": r["contrasts"]} if r.get("contrasts") else {})})   # 段階82 の続き: 2 つの種の見分け方(照合が読む)
     return rows
 
 
@@ -1559,10 +1561,31 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         + ([c["research"]["done_line"]] if researched else [])
         + [f"調べる: {t['why']}" for t in targets],
         "research": {"targets": targets},
+        **({"photos": fp} if (fp := form_photos(question, env)) else {}),
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def form_photos(question, env=None):
+    """段階82 の続き(本人の判断 2026-11-13 の 5): 聞かれた種の、季節の姿の写真(写真の対応表の「チングルマ(綿毛)」のような
+    「種の名前(姿)」の項目)のうち、点検で可の写真があるもの → [{name, species, word}]。答えに姿の語(綿毛)を書くと、ページに載る。"""
+    from . import guide_materials as GM
+    from . import guide_photos as GPh
+    sps = set(GM.species_names(question))
+    if not sps:
+        return []
+    out = []
+    try:
+        table = GPh.load_table(env) if env else GPh.load_table()
+    except (OSError, ValueError):
+        return []
+    for n, r in table.items():
+        m = re.match(r"^(.+?)\((.+)\)$", n)
+        if m and m.group(1) in sps and GPh.checked_ok(r["taxon_id"], env) and GPh.load_photo(r["taxon_id"], env):
+            out.append({"name": n, "species": m.group(1), "word": m.group(2)})
+    return out
 
 
 def _card_question(question):
@@ -1685,6 +1708,9 @@ def render_md(doc):
     if doc.get("narrative") is not None:
         from . import guide_narrative as GN
         L += [""] + GN.render(doc["narrative"])
+    if doc.get("photos"):                                   # 段階82 の続き: 種の季節の姿の写真(ページに載る)
+        P = cfg()["form_photos"]
+        L += ["", P["heading"], ""] + [P["line"].format(**p) for p in doc["photos"]]
     L += ["", "## 足りないもの", ""] + [f"- {x}" for x in doc["missing"] or ["(なし)"]]
     if (doc.get("research") or {}).get("targets"):
         from . import research as RS

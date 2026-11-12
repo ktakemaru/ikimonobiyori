@@ -94,7 +94,46 @@ def validate(card, strict_subject=False):
     for k in c["source_required"]:
         if not src.get(k):
             errs.append(f"出典の {k} がない")
+    errs += contrast_errors(card.get("contrasts"))
     return errs
+
+
+def contrast_errors(items):
+    """段階82 の続き(本人の判断 2026-11-13 の 1): 2 つの種を比べる見分け方のカードの項目 contrasts
+    [{a: [種の名前], a_re: 特徴の語(正規表現), b: [種の名前], b_re: 特徴の語(正規表現。片側だけの比べ方なら空)}] の形の検査。"""
+    if items is None:
+        return []
+    if not isinstance(items, list) or not items:
+        return ["contrasts は 1 つ以上の項目の配列"]
+    errs = []
+    for i, it in enumerate(items):
+        if not isinstance(it, dict):
+            errs.append(f"contrasts[{i}] がオブジェクトでない")
+            continue
+        for side in ("a", "b"):
+            names = it.get(side)
+            if not isinstance(names, list) or not names or not all(isinstance(n, str) and n for n in names):
+                errs.append(f"contrasts[{i}].{side} は種の名前の配列")
+            try:
+                re.compile(it.get(side + "_re") or "")
+            except re.error as e:
+                errs.append(f"contrasts[{i}].{side}_re が正規表現として読めない: {e}")
+        if not it.get("a_re"):
+            errs.append(f"contrasts[{i}].a_re(a の種の特徴の語)が要る")
+        if set(it.get("a") or []) & set(it.get("b") or []):
+            errs.append(f"contrasts[{i}] の a と b に同じ種")
+    return errs
+
+
+def set_contrasts(title, items, *, at, place=None, note=None, env=None):
+    """カードに contrasts(どちらの種が、どの特徴か)を付ける(控えを残す)。特徴の語は出典の本文と照らしてから(照らすのは付ける人)。"""
+    def fn(card):
+        card["contrasts"] = items
+        errs = validate(card)
+        if errs:
+            raise ValueError("; ".join(errs))
+        return card
+    return _change(title, place, fn, "set_contrasts", at=at, note=note, env=env)
 
 
 def add(card, env=None, strict_subject=False):

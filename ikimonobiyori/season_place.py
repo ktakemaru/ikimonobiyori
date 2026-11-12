@@ -238,6 +238,10 @@ def gather(sp, origin, c=None, env=None):
                 continue
             if not rows[k]["season"] and r.get("season"):
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
+            elif r.get("official") and r.get("start") and r.get("season") and not rows[k].get("official"):
+                # 段階82 の続き(本人の判断 2026-11-13 の 4): 同じ名所の公式の記録は、紹介サイト由来の時期より先に使う(名所の行と全体の目安が公式に合う)
+                rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=True, publisher=r.get("publisher") or "",
+                               peak=r.get("peak"), **{"from": "record"})
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
@@ -274,7 +278,15 @@ def _season_of_other_kind(text, kinds, entry_kinds):
     if not text:
         return False
     others = [k.get("kind") for k in entry_kinds or [] if isinstance(k, dict) and k.get("kind") and k.get("kind") not in kinds]
-    return any(text.startswith(o) for o in others) and not any(k in text for k in kinds)
+    if any(text.startswith(o) for o in others) and not any(k in text for k in kinds):
+        return True
+    # 段階82 の続き(本人の判断 2026-11-13 の 4): 時期の文がほかの種の名前(書き方の違いを含む。「ウメ・ツバキ・サクラ」)だけを挙げ、
+    # 聞かれた種の名前(書き方の違いを含む)がないときも、その種の時期にしない(神代植物公園の「春の植物(ウメ・ツバキ・サクラ)」をサザンカの時期にしない)
+    groups = SA.word_groups()
+    forms = lambda n: set(groups.get(n) or ()) | {n}             # noqa: E731
+    mine = set().union(*(forms(k) for k in kinds)) if kinds else set()
+    theirs = set().union(*(forms(o) for o in others)) if others else set()
+    return any(w in text for w in theirs if len(w) >= 2) and not any(w in text for w in mine)
 
 
 def _old_year(r, season, c=None):

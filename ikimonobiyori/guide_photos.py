@@ -314,6 +314,46 @@ def mark_no_photo(name, reason, *, today, env=None, policy=None):
     return int(tid)
 
 
+def restore_checked(taxon_id, archived, *, note, reason, today, env=None, policy=None):
+    """段階82 の続き(本人の判断 2026-11-13 の 3): 点検で不可にして控え(check_archive_dir)に写した写真を、見直して可にして戻す。
+    archived は控えのファイル名の拡張子の前(「359972-431465759」)。note は写真の説明の頭に必ず付ける断りの種類(方針 photos.html.caption_notes の鍵)。
+    写真なし・次に選ばない一覧・Commons の使わない一覧から外し、点検の記録を ok にする。→ 点検の記録の行。"""
+    pol = photos_policy(policy)
+    notes = (pol.get("html") or {}).get("caption_notes") or {}
+    if note not in notes:
+        raise ValueError(f"写真の説明の断りの種類が方針にない: {note}")
+    d = cache_dir(env, policy)
+    arch = d / pol["check_archive_dir"]
+    meta = json.loads((arch / f"{archived}.json").read_text(encoding="utf-8"))
+    if int(meta.get("taxon_id")) != int(taxon_id):
+        raise ValueError("控えの写真の taxon_id が違う")
+    meta.pop("check", None)
+    meta["caption_note"] = note
+    img = arch / f"{archived}.{meta['image_type']}"
+    (d / f"{int(taxon_id)}.{meta['image_type']}").write_bytes(img.read_bytes())
+    _meta_path(taxon_id, env, policy).write_text(json.dumps(meta, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    key = str(int(taxon_id))
+    rv = load_review(env, policy)
+    if key in rv:
+        rv.pop(key)
+        review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    if meta.get("source"):
+        den = load_commons_denied(env, policy)
+        t = commons_title(meta)
+        if t in den:
+            _save_json(export_dir(env) / pol["commons_deny_file"], sorted(x for x in den if x != t))
+    elif meta.get("photo_id") is not None:
+        skip = load_skip_photos(env, policy)
+        if int(meta["photo_id"]) in skip.get(int(taxon_id), set()):
+            skip[int(taxon_id)].discard(int(meta["photo_id"]))
+            _save_json(skip_photo_path(env, policy), {str(k): sorted(v) for k, v in skip.items() if v})
+    none = load_none(env, policy)
+    if meta.get("name") in none:
+        none.pop(meta["name"])
+        _save_none(none, env, policy)
+    return set_check(taxon_id, "ok", reason, today=today, env=env, policy=policy)
+
+
 def checked_ok(taxon_id, env=None, policy=None):
     """今のキャッシュの写真が、点検済みで可か(点検の記録の元のページが今の写真と同じ)。"""
     mp = _meta_path(taxon_id, env, policy)

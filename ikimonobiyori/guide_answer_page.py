@@ -118,6 +118,16 @@ def _found(doc, env=None, all_hits=False):
             n = words[w]
             found.append((m.start(), n, themes.get(n) or c["alias_themes"].get(w), w))
         rest = rest.replace(w, "\0" * len(w))
+    try:                                                              # 段階82 の続き: 資料の季節の姿の写真(チングルマ(綿毛))は、答えに姿の語(綿毛)があれば載せる
+        from . import guide_brief as GB
+        fps = GB.load(doc.get("brief"), env).get("photos") or [] if doc.get("brief") else []
+    except (OSError, ValueError, TypeError):
+        fps = []
+    have = {n for _p, n, _t, _w in found}
+    for p in fps:
+        pos = text.find(p["word"])
+        if pos >= 0 and p["name"] not in have:
+            found.append((pos, p["name"], themes.get(p["name"]) or c["alias_themes"].get(p["species"] + "の" + p["word"]), p["word"]))
     if not found:                                                     # 紅葉の答えで樹種の分からない名所だけ: 代表的な紅葉の木(その場所の写真ではない。注記は page.photo_note)
         from . import guide_brief as GB
         try:

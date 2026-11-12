@@ -481,6 +481,10 @@ photos:
     link_dup: "{label}({i})"
     credits_summary: "写真ごとの撮影者・ライセンスを見る"
     photo_credit: "写真: {author}・{license}"
+    # 段階82 の続き(本人の判断 2026-11-13 の 3): 写真の説明の頭に必ず書く断り(写真の記録の caption_note の値 → 文)。
+    # summer_leaf: 紅葉の木で秋の姿の写真がない種に、点検で可の緑の葉の写真を使うとき
+    caption_notes: {summer_leaf: "写真は夏の葉"}
+    caption_note_format: "{note}。{credit}"
     author_re: '^(?:\(c\) |no rights reserved, uploaded by )(.+?)(?:, (?:some|no) rights reserved|$)'   # iNaturalist の定型の表記から撮影者名だけを取る。合わなければ表記そのまま
     unit_places: 名所
     link_schemes: [http, https]

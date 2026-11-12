@@ -449,6 +449,7 @@ def check(draft, brief, c=None, env=None):
     errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
     errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
+    errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
@@ -493,6 +494,74 @@ def trait_errors(sents, brief, c):
         bad = [n for n in sps if not any(any(w in l for w in groups.get(n, {n})) and (_trait_hits(l, c) & hits) for l in lines if l)]
         if bad:
             errs.append(_err(T["wrong_card_code"], s, f"印({'・'.join(s['ids'])})に、{'・'.join(bad)}のこの特徴が書かれていない", T["wrong_card_fix"]))
+    return errs
+
+
+def _mentions(text, names_by_side):
+    """文の中の種の書き方の位置 → [(始まり, 終わり, 側)]。長い書き方の中の短い書き方(ソシンロウバイの中のロウバイ)は数えない。"""
+    def script(ch):
+        return "h" if "ぁ" <= ch <= "ゟ" else "k" if "゠" <= ch <= "ヿ" and ch != "・" else None
+    hits = []
+    for side, names in names_by_side.items():
+        for n in names:
+            for m in re.finditer(re.escape(n), text):
+                if m.start() and script(n[0]) and script(text[m.start() - 1]) == script(n[0]):
+                    continue                             # ひらがな・カタカナの長い語の一部(「ぶんごうめ」の「うめ」)は数えない
+                hits.append((m.start(), m.end(), side))
+    return [h for h in hits if not any(o[0] <= h[0] and h[1] <= o[1] and (o[1] - o[0]) > (h[1] - h[0]) for o in hits)]
+
+
+def _attributed(clause, pos, ments, X):
+    """特徴の語(pos の位置)が、節のどちらの側の種のことか。確かなときだけ側を返す(分からなければ None)。
+    比べる相手の書き方(「ツバキより」「ツバキと違って」「ツバキのように」)は数えない。両方の側があれば、主語の印(は・が・も)のある側が 1 つのときだけ。"""
+    own = [(a, b, s) for a, b, s in ments if not re.match(X["compare_re"], clause[b:])]
+    sides = {s for _a, _b, s in own}
+    if not sides:
+        return None
+    if len({s for _a, _b, s in ments}) == 1:
+        return sides.pop()
+    # 節に両方の側の書き方がある: 特徴の語のすぐ前の主語の印(は・が・も)のある書き方の側。特徴の語のあとに、主語の印のない
+    # もう一方の側の書き方(「小ぶりのロウバイより」)があれば決めない
+    topics = [(a, s) for a, b, s in own if a < pos and re.match(X["topic_re"], clause[b:])]
+    if not topics:
+        return None
+    who = max(topics)[1]
+    after = [s for a, b, s in ments if a > pos and s != who and not re.match(X["topic_re"], clause[b:])]
+    return None if after else who
+
+
+def contrast_errors(sents, brief, c):
+    """段階82 の続き(本人の判断 2026-11-13 の 1): 印のカードが 2 つの種を比べる見分け方のカード(項目 contrasts)のとき、
+    文が「どちらの種が、どの特徴か」の組み合わせと逆なら trait_reversed(「サザンカは花ごと落ちます [K…]」)。
+    確かなときだけ止める: 否定の形(落ちず・ではなく)・どちらの種のことか分からない節は照らさない。ほかの文の意味は照らさない。"""
+    from . import species_alias as SA
+    X = c["species_traits"]["contrast"]
+    groups = SA.word_groups()
+    by = {r["id"]: r for r in brief.get("cards") or []}
+    errs = []
+    for s in sents:
+        items = [it for i in s["ids"] for it in (by.get(i) or {}).get("contrasts") or []]
+        if not items:
+            continue
+        bad = None
+        for clause in [x for x in re.split(X["split_re"], s["clean"]) if x]:
+            for it in items:
+                names = {side: sorted({w for n in it[side] for w in (groups.get(n) or frozenset()) | {n}}, key=len, reverse=True) for side in ("a", "b")}
+                ments = _mentions(clause, names)
+                if not ments:
+                    continue
+                for side in ("a", "b"):
+                    rx = it.get(side + "_re")
+                    if not rx:
+                        continue
+                    for m in re.finditer(rx, clause):
+                        if re.match(X["negation_re"], clause[m.end():]):
+                            continue                     # 否定の形(「花ごと落ちず」「花ごと落ちることはない」)は照らさない
+                        who = _attributed(clause, m.start(), ments, X)
+                        if who and who != side:
+                            bad = bad or (it[who][0], m.group(0), it[side][0])
+        if bad:
+            errs.append(_err(X["code"], s, f"{bad[0]}に、{bad[2]}の特徴「{bad[1]}」を書いている(印のカードと逆)", X["fix"]))
     return errs
 
 
