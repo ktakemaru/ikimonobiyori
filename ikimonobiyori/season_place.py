@@ -236,12 +236,18 @@ def gather(sp, origin, c=None, env=None):
                 if r.get("season") and k2 not in rows:
                     rows[k2] = {**r, "km": rows[k]["km"], "km_estimated": rows[k]["km_estimated"]}
                 continue
+            prev = dict(rows[k])
+            sec = _secondary_of(prev, r, thirds) if r.get("official") and not prev.get("official") else None
             if not rows[k]["season"] and r.get("season"):
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
+                if sec:
+                    rows[k]["secondary_season"] = sec
             elif r.get("official") and r.get("start") and r.get("season") and not rows[k].get("official"):
                 # 段階82 の続き(本人の判断 2026-11-13 の 4): 同じ名所の公式の記録は、紹介サイト由来の時期より先に使う(名所の行と全体の目安が公式に合う)
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=True, publisher=r.get("publisher") or "",
                                peak=r.get("peak"), **{"from": "record"})
+                if sec:
+                    rows[k]["secondary_season"] = sec
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
@@ -324,6 +330,8 @@ def _records(match, env=None, sp=None, c=None):
             seen = window_text(win[0], win[1], thirds) if win else O.end_only_text(O.split_peak(r.get("typical"), opol)[0])   # 段階69 第7部: 「7月上旬まで」
             peak = O.peak_text(r.get("typical"), opol)
             season = seen
+            if win and month_only(r.get("typical")):    # 段階82 の続き(本人の判断 2026-11-13 の 1): 月だけの記載(「11月」)は旬を作らず月のまま
+                season = month_only(r.get("typical"))
             if (r.get("typical") or "").strip() in _year_round_words():   # 段階82 第3部 1: 季節のない名所(苔など)
                 season, peak = r["typical"].strip(), None
             if peak:                                  # 段階81 第1部 2: 見られる期間と、数が多い時期を分けて書く
@@ -336,6 +344,26 @@ def _records(match, env=None, sp=None, c=None):
                         "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj,
                         "notice": r.get("notice"), "closed_period": r.get("closed_period"), "best_conditions": r.get("best_conditions")})
     return out
+
+
+def month_only(text):
+    """例年の時期の記載が月だけ(「11月」「11月〜12月」)なら、その書き方(空白を除く)。旬・日のある記載は None。"""
+    t = re.sub(r"\s", "", text or "")
+    m = re.fullmatch(r"(\d{1,2})月(?:[〜~～\-ー－](\d{1,2})月)?(?:ごろ|頃)?", t)
+    if not m:
+        return None
+    return f"{m.group(1)}月" + (f"〜{m.group(2)}月" if m.group(2) else "")
+
+
+def _secondary_of(prev, rec, thirds):
+    """段階82 の続き(本人の判断 2026-11-13 の 2): 公式の記録で置き換える前の、紹介サイト由来の時期が公式の時期より長い(公式にない月がある)とき、
+    消さずに残す → {season, publisher, url} か None。"""
+    if not (prev.get("start") and prev.get("end") and rec.get("start") and rec.get("end")):
+        return None
+    if not set(months_of(prev["start"], prev["end"])) - set(months_of(rec["start"], rec["end"])):
+        return None
+    return {"season": prev.get("season") or window_text(prev["start"], prev["end"], thirds),
+            "publisher": prev.get("publisher") or "", "url": prev.get("url")}
 
 
 def _year_round_words():

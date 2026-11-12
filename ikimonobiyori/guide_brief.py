@@ -593,6 +593,10 @@ def _species_facts(F, sprows, cands, cond, c):
         F.add("typical", body, place=r["name"], source=r.get("publisher"), url=r.get("url"),
               source_class="official" if r.get("official") else ("secondary" if r.get("url") else None),
               extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
+        sec = r.get("secondary_season")
+        if sec:                                            # 段階82 の続き(本人の判断 2026-11-13 の 2): 公式より長い紹介サイトの時期は、区別して公式のあとに
+            F.add("typical", R["secondary_line"].format(name=r["name"], loc=loc, species=r["species"], season=sec["season"]), place=r["name"],
+                  source=sec.get("publisher"), url=sec.get("url"), source_class="secondary", extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
         if r.get("care"):
             F.add("facility", f"{r['name']}: 行く前に: {r['care']}", place=r["name"])
         if r.get("closed_period"):                         # 段階82 第3部 1: 行けない時期(冬期閉鎖など)は安全・規制の事実として

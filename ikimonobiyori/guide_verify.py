@@ -511,9 +511,15 @@ def _mentions(text, names_by_side):
     return [h for h in hits if not any(o[0] <= h[0] and h[1] <= o[1] and (o[1] - o[0]) > (h[1] - h[0]) for o in hits)]
 
 
-def _attributed(clause, pos, ments, X):
+def _attributed(clause, pos, ments, X, end=None):
     """特徴の語(pos の位置)が、節のどちらの側の種のことか。確かなときだけ側を返す(分からなければ None)。
     比べる相手の書き方(「ツバキより」「ツバキと違って」「ツバキのように」)は数えない。両方の側があれば、主語の印(は・が・も)のある側が 1 つのときだけ。"""
+    if end is not None:                                  # 段階82 の続き(本人の判断 2026-11-13 の 3): 特徴の語のすぐ後ろに種の名前が続く形(「花ごと落ちるサザンカ」)
+        gap = re.match(X["modifier_gap_re"], clause[end:])
+        at = end + (gap.end() if gap else 0)
+        hit = [s for a, _b, s in ments if a == at]
+        if hit:
+            return hit[0]
     own = [(a, b, s) for a, b, s in ments if not re.match(X["compare_re"], clause[b:])]
     sides = {s for _a, _b, s in own}
     if not sides:
@@ -557,7 +563,7 @@ def contrast_errors(sents, brief, c):
                     for m in re.finditer(rx, clause):
                         if re.match(X["negation_re"], clause[m.end():]):
                             continue                     # 否定の形(「花ごと落ちず」「花ごと落ちることはない」)は照らさない
-                        who = _attributed(clause, m.start(), ments, X)
+                        who = _attributed(clause, m.start(), ments, X, end=m.end())
                         if who and who != side:
                             bad = bad or (it[who][0], m.group(0), it[side][0])
         if bad:

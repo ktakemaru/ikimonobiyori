@@ -342,7 +342,7 @@ def species_rows(question, cond, env=None, c=None):
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"])),
-                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions") if r.get(k)}})
+                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season") if r.get(k)}})
     merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
