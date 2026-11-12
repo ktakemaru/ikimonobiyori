@@ -105,6 +105,8 @@ class OfficialFirst(TempEnv):
         self.assertFalse(SP._season_of_other_kind("サザンカとツバキは11月から", ["サザンカ"], kinds))
         self.assertFalse(SP._season_of_other_kind("梅の見頃のあとにツバキ", ["梅"], kinds))
         self.assertTrue(SP._season_of_other_kind("梅は1月上旬から", ["サザンカ"], kinds))       # 今までの決まり(名前で始まる)はそのまま
+        birds = [{"kind": "カモ"}, {"kind": "シギ"}, {"kind": "チドリ"}]
+        self.assertFalse(SP._season_of_other_kind("通年(秋〜春にカモ・シギ)", ["チドリ"], birds))   # 月のない名所全体の文は外さない
 
 
 class Chingruma(TempEnv):

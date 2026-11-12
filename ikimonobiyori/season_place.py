@@ -282,6 +282,8 @@ def _season_of_other_kind(text, kinds, entry_kinds):
         return True
     # 段階82 の続き(本人の判断 2026-11-13 の 4): 時期の文がほかの種の名前(書き方の違いを含む。「ウメ・ツバキ・サクラ」)だけを挙げ、
     # 聞かれた種の名前(書き方の違いを含む)がないときも、その種の時期にしない(神代植物公園の「春の植物(ウメ・ツバキ・サクラ)」をサザンカの時期にしない)
+    if not re.search(r"\d+月", text):                         # 月の書かれた時期の文だけ(「通年(秋〜春にカモ・シギ)」は名所全体の話なので外さない)
+        return False
     groups = SA.word_groups()
     forms = lambda n: set(groups.get(n) or ()) | {n}             # noqa: E731
     mine = set().union(*(forms(k) for k in kinds)) if kinds else set()
