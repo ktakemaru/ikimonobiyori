@@ -1533,7 +1533,15 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if _asked_themes(question):
         prev_ok = extra_ok
         extra_ok = lambda r, _p=prev_ok: (_p is None or _p(r)) and bool(_theme_card_filter([r], question))   # 語りの材料で足すカードも同じ
+    open_q = is_open_question(question, cond, towns, q_areas, c)
+    if not _asked_themes(question):
+        cards += calendar_cards(question, cond, cands, months, c, open_q, start=len(cards), have_titles=[k.get("title") for k in cards])   # 段階83 第3部: 季節の暦
     mat = _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=extra_ok)     # 段階78 第3部 1: 語りの材料
+    tale = tale_cards(question, cond, cands, sprows, c, start=len(cards))      # 段階83 第4部: 小話(1 点まで)
+    if tale:
+        cards += tale
+        mat = {**mat, "items": list(mat.get("items") or []) + [{"kind": c["tale"]["kind"], "card": k["id"], "title": k["title"],
+                                                               "place": k.get("where") or k.get("place"), "text": k["facts"][0]} for k in tale]}
     if hl:
         mat = _highlight_materials(mat, cards, hl, c)
     from . import research as RS
@@ -1548,6 +1556,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if not researched:
         targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
                     for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
+    sobs = seasonal_rows(question, cond, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
@@ -1558,7 +1567,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
         "candidate_merges": merges, "candidate_merge_conflicts": merge_conflicts,
-        "facts": F.rows, "cards": cards, "narrative": mat,
+        "facts": F.rows, "seasonal_obs": sobs, "cards": cards, "narrative": mat,
         "missing": _missing(question, res, cands, F.rows, cards, extra)
         + ([c["town_candidates"]["none_missing"].format(where=area_label or "・".join(towns))] if towns and not cands else [])
         + [c["species_traits"]["missing_line"].format(sp=sp) for sp in no_trait]
@@ -1570,6 +1579,177 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def _card_row(r, cid, link, c, where=None):
+    src = r.get("source") or {}
+    facts = [seireki(x) for x in r.get("facts") or []]
+    return {"id": cid, "title": r.get("title"), "category": r.get("category"), "place": r.get("place"), "link": link,
+            "narrative": r.get("narrative"), "where": where or _where(r), "facts": facts, "months": (r.get("condition") or {}).get("months"),
+            "confidence": r.get("confidence"), "source": src.get("name"), "url": src.get("url"), "checked_on": src.get("checked_on"),
+            "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)}
+
+
+def is_open_question(question, cond, towns=(), areas=(), c=None):
+    """段階83 第3部: 場所や種を決めない質問(「今の見頃のものを教えて」「近くの公園で何が見られる?」「冬の雑木林の楽しみ方を教えて」)。"""
+    c = c or cfg()
+    from . import guide_materials as GM
+    C = c["calendar"]
+    if (cond.get("route") or "") in C["skip_routes"] or towns or areas or cond.get("area_names"):
+        return False
+    if GM.species_match_words(question):
+        return False
+    return any(w in question for w in C["open_words"]) or any(w in question for ws in C["env_words"].values() for w in ws)
+
+
+def question_environments(question, cands=(), c=None):
+    """質問(なければ選んだ候補の名前)の語 → 季節の暦の環境の一覧。"""
+    c = c or cfg()
+    C = c["calendar"]
+
+    def envs(text):
+        out, rest = [], text or ""
+        for env, ws in C["env_words"].items():
+            hit = next((w for w in ws if w in rest), None)
+            if hit:
+                out.append(env)
+                rest = rest.replace(hit, "")
+        return out
+    got = envs(question)
+    if got:
+        return got
+    names = " ".join(r["name"] for r in cands if r.get("chosen"))
+    return envs(names)
+
+
+def _calendar_months(question, months, c):
+    for season, ms in c["calendar"]["season_months"].items():
+        if f"{season}の" in question:
+            return list(ms)
+    return list(months or [])
+
+
+def calendar_cards(question, cond, cands, months, c, open_q, start=0, shown=None, have_titles=()):
+    """段階83 第3部: 対象の月・環境に合う季節の暦のカード(場所や種を決めない質問は max_cards_open、ほかは max_cards)。"""
+    from . import knowledge as K
+    C = c["calendar"]
+    if (cond.get("route") or "") in C["skip_routes"]:
+        return []
+    try:
+        rows = [r for r in (shown if shown is not None else K.calendar_pool()) if r.get("calendar")]
+    except (OSError, ValueError):
+        return []
+    rows = [r for r in rows if r.get("title") not in set(have_titles or ())]      # 資料にすでにあるカードは足さない
+    ms = _calendar_months(question, months, c)
+    envs = question_environments(question, cands, c)
+    if not envs and not open_q:
+        return []
+    hits = [r for r in rows if set((r["calendar"].get("months") or [])) & set(ms) and (not envs or r["calendar"].get("environment") in envs)]
+    order = {e: i for i, e in enumerate(envs or C["environments"])}
+    hits.sort(key=lambda r: (order.get(r["calendar"].get("environment"), len(order)), r.get("title") or ""))
+    picked, seen_env = [], {}
+    limit = C["max_cards_open"] if open_q else C["max_cards"]
+    for r in hits:                                     # 同じ環境ばかりにしない(環境ごとに順に 1 枚ずつ)
+        seen_env.setdefault(r["calendar"].get("environment"), []).append(r)
+    while len(picked) < limit and any(seen_env.values()):
+        for env in sorted(seen_env, key=lambda e: order.get(e, len(order))):
+            if seen_env[env] and len(picked) < limit:
+                picked.append(seen_env[env].pop(0))
+    return [_card_row(r, f"K{start + i + 1:03d}", C["link"], c, where=(r["calendar"].get("where") or r["calendar"].get("environment")))
+            for i, r in enumerate(picked)]
+
+
+def tale_cards(question, cond, cands, sprows, c, start=0, shown=None):
+    """段階83 第4部: 小話のカード(質問・選んだ候補・種の名所の種と場所の名前に当たるもの。1 枚まで)。"""
+    from . import knowledge as K
+    T = c["tale"]
+    if (cond.get("route") or "") in T["skip_routes"]:
+        return []
+    try:
+        rows = [r for r in (shown if shown is not None else K.load_shown(include_special=True)) if r.get("tale")]
+    except (OSError, ValueError):
+        return []
+    words = [question] + [r["name"] for r in cands if r.get("chosen")][:3]
+    best = []
+    for r in rows:
+        names = [n for n in [r.get("subject"), r.get("place"), *(r.get("subject_aliases") or []), *(r.get("place_aliases") or [])] if n and len(n) >= 2]
+        score = sum(3 if n in question else 1 for n in names if any(n in w for w in words))
+        if score:
+            best.append((-score, r.get("title") or "", r))
+    best.sort(key=lambda x: x[:2])
+    return [_card_row(r, f"K{start + i + 1:03d}", T["link"], c) for i, (_s, _t, r) in enumerate(best[: T["max_cards"]])]
+
+
+def _seasonal_region(cond, cands, c):
+    """段階83 第2部: 観察記録の集計の地域の組。候補(選んだもの → すべて)の都県で多い組、なければ出発地の都県の組。"""
+    from collections import Counter
+    for pool in ([r for r in cands if r.get("chosen")], cands):
+        groups = Counter(g for g in (_group_of(r.get("prefecture"), c) for r in pool) if g)
+        if groups:
+            return groups.most_common(1)[0][0]
+    return _group_of(_origin_pref(cond.get("origin")), c)
+
+
+def _seasonal_date(cond, now):
+    for per in cond.get("periods") or []:
+        for d in per or []:
+            try:
+                return date.fromisoformat(str(d)[:10])
+            except ValueError:
+                continue
+    return now.date()
+
+
+def seasonal_categories(question, cond, sp=None):
+    """質問の語 → 観察記録の分類の一覧。分類の語がなければすべて。紅葉だけの質問・種や名所を決めた経路では空。"""
+    from . import seasonal_obs as SO
+    sp = sp or SO.load_policy()
+    B = sp["brief"]
+    if (cond.get("route") or "") in (B.get("skip_routes") or []):
+        return []
+    hit = [cid for cid, ws in B["category_words"].items() if any(w in question for w in ws)]
+    if hit:
+        return hit
+    if (cond.get("subjects") or []) == ["autumn_leaves"] or ("紅葉" in question and not hit):
+        return []
+    return [x["id"] for x in sp["categories"]]
+
+
+def seasonal_rows(question, cond, cands, now, env, c):
+    """段階83 第2部: 資料の節「例年この時期の観察記録」の行(分類ごとに 1 行、[O001]…)。集計がなければ空。"""
+    from . import seasonal_obs as SO
+    sp = SO.load_policy()
+    cats = seasonal_categories(question, cond, sp)
+    if not cats:
+        return []
+    gname = _seasonal_region(cond, cands, c)
+    reg = SO.region(gname, sp) if gname else None
+    if not reg:
+        return []
+    d = _seasonal_date(cond, now)
+    win = SO.species_window(reg["id"], d, env, sp)
+    if not win:
+        return []
+    B = sp["brief"]
+    n = SO._v(B["max_per_category"])
+    years = win.get("years") or []
+    ytxt = f"過去{len(years)}年({years[0]}〜{years[-1]}年)" if years else ""
+    wtxt = SO.weeks_text(d, win["weeks"], sp) or ""
+    out = []
+    for cid in cats:
+        rows = (win["categories"].get(cid) or [])[:n]
+        if not rows:
+            continue
+        label = next(x["label"] for x in sp["categories"] if x["id"] == cid)
+        items = [B["species_item"].format(name=r["name"], count=r["count"],
+                                          flower=B["flower_part"].format(n=r["flower"]) if r.get("flower_usable") else "") for r in rows]
+        content = B["line"].format(region=reg["name"], label=label, weeks=wtxt, years=ytxt, species="、".join(items))
+        out.append({"id": f"O{len(out) + 1:03d}", "kind": "seasonal_obs", "kind_label": B["kind_label"], "category": cid,
+                    "region": reg["name"], "content": content, "species": [r["name"] for r in rows],
+                    "flowering": [r["name"] for r in rows if r.get("flower_usable")],
+                    "values": values(content, c), "source": B["source_name"], "source_class": None, "url": B["source_url"],
+                    "fetched_at": win.get("fetched_at"), "complete": win.get("complete")})
+    return out
 
 
 def form_photos(question, env=None):
@@ -1703,6 +1883,11 @@ def render_md(doc):
         L.append(f"- [{f['id']}] {f['kind_label']}: {f['content']}({src}{'・' + when if when else ''}){' ' + f['url'] if f.get('url') else ''}")
     if not doc["facts"]:
         L.append("(なし)")
+    if doc.get("seasonal_obs"):                            # 段階83 第2部
+        from . import seasonal_obs as SO
+        B = SO.load_policy()["brief"]
+        L += ["", B["heading"], "", f"({B['source_name']}。{B['note']})"]
+        L += [f"- [{r['id']}] {r['content']}" for r in doc["seasonal_obs"]]
     L += ["", "## 知識カード", ""]
     for k in doc["cards"]:
         L.append(f"- [{k['id']}] {k['title']}({k.get('link') or ''}・{k.get('category') or ''}・{k.get('where') or k.get('place') or ''}・{k.get('source')}・{k.get('checked_on')}に確認)")

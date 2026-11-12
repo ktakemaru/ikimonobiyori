@@ -1302,7 +1302,10 @@ def main(argv=None, http_get=None):
             _out({"marked": n})
             return 0
         rows = WM.targets(t)
-        _out({"now": t.isoformat(), "count": len(rows), "pages": rows})
+        from . import seasonal_obs as SO                 # 段階83 第2部: 観察記録の集計(有効期間 90 日)の取り直しの要る数
+        so = SO.status(t)
+        _out({"now": t.isoformat(), "count": len(rows), "pages": rows,
+              **({"inat_seasonal": {"missing": so["missing"], "how": SO.load_policy()["warm_how"]}} if so["missing"] else {})})
         return 0
     if a.step == "vc-record":
         from . import page_cache as PC

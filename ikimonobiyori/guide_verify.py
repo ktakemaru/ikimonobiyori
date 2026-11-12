@@ -65,7 +65,7 @@ def sentences(body, c=None):
         segs = re.findall(r"[^。！？!?]+[。！？!?]?", line)
         cur = []
         for s in segs:
-            m = re.match(r"^\s*((?:\[[FK]\d{3,}\]\s*)+)(.*)$", s)
+            m = re.match(r"^\s*((?:\[[FKO]\d{3,}\]\s*)+)(.*)$", s)
             if m and (cur or out):
                 if cur:
                     cur[-1] = cur[-1] + m.group(1)
@@ -125,7 +125,7 @@ def _event_period(s, v, c):
 
 
 def check_marked(s, brief, c, allowed=()):
-    facts = {f["id"]: f for f in brief.get("facts") or []}
+    facts = {f["id"]: f for f in (brief.get("facts") or []) + (brief.get("seasonal_obs") or [])}
     cards = {k["id"]: k for k in brief.get("cards") or []}
     errs = []
     rows = []
@@ -150,7 +150,8 @@ def check_marked(s, brief, c, allowed=()):
     bad = [x for x in v["jun"] if x not in u["jun"]]
     if bad:
         errs.append(_err("month_mismatch", s, f"{'・'.join(bad)} が印の事実にない", "印の事実にある時期だけを書く"))
-    typical_talk = GB.has_any(c.get("typical_words") or [], s["clean"]) and all(r.get("kind") in ("typical", None) or r["id"].startswith("K") for r in rows)
+    typical_talk = GB.has_any(c.get("typical_words") or [], s["clean"]) and all(r.get("kind") in ("typical", "seasonal_obs", None) or r["id"].startswith("K") for r in rows)
+    errs += seasonal_obs_errors(s, rows, c)                 # 段階83 第2部: 観察記録の印のある文
     if _now_state(s["clean"], v, c) and not typical_talk:
         cur = [r for r in rows if r.get("kind") == "current"]
         if not cur:
@@ -333,9 +334,12 @@ def common_errors(final_body, question, c):
                              "fix": "「紹介サイトによると」のように短く書く(公式かどうかは最後の出典で分かる)"})
     if P.unused_in_text(final_body):
         errs.append({"code": "unused_source", "line": 0, "sentence": "", "detail": "使わない情報源の名前がある", "fix": "その情報源を書かない"})
+    body_iw = final_body
+    for ok in c.get("internal_word_allowed_phrases") or []:   # 段階83 第2部: 「観察記録では」は利用者の語(過去の観察の記録の話)
+        body_iw = body_iw.replace(ok, "")
     for w in c.get("guide_internal_words") or []:
         pat = rf"(?<![A-Za-z0-9_]){re.escape(w)}(?![A-Za-z0-9_])" if w.isascii() else re.escape(w)
-        for ln, line in enumerate(final_body.splitlines(), 1):
+        for ln, line in enumerate(body_iw.splitlines(), 1):
             if re.search(pat, line):
                 errs.append({"code": "internal_word", "line": ln, "sentence": line[:80], "detail": f"内部の言葉「{w}」", "fix": "利用者の語に言い換える"})
     rng = _in_range_prefs()
@@ -353,6 +357,43 @@ def common_errors(final_body, question, c):
     return errs
 
 
+def _seasonal_vocab():
+    if "v" not in _SV:
+        from . import seasonal_obs as SO
+        _SV["v"] = SO.vocabulary()
+    return _SV["v"]
+
+
+_SV = {}
+
+
+def seasonal_obs_errors(s, rows, c, vocab=None):
+    """段階83 第2部: 観察記録の印([O…])のある文。記録の語(過去・例年・記録)があること、今年の状態の言い切りでないこと、
+    書いた種の名前が印の行にあること(保存した集計の和名の中で、印の行と、いっしょに付けた印の事実・カードにないもの)。"""
+    obs = [r for r in rows if r.get("kind") == "seasonal_obs"]
+    if not obs:
+        return []
+    from . import seasonal_obs as SO
+    V = SO.load_policy()["verify"]
+    text = s["clean"]
+    errs = []
+    if not any(w in text for w in V["required_words"]):
+        errs.append(_err("seasonal_obs_not_past", s, "観察記録の文に「過去」「例年」「記録」の語がない",
+                         "「過去5年の観察記録では、この時期の○○で…の記録が多くなっています」のように、過去の記録の話として書く"))
+    if re.search(V["now_assert_re"], text):
+        errs.append(_err("seasonal_obs_now", s, "観察記録を今年の状態の言い切りにしている",
+                         "今年の状態にしない(「今、…が咲いています」「今週末は…が見られます」と書かない)。過去の記録の傾向として書く"))
+    allowed = {n for r in obs for n in r.get("species") or []}
+    others = " ".join(r.get("content") or " ".join(r.get("facts") or []) for r in rows if r.get("kind") != "seasonal_obs")
+    vocab = _seasonal_vocab() if vocab is None else vocab
+    bad = sorted({n for n in vocab if len(n) >= 2 and n in text and n not in allowed and n not in others
+                  and not any(n in a for a in allowed)})
+    if bad:
+        errs.append(_err("seasonal_obs_species", s, f"種の名前 {'・'.join(bad)} が印の観察記録の行にない",
+                         "印の観察記録の行にある種の名前だけを書く"))
+    return errs
+
+
 def final_sources(cited, c):
     f = c["final"]
     out, seen = [], set()
@@ -361,6 +402,9 @@ def final_sources(cited, c):
         if not key or key in seen:                       # 段階76 第5部 1: URL のない出典は出さない
             continue
         seen.add(key)
+        if r.get("kind") == "seasonal_obs":               # 段階83 第2部: 観察記録の集計の出典は 1 行
+            out.append("・" + r["source"] + " " + r["url"])
+            continue
         if r["id"].startswith("K"):
             note = f["card_note"].format(date=_md(r.get("checked_on")) or "日付不明")
         else:
@@ -450,7 +494,7 @@ def check(draft, brief, c=None, env=None):
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
     errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
     errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
-    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
+    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
     final = body.rstrip(NL) + NL + ((NL + c["final"]["sources_heading"] + NL + NL.join(src) + NL) if src else "")

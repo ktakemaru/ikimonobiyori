@@ -1,0 +1,80 @@
+# 段階83 第2部: 例年この時期の観察記録(iNaturalist の観察記録の集計。地域の組 × 週 × 分類)
+# 集計値だけを持つ(種の名前・記録の数・合計)。座標・観察者・写真・観察の id は問い合わせの結果から捨てる(絶対ルール7)。
+# 保存先は IKIMONOBIYORI_DATA_DIR の下の inat_seasonal/(リポジトリには入れない)。
+# 問い合わせの形は 2026-11-13 に少数の通信で確かめた(docs/stage83-report.md): week= は ISO の週(2025年の第46週 = 11/10〜11/16 の
+# d1/d2 と同じ結果)・term_id/term_value_id(開花の注釈)で件数が変わる・place_id の複数指定は足し算・/observations/histogram の
+# interval=week_of_year の第46週は /observations の week=46 の総数と同じ。
+
+store_dir: inat_seasonal
+# ask warm に出す取り直しの手順(有効期間を過ぎた・まだない 地域×週 があるとき)
+warm_how: "BIYORI_ALLOW_LIVE=1 python -X utf8 -m ikimonobiyori.seasonal_obs fetch --live --max-requests 60 を、missing が 0 になるまで繰り返す(1 回 60 回まで・束ごとに保存)"
+
+years:
+  count: {value: 5, source: "指示書 段階83 2.1(期間は過去5年)", provisional: false}
+  # 対象の年は、取得した日の前の年までの完全な年(2026年に取れば 2021〜2025年)。同じ取得の日なら同じ問い合わせ(決定論)
+weeks:
+  count: {value: 52, source: "指示書 段階83 2.1(1年を52週)。過去5年(2021〜2025年)には第53週がない", provisional: false}
+  window: {value: 1, source: "指示書 段階83 2.3(対象の日の週の前後1週を含む)", provisional: false}
+ttl_days: {value: 90, source: "指示書 段階83 2.1(有効期間90日。過去5年の集計なので頻繁には変わらない)", provisional: false}
+max_requests_per_run: {value: 60, source: "仮置き(1回の実行の上限。束(1地域×4週 = 12回)を5つまで。段階83 の通信の目安 1,500 回の内で、止めても続きから取れる大きさ)", provisional: true}
+min_interval_s: {value: 1.5, source: "iNaturalist の推奨(1分に60回より少なく)と、この仕組みの同じホストへの間隔 1 秒以上(段階38)より長めに", provisional: true}
+quality_grade: research          # 指示書 段階83 2.1(同定が確かな区分だけ)
+captive: "false"                 # 指示書 段階83 2.1(栽培・飼育の記録を除く)
+locale: ja
+exclude_names: [イエネコ, イヌ, アヒル, ドバト]   # 段階83 第2部: 野生でない動物(飼い猫・家禽など)は答えの材料にしない。2026-11-13 の集計で東京・神奈川などの上位にイエネコが出た
+name_strip_re: '\s*[(（]広義[)）]'   # 答えに書く名前から外す印(iNaturalist の和名の「ツワブキ(広義)」)
+
+regions:                         # 地域の組は guide_mode.yaml の region_groups と同じ(段階76)。place_id は 2026-11-13 に /places/autocomplete で確かめた(admin_level 10 = 都道府県)
+  - {id: tokyo_kanagawa, name: 東京・神奈川, place_ids: [10935, 10918]}
+  - {id: saitama_chiba_ibaraki, name: 埼玉・千葉・茨城, place_ids: [10931, 10907, 10914]}
+  - {id: tochigi_gunma, name: 栃木・群馬, place_ids: [10934, 10912]}
+  - {id: yamanashi_nagano, name: 山梨・長野, place_ids: [10940, 10925]}
+  - {id: shizuoka, name: 静岡, place_ids: [13084]}
+  - {id: niigata_s_tohoku, name: 新潟・南東北, place_ids: [13081, 10910, 10939, 10923]}
+
+categories:                      # 分類(指示書 段階83 2.1)
+  - {id: birds, label: 野鳥, iconic_taxa: [Aves]}
+  - {id: plants, label: 野生の植物, iconic_taxa: [Plantae]}
+  - {id: insects, label: 虫(チョウ・トンボなど), iconic_taxa: [Insecta]}
+  - {id: fungi, label: きのこ, iconic_taxa: [Fungi]}
+  - {id: other_animals, label: そのほかの動物(両生類・爬虫類・哺乳類), iconic_taxa: [Amphibia, Reptilia, Mammalia]}
+
+# 1 つの週に送る問い合わせ(分類をまとめて送り、返った種を分類に分ける。記録の多い順なので、分類ごとの上位は正しい)
+query_groups:
+  - {categories: [birds, plants], per_page: {value: 80, source: "仮置き(2分類の上位30がふつう入る大きさ。応答は1件あたり約1.3KB)", provisional: true}}
+  - {categories: [insects, fungi, other_animals], per_page: {value: 100, source: "仮置き(3分類の上位30がふつう入る大きさ)", provisional: true}}
+flowering:
+  category: plants
+  term_id: 12                    # iNaturalist の注釈「Plant Phenology」(2026-11-13 の確かめで、付けると件数が変わった)
+  term_value_id: 13              # 「Flowering」
+  per_page: {value: 30, source: "指示書 段階83 2.1(上位30)", provisional: false}
+top_n: {value: 30, source: "指示書 段階83 2.1(記録の多い種の上位30)", provisional: false}
+
+# 答えの材料にする種の決まり(指示書 段階83 2.1)
+min_per_year: {value: 5, source: "指示書 段階83 2.1(記録が年5件に満たない種は答えの材料にしない)。年の記録は、その地域の集計の全部の週の数の合計を年数で割ったもの(上位30に入った週だけを数えるので少なめ)", provisional: false}
+flowering_min_count: {value: 3, source: "仮置き(対象の週と前後1週の開花の注釈がこの数より少ない種は「記録が多い時期」としてだけ扱う。根拠のある値ではない)", provisional: true}
+
+brief:
+  max_per_category: {value: 8, source: "指示書 段階83 2.3(分類ごとに最大8種)", provisional: false}
+  heading: "## 例年この時期の観察記録"
+  kind_label: 例年この時期の観察記録
+  source_name: "iNaturalist の観察記録の集計(過去5年・地域の合計。市民の観察で、場所や種に偏りがあります)"
+  source_url: https://www.inaturalist.org/
+  line: "{region}・{label}({weeks}・{years}): {species}"
+  species_item: "{name}(記録 {count} 件{flower})"
+  flower_part: "・うち開花の注釈 {n} 件"
+  note: "例年の目安と同じ扱い(今年の現況ではない)。公式の現況があれば公式が先。"
+  # 場所や種を決めない質問(「今の見頃」「公園で何が見られる」)では全分類、種類の語がある質問ではその分類だけ
+  category_words:
+    birds: [鳥, 野鳥, 渡り鳥, 冬鳥, 夏鳥, 水鳥, カモ, 猛禽]
+    plants: [花, 草, 野草, 植物, 咲]
+    insects: [虫, チョウ, 蝶, トンボ, 蜻蛉, セミ, ホタル, バッタ, 甲虫]
+    fungi: [きのこ, キノコ, 茸, 菌]
+    other_animals: [カエル, 蛙, ヘビ, トカゲ, 哺乳類, けもの, 動物, リス, シカ]
+  # 種や名所を決めた質問(種の名所・紅葉の現況の型など)には入れない経路
+  skip_routes: [season_place, normal]
+
+# ask verify(段階83 2.3): 観察記録の印のある文
+verify:
+  required_words: [記録, 例年, 過去]
+  now_assert_re: '(今|現在|今日|明日|今週末|来週末|この週末|今週)[^。]*?(咲いています|咲いている|見られます|見られる|見頃です|見ごろです|出ています|飛んでいます|来ています|います)'
