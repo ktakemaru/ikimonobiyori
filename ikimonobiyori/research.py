@@ -256,6 +256,15 @@ def _brief_question(bid, env=None):
         return None
 
 
+def _note_try(bid, now, env=None):
+    st = _load_state(bid, env)
+    if st.get("tried_at") and st.get("question"):
+        return
+    st.setdefault("tried_at", now.isoformat())
+    st["question"] = st.get("question") or _brief_question(bid, env)
+    _save_state(bid, st, env)
+
+
 def already_researched(question, now, env=None):
     """段階82 第3部 4: この質問(読み替えたあとの文)で、research.once_hours 時間以内に一度調べたか(ask research fetch を 1 回以上)。"""
     R = cfg()
@@ -265,7 +274,7 @@ def already_researched(question, now, env=None):
     for p in d.glob("*.json"):
         try:
             st = json.loads(p.read_text(encoding="utf-8"))
-            at = datetime.fromisoformat(st.get("first_at") or "")
+            at = datetime.fromisoformat(st.get("first_at") or st.get("tried_at") or "")
         except (OSError, ValueError, TypeError):
             continue
         if st.get("question") == question and 0 <= (now - at).total_seconds() <= R["once_hours"] * 3600:
@@ -329,6 +338,7 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
     from . import netbudget as NB
     R = cfg()
     now = now or datetime.now().astimezone().replace(microsecond=0)
+    _note_try(bid, now, env)                              # 段階82 第3部 4: 読めなかった取得も「一度調べた」に数える
     why = allowed_page(url)
     declared = None
     if why and why.startswith("公式の発行元") and _declared_ok(publisher):

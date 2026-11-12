@@ -913,7 +913,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
     p = sub.add_parser("photo-review", help="段階82 第4部: 写真の点検。list(未点検・点検済みの一覧)/ set --name <和名> --verdict ok|ng [--reason]")
-    p.add_argument("action", choices=["list", "set"])
+    p.add_argument("action", choices=["list", "set", "none"])   # none: 合う写真がなかった種を写真なしにする(取り直さない)
     p.add_argument("--name", default=None)
     p.add_argument("--verdict", choices=["ok", "ng"], default=None)
     p.add_argument("--reason", default=None)
@@ -1330,6 +1330,13 @@ def main(argv=None, http_get=None):
             _out({"count": len(rows), "photos": rows})
             return 0
         tbl = GPh.load_table()
+        if a.action == "none":
+            try:
+                _out({"name": a.name, "taxon_id": GPh.mark_no_photo(a.name, a.reason or "", today=_clock().date()), "no_photo": True})
+            except ValueError as e:
+                print(str(e), file=sys.stderr)
+                return 2
+            return 0
         hits = [r for r in GPh.cached_photos() if r["name"] == a.name]
         if not a.name or not a.verdict or not hits:
             print("--name(キャッシュに写真がある和名)と --verdict が要る", file=sys.stderr)

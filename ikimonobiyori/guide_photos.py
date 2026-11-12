@@ -299,6 +299,21 @@ def commons_title(meta):
     return unquote("File:" + (meta.get("photo_page") or "").rsplit("File:", 1)[-1]).replace("_", " ")
 
 
+def mark_no_photo(name, reason, *, today, env=None, policy=None):
+    """段階82 第4部 4.2: 点検と取り直しを 3 回まで行って合う写真がなかった種を「写真なし」にする(目で見て使わないと決めた種の一覧
+    photo_review.json に入れる。ensure・学名での取り直しはこの種を取りに行かない)。→ taxon_id。"""
+    table = load_table(env, policy=policy)
+    if name not in table:
+        raise ValueError(f"写真の対応表にない和名: {name}")
+    tid = str(int(table[name]["taxon_id"]))
+    rv = load_review(env, policy)
+    rv[tid] = f"写真なし({today.isoformat()} 点検): {reason}"
+    review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+    review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    _remove_cache(int(tid), env, policy)
+    return int(tid)
+
+
 def checked_ok(taxon_id, env=None, policy=None):
     """今のキャッシュの写真が、点検済みで可か(点検の記録の元のページが今の写真と同じ)。"""
     mp = _meta_path(taxon_id, env, policy)
@@ -326,6 +341,12 @@ def set_check(taxon_id, verdict, reason=None, *, today, env=None, policy=None):
            "history": ((old or {}).get("history") or []) + ([{k: v for k, v in old.items() if k != "history"}] if old else [])}
     checks[key] = row
     _save_json(check_path(env, policy), checks)
+    ng_count = sum(1 for h in row["history"] + [row] if h.get("verdict") == "ng")
+    if verdict == "ng" and ng_count >= int(pol.get("check_max_ng") or 3):   # 3 回不可なら写真なし(取り直さない)
+        rv = load_review(env, policy)
+        rv[key] = f"写真なし({today.isoformat()} 点検で {ng_count} 回不可): {reason or ''}"
+        review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+        review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
     if verdict == "ng":
         d = cache_dir(env, policy)
         out = d / pol["check_archive_dir"]
@@ -807,9 +828,12 @@ def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today
     import zlib
     sci = (ph.get("scientific_names") or {}).get("value") or {}
     used = 0
+    review = load_review(env, policy)
     for n in [k for k, v in result.items() if v == "none" and k in sci]:
         if left - used < 3:
             break
+        if n in table and str(table[n]["taxon_id"]) in review:
+            continue                                     # 段階82: 点検で「写真なし」にした種は取り直さない
         row = dict(table[n]) if n in table else {"name": n, "scientific": sci[n], "taxon_id": 9_000_000_000 + zlib.crc32(sci[n].encode("utf-8"))}
         row = {**row, "name": n, "scientific": sci[n]}                 # 検索と「学名の記載」の確認は、対応表(指示書の学名)の学名を使う
         if has_cache(row["taxon_id"], env, policy):

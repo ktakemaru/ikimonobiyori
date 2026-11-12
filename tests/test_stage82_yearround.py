@@ -89,3 +89,17 @@ class Themes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RefusedFetchCountsAsResearched(unittest.TestCase):
+    """段階82 第3部 4: 公式でないとして読まなかった取得も、その質問で一度調べたことに数える(調べる節を繰り返さない)。"""
+
+    def test_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            env = {"IKIMONOBIYORI_DATA_DIR": d}
+            b = GB.build("苔がきれいな場所を教えて", now=NOW, env=env)
+            GB.brief_dir(env).mkdir(parents=True, exist_ok=True)
+            (GB.brief_dir(env) / f"{b['id']}.json").write_text(json.dumps(b, ensure_ascii=False), encoding="utf-8")
+            r = RS.fetch("https://example.com/moss", b["id"], env=env, now=NOW, http_get=lambda *a, **k: (_ for _ in ()).throw(AssertionError("通信しない")))
+            self.assertFalse(r["ok"])
+            self.assertTrue(RS.already_researched("苔がきれいな場所を教えて", NOW + timedelta(minutes=3), env))

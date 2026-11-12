@@ -103,21 +103,52 @@ if __name__ == "__main__":
 
 
 class CheckedPhotosAreKept(unittest.TestCase):
-    """段階82 第5部で見つけた不具合: 花の写真の規則の再評価が、点検済みで可の写真を未点検の写真に置き換えていた。"""
+    """段階82 第5部で見つけた不具合: 花の写真の規則の再評価が、点検済みで可の写真を未点検の写真に置き換えていた。
+    あわせて、写真なしにした種(iNaturalist の id・学名の仮の id)を取り直さない。どちらも通信しない(呼ばれたら失敗)。"""
 
-    def test_checked_ok(self):
-        with tempfile.TemporaryDirectory() as d:
-            env = {"IKIMONOBIYORI_DATA_DIR": d}
-            c = GP.cache_dir(env)
-            c.mkdir(parents=True)
-            (c / "7.jpeg").write_bytes(b"\xff\xd8\xff" + b"0" * 20)
-            (c / "7.json").write_text(json.dumps({"name": "試験の花", "taxon_id": 7, "image_type": "jpeg", "source": "wikimedia_commons",
-                                                  "photo_page": "https://commons.wikimedia.org/wiki/File:A.jpg"}), encoding="utf-8")
-            self.assertFalse(GP.checked_ok(7, env))
-            GP.set_check(7, "ok", None, today=TODAY, env=env)
-            self.assertTrue(GP.checked_ok(7, env))
-            pp = GP.phenology_cfg("花")
-            self.assertTrue(GP.stale_for_rule(7, pp, env))       # 規則の版の印がない写真でも
-            res = GP.ensure(["試験の花"], theme="花", env=env, http_get=lambda *a, **k: (_ for _ in ()).throw(AssertionError("通信しない")),
-                            http_bytes=None, phenology=True, max_requests=0)
-            self.assertTrue(GP.checked_ok(7, env))              # 置き換えない
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    @staticmethod
+    def no_net(*a, **k):
+        raise AssertionError("通信しない")
+
+    def ensure(self, names):
+        return GP.ensure(names, theme="花", env=self.env, http_get=self.no_net, http_bytes=self.no_net, phenology=True, max_requests=10,
+                         today=TODAY, sleep=lambda s: None)
+
+    def test_checked_ok_photo_is_not_reevaluated(self):
+        GP.add_to_table([{"name": "サザンカ", "scientific": "Camellia sasanqua", "taxon_id": 126549, "checked_on": "2026-11-12"}], "花", self.env)
+        c = GP.cache_dir(self.env)
+        c.mkdir(parents=True)
+        (c / "126549.jpeg").write_bytes(bytes([255, 216, 255]) + b"0" * 20)
+        (c / "126549.json").write_text(json.dumps({"name": "サザンカ", "taxon_id": 126549, "image_type": "jpeg", "source": "wikimedia_commons",
+                                                   "photo_page": "https://commons.wikimedia.org/wiki/File:A.jpg"}), encoding="utf-8")
+        GP.set_check(126549, "ok", None, today=TODAY, env=self.env)
+        self.assertTrue(GP.stale_for_rule(126549, GP.phenology_cfg("花"), self.env))      # 規則の版の印がない写真
+        res = self.ensure(["サザンカ"])
+        self.assertEqual((res["results"]["サザンカ"], res["requests"]), ("cached", 0))
+        self.assertTrue(GP.checked_ok(126549, self.env))
+
+    def test_no_photo_species_are_not_fetched_again(self):
+        GP.add_to_table([{"name": "コブシ", "scientific": "Magnolia kobus", "taxon_id": 143787, "checked_on": "2026-11-12"},
+                         {"name": "トウカエデ", "scientific": "Acer buergerianum", "taxon_id": 9423042119, "checked_on": "2026-11-12"}], "花", self.env)
+        GP.mark_no_photo("コブシ", "手が写る写真しかない", today=TODAY, env=self.env)
+        GP.mark_no_photo("トウカエデ", "秋の姿の写真がない", today=TODAY, env=self.env)
+        res = self.ensure(["コブシ", "トウカエデ"])
+        self.assertEqual(res["results"], {"コブシ": "none", "トウカエデ": "none"})
+        self.assertEqual(res["requests"], 0)
+
+    def test_third_ng_marks_no_photo(self):
+        c = GP.cache_dir(self.env)
+        c.mkdir(parents=True)
+        for k in range(3):
+            (c / "8.jpeg").write_bytes(bytes([255, 216, 255]) + b"0" * 20)
+            (c / "8.json").write_text(json.dumps({"name": "試験の鳥", "taxon_id": 8, "photo_id": 100 + k, "image_type": "jpeg",
+                                                 "photo_page": f"https://www.inaturalist.org/photos/{100 + k}"}), encoding="utf-8")
+            GP.set_check(8, "ng", "卵", today=TODAY, env=self.env)
+        self.assertIn("8", GP.load_review(self.env))

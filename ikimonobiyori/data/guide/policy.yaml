@@ -339,6 +339,7 @@ photos:
   check_file: photo_checks.json                           # 段階82 第4部: 写真を見て点検した記録 {taxon_id: {name, checked_on, verdict(ok/ng), reason, photo_page}}(手元の書き出し)
   commons_deny_file: photo_commons_denied.json            # 段階82 第4部: 点検で不可にした Commons のファイル名(次の候補を選ぶとき飛ばす)
   check_archive_dir: checked_ng                           # 段階82 第4部: 不可にした写真の控え(写真のキャッシュの下。消さずに残す)
+  check_max_ng: 3                                         # 段階82 第4部 4.2: 1 つの種で不可がこの回数になったら写真なし(photo_review.json に入れ、取り直さない)
   skip_photo_file: photo_skip.json                        # 目で見て使わないと決めた iNaturalist の写真の id(種は残す。手元の書き出し。コミットしない)
   rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
   cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
