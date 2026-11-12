@@ -518,7 +518,8 @@ def manner_errors(rec, policy):
 FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "state", "state_date", "state_date_text", "typical", "event", "url", "publisher",
           "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
           "source_year",                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
-          "research")                            # 段階78 第4部: その場で調べた印 {at, brief, question}
+          "research",                            # 段階78 第4部: その場で調べた印 {at, brief, question}
+          "closed_period", "best_conditions")    # 段階82 第3部 1: 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -576,6 +577,9 @@ def make_record(rec, policy, read_at):
         out["practical"] = str(out["practical"])[:mx]
     if out.get("typical"):
         out["typical"] = str(out["typical"])[:mx]
+    for k in ("closed_period", "best_conditions"):      # 段階82 第3部 1
+        if out.get(k):
+            out[k] = str(out[k])[:mx]
     out["state_norm"] = normalize(rec["subject"], out["state"], policy) if out["state"] else policy["unknown_state"]
     out.setdefault("state_date", None)
     if out.get("state_date_text"):
@@ -603,12 +607,24 @@ def read_confirmed(subject, env=None, policy=None):
         return {}
 
 
-def read_records(subject, env=None, policy=None):
+def _theme_kinds():
+    """段階82 第3部: 花ではないテーマ(苔など)の種の語。季節の花の候補には入れない(テーマの質問だけが引く)。"""
+    from . import knowledge as K
+    try:
+        return set(K.themes_cfg().get("species_themes") or [])
+    except (OSError, ValueError, KeyError):
+        return set()
+
+
+def read_records(subject, env=None, policy=None, include_themes=False):
     p = log_path(subject, env, policy)
     if not p.exists():
         return []
     policy = policy or load_policy()
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if not include_themes:
+        tk = _theme_kinds()
+        rows = [r for r in rows if r.get("kind") not in tk]
     rows = [r for r in rows if not _blocked_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]   # 段階47
     rows = [r for r in rows if not _reprint_of_blocked(r, policy)]   # 段階52: 転載を含むウェザーニュース由来
     rows = [r for r in rows if not _gated_unusable(r, policy)]       # 段階57 第11部: 承認待ちの公式データ

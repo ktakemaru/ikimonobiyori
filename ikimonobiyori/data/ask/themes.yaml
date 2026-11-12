@@ -1,0 +1,15 @@
+# 段階82 第3部 2(本人の判断 2026-11-12): 種や花ではないテーマ(季節のない名所)。名所とカードを引く語。
+# カードの主題に付けるテーマ(knowledge の themes 欄)は、題・主題にテーマの語があるか、事実の min_fact_hits 行以上にテーマの語があるもの
+# (「コケや海藻の芽を食べる」のように 1 行だけ出るカードは、そのテーマの話にしない)。Claude Code の判断 2026-11-12。provisional
+schema: ikimono-themes/1
+min_fact_hits: 2
+themes:
+  - {name: 苔, words: [苔, コケ, 蘚苔]}
+  - {name: 滝, words: [滝, 瀑布]}
+  - {name: 湿原, words: [湿原, 湿地, 高層湿原]}
+  - {name: 巨樹, words: [巨樹, 巨木, 大木, 天然記念物の木, 御神木, ご神木]}
+  - {name: 地形, words: [地形, 地質, ジオパーク, 溶岩, 柱状節理, 断層, 地層]}
+  - {name: 渓谷, words: [渓谷, 峡谷, 渓流]}
+  - {name: 森, words: [原生林, ブナ林, 原始林, 天然林, 森林]}
+# 種の質問の表(season_place.yaml の species)に入れて、名所(例年の時期の代わりに「通年」)まで引くテーマ。まずは苔
+species_themes: [苔]

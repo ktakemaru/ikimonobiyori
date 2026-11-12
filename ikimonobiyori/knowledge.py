@@ -309,3 +309,49 @@ def answer_errors(text, cards, env=None):
         if s not in allowed:
             errs.append({"code": "guide_eye_not_from_card", "detail": s[:40]})
     return errs
+
+
+# ---- 段階82 第3部 2: カードの主題のテーマ(苔・滝・湿原など。data/ask/themes.yaml) ----
+
+def themes_cfg():
+    from . import yamlcache
+    from .paths import DATA_FILES_DIR
+    return yamlcache.load(DATA_FILES_DIR / "ask" / "themes.yaml")
+
+
+def themes_of(card, tc=None):
+    """カード → テーマの名前の一覧(題・主題にテーマの語があるか、事実の min_fact_hits 行以上にあるもの)。"""
+    tc = tc or themes_cfg()
+    head = " ".join([card.get("title") or "", card.get("subject") or ""])
+    out = []
+    for t in tc["themes"]:
+        ws = t["words"]
+        n = sum(1 for f in card.get("facts") or [] if any(w in f for w in ws))
+        if any(w in head for w in ws) or n >= tc["min_fact_hits"]:
+            out.append(t["name"])
+    return out
+
+
+NL_ = chr(10)
+
+
+def tag_themes(env=None, dry_run=False):
+    """今あるカードに themes 欄を付ける(題と本文の語から機械的に)。→ {cards, tagged, by_theme}。カードの本体はデータ置き場の下。"""
+    rows = load(env)
+    tc = themes_cfg()
+    by, tagged = {}, 0
+    for r in rows:
+        ts = themes_of(r, tc)
+        if ts:
+            tagged += 1
+            for t in ts:
+                by[t] = by.get(t, 0) + 1
+        if ts:
+            r["themes"] = ts
+        else:
+            r.pop("themes", None)
+    if not dry_run and rows:
+        p = path(env)
+        p.write_text("".join(json.dumps(r, ensure_ascii=False) + NL_ for r in rows), encoding="utf-8")
+    return {"cards": len(rows), "tagged": tagged, "by_theme": by}
+

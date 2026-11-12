@@ -9,6 +9,7 @@ import re
 from datetime import date
 from urllib.parse import urlparse
 
+from . import species_alias as SA
 from . import yamlcache
 from .paths import DATA_FILES_DIR
 
@@ -46,7 +47,8 @@ def resolve_all(question, c=None):
     for sp in c["species"]:
         for w in sorted(sp["words"], key=len, reverse=True):
             for m in re.finditer(re.escape(w), q):
-                hits.append((m.start(), m.end(), sp))
+                if SA.short_ok(q, m.start(), m.end()):     # 段階82 第1部 3: 短いひらがなの語(「ふじさん」のふじ)を種にしない
+                    hits.append((m.start(), m.end(), sp))
     keep = []
     for a, b, sp in sorted(hits, key=lambda x: (x[0], -(x[1] - x[0]))):
         if any(a >= a2 and b <= b2 and (a, b) != (a2, b2) for a2, b2, _ in hits):
@@ -55,10 +57,13 @@ def resolve_all(question, c=None):
             keep.append(_sp_doc(sp))
     if keep:
         return keep
+    found, rest = [], q                                   # 段階82 第1部: 質問に出たカタログの種をすべて(「ツバキとサザンカ」は 2 つ。出た順)
     for k in _catalog_kinds():
-        if k in q:
-            return [{"name": k, "match": [k], "words": [k], "includes": []}]
-    return []
+        i = rest.find(k)
+        if i >= 0:
+            found.append((i, k))
+            rest = rest.replace(k, "\0" * len(k))
+    return [{"name": k, "match": [k], "words": [k], "includes": []} for _i, k in sorted(found)]
 
 
 def resolve_species(question, c=None):
@@ -295,7 +300,7 @@ def _records(match, env=None, sp=None, c=None):
     out = []
     for sj in ("flowers", "birds"):
         try:
-            rows = O.read_records(sj, env, opol)
+            rows = O.read_records(sj, env, opol, include_themes=True)   # 段階82: テーマ(苔)の名所もここでは引く
         except (OSError, ValueError, KeyError):
             continue
         for r in rows:
@@ -305,6 +310,8 @@ def _records(match, env=None, sp=None, c=None):
             seen = window_text(win[0], win[1], thirds) if win else O.end_only_text(O.split_peak(r.get("typical"), opol)[0])   # 段階69 第7部: 「7月上旬まで」
             peak = O.peak_text(r.get("typical"), opol)
             season = seen
+            if (r.get("typical") or "").strip() in _year_round_words():   # 段階82 第3部 1: 季節のない名所(苔など)
+                season, peak = r["typical"].strip(), None
             if peak:                                  # 段階81 第1部 2: 見られる期間と、数が多い時期を分けて書く
                 T = cfg()["text"]
                 season = T["season_peak"].format(season=seen, peak=peak) if seen else T["peak_only"].format(peak=peak)
@@ -312,8 +319,14 @@ def _records(match, env=None, sp=None, c=None):
                         "start": win[0] if win else None, "end": win[1] if win else None, "peak": peak,
                         "season": _old_year(r, season, c),
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
-                        "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
+                        "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj,
+                        "notice": r.get("notice"), "closed_period": r.get("closed_period"), "best_conditions": r.get("best_conditions")})
     return out
+
+
+def _year_round_words():
+    from . import guide_brief as GB
+    return set(GB.cfg()["research"].get("year_round_words") or [])
 
 
 def select(rows, origin, prefectures=None, c=None, by_distance=False):

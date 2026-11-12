@@ -579,7 +579,12 @@ def _species_facts(F, sprows, cands, cond, c):
     for r in sprows:
         loc = f"{r.get('prefecture') or ''}{r.get('city') or ''}"
         kinds = "・".join(r.get("kinds") or [])
-        if r.get("season"):
+        if r.get("season") in (c["research"].get("year_round_words") or []):     # 段階82 第3部 1: 季節のない名所
+            body = f"{r['name']}({loc}): {r['species']}は{r['season']}(季節を問わない見どころ)"
+            for k, lab in (("notice", "見どころ"), ("best_conditions", "特によいとされる条件")):
+                if r.get(k):
+                    body += f"。{lab}: {r[k]}"
+        elif r.get("season"):
             body = f"{r['name']}({loc}): {r['species']}の例年の時期 {r['season']}" + (f"(見られる種: {kinds})" if kinds else "")
         else:
             body = f"{r['name']}({loc}): {r['species']}" + (f"(見られる種: {kinds})" if kinds else "") + "。例年の時期の記載なし"
@@ -590,6 +595,9 @@ def _species_facts(F, sprows, cands, cond, c):
               extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
         if r.get("care"):
             F.add("facility", f"{r['name']}: 行く前に: {r['care']}", place=r["name"])
+        if r.get("closed_period"):                         # 段階82 第3部 1: 行けない時期(冬期閉鎖など)は安全・規制の事実として
+            F.add("safety", f"{r['name']}: 行けない時期: {r['closed_period']}", place=r["name"], source=r.get("publisher"), url=r.get("url"),
+                  source_class="official" if r.get("official") else None)
         if r["name"] in have:
             continue
         have.add(r["name"])
@@ -610,6 +618,9 @@ def _species_leads(F, sprows, now, c):
     today = now.date() if hasattr(now, "date") else now
     placed = {f["place"] for f in F.rows if f.get("place") and f["kind"] == "typical"}
     rows = [r for r in sprows if r["name"] in placed]            # 事実として資料に入った名所だけ(出典が使えない名所の時期を混ぜない)
+    yr = set(c["research"].get("year_round_words") or [])
+    if sprows and all(r.get("season") in yr for r in sprows):    # 段階82 第3部 1: 季節のない名所だけの種(苔)は、全体の目安の文を作らない
+        return
     for sp, lines in GM.species_leads(rows or [dict(r, start=None, end=None) for r in sprows], today, c).items():
         lead_re = re.compile("^" + re.escape(sp) + "は、例年.+が目安です。$")
         old_lead = [f for f in F.rows if lead_re.match(f["content"])]
@@ -1407,6 +1418,9 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     from . import answer_run as AR
     c = cfg()
     bid = brief_id(question, now, prev)
+    from . import species_alias
+    asked = question
+    question, renamed = species_alias.normalize(question)   # 段階82 第1部: 資料・題・答えは認識した種の名前(カタカナ)で
     work = brief_dir(env) / f"{bid}.work"
     if work.exists():
         shutil.rmtree(work)                              # 同じ資料の作り直し(前回の作業の残りで結果を変えない)
@@ -1492,7 +1506,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
               + f" 例年の冬季閉鎖 {cl.get('typical')}" + (f"。{season_txt}" if season_txt else "") + f"。{note}",
               place=card.get("place"), source=(card.get("source") or {}).get("name"), url=(card.get("source") or {}).get("url"),
               source_class="official", extra={"in_target": hit})
-    cards = _cards(question, res, c, cand_names=[n for r in cands if r.get("chosen") or r.get("basis") == "town" for n in [r["name"], *(r.get("merged_from") or [])]], months=months,
+    cards = _cards(_card_question(question), res, c, cand_names=[n for r in cands if r.get("chosen") or r.get("basis") == "town" for n in [r["name"], *(r.get("merged_from") or [])]], months=months,
                    event_texts=[f["content"] for f in F.rows if f["kind"] == "event"])
     if pb:
         seen = {k["title"] for k in cards}
@@ -1509,6 +1523,10 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         extra_ok = _place_extra_ok(question, res, cands, towns, F, c, cond.get("subjects") or [])
     if (res.get("route") or cond.get("route")) == "unknown_place":   # 段階80 A(提案4): 辞書にない地名の質問では、ほかの場所の話のカードを使わない(一般の話だけ)
         cards = [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(k for k in cards if _plain_general_card(k, c))]
+    cards = _theme_card_filter(cards, question)              # 段階82 第3部 2: テーマ(苔など)の質問は、そのテーマの話のカードだけ
+    if _asked_themes(question):
+        prev_ok = extra_ok
+        extra_ok = lambda r, _p=prev_ok: (_p is None or _p(r)) and bool(_theme_card_filter([r], question))   # 語りの材料で足すカードも同じ
     mat = _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=extra_ok)     # 段階78 第3部 1: 語りの材料
     if hl:
         mat = _highlight_materials(mat, cards, hl, c)
@@ -1516,8 +1534,17 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, cands, cards, F.rows, c)   # 段階78 第4部 1
     if towns and cond.get("route") not in c["species_rows"]["routes_skip"]:
         targets += _tentative_targets(question, towns, area_label, cands, targets, c)
+    researched = RS.already_researched(question, now, env)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ
+    if researched:
+        targets = []
+    no_trait = _species_without_cards(question, cards)   # 段階82 第2部 1: 聞かれた種の話のカードが 0 枚なら、公的な解説を調べる
+    T = c["species_traits"]
+    if not researched:
+        targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
+                    for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
+        **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
         "dates": _dates_block(cond, now), "intent": cond.get("intent"), "route": res.get("route") or cond.get("route"),
         "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else (scope or "default"),
@@ -1528,12 +1555,68 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "facts": F.rows, "cards": cards, "narrative": mat,
         "missing": _missing(question, res, cands, F.rows, cards, extra)
         + ([c["town_candidates"]["none_missing"].format(where=area_label or "・".join(towns))] if towns and not cands else [])
+        + [c["species_traits"]["missing_line"].format(sp=sp) for sp in no_trait]
+        + ([c["research"]["done_line"]] if researched else [])
         + [f"調べる: {t['why']}" for t in targets],
         "research": {"targets": targets},
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def _card_question(question):
+    """段階82 第1部 6: カードを引く文。質問の種の名前が漢字・ひらがな(「紫陽花」「すいせん」)のとき、カタカナの名前を後ろに添える
+    (カードは種の語をカタカナで探すので、書き方でカードが減らないように)。"""
+    from . import season_place as SP
+    from . import species_alias as SA
+    al = (SP.cfg().get("guide_page") or {}).get("aliases") or {}
+    extra = []
+    for n in SA.species_in(question):
+        k = al.get(n, n)
+        if k != n or not re.search(re.escape(k), question):
+            if k not in question and k not in extra and re.fullmatch(cfg()["species_word_re"], k):   # カタカナ 3 字以上の名前だけ(ウメ・フジは今までどおり)
+                extra.append(k)
+    return question + ("　" + "・".join(extra) if extra else "")
+
+
+def _asked_themes(question):
+    from . import knowledge as K
+    from . import species_alias as SA
+    tc = K.themes_cfg()
+    return [t for t in tc["themes"] if t["name"] in (tc.get("species_themes") or []) and t["name"] in SA.species_in(question)]
+
+
+def _theme_card_filter(cards, question):
+    """段階82 第3部 2: 質問にテーマ(themes.yaml の species_themes。苔)があるとき、テーマの語を含むのにそのテーマの話ではないカード
+    (「コケや海藻の芽を食べる」が 1 行だけのミユビシギのカード)を落とす。テーマの語を含まないカードはそのまま。"""
+    from . import knowledge as K
+    tc = K.themes_cfg()
+    asked = _asked_themes(question)
+    if not asked:
+        return cards
+    keep = []
+    for k in cards:
+        blob = " ".join([k.get("title") or "", k.get("subject") or ""] + list(k.get("facts") or []))
+        if any(any(w in blob for w in t["words"]) and t["name"] not in (k.get("themes") or K.themes_of(k, tc)) for t in asked):
+            continue
+        keep.append(k)
+    return [{**k, "id": f"K{i + 1:03d}"} for i, k in enumerate(keep)]
+
+
+def _species_without_cards(question, cards):
+    """段階82 第2部: 質問の種のうち、その種の書き方が題・主題・事実に出るカードが 1 枚もないもの(仲間の総称は除く)。"""
+    from . import species_alias as SA
+    groups = SA.word_groups()
+    skip = set(cfg()["species_traits"].get("group_words") or [])
+    out = []
+    for sp in SA.species_in(question):
+        if sp in skip:
+            continue
+        ws = groups.get(sp, {sp})
+        if not any(any(w in " ".join([k.get("title") or "", k.get("subject") or ""] + list(k.get("facts") or [])) for w in ws) for k in cards or []):
+            out.append(sp)
+    return out
 
 
 def _dist(r):
@@ -1558,6 +1641,8 @@ def _loc(r):
 
 def render_md(doc):
     L = [f"# ガイドの資料 {doc['id']}", "", f"- 質問: {doc['question']}"]
+    if doc.get("species_renamed"):                       # 段階82 第1部: 種の名前の読み替え
+        L.append("- 種の名前: " + "・".join(f"{a} → {b}" for a, b in doc["species_renamed"]) + "(答えでは右の名前を使う)")
     if doc.get("previous"):
         L.append(f"- 前の質問: {doc['previous'].get('question')}(資料 {doc['previous'].get('id')})")
     d = doc["dates"]

@@ -123,6 +123,9 @@ def lines_for(bid, targets):
     L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" for t in targets]
     L.append("")
     L += [x.format(id=bid) for x in R["step_lines"]]
+    if any(t.get("kind") == "species_card" for t in targets):      # 段階82 第2部 1: 種の公的な解説
+        from . import guide_brief as GB
+        L += [x.format(id=bid) for x in GB.cfg()["species_traits"]["step_lines"]]
     return L + [""]
 
 
@@ -245,6 +248,31 @@ def _state_path(bid, env=None):
     return rdir(env) / "questions" / f"{bid}.json"
 
 
+def _brief_question(bid, env=None):
+    from . import guide_brief as GB
+    try:
+        return (GB.load(bid, env) or {}).get("question")
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def already_researched(question, now, env=None):
+    """段階82 第3部 4: この質問(読み替えたあとの文)で、research.once_hours 時間以内に一度調べたか(ask research fetch を 1 回以上)。"""
+    R = cfg()
+    d = rdir(env) / "questions"
+    if not question or not d.exists():
+        return False
+    for p in d.glob("*.json"):
+        try:
+            st = json.loads(p.read_text(encoding="utf-8"))
+            at = datetime.fromisoformat(st.get("first_at") or "")
+        except (OSError, ValueError, TypeError):
+            continue
+        if st.get("question") == question and 0 <= (now - at).total_seconds() <= R["once_hours"] * 3600:
+            return True
+    return False
+
+
 def _load_state(bid, env=None):
     try:
         return json.loads(_state_path(bid, env).read_text(encoding="utf-8"))
@@ -365,6 +393,8 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
             return {"ok": False, "reason": f"robots.txt を確かめられない(HTTP {rs})。安全側で読まない"}
         if not st.get("first_at"):
             st["first_at"] = now.isoformat()
+        if not st.get("question"):                       # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ(資料を作り直したら調べる節を出さない)
+            st["question"] = _brief_question(bid, env)
         status, body, headers = g(url)
     except Exception as ex:                              # 通信の失敗は理由を返す(答えは今の記録で)
         return {"ok": False, "reason": f"取得できなかった({type(ex).__name__})"}

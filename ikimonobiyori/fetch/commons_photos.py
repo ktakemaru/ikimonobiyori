@@ -87,6 +87,10 @@ def seasonal_pick(pages, row, cm, ordered_titles):
         if not ok:
             seen.append(why)
             continue
+        dn = denied(t, info, cm)
+        if dn:
+            seen.append(dn)
+            continue
         text = " ".join([t, info["categories"], info["description"]]).lower()
         if row["scientific"].lower() not in text:
             seen.append("学名の記載がない")
@@ -97,6 +101,31 @@ def seasonal_pick(pages, row, cm, ordered_titles):
             continue
         return {"usable": ok, "title": t, "term": term}, seen
     return None, seen
+
+
+def denied(title, info, cm):
+    """段階82 第4部 4.3: 選ばない写真か(卵・標本などの語・点検で不可にしたファイル)。→ 理由か None。"""
+    if title in (cm.get("deny_titles") or ()):
+        return "点検で不可にした写真"
+    rx = cm.get("deny_re")
+    text = " ".join([title or "", (info or {}).get("categories") or "", (info or {}).get("description") or ""])
+    if rx and re.search(rx, text):
+        return "卵・巣・標本・図などの語がある"
+    return None
+
+
+def region_rank(title, info, cm):
+    """0: 国内と分かる / 1: 東アジアと分かる / 2: 分からない。"""
+    text = " ".join([title or "", (info or {}).get("categories") or "", (info or {}).get("description") or ""])
+    if cm.get("domestic_re") and re.search(cm["domestic_re"], text):
+        return 0
+    if cm.get("east_asia_re") and re.search(cm["east_asia_re"], text):
+        return 1
+    return 2
+
+
+def regional(row, cm):
+    return row.get("name") in (((cm.get("regional_species") or {}).get("value")) or [])
 
 
 def parse_search(doc, cm):
@@ -271,6 +300,11 @@ def fetch_commons(rows, *, http_get, http_bytes, ph, max_requests, has_cache, to
                     continue
                 info = parse_imageinfo(js(call(http_get, imageinfo_url(files[0], cm))))
                 ok, why = usable(info, cm)
+                if ok:
+                    why = denied(files[0] if str(files[0]).startswith(cm["file_prefix"]) else cm["file_prefix"] + str(files[0]), info, cm)
+                    if not why and regional(row, cm) and region_rank(str(files[0]), info, cm) > 1:
+                        why = "地域で種が分かれる鳥で、日本・東アジアの写真と分からない"
+                    ok = None if why else ok
                 if not ok:
                     unused[name] = why
                     continue
@@ -317,17 +351,20 @@ def scientific_pick(pages, row, cm, ordered_titles, pp=None):
     by_title = {t: i for t, i in pages}
     seen = []
     best = {}
-    dom = cm.get("domestic_re")
-    if dom:                                                       # 段階81 第3部: 撮影地が国内と分かる写真を先に見る(外国の別亜種・園芸品種で代用しない)
-        def is_dom(t):
-            i = by_title.get(t) or {}
-            return bool(re.search(dom, " ".join([t, i.get("categories") or "", i.get("description") or ""])))
-        ordered_titles = sorted(ordered_titles, key=lambda t: not is_dom(t))
+    if cm.get("domestic_re"):                                     # 段階81 第3部: 撮影地が国内と分かる写真を先に見る(外国の別亜種・園芸品種で代用しない)
+        ordered_titles = sorted(ordered_titles, key=lambda t: region_rank(t, by_title.get(t), cm))   # 段階82: 次に東アジア
     for t in ordered_titles:
         info = by_title.get(t)
         ok, why = usable(info, cm)
         if not ok:
             seen.append(why)
+            continue
+        dn = denied(t, info, cm)
+        if dn:
+            seen.append(dn)
+            continue
+        if regional(row, cm) and region_rank(t, info, cm) > 1:
+            seen.append("地域で種が分かれる鳥で、日本・東アジアの写真と分からない")
             continue
         text = " ".join([t, info["categories"], info["description"]])
         if row["scientific"].lower() not in text.lower():

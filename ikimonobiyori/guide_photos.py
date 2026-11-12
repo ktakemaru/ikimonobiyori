@@ -234,11 +234,112 @@ def stamp_unknown(taxon_id, pp, env=None, policy=None):
 
 
 def load_photo(taxon_id, env=None, policy=None):
-    """→ (メタデータ, 画像のバイト列) か None。"""
+    """→ (メタデータ, 画像のバイト列) か None。段階82: 点検で不可にした写真は使わない(点検済みで可 > 未点検)。"""
     if not has_cache(taxon_id, env, policy):
         return None
     meta = json.loads(_meta_path(taxon_id, env, policy).read_text(encoding="utf-8"))
+    chk = load_checks(env, policy).get(str(int(taxon_id)))
+    if chk and chk.get("verdict") == "ng" and chk.get("photo_page") == meta.get("photo_page"):
+        return None
     return meta, (cache_dir(env, policy) / f"{int(taxon_id)}.{meta['image_type']}").read_bytes()
+
+
+# ---- 段階82 第4部: 写真の点検(目で見た判定の記録・不可の写真の控えと除外・取り直し) ----
+
+NL_ = chr(10)
+
+
+def check_path(env=None, policy=None):
+    return export_dir(env) / photos_policy(policy)["check_file"]
+
+
+def load_checks(env=None, policy=None):
+    p = check_path(env, policy)
+    try:
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    except ValueError:
+        return {}
+
+
+def _save_json(p, doc):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(doc, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+
+
+def load_commons_denied(env=None, policy=None):
+    p = export_dir(env) / photos_policy(policy)["commons_deny_file"]
+    try:
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else []
+    except ValueError:
+        return []
+
+
+def cached_photos(env=None, policy=None):
+    """キャッシュにある写真の一覧 [{taxon_id, name, path, meta, check}](和名の順)。check はこの写真の点検の記録(なければ None = 未点検)。"""
+    d = cache_dir(env, policy)
+    checks = load_checks(env, policy)
+    out = []
+    for mp in sorted(d.glob("*.json")) if d.is_dir() else []:
+        try:
+            meta = json.loads(mp.read_text(encoding="utf-8"))
+            tid = int(meta["taxon_id"])
+        except (ValueError, KeyError, TypeError, OSError):
+            continue
+        img = d / f"{tid}.{meta.get('image_type')}"
+        if not img.is_file():
+            continue
+        c = checks.get(str(tid))
+        out.append({"taxon_id": tid, "name": meta.get("name"), "path": str(img), "meta": meta,
+                    "check": c if c and c.get("photo_page") == meta.get("photo_page") else None})
+    return sorted(out, key=lambda r: (r["name"] or "", r["taxon_id"]))
+
+
+def commons_title(meta):
+    from urllib.parse import unquote
+    return unquote("File:" + (meta.get("photo_page") or "").rsplit("File:", 1)[-1]).replace("_", " ")
+
+
+def set_check(taxon_id, verdict, reason=None, *, today, env=None, policy=None):
+    """写真を見て点検した結果を残す。verdict は ok / ng。ng のときは写真を消さずに控え(check_archive_dir)へ写し、
+    iNaturalist の写真なら写真の id を、Commons ならファイル名を、次に選ばない一覧に入れてから、キャッシュから外す(次の取得で別の候補)。
+    → 点検の記録の行。"""
+    if verdict not in ("ok", "ng"):
+        raise ValueError("verdict は ok か ng")
+    pol = photos_policy(policy)
+    meta = json.loads(_meta_path(taxon_id, env, policy).read_text(encoding="utf-8"))
+    key = str(int(taxon_id))
+    checks = load_checks(env, policy)
+    old = checks.get(key)
+    row = {"name": meta.get("name"), "checked_on": today.isoformat(), "verdict": verdict, "reason": reason,
+           "photo_page": meta.get("photo_page"), "source": meta.get("source") or "inaturalist",
+           "history": ((old or {}).get("history") or []) + ([{k: v for k, v in old.items() if k != "history"}] if old else [])}
+    checks[key] = row
+    _save_json(check_path(env, policy), checks)
+    if verdict == "ng":
+        d = cache_dir(env, policy)
+        out = d / pol["check_archive_dir"]
+        out.mkdir(parents=True, exist_ok=True)
+        tag = re.sub(r"[^0-9A-Za-z_-]", "_", str(meta.get("photo_id") or (meta.get("photo_page") or "x").rsplit("/", 1)[-1]))[:60]
+        img = d / f"{int(taxon_id)}.{meta['image_type']}"
+        if img.is_file():
+            (out / f"{int(taxon_id)}-{tag}.{meta['image_type']}").write_bytes(img.read_bytes())
+        (out / f"{int(taxon_id)}-{tag}.json").write_text(json.dumps({**meta, "check": {k: v for k, v in row.items() if k != "history"}},
+                                                                    ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+        if meta.get("source"):
+            den = load_commons_denied(env, policy)
+            t = commons_title(meta)
+            if t not in den:
+                _save_json(export_dir(env) / pol["commons_deny_file"], sorted(den + [t]))
+        elif meta.get("photo_id") is not None:
+            skip = load_skip_photos(env, policy)
+            skip.setdefault(int(taxon_id), set()).add(int(meta["photo_id"]))
+            _save_json(skip_photo_path(env, policy), {str(k): sorted(v) for k, v in skip.items()})
+        _remove_cache(taxon_id, env, policy)
+        none = load_none(env, policy)                     # 取り直せるように、取れなかった印を外す
+        if meta.get("name") in none:
+            none.pop(meta["name"])
+            _save_none(none, env, policy)
+    return row
 
 
 def clear_cache(env=None, policy=None):
@@ -484,6 +585,7 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
     ph = policy["photos"]
     th = theme_cfg(theme, policy)
     pht = {**ph, "class_name": th["class_name"], "ranks": th.get("ranks") or [ph["rank"]]}
+    pht["commons"] = {**ph["commons"], "deny_titles": frozenset(load_commons_denied(env, policy))}   # 段階82 第4部: 点検で不可にしたファイルは選ばない
     today = today or _d.today()
     sleep = sleep or _t.sleep
     table = load_table(env, policy=policy)
@@ -540,6 +642,26 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             add_to_table(new_rows, theme, env, policy)
         todo = [r for r in rows if not has(r["taxon_id"]) and str(r["taxon_id"]) not in review]
         unused = {}
+        reg = [r for r in todo if commons_photos.regional(r, pht["commons"])]   # 段階82 第4部 4.3: 地域で種が分かれる鳥は、日本・東アジアの Commons の写真だけ
+        todo = [r for r in todo if r not in reg]
+        for r in reg:
+            if left < 3 or rep["status"] != "ok":
+                result[r["name"]] = "pending"
+                continue
+            sci = ((ph.get("scientific_names") or {}).get("value") or {}).get(r["name"]) or r["scientific"]
+            g4, un4, r4 = commons_photos.fetch_commons_season({**r, "scientific": sci}, http_get=http_get, http_bytes=http_bytes, ph=pht,
+                                                              max_requests=left, today=today, sleep=sleep, season=False, pp=pp,
+                                                              on_got=lambda it: save_photo(it, env, policy))
+            used += r4["requests"]
+            left -= r4["requests"]
+            if g4:
+                result[r["name"]] = "saved"
+                rep["saved"].append(r["name"])
+            else:
+                result[r["name"]] = "none"
+                none[r["name"]] = {"on": today.isoformat(), "reason": un4.get(r["name"]) or "日本・東アジアの写真がない"}
+            if r4["status"] != "ok":
+                rep["status"], rep["stopped"] = r4["status"], r4["stopped"]
         if todo and left >= 2 and rep["status"] == "ok":
             got, unused, r2 = _fetch_for_theme(todo, pp, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left, has=has,
                                                skip=load_skip_photos(env, policy), sleep=sleep, today=today)

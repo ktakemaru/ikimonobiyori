@@ -336,6 +336,9 @@ photos:
   table_schema: ikimono-bird-taxa/1
   review_file: photo_review.json                          # 目で見て写真を使わないと決めた種(手元の書き出し。コミットしない)
   multi_file: bird_taxa_multi.json                        # 「候補が 2 件以上」から種を採った和名の候補の一覧(報告用。手元の書き出し)
+  check_file: photo_checks.json                           # 段階82 第4部: 写真を見て点検した記録 {taxon_id: {name, checked_on, verdict(ok/ng), reason, photo_page}}(手元の書き出し)
+  commons_deny_file: photo_commons_denied.json            # 段階82 第4部: 点検で不可にした Commons のファイル名(次の候補を選ぶとき飛ばす)
+  check_archive_dir: checked_ng                           # 段階82 第4部: 不可にした写真の控え(写真のキャッシュの下。消さずに残す)
   skip_photo_file: photo_skip.json                        # 目で見て使わないと決めた iNaturalist の写真の id(種は残す。手元の書き出し。コミットしない)
   rejected_file: bird_taxa_rejected.json                  # 表に入らなかった和名と理由(IKIMONOBIYORI_DATA_DIR の下の guide/export/。同じ和名は取り直さない)
   cache_dir: photos                                       # IKIMONOBIYORI_DATA_DIR の下の guide/ からの相対(画像と撮影者などのメタデータ)
@@ -417,6 +420,12 @@ photos:
     mime_types: [image/jpeg, image/png, image/webp]
     # 段階81 第3部: 学名で探すとき、ファイル名・カテゴリ・説明に国内の地名があるものを先に選ぶ(撮影地が分かるときは国内を優先。なければ今までの順)
     domestic_re: 'Japan|日本|Tokyo|東京|Kanagawa|神奈川|Saitama|埼玉|Chiba|千葉|Ibaraki|茨城|Tochigi|栃木|Gunma|群馬|Yamanashi|山梨|Shizuoka|静岡|Nagano|長野|Osaka|Kyoto|Hokkaido|北海道'
+    # 段階82 第4部 4.3(本人の判断 2026-11-12): 次の語がファイル名・説明・カテゴリにある写真は選ばない(卵・巣・標本・剥製・骨格・図・地図・切手)
+    deny_re: '(?i)\beggs?\b|\bnests?\b|specimen|skull|skeleton|taxidermy|\bmounted\b|MHNT|museum|illustration|drawing|painting|\bmaps?\b|distribution|\bstamps?\b|卵|巣|標本|剥製|骨格|図|分布'
+    # 東アジア(韓国・台湾・中国・ロシア極東)。国内の写真がなければ、次にこれを先に見る
+    east_asia_re: 'Korea|韓国|Taiwan|台湾|China|中国|Hong Kong|香港|Primorsky|Primorye|Khabarovsk|Sakhalin|Kamchatka|Russian Far East|沿海|樺太|サハリン'
+    # 地域で種・亜種が分かれる鳥。日本・東アジアの写真が取れなければ「写真なし」(iNaturalist の代表写真は撮影地が分からないので使わない)
+    regional_species: {value: [ハイイロチュウヒ, チュウヒ, オオヒシクイ], source: "本人の判断 2026-11-12(段階82 指示書 4.3)", provisional: false}
     page_hosts: [commons.wikimedia.org]                     # ファイルのページ(リンク)のホスト
     image_hosts: [upload.wikimedia.org]                     # サムネイルの実体のホスト(承認)
     thumb_host_rewrite: {thumb.wikimedia.org: upload.wikimedia.org}   # API が返すサムネイルのホスト → 配信元のホストに置き換える。パスは同じ・クエリは外す(段階30。報告に明記)

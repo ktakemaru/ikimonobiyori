@@ -448,6 +448,7 @@ def check(draft, brief, c=None, env=None):
     errs += distance_errors(sents, brief, c)               # 段階78 第1部 3
     errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
+    errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
@@ -458,6 +459,41 @@ def check(draft, brief, c=None, env=None):
         warns.append(f"長さ {n} 字(目安 {c['length']['min']}〜{c['length']['max']} 字)")
     return {"ok": not errs, "errors": errs, "final": final, "checked": len(sents), "marked": marked, "cited": cited_ids, "warnings": warns,
             "knowledge_places": parsed["knowledge"]}
+
+
+# ---- 段階82 第2部: 種の見分け方・特徴の裏取り ----
+
+def _trait_hits(text, c):
+    return {i for i, p in enumerate(c["species_traits"]["words_re"]) if re.search(p, text or "")}
+
+
+def trait_errors(sents, brief, c):
+    """種の名前と見分け・特徴の語が同じ文にあるとき、その種のその特徴を書いたカード(か事実)の印を求める。
+    印がなければ trait_without_card。印の行に、その種の書き方と同じ種類の特徴の語が一緒に出てこなければ trait_wrong_card
+    (ツバキのカードの印でサザンカの特徴を書く、を止める)。季節・環境の一般的な説明(特徴の語がない文)は照らさない。"""
+    from . import species_alias as SA
+    T = c["species_traits"]
+    groups = SA.word_groups()
+    ex = c.get("species_blob_exclude_re") or r"(?!)"
+    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
+    errs = []
+    for s in sents:
+        clean = re.sub(ex, "", s["clean"])
+        sps = [n for n in SA.species_in(clean) if n not in (T.get("group_words") or [])]
+        hits = _trait_hits(clean, c)
+        if not sps or not hits:
+            continue
+        rows = [by[i] for i in s["ids"] if i in by]
+        if not rows:
+            errs.append(_err(T["code"], s, f"{'・'.join(sps)}の見分け方・特徴の文に、カードの印がない", T["fix"]))
+            continue
+        lines = []
+        for r in rows:
+            lines += [r.get("title") or ""] + list(r.get("facts") or []) + [r.get("content") or ""]
+        bad = [n for n in sps if not any(any(w in l for w in groups.get(n, {n})) and (_trait_hits(l, c) & hits) for l in lines if l)]
+        if bad:
+            errs.append(_err(T["wrong_card_code"], s, f"印({'・'.join(s['ids'])})に、{'・'.join(bad)}のこの特徴が書かれていない", T["wrong_card_fix"]))
+    return errs
 
 
 # ---- 段階78 ----

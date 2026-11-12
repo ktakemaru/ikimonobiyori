@@ -234,13 +234,18 @@ def _themes_in(text, t, env=None):
     from . import guide_photos
     table = guide_photos.load_table(env) if env else guide_photos.load_table()
     mc = cfg()["min_word_chars"]
-    words = set(t["theme_words"]) | {w for w in list(cfg().get("aliases") or {}) + list(table) if len(w) >= mc}
+    from . import species_alias
+    words = set(t["theme_words"]) | {w for w in list(cfg().get("aliases") or {}) + list(table) + species_alias.canonical_names() if len(w) >= mc}
+    hira = species_alias.table_hiragana()             # 段階82 第1部: 種の表のひらがなの書き方(「あじさい」)は、認識した種の名前(アジサイ)で題に出す
+    words |= {w for w in hira if len(w) >= mc}
     rest, found = text, []
     for w in sorted(words, key=len, reverse=True):
         for m in re.finditer(re.escape(w), rest):
-            found.append((m.start(), w))
+            if w in hira and not species_alias.short_ok(text, m.start(), m.end()):
+                continue
+            found.append((m.start(), hira.get(w, w)))
         rest = rest.replace(w, "\0" * len(w))
-    return [w for _p, w in sorted(found)]
+    return list(dict.fromkeys(w for _p, w in sorted(found)))     # 同じ語は 1 回(段階82 第1部: 「ツバキとツバキとサザンカ」にしない)
 
 
 def _place_of(q, brief, t, env=None):
@@ -351,6 +356,39 @@ def page_reply(url, now, env=None):
     return text
 
 
+def photo_reply(names, url, now, env=None):
+    """段階82 第4部 4.5: 写真を指摘されて直したあとの最後の文(決まった短い文 + リンク)。
+    種ごとに、今のキャッシュの写真が今日点検で可なら「替えました」、写真がなければ「外しました」、どちらでもなければ「そのまま」。"""
+    from . import guide_photos
+    r = cfg()["reply"]
+    d = _load_page(now, env)
+    if d is None:
+        raise ReplyError(r["no_page"])
+    if url:
+        url = url.strip()
+        if not re.fullmatch(r["url_re"], url):
+            raise ReplyError(r["bad_url"])
+    table = guide_photos.load_table(env) if env else guide_photos.load_table()
+    checks = guide_photos.load_checks(env)
+    parts = []
+    for n in dict.fromkeys(names or []):
+        row = table.get(n)
+        tid = str(int(row["taxon_id"])) if row else None
+        has = bool(row) and guide_photos.has_cache(row["taxon_id"], env)
+        chk = checks.get(tid) if tid else None
+        hist = (chk or {}).get("history") or []
+        if not has:
+            parts.append(r["photo_removed"].format(name=n))
+        elif chk and chk.get("verdict") == "ok" and any(h.get("verdict") == "ng" for h in hist):
+            parts.append(r["photo_replaced"].format(name=n))
+        else:
+            parts.append(r["photo_kept"].format(name=n))
+    text = r["photo_fixed"].format(title=d["title"], changes="".join(parts), url=url or d["path"])
+    d["reply"] = text
+    last_page_path(env).write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+    return text
+
+
 def accepts_reply(message, now=None, env=None):
     """送るメッセージが、ask page-reply が出した案内の文と一致するか(空白の違いは見ない)。"""
     d = _load_page(now or datetime.now().astimezone(), env)
@@ -366,4 +404,4 @@ def linkify(escaped):
     return URL_RE.sub(rep, escaped)
 
 
-__all__ = ["load_last", "newest", "species", "make", "esc", "title_for", "page_reply", "accepts_reply"]
+__all__ = ["load_last", "newest", "species", "make", "esc", "title_for", "page_reply", "photo_reply", "accepts_reply"]

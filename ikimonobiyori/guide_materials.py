@@ -335,13 +335,14 @@ def species_rows(question, cond, env=None, c=None):
             note = None
             if re.search(r"\d{4}年の記載", r.get("season") or ""):
                 note = R["old_note"]
-            elif r.get("season") and not r.get("start"):
+            elif r.get("season") and not r.get("start") and r["season"] not in SP._year_round_words():   # 通年は「あいまい」ではない(段階82)
                 note = R["vague_note"]
             out.append({"species": sp["name"], "name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"),
                         "km": r.get("km"), "km_estimated": r.get("km_estimated"), "season": r.get("season"), "kinds": r.get("kinds") or [],
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
-                        "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
+                        "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"])),
+                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions") if r.get(k)}})
     merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
