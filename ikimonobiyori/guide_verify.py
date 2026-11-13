@@ -337,6 +337,8 @@ def common_errors(final_body, question, c):
     body_iw = final_body
     for ok in c.get("internal_word_allowed_phrases") or []:   # 段階83 第2部: 「観察記録では」は利用者の語(過去の観察の記録の話)
         body_iw = body_iw.replace(ok, "")
+    if c.get("internal_word_allowed_re"):
+        body_iw = re.sub(c["internal_word_allowed_re"], "", body_iw)
     for w in c.get("guide_internal_words") or []:
         pat = rf"(?<![A-Za-z0-9_]){re.escape(w)}(?![A-Za-z0-9_])" if w.isascii() else re.escape(w)
         for ln, line in enumerate(body_iw.splitlines(), 1):
@@ -380,7 +382,10 @@ def seasonal_obs_errors(s, rows, c, vocab=None):
     if not any(w in text for w in V["required_words"]):
         errs.append(_err("seasonal_obs_not_past", s, "観察記録の文に「過去」「例年」「記録」の語がない",
                          "「過去5年の観察記録では、この時期の○○で…の記録が多くなっています」のように、過去の記録の話として書く"))
-    if re.search(V["now_assert_re"], text):
+    plain = text
+    for w in V.get("period_words") or []:
+        plain = plain.replace(w, "")
+    if re.search(V["now_assert_re"], plain):
         errs.append(_err("seasonal_obs_now", s, "観察記録を今年の状態の言い切りにしている",
                          "今年の状態にしない(「今、…が咲いています」「今週末は…が見られます」と書かない)。過去の記録の傾向として書く"))
     allowed = {n for r in obs for n in r.get("species") or []}

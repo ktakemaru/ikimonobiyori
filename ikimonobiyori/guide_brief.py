@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import shutil
+import unicodedata
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -1534,9 +1535,24 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         prev_ok = extra_ok
         extra_ok = lambda r, _p=prev_ok: (_p is None or _p(r)) and bool(_theme_card_filter([r], question))   # 語りの材料で足すカードも同じ
     open_q = is_open_question(question, cond, towns, q_areas, c)
-    if not _asked_themes(question):
-        cards += calendar_cards(question, cond, cands, months, c, open_q, start=len(cards), have_titles=[k.get("title") for k in cards])   # 段階83 第3部: 季節の暦
+    if open_q and not _asked_themes(question):           # 段階83 第3部 3.3: 場所や種を決めない質問は、暦のカードが主な材料(先に入れる)
+        cards += calendar_cards(question, cond, cands, months, c, open_q, start=len(cards), have_titles=[k.get("title") for k in cards])
     mat = _narrative(cards, question, cond, cands, sprows, months, c, extra_ok=extra_ok)     # 段階78 第3部 1: 語りの材料
+    if not open_q and not _asked_themes(question):       # ほかの質問は、場所の話・種の話の材料を先に作ってから暦を 2 点まで足す
+        cal = calendar_cards(question, cond, cands, months, c, open_q, start=len(cards), have_titles=[k.get("title") for k in cards])
+        if cal:
+            from . import guide_narrative as GN
+            N = c["narrative"]
+            cards += cal
+            extra_items = []
+            for k in cal:
+                for text, kind in zip(k.get("facts") or [], GN.kinds_of(k, N)):
+                    if kind in N["kinds"]:
+                        extra_items.append({"kind": kind, "card": k["id"], "title": k["title"], "place": k.get("where"), "text": text})
+                        break
+            order = {kd: i for i, kd in enumerate(N["kinds"])}
+            items = sorted(list(mat.get("items") or []) + extra_items, key=lambda x: order.get(x["kind"], len(order)))
+            mat = {**mat, "items": items, "missing": [kd for kd in (mat.get("missing") or []) if not any(i["kind"] == kd for i in items)]}
     tale = tale_cards(question, cond, cands, sprows, c, start=len(cards))      # 段階83 第4部: 小話(1 点まで)
     if tale:
         cards += tale
@@ -1556,7 +1572,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if not researched:
         targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
                     for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
-    sobs = seasonal_rows(question, cond, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
+    sobs = seasonal_rows(question, {**cond, "_towns": towns}, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
@@ -1623,6 +1639,9 @@ def question_environments(question, cands=(), c=None):
 
 
 def _calendar_months(question, months, c):
+    qm = question_month(question, c)
+    if qm:
+        return [qm]
     for season, ms in c["calendar"]["season_months"].items():
         if f"{season}の" in question:
             return list(ms)
@@ -1681,8 +1700,11 @@ def tale_cards(question, cond, cands, sprows, c, start=0, shown=None):
 
 
 def _seasonal_region(cond, cands, c):
-    """段階83 第2部: 観察記録の集計の地域の組。候補(選んだもの → すべて)の都県で多い組、なければ出発地の都県の組。"""
+    """段階83 第2部: 観察記録の集計の地域の組。場所を挙げた質問(エリア・地域・市区町村)は候補(選んだもの → すべて)の都県で多い組、
+    場所を挙げない質問と候補のないときは出発地の都県の組(候補の名所の都県に引っぱられない)。"""
     from collections import Counter
+    if not (cond.get("area_names") or cond.get("region") or cond.get("_towns")):
+        return _group_of(_origin_pref(cond.get("origin")), c)
     for pool in ([r for r in cands if r.get("chosen")], cands):
         groups = Counter(g for g in (_group_of(r.get("prefecture"), c) for r in pool) if g)
         if groups:
@@ -1690,7 +1712,22 @@ def _seasonal_region(cond, cands, c):
     return _group_of(_origin_pref(cond.get("origin")), c)
 
 
-def _seasonal_date(cond, now):
+def question_month(question, c=None):
+    """段階83: 質問の「2月の」「5月に」のような月(1〜12)。なければ None。"""
+    c = c or cfg()
+    m = re.search(c["calendar"]["month_re"], question or "")
+    if not m:
+        return None
+    v = int(unicodedata.normalize("NFKC", m.group(1)))
+    return v if 1 <= v <= 12 else None
+
+
+def _seasonal_date(cond, now, question=None):
+    """観察記録の対象の日。質問に月があれば、その月(今月より前なら来年)の中ほどの日。なければ質問の対象の日。"""
+    qm = question_month(question) if question else None
+    if qm:
+        y = now.year + (1 if qm < now.month else 0)
+        return date(y, qm, cfg()["calendar"]["month_mid_day"])
     for per in cond.get("periods") or []:
         for d in per or []:
             try:
@@ -1722,11 +1759,16 @@ def seasonal_rows(question, cond, cands, now, env, c):
     cats = seasonal_categories(question, cond, sp)
     if not cats:
         return []
-    gname = _seasonal_region(cond, cands, c)
+    envs = question_environments(question, (), c)
+    gname = next((sp["brief"]["env_regions"][e] for e in envs if e in (sp["brief"].get("env_regions") or {})), None)         if not (cond.get("area_names") or cond.get("region") or cond.get("_towns")) else None
+    gname = gname or _seasonal_region(cond, cands, c)
     reg = SO.region(gname, sp) if gname else None
     if not reg:
         return []
-    d = _seasonal_date(cond, now)
+    d = _seasonal_date(cond, now, question)
+    asked = [ms for season, ms in c["calendar"]["season_months"].items() if f"{season}の" in question]
+    if asked and not any(d.month in ms for ms in asked):     # 「冬の雑木林」を 11 月に聞かれたとき: 対象の日の記録は聞かれた季節の話ではない
+        return []
     win = SO.species_window(reg["id"], d, env, sp)
     if not win:
         return []

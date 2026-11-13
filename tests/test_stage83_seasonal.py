@@ -16,6 +16,7 @@ from ikimonobiyori.fetch import ParseError
 JST = timezone(timedelta(hours=9))
 NOW = datetime(2026, 11, 13, 9, 0, tzinfo=JST)
 P = SO.load_policy()
+NL = chr(10)
 
 
 def _sp(tid, sci, ja, iconic, n):
@@ -119,6 +120,16 @@ class FetchAndWindow(unittest.TestCase):
         later = NOW + timedelta(days=SO._v(P["ttl_days"]) + 1)
         self.assertEqual(SO.status(later)["regions"]["shizuoka"]["weeks_ok"], 0)   # 有効期間を過ぎたら取り直し
 
+    def test_brief_rows_region_and_season(self):
+        calls = []
+        SO.run_fetch(NOW, fake_get(calls), lambda: 999, regions=["tokyo_kanagawa"], weeks=[45, 46, 47])
+        cond = {"origin": "横浜", "periods": [["2026-11-14"]]}
+        cands = [{"name": "試験の沼", "prefecture": "千葉県", "chosen": True}]
+        rows = GB.seasonal_rows("今の見頃のものを教えて", cond, cands, NOW, None, GB.cfg())
+        self.assertTrue(rows and all(r["region"] == "東京・神奈川" for r in rows))    # 場所を挙げない質問は出発地の地域(候補の千葉に引っぱられない)
+        self.assertEqual(rows[0]["id"], "O001")
+        self.assertEqual(GB.seasonal_rows("冬の雑木林の楽しみ方を教えて", cond, cands, NOW, None, GB.cfg()), [])   # 季節の語と対象の月が合わない
+
     def test_cli_requires_live_flags(self):
         self.assertEqual(SO.main(["fetch", "--now", NOW.isoformat()], http_get=lambda u: (200, "{}", {})), 4)
 
@@ -141,6 +152,15 @@ class BriefAndVerify(unittest.TestCase):
     def test_now_assertion_and_missing_past_word(self):
         self.assertIn("seasonal_obs_now", self._check("今、ツワブキが咲いています。過去の記録です。[O001]"))
         self.assertIn("seasonal_obs_not_past", self._check("この時期はツワブキが目立ちます。[O001]"))
+
+    def test_period_words_are_not_now(self):
+        self.assertEqual(self._check("過去5年の観察記録では、今の時期の東京・神奈川で、ツワブキの記録が多くなっています。[O001]"), [])
+        self.assertEqual(self._check("今の時期は、過去の記録ではツワブキが多く見られます。[O001]"), [])
+        self.assertIn("seasonal_obs_now", self._check("今週末はツワブキが見られます。過去の記録です。[O001]"))
+
+    def test_past_record_phrases_not_internal(self):
+        for t in ("過去5年の記録では、ツワブキが多いです。" + NL, "観察の記録では、ツワブキが多いです。" + NL):
+            self.assertNotIn("internal_word", [e["code"] for e in GV.common_errors(t, "今の見頃のものを教えて", GV.cfg())])
 
     def test_species_not_in_row(self):
         self.assertIn("seasonal_obs_species", self._check("過去5年の観察記録では、ツワブキやノコンギクの記録が多くなっています。[O001]"))
