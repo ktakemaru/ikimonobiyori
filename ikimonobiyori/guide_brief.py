@@ -1606,6 +1606,15 @@ def _card_row(r, cid, link, c, where=None):
             "source_class": _source_class(src.get("url")), "values": values(" ".join(facts), c)}
 
 
+def word_hit(w, text, c=None):
+    """段階83: 語が文にあるか。都県の名前(「神奈川」の「川」)と、カタカナ語の途中(「カワセミ」の「セミ」)の一致は数えない。"""
+    c = c or cfg()
+    t = re.sub(c["calendar"]["place_names_re"], "", text or "")
+    if re.fullmatch(r"[ァ-ヶー]+", w):
+        return bool(re.search(r"(?<![ァ-ヶー])" + re.escape(w) + r"(?![ァ-ヶー])", t))
+    return w in t
+
+
 def is_open_question(question, cond, towns=(), areas=(), c=None):
     """段階83 第3部: 場所や種を決めない質問(「今の見頃のものを教えて」「近くの公園で何が見られる?」「冬の雑木林の楽しみ方を教えて」)。"""
     c = c or cfg()
@@ -1615,7 +1624,7 @@ def is_open_question(question, cond, towns=(), areas=(), c=None):
         return False
     if GM.species_match_words(question):
         return False
-    return any(w in question for w in C["open_words"]) or any(w in question for ws in C["env_words"].values() for w in ws)
+    return any(w in question for w in C["open_words"]) or any(word_hit(w, question, c) for ws in C["env_words"].values() for w in ws)
 
 
 def question_environments(question, cands=(), c=None):
@@ -1624,9 +1633,9 @@ def question_environments(question, cands=(), c=None):
     C = c["calendar"]
 
     def envs(text):
-        out, rest = [], text or ""
+        out, rest = [], re.sub(C["place_names_re"], "", text or "")
         for env, ws in C["env_words"].items():
-            hit = next((w for w in ws if w in rest), None)
+            hit = next((w for w in ws if word_hit(w, rest, c)), None)
             if hit:
                 out.append(env)
                 rest = rest.replace(hit, "")
@@ -1668,6 +1677,9 @@ def calendar_cards(question, cond, cands, months, c, open_q, start=0, shown=None
     from . import seasonal_obs as SO
     if want and len(seasonal_categories(question, cond)) < len(SO.load_policy()["categories"]):   # 段階83: 虫・鳥など種類を聞く質問は、その対象の暦だけ
         hits = [r for r in hits if r["calendar"].get("target") in want]
+    autumn = [t for w, ts in (C.get("word_targets") or {}).items() if w in question for t in ts]
+    if autumn:                                             # 紅葉の質問は木の葉や実の暦だけ
+        hits = [r for r in hits if r["calendar"].get("target") in autumn]
     order = {e: i for i, e in enumerate(envs or C["environments"])}
     hits.sort(key=lambda r: (order.get(r["calendar"].get("environment"), len(order)), r.get("title") or ""))
     picked, seen_env = [], {}
@@ -1693,10 +1705,15 @@ def tale_cards(question, cond, cands, sprows, c, start=0, shown=None):
     except (OSError, ValueError):
         return []
     words = [question] + [r["name"] for r in cands if r.get("chosen")][:3]
+    from . import guide_materials as GM
+    spw = GM.species_match_words(question)
     best = []
     for r in rows:
-        names = [n for n in [r.get("subject"), r.get("place"), *(r.get("subject_aliases") or []), *(r.get("place_aliases") or [])] if n and len(n) >= 2]
+        allnames = [n for n in [r.get("subject"), r.get("place"), *(r.get("subject_aliases") or []), *(r.get("place_aliases") or [])] if n]
+        names = [n for n in allnames if len(n) >= 2]
         score = sum(3 if n in question else 1 for n in names if any(n in w for w in words))
+        if not score and spw and species_hit(spw, question, c) and species_hit(spw, " ".join(allnames), c):   # 「桜」「梅」(1 文字の種。梅雨は数えない)
+            score = 3
         if score:
             best.append((-score, r.get("title") or "", r))
     best.sort(key=lambda x: x[:2])
@@ -1748,7 +1765,7 @@ def seasonal_categories(question, cond, sp=None):
     B = sp["brief"]
     if (cond.get("route") or "") in (B.get("skip_routes") or []):
         return []
-    hit = [cid for cid, ws in B["category_words"].items() if any(w in question for w in ws)]
+    hit = [cid for cid, ws in B["category_words"].items() if any(word_hit(w, question) for w in ws)]
     if hit:
         return hit
     if (cond.get("subjects") or []) == ["autumn_leaves"] or ("紅葉" in question and not hit):
@@ -1781,6 +1798,10 @@ def seasonal_rows(question, cond, cands, now, env, c):
     years = win.get("years") or []
     ytxt = f"過去{len(years)}年({years[0]}〜{years[-1]}年)" if years else ""
     wtxt = SO.weeks_text(d, win["weeks"], sp) or ""
+    from . import guide_materials as GM
+    spw = GM.species_match_words(question)
+    if spw:                                                # 種を挙げた質問: その種を含む分類だけ(なければ入れない)
+        cats = [cid for cid in cats if any(species_hit(spw, r["name"], c) for r in win["categories"].get(cid) or [])]
     out = []
     for cid in cats:
         rows = (win["categories"].get(cid) or [])[:n]

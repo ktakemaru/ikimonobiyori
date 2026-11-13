@@ -395,6 +395,12 @@ def seasonal_obs_errors(s, rows, c, vocab=None):
         errs.append(_err("seasonal_obs_now", s, "観察記録を今年の状態の言い切りにしている",
                          "今年の状態にしない(「今、…が咲いています」「今週末は…が見られます」と書かない)。過去の記録の傾向として書く"))
     allowed = {n for r in obs for n in r.get("species") or []}
+    flowering = {n for r in obs for n in r.get("flowering") or []}
+    if re.search(V["flower_words_re"], text):              # 指示書 2.2: 開花の注釈の少ない種を「咲く」と書かない
+        nofl = sorted(n for n in allowed if n in text and n not in flowering and any(n in (r.get("species") or []) for r in obs if r.get("category") == "plants"))
+        if nofl:
+            errs.append(_err("seasonal_obs_flower", s, f"{'・'.join(nofl)} は開花の記録が少なく、咲いていると書けない",
+                             "開花の注釈の数がある種だけ「花の記録が多い」と書く。ほかは「記録が多い」まで"))
     others = " ".join(r.get("content") or " ".join(r.get("facts") or []) for r in rows if r.get("kind") != "seasonal_obs")
     vocab = _seasonal_vocab() if vocab is None else vocab
     bad = sorted({n for n in vocab if len(n) >= 2 and n in text and n not in allowed and n not in others
