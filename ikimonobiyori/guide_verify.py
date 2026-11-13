@@ -307,6 +307,15 @@ _PREF_RE = re.compile(r"(北海道|青森県|岩手県|宮城県|秋田県|山�
                       r"愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)")
 
 
+def _without_obs_phrases(text, c):
+    """段階83 第2部: 「観察記録では」「過去5年の記録では」など、過去の観察の記録の言い方を除いた文(内部の言葉の照合用)。"""
+    for ok in c.get("internal_word_allowed_phrases") or []:
+        text = text.replace(ok, "")
+    if c.get("internal_word_allowed_re"):
+        text = re.sub(c["internal_word_allowed_re"], "", text)
+    return text
+
+
 def common_errors(final_body, question, c):
     """今までの検査の部品(使わない情報源・内部の言葉・作業の事情・最後の質問・引用)+ 範囲の外の都県 + 内部の言葉(この形の語)+ 場所のすり替え。"""
     from . import ask_verify as V
@@ -317,7 +326,8 @@ def common_errors(final_body, question, c):
     for e in V.term_errors(final_body, rules):
         errs.append({"code": e["code"], "line": e.get("line", 0), "sentence": "", "detail": e.get("detail", ""), "fix": "その語・文を書かない"})
     skip = set(c.get("skip_reused_codes") or [])
-    for e in V.internal_word_errors(final_body, rules) + V.process_excuse_errors(final_body, rules) + V.source_rule_errors(final_body, rules) + \
+    obs_body = _without_obs_phrases(final_body, c)      # 段階83 第2部: 「観察記録には…」は過去の観察の記録の話(内部の言葉の決まりで止めない)
+    for e in V.internal_word_errors(obs_body, rules) + V.process_excuse_errors(final_body, rules) + V.source_rule_errors(final_body, rules) + \
             V.quote_errors(final_body, rules):
         if e["code"] in skip:
             continue
@@ -334,11 +344,7 @@ def common_errors(final_body, question, c):
                              "fix": "「紹介サイトによると」のように短く書く(公式かどうかは最後の出典で分かる)"})
     if P.unused_in_text(final_body):
         errs.append({"code": "unused_source", "line": 0, "sentence": "", "detail": "使わない情報源の名前がある", "fix": "その情報源を書かない"})
-    body_iw = final_body
-    for ok in c.get("internal_word_allowed_phrases") or []:   # 段階83 第2部: 「観察記録では」は利用者の語(過去の観察の記録の話)
-        body_iw = body_iw.replace(ok, "")
-    if c.get("internal_word_allowed_re"):
-        body_iw = re.sub(c["internal_word_allowed_re"], "", body_iw)
+    body_iw = obs_body
     for w in c.get("guide_internal_words") or []:
         pat = rf"(?<![A-Za-z0-9_]){re.escape(w)}(?![A-Za-z0-9_])" if w.isascii() else re.escape(w)
         for ln, line in enumerate(body_iw.splitlines(), 1):
@@ -385,7 +391,7 @@ def seasonal_obs_errors(s, rows, c, vocab=None):
     plain = text
     for w in V.get("period_words") or []:
         plain = plain.replace(w, "")
-    if re.search(V["now_assert_re"], plain):
+    if re.search(V["now_assert_re"], plain) or re.search(V["state_verbs_re"], text):
         errs.append(_err("seasonal_obs_now", s, "観察記録を今年の状態の言い切りにしている",
                          "今年の状態にしない(「今、…が咲いています」「今週末は…が見られます」と書かない)。過去の記録の傾向として書く"))
     allowed = {n for r in obs for n in r.get("species") or []}

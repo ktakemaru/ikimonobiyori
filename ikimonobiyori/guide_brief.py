@@ -1664,6 +1664,10 @@ def calendar_cards(question, cond, cands, months, c, open_q, start=0, shown=None
     if not envs and not open_q:
         return []
     hits = [r for r in rows if set((r["calendar"].get("months") or [])) & set(ms) and (not envs or r["calendar"].get("environment") in envs)]
+    want = [t for cid in seasonal_categories(question, cond) for t in (C.get("category_targets") or {}).get(cid, [])]
+    from . import seasonal_obs as SO
+    if want and len(seasonal_categories(question, cond)) < len(SO.load_policy()["categories"]):   # 段階83: 虫・鳥など種類を聞く質問は、その対象の暦だけ
+        hits = [r for r in hits if r["calendar"].get("target") in want]
     order = {e: i for i, e in enumerate(envs or C["environments"])}
     hits.sort(key=lambda r: (order.get(r["calendar"].get("environment"), len(order)), r.get("title") or ""))
     picked, seen_env = [], {}
