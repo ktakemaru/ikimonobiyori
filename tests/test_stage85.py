@@ -235,3 +235,26 @@ class KnowledgeSearchRetired(unittest.TestCase):
         cards = [{"title": "a", "place": "試験の森", "facts": ["x"]}, {"title": "b", "place": "試験の森", "facts": ["y"], "retired": True}]
         self.assertEqual([r["title"] for r in K.search(place="試験の森", cards=cards)], ["a"])
         self.assertEqual(len(K.search(place="試験の森", cards=cards, include_retired=True)), 2)
+
+
+class MonthWeekend(unittest.TestCase):
+    """段階85 第3部: 「2月の週末」は今週末ではなく、その月の中ごろの週末。"""
+    def test_month_weekend(self):
+        from ikimonobiyori.answer_run import month_weekend
+        from datetime import date
+        self.assertEqual(month_weekend("2月の週末、梅を見たい", date(2026, 11, 15)), [date(2027, 2, 13), date(2027, 2, 14)])
+        self.assertEqual(month_weekend("12月上旬の週末に紅葉", date(2026, 11, 15)), [date(2026, 12, 5), date(2026, 12, 6)])
+        self.assertEqual(month_weekend("来月の週末", date(2026, 11, 15)), [date(2026, 12, 12), date(2026, 12, 13)])
+        self.assertIsNone(month_weekend("今週末の紅葉", date(2026, 11, 15)))
+        self.assertIsNone(month_weekend("2月14日に梅", date(2026, 11, 15)))
+
+
+class AuditRegress(unittest.TestCase):
+    """段階85 第3部: 点検の「そのほか(理由が分からない)」が 0 件(種を絞った版。記録はリポジトリの名所カタログ・ガイドのカタログだけ)。"""
+    def test_no_unexplained_misses(self):
+        from ikimonobiyori import audit as AD
+        sps = GB.cfg()["audit"]["regress_species"]
+        res = AD.run(AD.questions(species=sps, kinds=("species", "month")), now=NOW)
+        self.assertFalse([r for r in res if r.get("error")])
+        other = [(r["question"], m["name"]) for r in res for m in r.get("missing") or [] if m["reason"] == "other"]
+        self.assertEqual(other, [])

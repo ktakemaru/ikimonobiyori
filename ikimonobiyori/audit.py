@@ -153,8 +153,8 @@ def classify(k, row, doc, sp, day=None):
     """資料に入らなかった名所の理由。"""
     if day is not None and not (row.get("start") and row.get("end")):
         return "season_parse"                            # 時期の文はあるが、月日の窓に読めない(その月に当たるか決められない)
-    if day is None and not row.get("season") and not row.get("start"):
-        return "no_season"                               # 例年の時期の記録がない(時期の分かる名所が多いときは資料に入れない決まり)
+    if day is None and not row.get("season"):
+        return "no_season"                               # 例年の時期の記録がない、または出さない(紹介サイト 1 件だけの時期。段階23)。時期の分かる名所が多いときは資料に入れない決まり
     if _species_cap(doc, sp["name"], cfg()):
         return "limit"
     return "other"

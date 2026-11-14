@@ -469,7 +469,7 @@ audit:
   list_heading: "### 理由が「上限で外れた」「規約・承認のため」以外の一覧"
   labels:
     kinds: {species: 種の質問, month: 月の週末の質問, place: 都県の質問}
-    reasons: {limit: 上限で外れた(件数の枠), no_season: 例年の時期の記録がない(時期の分かる名所が多いときは入れない), season_parse: 時期の読み取りに失敗, species_link: 種の名前が結びつかない, place_link: 場所が結びつかない, terms: 規約・承認のため出せない, retired: 取り下げ済み, other: そのほか(理由が分からない)}
+    reasons: {limit: 上限で外れた(件数の枠), no_season: 例年の時期の記録がない・出さない(紹介サイト 1 件だけの時期。時期の分かる名所が多いときは入れない), season_parse: 時期の読み取りに失敗, species_link: 種の名前が結びつかない, place_link: 場所が結びつかない, terms: 規約・承認のため出せない, retired: 取り下げ済み, other: そのほか(理由が分からない)}
 # 段階85 第4部 2: 語りの材料の枠(紅葉や野鳥の候補がある質問でも、観察記録と暦を先に取っておく)
 reserve:
   seasonal_obs: {value: 2, source: "指示書 段階85 第4部 2(例年この時期の観察記録を 1〜2 点)", provisional: true}
