@@ -621,6 +621,84 @@ def SP_base(name):
     return SP._base_name(name)
 
 
+def event_window(question, cond, now, c=None):
+    """段階84 の続き A: 行事を探す期間。質問の月(「2月の」)→ その月(今月より前なら来年)、期間の語(来月・今週末)、
+    指定の日付(既定の日でないとき)の順。なければ None。"""
+    import calendar
+    from . import facility_events as FE
+    c = c or cfg()
+    today = now.date() if hasattr(now, "date") else now
+    qm = question_month(question, c)
+    if qm:
+        y = today.year + (1 if qm < today.month else 0)
+        return date(y, qm, 1), date(y, qm, calendar.monthrange(y, qm)[1])
+    win = FE.period_of(question, today)
+    if win:
+        return win
+    if not cond.get("defaulted_date"):
+        ds = [date.fromisoformat(str(d)[:10]) for per in cond.get("periods") or [] for d in per or [] if d]
+        if ds:
+            return min(ds), max(ds)
+    return None
+
+
+def _wd(d, c):
+    return c["record_events"]["weekdays"][d.weekday()]
+
+
+def _record_events(F, question, cond, now, env, c):
+    """段階84 の続き A: 読んだ事実の記録の行事(event。年つきの日付・公式の発信・本文で確かめたもの)を、行事を聞いた質問と、
+    種を挙げて期間を決めた質問(「2月の週末、梅を見たい」)の資料の事実にする。期間の内の行事、期間の内になければ期間のあとの行事を少し。
+    行事の台帳(facility_events)・承認の要る施設の扱いは変えない(読んだ事実の記録だけ)。"""
+    from . import guide_materials as GM
+    from . import observations as O
+    E = c["record_events"]
+    today = now.date() if hasattr(now, "date") else now
+    asked = any(w in (question or "") for w in E["event_words"])
+    win = event_window(question, cond, now, c)
+    spw = GM.species_match_words(question)
+    if not (asked or (win and spw)):
+        return
+    if not spw and not asked:
+        return
+    rows = {}
+    opol = O.load_policy()
+    for sj in E["subjects"]:
+        try:
+            recs = O.read_records(sj, env, opol, include_themes=True)
+        except (OSError, ValueError, KeyError):
+            continue
+        for r in recs:
+            ev = r.get("event")
+            if not isinstance(ev, dict) or not ev.get("start") or r.get("source_class") != "official" or not r.get("name"):
+                continue
+            try:
+                st = date.fromisoformat(str(ev["start"])[:10])
+                en = date.fromisoformat(str(ev.get("end") or ev["start"])[:10])
+            except ValueError:
+                continue
+            if en < today:
+                continue
+            blob = " ".join(str(x or "") for x in (r.get("kind"), ev.get("name"), r.get("name")))
+            if spw and not species_hit(spw, blob, c):
+                continue
+            key = (r["name"], ev.get("name"), st)
+            if key not in rows or (ev.get("end") and not rows[key][3].get("end")):    # 同じ行事は 1 つ(終わりの日のある記録を先に)
+                rows[key] = (st, en, r, ev)
+    allr = sorted(rows.values(), key=lambda x: (x[0], x[2]["name"]))
+    named = [x for x in allr if re.sub(r"[(（].*$", "", x[2]["name"]) in (question or "")]
+    if named:                                             # 場所を挙げた質問(「桜山公園の冬桜の行事」)は、その場所の行事だけ
+        allr = named
+    inwin = [x for x in allr if not win or (x[1] >= win[0] and x[0] <= win[1])]
+    pick = inwin[: E["max_in_window"]] or [x for x in allr if win and x[0] > win[1]][: E["max_after"]]
+    for st, en, r, ev in pick:
+        a = f"{st.year}年{st.month}月{st.day}日({_wd(st, c)})"
+        b = f"{en.year}年{en.month}月{en.day}日({_wd(en, c)})"
+        F.add("event", E["line"].format(name=r["name"], event=ev["name"], period=a if st == en else f"{a}〜{b}"),
+              place=r["name"], source=r.get("publisher"), url=r.get("url"), source_class="official",
+              extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
+
+
 def _species_leads(F, sprows, now, c):
     """日付の指定がない種の質問: コードの答えから写した全体の目安の文(「桜は、例年1月〜3月が目安です。」・「今は時期の外で…」)を、
     資料に入った名所の時期から作った文に置き換える(コードの答えの名所は資料の名所より少ないので、時期の幅が食い違う)。"""
@@ -1456,6 +1534,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
         _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
     _place_records(F, question, cands, cond, c, env)          # 段階78 第4部: 質問の場所の記録(その場で調べた名所を含む)
+    _record_events(F, question, cond, now, env, c)            # 段階84 の続き A: 名所の記録の行事(年つき・公式)を、行事の質問と日付を決めた質問に
     if prev:
         try:
             pb = load(prev, env)

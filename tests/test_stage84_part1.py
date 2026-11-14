@@ -204,13 +204,17 @@ class Traits(unittest.TestCase):
         brief = {"cards": [{"id": "K003", "title": "コハクチョウの見分け方", "facts": ["くちばしの黄色部が半分以下で、丸みがありとがらないのがコハクチョウ", "幼鳥は全体が灰色で、越冬中に白くなる"]}]}
         s = GV.sentences(["コハクチョウの幼鳥は全体が灰色で、冬を越すあいだに白くなります [K003]。"])
         self.assertEqual([e["code"] for e in GV.trait_errors(s, brief, GV.cfg())], [])   # 段階84 第5部 q4 の止めすぎ
-        s = GV.sentences(["オオハクチョウの幼鳥は、冬を越すあいだに白くなります [K003]。"])
-        self.assertIn("trait_wrong_card", [e["code"] for e in GV.trait_errors(s, brief, GV.cfg())])
+        s = GV.sentences(["白い鳥がいたら、オオハクチョウです [K003]。"])
+        self.assertIn("trait_wrong_card", [e["code"] for e in GV.trait_errors(s, brief, GV.cfg())])   # 見分けを言い切る形で、カードにない種
 
     def test_size_words_about_places_not_blocked(self):
         self.assertEqual(self.errs("カワセミは小さな池でも見られます。"), [])
         self.assertEqual(self.errs("白い砂浜の先にウミウの崖があります。"), [])
-        self.assertIn("trait_without_card", self.errs("コガモは日本でいちばん小さなカモの仲間です。"))
+        self.assertEqual(self.errs("大きな群れのコハクチョウが見られます。"), [])
+        self.assertEqual(self.errs("白い花が咲く公園でツワブキも見られます。"), [])
+        self.assertEqual(self.errs("コガモは日本でいちばん小さなカモの仲間です。"), [])   # 段階84 の続き B: 見分けを言い切る形でない文は照らさない
+        self.assertIn("trait_without_card", self.errs("くちばしの黄色が小さいのがコハクチョウです。"))
+        self.assertIn("trait_without_card", self.errs("白い花ならサザンカです。"))
 
     def test_omoshiroi_is_not_color(self):
         self.assertEqual(self.errs("鳥では、ホオジロの仲間のすみ分けが面白いところです。"), [])

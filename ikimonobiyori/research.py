@@ -332,7 +332,19 @@ def _verified(text, publisher, operator=None):
     text は使わない(呼び出しの形を変えないために残している)。"""
     if not publisher or not operator:
         return False
-    return re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", operator)
+    pub, op = re.sub(r"\s+", "", publisher), re.sub(r"\s+", " ", operator)
+    pat = r"\s?".join(re.escape(ch) for ch in pub)       # 名前の中の空白の違いは見ない(境目は空白で分かるように残す)
+    addr = cfg().get("operator_address_before_re")
+    cr = cfg().get("operator_copyright_re")
+    for m in re.finditer(pat, op):                       # 段階84 の続き(本人の判断 2026-11-15 の 3): 住所の中の名前(「〒949-8433新潟県十日町市」)と、
+        before = op[max(0, m.start() - 20):m.start()]   # 別の名前の一部(「十日町市観光協会」の中の「十日町市」)は数えない。著作権表示(「©2024埼玉県日高市」)は数える
+        longer = cfg().get("operator_longer_name_re")
+        if longer and re.match(longer, op[m.end():]):     # 「十日町市観光協会」のように、名前の後ろに別の団体の名前が続く
+            continue
+        if addr and re.search(addr, before) and not (cr and re.search(cr, before[-14:])):
+            continue
+        return True
+    return False
 
 
 def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep, publisher=None):

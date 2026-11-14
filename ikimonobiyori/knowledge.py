@@ -270,8 +270,16 @@ def usable(card, centers=None):
             return False, "facility_pending"
         return True, None
     if conf in g["public_confidences"]:
-        if not str(card.get("rights") or "").startswith(g["rights_confirmed_prefix"]):
-            return False, "rights_unconfirmed"
+        rights = str(card.get("rights") or "")
+        if rights.startswith(g["rights_confirmed_prefix"]):
+            return True, None
+        if g.get("no_policy_prefix") and rights.startswith(g["no_policy_prefix"]):   # 段階84 の続き(本人の判断 2026-11-11・11-13・11-15)
+            from urllib.parse import urlparse
+            host = (urlparse((card.get("source") or {}).get("url") or "").hostname or "").lower()
+            if re.search(g["no_policy_hosts_re"], host):
+                return True, "no_policy_municipal"
+            return False, "no_policy_not_municipal"
+        return False, "rights_unconfirmed"
     return True, None
 
 

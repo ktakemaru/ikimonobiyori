@@ -556,6 +556,8 @@ def trait_errors(sents, brief, c):
         clean = re.sub(ex, "", s["clean"])
         sps = [n for n in SA.species_in(clean) if n not in (T.get("group_words") or [])]
         hits = _trait_hits(clean, c)
+        if T.get("clause_form_re") and not re.search(T["clause_form_re"], re.sub(r"\s*\[[^\]]*\]\s*", "", clean).strip()):
+            hits = {h for h in hits if h < len(T["words_re"])}    # 段階84 の続き B: 見分けを言い切る形でない文では、色・大きさの語を照らさない
         if hits and min(hits) >= len(T["words_re"]):        # 色・大きさの語だけの文: その語のある節の種だけを照らす
             sps = [n for n in _clause_species(clean, c) if n in sps] or sps   # 節に種がない(「白い大きな鳥がいたら、ハクチョウです」)なら文の種
         if not sps or not hits:
