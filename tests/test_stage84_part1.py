@@ -207,6 +207,11 @@ class Traits(unittest.TestCase):
         s = GV.sentences(["オオハクチョウの幼鳥は、冬を越すあいだに白くなります [K003]。"])
         self.assertIn("trait_wrong_card", [e["code"] for e in GV.trait_errors(s, brief, GV.cfg())])
 
+    def test_size_words_about_places_not_blocked(self):
+        self.assertEqual(self.errs("カワセミは小さな池でも見られます。"), [])
+        self.assertEqual(self.errs("白い砂浜の先にウミウの崖があります。"), [])
+        self.assertIn("trait_without_card", self.errs("コガモは日本でいちばん小さなカモの仲間です。"))
+
     def test_omoshiroi_is_not_color(self):
         self.assertEqual(self.errs("鳥では、ホオジロの仲間のすみ分けが面白いところです。"), [])
 
