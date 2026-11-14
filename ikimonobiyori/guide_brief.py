@@ -1659,6 +1659,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
                     for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
     sobs = seasonal_rows(question, {**cond, "_towns": towns}, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
+    refresh_pages = _refresh_targets(work, cands, now, env, c)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
+    _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
@@ -1675,12 +1677,100 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         + [c["species_traits"]["missing_line"].format(sp=sp) for sp in no_trait]
         + ([c["research"]["done_line"]] if researched else [])
         + [f"調べる: {t['why']}" for t in targets],
-        "research": {"targets": targets},
+        "research": {"targets": targets}, "refresh_pages": refresh_pages,
         **({"photos": fp} if (fp := form_photos(question, env)) else {}),
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def _refresh_targets(work, cands, now, env, c):
+    """段階85 第1部: 資料に入る候補の、承認済みの現況の情報源のうち有効期間が切れたページ(候補の順位の高いものから。最大 max_pages)。通信しない。"""
+    from . import answer_plan as AP
+    A = c.get("auto_refresh") or {}
+    try:
+        facts_doc = json.loads((Path(work) / "facts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    subs = facts_doc.get("subjects") or {}
+    plan_doc = {"subjects": {}}                              # 資料に入る候補(選ばなかった候補も)を、読み直しの対象を選ぶ計画の形に
+    for r in cands:
+        sj = r.get("subject")
+        if sj in subs:
+            for n in [r.get("name"), *(r.get("merged_from") or [])]:
+                if n:
+                    plan_doc["subjects"].setdefault(sj, {"picks": []})["picks"].append({"name": n})
+    mx = A.get("max_pages") or {}
+    mx = mx.get("value") if isinstance(mx, dict) else mx
+    try:
+        pages = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env, max_pages=None if mx is None else len(cands) + mx)
+    except (KeyError, ValueError, TypeError):
+        return []
+    order = {}
+    for i, r in enumerate(cands):
+        for n in [r.get("name"), *(r.get("merged_from") or [])]:
+            if n and n not in order:
+                order[n] = (r.get("rank") if r.get("rank") is not None else len(cands) + i, i)
+    from . import auto_refresh as AU
+    ok = AU.approved_status_urls()                       # 台帳で承認済みの現況のページだけ(新しい通信先を足さない)
+    pages = [p for p in pages if p.get("name") in order and AU.url_key(p.get("url")) in ok]
+    pages.sort(key=lambda p: order[p["name"]])
+    return pages[: mx] if mx else pages
+
+
+def _target_day(cond, now):
+    try:
+        return date.fromisoformat(((cond.get("periods") or [[None]])[0] or [None])[0])
+    except (TypeError, ValueError, IndexError):
+        return now.date()
+
+
+def _mark_stale(rows, cond, now, c):
+    """段階85 第1部: 現況の日付が対象の日より stale_days 日以上前の事実に、古さの印(fields.stale_days)。"""
+    A = c.get("auto_refresh") or {}
+    lim = A.get("stale_days") or {}
+    lim = lim.get("value") if isinstance(lim, dict) else lim
+    if not lim:
+        return
+    day = _target_day(cond, now)
+    for f in rows:
+        if f.get("kind") != "current" or not f.get("observed"):
+            continue
+        try:
+            d = (day - date.fromisoformat(str(f["observed"])[:10])).days
+        except ValueError:
+            continue
+        if d >= lim:
+            f.setdefault("fields", {})["stale_days"] = d
+
+
+def attach_refresh(doc, result, c=None):
+    """段階85 第1部: 自動の読み直しの結果を資料に入れる(読み直せなかったページは「足りないもの」に・内容が変わったページは節に)。"""
+    c = c or cfg()
+    L = c["auto_refresh"]["lines"]
+    doc["auto_refresh"] = result
+    miss = []
+    for p in result.get("pages") or []:
+        md = _md(p.get("current_date")) if p.get("current_date") else "前回"
+        if p["result"] == "failed":
+            miss.append(L["failed"].format(name=p.get("name"), publisher=p.get("publisher") or "", md=md))
+    doc["missing"] = list(doc.get("missing") or []) + [m for m in miss if m not in (doc.get("missing") or [])]
+    return doc
+
+
+def build_refreshed(question, *, now, env=None, prev=None, http_get=None, clock=None, sleep=None):
+    """段階85 第1部: 資料を作り、資料に入る候補の現況のページを読み直す(有効期間切れ・上限つき)。記録が変わったら作り直す。"""
+    from . import auto_refresh as AU
+    c = cfg()
+    doc = build(question, now=now, env=env, prev=prev)
+    if not (c.get("auto_refresh") or {}).get("enabled") or not doc.get("refresh_pages"):
+        return doc
+    kw = {k: v for k, v in (("clock", clock), ("sleep", sleep)) if v is not None}
+    res = AU.run(doc["refresh_pages"], now=now, env=env, http_get=http_get, **kw)
+    if AU.needs_rebuild(res):
+        doc = build(question, now=now, env=env, prev=prev)
+    return attach_refresh(doc, res, c)
 
 
 def _card_row(r, cid, link, c, where=None):
@@ -2054,6 +2144,8 @@ def render_md(doc):
     for f in doc["facts"]:
         src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else 'その他' if f.get('source_class') else '区分なし'}"
         when = "・".join(x for x in (f"観測 {f['observed']}" if f.get("observed") else "", f"取得 {f['read_at'][:10]}" if f.get("read_at") else "") if x)
+        if (f.get("fields") or {}).get("stale_days"):                # 段階85 第1部: 現況の古さの印
+            when = "・".join(x for x in (when, cfg()["auto_refresh"]["lines"]["stale_mark"].format(days=f["fields"]["stale_days"])) if x)
         L.append(f"- [{f['id']}] {f['kind_label']}: {f['content']}({src}{'・' + when if when else ''}){' ' + f['url'] if f.get('url') else ''}")
     if not doc["facts"]:
         L.append("(なし)")
@@ -2075,6 +2167,12 @@ def render_md(doc):
         P = cfg()["form_photos"]
         L += ["", P["heading"], ""] + [P["line"].format(**p) for p in doc["photos"]]
     L += ["", "## 足りないもの", ""] + [f"- {x}" for x in doc["missing"] or ["(なし)"]]
+    changed = [p for p in (doc.get("auto_refresh") or {}).get("pages") or [] if p.get("result") == "changed"]
+    if changed:                                           # 段階85 第1部: 読み直して内容が変わった公式の現況
+        A = cfg()["auto_refresh"]["lines"]
+        L += ["", A["heading"], "", A["note"]] + [A["row"].format(name=p.get("name"), publisher=p.get("publisher") or "", url=p.get("url"),
+                                                               md=_md(p.get("current_date")) if p.get("current_date") else "前回",
+                                                               text_path=p.get("text_path")) for p in changed]
     if (doc.get("research") or {}).get("targets"):
         from . import research as RS
         L += [""] + RS.lines_for(doc["id"], doc["research"]["targets"])

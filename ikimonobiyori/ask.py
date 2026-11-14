@@ -946,7 +946,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask place の行で作った答え)。計画の照合と候補数の下限を当てない(段階60)")
     p.add_argument("--question", help="--generic のとき: 質問の文。意図が行事(観察会・講座・展示)なら、行事用の検査(台帳との照合。候補数の下限は当てない)")
     p.add_argument("--now", help="--generic --question の行事の検査: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
-    p = sub.add_parser("brief", help="段階75: ガイドの資料(候補と順位・確かめた事実・知識カード・足りないもの・決まり)を作る。通信しない。標準出力は id とパスだけ")
+    p = sub.add_parser("brief", help="段階75: ガイドの資料(候補と順位・確かめた事実・知識カード・足りないもの・決まり)を作る。段階85: 候補の現況のページ(有効期間切れ)を最大 5 ページ・25 秒まで読み直す。標準出力は id とパスだけ")
     p.add_argument("question_pos", nargs="?", metavar="question", help="質問の文")
     p.add_argument("--question")
     p.add_argument("--prev", help="続けて聞く質問: 前の質問の資料の id")
@@ -1231,7 +1231,7 @@ def main(argv=None, http_get=None):
         if not q:
             print("質問の文がありません", file=sys.stderr)
             return 2
-        doc = GB.build(q, now=now or _clock(), prev=a.prev)
+        doc = GB.build_refreshed(q, now=now or _clock(), prev=a.prev)     # 段階85 第1部: 候補の現況のページを読み直してから
         jp, mp = GB.save(doc)
         print(doc["id"])
         print(jp)

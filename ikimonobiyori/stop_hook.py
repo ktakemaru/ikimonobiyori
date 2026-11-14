@@ -129,6 +129,20 @@ def _is_research(call, c):
     return _matches(call, c["record_patterns"])
 
 
+def _first_pos(call, patterns):
+    poss = [m.start() for p in patterns for m in [re.search(p, _cmd(call))] if m]
+    return min(poss) if poss else None
+
+
+def _after(calls, vi, pi, c):
+    """ページを作る呼び出し(pi)が、ask verify の呼び出し(vi)のあとか(同じ呼び出しなら、コマンドの中で後ろにあるか)。"""
+    if pi != vi:
+        return pi > vi
+    k = calls[pi]
+    v, pg = _first_pos(k, c["guide_verify_patterns"]), _first_pos(k, c.get("page_patterns") or [])
+    return v is not None and pg is not None and pg > v
+
+
 def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
     """段階75: ガイドの形の回。ask verify --brief が合格(または今の形の答え)を出し、最終メッセージがその文と一致するときだけ通す。
     段階81 の続き 1: この回に ask verify のあとで写真つきのページを作り(ask page)、最終メッセージが ask page-reply の案内の文と一致するときも通す。"""
@@ -137,7 +151,9 @@ def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
     if not verifies:
         return {"block": True, "why": "guide_no_verify", "reasons": [c["reasons"]["guide_no_verify"]]}
     pages = [i for i, k in enumerate(after) if _matches(k, c.get("page_patterns") or [])]
-    if msg.strip() and page_ok and pages and pages[-1] > verifies[-1] and page_ok(msg):
+    # 段階85 第4部 1: ask verify と ask page を 1 回のコマンドで続けて実行した回(同じ呼び出し)と、ページのあとで ask verify を
+    # 実行し直した回も、ページの案内の文(ask page-reply の出力)なら通す。比べるのはコマンドの中の位置まで
+    if msg.strip() and page_ok and pages and any(_after(after, v, pg, c) for v in verifies[:1] for pg in pages) and page_ok(msg):
         return {"block": False, "reasons": [], "why": "guide_page"}
     if msg.strip() and not (guide_ok(msg) if guide_ok else False):
         return {"block": True, "why": "guide_mismatch", "reasons": [c["reasons"]["guide_mismatch"]]}

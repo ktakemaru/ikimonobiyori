@@ -112,7 +112,7 @@ stop_hook:
   brief_patterns: ['ikimonobiyori\.ask\s+brief\b', 'ask\.py\s+brief\b']
   guide_verify_patterns: ['ikimonobiyori\.ask\s+verify\b.*--brief\b', 'ask\.py\s+verify\b.*--brief\b']
   # 段階81 の続き 1: 写真つきのページを作る呼び出し(ask page。page-reply は含めない)
-  page_patterns: ['ikimonobiyori\.ask\s+page(\s|$)', 'ask\.py\s+page(\s|$)']
+  page_patterns: ['ikimonobiyori\.ask\s+page(?![\w-])', 'ask\.py\s+page(?![\w-])']   # 段階85 第4部 1: 「ask page;」「ask page 2>&1」も
   # 段階82 第4部 4.5: 写真を指摘されて直した回(ask photo-reply の文をそのまま送る)
   photo_reply_patterns: ['ikimonobiyori\.ask\s+photo-reply\b', 'ask\.py\s+photo-reply\b']
   record_patterns: ['ikimonobiyori\.ask\s+(record|vc-record|knowledge\s+add|record-unverified)\b', 'ikimonobiyori\.guide\s+record-candidate\b']
