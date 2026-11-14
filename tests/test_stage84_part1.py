@@ -195,6 +195,11 @@ class Traits(unittest.TestCase):
     def test_color_size_without_card_blocked(self):
         self.assertIn("trait_without_card", self.errs("白い大きな鳥がいたら、ハクチョウです。"))
 
+    def test_marked_sentence_checks_only_clause_species(self):
+        brief = {"cards": [{"id": "K001", "title": "冬桜と寒桜の違い", "facts": ["冬桜は白から淡紅色の一重小輪の花", "寒桜は1〜2月に咲く淡紅色の一重で、冬桜とは別の種"]}]}
+        s = GV.sentences(["冬桜は白から淡紅色の一重の小さな花で、1〜2月に咲く寒桜とは別の種です [K001]。"])
+        self.assertEqual([e["code"] for e in GV.trait_errors(s, brief, GV.cfg())], [])   # 比べ相手(寒桜)の節には色・大きさの語がない
+
     def test_omoshiroi_is_not_color(self):
         self.assertEqual(self.errs("鳥では、ホオジロの仲間のすみ分けが面白いところです。"), [])
 

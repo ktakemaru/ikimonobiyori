@@ -526,7 +526,20 @@ def check(draft, brief, c=None, env=None):
 # ---- 段階82 第2部: 種の見分け方・特徴の裏取り ----
 
 def _trait_hits(text, c):
-    return {i for i, p in enumerate(c["species_traits"]["words_re"]) if re.search(p, text or "")}
+    T = c["species_traits"]
+    n = len(T["words_re"])
+    return ({i for i, p in enumerate(T["words_re"]) if re.search(p, text or "")}
+            | {n + i for i, p in enumerate(T.get("clause_words_re") or []) if re.search(p, text or "")})
+
+
+def _clause_species(clean, c):
+    """段階84 第1部 B: 色・大きさの語(clause_words_re)のある節(読点・句点で区切る)の種の名前。"""
+    from . import species_alias as SA
+    out = []
+    for part in re.split(r"[、。,]", clean):
+        if any(re.search(p, part) for p in c["species_traits"].get("clause_words_re") or []):
+            out += [n for n in SA.species_in(part) if n not in out]
+    return out
 
 
 def trait_errors(sents, brief, c):
@@ -543,6 +556,8 @@ def trait_errors(sents, brief, c):
         clean = re.sub(ex, "", s["clean"])
         sps = [n for n in SA.species_in(clean) if n not in (T.get("group_words") or [])]
         hits = _trait_hits(clean, c)
+        if hits and min(hits) >= len(T["words_re"]):        # 色・大きさの語だけの文: その語のある節の種だけを照らす
+            sps = [n for n in _clause_species(clean, c) if n in sps] or sps   # 節に種がない(「白い大きな鳥がいたら、ハクチョウです」)なら文の種
         if not sps or not hits:
             continue
         rows = [by[i] for i in s["ids"] if i in by]
