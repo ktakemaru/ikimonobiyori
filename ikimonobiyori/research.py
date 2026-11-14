@@ -123,6 +123,9 @@ def lines_for(bid, targets):
     L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" for t in targets]
     L.append("")
     L += [x.format(id=bid) for x in R["step_lines"]]
+    if any(t.get("kind") == "species_card" for t in targets):      # 段階82 第2部 1: 種の公的な解説
+        from . import guide_brief as GB
+        L += [x.format(id=bid) for x in GB.cfg()["species_traits"]["step_lines"]]
     return L + [""]
 
 
@@ -245,6 +248,40 @@ def _state_path(bid, env=None):
     return rdir(env) / "questions" / f"{bid}.json"
 
 
+def _brief_question(bid, env=None):
+    from . import guide_brief as GB
+    try:
+        return (GB.load(bid, env) or {}).get("question")
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _note_try(bid, now, env=None):
+    st = _load_state(bid, env)
+    if st.get("tried_at") and st.get("question"):
+        return
+    st.setdefault("tried_at", now.isoformat())
+    st["question"] = st.get("question") or _brief_question(bid, env)
+    _save_state(bid, st, env)
+
+
+def already_researched(question, now, env=None):
+    """段階82 第3部 4: この質問(読み替えたあとの文)で、research.once_hours 時間以内に一度調べたか(ask research fetch を 1 回以上)。"""
+    R = cfg()
+    d = rdir(env) / "questions"
+    if not question or not d.exists():
+        return False
+    for p in d.glob("*.json"):
+        try:
+            st = json.loads(p.read_text(encoding="utf-8"))
+            at = datetime.fromisoformat(st.get("first_at") or st.get("tried_at") or "")
+        except (OSError, ValueError, TypeError):
+            continue
+        if st.get("question") == question and 0 <= (now - at).total_seconds() <= R["once_hours"] * 3600:
+            return True
+    return False
+
+
 def _load_state(bid, env=None):
     try:
         return json.loads(_state_path(bid, env).read_text(encoding="utf-8"))
@@ -282,7 +319,11 @@ def allowed_page(url):
 
 def _declared_ok(publisher):
     """発行元の名前が、公式に当たる形(観光協会・自治体・公園の管理者など)か。"""
-    return bool(publisher) and bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
+    if not publisher:
+        return False
+    if publisher.strip() in (cfg().get("declared_publishers_approved") or []):   # 段階83 第1部: 本人が名指しで公式に含めた運営会社
+        return True
+    return bool(re.search(cfg()["declared_publisher_re"], publisher.strip()))
 
 
 def _verified(text, publisher, operator=None):
@@ -291,7 +332,19 @@ def _verified(text, publisher, operator=None):
     text は使わない(呼び出しの形を変えないために残している)。"""
     if not publisher or not operator:
         return False
-    return re.sub(r"\s+", "", publisher) in re.sub(r"\s+", "", operator)
+    pub, op = re.sub(r"\s+", "", publisher), re.sub(r"\s+", " ", operator)
+    pat = r"\s?".join(re.escape(ch) for ch in pub)       # 名前の中の空白の違いは見ない(境目は空白で分かるように残す)
+    addr = cfg().get("operator_address_before_re")
+    cr = cfg().get("operator_copyright_re")
+    for m in re.finditer(pat, op):                       # 段階84 の続き(本人の判断 2026-11-15 の 3): 住所の中の名前(「〒949-8433新潟県十日町市」)と、
+        before = op[max(0, m.start() - 20):m.start()]   # 別の名前の一部(「十日町市観光協会」の中の「十日町市」)は数えない。著作権表示(「©2024埼玉県日高市」)は数える
+        longer = cfg().get("operator_longer_name_re")
+        if longer and re.match(longer, op[m.end():]):     # 「十日町市観光協会」のように、名前の後ろに別の団体の名前が続く
+            continue
+        if addr and re.search(addr, before) and not (cr and re.search(cr, before[-14:])):
+            continue
+        return True
+    return False
 
 
 def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, sleep=time.sleep, publisher=None):
@@ -301,6 +354,7 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
     from . import netbudget as NB
     R = cfg()
     now = now or datetime.now().astimezone().replace(microsecond=0)
+    _note_try(bid, now, env)                              # 段階82 第3部 4: 読めなかった取得も「一度調べた」に数える
     why = allowed_page(url)
     declared = None
     if why and why.startswith("公式の発行元") and _declared_ok(publisher):
@@ -365,6 +419,8 @@ def fetch(url, bid, *, env=None, now=None, http_get=None, clock=time.monotonic, 
             return {"ok": False, "reason": f"robots.txt を確かめられない(HTTP {rs})。安全側で読まない"}
         if not st.get("first_at"):
             st["first_at"] = now.isoformat()
+        if not st.get("question"):                       # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ(資料を作り直したら調べる節を出さない)
+            st["question"] = _brief_question(bid, env)
         status, body, headers = g(url)
     except Exception as ex:                              # 通信の失敗は理由を返す(答えは今の記録で)
         return {"ok": False, "reason": f"取得できなかった({type(ex).__name__})"}

@@ -322,6 +322,8 @@ def run(question, *, now=None, env=None, workdir=None, polished=None, obs_kw=Non
     t0 = time.monotonic()
     pol = policy or AP.load_policy()
     now = now or ask._clock()
+    from . import species_alias
+    question, _renamed = species_alias.normalize(question)   # 段階82 第1部: 種の名前(ひらがな・漢字)を認識した名前(カタカナ)に
     if workdir is None:                                  # 質問ごとに別の作業フォルダ(同じ秒・同じ --now の質問で記録を混ぜない)
         import uuid
         workdir = data_path(ask.load_policy()["work_dir"], env) / (datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6])

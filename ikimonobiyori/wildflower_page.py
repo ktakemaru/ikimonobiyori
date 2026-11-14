@@ -8,7 +8,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-from . import guide, guide_page, guide_photos, wildflower
+from . import guide, guide_page, guide_photos, plan_page, wildflower
 from .guide_page import esc, link
 from .photo_pool import PhotoPool
 
@@ -60,7 +60,7 @@ def build(r, *, policy, now, photo_for):
 
     def card(f, got):
         meta = got[0]
-        cr = h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"])
+        cr = plan_page.with_caption_note(meta, h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"]), h)
         return (f'<li class="card">{pool.tag(meta, got[1], f["name"])}<h3>{esc(f["name"])}</h3>'
                 + f'<ul class="facts">{"".join(f"<li>{esc(x)}</li>" for x in facts(f))}</ul>'
                 + (f'<p class="note">{esc(w["caution"].format(text=f["caution"]))}</p>' if f["caution"] else "")
@@ -141,7 +141,7 @@ def build_overview(r, *, policy, now, photo_for):
 
     def card(e, got):
         meta = got[0]
-        cr = h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"])
+        cr = plan_page.with_caption_note(meta, h["photo_credit"].format(author=guide_page.short_author(meta, policy), license=meta["license"]), h)
         return f'<li class="card">{pool.tag(meta, got[1], e["name"])}{body_of(e)}<span class="credit">{esc(cr)}</span>{links(e)}</li>'   # 段階81 の追記: 状態は出さない
     kind = r.get("kind")
     if kind == "mountain":

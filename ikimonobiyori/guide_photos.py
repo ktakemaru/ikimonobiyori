@@ -234,11 +234,184 @@ def stamp_unknown(taxon_id, pp, env=None, policy=None):
 
 
 def load_photo(taxon_id, env=None, policy=None):
-    """→ (メタデータ, 画像のバイト列) か None。"""
+    """→ (メタデータ, 画像のバイト列) か None。段階82: 点検で不可にした写真は使わない(点検済みで可 > 未点検)。"""
     if not has_cache(taxon_id, env, policy):
         return None
     meta = json.loads(_meta_path(taxon_id, env, policy).read_text(encoding="utf-8"))
+    chk = load_checks(env, policy).get(str(int(taxon_id)))
+    if chk and chk.get("verdict") == "ng" and chk.get("photo_page") == meta.get("photo_page"):
+        return None
     return meta, (cache_dir(env, policy) / f"{int(taxon_id)}.{meta['image_type']}").read_bytes()
+
+
+# ---- 段階82 第4部: 写真の点検(目で見た判定の記録・不可の写真の控えと除外・取り直し) ----
+
+NL_ = chr(10)
+
+
+def check_path(env=None, policy=None):
+    return export_dir(env) / photos_policy(policy)["check_file"]
+
+
+def load_checks(env=None, policy=None):
+    p = check_path(env, policy)
+    try:
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    except ValueError:
+        return {}
+
+
+def _save_json(p, doc):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(doc, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+
+
+def load_commons_denied(env=None, policy=None):
+    p = export_dir(env) / photos_policy(policy)["commons_deny_file"]
+    try:
+        return json.loads(p.read_text(encoding="utf-8")) if p.is_file() else []
+    except ValueError:
+        return []
+
+
+def cached_photos(env=None, policy=None):
+    """キャッシュにある写真の一覧 [{taxon_id, name, path, meta, check}](和名の順)。check はこの写真の点検の記録(なければ None = 未点検)。"""
+    d = cache_dir(env, policy)
+    checks = load_checks(env, policy)
+    out = []
+    for mp in sorted(d.glob("*.json")) if d.is_dir() else []:
+        try:
+            meta = json.loads(mp.read_text(encoding="utf-8"))
+            tid = int(meta["taxon_id"])
+        except (ValueError, KeyError, TypeError, OSError):
+            continue
+        img = d / f"{tid}.{meta.get('image_type')}"
+        if not img.is_file():
+            continue
+        c = checks.get(str(tid))
+        out.append({"taxon_id": tid, "name": meta.get("name"), "path": str(img), "meta": meta,
+                    "check": c if c and c.get("photo_page") == meta.get("photo_page") else None})
+    return sorted(out, key=lambda r: (r["name"] or "", r["taxon_id"]))
+
+
+def commons_title(meta):
+    from urllib.parse import unquote
+    return unquote("File:" + (meta.get("photo_page") or "").rsplit("File:", 1)[-1]).replace("_", " ")
+
+
+def mark_no_photo(name, reason, *, today, env=None, policy=None):
+    """段階82 第4部 4.2: 点検と取り直しを 3 回まで行って合う写真がなかった種を「写真なし」にする(目で見て使わないと決めた種の一覧
+    photo_review.json に入れる。ensure・学名での取り直しはこの種を取りに行かない)。→ taxon_id。"""
+    table = load_table(env, policy=policy)
+    if name not in table:
+        raise ValueError(f"写真の対応表にない和名: {name}")
+    tid = str(int(table[name]["taxon_id"]))
+    rv = load_review(env, policy)
+    rv[tid] = f"写真なし({today.isoformat()} 点検): {reason}"
+    review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+    review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    _remove_cache(int(tid), env, policy)
+    return int(tid)
+
+
+def restore_checked(taxon_id, archived, *, note, reason, today, env=None, policy=None):
+    """段階82 の続き(本人の判断 2026-11-13 の 3): 点検で不可にして控え(check_archive_dir)に写した写真を、見直して可にして戻す。
+    archived は控えのファイル名の拡張子の前(「359972-431465759」)。note は写真の説明の頭に必ず付ける断りの種類(方針 photos.html.caption_notes の鍵)。
+    写真なし・次に選ばない一覧・Commons の使わない一覧から外し、点検の記録を ok にする。→ 点検の記録の行。"""
+    pol = photos_policy(policy)
+    notes = (pol.get("html") or {}).get("caption_notes") or {}
+    if note not in notes:
+        raise ValueError(f"写真の説明の断りの種類が方針にない: {note}")
+    d = cache_dir(env, policy)
+    arch = d / pol["check_archive_dir"]
+    meta = json.loads((arch / f"{archived}.json").read_text(encoding="utf-8"))
+    if int(meta.get("taxon_id")) != int(taxon_id):
+        raise ValueError("控えの写真の taxon_id が違う")
+    meta.pop("check", None)
+    meta["caption_note"] = note
+    img = arch / f"{archived}.{meta['image_type']}"
+    (d / f"{int(taxon_id)}.{meta['image_type']}").write_bytes(img.read_bytes())
+    _meta_path(taxon_id, env, policy).write_text(json.dumps(meta, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    key = str(int(taxon_id))
+    rv = load_review(env, policy)
+    if key in rv:
+        rv.pop(key)
+        review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    if meta.get("source"):
+        den = load_commons_denied(env, policy)
+        t = commons_title(meta)
+        if t in den:
+            _save_json(export_dir(env) / pol["commons_deny_file"], sorted(x for x in den if x != t))
+    elif meta.get("photo_id") is not None:
+        skip = load_skip_photos(env, policy)
+        if int(meta["photo_id"]) in skip.get(int(taxon_id), set()):
+            skip[int(taxon_id)].discard(int(meta["photo_id"]))
+            _save_json(skip_photo_path(env, policy), {str(k): sorted(v) for k, v in skip.items() if v})
+    none = load_none(env, policy)
+    if meta.get("name") in none:
+        none.pop(meta["name"])
+        _save_none(none, env, policy)
+    return set_check(taxon_id, "ok", reason, today=today, env=env, policy=policy)
+
+
+def checked_ok(taxon_id, env=None, policy=None):
+    """今のキャッシュの写真が、点検済みで可か(点検の記録の元のページが今の写真と同じ)。"""
+    mp = _meta_path(taxon_id, env, policy)
+    try:
+        meta = json.loads(mp.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    c = load_checks(env, policy).get(str(int(taxon_id)))
+    return bool(c and c.get("verdict") == "ok" and c.get("photo_page") == meta.get("photo_page"))
+
+
+def set_check(taxon_id, verdict, reason=None, *, today, env=None, policy=None):
+    """写真を見て点検した結果を残す。verdict は ok / ng。ng のときは写真を消さずに控え(check_archive_dir)へ写し、
+    iNaturalist の写真なら写真の id を、Commons ならファイル名を、次に選ばない一覧に入れてから、キャッシュから外す(次の取得で別の候補)。
+    → 点検の記録の行。"""
+    if verdict not in ("ok", "ng"):
+        raise ValueError("verdict は ok か ng")
+    pol = photos_policy(policy)
+    meta = json.loads(_meta_path(taxon_id, env, policy).read_text(encoding="utf-8"))
+    key = str(int(taxon_id))
+    checks = load_checks(env, policy)
+    old = checks.get(key)
+    row = {"name": meta.get("name"), "checked_on": today.isoformat(), "verdict": verdict, "reason": reason,
+           "photo_page": meta.get("photo_page"), "source": meta.get("source") or "inaturalist",
+           "history": ((old or {}).get("history") or []) + ([{k: v for k, v in old.items() if k != "history"}] if old else [])}
+    checks[key] = row
+    _save_json(check_path(env, policy), checks)
+    ng_count = sum(1 for h in row["history"] + [row] if h.get("verdict") == "ng")
+    if verdict == "ng" and ng_count >= int(pol.get("check_max_ng") or 3):   # 3 回不可なら写真なし(取り直さない)
+        rv = load_review(env, policy)
+        rv[key] = f"写真なし({today.isoformat()} 点検で {ng_count} 回不可): {reason or ''}"
+        review_path(env, policy).parent.mkdir(parents=True, exist_ok=True)
+        review_path(env, policy).write_text(json.dumps(rv, ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+    if verdict == "ng":
+        d = cache_dir(env, policy)
+        out = d / pol["check_archive_dir"]
+        out.mkdir(parents=True, exist_ok=True)
+        tag = re.sub(r"[^0-9A-Za-z_-]", "_", str(meta.get("photo_id") or (meta.get("photo_page") or "x").rsplit("/", 1)[-1]))[:60]
+        img = d / f"{int(taxon_id)}.{meta['image_type']}"
+        if img.is_file():
+            (out / f"{int(taxon_id)}-{tag}.{meta['image_type']}").write_bytes(img.read_bytes())
+        (out / f"{int(taxon_id)}-{tag}.json").write_text(json.dumps({**meta, "check": {k: v for k, v in row.items() if k != "history"}},
+                                                                    ensure_ascii=False, sort_keys=True, indent=1), encoding="utf-8", newline=NL_)
+        if meta.get("source"):
+            den = load_commons_denied(env, policy)
+            t = commons_title(meta)
+            if t not in den:
+                _save_json(export_dir(env) / pol["commons_deny_file"], sorted(den + [t]))
+        elif meta.get("photo_id") is not None:
+            skip = load_skip_photos(env, policy)
+            skip.setdefault(int(taxon_id), set()).add(int(meta["photo_id"]))
+            _save_json(skip_photo_path(env, policy), {str(k): sorted(v) for k, v in skip.items()})
+        _remove_cache(taxon_id, env, policy)
+        none = load_none(env, policy)                     # 取り直せるように、取れなかった印を外す
+        if meta.get("name") in none:
+            none.pop(meta["name"])
+            _save_none(none, env, policy)
+    return row
 
 
 def clear_cache(env=None, policy=None):
@@ -484,6 +657,7 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
     ph = policy["photos"]
     th = theme_cfg(theme, policy)
     pht = {**ph, "class_name": th["class_name"], "ranks": th.get("ranks") or [ph["rank"]]}
+    pht["commons"] = {**ph["commons"], "deny_titles": frozenset(load_commons_denied(env, policy))}   # 段階82 第4部: 点検で不可にしたファイルは選ばない
     today = today or _d.today()
     sleep = sleep or _t.sleep
     table = load_table(env, policy=policy)
@@ -502,7 +676,7 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             r = table[n]
             if has(r["taxon_id"]):
                 result[n] = "cached"
-                if pp and stale_for_rule(r["taxon_id"], pp, env, policy):          # 段階53: 古い規則の写真は再評価する
+                if pp and stale_for_rule(r["taxon_id"], pp, env, policy) and not checked_ok(r["taxon_id"], env, policy):   # 段階53: 古い規則の写真は再評価する(段階82: 点検済みで可の写真は置き換えない)
                     reeval.append(r)
             elif str(r["taxon_id"]) in review or (n in none and none_active(none[n], today, policy)):
                 result[n] = "none"
@@ -540,6 +714,37 @@ def ensure(names, *, theme="野鳥", env=None, policy=None, http_get, http_bytes
             add_to_table(new_rows, theme, env, policy)
         todo = [r for r in rows if not has(r["taxon_id"]) and str(r["taxon_id"]) not in review]
         unused = {}
+        reg = [r for r in todo if commons_photos.regional(r, pht["commons"])]   # 段階82 第4部 4.3: 地域で種が分かれる鳥は、日本・東アジアの Commons の写真だけ
+        todo = [r for r in todo if r not in reg]
+        for r in reg:
+            if left < 3 or rep["status"] != "ok":
+                result[r["name"]] = "pending"
+                continue
+            sci = ((ph.get("scientific_names") or {}).get("value") or {}).get(r["name"]) or r["scientific"]
+            g4, un4, r4 = commons_photos.fetch_commons_season({**r, "scientific": sci}, http_get=http_get, http_bytes=http_bytes, ph=pht,
+                                                              max_requests=left, today=today, sleep=sleep, season=False, pp=pp,
+                                                              on_got=lambda it: save_photo(it, env, policy))
+            used += r4["requests"]
+            left -= r4["requests"]
+            if g4:
+                result[r["name"]] = "saved"
+                rep["saved"].append(r["name"])
+            else:
+                result[r["name"]] = "none"
+                none[r["name"]] = {"on": today.isoformat(), "reason": un4.get(r["name"]) or "日本・東アジアの写真がない"}
+            if r4["status"] != "ok":
+                rep["status"], rep["stopped"] = r4["status"], r4["stopped"]
+        nf = set(((pp or {}).get("non_flower_species") or {}).get("value") or [])
+        if todo and left >= 2 and rep["status"] == "ok" and nf & {r["name"] for r in todo}:     # 段階82: 見どころが花でない種は開花の規則なし
+            g5, un5, r5 = _fetch_for_theme([r for r in todo if r["name"] in nf], None, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left,
+                                           has=has, skip=load_skip_photos(env, policy), sleep=sleep, today=today)
+            used += r5["requests"]
+            left -= r5["requests"]
+            for item in g5:
+                save_photo(item, env, policy)
+                result[item["row"]["name"]] = "saved"
+            rep["saved"] += [i["row"]["name"] for i in g5]
+            todo = [r for r in todo if r["name"] not in nf or r["name"] in un5]
         if todo and left >= 2 and rep["status"] == "ok":
             got, unused, r2 = _fetch_for_theme(todo, pp, http_get=http_get, http_bytes=http_bytes, pht=pht, left=left, has=has,
                                                skip=load_skip_photos(env, policy), sleep=sleep, today=today)
@@ -663,9 +868,12 @@ def _scientific_fallback(result, none, table, theme, pht, ph, env, policy, today
     import zlib
     sci = (ph.get("scientific_names") or {}).get("value") or {}
     used = 0
+    review = load_review(env, policy)
     for n in [k for k, v in result.items() if v == "none" and k in sci]:
         if left - used < 3:
             break
+        if n in table and str(table[n]["taxon_id"]) in review:
+            continue                                     # 段階82: 点検で「写真なし」にした種は取り直さない
         row = dict(table[n]) if n in table else {"name": n, "scientific": sci[n], "taxon_id": 9_000_000_000 + zlib.crc32(sci[n].encode("utf-8"))}
         row = {**row, "name": n, "scientific": sci[n]}                 # 検索と「学名の記載」の確認は、対応表(指示書の学名)の学名を使う
         if has_cache(row["taxon_id"], env, policy):

@@ -168,7 +168,8 @@ def build_page(parts, *, policy, now, kind_notes=(), photo_for=lambda name: None
 
     def credit(got):
         meta = got[0]
-        out = f'<span class="credit">{esc(h["photo_credit"].format(author=short_author(meta, policy), license=meta["license"]))}</span>'
+        from . import plan_page as PP
+        out = f'<span class="credit">{esc(PP.with_caption_note(meta, h["photo_credit"].format(author=short_author(meta, policy), license=meta["license"]), h))}</span>'
         return out                                              # 段階81 の追記: 状態(開花など)は出さない(段階54 の学名と状態の行をやめた。本人の判断 2026-11-12)
 
     def species_card(name, with_season):

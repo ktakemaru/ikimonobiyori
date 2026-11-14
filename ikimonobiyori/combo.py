@@ -123,7 +123,7 @@ def _window_of(name, sjs, thirds):
                 continue
             for w in x.get("typical") or []:
                 if w.get("start") and w.get("end") and w.get("source_class") == "official":
-                    return (w.get("kind") or {"autumn_leaves": "紅葉"}.get(sj, ""), SP.window_text(w["start"], w["end"], thirds), w.get("publisher") or "",
+                    return (w.get("kind") or {"autumn_leaves": "紅葉"}.get(sj, ""), SP.catalog_window_text(w, thirds), w.get("publisher") or "",
                             w.get("url"))
     return None
 

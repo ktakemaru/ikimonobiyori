@@ -181,4 +181,11 @@ def build(facts, plan, *, policy, photo_for, photo_credit, now, answer=None):
 def author_credit(meta, gp, state_line=None):
     """写真の下の 1 行(撮影者・ライセンス)。段階81 の追記から、呼び出し側は状態を渡さない(state_line は互換のため残す)。"""
     text = gp["html"]["photo_credit"].format(author=short_author(meta, gp["html"]["author_re"]), license=meta["license"])
+    text = with_caption_note(meta, text, gp["html"])
     return text + (" " + state_line if state_line else "")
+
+
+def with_caption_note(meta, credit, html):
+    """段階82 の続き: 写真の記録に caption_note(「写真は夏の葉」など)があれば、説明の頭に必ず付ける。"""
+    note = (html.get("caption_notes") or {}).get((meta or {}).get("caption_note") or "")
+    return html["caption_note_format"].format(note=note, credit=credit) if note else credit

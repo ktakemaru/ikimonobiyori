@@ -159,7 +159,7 @@ def town_spots(town, origin=None):
     for e in SP._all_entries():
         if not e.get("city") or town not in _city_parts(e["city"]):
             continue
-        seasons = [(SP.window_text(w["start"], w["end"], thirds), w.get("kind")) for w in e.get("windows") or []
+        seasons = [(SP.catalog_window_text(w, thirds), w.get("kind")) for w in e.get("windows") or []
                    if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"])]
         if e.get("season_text"):
             seasons.append((e["season_text"], "・".join(x for x in e["kinds"][:2] if x)))
@@ -335,13 +335,14 @@ def species_rows(question, cond, env=None, c=None):
             note = None
             if re.search(r"\d{4}年の記載", r.get("season") or ""):
                 note = R["old_note"]
-            elif r.get("season") and not r.get("start"):
+            elif r.get("season") and not r.get("start") and r["season"] not in SP._year_round_words():   # 通年は「あいまい」ではない(段階82)
                 note = R["vague_note"]
             out.append({"species": sp["name"], "name": r["name"], "prefecture": r.get("prefecture"), "city": r.get("city"),
                         "km": r.get("km"), "km_estimated": r.get("km_estimated"), "season": r.get("season"), "kinds": r.get("kinds") or [],
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
-                        "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"]))})
+                        "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"])),
+                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season", "mountain_site") if r.get(k)}})
     merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
@@ -469,6 +470,12 @@ def species_match_words(question):
     out = []
     for sp in sps:
         out += [w for w in list(sp.get("match") or []) + list(sp.get("includes") or []) + list(sp.get("words") or []) if w not in out]
+    if not out:                                          # 段階84 第1部 C: 種の表にない種は、観察記録の集計の和名(種の名前の辞書)で
+        from . import seasonal_obs as SO
+        try:
+            out = SO.species_in_question(question)
+        except (KeyError, OSError, ValueError):
+            out = []
     return out
 
 

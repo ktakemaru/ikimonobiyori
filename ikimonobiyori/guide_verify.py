@@ -65,7 +65,7 @@ def sentences(body, c=None):
         segs = re.findall(r"[^。！？!?]+[。！？!?]?", line)
         cur = []
         for s in segs:
-            m = re.match(r"^\s*((?:\[[FK]\d{3,}\]\s*)+)(.*)$", s)
+            m = re.match(r"^\s*((?:\[[FKO]\d{3,}\]\s*)+)(.*)$", s)
             if m and (cur or out):
                 if cur:
                     cur[-1] = cur[-1] + m.group(1)
@@ -125,7 +125,7 @@ def _event_period(s, v, c):
 
 
 def check_marked(s, brief, c, allowed=()):
-    facts = {f["id"]: f for f in brief.get("facts") or []}
+    facts = {f["id"]: f for f in (brief.get("facts") or []) + (brief.get("seasonal_obs") or [])}
     cards = {k["id"]: k for k in brief.get("cards") or []}
     errs = []
     rows = []
@@ -150,7 +150,8 @@ def check_marked(s, brief, c, allowed=()):
     bad = [x for x in v["jun"] if x not in u["jun"]]
     if bad:
         errs.append(_err("month_mismatch", s, f"{'・'.join(bad)} が印の事実にない", "印の事実にある時期だけを書く"))
-    typical_talk = GB.has_any(c.get("typical_words") or [], s["clean"]) and all(r.get("kind") in ("typical", None) or r["id"].startswith("K") for r in rows)
+    typical_talk = GB.has_any(c.get("typical_words") or [], s["clean"]) and all(r.get("kind") in ("typical", "seasonal_obs", None) or r["id"].startswith("K") for r in rows)
+    errs += seasonal_obs_errors(s, rows, c)                 # 段階83 第2部: 観察記録の印のある文
     if _now_state(s["clean"], v, c) and not typical_talk:
         cur = [r for r in rows if r.get("kind") == "current"]
         if not cur:
@@ -306,6 +307,15 @@ _PREF_RE = re.compile(r"(北海道|青森県|岩手県|宮城県|秋田県|山�
                       r"愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県)")
 
 
+def _without_obs_phrases(text, c):
+    """段階83 第2部: 「観察記録では」「過去5年の記録では」など、過去の観察の記録の言い方を除いた文(内部の言葉の照合用)。"""
+    for ok in c.get("internal_word_allowed_phrases") or []:
+        text = text.replace(ok, "")
+    if c.get("internal_word_allowed_re"):
+        text = re.sub(c["internal_word_allowed_re"], "", text)
+    return text
+
+
 def common_errors(final_body, question, c):
     """今までの検査の部品(使わない情報源・内部の言葉・作業の事情・最後の質問・引用)+ 範囲の外の都県 + 内部の言葉(この形の語)+ 場所のすり替え。"""
     from . import ask_verify as V
@@ -316,7 +326,8 @@ def common_errors(final_body, question, c):
     for e in V.term_errors(final_body, rules):
         errs.append({"code": e["code"], "line": e.get("line", 0), "sentence": "", "detail": e.get("detail", ""), "fix": "その語・文を書かない"})
     skip = set(c.get("skip_reused_codes") or [])
-    for e in V.internal_word_errors(final_body, rules) + V.process_excuse_errors(final_body, rules) + V.source_rule_errors(final_body, rules) + \
+    obs_body = _without_obs_phrases(final_body, c)      # 段階83 第2部: 「観察記録には…」は過去の観察の記録の話(内部の言葉の決まりで止めない)
+    for e in V.internal_word_errors(obs_body, rules) + V.process_excuse_errors(final_body, rules) + V.source_rule_errors(final_body, rules) + \
             V.quote_errors(final_body, rules):
         if e["code"] in skip:
             continue
@@ -333,9 +344,10 @@ def common_errors(final_body, question, c):
                              "fix": "「紹介サイトによると」のように短く書く(公式かどうかは最後の出典で分かる)"})
     if P.unused_in_text(final_body):
         errs.append({"code": "unused_source", "line": 0, "sentence": "", "detail": "使わない情報源の名前がある", "fix": "その情報源を書かない"})
+    body_iw = obs_body
     for w in c.get("guide_internal_words") or []:
         pat = rf"(?<![A-Za-z0-9_]){re.escape(w)}(?![A-Za-z0-9_])" if w.isascii() else re.escape(w)
-        for ln, line in enumerate(final_body.splitlines(), 1):
+        for ln, line in enumerate(body_iw.splitlines(), 1):
             if re.search(pat, line):
                 errs.append({"code": "internal_word", "line": ln, "sentence": line[:80], "detail": f"内部の言葉「{w}」", "fix": "利用者の語に言い換える"})
     rng = _in_range_prefs()
@@ -353,6 +365,52 @@ def common_errors(final_body, question, c):
     return errs
 
 
+def _seasonal_vocab():
+    if "v" not in _SV:
+        from . import seasonal_obs as SO
+        _SV["v"] = SO.vocabulary()
+    return _SV["v"]
+
+
+_SV = {}
+
+
+def seasonal_obs_errors(s, rows, c, vocab=None):
+    """段階83 第2部: 観察記録の印([O…])のある文。記録の語(過去・例年・記録)があること、今年の状態の言い切りでないこと、
+    書いた種の名前が印の行にあること(保存した集計の和名の中で、印の行と、いっしょに付けた印の事実・カードにないもの)。"""
+    obs = [r for r in rows if r.get("kind") == "seasonal_obs"]
+    if not obs:
+        return []
+    from . import seasonal_obs as SO
+    V = SO.load_policy()["verify"]
+    text = s["clean"]
+    errs = []
+    if not any(w in text for w in V["required_words"]):
+        errs.append(_err("seasonal_obs_not_past", s, "観察記録の文に「過去」「例年」「記録」の語がない",
+                         "「過去5年の観察記録では、この時期の○○で…の記録が多くなっています」のように、過去の記録の話として書く"))
+    plain = text
+    for w in V.get("period_words") or []:
+        plain = plain.replace(w, "")
+    if re.search(V["now_assert_re"], plain) or re.search(V["state_verbs_re"], text):
+        errs.append(_err("seasonal_obs_now", s, "観察記録を今年の状態の言い切りにしている",
+                         "今年の状態にしない(「今、…が咲いています」「今週末は…が見られます」と書かない)。過去の記録の傾向として書く"))
+    allowed = {n for r in obs for n in r.get("species") or []}
+    flowering = {n for r in obs for n in r.get("flowering") or []}
+    if re.search(V["flower_words_re"], text):              # 指示書 2.2: 開花の注釈の少ない種を「咲く」と書かない
+        nofl = sorted(n for n in allowed if n in text and n not in flowering and any(n in (r.get("species") or []) for r in obs if r.get("category") == "plants"))
+        if nofl:
+            errs.append(_err("seasonal_obs_flower", s, f"{'・'.join(nofl)} は開花の記録が少なく、咲いていると書けない",
+                             "開花の注釈の数がある種だけ「花の記録が多い」と書く。ほかは「記録が多い」まで"))
+    others = " ".join(r.get("content") or " ".join(r.get("facts") or []) for r in rows if r.get("kind") != "seasonal_obs")
+    vocab = _seasonal_vocab() if vocab is None else vocab
+    bad = sorted({n for n in vocab if len(n) >= 2 and n in text and n not in allowed and n not in others
+                  and not any(n in a for a in allowed)})
+    if bad:
+        errs.append(_err("seasonal_obs_species", s, f"種の名前 {'・'.join(bad)} が印の観察記録の行にない",
+                         "印の観察記録の行にある種の名前だけを書く"))
+    return errs
+
+
 def final_sources(cited, c):
     f = c["final"]
     out, seen = [], set()
@@ -361,6 +419,9 @@ def final_sources(cited, c):
         if not key or key in seen:                       # 段階76 第5部 1: URL のない出典は出さない
             continue
         seen.add(key)
+        if r.get("kind") == "seasonal_obs":               # 段階83 第2部: 観察記録の集計の出典は 1 行
+            out.append("・" + r["source"] + " " + r["url"])
+            continue
         if r["id"].startswith("K"):
             note = f["card_note"].format(date=_md(r.get("checked_on")) or "日付不明")
         else:
@@ -448,7 +509,9 @@ def check(draft, brief, c=None, env=None):
     errs += distance_errors(sents, brief, c)               # 段階78 第1部 3
     errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
-    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
+    errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
+    errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
+    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
     final = body.rstrip(NL) + NL + ((NL + c["final"]["sources_heading"] + NL + NL.join(src) + NL) if src else "")
@@ -458,6 +521,140 @@ def check(draft, brief, c=None, env=None):
         warns.append(f"長さ {n} 字(目安 {c['length']['min']}〜{c['length']['max']} 字)")
     return {"ok": not errs, "errors": errs, "final": final, "checked": len(sents), "marked": marked, "cited": cited_ids, "warnings": warns,
             "knowledge_places": parsed["knowledge"]}
+
+
+# ---- 段階82 第2部: 種の見分け方・特徴の裏取り ----
+
+def _trait_hits(text, c):
+    T = c["species_traits"]
+    n = len(T["words_re"])
+    return ({i for i, p in enumerate(T["words_re"]) if re.search(p, text or "")}
+            | {n + i for i, p in enumerate(T.get("clause_words_re") or []) if re.search(p, text or "")})
+
+
+def _clause_species(clean, c):
+    """段階84 第1部 B: 色・大きさの語(clause_words_re)のある節(読点・句点で区切る)の種の名前。"""
+    from . import species_alias as SA
+    out = []
+    for part in re.split(r"[、。,]", clean):
+        if any(re.search(p, part) for p in c["species_traits"].get("clause_words_re") or []):
+            out += [n for n in SA.species_in(part) if n not in out]
+    return out
+
+
+def trait_errors(sents, brief, c):
+    """種の名前と見分け・特徴の語が同じ文にあるとき、その種のその特徴を書いたカード(か事実)の印を求める。
+    印がなければ trait_without_card。印の行に、その種の書き方と同じ種類の特徴の語が一緒に出てこなければ trait_wrong_card
+    (ツバキのカードの印でサザンカの特徴を書く、を止める)。季節・環境の一般的な説明(特徴の語がない文)は照らさない。"""
+    from . import species_alias as SA
+    T = c["species_traits"]
+    groups = SA.word_groups()
+    ex = c.get("species_blob_exclude_re") or r"(?!)"
+    by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("cards") or [])}
+    errs = []
+    for s in sents:
+        clean = re.sub(ex, "", s["clean"])
+        sps = [n for n in SA.species_in(clean) if n not in (T.get("group_words") or [])]
+        hits = _trait_hits(clean, c)
+        if T.get("clause_form_re") and not re.search(T["clause_form_re"], re.sub(r"\s*\[[^\]]*\]\s*", "", clean).strip()):
+            hits = {h for h in hits if h < len(T["words_re"])}    # 段階84 の続き B: 見分けを言い切る形でない文では、色・大きさの語を照らさない
+        if hits and min(hits) >= len(T["words_re"]):        # 色・大きさの語だけの文: その語のある節の種だけを照らす
+            sps = [n for n in _clause_species(clean, c) if n in sps] or sps   # 節に種がない(「白い大きな鳥がいたら、ハクチョウです」)なら文の種
+        if not sps or not hits:
+            continue
+        rows = [by[i] for i in s["ids"] if i in by]
+        if not rows:
+            errs.append(_err(T["code"], s, f"{'・'.join(sps)}の見分け方・特徴の文に、カードの印がない", T["fix"]))
+            continue
+        clause_only = min(hits) >= len(T["words_re"])
+
+        def backed(n):
+            ws = groups.get(n, {n})
+            for r in rows:
+                head = (r.get("title") or "") + " " + (r.get("subject") or "")
+                named = clause_only and any(w in head for w in ws)   # 段階84: 色・大きさの語は、題・主語でその種のカードなら、文に種の名前がなくてよい(「幼鳥は…白くなる」)
+                for l in [r.get("title") or ""] + list(r.get("facts") or []) + [r.get("content") or ""]:
+                    if l and (_trait_hits(l, c) & hits) and (named or any(w in l for w in ws)):
+                        return True
+            return False
+        bad = [n for n in sps if not backed(n)]
+        if bad:
+            errs.append(_err(T["wrong_card_code"], s, f"印({'・'.join(s['ids'])})に、{'・'.join(bad)}のこの特徴が書かれていない", T["wrong_card_fix"]))
+    return errs
+
+
+def _mentions(text, names_by_side):
+    """文の中の種の書き方の位置 → [(始まり, 終わり, 側)]。長い書き方の中の短い書き方(ソシンロウバイの中のロウバイ)は数えない。"""
+    def script(ch):
+        return "h" if "ぁ" <= ch <= "ゟ" else "k" if "゠" <= ch <= "ヿ" and ch != "・" else None
+    hits = []
+    for side, names in names_by_side.items():
+        for n in names:
+            for m in re.finditer(re.escape(n), text):
+                if m.start() and script(n[0]) and script(text[m.start() - 1]) == script(n[0]):
+                    continue                             # ひらがな・カタカナの長い語の一部(「ぶんごうめ」の「うめ」)は数えない
+                hits.append((m.start(), m.end(), side))
+    return [h for h in hits if not any(o[0] <= h[0] and h[1] <= o[1] and (o[1] - o[0]) > (h[1] - h[0]) for o in hits)]
+
+
+def _attributed(clause, pos, ments, X, end=None):
+    """特徴の語(pos の位置)が、節のどちらの側の種のことか。確かなときだけ側を返す(分からなければ None)。
+    比べる相手の書き方(「ツバキより」「ツバキと違って」「ツバキのように」)は数えない。両方の側があれば、主語の印(は・が・も)のある側が 1 つのときだけ。"""
+    if end is not None:                                  # 段階82 の続き(本人の判断 2026-11-13 の 3): 特徴の語のすぐ後ろに種の名前が続く形(「花ごと落ちるサザンカ」)
+        for e in X["modifier_endings"]:                 # 連体の語尾だけ(「落ちる」の「る」)。「落ちるが」「大きく」「湿地に」のつなぎは数えない
+            if clause.startswith(e, end):
+                hit = [s for a, _b, s in ments if a == end + len(e)]
+                if hit:
+                    return hit[0]
+    own = [(a, b, s) for a, b, s in ments if not re.match(X["compare_re"], clause[b:])]
+    sides = {s for _a, _b, s in own}
+    if not sides:
+        return None
+    if len({s for _a, _b, s in ments}) == 1:
+        return sides.pop()
+    # 節に両方の側の書き方がある: 特徴の語のすぐ前の主語の印(は・が・も)のある書き方の側。特徴の語のあとに、主語の印のない
+    # もう一方の側の書き方(「小ぶりのロウバイより」)があれば決めない
+    topics = [(a, s) for a, b, s in own if a < pos and re.match(X["topic_re"], clause[b:])]
+    if not topics:
+        return None
+    who = max(topics)[1]
+    after = [s for a, b, s in ments if a > pos and s != who and not re.match(X["topic_re"], clause[b:])]
+    return None if after else who
+
+
+def contrast_errors(sents, brief, c):
+    """段階82 の続き(本人の判断 2026-11-13 の 1): 印のカードが 2 つの種を比べる見分け方のカード(項目 contrasts)のとき、
+    文が「どちらの種が、どの特徴か」の組み合わせと逆なら trait_reversed(「サザンカは花ごと落ちます [K…]」)。
+    確かなときだけ止める: 否定の形(落ちず・ではなく)・どちらの種のことか分からない節は照らさない。ほかの文の意味は照らさない。"""
+    from . import species_alias as SA
+    X = c["species_traits"]["contrast"]
+    groups = SA.word_groups()
+    by = {r["id"]: r for r in brief.get("cards") or []}
+    errs = []
+    for s in sents:
+        items = [it for i in s["ids"] for it in (by.get(i) or {}).get("contrasts") or []]
+        if not items:
+            continue
+        bad = None
+        for clause in [x for x in re.split(X["split_re"], s["clean"]) if x]:
+            for it in items:
+                names = {side: sorted({w for n in it[side] for w in (groups.get(n) or frozenset()) | {n}}, key=len, reverse=True) for side in ("a", "b")}
+                ments = _mentions(clause, names)
+                if not ments:
+                    continue
+                for side in ("a", "b"):
+                    rx = it.get(side + "_re")
+                    if not rx:
+                        continue
+                    for m in re.finditer(rx, clause):
+                        if re.match(X["negation_re"], clause[m.end():]):
+                            continue                     # 否定の形(「花ごと落ちず」「花ごと落ちることはない」)は照らさない
+                        who = _attributed(clause, m.start(), ments, X, end=m.end())
+                        if who and who != side:
+                            bad = bad or (it[who][0], m.group(0), it[side][0])
+        if bad:
+            errs.append(_err(X["code"], s, f"{bad[0]}に、{bad[2]}の特徴「{bad[1]}」を書いている(印のカードと逆)", X["fix"]))
+    return errs
 
 
 # ---- 段階78 ----

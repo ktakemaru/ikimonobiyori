@@ -156,6 +156,11 @@ def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
         return {"block": False, "reasons": [], "why": ex}
     answers = [i for i, k in enumerate(calls) if _matches(k, c["answer_patterns"])]
     briefs = [i for i, k in enumerate(calls) if _matches(k, c.get("brief_patterns") or [])]
+    photo = [i for i, k in enumerate(calls) if _matches(k, c.get("photo_reply_patterns") or [])]
+    if photo and not (briefs and briefs[-1] > photo[-1]) and not (answers and answers[-1] > photo[-1]):   # 段階82 第4部 4.5: 写真を直した回
+        if not msg.strip() or (page_ok(msg) if page_ok else False):
+            return {"block": False, "reasons": [], "why": "photo_fix"}
+        return {"block": True, "why": "photo_fix_mismatch", "reasons": [c["reasons"]["photo_reply"]]}
     if briefs and (not answers or briefs[-1] > answers[-1]):        # 段階75: ガイドの形(ask brief → 書く → ask verify --brief)
         return _decide_guide(msg, calls, briefs[-1], c, guide_ok, page_ok)
     if not answers:

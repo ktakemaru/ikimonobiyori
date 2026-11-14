@@ -94,7 +94,68 @@ def validate(card, strict_subject=False):
     for k in c["source_required"]:
         if not src.get(k):
             errs.append(f"出典の {k} がない")
+    errs += contrast_errors(card.get("contrasts"))
+    errs += special_errors(card)
     return errs
+
+
+def special_errors(card):
+    """段階83 第3部・第4部: 季節の暦(calendar)と小話(tale)の項目の形。"""
+    from . import guide_brief as GB
+    errs = []
+    cal = card.get("calendar")
+    if cal is not None:
+        C = GB.cfg()["calendar"]
+        if not isinstance(cal, dict) or cal.get("environment") not in C["environments"]:
+            errs.append(f"calendar.environment は {C['environments']} のどれか")
+        elif not cal.get("months") or any(not isinstance(m, int) or not 1 <= m <= 12 for m in cal["months"]):
+            errs.append("calendar.months は 1〜12 の月の一覧")
+        elif cal.get("target") not in C["targets"]:
+            errs.append(f"calendar.target は {C['targets']} のどれか")
+        elif not cal.get("where"):
+            errs.append("calendar.where(どの地域・標高の話か)がない")
+    tale = card.get("tale")
+    if tale is not None and (not isinstance(tale, dict) or not tale.get("topic")):
+        errs.append("tale.topic(何の話か: 名前の由来・人との関わり・歴史・文学や行事)がない")
+    return errs
+
+
+def contrast_errors(items):
+    """段階82 の続き(本人の判断 2026-11-13 の 1): 2 つの種を比べる見分け方のカードの項目 contrasts
+    [{a: [種の名前], a_re: 特徴の語(正規表現), b: [種の名前], b_re: 特徴の語(正規表現。片側だけの比べ方なら空)}] の形の検査。"""
+    if items is None:
+        return []
+    if not isinstance(items, list) or not items:
+        return ["contrasts は 1 つ以上の項目の配列"]
+    errs = []
+    for i, it in enumerate(items):
+        if not isinstance(it, dict):
+            errs.append(f"contrasts[{i}] がオブジェクトでない")
+            continue
+        for side in ("a", "b"):
+            names = it.get(side)
+            if not isinstance(names, list) or not names or not all(isinstance(n, str) and n for n in names):
+                errs.append(f"contrasts[{i}].{side} は種の名前の配列")
+            try:
+                re.compile(it.get(side + "_re") or "")
+            except re.error as e:
+                errs.append(f"contrasts[{i}].{side}_re が正規表現として読めない: {e}")
+        if not it.get("a_re"):
+            errs.append(f"contrasts[{i}].a_re(a の種の特徴の語)が要る")
+        if set(it.get("a") or []) & set(it.get("b") or []):
+            errs.append(f"contrasts[{i}] の a と b に同じ種")
+    return errs
+
+
+def set_contrasts(title, items, *, at, place=None, note=None, env=None):
+    """カードに contrasts(どちらの種が、どの特徴か)を付ける(控えを残す)。特徴の語は出典の本文と照らしてから(照らすのは付ける人)。"""
+    def fn(card):
+        card["contrasts"] = items
+        errs = validate(card)
+        if errs:
+            raise ValueError("; ".join(errs))
+        return card
+    return _change(title, place, fn, "set_contrasts", at=at, note=note, env=env)
 
 
 def add(card, env=None, strict_subject=False):
@@ -209,15 +270,54 @@ def usable(card, centers=None):
             return False, "facility_pending"
         return True, None
     if conf in g["public_confidences"]:
-        if not str(card.get("rights") or "").startswith(g["rights_confirmed_prefix"]):
-            return False, "rights_unconfirmed"
+        rights = str(card.get("rights") or "")
+        if rights.startswith(g["rights_confirmed_prefix"]):
+            return True, None
+        if g.get("no_policy_prefix") and rights.startswith(g["no_policy_prefix"]):   # 段階84 の続き(本人の判断 2026-11-11・11-13・11-15)
+            from urllib.parse import urlparse
+            host = (urlparse((card.get("source") or {}).get("url") or "").hostname or "").lower()
+            if re.search(g["no_policy_hosts_re"], host):
+                return True, "no_policy_municipal"
+            return False, "no_policy_not_municipal"
+        return False, "rights_unconfirmed"
     return True, None
 
 
-def load_shown(env=None, centers=None):
-    """答えに出してよいカードだけ(承認されれば自動で出る)。"""
+def is_special(card):
+    """段階83 第3部・第4部: 季節の暦(calendar)と小話(tale)のカード。ふつうの選び方では使わず、資料が決まった数だけ足す。"""
+    return bool(card.get("calendar") or card.get("tale"))
+
+
+def calendar_tags(env=None):
+    """段階83 第3部: 既存のカードに付けた季節の暦の札(データ置き場の knowledge/calendar_tags.jsonl。1 行 1 件:
+    {title, place, environment, months, target, where})。カードは複製しない(ふつうの選び方もそのまま)。"""
+    p = Path(data_path(PT.policy()["cards"].get("calendar_tags_file") or "knowledge/calendar_tags.jsonl", env))
+    if not p.exists():
+        return []
+    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
+def calendar_pool(env=None, centers=None):
+    """季節の暦の材料: calendar の項目を持つカードと、札を付けた既存のカード(札の calendar を付けた写し)。"""
+    rows = load_shown(env, centers, include_special=True)
+    tags = {}
+    for t in calendar_tags(env):
+        tags[(t.get("title"), t.get("place"))] = t
+    out = []
+    for r in rows:
+        if r.get("calendar"):
+            out.append(r)
+            continue
+        t = tags.get((r.get("title"), r.get("place")))
+        if t and not is_special(r):
+            out.append({**r, "calendar": {k: t[k] for k in ("environment", "months", "target", "where") if k in t}, "calendar_tag": True})
+    return out
+
+
+def load_shown(env=None, centers=None, include_special=False):
+    """答えに出してよいカードだけ(承認されれば自動で出る)。季節の暦・小話のカードは include_special のときだけ。"""
     cs = _centers() if centers is None else centers
-    return [r for r in load(env) if usable(r, cs)[0]]
+    return [r for r in load(env) if usable(r, cs)[0] and (include_special or not is_special(r))]
 
 
 def _months(card):
@@ -309,3 +409,49 @@ def answer_errors(text, cards, env=None):
         if s not in allowed:
             errs.append({"code": "guide_eye_not_from_card", "detail": s[:40]})
     return errs
+
+
+# ---- 段階82 第3部 2: カードの主題のテーマ(苔・滝・湿原など。data/ask/themes.yaml) ----
+
+def themes_cfg():
+    from . import yamlcache
+    from .paths import DATA_FILES_DIR
+    return yamlcache.load(DATA_FILES_DIR / "ask" / "themes.yaml")
+
+
+def themes_of(card, tc=None):
+    """カード → テーマの名前の一覧(題・主題にテーマの語があるか、事実の min_fact_hits 行以上にあるもの)。"""
+    tc = tc or themes_cfg()
+    head = " ".join([card.get("title") or "", card.get("subject") or ""])
+    out = []
+    for t in tc["themes"]:
+        ws = t["words"]
+        n = sum(1 for f in card.get("facts") or [] if any(w in f for w in ws))
+        if any(w in head for w in ws) or n >= tc["min_fact_hits"]:
+            out.append(t["name"])
+    return out
+
+
+NL_ = chr(10)
+
+
+def tag_themes(env=None, dry_run=False):
+    """今あるカードに themes 欄を付ける(題と本文の語から機械的に)。→ {cards, tagged, by_theme}。カードの本体はデータ置き場の下。"""
+    rows = load(env)
+    tc = themes_cfg()
+    by, tagged = {}, 0
+    for r in rows:
+        ts = themes_of(r, tc)
+        if ts:
+            tagged += 1
+            for t in ts:
+                by[t] = by.get(t, 0) + 1
+        if ts:
+            r["themes"] = ts
+        else:
+            r.pop("themes", None)
+    if not dry_run and rows:
+        p = path(env)
+        p.write_text("".join(json.dumps(r, ensure_ascii=False) + NL_ for r in rows), encoding="utf-8")
+    return {"cards": len(rows), "tagged": tagged, "by_theme": by}
+

@@ -912,6 +912,15 @@ def main(argv=None, http_get=None):
     p.add_argument("--out-dir", help="作業フォルダ(省くと直前の計画。24時間より前・なければ作らない)")
     p.add_argument("--open", action="store_true", help="手元のブラウザで開く")
     p.add_argument("--answer", default=None, help="答えの文章のファイル(省略: 作業フォルダの final.txt か answer.txt)。ページの結論・順位に使う")
+    p = sub.add_parser("photo-review", help="段階82 第4部: 写真の点検。list(未点検・点検済みの一覧)/ set --name <和名> --verdict ok|ng [--reason]")
+    p.add_argument("action", choices=["list", "set", "none"])   # none: 合う写真がなかった種を写真なしにする(取り直さない)
+    p.add_argument("--name", default=None)
+    p.add_argument("--verdict", choices=["ok", "ng"], default=None)
+    p.add_argument("--reason", default=None)
+    p.add_argument("--unchecked", action="store_true", help="list: 未点検の写真だけ")
+    p = sub.add_parser("photo-reply", help="段階82 第4部 4.5: 写真を指摘されて直したあとの最後の文(決まった短い文 + リンク)。出力を一字一句そのまま送る")
+    p.add_argument("--name", action="append", default=[], help="直した種の和名(複数可)")
+    p.add_argument("--url", default=None)
     p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
     p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
@@ -969,7 +978,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--month", type=int)
     p.add_argument("--now", help="行事の質問: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
     p = sub.add_parser("knowledge", help="ネイチャーガイドの知識カード(段階59)。add|list|search|show|backup(段階60。commit だけ。push は本人)|audit-subject(段階72。主語のない文の一覧)")
-    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject", "narrative", "rename", "retire", "add-fact"])   # 段階78: narrative = カードの文に語りの種類の項目を足す。段階80: rename・retire・add-fact(控えを残す)
+    p.add_argument("action", choices=["add", "list", "search", "show", "backup", "audit-subject", "narrative", "rename", "retire", "add-fact", "tag-themes", "contrasts"])   # contrasts: 段階82 の続き(2 つの種の見分け方の項目を --file の JSON で付ける)。段階78: narrative = カードの文に語りの種類の項目を足す。段階80: rename・retire・add-fact(控えを残す)
     p.add_argument("--new-title", help="rename: 新しい題名")
     p.add_argument("--reason", help="retire: 取り下げの理由(rename・add-fact では控えに残すメモ)")
     p.add_argument("--fact", help="add-fact: 足す事実(出典の本文と照らしてから)")
@@ -1114,6 +1123,17 @@ def main(argv=None, http_get=None):
             K.path().write_text("".join(json.dumps(r, ensure_ascii=False) + chr(10) for r in rows), encoding="utf-8")
             print(f"{n} 枚に語りの種類を足しました(全 {len(rows)} 枚)")
             return 0
+        if a.action == "contrasts":                      # 段階82 の続き(本人の判断 2026-11-13 の 1)
+            if not a.title or not a.file:
+                print("--title <題名> と --file <contrasts の JSON(配列)> が要ります", file=sys.stderr)
+                return 1
+            try:
+                card = K.set_contrasts(a.title, json.loads(Path(a.file).read_text(encoding="utf-8")), at=_clock().isoformat(), place=a.place, note=a.reason)
+            except ValueError as ex:
+                print(str(ex), file=sys.stderr)
+                return 1
+            _out({"action": a.action, "title": card["title"], "contrasts": len(card["contrasts"])})
+            return 0
         if a.action in ("rename", "retire", "add-fact"):              # 段階80 F(提案5): 題名の変更・取り下げ(データ置き場の控え knowledge/card_changes.jsonl)
             if not a.title:
                 print("--title <今の題名> が要ります", file=sys.stderr)
@@ -1130,6 +1150,9 @@ def main(argv=None, http_get=None):
                 print(str(ex), file=sys.stderr)
                 return 1
             _out({"action": a.action, "title": card["title"], "place": card.get("place"), "retired": bool(card.get("retired"))})
+            return 0
+        if a.action == "tag-themes":                     # 段階82 第3部 2: カードの主題にテーマ(苔・滝など)を付ける
+            _out(K.tag_themes())
             return 0
         if a.action == "audit-subject":                  # 段階72 第2部 1
             _out(K.subject_audit())
@@ -1279,7 +1302,10 @@ def main(argv=None, http_get=None):
             _out({"marked": n})
             return 0
         rows = WM.targets(t)
-        _out({"now": t.isoformat(), "count": len(rows), "pages": rows})
+        from . import seasonal_obs as SO                 # 段階83 第2部: 観察記録の集計(有効期間 90 日)の取り直しの要る数
+        so = SO.status(t)
+        _out({"now": t.isoformat(), "count": len(rows), "pages": rows,
+              **({"inat_seasonal": {"missing": so["missing"], "how": SO.load_policy()["warm_how"]}} if so["missing"] else {})})
         return 0
     if a.step == "vc-record":
         from . import page_cache as PC
@@ -1306,6 +1332,39 @@ def main(argv=None, http_get=None):
     if a.step == "coverage":                             # 段階72 第4部 1
         from . import coverage as CV
         sys.stdout.flush(); sys.stdout.buffer.write(CV.table().encode("utf-8"))
+        return 0
+    if a.step == "photo-review":                         # 段階82 第4部
+        from . import guide_photos as GPh
+        if a.action == "list":
+            rows = [{"name": r["name"], "taxon_id": r["taxon_id"], "path": r["path"], "photo_page": r["meta"].get("photo_page"),
+                     "source": r["meta"].get("source") or "inaturalist", "verdict": (r["check"] or {}).get("verdict"),
+                     "reason": (r["check"] or {}).get("reason")} for r in GPh.cached_photos()]
+            if a.unchecked:
+                rows = [r for r in rows if not r["verdict"]]
+            _out({"count": len(rows), "photos": rows})
+            return 0
+        tbl = GPh.load_table()
+        if a.action == "none":
+            try:
+                _out({"name": a.name, "taxon_id": GPh.mark_no_photo(a.name, a.reason or "", today=_clock().date()), "no_photo": True})
+            except ValueError as e:
+                print(str(e), file=sys.stderr)
+                return 2
+            return 0
+        hits = [r for r in GPh.cached_photos() if r["name"] == a.name]
+        if not a.name or not a.verdict or not hits:
+            print("--name(キャッシュに写真がある和名)と --verdict が要る", file=sys.stderr)
+            return 2
+        _out(GPh.set_check(hits[0]["taxon_id"], a.verdict, a.reason, today=_clock().date()) | {"in_table": a.name in tbl})
+        return 0
+    if a.step == "photo-reply":                          # 段階82 第4部 4.5
+        from . import guide_answer_page as GAP
+        try:
+            text = GAP.photo_reply(a.name, a.url, _clock())
+        except GAP.ReplyError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
         return 0
     if a.step == "page-reply":                           # 段階81 の続き 1
         from . import guide_answer_page as GAP

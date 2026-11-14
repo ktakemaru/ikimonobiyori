@@ -9,6 +9,7 @@ import re
 from datetime import date
 from urllib.parse import urlparse
 
+from . import species_alias as SA
 from . import yamlcache
 from .paths import DATA_FILES_DIR
 
@@ -46,7 +47,8 @@ def resolve_all(question, c=None):
     for sp in c["species"]:
         for w in sorted(sp["words"], key=len, reverse=True):
             for m in re.finditer(re.escape(w), q):
-                hits.append((m.start(), m.end(), sp))
+                if SA.short_ok(q, m.start(), m.end()):     # 段階82 第1部 3: 短いひらがなの語(「ふじさん」のふじ)を種にしない
+                    hits.append((m.start(), m.end(), sp))
     keep = []
     for a, b, sp in sorted(hits, key=lambda x: (x[0], -(x[1] - x[0]))):
         if any(a >= a2 and b <= b2 and (a, b) != (a2, b2) for a2, b2, _ in hits):
@@ -55,10 +57,13 @@ def resolve_all(question, c=None):
             keep.append(_sp_doc(sp))
     if keep:
         return keep
+    found, rest = [], q                                   # 段階82 第1部: 質問に出たカタログの種をすべて(「ツバキとサザンカ」は 2 つ。出た順)
     for k in _catalog_kinds():
-        if k in q:
-            return [{"name": k, "match": [k], "words": [k], "includes": []}]
-    return []
+        i = rest.find(k)
+        if i >= 0:
+            found.append((i, k))
+            rest = rest.replace(k, "\0" * len(k))
+    return [{"name": k, "match": [k], "words": [k], "includes": []} for _i, k in sorted(found)]
 
 
 def resolve_species(question, c=None):
@@ -137,6 +142,21 @@ def window_text(start, end, thirds):
         return cfg()["text"]["year_round"]
     a, b = _third(start, thirds), _third(end, thirds)
     return a if a == b else f"{a}〜{b}"
+
+
+def catalog_window_text(w, thirds):
+    """段階83 第1部(段階82 の続き 2 の本人の判断 5): 名所カタログの窓が月まるごと(1 日〜末日)で、元の記載(note)に旬の語がないときは、
+    月だけの書き方(「1月〜3月」)。それ以外は window_text と同じ。"""
+    import calendar
+    s, e = str(w.get("start") or ""), str(w.get("end") or "")
+    note = w.get("note") or ""
+    if (len(s) == 5 and len(e) == 5 and s.endswith("-01") and note and "旬" not in note
+            and int(e[3:]) == calendar.monthrange(2001, int(e[:2]))[1]):
+        from . import observations as O
+        if not O.is_year_round({"start": s, "end": e}):
+            a, b = int(s[:2]), int(e[:2])
+            return f"{a}月" if a == b else f"{a}月〜{b}月"
+    return window_text(w["start"], w["end"], thirds)
 
 
 def _km(point, city, origin, cat_pol):
@@ -231,12 +251,50 @@ def gather(sp, origin, c=None, env=None):
                 if r.get("season") and k2 not in rows:
                     rows[k2] = {**r, "km": rows[k]["km"], "km_estimated": rows[k]["km_estimated"]}
                 continue
+            prev = dict(rows[k])
+            sec = _secondary_of(prev, r, thirds) if r.get("official") and not prev.get("official") else None
             if not rows[k]["season"] and r.get("season"):
                 rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=r["official"], publisher=r.get("publisher") or "")
+                if sec:
+                    rows[k]["secondary_season"] = sec
+            elif r.get("official") and r.get("start") and r.get("season") and not rows[k].get("official"):
+                # 段階82 の続き(本人の判断 2026-11-13 の 4): 同じ名所の公式の記録は、紹介サイト由来の時期より先に使う(名所の行と全体の目安が公式に合う)
+                rows[k].update(season=r["season"], start=r["start"], end=r["end"], url=r["url"], official=True, publisher=r.get("publisher") or "",
+                               peak=r.get("peak"), **{"from": "record"})
+                if sec:
+                    rows[k]["secondary_season"] = sec
+            elif r.get("official") and not r.get("start") and not prev.get("official") and prev.get("start") and prev.get("end"):
+                # 段階84 第1部 E: 公式の記録に時期がない(「冬には…確認できる」)とき、紹介サイト由来の時期は「紹介サイトによると」の行で残す
+                rows[k].update(season=None, start=None, end=None, url=r["url"], official=True, publisher=r.get("publisher") or "", **{"from": "record"})
+                rows[k]["secondary_season"] = {"season": prev.get("season") or window_text(prev["start"], prev["end"], thirds),
+                                               "publisher": prev.get("publisher") or "", "url": prev.get("url")}
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
+    for r in rows.values():                               # 段階84 第1部 A: 山の地点(sites.yaml)に結びつく名所は、都県の一覧の外でも山の地点の距離で範囲を決める
+        if r.get("km") is None:
+            site = mountain_site(r.get("name"))
+            if site:
+                r["km"], r["km_estimated"] = CM.range_from(cat_pol, site, origin)["km"], True
+                r["mountain_site"] = site["name"]
     return list(rows.values())
+
+
+def _base_name(name):
+    return re.sub(r"[(（].*$", "", name or "").strip()
+
+
+def mountain_site(name):
+    """段階84 第1部 A: 名所の名前(「乗鞍岳(畳平周辺)」)→ 括弧の前の名前が同じ山の地点(sites.yaml の kind: mountain の「乗鞍岳(剣ヶ峰)」)。なければ None。"""
+    from . import yamlcache
+    from .paths import SITES_PATH
+    b = _base_name(name)
+    if not b:
+        return None
+    for st in (yamlcache.load(SITES_PATH) or {}).get("sites") or []:
+        if st.get("kind") == "mountain" and st.get("lat") is not None and _base_name(st.get("name")) == b:
+            return st
+    return None
 
 
 
@@ -246,7 +304,7 @@ def _catalog_row(rows, k, e, t, km, est, w, kinds, thirds, P):
             "name": e["name"], "prefecture": t.get("prefecture"), "city": t.get("city"), "km": km, "km_estimated": est,
             "kinds": kinds,
             "start": w["start"] if w else None, "end": w["end"] if w else None,
-            "season": window_text(w["start"], w["end"], thirds) if w else None,
+            "season": catalog_window_text(w, thirds) if w else None,
             "url": w["source_url"] if w else next((s.get("url") for s in e.get("sources") or [] if not P.unused_source(s.get("url"))), None),
             "official": bool(w) and _official(w["source_url"], not (w.get("source_class") == "secondary" or w.get("unapproved_host"))),
             "publisher": _publisher(w["source_url"], e) if w else "",
@@ -269,7 +327,17 @@ def _season_of_other_kind(text, kinds, entry_kinds):
     if not text:
         return False
     others = [k.get("kind") for k in entry_kinds or [] if isinstance(k, dict) and k.get("kind") and k.get("kind") not in kinds]
-    return any(text.startswith(o) for o in others) and not any(k in text for k in kinds)
+    if any(text.startswith(o) for o in others) and not any(k in text for k in kinds):
+        return True
+    # 段階82 の続き(本人の判断 2026-11-13 の 4): 時期の文がほかの種の名前(書き方の違いを含む。「ウメ・ツバキ・サクラ」)だけを挙げ、
+    # 聞かれた種の名前(書き方の違いを含む)がないときも、その種の時期にしない(神代植物公園の「春の植物(ウメ・ツバキ・サクラ)」をサザンカの時期にしない)
+    if not re.search(r"\d+月", text):                         # 月の書かれた時期の文だけ(「通年(秋〜春にカモ・シギ)」は名所全体の話なので外さない)
+        return False
+    groups = SA.word_groups()
+    forms = lambda n: set(groups.get(n) or ()) | {n}             # noqa: E731
+    mine = set().union(*(forms(k) for k in kinds)) if kinds else set()
+    theirs = set().union(*(forms(o) for o in others)) if others else set()
+    return any(w in text for w in theirs if len(w) >= 2) and not any(w in text for w in mine)
 
 
 def _old_year(r, season, c=None):
@@ -295,7 +363,7 @@ def _records(match, env=None, sp=None, c=None):
     out = []
     for sj in ("flowers", "birds"):
         try:
-            rows = O.read_records(sj, env, opol)
+            rows = O.read_records(sj, env, opol, include_themes=True)   # 段階82: テーマ(苔)の名所もここでは引く
         except (OSError, ValueError, KeyError):
             continue
         for r in rows:
@@ -305,6 +373,10 @@ def _records(match, env=None, sp=None, c=None):
             seen = window_text(win[0], win[1], thirds) if win else O.end_only_text(O.split_peak(r.get("typical"), opol)[0])   # 段階69 第7部: 「7月上旬まで」
             peak = O.peak_text(r.get("typical"), opol)
             season = seen
+            if win and month_only(r.get("typical")):    # 段階82 の続き(本人の判断 2026-11-13 の 1): 月だけの記載(「11月」)は旬を作らず月のまま
+                season = month_only(r.get("typical"))
+            if (r.get("typical") or "").strip() in _year_round_words():   # 段階82 第3部 1: 季節のない名所(苔など)
+                season, peak = r["typical"].strip(), None
             if peak:                                  # 段階81 第1部 2: 見られる期間と、数が多い時期を分けて書く
                 T = cfg()["text"]
                 season = T["season_peak"].format(season=seen, peak=peak) if seen else T["peak_only"].format(peak=peak)
@@ -312,8 +384,34 @@ def _records(match, env=None, sp=None, c=None):
                         "start": win[0] if win else None, "end": win[1] if win else None, "peak": peak,
                         "season": _old_year(r, season, c),
                         "url": r.get("url"), "official": _official(r.get("url"), r.get("source_class") == "official"),
-                        "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj})
+                        "publisher": P.clean(r.get("publisher")) or _publisher(r.get("url")), "care": None, "from": "record", "subject": sj,
+                        "notice": r.get("notice"), "closed_period": r.get("closed_period"), "best_conditions": r.get("best_conditions")})
     return out
+
+
+def month_only(text):
+    """例年の時期の記載が月だけ(「11月」「11月〜12月」)なら、その書き方(空白を除く)。旬・日のある記載は None。"""
+    t = re.sub(r"\s", "", text or "")
+    m = re.fullmatch(r"(\d{1,2})月(?:[〜~～\-ー－](\d{1,2})月)?(?:ごろ|頃)?", t)
+    if not m:
+        return None
+    return f"{m.group(1)}月" + (f"〜{m.group(2)}月" if m.group(2) else "")
+
+
+def _secondary_of(prev, rec, thirds):
+    """段階82 の続き(本人の判断 2026-11-13 の 2): 公式の記録で置き換える前の、紹介サイト由来の時期が公式の時期より長い(公式にない月がある)とき、
+    消さずに残す → {season, publisher, url} か None。"""
+    if not (prev.get("start") and prev.get("end") and rec.get("start") and rec.get("end")):
+        return None
+    if not set(months_of(prev["start"], prev["end"])) - set(months_of(rec["start"], rec["end"])):
+        return None
+    return {"season": prev.get("season") or window_text(prev["start"], prev["end"], thirds),
+            "publisher": prev.get("publisher") or "", "url": prev.get("url")}
+
+
+def _year_round_words():
+    from . import guide_brief as GB
+    return set(GB.cfg()["research"].get("year_round_words") or [])
 
 
 def select(rows, origin, prefectures=None, c=None, by_distance=False):
@@ -903,7 +1001,7 @@ def compose_town(question, *, origin, env=None):
         seasons = []
         for w in e.get("windows") or []:
             if w.get("start") and w.get("end") and not O.event_derived(w, e.get("events"), opol, e["name"]):
-                seasons.append((w["start"], window_text(w["start"], w["end"], thirds), w.get("kind")))
+                seasons.append((w["start"], catalog_window_text(w, thirds), w.get("kind")))
         if e.get("season_text"):
             seasons.append(("", e["season_text"], "・".join(e["kinds"][:2])))
         rows.append({"name": e["name"], "prefecture": e["prefecture"], "city": e["city"], "km": km, "kinds": [x for x in e["kinds"] if x],
