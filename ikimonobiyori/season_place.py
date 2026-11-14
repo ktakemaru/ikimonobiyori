@@ -263,10 +263,38 @@ def gather(sp, origin, c=None, env=None):
                                peak=r.get("peak"), **{"from": "record"})
                 if sec:
                     rows[k]["secondary_season"] = sec
+            elif r.get("official") and not r.get("start") and not prev.get("official") and prev.get("start") and prev.get("end"):
+                # 段階84 第1部 E: 公式の記録に時期がない(「冬には…確認できる」)とき、紹介サイト由来の時期は「紹介サイトによると」の行で残す
+                rows[k].update(season=None, start=None, end=None, url=r["url"], official=True, publisher=r.get("publisher") or "", **{"from": "record"})
+                rows[k]["secondary_season"] = {"season": prev.get("season") or window_text(prev["start"], prev["end"], thirds),
+                                               "publisher": prev.get("publisher") or "", "url": prev.get("url")}
             continue
         km, est = _km(None, r.get("city"), origin, cat_pol)
         rows[k] = {**r, "km": km, "km_estimated": est}
+    for r in rows.values():                               # 段階84 第1部 A: 山の地点(sites.yaml)に結びつく名所は、都県の一覧の外でも山の地点の距離で範囲を決める
+        if r.get("km") is None:
+            site = mountain_site(r.get("name"))
+            if site:
+                r["km"], r["km_estimated"] = CM.range_from(cat_pol, site, origin)["km"], True
+                r["mountain_site"] = site["name"]
     return list(rows.values())
+
+
+def _base_name(name):
+    return re.sub(r"[(（].*$", "", name or "").strip()
+
+
+def mountain_site(name):
+    """段階84 第1部 A: 名所の名前(「乗鞍岳(畳平周辺)」)→ 括弧の前の名前が同じ山の地点(sites.yaml の kind: mountain の「乗鞍岳(剣ヶ峰)」)。なければ None。"""
+    from . import yamlcache
+    from .paths import SITES_PATH
+    b = _base_name(name)
+    if not b:
+        return None
+    for st in (yamlcache.load(SITES_PATH) or {}).get("sites") or []:
+        if st.get("kind") == "mountain" and st.get("lat") is not None and _base_name(st.get("name")) == b:
+            return st
+    return None
 
 
 

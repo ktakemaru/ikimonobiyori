@@ -342,7 +342,7 @@ def species_rows(question, cond, env=None, c=None):
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"])),
-                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season") if r.get(k)}})
+                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season", "mountain_site") if r.get(k)}})
     merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out
@@ -470,6 +470,12 @@ def species_match_words(question):
     out = []
     for sp in sps:
         out += [w for w in list(sp.get("match") or []) + list(sp.get("includes") or []) + list(sp.get("words") or []) if w not in out]
+    if not out:                                          # 段階84 第1部 C: 種の表にない種は、観察記録の集計の和名(種の名前の辞書)で
+        from . import seasonal_obs as SO
+        try:
+            out = SO.species_in_question(question)
+        except (KeyError, OSError, ValueError):
+            out = []
     return out
 
 

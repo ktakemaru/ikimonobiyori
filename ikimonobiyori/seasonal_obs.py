@@ -65,8 +65,27 @@ def region(rid_or_name, p=None):
     return next((r for r in p["regions"] if rid_or_name in (r["id"], r["name"])), None)
 
 
+def region_label(reg):
+    """答えに書く地域の名前(段階84: 新潟・南東北の組は 新潟・福島 の集計)。"""
+    return reg.get("label") or reg["name"]
+
+
 def _cat(cid, p):
     return next(c for c in p["categories"] if c["id"] == cid)
+
+
+def subcategories(p=None):
+    """段階84 第1部 D: 分けた分類 → {子の id: (親の id, 子の定義)}。"""
+    p = p or load_policy()
+    return {s["id"]: (parent, s) for parent, subs in (p.get("subcategories") or {}).items() for s in subs}
+
+
+def category_label(cid, p=None):
+    p = p or load_policy()
+    sub = subcategories(p).get(cid)
+    if sub:
+        return sub[1]["label"]
+    return _cat(cid, p)["label"]
 
 
 def _iconic_to_cat(p):
@@ -181,12 +200,17 @@ def _write(path, obj):
     tmp.replace(path)
 
 
-def fresh(obj, now, p=None):
+def fresh(obj, now, p=None, reg=None):
+    """有効期間の内で、対象の年が同じ。段階84: 保存した place_ids が今の地域の組と違うか、地域の組を変えた時刻(changed_at)より前に取った保存は取り直す。"""
     p = p or load_policy()
     try:
         at = datetime.fromisoformat(obj["fetched_at"])
     except (KeyError, TypeError, ValueError):
         return False
+    if reg is not None and "place_ids" in obj and list(obj["place_ids"]) != list(reg["place_ids"]):
+        return False
+    if reg is not None and reg.get("changed_at") and at < datetime.fromisoformat(str(reg["changed_at"])):
+        return False                                      # 地域の組を変える前に取った保存
     return now - at <= timedelta(days=_v(p["ttl_days"])) and obj.get("years") == years_for(now, p)
 
 
@@ -196,8 +220,8 @@ def status(now, env=None, p=None):
     out, missing = {}, 0
     n = _v(p["weeks"]["count"])
     for r in p["regions"]:
-        miss = [w for w in range(1, n + 1) if not fresh(_read(week_path(r["id"], w, env)) or {}, now, p)]
-        tot = fresh(_read(totals_path(r["id"], env)) or {}, now, p)
+        miss = [w for w in range(1, n + 1) if not fresh(_read(week_path(r["id"], w, env)) or {}, now, p, r)]
+        tot = fresh(_read(totals_path(r["id"], env)) or {}, now, p, r)
         out[r["id"]] = {"name": r["name"], "weeks_ok": n - len(miss), "weeks_missing": miss, "totals_ok": tot}
         missing += len(miss) + (0 if tot else 1)
     return {"regions": out, "missing": missing}
@@ -239,7 +263,8 @@ def fetch_week(rid, week, now, get, env=None, p=None):
         else:
             g = p["query_groups"][int(name.split(":")[1])]
             cats.update(split_by_category(rows, g["categories"], p))
-    obj = {"region": rid, "week": week, "years": years, "fetched_at": now.isoformat(), "categories": cats, "flowering": flowering}
+    obj = {"region": rid, "place_ids": list(reg["place_ids"]), "week": week, "years": years, "fetched_at": now.isoformat(),
+           "categories": cats, "flowering": flowering}
     _write(week_path(rid, week, env), obj)
     return obj
 
@@ -256,7 +281,7 @@ def fetch_totals(rid, now, get, env=None, p=None):
         except ParseError as e:
             _unparsed(url, 200, json.dumps(j, ensure_ascii=False), now, env, str(e))
             raise
-    obj = {"region": rid, "years": years, "fetched_at": now.isoformat(), "totals": tot}
+    obj = {"region": rid, "place_ids": list(reg["place_ids"]), "years": years, "fetched_at": now.isoformat(), "totals": tot}
     _write(totals_path(rid, env), obj)
     return obj
 
@@ -273,10 +298,10 @@ def plan_fetch(now, env=None, regions=None, weeks=None, p=None):
     p = p or load_policy()
     rids = regions or [r["id"] for r in p["regions"]]
     order = weeks or _week_order(now, p)
-    jobs = [(rid, "totals") for rid in rids if not fresh(_read(totals_path(rid, env)) or {}, now, p)]
+    jobs = [(rid, "totals") for rid in rids if not fresh(_read(totals_path(rid, env)) or {}, now, p, region(rid, p))]
     for w in order:
         for rid in rids:
-            if not fresh(_read(week_path(rid, w, env)) or {}, now, p):
+            if not fresh(_read(week_path(rid, w, env)) or {}, now, p, region(rid, p)):
                 jobs.append((rid, w))
     return jobs
 
@@ -304,6 +329,79 @@ def run_fetch(now, get, budget_left, env=None, regions=None, weeks=None, p=None,
             errors.append({"region": rid, "week": w, "error": str(e)})
             break
     return {"done": done, "errors": errors, "left_jobs": len(plan_fetch(now, env, regions, weeks, p))}
+
+
+# ---- 段階84 第1部 D: 虫の種の祖先(トンボ・チョウ・そのほか に分ける) ----
+
+def taxa_path(env=None, p=None):
+    p = p or load_policy()
+    return data_path(f"{p['store_dir']}/{p['taxa_lookup']['file']}", env)
+
+
+def load_taxa_groups(env=None, p=None):
+    """→ {taxon_id(str): 子の分類の id}(祖先の表。なければ空)。"""
+    return dict(((_read(taxa_path(env, p)) or {}).get("groups") or {}))
+
+
+def _sub_of(ancestors, parent, p):
+    subs = (p.get("subcategories") or {}).get(parent) or []
+    for s in subs:
+        if s.get("ancestor_taxon_id") is not None and s["ancestor_taxon_id"] in ancestors:
+            return s["id"]
+    return next(s["id"] for s in subs if s.get("ancestor_taxon_id") is None)
+
+
+def missing_taxa(env=None, p=None):
+    """保存した集計の、分けた分類(虫)の種のうち、祖先の表にない taxon_id(数の順)。"""
+    p = p or load_policy()
+    known = load_taxa_groups(env, p)
+    parents = set((p.get("subcategories") or {}).keys())
+    ids = set()
+    root = data_path(p["store_dir"], env)
+    if root.is_dir():
+        for f in root.glob("*/w*.json"):
+            for cid, rows in ((_read(f) or {}).get("categories") or {}).items():
+                if cid in parents:
+                    ids |= {r["taxon_id"] for r in rows if isinstance(r.get("taxon_id"), int) and str(r["taxon_id"]) not in known}
+    return sorted(ids)
+
+
+def parse_taxa(resp):
+    """/v1/taxa/{ids} → {taxon_id: [祖先の id]}(形が違えば ParseError)。"""
+    if not isinstance(resp, dict) or not isinstance(resp.get("results"), list):
+        raise ParseError("taxa: results (配列) がない")
+    out = {}
+    for i, r in enumerate(resp["results"]):
+        if not isinstance(r, dict) or not isinstance(r.get("id"), int) or not isinstance(r.get("ancestor_ids"), list):
+            raise ParseError(f"taxa: results[{i}].id / ancestor_ids がない")
+        out[r["id"]] = [a for a in r["ancestor_ids"] if isinstance(a, int)]
+    return out
+
+
+def run_taxa(now, get, budget_left, env=None, p=None):
+    """祖先の表にない虫の種を、上限の内で引く(1 回 per_request 件)。→ {done, errors, left}。"""
+    p = p or load_policy()
+    per = _v(p["taxa_lookup"]["per_request"])
+    ids = missing_taxa(env, p)
+    groups = load_taxa_groups(env, p)
+    done, errors = 0, []
+    parent = next(iter((p.get("subcategories") or {}).keys()))
+    for i in range(0, len(ids), per):
+        if budget_left() < 1:
+            break
+        chunk = ids[i:i + per]
+        url = f"{BASE}/taxa/{','.join(str(x) for x in chunk)}?{urlencode({'locale': p['locale'], 'per_page': per})}"
+        try:
+            anc = parse_taxa(_get_json(get, url, now, env, "taxa"))
+        except (ParseError, OSError) as e:
+            errors.append(str(e))
+            break
+        for tid in chunk:
+            if tid in anc:
+                groups[str(tid)] = _sub_of(anc[tid], parent, p)
+        done += len(chunk)
+        _write(taxa_path(env, p), {"fetched_at": now.isoformat(), "groups": dict(sorted(groups.items(), key=lambda kv: int(kv[0])))})
+    return {"done": done, "errors": errors, "left": len(missing_taxa(env, p))}
 
 
 # ---- 資料の材料(通信しない) ----
@@ -347,7 +445,7 @@ def species_window(rid, d, env=None, p=None):
             for r in (o.get("categories") or {}).get(c["id"]) or []:
                 if not r.get("ja") or display_name(r["ja"], p) in (p.get("exclude_names") or []):
                     continue
-                a = acc.setdefault(r["sci"], {"name": display_name(r["ja"], p), "sci": r["sci"], "count": 0})
+                a = acc.setdefault(r["sci"], {"name": display_name(r["ja"], p), "sci": r["sci"], "taxon_id": r.get("taxon_id"), "count": 0})
                 a["count"] += r["count"]
         rows = [a for a in acc.values() if annual.get((c["id"], a["sci"]), 0) >= min_y]
         for a in rows:
@@ -356,10 +454,18 @@ def species_window(rid, d, env=None, p=None):
                 a["flower_usable"] = a["flower"] >= fmin
         rows.sort(key=lambda a: (-a["count"], a["name"]))
         cats[c["id"]] = rows
+    groups = load_taxa_groups(env, p)
+    subs_ok = {}
+    if groups:                                            # 段階84 第1部 D: 祖先の表があれば、虫を トンボ・チョウ・そのほか に分ける
+        for parent, subs in (p.get("subcategories") or {}).items():
+            rows = cats.get(parent) or []
+            for s in subs:
+                cats[s["id"]] = [a for a in rows if groups.get(str(a.get("taxon_id"))) == s["id"]]
+            subs_ok[parent] = all(str(a.get("taxon_id")) in groups for a in rows)
     tot_obj = _read(totals_path(rid, env)) or {}
     totals = {cid: sum((tot_obj.get("totals") or {}).get(cid, {}).get(str(w), 0) for w in ws) for cid in (tot_obj.get("totals") or {})}
     return {"weeks": ws, "years": objs[0].get("years"), "fetched_at": min(o.get("fetched_at") or "" for o in objs),
-            "complete": len(objs) == len(ws), "categories": cats, "totals": totals}
+            "complete": len(objs) == len(ws), "categories": cats, "totals": totals, "subcategories_complete": subs_ok}
 
 
 def weeks_text(d, ws, p=None):
@@ -388,6 +494,31 @@ def vocabulary(env=None, p=None):
     return names
 
 
+
+_VOCAB = {}
+
+
+def species_in_question(question, env=None, p=None):
+    """段階84 第1部 C: 質問の文にある、集計の和名(種の名前の辞書)→ [名前](長い名前から。前後がカタカナの一致は数えない。
+    分類の語(トンボ・チョウ など)は種にしない)。集計がなければ空。"""
+    p = p or load_policy()
+    D = p["species_dictionary"]
+    key = str(data_path(p["store_dir"], env))
+    if key not in _VOCAB:
+        cw = {w for ws in p["brief"]["category_words"].values() for w in ws}
+        _VOCAB[key] = sorted((n for n in vocabulary(env, p) if n and re.fullmatch(D["name_re"], n) and len(n) >= _v(D["min_len"]) and n not in cw),
+                             key=lambda n: (-len(n), n))
+    q = question or ""
+    out, used = [], []
+    for n in _VOCAB[key]:
+        for m in re.finditer(r"(?<![ァ-ヶー])" + re.escape(n) + r"(?![ァ-ヶー])", q):
+            if not any(a <= m.start() and m.end() <= b for a, b in used):
+                used.append((m.start(), m.end()))
+                if n not in out:
+                    out.append(n)
+    return out
+
+
 # ---- CLI ----
 
 def main(argv=None, http_get=None, clock=None):
@@ -402,6 +533,10 @@ def main(argv=None, http_get=None, clock=None):
     f.add_argument("--region", action="append")
     f.add_argument("--weeks", help="例: 45-48 か 6,7,8")
     f.add_argument("--now")
+    t = sub.add_parser("taxa", help="段階84: 虫の種の祖先を引く(トンボ・チョウ・そのほか に分ける)")
+    t.add_argument("--live", action="store_true")
+    t.add_argument("--max-requests", type=int)
+    t.add_argument("--now")
     w = sub.add_parser("window")
     w.add_argument("--region", required=True)
     w.add_argument("--date", required=True)
@@ -420,7 +555,7 @@ def main(argv=None, http_get=None, clock=None):
         print("--live と --max-requests (1 以上)が必要です", file=sys.stderr)
         return 4
     weeks = None
-    if a.weeks:
+    if getattr(a, "weeks", None):
         weeks = []
         for part in a.weeks.split(","):
             lo, _, hi = part.partition("-")
@@ -447,6 +582,11 @@ def main(argv=None, http_get=None, clock=None):
 
         def left():
             return a.max_requests - used[0]
+    if a.cmd == "taxa":
+        out = run_taxa(now, get, left, p=p)
+        out["requests"] = budget.used if budget else a.max_requests - left()
+        print(json.dumps(out, ensure_ascii=False, indent=1))
+        return 5 if out["errors"] else 0
     out = run_fetch(now, get, left, regions=a.region, weeks=weeks, p=p)
     out["requests"] = budget.used if budget else a.max_requests - left()
     print(json.dumps(out, ensure_ascii=False, indent=1))

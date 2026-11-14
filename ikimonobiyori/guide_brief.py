@@ -608,10 +608,17 @@ def _species_facts(F, sprows, cands, cond, c):
         have.add(r["name"])
         km, label = GM.distance_text(r["name"], r.get("km"), cond.get("origin"), estimated=bool(r.get("km_estimated")),
                                      prefecture=r.get("prefecture"), city=r.get("city"), c=c)
-        cands.append({"subject": None, "rank": None, "name": r["name"], "chosen": False, "basis": "species", "group": _group_of(r.get("prefecture"), c),
+        grp = _group_of(r.get("prefecture"), c) or (f"山の地点 {SP_base(r['mountain_site'])}" if r.get("mountain_site") else None)
+        cands.append({"subject": None, "rank": None, "name": r["name"], "chosen": False, "basis": "species", "group": grp,
+                      **({"mountain_site": r["mountain_site"]} if r.get("mountain_site") else {}),   # 段階84 第1部 A: 山の地点に結びつく名所(都県の一覧の外でも範囲内)
                       "prefecture": r.get("prefecture"), "city": r.get("city"), "distance_km": km, "distance_text": label,
                       "theme": r["species"], "season": r.get("season"), "note": r.get("note"),
                       "reasons": [R["label"]] + ([r["note"]] if r.get("note") else [])})
+
+
+def SP_base(name):
+    from . import season_place as SP
+    return SP._base_name(name)
 
 
 def _species_leads(F, sprows, now, c):
@@ -1673,8 +1680,9 @@ def calendar_cards(question, cond, cands, months, c, open_q, start=0, shown=None
     if not envs and not open_q:
         return []
     hits = [r for r in rows if set((r["calendar"].get("months") or [])) & set(ms) and (not envs or r["calendar"].get("environment") in envs)]
-    want = [t for cid in seasonal_categories(question, cond) for t in (C.get("category_targets") or {}).get(cid, [])]
     from . import seasonal_obs as SO
+    subs = SO.subcategories()                             # 段階84: 分けた虫(トンボ・チョウ)は、親の分類(虫)の暦の対象
+    want = [t for cid in seasonal_categories(question, cond) for t in (C.get("category_targets") or {}).get(subs[cid][0] if cid in subs else cid, [])]
     if want and len(seasonal_categories(question, cond)) < len(SO.load_policy()["categories"]):   # 段階83: 虫・鳥など種類を聞く質問は、その対象の暦だけ
         hits = [r for r in hits if r["calendar"].get("target") in want]
     autumn = [t for w, ts in (C.get("word_targets") or {}).items() if w in question for t in ts]
@@ -1802,17 +1810,37 @@ def seasonal_rows(question, cond, cands, now, env, c):
     spw = GM.species_match_words(question)
     if spw:                                                # 種を挙げた質問: その種を含む分類だけ(なければ入れない)
         cats = [cid for cid in cats if any(species_hit(spw, r["name"], c) for r in win["categories"].get(cid) or [])]
+    subs = SO.subcategories(sp)
+    if len(cats) < len(sp["categories"]) and any(s in win["categories"] for s in subs):   # 段階84 第1部 D: 虫を聞いた質問は トンボ・チョウ・そのほか に分ける
+        SW = B.get("subcategory_words") or {}
+        out_c = []
+        for cid in cats:
+            kids = [k["id"] for k in (sp.get("subcategories") or {}).get(cid) or []]
+            if kids:
+                said = [k for k in kids if any(word_hit(w, question) for w in SW.get(k) or [])]
+                out_c += said or kids
+            else:
+                out_c.append(cid)
+        cats = out_c
+        if spw:                                            # 種を挙げた質問: 分けたあとも、その種を含む行だけ
+            cats = [cid for cid in cats if any(species_hit(spw, r["name"], c) for r in win["categories"].get(cid) or [])]
     out = []
+    rname = SO.region_label(reg)
     for cid in cats:
-        rows = (win["categories"].get(cid) or [])[:n]
-        if not rows:
+        allrows = win["categories"].get(cid) or []
+        asked = [r for r in allrows if spw and species_hit(spw, r["name"], c)]
+        rows = (asked + [r for r in allrows if r not in asked])[:n]   # 段階84: 聞かれた種は上位8種の外でも行の先頭に
+        label = SO.category_label(cid, sp)
+        if not rows and cid in subs and not spw:         # 段階84 第1部 D: 分けたトンボ・チョウの行は、上位にないことが分かる形で出す
+            content = B["few_line"].format(region=rname, label=label, weeks=wtxt, years=ytxt, top=SO._v(sp["top_n"]))
+        elif not rows:
             continue
-        label = next(x["label"] for x in sp["categories"] if x["id"] == cid)
-        items = [B["species_item"].format(name=r["name"], count=r["count"],
-                                          flower=B["flower_part"].format(n=r["flower"]) if r.get("flower_usable") else "") for r in rows]
-        content = B["line"].format(region=reg["name"], label=label, weeks=wtxt, years=ytxt, species="、".join(items))
+        else:
+            items = [B["species_item"].format(name=r["name"], count=r["count"],
+                                              flower=B["flower_part"].format(n=r["flower"]) if r.get("flower_usable") else "") for r in rows]
+            content = B["line"].format(region=rname, label=label, weeks=wtxt, years=ytxt, species="、".join(items))
         out.append({"id": f"O{len(out) + 1:03d}", "kind": "seasonal_obs", "kind_label": B["kind_label"], "category": cid,
-                    "region": reg["name"], "content": content, "species": [r["name"] for r in rows],
+                    "region": rname, "content": content, "species": [r["name"] for r in rows],
                     "flowering": [r["name"] for r in rows if r.get("flower_usable")],
                     "values": values(content, c), "source": B["source_name"], "source_class": None, "url": B["source_url"],
                     "fetched_at": win.get("fetched_at"), "complete": win.get("complete")})

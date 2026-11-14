@@ -30,7 +30,10 @@ regions:                         # 地域の組は guide_mode.yaml の region_gr
   - {id: tochigi_gunma, name: 栃木・群馬, place_ids: [10934, 10912]}
   - {id: yamanashi_nagano, name: 山梨・長野, place_ids: [10940, 10925]}
   - {id: shizuoka, name: 静岡, place_ids: [13084]}
-  - {id: niigata_s_tohoku, name: 新潟・南東北, place_ids: [13081, 10910, 10939, 10923]}
+  # 段階84(本人の判断 2026-11-13 の 2): 新潟・南東北の組の集計は新潟(13081)・福島(10910)だけ(宮城・山形を外す)。name は guide_mode.yaml の
+  # region_groups の名前(候補の都県から組を引く)。答えに書く名前は label。place_id は 2026-11-15 に /places で確かめた
+  # changed_at: 地域の組を変えた時刻。これより前に取った保存は取り直す
+  - {id: niigata_s_tohoku, name: 新潟・南東北, label: 新潟・福島, place_ids: [13081, 10910], changed_at: '2026-11-15T01:00:00+09:00'}
 
 categories:                      # 分類(指示書 段階83 2.1)
   - {id: birds, label: 野鳥, iconic_taxa: [Aves]}
@@ -38,6 +41,17 @@ categories:                      # 分類(指示書 段階83 2.1)
   - {id: insects, label: 虫(チョウ・トンボなど), iconic_taxa: [Insecta]}
   - {id: fungi, label: きのこ, iconic_taxa: [Fungi]}
   - {id: other_animals, label: そのほかの動物(両生類・爬虫類・哺乳類), iconic_taxa: [Amphibia, Reptilia, Mammalia]}
+
+# 段階84 第1部 D: 虫を トンボ・チョウ・そのほか に分ける。分け方は種の祖先(/v1/taxa の ancestor_ids)。祖先の taxon_id は 2026-11-15 に
+# /v1/taxa で確かめた(47792 = Odonata(目)・47224 = Papilionoidea(上科。チョウ。ガは含まない))。祖先の表は inat_seasonal/taxa_groups.json
+subcategories:
+  insects:
+    - {id: dragonflies, label: トンボ, ancestor_taxon_id: 47792}
+    - {id: butterflies, label: チョウ, ancestor_taxon_id: 47224}
+    - {id: other_insects, label: そのほかの虫}
+taxa_lookup:
+  file: taxa_groups.json
+  per_request: {value: 30, source: "iNaturalist の /v1/taxa/{ids} の 1 ページの既定の件数(30)", provisional: true}
 
 # 1 つの週に送る問い合わせ(分類をまとめて送り、返った種を分類に分ける。記録の多い順なので、分類ごとの上位は正しい)
 query_groups:
@@ -54,6 +68,12 @@ top_n: {value: 30, source: "指示書 段階83 2.1(記録の多い種の上位30
 min_per_year: {value: 5, source: "指示書 段階83 2.1(記録が年5件に満たない種は答えの材料にしない)。年の記録は、その地域の集計の全部の週の数の合計を年数で割ったもの(上位30に入った週だけを数えるので少なめ)", provisional: false}
 flowering_min_count: {value: 3, source: "仮置き(対象の週と前後1週の開花の注釈がこの数より少ない種は「記録が多い時期」としてだけ扱う。根拠のある値ではない)", provisional: true}
 
+# 段階84 第1部 C: 集計にある和名を種の名前の辞書として使う(「ツワブキはどこで見られる?」を種の質問にする)。
+# 短い名前の取り違え(「カモメ」の中の「カモ」・「アキアカネ」の中の「アカネ」)を避けるため、カタカナだけの名前で、前後がカタカナでない一致だけ
+species_dictionary:
+  min_len: {value: 3, source: "仮置き(2 文字のカタカナの名前(カモ・ガン など)は総称や別の語の一部と取り違えやすい)", provisional: true}
+  name_re: '^[ァ-ヶー]+$'
+
 brief:
   max_per_category: {value: 8, source: "指示書 段階83 2.3(分類ごとに最大8種)", provisional: false}
   heading: "## 例年この時期の観察記録"
@@ -63,6 +83,8 @@ brief:
   line: "{region}・{label}({weeks}・{years}): {species}"
   species_item: "{name}(記録 {count} 件{flower})"
   flower_part: "・うち開花の注釈 {n} 件"
+  # 段階84 第1部 D: 分けた虫(トンボ・チョウ)の行で、上位に入った種がないとき
+  few_line: "{region}・{label}({weeks}・{years}): この時期の記録は少ない(虫の記録の多い上位{top}種に入らない)"
   note: "例年の目安と同じ扱い(今年の現況ではない)。公式の現況があれば公式が先。"
   # 場所や種を決めない質問(「今の見頃」「公園で何が見られる」)では全分類、種類の語がある質問ではその分類だけ
   category_words:
@@ -71,6 +93,12 @@ brief:
     insects: [虫, チョウ, 蝶, トンボ, 蜻蛉, セミ, ホタル, バッタ, 甲虫]
     fungi: [きのこ, キノコ, 茸, 菌]
     other_animals: [カエル, 蛙, ヘビ, トカゲ, 哺乳類, けもの, 動物, リス, シカ]
+  # 段階84 第1部 D: 虫の分類を聞いた質問は、トンボ・チョウ・そのほか の行に分ける(語のある行だけ。「虫」だけなら 3 行)。
+  # 場所や種を決めない質問(全分類)は、虫を 1 行のまま
+  subcategory_words:
+    dragonflies: [トンボ, 蜻蛉, ヤンマ]
+    butterflies: [チョウ, 蝶]
+    other_insects: [セミ, ホタル, バッタ, 甲虫]
   # 場所を挙げず、環境だけを挙げた質問(「5月の高原」)の地域の組(出発地の組では低地の種になるため。範囲の中で高原・高山の多い組)
   env_regions: {高原・湿原: 山梨・長野, 亜高山・高山: 山梨・長野}
   # 種や名所を決めた質問(種の名所・紅葉の現況の型など)には入れない経路
