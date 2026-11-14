@@ -564,10 +564,18 @@ def trait_errors(sents, brief, c):
         if not rows:
             errs.append(_err(T["code"], s, f"{'・'.join(sps)}の見分け方・特徴の文に、カードの印がない", T["fix"]))
             continue
-        lines = []
-        for r in rows:
-            lines += [r.get("title") or ""] + list(r.get("facts") or []) + [r.get("content") or ""]
-        bad = [n for n in sps if not any(any(w in l for w in groups.get(n, {n})) and (_trait_hits(l, c) & hits) for l in lines if l)]
+        clause_only = min(hits) >= len(T["words_re"])
+
+        def backed(n):
+            ws = groups.get(n, {n})
+            for r in rows:
+                head = (r.get("title") or "") + " " + (r.get("subject") or "")
+                named = clause_only and any(w in head for w in ws)   # 段階84: 色・大きさの語は、題・主語でその種のカードなら、文に種の名前がなくてよい(「幼鳥は…白くなる」)
+                for l in [r.get("title") or ""] + list(r.get("facts") or []) + [r.get("content") or ""]:
+                    if l and (_trait_hits(l, c) & hits) and (named or any(w in l for w in ws)):
+                        return True
+            return False
+        bad = [n for n in sps if not backed(n)]
         if bad:
             errs.append(_err(T["wrong_card_code"], s, f"印({'・'.join(s['ids'])})に、{'・'.join(bad)}のこの特徴が書かれていない", T["wrong_card_fix"]))
     return errs

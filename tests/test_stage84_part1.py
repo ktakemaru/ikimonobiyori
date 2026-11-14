@@ -200,6 +200,13 @@ class Traits(unittest.TestCase):
         s = GV.sentences(["冬桜は白から淡紅色の一重の小さな花で、1〜2月に咲く寒桜とは別の種です [K001]。"])
         self.assertEqual([e["code"] for e in GV.trait_errors(s, brief, GV.cfg())], [])   # 比べ相手(寒桜)の節には色・大きさの語がない
 
+    def test_card_named_by_title_backs_color_word(self):
+        brief = {"cards": [{"id": "K003", "title": "コハクチョウの見分け方", "facts": ["くちばしの黄色部が半分以下で、丸みがありとがらないのがコハクチョウ", "幼鳥は全体が灰色で、越冬中に白くなる"]}]}
+        s = GV.sentences(["コハクチョウの幼鳥は全体が灰色で、冬を越すあいだに白くなります [K003]。"])
+        self.assertEqual([e["code"] for e in GV.trait_errors(s, brief, GV.cfg())], [])   # 段階84 第5部 q4 の止めすぎ
+        s = GV.sentences(["オオハクチョウの幼鳥は、冬を越すあいだに白くなります [K003]。"])
+        self.assertIn("trait_wrong_card", [e["code"] for e in GV.trait_errors(s, brief, GV.cfg())])
+
     def test_omoshiroi_is_not_color(self):
         self.assertEqual(self.errs("鳥では、ホオジロの仲間のすみ分けが面白いところです。"), [])
 
