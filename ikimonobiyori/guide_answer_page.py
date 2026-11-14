@@ -32,6 +32,8 @@ def load_last(now, env=None):
         return None
     if not doc.get("text") or now < saved or now - saved > timedelta(hours=APG.cfg()["valid_hours"]):
         return None
+    if doc.get("full_text"):                             # 段階85 第2部: ページは URL つきの出典の形から作る
+        doc = {**doc, "chat_text": doc["text"], "text": doc["full_text"]}
     return doc
 
 

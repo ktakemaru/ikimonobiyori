@@ -160,7 +160,7 @@ def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
     return {"block": False, "reasons": [], "why": "guide_checked"}
 
 
-def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
+def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None, sources_ok=None):
     """→ {"block": bool, "reasons": [エージェントへの次の手順], "why": 判定の語}。
     guide_ok(段階75): 最終メッセージが ask verify --brief の最終の文と一致するかを返す関数。
     page_ok(段階81 の続き): 最終メッセージが ask page-reply の案内の文と一致するかを返す関数。"""
@@ -172,6 +172,14 @@ def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
         return {"block": False, "reasons": [], "why": ex}
     answers = [i for i, k in enumerate(calls) if _matches(k, c["answer_patterns"])]
     briefs = [i for i, k in enumerate(calls) if _matches(k, c.get("brief_patterns") or [])]
+    srcs = [i for i, k in enumerate(calls) if _matches(k, c.get("sources_patterns") or [])]
+    if srcs and not (briefs and briefs[-1] > srcs[-1]) and not (answers and answers[-1] > srcs[-1]):   # 段階85 第2部: 出典を聞かれた回
+        if not msg.strip() or (sources_ok(msg) if sources_ok else False):
+            return {"block": False, "reasons": [], "why": "sources_reply"}
+        return {"block": True, "why": "sources_mismatch", "reasons": [c["reasons"]["sources_reply"]]}
+    if (not srcs and not briefs and not answers and answer and msg.strip() and re.search(r"https?://", msg)
+            and any(w in prompt for w in c.get("sources_request_words") or [])):   # 出典の URL を手で書き写した回
+        return {"block": True, "why": "sources_by_hand", "reasons": [c["reasons"]["sources_reply"]]}
     photo = [i for i, k in enumerate(calls) if _matches(k, c.get("photo_reply_patterns") or [])]
     if photo and not (briefs and briefs[-1] > photo[-1]) and not (answers and answers[-1] > photo[-1]):   # 段階82 第4部 4.5: 写真を直した回
         if not msg.strip() or (page_ok(msg) if page_ok else False):
@@ -254,7 +262,9 @@ def run(payload, *, env=None, now=None):
     answer = FC.load_answer(t, env)
     from . import guide_verify as GV
     from . import guide_answer_page as GAP
-    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env), page_ok=lambda m: GAP.accepts_reply(m, t, env))
+    from . import sources_reply as SR
+    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env), page_ok=lambda m: GAP.accepts_reply(m, t, env),
+               sources_ok=lambda m: SR.accepts(m, t, env))
     if not d["block"]:
         return None
     note_block(key, env)

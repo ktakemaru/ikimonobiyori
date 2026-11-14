@@ -150,3 +150,79 @@ class HookPageReply(unittest.TestCase):
         t["calls"][1]["input"]["command"] = "python -X utf8 -m ikimonobiyori.ask page; python -X utf8 -m ikimonobiyori.ask verify d7.txt --brief b2"
         self.assertTrue(self.decide(self.REPLY, t)["block"])
         self.assertTrue(SH._after(t["calls"], 1, 2, SH.cfg()))
+
+
+class ShortSources(unittest.TestCase):
+    """段階85 第2部(本人の判断 B): 会話の出典は名前と日付だけ・URL つきは ask source-urls とページ。"""
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.TemporaryDirectory()
+        self.env = {"IKIMONOBIYORI_DATA_DIR": self.tmp.name}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _brief(self):
+        import test_stage75_guide as T75
+        b = T75.brief()
+        b["facts"].append(T75.fact("F006", "current", "試験の峠: 色づき始め(11/12時点、試験町観光協会)", url="https://example.org/b",
+                                   observed="2026-11-12", place="試験の峠"))
+        b["facts"].append(T75.fact("F007", "typical", "試験の庭: 例年 11月下旬", url="https://walker.example.com/x", source="紹介の例",
+                                   cls="secondary", place="試験の庭"))
+        return b, T75
+
+    def test_short_line_groups_publishers(self):
+        from ikimonobiyori import guide_verify as GV
+        b, T75 = self._brief()
+        cited = [r for r in b["facts"] + b["cards"] if r["id"] in ("F001", "F006", "F007", "K001")]
+        line = GV.short_sources(cited, GV.cfg())
+        self.assertNotIn("http", line)
+        self.assertTrue(line.startswith("出典: "))
+        self.assertEqual(line.count("試験町観光協会"), 1)                 # 同じ発行元は 1 つ(日付は新しいほう)
+        self.assertIn("試験町観光協会(11/12時点)", line)
+        self.assertIn("(紹介サイト", line)
+        self.assertIn("試験の研究所(紹介サイト・11/7に確認)", line)
+
+    def test_run_outputs_short_and_keeps_full_for_page_and_sources(self):
+        from ikimonobiyori import guide_answer_page as GAP
+        from ikimonobiyori import guide_verify as GV
+        from ikimonobiyori import sources_reply as SR
+        b, T75 = self._brief()
+        from pathlib import Path
+        d = GB.brief_dir(self.env)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{b['id']}.json").write_text(__import__("json").dumps(b, ensure_ascii=False), encoding="utf-8")
+        res = GV.run("試験の渓谷は11/9時点で見頃です。[F001]\n寒暖差で赤が濃くなります。[K001]" + T75.PLACES, b["id"], now=T75.NOW, env=self.env)
+        self.assertEqual(res["status"], "PASS", res["errors"])
+        self.assertIn("出典: 試験町観光協会(11/9時点)", res["text"])
+        self.assertNotIn("https://", res["text"])
+        self.assertTrue(GV.accepts(res["text"], T75.NOW, self.env))
+        page = GAP.load_last(T75.NOW, self.env)
+        self.assertIn("https://example.org/a", page["text"])                 # ページは URL つきの出典
+        out = SR.reply(T75.NOW, self.env)
+        self.assertIn("・試験町観光協会(11/9時点、公式) https://example.org/a", out)
+        self.assertTrue(SR.accepts(out, T75.NOW, self.env))
+        self.assertFalse(SR.accepts(out + "x", T75.NOW, self.env))
+
+    def test_classic_answer_sources(self):
+        from ikimonobiyori import final_check as FC
+        from ikimonobiyori import sources_reply as SR
+        FC.remember_answer("本文です。\n\n出典\n- 試験町観光協会 https://example.org/a\n", "質問", NOW, self.env)
+        self.assertEqual(SR.reply(NOW, self.env), "出典\n- 試験町観光協会 https://example.org/a")
+
+
+class HookSources(unittest.TestCase):
+    def decide(self, msg, calls, answer="前の答え", ok=True):
+        from ikimonobiyori import stop_hook as SH
+        turn = {"prompt": "出典を見せて", "calls": calls}
+        return SH.decide({"last_assistant_message": msg}, turn, answer, sources_ok=lambda m: ok)
+
+    def test_sources_output_passes(self):
+        calls = [{"name": "Bash", "input": {"command": "python -X utf8 -m ikimonobiyori.ask source-urls"}}]
+        self.assertFalse(self.decide("出典\n・a https://example.org/a", calls)["block"])
+        self.assertTrue(self.decide("出典です https://example.org/a", calls, ok=False)["block"])
+
+    def test_hand_written_urls_are_blocked(self):
+        self.assertTrue(self.decide("出典\n・a https://example.org/a", [])["block"])
+        self.assertFalse(self.decide("出典\n・a https://example.org/a", [], answer=None)["block"])     # 直前の答えがない回は見ない

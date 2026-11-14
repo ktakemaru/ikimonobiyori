@@ -923,6 +923,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--url", default=None)
     p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
     p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
+    sub.add_parser("source-urls", help="段階85 第2部: 「出典を見せて」「URL を教えて」のとき、直前の答えの URL つきの出典。出力を一字一句そのまま送る")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
     p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
@@ -1374,6 +1375,11 @@ def main(argv=None, http_get=None):
             print(str(e), file=sys.stderr)
             return 2
         sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
+        return 0
+    if a.step == "source-urls":                          # 段階85 第2部
+        from . import sources_reply as SR
+        text = SR.reply(now or _clock())
+        sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip(chr(10)) + chr(10)).encode("utf-8"))
         return 0
     if a.step == "final-check":                          # 段階69 第1部
         from . import final_check as FC
