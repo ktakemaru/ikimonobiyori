@@ -923,6 +923,11 @@ def main(argv=None, http_get=None):
     p.add_argument("--url", default=None)
     p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
     p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
+    p = sub.add_parser("audit", help="段階85 第3部: 取りこぼしの点検(記録にある名所のうち資料に入らなかったものを理由ごとに数える。通信しない)。標準出力は Markdown の表と一覧")
+    p.add_argument("--species", help="点検する種(読点・カンマ区切り。省くと全部)")
+    p.add_argument("--kinds", default="species,month,place", help="質問の型(species・month・place)")
+    p.add_argument("--json", dest="json_out", help="結果の JSON を書くファイル(データ置き場の下を勧める)")
+    p.add_argument("--now")
     sub.add_parser("source-urls", help="段階85 第2部: 「出典を見せて」「URL を教えて」のとき、直前の答えの URL つきの出典。出力を一字一句そのまま送る")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
@@ -985,6 +990,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--fact", help="add-fact: 足す事実(出典の本文と照らしてから)")
     p.add_argument("--narrative", help="add-fact: 足す事実の語りの種類(例: 次の季節)")
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
+    p.add_argument("--include-retired", action="store_true", help="段階85: search で取り下げたカードも出す(既定は出さない)")
     p.add_argument("--place")
     p.add_argument("--category")
     p.add_argument("--month", type=int)
@@ -1168,12 +1174,14 @@ def main(argv=None, http_get=None):
                     bad += 1
                     print(f"{card.get('title')}: {ex}", file=sys.stderr)
             return 1 if bad else 0
-        rows = K.search(place=a.place, category=a.category, month=a.month, text=a.text) if a.action == "search" else K.load()
+        rows = (K.search(place=a.place, category=a.category, month=a.month, text=a.text, include_retired=a.include_retired)
+                if a.action == "search" else K.load())
         if a.action == "show":
             rows = [r for r in rows if r["title"] == a.title]
             _out(rows)
             return 0 if rows else 2
-        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]} for r in rows])
+        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]}
+              | ({"retired": True, "retired_reason": r.get("retired_reason")} if r.get("retired") else {}) for r in rows])   # 段階85 第4部 4: 取り下げの印
         return 0
     if a.step == "combo":
         from . import combo
@@ -1376,6 +1384,16 @@ def main(argv=None, http_get=None):
             return 2
         sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
         return 0
+    if a.step == "audit":                                # 段階85 第3部
+        from . import audit as AU
+        import re as _re
+        sps = [x for x in _re.split(r"[,、・]", a.species or "") if x] or None
+        qs = AU.questions(species=sps, kinds=tuple(x for x in a.kinds.split(",") if x))
+        res = AU.run(qs, now=now or _clock(), progress=lambda i, n, r: print(f"{i}/{n} {r['question']} 対象 {r.get('expected')}・入らなかった {len(r.get('missing') or [])}", file=sys.stderr))
+        if a.json_out:
+            Path(a.json_out).write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+        sys.stdout.flush(); sys.stdout.buffer.write(AU.render(res).encode("utf-8"))
+        return 1 if any(m["reason"] == "other" for r in res for m in r.get("missing") or []) else 0
     if a.step == "source-urls":                          # 段階85 第2部
         from . import sources_reply as SR
         text = SR.reply(now or _clock())

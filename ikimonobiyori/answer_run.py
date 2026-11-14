@@ -13,6 +13,7 @@ BLOCKED(危険な案内を外した)。
 読み直しが要るページ(有効期間を過ぎた現況のページ。最大 3)は答えの本文には書かず、結果の refresh_pages に出す(読むのはエージェントの道具)。"""
 import json
 import re
+import unicodedata
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -45,6 +46,33 @@ def _weekend_of(d):
     return [sat, sat + timedelta(days=1)]
 
 
+_MONTH_WEEKEND = re.compile(r"(?<![\d今来先])(\d{1,2})\s*月\s*(?:の)?\s*(上旬|中旬|下旬|初め|はじめ|末)?\s*(?:の|ごろの|頃の)?\s*(?:週末|土日|土曜|日曜)")
+_NEXT_MONTH_WEEKEND = re.compile(r"来月()\s*(?:の)?\s*(上旬|中旬|下旬|初め|はじめ|末)?\s*(?:の|ごろの|頃の)?\s*(?:週末|土日|土曜|日曜)")
+_PART_DAY = {None: "mid", "上旬": "early", "初め": "early", "はじめ": "early", "中旬": "mid", "下旬": "late", "末": "late"}
+
+
+def month_weekend(q, today):
+    """「2月の週末」「2月中旬の週末」→ その月(過ぎていれば来年)の、旬のまん中に近い週末 [土, 日]。なければ None。
+    旬のまん中の日は data/ask/plan.yaml の dates_default.month_part_days(上旬・中旬・下旬)。"""
+    q = unicodedata.normalize("NFKC", q or "")
+    m = _MONTH_WEEKEND.search(q) or _NEXT_MONTH_WEEKEND.search(q)
+    if not m:
+        return None
+    mo = int(m.group(1)) if m.re is _MONTH_WEEKEND else today.month % 12 + 1
+    if not 1 <= mo <= 12:
+        return None
+    day = AP.load_policy()["dates_default"]["month_part_days"][_PART_DAY.get(m.group(2), "mid")]
+    y = today.year
+    if (mo, day) < (today.month, today.day):
+        y += 1
+    mid = date(y, mo, day)
+    sat = mid + timedelta(days=(5 - mid.weekday()) % 7)
+    prev = sat - timedelta(days=7)
+    if (mid - prev).days < (sat - mid).days and prev.month == mo and prev >= today:
+        sat = prev
+    return [sat, sat + timedelta(days=1)]
+
+
 def resolve_dates(question, now):
     """質問の文 → (期間の一覧 [[date, ...], ...], 日付の指定がなかったか)。期間が 2 つの質問(「今週末と来週末」)は 2 つ。"""
     q = question or ""
@@ -53,6 +81,9 @@ def resolve_dates(question, now):
     wk2 = [wk1[-1] + timedelta(days=6), wk1[-1] + timedelta(days=7)]
     if "今週末" in q and "来週末" in q:
         return [wk1, wk2], False
+    mw = month_weekend(q, today)                         # 段階85 第3部: 「2月の週末」「2月中旬の週末」は、その月の週末(今週末ではない)
+    if mw:
+        return [mw], False
     for word, ds in (("明後日", [today + timedelta(days=2)]), ("明日", [today + timedelta(days=1)]), ("今日", [today]),
                      ("来週末", wk2), ("今週末", wk1), ("来週", _weekend_of(today + timedelta(days=7))), ("週末", wk1), ("今週", wk1)):
         if word in q:

@@ -325,7 +325,7 @@ def species_rows(question, cond, env=None, c=None):
                 known = [r for r in rows if r.get("start") and r.get("season")]
                 rows = spread_rows(known, sp["name"], R["max_known"], R["spread"]) + [r for r in rows if r not in known]
         if R.get("drop_unknown_when_known") and sum(1 for r in rows if r.get("season")) >= R["drop_unknown_when_known"]:
-            keep = [r for r in rows if r.get("season") or (place and place.get("cities") and SP._in_cities(r, place["cities"]))]   # 段階79 第1部 3: 時期の分かる名所が十分あれば、時期の記載のない名所は入れない(聞かれた場所の名所は残す)
+            keep = [r for r in rows if r.get("season") or r.get("secondary_season") or r.get("annual_events") or (place and place.get("cities") and SP._in_cities(r, place["cities"]))]   # 段階85: 紹介サイトの時期がある名所は残す   # 段階79 第1部 3: 時期の分かる名所が十分あれば、時期の記載のない名所は入れない(聞かれた場所の名所は残す)
             dropped += [r["name"] for r in rows if r not in keep]
             rows = keep
         if place and place.get("cities"):
@@ -342,7 +342,7 @@ def species_rows(question, cond, env=None, c=None):
                         "start": r.get("start") if r.get("season") else None, "end": r.get("end") if r.get("season") else None,
                         "url": r.get("url"), "official": bool(r.get("official")), "publisher": r.get("publisher") or None,
                         "care": r.get("care"), "note": note, "in_place": bool(place and place.get("cities") and SP._in_cities(r, place["cities"])),
-                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season", "mountain_site") if r.get(k)}})
+                        **{k: r[k] for k in ("notice", "closed_period", "best_conditions", "secondary_season", "mountain_site", "annual_events") if r.get(k)}})
     merge_same_places(out)
     out.dropped = [n for n in dropped if n not in {r["name"] for r in out}]
     return out

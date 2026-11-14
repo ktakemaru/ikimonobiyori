@@ -226,3 +226,12 @@ class HookSources(unittest.TestCase):
     def test_hand_written_urls_are_blocked(self):
         self.assertTrue(self.decide("出典\n・a https://example.org/a", [])["block"])
         self.assertFalse(self.decide("出典\n・a https://example.org/a", [], answer=None)["block"])     # 直前の答えがない回は見ない
+
+
+class KnowledgeSearchRetired(unittest.TestCase):
+    """段階85 第4部 4: 取り下げたカードは、既定では search に出さない。"""
+    def test_retired_hidden_by_default(self):
+        from ikimonobiyori import knowledge as K
+        cards = [{"title": "a", "place": "試験の森", "facts": ["x"]}, {"title": "b", "place": "試験の森", "facts": ["y"], "retired": True}]
+        self.assertEqual([r["title"] for r in K.search(place="試験の森", cards=cards)], ["a"])
+        self.assertEqual(len(K.search(place="試験の森", cards=cards, include_retired=True)), 2)

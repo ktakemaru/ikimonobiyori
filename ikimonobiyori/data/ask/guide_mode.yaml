@@ -456,3 +456,25 @@ sources_reply:
   heading: 出典
   none: 直前の答えには、URL のある出典はありません。
   no_answer: 直前の答えが見つかりません。もう一度質問していただければ、出典つきでお答えします。
+# 段階85 第3部: 取りこぼしの点検(audit.py。ask audit)。通信しない
+audit:
+  origin: null                       # 省くと ask の既定の出発地
+  q_species: "{sp}はいつどこで見られますか?"
+  q_month: "{month}月の週末、{sp}を見たい"
+  q_place: "{pref}で見られる花は?"
+  months_per_species: {value: 2, source: "理由: 時間のため、名所の窓に多く当たる月から 2 か月", provisional: true}
+  prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 静岡県, 長野県]
+  place_cap: {value: 12, source: "species_rows.max_known と同じ(都県の質問の候補の枠の目安)", provisional: true}
+  regress_species: [梅, 水仙, 河津桜, 冬桜, ハクチョウ]      # 回帰テストで点検する種(時間のため絞る)
+  list_heading: "### 理由が「上限で外れた」「規約・承認のため」以外の一覧"
+  labels:
+    kinds: {species: 種の質問, month: 月の週末の質問, place: 都県の質問}
+    reasons: {limit: 上限で外れた(件数の枠), no_season: 例年の時期の記録がない(時期の分かる名所が多いときは入れない), season_parse: 時期の読み取りに失敗, species_link: 種の名前が結びつかない, place_link: 場所が結びつかない, terms: 規約・承認のため出せない, retired: 取り下げ済み, other: そのほか(理由が分からない)}
+# 段階85 第4部 2: 語りの材料の枠(紅葉や野鳥の候補がある質問でも、観察記録と暦を先に取っておく)
+reserve:
+  seasonal_obs: {value: 2, source: "指示書 段階85 第4部 2(例年この時期の観察記録を 1〜2 点)", provisional: true}
+  obs_kind: 例年この時期の観察記録
+  calendar_kind: 季節の暦
+  fallback_question: 今の時期に見られる生き物           # 観察記録の分類を決めない質問の形(紅葉だけの質問でも地域の観察記録を引く)
+  obs_ref: "・公式の現況がなければ、地域の観察記録 [{ids}] の傾向を続けて書ける"
+  skip_routes: []

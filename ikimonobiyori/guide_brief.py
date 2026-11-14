@@ -598,6 +598,9 @@ def _species_facts(F, sprows, cands, cond, c):
         if sec:                                            # 段階82 の続き(本人の判断 2026-11-13 の 2): 公式より長い紹介サイトの時期は、区別して公式のあとに
             F.add("typical", R["secondary_line"].format(name=r["name"], loc=loc, species=r["species"], season=sec["season"]), place=r["name"],
                   source=sec.get("publisher"), url=sec.get("url"), source_class="secondary", extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
+        for ev in r.get("annual_events") or []:            # 段階85 第3部: 公式の「毎年」の行事の期間(例年の見頃ではない。時期の記載のない名所の手がかり)
+            F.add("event", f"{r['name']}: {ev['name']}は{ev['text']}({ev.get('publisher') or ''})", place=r["name"], source=ev.get("publisher"),
+                  url=ev.get("source_url"), source_class="official", extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
         if r.get("care"):
             F.add("facility", f"{r['name']}: 行く前に: {r['care']}", place=r["name"])
         if r.get("closed_period"):                         # 段階82 第3部 1: 行けない時期(冬期閉鎖など)は安全・規制の事実として
@@ -1531,6 +1534,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                 skip_names={r["name"] for r in sprows} | {r["merged_from"] for r in sprows if r.get("merged_from")}
                 | set(getattr(sprows, "dropped", ()) or ()))
     _species_facts(F, sprows, cands, cond, c)
+    _dated_species_candidates(cands, res, cond, c)            # 段階85 第3部: 日付つきの種の質問で、その日に当たる種の名所を候補に
     if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
         _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
     _place_records(F, question, cands, cond, c, env)          # 段階78 第4部: 質問の場所の記録(その場で調べた名所を含む)
@@ -1659,6 +1663,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
                     for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
     sobs = seasonal_rows(question, {**cond, "_towns": towns}, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
+    mat, cards, sobs = _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c)   # 段階85 第4部 2: 観察記録と暦の枠
     refresh_pages = _refresh_targets(work, cands, now, env, c)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
     _mark_stale(F.rows, cond, now, c)
     doc = {
@@ -1683,6 +1688,69 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def _pref_short(p):
+    return re.sub(r"[都道府県]$", "", p or "")
+
+
+def _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c):
+    """段階85 第4部 2: 紅葉や野鳥の候補がある質問でも、語りの材料に「例年この時期の観察記録」を 1〜2 点、「季節の暦」を 1 点、先に取っておく。
+    公式の現況がない候補には、その地域の観察記録の印を候補のそばに置く(「今年の状況は確かめられていません」のあとに傾向を続けて書けるように)。"""
+    R = c.get("reserve") or {}
+    route = cond.get("route")
+    if not R or route in (c["narrative"].get("skip_routes") or []) or route in (R.get("skip_routes") or []):
+        return mat, cards, sobs
+    mat = dict(mat or {"items": [], "missing": []})
+    items = list(mat.get("items") or [])
+    if not sobs and R.get("fallback_question"):             # 紅葉だけの質問など: 分類を決めない質問の形で、地域の観察記録を引く
+        try:
+            sobs = seasonal_rows(R["fallback_question"], {k: v for k, v in cond.items() if k not in ("subjects", "route")}, cands, now, env, c)
+        except (OSError, ValueError, KeyError, TypeError):
+            sobs = []
+    n_obs = R["seasonal_obs"]["value"] if isinstance(R.get("seasonal_obs"), dict) else (R.get("seasonal_obs") or 0)
+    have = {i.get("card") for i in items}
+    for r in (sobs or [])[:n_obs]:
+        if r["id"] not in have:
+            items.append({"kind": R["obs_kind"], "card": r["id"], "title": r.get("category"), "place": r.get("region"), "text": r["content"]})
+    cal_link = c["calendar"]["link"]
+    if not any(i.get("card") in {k["id"] for k in cards if k.get("link") == cal_link} for i in items):
+        cal = [k for k in cards if k.get("link") == cal_link]
+        if not cal:
+            try:
+                cal = calendar_cards(question, cond, cands, months, c, True, start=len(cards), have_titles=[k.get("title") for k in cards])[:1]
+                if not cal and R.get("fallback_question"):     # 紅葉の質問で木の葉や実の暦がないときなど: 対象を決めない形で 1 枚
+                    cal = calendar_cards(R["fallback_question"], {k: v for k, v in cond.items() if k not in ("subjects", "route")}, cands, months, c,
+                                         True, start=len(cards), have_titles=[k.get("title") for k in cards])[:1]
+            except (OSError, ValueError, KeyError, TypeError):
+                cal = []
+            cards = list(cards) + cal
+        if cal and cal[0].get("facts"):
+            items.append({"kind": R["calendar_kind"], "card": cal[0]["id"], "title": cal[0].get("title"), "place": cal[0].get("where"),
+                          "text": cal[0]["facts"][0]})
+    for r in cands:                                          # 公式の現況がない候補のそばに、その地域の観察記録の印
+        if r.get("basis") == "current" or r.get("current_state"):
+            continue
+        pref = _pref_short(r.get("prefecture"))
+        ids = [o["id"] for o in sobs or [] if pref and pref in (o.get("region") or "")]
+        if ids:
+            r["seasonal_obs_ids"] = ids[: n_obs]
+    mat["items"] = items
+    return mat, cards, sobs
+
+
+def _dated_species_candidates(cands, res, cond, c):
+    """段階85 第3部(取りこぼしの点検): 種 + 日付の質問(「2月の週末、梅を見たい」)は、種の名所の一覧を作らない経路(species_rows.routes_skip)なので、
+    その日に当たる種の名所(今までの答えの経路が選んだ名所)が、事実はあっても候補に入らなかった。その名所を候補に入れる。"""
+    if (res.get("route") or cond.get("route")) != "species_dated":
+        return
+    have = {r.get("name") for r in cands}
+    sp = res.get("season_place") or {}
+    for n in sp.get("spots") or []:
+        if n and n not in have:
+            have.add(n)
+            cands.append({"subject": None, "rank": None, "name": n, "chosen": False, "basis": "species", "group": None,
+                          "theme": "・".join(sp.get("species") or []) or None, "reasons": [c["species_rows"]["label"]]})
 
 
 def _refresh_targets(work, cands, now, env, c):
@@ -2135,10 +2203,12 @@ def render_md(doc):
             if r.get("rank") is None:
                 tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
                 L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({_loc(r)} {_dist(r)})"
-                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else ""))
+                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else "")
+                         + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
                 continue
             L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({_loc(r)} {_dist(r)}・点 {r.get('score')}・"
-                     f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}")
+                     f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}"
+                     + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
         L.append("")
     L += ["## 確かめた事実", ""]
     for f in doc["facts"]:
