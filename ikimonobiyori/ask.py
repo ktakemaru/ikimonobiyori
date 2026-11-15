@@ -1289,7 +1289,8 @@ def main(argv=None, http_get=None):
             print("下書きのファイルがありません", file=sys.stderr)
             return 2
         res = GV.run(Path(a.draft).read_text(encoding="utf-8"), a.brief, now=now or _clock())
-        sys.stderr.write(GV.report(res))
+        if res["status"] == "FAIL":                      # 段階85 第5部: 合格・従来形のときは結果の行を出さない(2>&1 で送る文に混ざり、答えが 2 回出ていた)
+            sys.stderr.write(GV.report(res))
         if res["text"]:
             sys.stdout.flush(); sys.stdout.buffer.write(res["text"].encode("utf-8"))
         return 1 if res["status"] == "FAIL" else 0

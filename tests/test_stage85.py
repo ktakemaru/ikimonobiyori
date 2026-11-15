@@ -182,7 +182,7 @@ class ShortSources(unittest.TestCase):
         self.assertEqual(line.count("試験町観光協会"), 1)                 # 同じ発行元は 1 つ(日付は新しいほう)
         self.assertIn("試験町観光協会(11/12時点)", line)
         self.assertIn("(紹介サイト", line)
-        self.assertIn("試験の研究所(紹介サイト・11/7に確認)", line)
+        self.assertIn("試験の研究所(11/7に確認)", line)                  # 区分のない知識カードは「紹介サイト」と書かない
 
     def test_run_outputs_short_and_keeps_full_for_page_and_sources(self):
         from ikimonobiyori import guide_answer_page as GAP

@@ -458,7 +458,7 @@ def short_sources(cited, c):
                 iso, how = r.get("checked_on"), "card"
             else:
                 iso, how = r.get("observed") or r.get("read_at"), "fact"
-            off = r.get("source_class") == "official"
+            off = r.get("source_class") != "secondary"        # 紹介サイトと分かるもの(secondary)だけに添える(区分のない知識カードは添えない)
         g = groups.setdefault(name, {"iso": None, "how": None, "official": off})
         g["official"] = g["official"] and off
         if iso and (g["iso"] is None or (how == "fact" and g["how"] == "card") or (how == g["how"] and str(iso)[:10] > str(g["iso"])[:10])):
