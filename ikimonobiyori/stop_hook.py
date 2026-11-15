@@ -129,6 +129,20 @@ def _is_research(call, c):
     return _matches(call, c["record_patterns"])
 
 
+def _first_pos(call, patterns):
+    poss = [m.start() for p in patterns for m in [re.search(p, _cmd(call))] if m]
+    return min(poss) if poss else None
+
+
+def _after(calls, vi, pi, c):
+    """ページを作る呼び出し(pi)が、ask verify の呼び出し(vi)のあとか(同じ呼び出しなら、コマンドの中で後ろにあるか)。"""
+    if pi != vi:
+        return pi > vi
+    k = calls[pi]
+    v, pg = _first_pos(k, c["guide_verify_patterns"]), _first_pos(k, c.get("page_patterns") or [])
+    return v is not None and pg is not None and pg > v
+
+
 def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
     """段階75: ガイドの形の回。ask verify --brief が合格(または今の形の答え)を出し、最終メッセージがその文と一致するときだけ通す。
     段階81 の続き 1: この回に ask verify のあとで写真つきのページを作り(ask page)、最終メッセージが ask page-reply の案内の文と一致するときも通す。"""
@@ -137,14 +151,16 @@ def _decide_guide(msg, calls, at, c, guide_ok, page_ok=None):
     if not verifies:
         return {"block": True, "why": "guide_no_verify", "reasons": [c["reasons"]["guide_no_verify"]]}
     pages = [i for i, k in enumerate(after) if _matches(k, c.get("page_patterns") or [])]
-    if msg.strip() and page_ok and pages and pages[-1] > verifies[-1] and page_ok(msg):
+    # 段階85 第4部 1: ask verify と ask page を 1 回のコマンドで続けて実行した回(同じ呼び出し)と、ページのあとで ask verify を
+    # 実行し直した回も、ページの案内の文(ask page-reply の出力)なら通す。比べるのはコマンドの中の位置まで
+    if msg.strip() and page_ok and pages and any(_after(after, v, pg, c) for v in verifies[:1] for pg in pages) and page_ok(msg):
         return {"block": False, "reasons": [], "why": "guide_page"}
     if msg.strip() and not (guide_ok(msg) if guide_ok else False):
         return {"block": True, "why": "guide_mismatch", "reasons": [c["reasons"]["guide_mismatch"]]}
     return {"block": False, "reasons": [], "why": "guide_checked"}
 
 
-def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
+def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None, sources_ok=None):
     """→ {"block": bool, "reasons": [エージェントへの次の手順], "why": 判定の語}。
     guide_ok(段階75): 最終メッセージが ask verify --brief の最終の文と一致するかを返す関数。
     page_ok(段階81 の続き): 最終メッセージが ask page-reply の案内の文と一致するかを返す関数。"""
@@ -156,6 +172,14 @@ def decide(payload, turn, answer=None, c=None, guide_ok=None, page_ok=None):
         return {"block": False, "reasons": [], "why": ex}
     answers = [i for i, k in enumerate(calls) if _matches(k, c["answer_patterns"])]
     briefs = [i for i, k in enumerate(calls) if _matches(k, c.get("brief_patterns") or [])]
+    srcs = [i for i, k in enumerate(calls) if _matches(k, c.get("sources_patterns") or [])]
+    if srcs and not (briefs and briefs[-1] > srcs[-1]) and not (answers and answers[-1] > srcs[-1]):   # 段階85 第2部: 出典を聞かれた回
+        if not msg.strip() or (sources_ok(msg) if sources_ok else False):
+            return {"block": False, "reasons": [], "why": "sources_reply"}
+        return {"block": True, "why": "sources_mismatch", "reasons": [c["reasons"]["sources_reply"]]}
+    if (not srcs and not briefs and not answers and answer and msg.strip() and re.search(r"https?://", msg)
+            and any(w in prompt for w in c.get("sources_request_words") or [])):   # 出典の URL を手で書き写した回
+        return {"block": True, "why": "sources_by_hand", "reasons": [c["reasons"]["sources_reply"]]}
     photo = [i for i, k in enumerate(calls) if _matches(k, c.get("photo_reply_patterns") or [])]
     if photo and not (briefs and briefs[-1] > photo[-1]) and not (answers and answers[-1] > photo[-1]):   # 段階82 第4部 4.5: 写真を直した回
         if not msg.strip() or (page_ok(msg) if page_ok else False):
@@ -238,7 +262,9 @@ def run(payload, *, env=None, now=None):
     answer = FC.load_answer(t, env)
     from . import guide_verify as GV
     from . import guide_answer_page as GAP
-    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env), page_ok=lambda m: GAP.accepts_reply(m, t, env))
+    from . import sources_reply as SR
+    d = decide(payload, turn, answer, c, guide_ok=lambda m: GV.accepts(m, t, env), page_ok=lambda m: GAP.accepts_reply(m, t, env),
+               sources_ok=lambda m: SR.accepts(m, t, env))
     if not d["block"]:
         return None
     note_block(key, env)

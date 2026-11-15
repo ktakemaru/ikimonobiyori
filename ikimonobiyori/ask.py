@@ -923,6 +923,12 @@ def main(argv=None, http_get=None):
     p.add_argument("--url", default=None)
     p = sub.add_parser("page-reply", help="段階81 の続き: ページを頼まれたときの最後の文(決まった案内 + ページのリンク)。出力を一字一句そのまま送る")
     p.add_argument("--url", default=None, help="公開したページのリンク(https://claude.ai/artifact/…)。省くとページのファイルの場所")
+    p = sub.add_parser("audit", help="段階85 第3部: 取りこぼしの点検(記録にある名所のうち資料に入らなかったものを理由ごとに数える。通信しない)。標準出力は Markdown の表と一覧")
+    p.add_argument("--species", help="点検する種(読点・カンマ区切り。省くと全部)")
+    p.add_argument("--kinds", default="species,month,place", help="質問の型(species・month・place)")
+    p.add_argument("--json", dest="json_out", help="結果の JSON を書くファイル(データ置き場の下を勧める)")
+    p.add_argument("--now")
+    sub.add_parser("source-urls", help="段階85 第2部: 「出典を見せて」「URL を教えて」のとき、直前の答えの URL つきの出典。出力を一字一句そのまま送る")
     p = sub.add_parser("plan", help="答えの計画(狙い別の節・今回のおすすめ・不採用の理由)をコードで作る(段階56)")
     p.add_argument("--out-dir", help="作業フォルダ(--refine のときは省くと直前の計画)")
     p.add_argument("--area", action="append", default=[], help="エリア名(複数可)。エリアごとの計画を作る(段階58)")
@@ -946,7 +952,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--place", action="store_true", help="場所の質問の答え(ask place の行で作った答え)。計画の照合と候補数の下限を当てない(段階60)")
     p.add_argument("--question", help="--generic のとき: 質問の文。意図が行事(観察会・講座・展示)なら、行事用の検査(台帳との照合。候補数の下限は当てない)")
     p.add_argument("--now", help="--generic --question の行事の検査: 行事の日付と比べる時刻(ISO 8601。省くと今日)")
-    p = sub.add_parser("brief", help="段階75: ガイドの資料(候補と順位・確かめた事実・知識カード・足りないもの・決まり)を作る。通信しない。標準出力は id とパスだけ")
+    p = sub.add_parser("brief", help="段階75: ガイドの資料(候補と順位・確かめた事実・知識カード・足りないもの・決まり)を作る。段階85: 候補の現況のページ(有効期間切れ)を最大 5 ページ・25 秒まで読み直す。標準出力は id とパスだけ")
     p.add_argument("question_pos", nargs="?", metavar="question", help="質問の文")
     p.add_argument("--question")
     p.add_argument("--prev", help="続けて聞く質問: 前の質問の資料の id")
@@ -984,6 +990,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--fact", help="add-fact: 足す事実(出典の本文と照らしてから)")
     p.add_argument("--narrative", help="add-fact: 足す事実の語りの種類(例: 次の季節)")
     p.add_argument("--file", help="add: カードの JSON(1 枚か配列)")
+    p.add_argument("--include-retired", action="store_true", help="段階85: search で取り下げたカードも出す(既定は出さない)")
     p.add_argument("--place")
     p.add_argument("--category")
     p.add_argument("--month", type=int)
@@ -1167,12 +1174,14 @@ def main(argv=None, http_get=None):
                     bad += 1
                     print(f"{card.get('title')}: {ex}", file=sys.stderr)
             return 1 if bad else 0
-        rows = K.search(place=a.place, category=a.category, month=a.month, text=a.text) if a.action == "search" else K.load()
+        rows = (K.search(place=a.place, category=a.category, month=a.month, text=a.text, include_retired=a.include_retired)
+                if a.action == "search" else K.load())
         if a.action == "show":
             rows = [r for r in rows if r["title"] == a.title]
             _out(rows)
             return 0 if rows else 2
-        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]} for r in rows])
+        _out([{k: r.get(k) for k in ("title", "category", "place")} | {"source": r["source"]["name"]}
+              | ({"retired": True, "retired_reason": r.get("retired_reason")} if r.get("retired") else {}) for r in rows])   # 段階85 第4部 4: 取り下げの印
         return 0
     if a.step == "combo":
         from . import combo
@@ -1231,7 +1240,7 @@ def main(argv=None, http_get=None):
         if not q:
             print("質問の文がありません", file=sys.stderr)
             return 2
-        doc = GB.build(q, now=now or _clock(), prev=a.prev)
+        doc = GB.build_refreshed(q, now=now or _clock(), prev=a.prev)     # 段階85 第1部: 候補の現況のページを読み直してから
         jp, mp = GB.save(doc)
         print(doc["id"])
         print(jp)
@@ -1280,7 +1289,8 @@ def main(argv=None, http_get=None):
             print("下書きのファイルがありません", file=sys.stderr)
             return 2
         res = GV.run(Path(a.draft).read_text(encoding="utf-8"), a.brief, now=now or _clock())
-        sys.stderr.write(GV.report(res))
+        if res["status"] == "FAIL":                      # 段階85 第5部: 合格・従来形のときは結果の行を出さない(2>&1 で送る文に混ざり、答えが 2 回出ていた)
+            sys.stderr.write(GV.report(res))
         if res["text"]:
             sys.stdout.flush(); sys.stdout.buffer.write(res["text"].encode("utf-8"))
         return 1 if res["status"] == "FAIL" else 0
@@ -1374,6 +1384,21 @@ def main(argv=None, http_get=None):
             print(str(e), file=sys.stderr)
             return 2
         sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip("\n") + "\n").encode("utf-8"))
+        return 0
+    if a.step == "audit":                                # 段階85 第3部
+        from . import audit as AU
+        import re as _re
+        sps = [x for x in _re.split(r"[,、・]", a.species or "") if x] or None
+        qs = AU.questions(species=sps, kinds=tuple(x for x in a.kinds.split(",") if x))
+        res = AU.run(qs, now=now or _clock(), progress=lambda i, n, r: print(f"{i}/{n} {r['question']} 対象 {r.get('expected')}・入らなかった {len(r.get('missing') or [])}", file=sys.stderr))
+        if a.json_out:
+            Path(a.json_out).write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+        sys.stdout.flush(); sys.stdout.buffer.write(AU.render(res).encode("utf-8"))
+        return 1 if any(m["reason"] == "other" for r in res for m in r.get("missing") or []) else 0
+    if a.step == "source-urls":                          # 段階85 第2部
+        from . import sources_reply as SR
+        text = SR.reply(now or _clock())
+        sys.stdout.flush(); sys.stdout.buffer.write((text.rstrip(chr(10)) + chr(10)).encode("utf-8"))
         return 0
     if a.step == "final-check":                          # 段階69 第1部
         from . import final_check as FC

@@ -174,6 +174,15 @@ final:
   not_official: 公式ではありません
   card_note: '{date}に確認'
   fact_note: '{date}時点'
+  # 段階85 第2部(本人の判断 B): 会話の答えの出典は名前と日付だけの 1 行(URL は ask sources と写真つきのページ)
+  short:
+    line: '出典: {items}'
+    not_official: 紹介サイト
+    fact_note: '{date}時点'
+    card_note: '{date}に確認'
+    seasonal_name: iNaturalist の観察記録(過去5年)
+    max_items: {value: 6, source: "指示書 段階85 第2部 1(1〜2 行に収める)。理由: 6 件で 2 行ほど", provisional: true}
+    more: 'ほか{n}件'
 
 # 資料の「決まり」(AI に渡す。指示書 0.3 の事実の決まりを短く)
 rules:
@@ -421,3 +430,54 @@ record_events:
   max_after: 3                   # 期間の内になければ、期間のあとの行事をこの数まで
   weekdays: [月, 火, 水, 木, 金, 土, 日]
   line: "{name}: {event}: {period}"
+# 段階85 第1部: 資料を作るときの現況のページの自動の読み直し(auto_refresh.py)。値は指示書 段階85 1.2 による
+auto_refresh:
+  enabled: true
+  max_pages: {value: 5, source: "指示書 段階85 1.2(1 つの質問で最大 5 ページ)", provisional: true}
+  max_seconds: {value: 25, source: "指示書 段階85 1.2(合わせて 25 秒まで)", provisional: true}
+  max_requests: {value: 12, source: "5 ページ × (robots.txt と本文) に余り。理由: 上限を通信の回数でも抑える", provisional: true}
+  max_requests_per_page: {value: 2, source: "robots.txt と本文の 2 回(コードで読む日光・箱根の上限。施設のページは見出しのリンクを 1 つたどるので 3 回になることがある。全体の上限は max_requests)", provisional: true}
+  min_interval_s: {value: 1, source: "CLAUDE.md 規則 6(同じホストへの間隔 1 秒以上)", provisional: true}
+  connect_s: {value: 5, source: "理由: 25 秒の中で 5 ページを読むため、research(10 秒)より短く", provisional: true}
+  read_s: {value: 8, source: "同上", provisional: true}
+  max_bytes: {value: 3000000, source: "research.max_bytes と同じ", provisional: true}
+  max_text_chars: {value: 20000, source: "理由: 変わったページの本文の控えの長さ(エージェントが読む分)", provisional: true}
+  stale_days: {value: 7, source: "指示書 段階85 1.2(現況の日付が対象の日より 7 日以上前なら「古い」の印)", provisional: true}
+  vc_follow_words: [紅葉情報, 開花情報, 花情報, 自然情報, 野鳥情報, 今の, 近ごろの自然]   # 本人の判断(2026-11-15 の 1): 施設のトップに見出しだけがあるとき、この語のリンクを 1 つだけたどる(同じサイトの中だけ)
+  dir: auto_refresh                  # データ置き場の下(変わったページの本文の控え。次の読み直しで上書き)
+  lines:
+    failed: "{name}の公式の現況({publisher})を読み直せませんでした({md}時点の記録のまま)"
+    heading: "## 読み直したページ(前回の記録から内容が変わった公式の現況)"
+    note: "下の本文の控えで、名所ごとの今の状態と日付を確かめ、ask record --batch <JSON> で記録してから、同じ質問で ask brief を作り直す(本文にない状態を書かない。Web を使わない)。"
+    vc_note: "施設(ビジターセンターなど)のページは ask record ではなく ask vc-record --batch <JSON> で記録する(1 件: center・date(年つき)・state(状態の語だけ)・url。台帳の allowed_fields にない項目(種名など)は入れない)。"
+    row: "- {name}({publisher}・前回の記録 {md}時点): {url} → 本文の控え {text_path}"
+    stale_mark: "古い({days}日前)"
+# 段階85 第2部: 「出典を見せて」のときの URL つきの出典(sources_reply.py。ask sources)
+sources_reply:
+  file: ask/last_sources_reply.json
+  heading: 出典
+  none: 直前の答えには、URL のある出典はありません。
+  no_answer: 直前の答えが見つかりません。もう一度質問していただければ、出典つきでお答えします。
+# 段階85 第3部: 取りこぼしの点検(audit.py。ask audit)。通信しない
+audit:
+  origin: null                       # 省くと ask の既定の出発地
+  q_species: "{sp}はいつどこで見られますか?"
+  q_month: "{month}月の週末、{sp}を見たい"
+  q_place: "{pref}で見られる花は?"
+  months_per_species: {value: 2, source: "理由: 時間のため、名所の窓に多く当たる月から 2 か月", provisional: true}
+  prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 静岡県, 長野県]
+  place_cap: {value: 12, source: "species_rows.max_known と同じ(都県の質問の候補の枠の目安)", provisional: true}
+  place_skip_species: [ホタル]                  # 都県の「花」の質問で数えない種(花でない)
+  regress_species: [梅, 水仙, 河津桜, 冬桜, ハクチョウ]      # 回帰テストで点検する種(時間のため絞る)
+  list_heading: "### 理由が「上限で外れた」「規約・承認のため」以外の一覧"
+  labels:
+    kinds: {species: 種の質問, month: 月の週末の質問, place: 都県の質問}
+    reasons: {limit: 上限で外れた(件数の枠), no_season: 例年の時期の記録がない・出さない(紹介サイト 1 件だけの時期。時期の分かる名所が多いときは入れない), season_parse: 時期の読み取りに失敗, species_link: 種の名前が結びつかない, place_link: 場所が結びつかない, terms: 規約・承認のため出せない, retired: 取り下げ済み, other: そのほか(理由が分からない)}
+# 段階85 第4部 2: 語りの材料の枠(紅葉や野鳥の候補がある質問でも、観察記録と暦を先に取っておく)
+reserve:
+  seasonal_obs: {value: 2, source: "指示書 段階85 第4部 2(例年この時期の観察記録を 1〜2 点)", provisional: true}
+  obs_kind: 例年この時期の観察記録
+  calendar_kind: 季節の暦
+  fallback_question: 今の時期に見られる生き物           # 観察記録の分類を決めない質問の形(紅葉だけの質問でも地域の観察記録を引く)
+  obs_ref: "・公式の現況がなければ、地域の観察記録 [{ids}] の傾向を続けて書ける"
+  skip_routes: []

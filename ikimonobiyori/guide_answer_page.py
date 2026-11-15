@@ -32,6 +32,8 @@ def load_last(now, env=None):
         return None
     if not doc.get("text") or now < saved or now - saved > timedelta(hours=APG.cfg()["valid_hours"]):
         return None
+    if doc.get("full_text"):                             # 段階85 第2部: ページは URL つきの出典の形から作る
+        doc = {**doc, "chat_text": doc["text"], "text": doc["full_text"]}
     return doc
 
 
@@ -403,7 +405,18 @@ def accepts_reply(message, now=None, env=None):
     """送るメッセージが、ask page-reply が出した案内の文と一致するか(空白の違いは見ない)。"""
     d = _load_page(now or datetime.now().astimezone(), env)
     t = (d or {}).get("reply")
-    return bool(t) and re.sub(r"\s+", "", t) == re.sub(r"\s+", "", message or "")
+    return bool(t) and loose(t) == loose(message)
+
+
+def loose(s):
+    """段階85 第4部 1: 決まった文と比べる形。空白・改行・行の頭の記号(「- 」「* 」「> 」「・」)・リンクの書き方
+    (<URL>・[文字](URL)・URL だけの行の括弧)の違いを見ない。"""
+    s = s or ""
+    s = re.sub(r"\[[^\]]*\]\((https?://[^)\s]+)\)", r"\1", s)
+    s = re.sub(r"<(https?://[^>\s]+)>", r"\1", s)
+    s = re.sub(r"(?m)^\s*(?:[-*>・→]|\d+\.)\s*", "", s)
+    s = re.sub(r"(?m)^[(（](https?://[^\s)）]+)[)）]\s*$", r"\1", s)
+    return re.sub(r"\s+", "", s)
 
 
 def linkify(escaped):

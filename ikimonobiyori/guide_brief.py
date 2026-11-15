@@ -598,6 +598,9 @@ def _species_facts(F, sprows, cands, cond, c):
         if sec:                                            # 段階82 の続き(本人の判断 2026-11-13 の 2): 公式より長い紹介サイトの時期は、区別して公式のあとに
             F.add("typical", R["secondary_line"].format(name=r["name"], loc=loc, species=r["species"], season=sec["season"]), place=r["name"],
                   source=sec.get("publisher"), url=sec.get("url"), source_class="secondary", extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
+        for ev in r.get("annual_events") or []:            # 段階85 第3部: 公式の「毎年」の行事の期間(例年の見頃ではない。時期の記載のない名所の手がかり)
+            F.add("event", f"{r['name']}: {ev['name']}は{ev['text']}({ev.get('publisher') or ''})", place=r["name"], source=ev.get("publisher"),
+                  url=ev.get("source_url"), source_class="official", extra={"_pref": r.get("prefecture"), "_city": r.get("city")})
         if r.get("care"):
             F.add("facility", f"{r['name']}: 行く前に: {r['care']}", place=r["name"])
         if r.get("closed_period"):                         # 段階82 第3部 1: 行けない時期(冬期閉鎖など)は安全・規制の事実として
@@ -1531,6 +1534,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                 skip_names={r["name"] for r in sprows} | {r["merged_from"] for r in sprows if r.get("merged_from")}
                 | set(getattr(sprows, "dropped", ()) or ()))
     _species_facts(F, sprows, cands, cond, c)
+    _dated_species_candidates(cands, res, cond, c)            # 段階85 第3部: 日付つきの種の質問で、その日に当たる種の名所を候補に
     if sprows and cond.get("defaulted_date") and (c["species_rows"].get("spread") or {}):
         _species_leads(F, sprows, now, c)                       # 段階78 の追記: 全体の目安を資料に入った名所の時期から
     _place_records(F, question, cands, cond, c, env)          # 段階78 第4部: 質問の場所の記録(その場で調べた名所を含む)
@@ -1659,6 +1663,10 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         targets += [{"what": sp, "where": None, "why": T["research_why"].format(sp=sp), "kind": "species_card"}
                     for sp in no_trait if not any(t.get("what") == sp and t.get("kind") == "species_card" for t in targets)]
     sobs = seasonal_rows(question, {**cond, "_towns": towns}, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
+    _vc_facts(F, question, cands, now, env, c)              # 本人の判断(2026-11-15 の 1): 承認済みの施設の発信(新しいものを先に・古い現況を外す)
+    mat, cards, sobs = _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c)   # 段階85 第4部 2: 観察記録と暦の枠
+    refresh_pages = _refresh_targets(work, cands, now, env, c, F.rows)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
+    _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
@@ -1675,12 +1683,233 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         + [c["species_traits"]["missing_line"].format(sp=sp) for sp in no_trait]
         + ([c["research"]["done_line"]] if researched else [])
         + [f"調べる: {t['why']}" for t in targets],
-        "research": {"targets": targets},
+        "research": {"targets": targets}, "refresh_pages": refresh_pages,
         **({"photos": fp} if (fp := form_photos(question, env)) else {}),
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
     }
     return doc
+
+
+def _pref_short(p):
+    return re.sub(r"[都道府県]$", "", p or "")
+
+
+def _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c):
+    """段階85 第4部 2: 紅葉や野鳥の候補がある質問でも、語りの材料に「例年この時期の観察記録」を 1〜2 点、「季節の暦」を 1 点、先に取っておく。
+    公式の現況がない候補には、その地域の観察記録の印を候補のそばに置く(「今年の状況は確かめられていません」のあとに傾向を続けて書けるように)。"""
+    R = c.get("reserve") or {}
+    route = cond.get("route")
+    if not R or route in (c["narrative"].get("skip_routes") or []) or route in (R.get("skip_routes") or []):
+        return mat, cards, sobs
+    mat = dict(mat or {"items": [], "missing": []})
+    items = list(mat.get("items") or [])
+    if not sobs and R.get("fallback_question"):             # 紅葉だけの質問など: 分類を決めない質問の形で、地域の観察記録を引く
+        try:
+            sobs = seasonal_rows(R["fallback_question"], {k: v for k, v in cond.items() if k not in ("subjects", "route")}, cands, now, env, c)
+        except (OSError, ValueError, KeyError, TypeError):
+            sobs = []
+    n_obs = R["seasonal_obs"]["value"] if isinstance(R.get("seasonal_obs"), dict) else (R.get("seasonal_obs") or 0)
+    have = {i.get("card") for i in items}
+    for r in (sobs or [])[:n_obs]:
+        if r["id"] not in have:
+            items.append({"kind": R["obs_kind"], "card": r["id"], "title": r.get("category"), "place": r.get("region"), "text": r["content"]})
+    cal_link = c["calendar"]["link"]
+    if not any(i.get("card") in {k["id"] for k in cards if k.get("link") == cal_link} for i in items):
+        cal = [k for k in cards if k.get("link") == cal_link]
+        if not cal:
+            try:
+                cal = calendar_cards(question, cond, cands, months, c, True, start=len(cards), have_titles=[k.get("title") for k in cards])[:1]
+                if not cal and R.get("fallback_question"):     # 紅葉の質問で木の葉や実の暦がないときなど: 対象を決めない形で 1 枚
+                    cal = calendar_cards(R["fallback_question"], {k: v for k, v in cond.items() if k not in ("subjects", "route")}, cands, months, c,
+                                         True, start=len(cards), have_titles=[k.get("title") for k in cards])[:1]
+            except (OSError, ValueError, KeyError, TypeError):
+                cal = []
+            cards = list(cards) + cal
+        if cal and cal[0].get("facts"):
+            items.append({"kind": R["calendar_kind"], "card": cal[0]["id"], "title": cal[0].get("title"), "place": cal[0].get("where"),
+                          "text": cal[0]["facts"][0]})
+    for r in cands:                                          # 公式の現況がない候補のそばに、その地域の観察記録の印
+        if r.get("basis") == "current" or r.get("current_state"):
+            continue
+        pref = _pref_short(r.get("prefecture"))
+        ids = [o["id"] for o in sobs or [] if pref and pref in (o.get("region") or "")]
+        if ids:
+            r["seasonal_obs_ids"] = ids[: n_obs]
+    mat["items"] = items
+    return mat, cards, sobs
+
+
+def _dated_species_candidates(cands, res, cond, c):
+    """段階85 第3部(取りこぼしの点検): 種 + 日付の質問(「2月の週末、梅を見たい」)は、種の名所の一覧を作らない経路(species_rows.routes_skip)なので、
+    その日に当たる種の名所(今までの答えの経路が選んだ名所)が、事実はあっても候補に入らなかった。その名所を候補に入れる。"""
+    if (res.get("route") or cond.get("route")) != "species_dated":
+        return
+    have = {r.get("name") for r in cands}
+    sp = res.get("season_place") or {}
+    for n in sp.get("spots") or []:
+        if n and n not in have:
+            have.add(n)
+            cands.append({"subject": None, "rank": None, "name": n, "chosen": False, "basis": "species", "group": None,
+                          "theme": "・".join(sp.get("species") or []) or None, "reasons": [c["species_rows"]["label"]]})
+
+
+def _vc_facts(F, question, cands, now, env, c):
+    """段階85 の続き(本人の判断 2026-11-15 の 1): 承認済み・季節内の施設の、いちばん新しい発信(visitor_centers.fact_rows。承認の条件の
+    allowed_fields のとおり、種名を使わない施設は種名なし)を、施設の場所の語(plan.yaml の skeleton.visitor_center_places)が質問か候補の名前に
+    あるとき、資料の今年の現況に入れる。同じ施設のサイトの、それより古い現況の事実は外す(古い日付と新しい日付が並ばないように)。"""
+    from urllib.parse import urlsplit
+    from . import answer_plan as AP
+    from . import visitor_centers as VC
+    try:
+        rows = VC.fact_rows(now.date(), env=env)
+        places = (AP.load_policy().get("skeleton") or {}).get("visitor_center_places") or {}
+        centers = {x["id"]: x for x in VC.load_centers()}
+    except (OSError, ValueError, KeyError):
+        return
+    words = (question or "") + " " + " ".join(str(r.get(k) or "") for r in cands for k in ("name", "city"))
+    for r in rows:
+        if not any(w in words for w in places.get(r["center"]) or []):
+            continue
+        host = (urlsplit((centers.get(r["center"]) or {}).get("site_url") or r["url"]).hostname or "").lower()
+        new_md = _md(r["date"])
+        same = lambda f: (urlsplit(f.get("url") or "").hostname or "").lower() == host or r["name"] in str(f.get("source") or "")   # noqa: E731
+
+        def fact_day(f):                                  # 事実の観測の日(欄がなければ本文の「M/D時点」。年は記録の年とする)
+            if f.get("observed"):
+                return str(f["observed"])[:10]
+            m = re.search(r"(\d{1,2})/(\d{1,2})時点", f.get("content") or "")
+            return f"{r['date'][:4]}-{int(m.group(1)):02d}-{int(m.group(2)):02d}" if m else None
+        old = [f for f in F.rows if f["kind"] == "current" and same(f) and fact_day(f) and fact_day(f) < r["date"]]
+        for f in old:
+            F.rows.remove(f)
+        if any(f["kind"] == "current" and same(f) and fact_day(f) == r["date"] for f in F.rows):
+            continue                                      # 同じ日の発信がもう資料にある
+        place = next((w for w in places.get(r["center"]) or [] if w in words), None)
+        F.add("current", r["line"], place=place, source=r["name"], url=r["url"], source_class="official", observed=r["date"])
+        _ = new_md
+
+
+def _vc_targets(rows, order, now, env, seen=()):
+    """段階85 の続き(本人の判断 2026-11-15 の 1): 資料に事実が入っている、台帳で承認済み・季節内の施設(ビジターセンター・自然観察施設)の
+    情報ページ(台帳の info_url)のうち、施設の有効期間(page_cache.ttl_hours.visitor_center)を過ぎたもの。通信しない。"""
+    from . import auto_refresh as AU
+    from . import page_cache as PC
+    from . import visitor_centers as VC
+    try:
+        centers = VC.load_centers()
+        reports = VC.read_reports(env)
+        reads = PC.last_reads(now, env)
+    except (OSError, ValueError, KeyError):
+        return []
+    out = []
+    for c in centers:
+        if not VC.usable_center(c, now.date())[0] or not c.get("info_url"):
+            continue
+        urls = {r.get("url") for r in reports if r.get("center") == c["id"] and r.get("url")}
+        hit = [f for f in rows if f.get("url") in urls or (f.get("source") and c["name"] in str(f.get("source")))]
+        if not hit or AU.url_key(c["info_url"]) in seen:
+            continue
+        last = max([t for t in (reads.get(u) for u in urls | {c["info_url"]}) if t is not None], default=None)
+        if last is not None and now - last < PC.ttl("visitor_center"):
+            continue
+        mine = [r for r in reports if r.get("center") == c["id"]]
+        cur = max(mine, key=lambda r: str(r.get("date"))) if mine else {}
+        place = next((f.get("place") for f in hit if f.get("place") in order), hit[0].get("place"))
+        out.append({"name": place or c["name"], "subject": None, "url": c["info_url"], "publisher": c["name"], "kind": "visitor_center",
+                    "center": c["id"], "source_class": c.get("class"), "reason": "expired", "current_date": cur.get("date"),
+                    "last_read": last.isoformat() if last else None})
+    return out
+
+
+def _refresh_targets(work, cands, now, env, c, F_rows=()):
+    """段階85 第1部: 資料に入る候補の、承認済みの現況の情報源のうち有効期間が切れたページ(候補の順位の高いものから。最大 max_pages)。通信しない。"""
+    from . import answer_plan as AP
+    A = c.get("auto_refresh") or {}
+    try:
+        facts_doc = json.loads((Path(work) / "facts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        facts_doc = {"subjects": {}, "now": now.isoformat()}     # 計画の経路でない質問(場所 + 日付など)も、施設の情報ページは読み直す
+    subs = facts_doc.get("subjects") or {}
+    plan_doc = {"subjects": {}}                              # 資料に入る候補(選ばなかった候補も)を、読み直しの対象を選ぶ計画の形に
+    for r in cands:
+        sj = r.get("subject")
+        if sj in subs:
+            for n in [r.get("name"), *(r.get("merged_from") or [])]:
+                if n:
+                    plan_doc["subjects"].setdefault(sj, {"picks": []})["picks"].append({"name": n})
+    mx = A.get("max_pages") or {}
+    mx = mx.get("value") if isinstance(mx, dict) else mx
+    try:
+        pages = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env, max_pages=None if mx is None else len(cands) + mx) if subs else []
+    except (KeyError, ValueError, TypeError):
+        pages = []
+    order = {}
+    for i, r in enumerate(cands):
+        for n in [r.get("name"), *(r.get("merged_from") or [])]:
+            if n and n not in order:
+                order[n] = (r.get("rank") if r.get("rank") is not None else len(cands) + i, i)
+    from . import auto_refresh as AU
+    ok = AU.approved_status_urls()                       # 台帳で承認済みの現況のページだけ(新しい通信先を足さない)
+    pages = [p for p in pages if p.get("name") in order and AU.url_key(p.get("url")) in ok]
+    pages += _vc_targets(F_rows, order, now, env, {AU.url_key(p.get("url")) for p in pages})   # 本人の判断(2026-11-15 の 1): 承認済みの施設の情報ページ
+    big = (len(cands) + 1, 0)
+    pages.sort(key=lambda p: order.get(p["name"], big))
+    return pages[: mx] if mx else pages
+
+
+def _target_day(cond, now):
+    try:
+        return date.fromisoformat(((cond.get("periods") or [[None]])[0] or [None])[0])
+    except (TypeError, ValueError, IndexError):
+        return now.date()
+
+
+def _mark_stale(rows, cond, now, c):
+    """段階85 第1部: 現況の日付が対象の日より stale_days 日以上前の事実に、古さの印(fields.stale_days)。"""
+    A = c.get("auto_refresh") or {}
+    lim = A.get("stale_days") or {}
+    lim = lim.get("value") if isinstance(lim, dict) else lim
+    if not lim:
+        return
+    day = _target_day(cond, now)
+    for f in rows:
+        if f.get("kind") != "current" or not f.get("observed"):
+            continue
+        try:
+            d = (day - date.fromisoformat(str(f["observed"])[:10])).days
+        except ValueError:
+            continue
+        if d >= lim:
+            f.setdefault("fields", {})["stale_days"] = d
+
+
+def attach_refresh(doc, result, c=None):
+    """段階85 第1部: 自動の読み直しの結果を資料に入れる(読み直せなかったページは「足りないもの」に・内容が変わったページは節に)。"""
+    c = c or cfg()
+    L = c["auto_refresh"]["lines"]
+    doc["auto_refresh"] = result
+    miss = []
+    for p in result.get("pages") or []:
+        md = _md(p.get("current_date")) if p.get("current_date") else "前回"
+        if p["result"] == "failed":
+            miss.append(L["failed"].format(name=p.get("name"), publisher=p.get("publisher") or "", md=md))
+    doc["missing"] = list(doc.get("missing") or []) + [m for m in miss if m not in (doc.get("missing") or [])]
+    return doc
+
+
+def build_refreshed(question, *, now, env=None, prev=None, http_get=None, clock=None, sleep=None):
+    """段階85 第1部: 資料を作り、資料に入る候補の現況のページを読み直す(有効期間切れ・上限つき)。記録が変わったら作り直す。"""
+    from . import auto_refresh as AU
+    c = cfg()
+    doc = build(question, now=now, env=env, prev=prev)
+    if not (c.get("auto_refresh") or {}).get("enabled") or not doc.get("refresh_pages"):
+        return doc
+    kw = {k: v for k, v in (("clock", clock), ("sleep", sleep)) if v is not None}
+    res = AU.run(doc["refresh_pages"], now=now, env=env, http_get=http_get, **kw)
+    if AU.needs_rebuild(res):
+        doc = build(question, now=now, env=env, prev=prev)
+    return attach_refresh(doc, res, c)
 
 
 def _card_row(r, cid, link, c, where=None):
@@ -2045,15 +2274,19 @@ def render_md(doc):
             if r.get("rank") is None:
                 tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
                 L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({_loc(r)} {_dist(r)})"
-                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else ""))
+                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else "")
+                         + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
                 continue
             L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({_loc(r)} {_dist(r)}・点 {r.get('score')}・"
-                     f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}")
+                     f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}"
+                     + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
         L.append("")
     L += ["## 確かめた事実", ""]
     for f in doc["facts"]:
         src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else 'その他' if f.get('source_class') else '区分なし'}"
         when = "・".join(x for x in (f"観測 {f['observed']}" if f.get("observed") else "", f"取得 {f['read_at'][:10]}" if f.get("read_at") else "") if x)
+        if (f.get("fields") or {}).get("stale_days"):                # 段階85 第1部: 現況の古さの印
+            when = "・".join(x for x in (when, cfg()["auto_refresh"]["lines"]["stale_mark"].format(days=f["fields"]["stale_days"])) if x)
         L.append(f"- [{f['id']}] {f['kind_label']}: {f['content']}({src}{'・' + when if when else ''}){' ' + f['url'] if f.get('url') else ''}")
     if not doc["facts"]:
         L.append("(なし)")
@@ -2075,6 +2308,16 @@ def render_md(doc):
         P = cfg()["form_photos"]
         L += ["", P["heading"], ""] + [P["line"].format(**p) for p in doc["photos"]]
     L += ["", "## 足りないもの", ""] + [f"- {x}" for x in doc["missing"] or ["(なし)"]]
+    changed = [p for p in (doc.get("auto_refresh") or {}).get("pages") or [] if p.get("result") == "changed"]
+    if changed:                                           # 段階85 第1部: 読み直して内容が変わった公式の現況
+        A = cfg()["auto_refresh"]["lines"]
+        if any(p.get("center") for p in changed):
+            L += ["", A["heading"], "", A["note"], A["vc_note"]]
+        else:
+            L += ["", A["heading"], "", A["note"]]
+        L += [A["row"].format(name=p.get("name"), publisher=p.get("publisher") or "", url=p.get("url"),
+                                                               md=_md(p.get("current_date")) if p.get("current_date") else "前回",
+                                                               text_path=p.get("text_path")) for p in changed]
     if (doc.get("research") or {}).get("targets"):
         from . import research as RS
         L += [""] + RS.lines_for(doc["id"], doc["research"]["targets"])

@@ -434,6 +434,50 @@ def final_sources(cited, c):
     return out
 
 
+def _source_label(r):
+    from . import guide_materials as GM
+    return GM.source_name(r.get("url"), r.get("source")) or _ledger_name(r.get("url")) or _domain(r.get("url"))
+
+
+def short_sources(cited, c):
+    """段階85 第2部(本人の判断 B): 会話の答えの出典は、名前と日付だけの 1 行(URL を出さない)。同じ発行元は 1 つにまとめ、日付は新しいほう。
+    公式でないものだけ「紹介サイト」と添える。URL つきの出典は ask source-urls と写真つきのページで見られる。"""
+    f = c["final"]
+    S = f["short"]
+    groups, seen = {}, set()
+    for r in cited:
+        key = r.get("url")
+        if not key or key in seen:                       # URL のない出典は出さない(URL つきの出典と同じ範囲)
+            continue
+        seen.add(key)
+        if r.get("kind") == "seasonal_obs":
+            name, iso, how, off = S["seasonal_name"], None, None, True
+        else:
+            name = _source_label(r)
+            if r["id"].startswith("K"):
+                iso, how = r.get("checked_on"), "card"
+            else:
+                iso, how = r.get("observed") or r.get("read_at"), "fact"
+            off = r.get("source_class") != "secondary"        # 紹介サイトと分かるもの(secondary)だけに添える(区分のない知識カードは添えない)
+        g = groups.setdefault(name, {"iso": None, "how": None, "official": off})
+        g["official"] = g["official"] and off
+        if iso and (g["iso"] is None or (how == "fact" and g["how"] == "card") or (how == g["how"] and str(iso)[:10] > str(g["iso"])[:10])):
+            if not (how == "card" and g["how"] == "fact"):
+                g["iso"], g["how"] = iso, how
+    parts = []
+    for name, g in groups.items():
+        md = _md(g["iso"])
+        note = [S["not_official"]] if not g["official"] else []
+        if md:
+            note.append((S["fact_note"] if g["how"] == "fact" else S["card_note"]).format(date=md))
+        parts.append(name + ("(" + "・".join(note) + ")" if note else ""))
+    if not parts:
+        return None
+    mx = S["max_items"]["value"] if isinstance(S["max_items"], dict) else S["max_items"]
+    shown = parts[:mx] + ([S["more"].format(n=len(parts) - mx)] if len(parts) > mx else [])
+    return S["line"].format(items="、".join(shown))
+
+
 def _ledger_name(url):
     """台帳(情報源・施設)とガイドの発行元の表にある、URL のホストの発行元の名前。なければ None(台帳には足さない)。"""
     from . import publisher as P
@@ -515,11 +559,14 @@ def check(draft, brief, c=None, env=None):
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
     final = body.rstrip(NL) + NL + ((NL + c["final"]["sources_heading"] + NL + NL.join(src) + NL) if src else "")
+    short = short_sources(cited, c)                         # 段階85 第2部: 会話の答え(ask verify の出力)は名前と日付だけの出典
+    chat = body.rstrip(NL) + NL + ((NL + short + NL) if short else "")
     warns = []
     n = len(body.strip())
     if n < c["length"]["min"] or n > c["length"]["max"]:
         warns.append(f"長さ {n} 字(目安 {c['length']['min']}〜{c['length']['max']} 字)")
-    return {"ok": not errs, "errors": errs, "final": final, "checked": len(sents), "marked": marked, "cited": cited_ids, "warnings": warns,
+    return {"ok": not errs, "errors": errs, "final": final, "final_chat": chat, "sources_full": src, "checked": len(sents), "marked": marked,
+            "cited": cited_ids, "warnings": warns,
             "knowledge_places": parsed["knowledge"]}
 
 
@@ -750,13 +797,19 @@ def last_guide_path(env=None):
     return data_path("logs/last_guide_answer.json", env)
 
 
-def remember_final(text, question, bid, now, env=None):
-    """合格した最終の文を覚える(ask final-check と Stop フックが、この文と一致するときだけ受け入れる)。"""
+def remember_final(text, question, bid, now, env=None, full_text=None, sources_full=None):
+    """合格した最終の文を覚える(ask final-check と Stop フックが、この文と一致するときだけ受け入れる)。
+    段階85 第2部: full_text は URL つきの出典の形(写真つきのページの材料)、sources_full は ask source-urls が出す URL つきの出典の行。"""
     from . import final_check as FC
     FC.remember_answer(text, question, now, env)
     p = last_guide_path(env)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps({"saved_at": now.isoformat(), "brief": bid, "question": question, "text": text}, ensure_ascii=False, indent=1), encoding="utf-8")
+    doc = {"saved_at": now.isoformat(), "brief": bid, "question": question, "text": text}
+    if full_text:
+        doc["full_text"] = full_text
+    if sources_full is not None:
+        doc["sources_full"] = list(sources_full)
+    p.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def load_final(now=None, env=None):
@@ -777,8 +830,9 @@ def load_final(now=None, env=None):
 
 def accepts(message, now=None, env=None):
     """送るメッセージが、ask verify が出した最終の文と一致するか(空白の違いは見ない)。"""
+    from .guide_answer_page import loose
     t = load_final(now, env)
-    return bool(t) and re.sub(r"\s+", "", t) == re.sub(r"\s+", "", message or "")
+    return bool(t) and loose(t) == loose(message)
 
 
 def _log(row, env=None):
@@ -797,7 +851,7 @@ def run(draft, bid, *, now, env=None):
     r = check(draft, brief, c, env)
     rewrites = st["attempts"] - 1
     if r["ok"]:
-        status, text = "PASS", r["final"]
+        status, text = "PASS", r["final_chat"]             # 段階85 第2部: URL つきの形(r["final"])はページと ask source-urls に
     elif rewrites >= c["rewrites"]["max"]:
         status, text = "FALLBACK", (brief.get("fallback") or {}).get("text") or ""
     else:
@@ -808,7 +862,10 @@ def run(draft, bid, *, now, env=None):
     p.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
     if status in ("PASS", "FALLBACK") and text:
         (GB.brief_dir(env) / f"{bid}.final.txt").write_text(text, encoding="utf-8")
-        remember_final(text, brief.get("question"), bid, now, env)
+        if status == "PASS":                             # 段階85 第2部: 写真つきのページと ask source-urls には URL つきの出典
+            remember_final(text, brief.get("question"), bid, now, env, full_text=r["final"], sources_full=r["sources_full"])
+        else:
+            remember_final(text, brief.get("question"), bid, now, env)
     if status == "PASS":                                 # 段階78 第5部: 足りなかったことの記録
         try:
             from . import gaps as GP

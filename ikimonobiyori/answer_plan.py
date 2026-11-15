@@ -805,7 +805,7 @@ def _all_pick_names(plan):
     return out
 
 
-def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None, env=None):
+def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None, env=None, max_pages=None):
     """答えの前に読むページ(段階57 第9部・段階63b 第2部)。取得はエージェントの道具で行う(このコードは通信しない)。
     今回のおすすめの候補のうち、現況の記録を最後に読んで(確かめて)から有効期間を過ぎたもの・現況の記録がないものについて、
     有効期間の中で読んでいないページだけ(最大 refresh.max_pages)。ページに書かれた日付が古くても、有効期間の中で読んでいれば読まない。
@@ -852,7 +852,7 @@ def refresh_targets(facts_doc, plan, seen=(), policy=None, reads=None, now=None,
                         "covers": _page_covers(u, subjects)})
     # 段階65 第6部 3: 1 ページで今回の候補を多くまとめて更新できるページ(日光市観光協会の紅葉状況など)を先に(同数なら今回のおすすめの順)
     out = sorted(out, key=lambda x: -x["covers"])
-    return out[: cfg["max_pages"]]
+    return out[: max_pages or cfg["max_pages"]]
 
 
 def _page_covers(url, subjects):

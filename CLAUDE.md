@@ -16,7 +16,7 @@ biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り
 3. **時刻は ISO 8601 でオフセット必須。欠損は 0 で埋めず `null`。** 現在時刻は外から注入する(`--now`)。同じ入力・同じ `now` なら同じ出力(決定論)。
 4. **出力の契約は `biyori-proposal/1`。** 正本は biyori-hub の `schemas/` にあり、このリポジトリで変えない。`tests/contract/` は検査用の写し(`tests/contract/README.md`)。契約の変更が要るときは、提案としてユーザーに報告して承認を待つ。
 5. **挙動を変えない。** 閾値・式・band の判定・出力の項目を変えたいときは、変更せず「提案」としてユーザーに報告して承認を待つ。
-6. **Python のコードが行う実通信(`--live`)は、ユーザーがその場で認めたときだけ。**写真の取得（`guide photos-ensure`・`photos-prefetch`・`ask photos`・`guide page` が補う分）は、利用者の承認B（2026-11-03）により確認なしで行ってよい**（段階39。通信先・間隔・1 回の上限は方針 `photos` のまま）。ただし iNaturalist の集計と写真は、質問のときに古ければ自分で取りに行く(段階38。利用者の決定 2026-11-01)。** WebSearch・WebFetch による公開ページの読み取りはこの規則の対象外で、自由に行う(段階34。通信の作法は「段階34の方針」)。
+6. **Python のコードが行う実通信(`--live`)は、ユーザーがその場で認めたときだけ。**写真の取得（`guide photos-ensure`・`photos-prefetch`・`ask photos`・`guide page` が補う分）は、利用者の承認B（2026-11-03）により確認なしで行ってよい**（段階39。通信先・間隔・1 回の上限は方針 `photos` のまま）。ただし iNaturalist の集計と写真は、質問のときに古ければ自分で取りに行く(段階38。利用者の決定 2026-11-01)。** `ask brief` は、資料に入る候補の、台帳で承認済みの現況のページと施設の情報ページ(有効期間切れ)を確認なしで読み直す(段階85・本人の判断 2026-11-15。1 問 5 ページ・25 秒まで。robots.txt・間隔・`netlog` は `ask research` と同じ)。WebSearch・WebFetch による公開ページの読み取りはこの規則の対象外で、自由に行う(段階34。通信の作法は「段階34の方針」)。
    - テストは通信しない(ソケットは `tests/nonet.py` で禁止、子プロセスも `tests/nonet_child/` で禁止、`BIYORI_UNDER_TEST=1` は `--live` を常に拒否)。テストから子プロセスを起動するのは `tests/helpers.py` の `run_child` / `run_child_env` だけ。
    - Open-Meteo などの `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る(このリポジトリ単独では実通信しない)。
    - **iNaturalist(段階38。利用者の決定 2026-11-01)**: 野鳥の集計(`ask inat-refresh`・`observations inat-refresh`)と写真(`ask photos`・`guide photos-*`)は、yamabiyori が単体で Open-Meteo を取りに行くのと同じ考え方で、単体でも取りに行く。そのときはイキモノビヨリ自身の小さな上限(`ikimonobiyori/netbudget.py`)の下で: 1 回の実行の上限(集計は `inat_refresh.max_requests_per_question` = 10、写真は `photos.max_requests_per_run` = 80、例年この時期の観察記録の集計 `seasonal_obs fetch`・`taxa` は `max_requests_per_run` = 60・間隔 1.5 秒。段階83・84)、同じホストへの間隔 1 秒以上、宣言済みホスト(`api.inaturalist.org`・`static.inaturalist.org`・`inaturalist-open-data.s3.amazonaws.com`、Commons の承認済みホスト)だけ、実行ごとの記録(時刻・種類・ホスト・回数・状態コード)を `IKIMONOBIYORI_DATA_DIR` の下の `netlog/requests.jsonl` に残す。ask の手順(質問のとき)は利用者に確認せずに取りに行く。直接のコマンド(`observations inat-refresh`・`guide photos-*`・`seasonal_obs fetch`・`seasonal_obs taxa`)は `BIYORI_ALLOW_LIVE=1`・`--live`・`--max-requests` が要る。ハブから呼ばれる(`BIYORI_REQ_LOG` がある)ときは、これまでどおりハブの計測フックを使う(`BIYORI_ALLOW_LIVE=1` が要る)。
@@ -48,10 +48,11 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 
 ### 0. 答えの形(段階77。既定は新しい形。戻し方は `docs/guide-mode.md` の先頭)
 - 生き物・お出かけの質問は `python -X utf8 -m ikimonobiyori.ask brief "<質問の文>"` で資料を作り、資料と `docs/guide-voice.md` だけで下書きを書き(Web 検索・ほかのコマンドで事実を足さない)、`ask verify <下書き> --brief <id>` の標準出力を**一字一句そのまま**送る。不合格は 2 回まで書き直し、3 回目に出る答え(今までの形の答え)を送る。続けて聞く質問は `--prev <前の資料の id>`。
-- **最後に送るのは `ask verify` の出した文だけ。前にも後ろにも何も足さない**(段階78。「検査に合格しました」「そのまま送ります」などの前置き・作業の説明・英語のメモを書かない。道具を呼ぶあいだの文も書かない)。
-- **ページ・Artifact を頼まれたとき**(「artifactにして」など。段階81 の続き): 下書きが合格したら `ask page` → Artifact で公開 → `python -X utf8 -m ikimonobiyori.ask page-reply --url <公開したリンク>` の出力を**一字一句そのまま**送る(公開できなければ `--url` を省く)。答えの全文は会話に出さない(ページの中にある)。**ページを作る流れでも作業の説明を書かない**(「ページを作ります」「公開します」など)。
+- **最後に送るのは道具が出した文だけ**(`ask verify`・`ask page-reply`・`ask source-urls`。前にも後ろにも何も足さない)。前置き・作業の説明(「検査に合格しました」「ページを作ります」「公式ページを探しています」など)・英語のメモは、答えの前後にも道具を呼ぶあいだにも書かない(段階78・81・85)。
+- 出典は名前と日付だけ(段階85)。「出典を見せて」「URL を教えて」は `ask source-urls` の出力をそのまま送る(URL を書き写さない)。
+- **ページ・Artifact を頼まれたとき**(「artifactにして」など。段階81 の続き): 下書きが合格したら `ask page` → Artifact で公開 → `python -X utf8 -m ikimonobiyori.ask page-reply --url <公開したリンク>` の出力を**一字一句そのまま**送る(公開できなければ `--url` を省く)。答えの全文は会話に出さない(ページの中にある)。
 - 写真の指摘は `docs/guide-mode.md` の手順(段階82)。
-- 資料に「調べる(資料が薄い)」の節があり Web が使えるときは、その手順で公式ページを `ask research fetch` で読み(1 問 3 ページ・2 分まで)、確かめた名所と例年の時期だけを `ask research record` してから資料を作り直す(段階78。今年の現況は記録しない。Web が使えなければ飛ばす。`docs/guide-mode.md` §5)。**調べているあいだも作業の説明(「公式ページを探しています」「検索結果は紹介サイトだけです」など)を書かない**(段階81)。下書きは `docs/guide-voice.md` §1 の順番で、語りの材料を 1 点以上使う。
+- 資料に「調べる(資料が薄い)」の節があり Web が使えるときは、その手順で公式ページを `ask research fetch` で読み(1 問 3 ページ・2 分まで)、確かめた名所と例年の時期だけを `ask research record` してから資料を作り直す(段階78。今年の現況は記録しない。Web が使えなければ飛ばす。`docs/guide-mode.md` §5)。下書きは `docs/guide-voice.md` §1 の順番で、語りの材料を 1 点以上使う。
 - 今までの形(下の A〜E)が受け持つもの: `answer_form: classic` に戻したとき、単体の実行(`ask answer` を直接使う)、表にして比べる・写真つきのページ、新しい形の控え。新しい形の答えに「表にできます」などの案内を足さない。
 
 ### A. ふだんの手順(段階63a)

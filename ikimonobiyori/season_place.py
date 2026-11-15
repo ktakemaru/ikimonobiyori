@@ -239,6 +239,14 @@ def gather(sp, origin, c=None, env=None):
         if _season_of_other_kind(s.get("text"), kinds, e.get("kinds")):   # 段階78 の追記: 「梅は1月上旬から…」を桜の時期にしない
             s, win = {}, {}
         src = next((x for x in srcs if x.get("url") == s.get("from_url")), srcs[0])
+        prev = rows.get(key(e["name"]))
+        if (prev and prev.get("official") and not prev.get("season") and not prev.get("secondary_season") and s.get("shown", True)
+                and (s.get("text") or (win.get("start") and win.get("end"))) and src.get("class") not in ("A", "B")):
+            # 段階85 第3部: 公式の名所の行(カタログ)に時期がなく、紹介サイト由来の時期がある名所(曽我梅林)は、「紹介サイトによると」の行で残す
+            prev["secondary_season"] = {"season": s.get("text") or window_text(win["start"], win["end"], thirds),
+                                        "publisher": _publisher(src.get("url"), {"tags": {"prefecture": e.get("prefecture"), "city": e.get("municipality")},
+                                                                                 "sources": [{"url": src.get("url"), "title": src.get("title")}]}) or "",
+                                        "url": src.get("url")}
         rows.setdefault(key(e["name"]), {
             "name": e["name"], "prefecture": e.get("prefecture"), "city": e.get("municipality"), "km": km, "km_estimated": est,
             "kinds": kinds, "start": win.get("start"), "end": win.get("end"), "season": s.get("text") if s.get("shown", True) else None,
@@ -550,6 +558,14 @@ def _species_part(sp, rows, n_out, *, today, origin, region, prefectures, table,
                     ln = t["typical"].format(text=stext, publisher=pub) if pub else t["typical_nopub"].format(text=stext)
                 else:
                     ln = t["typical_secondary"].format(text=stext, publisher=pub) if pub else t["typical_secondary_nopub"].format(text=stext)
+            elif (r.get("secondary_season") or {}).get("season"):     # 段階85 第3部: 公式に時期がなく、紹介サイトに時期がある名所
+                sec = r["secondary_season"]
+                stext = re.sub(r"^例年(の時期は|の見頃時期は|は)?", "", sec["season"]).strip() or sec["season"]
+                ln = (t["typical_secondary"].format(text=stext, publisher=sec["publisher"]) if sec.get("publisher")
+                      else t["typical_secondary_nopub"].format(text=stext))
+                if sec.get("url") and sec["url"] not in urls:
+                    urls.append(sec["url"])
+                any_secondary = True
             else:
                 ln = t["typical_unknown"]
             if is_bird:

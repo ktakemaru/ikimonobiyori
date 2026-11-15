@@ -324,11 +324,13 @@ def _months(card):
     return set((card.get("condition") or {}).get("months") or [])
 
 
-def search(env=None, place=None, category=None, month=None, text=None, cards=None):
-    """場所・分類・月・語で探す。"""
+def search(env=None, place=None, category=None, month=None, text=None, cards=None, include_retired=False):
+    """場所・分類・月・語で探す。段階85 第4部 4: 取り下げたカード(retired)は、include_retired のときだけ含める。"""
     rows = cards if cards is not None else load(env)
     out = []
     for r in rows:
+        if r.get("retired") and not include_retired:
+            continue
         if place and not place_match(r, place):
             continue
         if category and r.get("category") != category:
