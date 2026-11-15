@@ -319,8 +319,9 @@ def species_rows(question, cond, env=None, c=None):
         except (OSError, ValueError, KeyError, TypeError):
             rows = []
         if spread:
-            if is_bird:
-                rows = rows[: R["max_known"]]
+            if is_bird:                                   # 段階85 第3部: 時期の分かる観察地を先に(近い順)。時期のない観察地が枠を使い、あとで外れて件数が減っていた
+                known = [r for r in rows if r.get("season") or r.get("secondary_season") or r.get("annual_events")]
+                rows = (known + [r for r in rows if r not in known])[: R["max_known"]]
             else:
                 known = [r for r in rows if r.get("start") and r.get("season")]
                 rows = spread_rows(known, sp["name"], R["max_known"], R["spread"]) + [r for r in rows if r not in known]

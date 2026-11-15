@@ -145,7 +145,11 @@ def present(k, names, blob):
 def _species_cap(doc, sp_name, c):
     """資料の、その種の名所の候補の数が枠に達しているか。"""
     from . import guide_brief as GB
+    from . import season_place as SP
     n = sum(1 for r in doc.get("candidates") or [] if r.get("basis") in ("species", "typical", "current", "town") or r.get("rank") is not None)
+    if doc.get("route") == "species_dated":              # 日付つきの種の質問は、今までの答えの経路の枠(season_place の max_items)で名所が選ばれる
+        n_sp = sum(1 for r in doc.get("candidates") or [] if r.get("basis") == "species")
+        return n_sp >= SP.cfg()["max_items"]
     return n >= GB.cfg()["species_rows"]["max_known"]
 
 
@@ -229,7 +233,9 @@ def check_one(q, *, now, env=None):
                 misses.append({"name": nm, "reason": why, "season": None, "from": "fixed"})
         n_exp = len(exp) + (len(fixed) if q["kind"] == "species" else 0)
     else:
-        rows = _place_rows(q["prefecture"], env)
+        from datetime import date as _date
+        days = [_date.fromisoformat(x) for p in (doc.get("dates") or {}).get("periods") or [] for x in p]
+        rows = _place_rows(q["prefecture"], env, days)
         for k, r in rows.items():
             if not present(k, names, blob):
                 misses.append({"name": r["name"], "reason": "limit" if len(doc.get("candidates") or []) >= (C["place_cap"]["value"] if isinstance(C["place_cap"], dict) else C["place_cap"]) else "other",
@@ -238,16 +244,21 @@ def check_one(q, *, now, env=None):
     return {**q, "brief": doc["id"], "route": doc.get("route"), "expected": n_exp, "missing": misses, "elapsed_s": round(time.monotonic() - t0, 1)}
 
 
-def _place_rows(pref, env=None):
-    """都県 → その都県の花の名所(名所カタログ・種の名所の行)。"""
+def _place_rows(pref, env=None, days=None):
+    """都県 → その都県の花の名所(名所カタログ・種の名所の行)のうち、対象の日(日付の指定がない質問は今週末)に例年の時期が当たるもの。
+    花でない種(鳥・ホタルなど。audit.place_skip_species)は数えない。"""
     from . import season_place as SP
+    skip = set(SP.cfg().get("bird_species") or []) | set(cfg().get("place_skip_species") or [])
     out = {}
     for sp in SP.cfg()["species"]:
-        if sp["name"] in (SP.cfg().get("bird_species") or []):
+        if sp["name"] in skip:
             continue
         for r in SP.gather(sp, _origin(), SP.cfg(), env):
-            if r.get("prefecture") == pref and (r.get("start") or r.get("season")):
-                out.setdefault(key(r["name"]), r)
+            if r.get("prefecture") != pref or not (r.get("start") and r.get("end")):
+                continue
+            if days and not any(_in_window(d, r["start"], r["end"]) for d in days):
+                continue
+            out.setdefault(key(r["name"]), r)
     return out
 
 

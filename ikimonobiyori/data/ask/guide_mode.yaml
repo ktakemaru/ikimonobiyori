@@ -465,6 +465,7 @@ audit:
   months_per_species: {value: 2, source: "理由: 時間のため、名所の窓に多く当たる月から 2 か月", provisional: true}
   prefectures: [東京都, 神奈川県, 埼玉県, 千葉県, 茨城県, 栃木県, 群馬県, 山梨県, 静岡県, 長野県]
   place_cap: {value: 12, source: "species_rows.max_known と同じ(都県の質問の候補の枠の目安)", provisional: true}
+  place_skip_species: [ホタル]                  # 都県の「花」の質問で数えない種(花でない)
   regress_species: [梅, 水仙, 河津桜, 冬桜, ハクチョウ]      # 回帰テストで点検する種(時間のため絞る)
   list_heading: "### 理由が「上限で外れた」「規約・承認のため」以外の一覧"
   labels:
