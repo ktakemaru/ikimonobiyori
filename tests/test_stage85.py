@@ -258,3 +258,51 @@ class AuditRegress(unittest.TestCase):
         self.assertFalse([r for r in res if r.get("error")])
         other = [(r["question"], m["name"]) for r in res for m in r.get("missing") or [] if m["reason"] == "other"]
         self.assertEqual(other, [])
+
+
+class VisitorCenterRefresh(unittest.TestCase):
+    """本人の判断(2026-11-15 の 1): 承認済みの施設の情報ページも読み直す(施設 48 時間・同じ上限・承認の条件のまま)。"""
+
+    def setUp(self):
+        from ikimonobiyori import visitor_centers as VC
+        self.VC = VC
+        VC.record_reports([{"center": "takao-vc", "date": "2026-11-06", "state": "色づき始め", "url": "https://takaovc.ces-net.jp/?p=1"}])
+
+    def test_unchanged_and_changed(self):
+        self.assertTrue(AU.vc_unchanged("紅葉情報(11/06更新) 色づき始め", "takao-vc"))
+        self.assertFalse(AU.vc_unchanged("紅葉情報(11/13更新) 麓7割", "takao-vc"))
+        self.assertFalse(AU.vc_unchanged("なにか", "no-such-center"))
+
+    def test_follow_link_prefers_word_order_and_same_host(self):
+        html = ('<a href="https://other.example.com/x">紅葉情報</a><a href="/?page_id=2">花情報</a>'
+                '<a href="/?p=9">紅葉情報(11/13更新)</a>')
+        self.assertEqual(AU.follow_link(html, "https://takaovc.ces-net.jp/"), "https://takaovc.ces-net.jp/?p=9")
+
+    def test_changed_page_follows_link_and_is_not_marked_read(self):
+        from ikimonobiyori import page_cache as PC
+
+        def get(url):
+            if url.endswith("/robots.txt"):
+                return 200, b"User-agent: *\n", {}
+            if "?p=9" in url:
+                return 200, "<p>紅葉情報(11/13更新) 麓7割</p>".encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+            return 200, '<a href="/?p=9">紅葉情報(11/13更新)</a>'.encode("utf-8"), {"Content-Type": "text/html; charset=utf-8"}
+        t = {"url": "https://takaovc.ces-net.jp/", "name": "高尾山", "subject": None, "kind": "visitor_center", "center": "takao-vc",
+             "publisher": "高尾ビジターセンター", "current_date": "2026-11-06"}
+        res = AU.run([t], now=NOW, http_get=get, sleep=lambda s: None)
+        p = res["pages"][0]
+        self.assertEqual(p["result"], "changed")
+        from pathlib import Path
+        self.assertIn("麓7割", Path(p["text_path"]).read_text(encoding="utf-8"))
+        self.assertNotIn("https://takaovc.ces-net.jp/", PC.last_reads(NOW))      # 記録するまで、次の質問でも読み直す
+
+    def test_vc_fact_replaces_older_current(self):
+        self.VC.record_reports([{"center": "takao-vc", "date": "2026-11-13", "state": "麓7割", "url": "https://takaovc.ces-net.jp/?p=9"}])
+        F = GB._Facts(GB.cfg(), set())
+        F.add("current", "高尾山: 色づき始め(11/6時点、高尾ビジターセンター)", place="高尾山", source="高尾ビジターセンター",
+              url="https://takaovc.ces-net.jp/?p=1", source_class="official")
+        GB._vc_facts(F, "今週末、高尾山の見どころを教えて", [], NOW, None, GB.cfg())
+        cur = [f["content"] for f in F.rows if f["kind"] == "current"]
+        self.assertEqual(len(cur), 1)
+        self.assertIn("11/13", cur[0])
+        self.assertIn("麓7割", cur[0])

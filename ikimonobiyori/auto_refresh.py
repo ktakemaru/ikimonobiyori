@@ -105,6 +105,44 @@ def unchanged(text, records):
     return True
 
 
+_A_RE = re.compile(r"<a\s[^>]*href=[\"']([^\"'#]+)[\"'][^>]*>(.*?)</a>", re.I | re.S)
+
+
+def follow_link(html, base):
+    """施設のページの中の、決まった語(auto_refresh.vc_follow_words)を文字に含む最初のリンク(同じホストだけ)。なければ None。"""
+    from urllib.parse import urljoin
+    words = cfg().get("vc_follow_words") or []
+    host = (urlsplit(base).hostname or "").lower()
+    links = [(re.sub(r"<[^>]+>", "", m.group(2)), urljoin(base, m.group(1).strip())) for m in _A_RE.finditer(html or "")]
+    for w in words:                                      # 語の並びの順(紅葉情報が先)。同じ語ならページの上にあるもの
+        for label, u in links:
+            if w in label and (urlsplit(u).hostname or "").lower() == host and urlsplit(u).scheme in ("http", "https"):
+                return u
+    return None
+
+
+def _date_forms(iso):
+    """記録の日付(YYYY-MM-DD)の、ページでの書き方の候補(比べる形)。"""
+    from datetime import date as _date
+    d = _date.fromisoformat(str(iso)[:10])
+    forms = [f"{d.month}/{d.day}", f"{d.month:02d}/{d.day:02d}", f"{d.month}月{d.day}日", f"{d.year}.{d.month}.{d.day}",
+             f"{d.year}.{d.month:02d}.{d.day:02d}", f"{d.year}/{d.month}/{d.day}", f"{d.year}/{d.month:02d}/{d.day:02d}", f"{d.year}-{d.month:02d}-{d.day:02d}"]
+    return [norm(x) for x in forms]
+
+
+def vc_unchanged(text, center, env=None):
+    """施設の情報ページの本文に、その施設の最新の記録の状態の語と日付(どれかの書き方)がそのまま残っているか。記録がなければ False。"""
+    from . import visitor_centers as VC
+    mine = [r for r in VC.read_reports(env) if r.get("center") == center and r.get("date")]
+    if not mine:
+        return False
+    r = max(mine, key=lambda x: str(x["date"]))
+    body = norm(text)
+    if r.get("state") and norm(r["state"]) not in body:
+        return False
+    return any(f in body for f in _date_forms(r["date"]))
+
+
 def _resubmit(records):
     """同じ記録を出し直す形(記録の側で重複として扱われ、最後に確かめた時刻だけが新しくなる)。"""
     from . import observations as O
@@ -210,7 +248,26 @@ def run(targets, *, now, env=None, http_get=None, clock=time.monotonic, sleep=ti
                     continue
                 ctype = (headers or {}).get("Content-Type") or (headers or {}).get("content-type") or ""
                 raw = body if isinstance(body, bytes) else (body or "").encode("utf-8")
-                text = RS.html_text(raw.decode(RS._charset(ctype, raw), errors="replace"))
+                html = raw.decode(RS._charset(ctype, raw), errors="replace")
+                text = RS.html_text(html)
+                if t.get("center") and not vc_unchanged(text, t["center"], env):   # 施設のトップに見出しだけがあるとき: 決まった語のリンクを 1 つだけたどる
+                    link = follow_link(html, url)
+                    if link and budget.left() > 0 and clock() - t0 <= _v(C["max_seconds"]):
+                        st2, body2, h2 = g(link)
+                        if st2 == 200:
+                            raw2 = body2 if isinstance(body2, bytes) else (body2 or "").encode("utf-8")
+                            ct2 = (h2 or {}).get("Content-Type") or (h2 or {}).get("content-type") or ""
+                            text = text + NL + NL + "----- " + link + " -----" + NL + RS.html_text(raw2.decode(RS._charset(ct2, raw2), errors="replace"))
+                if t.get("center"):                      # 本人の判断(2026-11-15 の 1): 施設の情報ページ。前回の記録(状態の語と日付)が残っていれば変わっていない
+                    if vc_unchanged(text, t["center"], env):
+                        out["pages"].append({**row, "result": "unchanged", "detail": "前回の記録の状態の語と日付がそのまま"})
+                        notes.append({"url": url, "ok": True, "kind": "visitor_center", "reason": "auto_refresh_unchanged"})
+                        continue
+                    tp = _text_path(url, env)
+                    tp.parent.mkdir(parents=True, exist_ok=True)
+                    tp.write_text(text[: _v(C["max_text_chars"])], encoding="utf-8")
+                    out["pages"].append({**row, "result": "changed", "detail": "前回の記録の状態の語か日付がページにない", "text_path": str(tp)})
+                    continue                             # 読んだ時刻は残さない(記録するまで、次の質問でも読み直す)
                 recs = _latest_records(t.get("subject"), url, env)
                 if unchanged(text, recs):
                     O.record(_resubmit(recs), env=env, now=now)
@@ -237,7 +294,7 @@ def run(targets, *, now, env=None, http_get=None, clock=time.monotonic, sleep=ti
 
 def _brief_row(t):
     return {"url": t.get("url"), "name": t.get("name"), "subject": t.get("subject"), "publisher": t.get("publisher"),
-            "current_date": t.get("current_date")}
+            "current_date": t.get("current_date"), **({"center": t["center"]} if t.get("center") else {})}
 
 
 def needs_rebuild(result):

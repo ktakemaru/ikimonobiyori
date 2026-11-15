@@ -436,18 +436,20 @@ auto_refresh:
   max_pages: {value: 5, source: "指示書 段階85 1.2(1 つの質問で最大 5 ページ)", provisional: true}
   max_seconds: {value: 25, source: "指示書 段階85 1.2(合わせて 25 秒まで)", provisional: true}
   max_requests: {value: 12, source: "5 ページ × (robots.txt と本文) に余り。理由: 上限を通信の回数でも抑える", provisional: true}
-  max_requests_per_page: {value: 2, source: "robots.txt と本文の 2 回", provisional: true}
+  max_requests_per_page: {value: 2, source: "robots.txt と本文の 2 回(コードで読む日光・箱根の上限。施設のページは見出しのリンクを 1 つたどるので 3 回になることがある。全体の上限は max_requests)", provisional: true}
   min_interval_s: {value: 1, source: "CLAUDE.md 規則 6(同じホストへの間隔 1 秒以上)", provisional: true}
   connect_s: {value: 5, source: "理由: 25 秒の中で 5 ページを読むため、research(10 秒)より短く", provisional: true}
   read_s: {value: 8, source: "同上", provisional: true}
   max_bytes: {value: 3000000, source: "research.max_bytes と同じ", provisional: true}
   max_text_chars: {value: 20000, source: "理由: 変わったページの本文の控えの長さ(エージェントが読む分)", provisional: true}
   stale_days: {value: 7, source: "指示書 段階85 1.2(現況の日付が対象の日より 7 日以上前なら「古い」の印)", provisional: true}
+  vc_follow_words: [紅葉情報, 開花情報, 花情報, 自然情報, 野鳥情報, 今の, 近ごろの自然]   # 本人の判断(2026-11-15 の 1): 施設のトップに見出しだけがあるとき、この語のリンクを 1 つだけたどる(同じサイトの中だけ)
   dir: auto_refresh                  # データ置き場の下(変わったページの本文の控え。次の読み直しで上書き)
   lines:
     failed: "{name}の公式の現況({publisher})を読み直せませんでした({md}時点の記録のまま)"
     heading: "## 読み直したページ(前回の記録から内容が変わった公式の現況)"
     note: "下の本文の控えで、名所ごとの今の状態と日付を確かめ、ask record --batch <JSON> で記録してから、同じ質問で ask brief を作り直す(本文にない状態を書かない。Web を使わない)。"
+    vc_note: "施設(ビジターセンターなど)のページは ask record ではなく ask vc-record --batch <JSON> で記録する(1 件: center・date(年つき)・state(状態の語だけ)・url。台帳の allowed_fields にない項目(種名など)は入れない)。"
     row: "- {name}({publisher}・前回の記録 {md}時点): {url} → 本文の控え {text_path}"
     stale_mark: "古い({days}日前)"
 # 段階85 第2部: 「出典を見せて」のときの URL つきの出典(sources_reply.py。ask sources)
