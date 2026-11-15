@@ -3,7 +3,7 @@
  "request_id": "ikimonobiyori-official-status:birds:2026-10-31+2026-11-01",
  "agent": {
   "id": "ikimonobiyori",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "commit": null
  },
  "status": "ok",

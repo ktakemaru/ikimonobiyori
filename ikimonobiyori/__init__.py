@@ -6,4 +6,4 @@
 - 閾値・係数は ikimonobiyori/profiles/*.yaml の method.params からだけ読む(コードに直接書かない)。
 - v0 は通信しない(6b で別途承認)。入力は inputs JSON(フィクスチャ)で渡す。
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"
