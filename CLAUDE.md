@@ -124,10 +124,9 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 
 | 作業 | コマンド | 目安 | 出どころ |
 |---|---|---|---|
-| 資料を作る(読み直すページがあるとき) | `ask brief` | 読み直し 5.6〜17.1 秒・作り直しまで 37〜40 秒 | 段階85 報告「確かめ」(手元・3 問) |
-| 資料を作る(読み直すページがないとき) | `ask brief` | 未計測 | 条件が分からないときは上の行を伝える |
+| 資料を作る | `ask brief` | 未計測 | 段階85 の続きで中身が変わった。前の版の値は `docs/wait-notice-timings.md` |
 | 山の花暦 | `guide wildflower --json` | 0.9〜1.2 秒 | 2026-11-27 手元・6 回 |
-| 全テスト | `unittest discover -s tests` | 4 組で 60〜209 秒ずつ | 段階85 報告「通信と時間」(手元) |
+| 全テスト(1 回で) | `unittest discover -s tests` | 未計測 | 4 組に分けた値は `docs/wait-notice-timings.md` |
 
 ## 報告のしかた
 作業ごとに、できたこと・テスト結果(件数)・未確認事項・ユーザーへの確認事項を短くまとめる。手順の逐一報告は不要。GitHub の設定変更はユーザーが行う。push・PR・マージは、ユーザーの指示書があるときだけ Claude Code が行う(段階34)。

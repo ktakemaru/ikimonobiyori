@@ -1,0 +1,293 @@
+README.md:151:- **Open-Meteo などの実通信(`--live`)は、このリポジトリ単独では実行できません。** 環境変数 `BIYORI_ALLOW_LIVE=1`、明示的な `--max-requests`、そして通信の記録・上限・許可ホストを強制する**計測フック**(環境変数 `BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要ります。許可ホストは `ikimonobiyori/config.yaml` の `live.allowed_hosts_by_subject` だけです。
+README.md:166:## biyori-hub との関係
+README.md:168:[biyori-hub](https://github.com/ktakemaru/biyori-hub) は、ヤマビヨリ・ホシビヨリと同じように、このリポジトリを**固定 commit で取り込み(`vendor.lock`)**、manifest 1 枚で窓口(コンシェルジュ)に登録します。
+README.md:170:- このリポジトリは**ハブのコードもデータも参照しません**(`tests/test_self_contained.py` が検査します)。ハブ側の `adapters/ikimonobiyori_run.py` が、取り込んだコードを子プロセスで起動し、提案を契約で検査し、部品を合成します。
+README.md:171:- 契約 `biyori-proposal/1` の正本はハブの `schemas/` にあります。`tests/contract/biyori-proposal.schema.json` はその**写し**(検査用。`tests/contract/README.md`)で、このリポジトリでは変えません。
+README.md:172:- 山・星を合わせた提案、窓口の最終文・独立検査器・定期実行・計測フックはハブの仕事です。窓口との統合のテストはハブ側にあります。
+README.md:173:- ハブから呼ばれても単体で聞かれても、同じコマンド・同じ書き込み先(`IKIMONOBIYORI_DATA_DIR`。ハブは必ず渡します)を使います。
+README.md:196:- `docs/` 設計と調査の記録(段階ごとの指示書・報告書を含む。biyori-hub の中にあったときの記述が残ります)
+AGENTS.md:5:biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り込んで使う。
+AGENTS.md:17:4. **出力の契約は `biyori-proposal/1`。** 正本は biyori-hub の `schemas/` にあり、このリポジトリで変えない。`tests/contract/` は検査用の写し(`tests/contract/README.md`)。契約の変更が要るときは、提案としてユーザーに報告して承認を待つ。
+AGENTS.md:21:   - Open-Meteo などの `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る(このリポジトリ単独では実通信しない)。
+AGENTS.md:22:   - **iNaturalist(段階38。利用者の決定 2026-11-01)**: 野鳥の集計(`ask inat-refresh`・`observations inat-refresh`)と写真(`ask photos`・`guide photos-*`)は、yamabiyori が単体で Open-Meteo を取りに行くのと同じ考え方で、単体でも取りに行く。そのときはイキモノビヨリ自身の小さな上限(`ikimonobiyori/netbudget.py`)の下で: 1 回の実行の上限(集計は `inat_refresh.max_requests_per_question` = 10、写真は `photos.max_requests_per_run` = 80、例年この時期の観察記録の集計 `seasonal_obs fetch`・`taxa` は `max_requests_per_run` = 60・間隔 1.5 秒。段階83・84)、同じホストへの間隔 1 秒以上、宣言済みホスト(`api.inaturalist.org`・`static.inaturalist.org`・`inaturalist-open-data.s3.amazonaws.com`、Commons の承認済みホスト)だけ、実行ごとの記録(時刻・種類・ホスト・回数・状態コード)を `IKIMONOBIYORI_DATA_DIR` の下の `netlog/requests.jsonl` に残す。ask の手順(質問のとき)は利用者に確認せずに取りに行く。直接のコマンド(`observations inat-refresh`・`guide photos-*`・`seasonal_obs fetch`・`seasonal_obs taxa`)は `BIYORI_ALLOW_LIVE=1`・`--live`・`--max-requests` が要る。ハブから呼ばれる(`BIYORI_REQ_LOG` がある)ときは、これまでどおりハブの計測フックを使う(`BIYORI_ALLOW_LIVE=1` が要る)。
+AGENTS.md:26:8. **書き込み先は `IKIMONOBIYORI_DATA_DIR` の下だけ**(キャッシュ・読めなかった応答・部品・観察の記録・作業フォルダ)。未設定のときは、リポジトリにも実行用コピーにも依存しない利用者ごとの 1 か所: Windows は `%LOCALAPPDATA%\ikimonobiyori`、それ以外は `~/.local/share/ikimonobiyori`(段階37。利用者の承認 2026-11-01。以前の既定 `runtime/ikimonobiyori/` と biyori-hub の `runtime-data/ikimonobiyori` の記録は `python -X utf8 -m ikimonobiyori.migrate_data` で写した。元は残してある)。単体で聞いても biyori-hub から呼ばれても、同じ置き場所を使う。テストは一時フォルダに書く(`tests/nonet.py`)。リポジトリの追跡ファイルを実行で変えない。biyori-hub は取り込んだこのコードを `vendor/` から動かすので、`ikimonobiyori/` の中に書き込まない。
+AGENTS.md:27:9. **`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しない**(`tests/test_self_contained.py` が検査する)。使ってよい外部ライブラリは PyYAML・jsonschema・requests と、PDF の本文の抽出の pdfminer.six(本人の承認 2026-11-07。段階59)だけ。
+AGENTS.md:33:- `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
+AGENTS.md:38:- `ikimonobiyori/ask.py` 生き物の質問に答える手順(段階37。`python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。biyori-hub の `concierge_skill/ask.py` から移した)。`ikimonobiyori/ask_verify.py` は答えの文章の検査器(ハブの `verify_text.py` から移した。語は `data/ask/policy.yaml`、評価表は `docs/ask-rubric.md`)。`ikimonobiyori/migrate_data.py` は記録の置き場所を 1 か所にまとめる 1 回だけの移行。
+AGENTS.md:41:- 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
+AGENTS.md:84:- 個別のコマンド(デバッグ・ハブ用): `ikimonobiyori.ask prepare` → `ikimonobiyori.ask record` → `ikimonobiyori.ask facts` → `ask plan`(plan の `sections` に従う。見出しは節が2つ以上のときだけ)→ `ask skeleton` → `ask polish-check` / `ikimonobiyori.ask verify`(`--reply`)。評価表は `docs/ask-rubric.md`。答えの組み立て(段階48): 結論が先、狙い別の節、今週末の見込みは根拠つき、読めなかった項目は「確認できていません」。
+AGENTS.md:95:### E. 現況の下書きと提案(sources。biyori-hub の窓口が使う)
+AGENTS.md:114:## biyori-hub との関係
+AGENTS.md:115:- ハブは manifest(`agents/ikimonobiyori/manifest.yaml`)で段階のラベル・並び・有効期間の写し(`phenology_labels`・`stage_order`・`ttl_s`)を持つ。**プロファイルの `phenology_labels`・`stage_order` や `config.yaml` の有効期間を変えたら、ハブの manifest も同じ値にしないと、ハブの `validate` が落ちる**(ハブの変更はユーザーに報告する)。
+AGENTS.md:116:- 提案の `id`・`phenology_stage` の値・`details.component`・`diagnostics` の項目は、ハブの窓口・独立検査器・最終文の検査器が読む。変えるときは必ず事前にユーザーに報告する。
+AGENTS.md:117:- 窓口との統合(plan・最終文・独立検査器・定期実行・台帳)のテストと、iNaturalist の実際の応答の記録は、biyori-hub 側にある。
+CLAUDE.md:5:biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り込んで使う。
+CLAUDE.md:17:4. **出力の契約は `biyori-proposal/1`。** 正本は biyori-hub の `schemas/` にあり、このリポジトリで変えない。`tests/contract/` は検査用の写し(`tests/contract/README.md`)。契約の変更が要るときは、提案としてユーザーに報告して承認を待つ。
+CLAUDE.md:21:   - Open-Meteo などの `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る(このリポジトリ単独では実通信しない)。
+CLAUDE.md:22:   - **iNaturalist(段階38。利用者の決定 2026-11-01)**: 野鳥の集計(`ask inat-refresh`・`observations inat-refresh`)と写真(`ask photos`・`guide photos-*`)は、yamabiyori が単体で Open-Meteo を取りに行くのと同じ考え方で、単体でも取りに行く。そのときはイキモノビヨリ自身の小さな上限(`ikimonobiyori/netbudget.py`)の下で: 1 回の実行の上限(集計は `inat_refresh.max_requests_per_question` = 10、写真は `photos.max_requests_per_run` = 80、例年この時期の観察記録の集計 `seasonal_obs fetch`・`taxa` は `max_requests_per_run` = 60・間隔 1.5 秒。段階83・84)、同じホストへの間隔 1 秒以上、宣言済みホスト(`api.inaturalist.org`・`static.inaturalist.org`・`inaturalist-open-data.s3.amazonaws.com`、Commons の承認済みホスト)だけ、実行ごとの記録(時刻・種類・ホスト・回数・状態コード)を `IKIMONOBIYORI_DATA_DIR` の下の `netlog/requests.jsonl` に残す。ask の手順(質問のとき)は利用者に確認せずに取りに行く。直接のコマンド(`observations inat-refresh`・`guide photos-*`・`seasonal_obs fetch`・`seasonal_obs taxa`)は `BIYORI_ALLOW_LIVE=1`・`--live`・`--max-requests` が要る。ハブから呼ばれる(`BIYORI_REQ_LOG` がある)ときは、これまでどおりハブの計測フックを使う(`BIYORI_ALLOW_LIVE=1` が要る)。
+CLAUDE.md:26:8. **書き込み先は `IKIMONOBIYORI_DATA_DIR` の下だけ**(キャッシュ・読めなかった応答・部品・観察の記録・作業フォルダ)。未設定のときは、リポジトリにも実行用コピーにも依存しない利用者ごとの 1 か所: Windows は `%LOCALAPPDATA%\ikimonobiyori`、それ以外は `~/.local/share/ikimonobiyori`(段階37。利用者の承認 2026-11-01。以前の既定 `runtime/ikimonobiyori/` と biyori-hub の `runtime-data/ikimonobiyori` の記録は `python -X utf8 -m ikimonobiyori.migrate_data` で写した。元は残してある)。単体で聞いても biyori-hub から呼ばれても、同じ置き場所を使う。テストは一時フォルダに書く(`tests/nonet.py`)。リポジトリの追跡ファイルを実行で変えない。biyori-hub は取り込んだこのコードを `vendor/` から動かすので、`ikimonobiyori/` の中に書き込まない。
+CLAUDE.md:27:9. **`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しない**(`tests/test_self_contained.py` が検査する)。使ってよい外部ライブラリは PyYAML・jsonschema・requests と、PDF の本文の抽出の pdfminer.six(本人の承認 2026-11-07。段階59)だけ。
+CLAUDE.md:33:- `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
+CLAUDE.md:38:- `ikimonobiyori/ask.py` 生き物の質問に答える手順(段階37。`python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。biyori-hub の `concierge_skill/ask.py` から移した)。`ikimonobiyori/ask_verify.py` は答えの文章の検査器(ハブの `verify_text.py` から移した。語は `data/ask/policy.yaml`、評価表は `docs/ask-rubric.md`)。`ikimonobiyori/migrate_data.py` は記録の置き場所を 1 か所にまとめる 1 回だけの移行。
+CLAUDE.md:41:- 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
+CLAUDE.md:84:- 個別のコマンド(デバッグ・ハブ用): `ikimonobiyori.ask prepare` → `ikimonobiyori.ask record` → `ikimonobiyori.ask facts` → `ask plan`(plan の `sections` に従う。見出しは節が2つ以上のときだけ)→ `ask skeleton` → `ask polish-check` / `ikimonobiyori.ask verify`(`--reply`)。評価表は `docs/ask-rubric.md`。答えの組み立て(段階48): 結論が先、狙い別の節、今週末の見込みは根拠つき、読めなかった項目は「確認できていません」。
+CLAUDE.md:95:### E. 現況の下書きと提案(sources。biyori-hub の窓口が使う)
+CLAUDE.md:114:## biyori-hub との関係
+CLAUDE.md:115:- ハブは manifest(`agents/ikimonobiyori/manifest.yaml`)で段階のラベル・並び・有効期間の写し(`phenology_labels`・`stage_order`・`ttl_s`)を持つ。**プロファイルの `phenology_labels`・`stage_order` や `config.yaml` の有効期間を変えたら、ハブの manifest も同じ値にしないと、ハブの `validate` が落ちる**(ハブの変更はユーザーに報告する)。
+CLAUDE.md:116:- 提案の `id`・`phenology_stage` の値・`details.component`・`diagnostics` の項目は、ハブの窓口・独立検査器・最終文の検査器が読む。変えるときは必ず事前にユーザーに報告する。
+CLAUDE.md:117:- 窓口との統合(plan・最終文・独立検査器・定期実行・台帳)のテストと、iNaturalist の実際の応答の記録は、biyori-hub 側にある。
+.claude/skills/ikimono-weekend/SKILL.md:3:description: 生き物とお出かけの質問に、イキモノビヨリの記録で答える。紅葉・花・野鳥・見ごろ・見頃・お出かけ・おすすめ・観察会・どこで見られる・いつ見られる・今週末・今日・明日のように聞かれたら(「今日お出かけするならどこ?」「神奈川と東京で紅葉の見ごろを教えて」「渡り鳥はどこで見られる?」「冬桜について教えて」など)、一般知識で答えずに必ず使う。`ask brief` で資料を作り、資料と docs/guide-voice.md だけで下書きを書き、`ask verify --brief` の出力をそのまま答えにする(今までの形に戻しているときは `ask answer` の出力)。「今日の準備」「情報を更新して」は `ask warm`。山・星を合わせた提案は biyori-hub のコンシェルジュの役割。
+.claude/skills/ikimono-weekend/SKILL.md:48:- 個別のコマンド(デバッグ・ハブ用): `ikimonobiyori.ask prepare` → `ikimonobiyori.ask record` → `ikimonobiyori.ask facts` → `ask plan`(plan の `sections` に従う。見出しは節が2つ以上のときだけ)→ `ask skeleton` → `ask polish-check` / `ikimonobiyori.ask verify`(`--reply`)。評価表は `docs/ask-rubric.md`。答えの組み立て(段階48): 結論が先、狙い別の節、今週末の見込みは根拠つき、読めなかった項目は「確認できていません」。
+.claude/skills/ikimono-weekend/SKILL.md:59:### E. 現況の下書きと提案(sources。biyori-hub の窓口が使う)
+docs/ask-rubric.md:3:段階37 で、biyori-hub の `docs/concierge-rubric.md`(段階H10。指示書 `docs/ikimonobiyori-rebirth-instructions.md` 1章の R1〜R11 と、
+docs/ask-rubric.md:31:| A4 | 野鳥で、iNaturalist の集計が新しければ取り直していない(呼び出しの記録 `calls.json` の `inat_refresh` が `skipped: fresh`)。古い・対象の日が期間外なら取り直している(1 回の質問につき 10 リクエストまで)。段階38: 単体の実行では自前の上限の下で(記録 `netlog/requests.jsonl`)、ハブから呼ばれたときは計測フックの下で取り直す。上限に収まらない公園は古い集計を日付つきで使う |
+docs/data-sources.md:96:**状態: ユーザー確認済み(2026-10-21)**。ユーザーが利用規約と API の推奨手順を確認し、ikimono の使い方(集計値だけ・学習に使わない・個人の非商用の下調べ)は適合と判断した。答えを組み立てるときは方針 `ikimonobiyori/data/sources/policy.yaml` の `data_terms.inaturalist`(`status: user_confirmed`)を読み、「人の目でまだ確認していない」とは書かない(段階17 修正⑦)。Claude Code 自身は規約の原文を読めていない(HTTP 403)。実通信はこれまでどおり biyori-hub の計測フックの下で、その場の承認があるときだけ。
+docs/data-sources.md:110:  - リクエストの間隔: `ikimonobiyori/config.yaml` の `live.min_interval_s: 2`(0.5 リクエスト/秒以下)。1 日の上限: ハブの `host_daily_caps` の `api.inaturalist.org: 1000`(目安の 1/10)。どちらも目安の内側。
+docs/data-sources.md:111:  - **User-Agent(コードは変えていない。調べた結果)**: iNaturalist への取得はすべて User-Agent を付けている。値は `ikimonobiyori/config.yaml:25` の `live.user_agent` = `biyori-hub/ikimonobiyori (personal, non-commercial)`。
+docs/design.md:43:      "Bash(BIYORI_ALLOW_LIVE=1 BIYORI_REQ_LOG=C:/biyori-hub/runtime/req.log BIYORI_REQ_MAX=4 BIYORI_ALLOW_HOSTS=www.nikko-kankou.org,www.hakone.or.jp PYTHONPATH=C:/biyori-hub/hub/measure python -X utf8 -m ikimonobiyori.sources read --source nikko-kankou-autumn-leaves --source hakone-kankou-koyo:*)"
+docs/design.md:61:イキモノビヨリのコードはこのリポジトリの中に閉じる。窓口(biyori-hub)の変更は、この設計の範囲ではしない。
+docs/ikimonobiyori-mapping.md:3:実装: `ikimonobiyori/`（このリポジトリのパッケージ。biyori-hub が固定 commit で取り込む。biyori-hub の中にあったとき〔段階12より前〕の記述が残る文書がある。他のビヨリのコードを import しない）。閾値・係数は `ikimonobiyori/profiles/*.yaml` の `method.params` だけに書く（コードに直接書かない）。
+docs/ikimonobiyori-research.md:25:| 帰属・写真のライセンス | 写真は個別のライセンス（`photo_license` で絞れる）。ハブは写真を使わない方針（出力に含めない） | ⚠ `photo_license` パラメータは確認。各ライセンスの条件・帰属の書き方は ❌ 未確認 |
+docs/ikimonobiyori-research.md:62:**ハブでの扱い**: 8℃/5〜6℃ は「**出典はあるが、非公式の言い伝えで、種・地域差があり、気象庁の基準ではない目安**」。プロファイルでは `provisional: true`、出典（上の 2 件）と「言い伝えの目安」である理由を必ず付け、確信度の数値は出さない（`heuristic-unvalidated`）。
+docs/ikimonobiyori-research.md:150:**これは原文ではなく要約**で、助言役（ユーザーの側）が WebFetch で読んだ内容。ハブ（私）は一次ページを読めていない。ユーザーは気が向いたときに自分のブラウザで目視する（急がない）。出典 URL: https://www.inaturalist.org/pages/api+recommended+practices と https://www.inaturalist.org/pages/terms 。
+docs/ikimonobiyori-research.md:161:**ハブの運用への反映**: 自主制限は 30 リクエスト/分（2 秒間隔。要約の「約 1 リクエスト/秒」より厳しい）、さらに `hub/config.yaml` の `snapshot.host_daily_caps` で iNaturalist は 1 日（JST）1,000 リクエスト（仮置き。推奨の約 1 万/日の 1/10）。台帳 `snapshots/_ledger.jsonl` に host つきで数える。`per_page` 最大 200 は、ハブの実行（§11）で 200 が通った事実と矛盾しない。
+docs/proposal-mapping.md:4:対象はこのリポジトリの出力だけ。契約の正本は biyori-hub にあり、ここでは変えない(検査用の写しは `tests/contract/`)。
+docs/proposal-mapping.md:63:## 注意の文の型(段階21・22。ハブも同じ型を使う)
+docs/proposal-mapping.md:65:答え(`answer`)とハブが使う決まった文。値は方針 `ikimonobiyori/data/sources/policy.yaml` の `answer`(正本はそちら。ここは写しで、`tests/test_stage22.py` が一致を確かめる)。**見頃予測の部分は必ず「」で囲む。** モデルが自分で文を書かない。
+docs/rules-history.md:14:biyori-hub(窓口の基盤)が、このリポジトリを固定 commit で取り込んで使う。
+docs/rules-history.md:26:4. **出力の契約は `biyori-proposal/1`。** 正本は biyori-hub の `schemas/` にあり、このリポジトリで変えない。`tests/contract/` は検査用の写し(`tests/contract/README.md`)。契約の変更が要るときは、提案としてユーザーに報告して承認を待つ。
+docs/rules-history.md:30:   - Open-Meteo などの `--live` には `BIYORI_ALLOW_LIVE=1`・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)が要る(このリポジトリ単独では実通信しない)。
+docs/rules-history.md:31:   - **iNaturalist(段階38。利用者の決定 2026-11-01)**: 野鳥の集計(`ask inat-refresh`・`observations inat-refresh`)と写真(`ask photos`・`guide photos-*`)は、yamabiyori が単体で Open-Meteo を取りに行くのと同じ考え方で、単体でも取りに行く。そのときはイキモノビヨリ自身の小さな上限(`ikimonobiyori/netbudget.py`)の下で: 1 回の実行の上限(集計は `inat_refresh.max_requests_per_question` = 10、写真は `photos.max_requests_per_run` = 80)、同じホストへの間隔 1 秒以上、宣言済みホスト(`api.inaturalist.org`・`static.inaturalist.org`・`inaturalist-open-data.s3.amazonaws.com`、Commons の承認済みホスト)だけ、実行ごとの記録(時刻・種類・ホスト・回数・状態コード)を `IKIMONOBIYORI_DATA_DIR` の下の `netlog/requests.jsonl` に残す。ask の手順(質問のとき)は利用者に確認せずに取りに行く。直接のコマンド(`observations inat-refresh`・`guide photos-*`)は `BIYORI_ALLOW_LIVE=1`・`--live`・`--max-requests` が要る。ハブから呼ばれる(`BIYORI_REQ_LOG` がある)ときは、これまでどおりハブの計測フックを使う(`BIYORI_ALLOW_LIVE=1` が要る)。
+docs/rules-history.md:35:8. **書き込み先は `IKIMONOBIYORI_DATA_DIR` の下だけ**(キャッシュ・読めなかった応答・部品・観察の記録・作業フォルダ)。未設定のときは、リポジトリにも実行用コピーにも依存しない利用者ごとの 1 か所: Windows は `%LOCALAPPDATA%\ikimonobiyori`、それ以外は `~/.local/share/ikimonobiyori`(段階37。利用者の承認 2026-11-01。以前の既定 `runtime/ikimonobiyori/` と biyori-hub の `runtime-data/ikimonobiyori` の記録は `python -X utf8 -m ikimonobiyori.migrate_data` で写した。元は残してある)。単体で聞いても biyori-hub から呼ばれても、同じ置き場所を使う。テストは一時フォルダに書く(`tests/nonet.py`)。リポジトリの追跡ファイルを実行で変えない。biyori-hub は取り込んだこのコードを `vendor/` から動かすので、`ikimonobiyori/` の中に書き込まない。
+docs/rules-history.md:36:9. **`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しない**(`tests/test_self_contained.py` が検査する)。使ってよい外部ライブラリは PyYAML・jsonschema・requests と、PDF の本文の抽出の pdfminer.six(本人の承認 2026-11-07。段階59)だけ。
+docs/rules-history.md:42:- `ikimonobiyori/paths.py` がファイルの場所を 1 か所で決める。`livegate.py` は実通信の許可の判定(biyori-hub の `hub/livegate.py` と同じ判定。ハブ側のテストが両方を比べる)。
+docs/rules-history.md:50:- `ikimonobiyori/ask.py` 生き物の質問に答える手順(段階37。`python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。biyori-hub の `concierge_skill/ask.py` から移した)。`ikimonobiyori/ask_verify.py` は答えの文章の検査器(ハブの `verify_text.py` から移した。語は `data/ask/policy.yaml`、評価表は `docs/ask-rubric.md`)。`ikimonobiyori/migrate_data.py` は記録の置き場所を 1 か所にまとめる 1 回だけの移行。
+docs/rules-history.md:52:- 設計の記録: `docs/ikimonobiyori-research.md`(調査と出典)、`docs/ikimonobiyori-mapping.md`(対応表)、`docs/ikimonobiyori-validation-plan.md`(検証計画)。biyori-hub の中にあったときの記述が残る。
+docs/rules-history.md:69:8. 山の天気・星は「ヤマビヨリ・ホシビヨリで確かめてください」の一言まで。**コンシェルジュの使い方・操作は案内しない**（ハブ側のスキル。単体では呼べない）。
+docs/rules-history.md:129:イキモノビヨリは、ヤマビヨリ・ホシビヨリと同じく**単体で完結する専門家**。生き物(紅葉・花・野鳥など実装済みの対象)の見頃・おすすめは、`C:\ikimonobiyori` で単体で聞かれても、biyori-hub のコンシェルジュから呼ばれても、**同じコマンド・同じ記録の置き場所**(`IKIMONOBIYORI_DATA_DIR`。無ければ Windows は `%LOCALAPPDATA%\ikimonobiyori`)で答える。山・星を合わせた提案や価値の判断(組み合わせ・順位)は biyori-hub のコンシェルジュの役割で、ここでは山・星に触れない。
+docs/rules-history.md:164:- **段階35の修正**(指示書 `biyori-hub/docs/stageH9-instructions.md`。試用で見つかった穴):
+docs/rules-history.md:170:- **段階36の修正**(指示書 `biyori-hub/docs/stageH10-instructions.md`。利用者の決定 2026-11-01):
+docs/rules-history.md:192:   - **出発地**(段階23 の続き。ユーザーの指示 2026-10-25): 既定は横浜(ハブのコンシェルと同じ)。ユーザーが東京などを出発地にしたいときは `guide find --origin 東京`。**答えの冒頭に出発地を 1 行で書く**(`find` の出力の `origin_line`)。距離は出発地から測って書く(各名所の `distance`)。出発地から 250 km より先(`out_of_range`)はおすすめに入れず、ユーザーが名指しで聞いたときだけ「範囲の外」と説明する。240〜250 km(`distance.status: edge`)は「範囲の端」と書く。範囲を確かめられない名所(代表点がない)もおすすめに入れない。
+docs/rules-history.md:268:   - 許可があるとき、台帳で `reader: code` の情報源は、biyori-hub の計測フックの下で、コードで 1 回読む(読めた事実は `--record` で記録される):
+docs/rules-history.md:270:     BIYORI_ALLOW_LIVE=1 BIYORI_REQ_LOG=<絶対パス> BIYORI_REQ_MAX=<N> BIYORI_ALLOW_HOSTS=www.nikko-kankou.org,www.hakone.or.jp PYTHONPATH=<biyori-hub>/hub/measure
+docs/rules-history.md:305:   - v0 の結果は、biyori-hub の計測フックの下で実行した出力(`biyori-proposal/1`)があれば読む: `python -X utf8 -m ikimonobiyori.sources v0 --proposal <出力.json> --date <日>`。出力の `generated_at` も書く。
+docs/rules-history.md:312:   - **見頃予測が対象の日より前に終わる名所**(段階20・21。対象の日ごとに判定する。10/31 と 11/1 で結果が違ってよい)。旬は上旬 1〜10 日・中旬 11〜20 日・下旬 21 日〜月末(`month_thirds`。ハブのコンシェルと同じ)。公式の最新の状態が「◎」「◯」「△」で、その状態の日付(現地の日付、なければ更新日)が読んだ日から 3 日以内(`answer.past_forecast.state_max_days`。暫定の値)なら、**外さずに**、決まった文(「公式の見頃予測は○○ですが、○/○時点で公式は「◎」です。予測の時期は過ぎており、終わりに近い可能性が高いです。」。△は「公式はまだ色づき始めです。予測より遅れている可能性があります。」)を付け、順位は予測が対象の日にかかる名所より後ろにする(ユーザー承認 2026-10-25、案B)。状態が「▼」「✕」のとき・3 日より古いとき・状態の日付が分からないときは外す。「予測の時期を過ぎる見込みのため外しました」の行には、予測の時期を過ぎたために外した名所(◎・◯・△で、状態が古い・日付が分からないもの)の名前だけを書く(▼・✕はもともと候補ではないので書かない。段階22)。「終盤の可能性があります」は日ごとに書く: 対象の日が予測の最後の旬に入る日だけに付け、一部の日だけなら「11/1(日)は終盤の可能性があります」のように日を書く(全部の日なら日を省く)。選ばなかった名所のうち、予測が対象の日にかかるものは「ほかの候補」として名前を 1 行で挙げる。
+docs/rules-history.md:332:    - ビヨリコンシェル(biyori-hub の窓口)から呼ぶときは、読んで記録したあとの `proposals` だけで足りる(`answer` の文章は要らない)。
+docs/rules-history.md:357:## biyori-hub との関係
+docs/rules-history.md:358:- ハブは manifest(`agents/ikimonobiyori/manifest.yaml`)で段階のラベル・並び・有効期間の写し(`phenology_labels`・`stage_order`・`ttl_s`)を持つ。**プロファイルの `phenology_labels`・`stage_order` や `config.yaml` の有効期間を変えたら、ハブの manifest も同じ値にしないと、ハブの `validate` が落ちる**(ハブの変更はユーザーに報告する)。
+docs/rules-history.md:359:- 提案の `id`・`phenology_stage` の値・`details.component`・`diagnostics` の項目は、ハブの窓口・独立検査器・最終文の検査器が読む。変えるときは必ず事前にユーザーに報告する。
+docs/rules-history.md:360:- 窓口との統合(plan・最終文・独立検査器・定期実行・台帳)のテストと、iNaturalist の実際の応答の記録は、biyori-hub 側にある。
+docs/rules-history.md:373:description: 生き物(紅葉・花・野鳥など)の見頃・おすすめを、単体で答える。「11/3のおすすめをおしえて」「明日 紅葉を見に行きたい。神奈川でおすすめを教えて」「明日 野鳥を見に行くならどこ?」「どこか花を見に行きたい」「今週末の紅葉のおすすめは?」「白鳥はいつごろどこで見られる?」のように聞かれたときに使う。記録が古ければ自分で公式ページと紹介サイト(tenki.jp など)を読み直して記録し(ikimonobiyori.ask prepare → record → facts → verify)、今の状態(原文の表記)・日付・出所つきの自然な文章で答える(古いデータや公式でないことは答えを止める理由にしない)。山・星を合わせた提案は biyori-hub のコンシェルジュの役割で、ここでは扱わない。手順は AGENTS.md の「生き物の見頃・おすすめ」と同じ。
+docs/stage13-decisions.md:8:| D-01 | 2026-10-21 | フェーズ0: 既定の `python` に jsonschema・PyYAML がなく、テストが import エラー(errors=7) | biyori-hub の既存の仮想環境 `C:\biyori-hub\.venv-hub\Scripts\python.exe`(3.13.15、requirements と同じ版)でテストを実行 | `pip install -r requirements.txt`(PyPI への通信) / 止まる | パッケージの取得は「通信の許可」の範囲外。既存の環境は同じ版で、何も変更しない |
+docs/stage13-decisions.md:13:| D-06 | 2026-10-21 | フェーズ2: カタログとスキーマの置き場所(指示書は `data/catalog/`・`schemas/`) | パッケージの中 `ikimonobiyori/data/catalog/<subject>.yaml`・`ikimonobiyori/schemas/site-catalog.schema.json` | リポジトリ直下の `data/catalog/`・`schemas/` | 規則 9(`ikimonobiyori/` は自分のフォルダの外を指さない。`tests/test_self_contained.py`)と、既存の `sites.yaml`・プロファイルのスキーマがパッケージの中にあるため。ハブは vendor からパッケージを動かす |
+docs/stage13-decisions.md:54:- 2026-10-21、`C:\biyori-hub\.venv-hub\Scripts\python.exe -X utf8 -m unittest discover -s tests`(D-01 と同じ環境): `Ran 188 tests` / `OK`。この作業ではコードとテストを変えていない(文書だけ)。
+docs/stage13-report.md:3:作業指示書: `biyori-hub_stage13_instructions.md`(2026-10-21)。ブランチ `stage13`(main の `add784e` から)。判断の記録は `docs/stage13-decisions.md`。
+docs/stage13-report.md:13:    パッケージを入れる通信は許可の範囲外なので、biyori-hub の既存の仮想環境 `C:\biyori-hub\.venv-hub`(Python 3.13.15、`requirements.txt` と同じ版の jsonschema 4.26.0 など)でテストを実行した(判断 D-01)。以降のテストの件数はすべてこの環境での値。
+docs/stage13-report.md:28:スキーマ `ikimonobiyori/schemas/ikimono-profile.schema.json` は `additionalProperties: true`。biyori-hub の `hub/validate.py:67` はこの ikimono 自身のスキーマでプロファイルを検証する(ハブ側に別の写しはない)。
+docs/stage13-report.md:76:- プロファイル 7 つに `timing_type` を追加(紅葉・桜・ホタル temperature、野鳥 frequency、彼岸花 calendar、ひまわり managed、夜光虫 episodic)。プロファイルのスキーマに任意項目として追加(項目の追加のみ)。ハブの `hub/validate.py` は ikimono 自身のスキーマで検証するので、ハブ側の変更は要らない。
+docs/stage13-report.md:131:- 通信量: 1 リクエスト = 1 地点 × 1 季節。最悪 約 9.2 call/リクエスト(推測)。推奨の案 A'(9 地点 × 10 年 × 標高 2 通り)= **180 リクエスト・約 1,660 call**・2 秒間隔で約 6 分。無料枠(10,000/日)にもハブの自主上限(3,000 リクエスト/日、推定 4,130 call/日)にも収まる。35 年に広げる案 B'(840 リクエスト・約 7,730 call)は 3 日以上に分ける。キャッシュは `IKIMONOBIYORI_DATA_DIR` の下の `cache/`。
+docs/stage13-report.md:150:- テストは biyori-hub の既存の仮想環境で実行した(D-01)。この PC の既定の `python` には jsonschema・PyYAML がない。
+docs/stage13-report.md:179:- フェーズ 5(biyori-hub への取り込み)は指示書どおり**実行していない**。push の後に、`vendor.lock` の更新(`hub/fetch_vendor.py` → `--apply` → `hub/check_vendor.py`)・ハブの unittest・manifest の `source.commit` の更新を行う。プロファイルの `phenology_labels`・`stage_order`・`config.yaml` の有効期間は変えていないので、ハブの manifest の写しを直す必要はない見込み。
+docs/stage13-report.md:193:3. **User-Agent の調査(コードは変えていない)**: iNaturalist への取得は**すべて User-Agent を付けている**。値は `ikimonobiyori/config.yaml:25` の `biyori-hub/ikimonobiyori (personal, non-commercial)`。
+docs/stage13-report.md:195:   - リクエストの間隔は 2 秒(0.5 リクエスト/秒以下)。ハブの iNaturalist の 1 日の上限は 1,000。どちらも目安の内側。
+docs/stage14-decisions.md:22:| D-15 | 2026-10-22 | フェーズ1: 実通信の経路 | `python -X utf8 -m ikimonobiyori.backtest_run fetch --live`。main.py と同じく BIYORI_ALLOW_LIVE=1・明示的な `--max-requests`・計測フック(`BIYORI_REQ_LOG`)が要る。計測フックは biyori-hub の `hub/measure/sitecustomize.py` を **読むだけ**(`PYTHONPATH` に足して子プロセスで使う。ハブのファイルは変えない)。`BIYORI_ALLOW_HOSTS=archive-api.open-meteo.com`、`BIYORI_REQ_MAX`=送る件数の上限、`BIYORI_MIN_INTERVAL_S=2`(config の `live.min_interval_s`)。HTTP の再試行の許容(`BIYORI_HTTP_RETRY_*`)は渡さない(フックはどの非 200 でも中止する=429 で押し切らない) | このリポジトリ単独で上限の仕組みを作る | CLAUDE.md の規則 6(単独で別の上限の仕組みは作らない)。ハブの変更もしない |
+docs/stage14-decisions.md:24:| D-17 | 2026-10-22 | フェーズ2: 最初の 1 リクエストの確認と call の測定 | 最初の 1 件(長野 2016・標高あり)は HTTP 200、2,538 バイト、1.8 秒。応答は `daily` が `time`・`temperature_2m_min` だけ、128 日(2016-08-26〜12-31)、`timezone: Asia/Tokyo`、`elevation: 418.0`(渡した値と同じ)、格子の緯度経度は 0.1° に丸まっていた(36.70, 138.20 = ERA5-Land の格子)。想定どおりなので続行。次の 4 件も 200。**call の消費は測れなかった**(応答にもヘッダーにも call 数・残りがない。`rate_headers` は空。ハブの台帳は読まない)ので、指示書どおり最悪側の約 9.2 call/リクエストで見積もり: 180 × 9.2 = 約 1,656 call ≦ 2,000 → 1 日で最後まで実行 | 5 件で止めて分ける | 最悪の見積もりが上限内 |
+docs/stage14-report.md:54:- D-10 官署の座標は PDF の「最初の行」を採用(地点名は PDF から取り出せず、観測所番号と座標の妥当性で対応づけた=推測)/ D-11 `normalized.csv` を作り直した(座標の列が入る)/ D-12 許可ホストを `autumn_leaves_backtest` に置いた(通常の紅葉の実行には足さない)/ D-13 キャッシュ有効期間 30 日(仮置き)/ D-14 細部(差の中央値は v0 の全組、0.2 ちょうどは合格側、平均絶対誤差が等しければ不合格、気温の欠けは止める)を**結果を見る前に**固定 / D-15 計測フックはハブのファイルを読むだけで使った / D-16 応答の形の検査 / D-17〜D-20 実行の記録。
+docs/stage14b-decisions.md:18:| D-12 | 2026-10-22 | 止める | フェーズ 2 の終わりで必ず止め、ユーザーの承認を待つ。main・biyori-hub に触らない。push しない | 指示書 |
+docs/stage14b-decisions.md:22:| D-16 | 2026-10-22 | フェーズ1: 標高の取得 | Open-Meteo Elevation API(`api.open-meteo.com`)に **2 リクエスト**(25 点 → 修正後の 24 点。1 リクエストに複数の座標)。biyori-hub の計測フック(読むだけ)の下で、`BIYORI_ALLOW_HOSTS=api.open-meteo.com`・`BIYORI_REQ_MAX=1` で実行。スクリプトは作業用フォルダ(リポジトリの外)に置いた一度きりのもの。どちらも HTTP 200 | — | 指示書で許可された範囲。許可リストは変えていない |
+docs/stage14b-decisions.md:35:| D-29 | 2026-10-22 | フェーズ4: 地点の集合の選び方 | 新しい引数 `--site-set {mountains,catalog,both}`(既定 mountains)を足した。既存の `--sites`(地点 ID のカンマ区切り)はそのまま、選んだ集合の中で使える | 指示書の例どおり `--sites mountains` にする | `--sites` はすでに地点 ID の一覧として使われ、ハブやテストが渡している。意味を変えると既定の動作が変わる |
+docs/stage14b-decisions.md:37:| D-31 | 2026-10-22 | フェーズ4: 実通信 | `main.py --site-set catalog --live --max-requests 25`(依頼は 2026-10-24〜25)。計測フック(ハブのファイルを読むだけ)の下、`BIYORI_ALLOW_HOSTS=api.open-meteo.com`・`BIYORI_REQ_MAX=25`・間隔 2 秒。**20 リクエスト(名所 20 件 × 1)、すべて HTTP 200**。出力は契約 biyori-proposal/1 に通った(status ok、警告なし)。出力は `runtime/`(git の追跡外)にだけ置いた | — | 指示書 |
+docs/stage14b-report.md:75:4. biyori-hub への取り込み: 名所の提案は `place.sources`・`details.landmark`・`site_ref: ikimonobiyori:<id>` が新しい。ハブの窓口・独立検査器が `site_ref` の接頭辞や place の項目を検査している場合、取り込み時に確認が要る(このリポジトリからはハブを見ていない)。
+docs/stage14b-report.md:79:2. **ハブへの取り込み**: 既定(76 地点)は変わらないので、まず既定のまま取り込み、名所は `--site-set both` を窓口から明示したときだけ使う形にする。窓口側の `site_ref` の扱いの確認が先。
+docs/stage15-decisions.md:19:| D-12 | 2026-10-23 | 進め方 | 無人で最後まで。main・biyori-hub に触らない。push しない。コミットは `stage15` だけ。止める条件に当たったら、そこまでをコミットして報告 | — | 指示書 |
+docs/stage15-decisions.md:36:| D-29 | 2026-10-23 | フェーズ3: 補助の推定の取り方 | v0 の気温判定は、手順の中で新たに実行しない(このリポジトリ単独の `--live` は CLAUDE.md 規則 6 で禁止)。biyori-hub の計測フックの下で実行済みの出力(`biyori-proposal/1`)があれば `python -m ikimonobiyori.sources v0 --proposal` で名所ごとの段階・band を取り出し、「推定(未検証・段階14で不合格)」と `generated_at` を付けて添える。なければ例年の時期だけ | 手順の中で `--live` を実行する | 規則 6。指示書の「v0 を消さない・補助として出す」は満たす |
+docs/stage15-report.md:72:5. **ハブへの取り込み**: 記録(`status_log`)を、ハブの窓口が「現況」として読める部品にする案。契約 `biyori-proposal/1` は変えずに、`evidence` に公式の状態・更新日・URL を入れられるかを先に確かめる(変えるなら提案)。
+docs/stage16-decisions.md:10:| D-03 | 2026-10-23 | 進め方 | 無人で最後まで。質問のために止まらない。main・biyori-hub に触らない。push しない。コミットは `stage16` だけ。各フェーズの終わりにテストを通してコミットし、`docs/stage16-report.md` の「途中経過」に 1〜2 行書く | — | 指示書 |
+docs/stage16-decisions.md:18:| D-11 | 2026-10-23 | A-4 通信 | 通信は既存の実通信と同じく biyori-hub の計測フックの下。許可するホストは `www.nikko-kankou.org` と `www.hakone.or.jp` の 2 つだけ。残すのは事実だけ(地点・状態・更新日・見頃予測)。テストは合成の見本。形が変わって読めないときは要約の手順に戻り、答えに「コードで読めなかった」と書く。1 回だけ実通信で動かし、段階15 の要約の記録と比べる | ほかのホストも足す | 指示書(ユーザー承認 2026-10-23) |
+docs/stage16-decisions.md:24:| D-17 | 2026-10-23 | C 冬鳥 | 新しいプロファイル(冬鳥の飛来地)。季節は 11 月〜3 月。既存の `birds` は残し、補助に使ってよい。情報源は自治体・観光協会・管理者の白鳥などの飛来情報。250 km 以内で 5〜10 か所。飛来の季節の前でも「飛来前」「例年の飛来開始の時期」を答えられるようにする。ハブの語彙の要否は、ハブを変えずに報告書の提案に書く | — | 指示書 |
+docs/stage16-decisions.md:27:| D-20 | 2026-10-23 | 止める条件 | 拒否するサイトを読まないと進めない/2 ホスト以外を計測フックの許可に常設しないと進めない/本文・HTML をリポジトリに入れないとテストが書けない/biyori-proposal/1 の変更が要る/main・biyori-hub の変更が要る/段階16 の外の原因でテストが通らない。止めたフェーズと関係のない後ろのフェーズは進めてよい | — | 指示書 |
+docs/stage16-decisions.md:39:| D-32 | 2026-10-23 | フェーズ2: 1 回だけの実通信 | 2026-10-23T07:17:41+09:00 に、biyori-hub の計測フック(`hub/measure/sitecustomize.py`。変更していない。PYTHONPATH で読み込むだけ)の下で、`BIYORI_ALLOW_HOSTS=www.nikko-kankou.org,www.hakone.or.jp`・`BIYORI_REQ_MAX=4`・`--max-requests 4` で実行。4 リクエスト(robots.txt 2・ページ 2)すべて HTTP 200。日光 23/24 地点、箱根 8/8 地点を読み、31 件を記録(method: code)。計測の記録は `runtime/ikimonobiyori/status_read/`(git の追跡外) | — | 指示書 A-4 |
+docs/stage16-decisions.md:42:| D-35 | 2026-10-23 | フェーズ3: 段階の正本 | 対象ごとの段階(id・order・呼び方)はプロファイルの `stages` に置き、方針 `policy.yaml` からは消した。`sources.load_policy()` がプロファイルから読み込んで `policy["stages"][<対象>]` に置く(呼び出し側は変えない)。共通の順番(0〜4)と、質問の型③の範囲(`stage_scope`)、14 日の期限(`horizon_days`)は方針に置いた。v0 の `phenology_labels`・`stage_order`(窓口の manifest が写しを持つ)には触れていない | v0 の phenology_labels を使い回す | v0 の段階(色づき前・色づき始め・見頃・終盤)と現況の段階は別物。ハブの manifest に影響させない |
+docs/stage16-decisions.md:55:| D-48 | 2026-10-23 | フェーズ5: 冬鳥のプロファイル | `profiles/wintering_birds.yaml` を骨組み(`status: skeleton`、`method.kind: tbd`)で足した。エンジン(v0)は `not_applicable(profile_skeleton)` を返す。答えは対象によらない手順(台帳・カタログ・`stages`)で出す。category は `observation_record`(位置を明かさない・マナー必須の検査がかかる) | 新しい method.kind(official_reports)を足す | プロファイルのスキーマ(ハブの文書用)の列挙を広げない。エンジンの手法はまだない |
+docs/stage16-report.md:4:- **結論**: フェーズ0〜8 を最後まで進めた。止める条件には当たっていない。main・biyori-hub は未変更、push なし。テスト `Ran 301 tests` / `OK`。
+docs/stage16-report.md:74:1. **ハブへの取り込みと語彙**(ハブは変えていない):
+docs/stage16-report.md:75:   - biyori-hub の `schemas/biyori-vocabulary.yaml` の interests に冬鳥の語がない。`wintering_birds`(label: 冬鳥の飛来地、aliases: 白鳥・ハクチョウ・白鳥の飛来地)を足し、manifest の `capabilities.interests` にも加える提案。
+docs/stage16-report.md:77:   - ハブが取り込みの commit を上げるときは、新しいプロファイル(骨組み)と `config.yaml` の新しい許可ホストの項目(`autumn_leaves_status`)が、ハブの validate と計測の設定に影響しないかを確かめる。
+docs/stage17-decisions.md:9:| D-02 | 2026-10-24 | 進め方 | 無人で最後まで。質問のために止まらない。main・biyori-hub に触らない。push しない。コミットは `stage17` だけ。各フェーズの終わりにテストを通してコミットし、`docs/stage17-report.md` の「途中経過」に 1〜2 行書く。フェーズは優先度順 | — | 指示書 |
+docs/stage17-decisions.md:12:| D-05 | 2026-10-24 | 実通信 | CLAUDE.md 規則 6 のとおり、biyori-hub の計測フックの下で承認済みのホストだけ。新しいホストを常設の許可に足さない | — | 指示書 |
+docs/stage17-decisions.md:23:| D-16 | 2026-10-24 | 止める条件 | 拒否するサイトを読まないと進めない/新しいホストを常設しないと進めない/本文・HTML を入れないとテストが書けない/biyori-proposal/1 の変更が要る/main・biyori-hub の変更が要る/`.claude/settings.local.json` や規則を自分の判断で緩めないと進めない/段階17 の外の原因でテストが通らない。止めたフェーズと関係のない後ろのフェーズは進めてよい | — | 指示書 |
+docs/stage17-decisions.md:45:| D-38 | 2026-10-24 | フェーズ4: 桜・彼岸花・ひまわり | 既存の骨組み(cherry_blossom・higanbana・sunflower)はそのまま残し、`flowers` に取り込まない。答えられないと聞かれたときは「近い対象の『花』ならお答えできます」と添える(方針 `unimplemented.related`) | `flowers` に取り込んで骨組みを消す | 骨組みにはハブの manifest と既存テストが頼っている。消すと既定の動作が変わる。春の対象(段階18)で、`flowers` の種類にするかを決める |
+docs/stage17-report.md:4:- **結論**: フェーズ0〜8 を最後まで進めた。止める条件には当たっていない。main・biyori-hub は未変更、push なし。テスト `Ran 342 tests` / `OK`。
+docs/stage17-report.md:85:- **ハブへの取り込み**: 対象の語彙に `flowers`(新)と、手順で答えられるようになった `birds` を足すか。プロファイルの数が 9 になった(`flowers`)。ハブの manifest は `phenology_labels`・`stage_order` を写すが、`flowers` にはそれがない(骨組み)ので manifest の変更は要らない見込み(ハブ側は未確認・未変更)。
+docs/stage18-decisions.md:8:| D-01 | 2026-10-24 | 目的 | 現地の情報の答え(公式な現況ページを読み、状態・日付・出典つきで答える)を、契約 `biyori-proposal/1` で出す決まったコマンドを作る。ハブの変更(取り込み・manifest・窓口)は段階の外 | — | 指示書 |
+docs/stage18-decisions.md:9:| D-02 | 2026-10-24 | 役割 | 読むのはエージェント(読んだ事実は記録に残す。今の手順のまま)。提案を作るのは決まったコマンドで、記録・名所カタログ・情報源の一覧から組み立てる。通信も LLM も使わない | — | 指示書(ハブ側の設計。ユーザー承認 2026-10-24) |
+docs/stage18-decisions.md:15:| D-08 | 2026-10-24 | 進め方 | 無人で最後まで。main と biyori-hub に触らない。push しない。コミットは `stage18` だけ。各フェーズの終わりにテストを通してコミットし、`docs/stage18-report.md` の「途中経過」に書く | — | 指示書 |
+docs/stage18-decisions.md:19:| D-12 | 2026-10-24 | 止める条件 | 契約を変えないと `evidence` に必要な値が載らない/新しいホストや通信が要る/禁止語を避けると意味が通らない/biyori-hub のファイルを変える(ハブの内容をこのリポジトリに写す)/main を変える/段階18 の外の原因でテストが落ちる。止めたフェーズと関係のない後ろのフェーズは進めてよい | — | 指示書 |
+docs/stage18-decisions.md:33:| D-26 | 2026-10-24 | フェーズ4: ハブ側の検査 | biyori-hub の `python hub/validate.py <ファイル>`(読むだけ。ファイルを書かない)を、ゴールデン 4 つの写し(作業用の一時フォルダ)に対して実行した。4 つとも `OK (biyori-proposal/1)`。ハブの作業ツリーは変わっていない。`tests/contract/` の写しはハブの正本と同じ内容だった | 実行しない | 指示書 フェーズ4 の 4。書き込むコマンド・`runtime/` に書くコマンドは実行していない |
+docs/stage18-decisions.md:36:| D-29 | 2026-10-24 | 確認後: 現況の提案の id | `ikimonobiyori:status:<対象>:<対象の日>:<名所 ID>` に変えた(2 つ目に `status`)。気温の推定の id(`ikimonobiyori:<対象>:<対象の日>:<名所 ID>`。engine)は変えていない。契約の検査(`tests/contract/` の写しと biyori-hub の `hub/validate.py`)に通ること、気温の推定の id が変わらないこと、同じ名所・同じ日でも両者が重ならないこと、補助の推定の読み取り(`sources v0`)が現況の提案を拾わないことをテストで確かめた(`tests/test_proposals.py` の `IdsAreSeparate`)。ゴールデン 4 つは id の欄だけを置き換えた(作り直していない) | id を変えない | ユーザーの確認(2026-10-24。段階18 の報告の確認事項 4) |
+docs/stage18-report.md:12:5. ハブ側の検査: biyori-hub の `python hub/validate.py <ファイル>`(読むだけ)で、ゴールデン 4 つとも `OK (biyori-proposal/1)`(D-26)。
+docs/stage18-report.md:24:| 4 | `039e1c6` | 次のテストを足した。<br>・契約の検査<br>・ゴールデン(紅葉・冬鳥・花・野鳥)<br>・性質のテスト<br>・子プロセスの CLI(ソケット禁止)<br>ハブの `validate.py` で確認した。不具合 3 つを直した(D-24) |
+docs/stage18-report.md:57:4. **id の重なり**: 現況の提案の id を `ikimonobiyori:status:…` に変えた。気温の推定の id は変わらない(D-29。テストで確認、ハブの `validate.py` でも 4 つとも OK)。
+docs/stage18-report.md:63:- **ハブ側**:
+docs/stage18-report.md:64:  - 取り込みの commit を上げる(`vendor.lock`)。
+docs/stage18-report.md:66:  - 既存のスナップショット(気温の推定)を置き換えるかは、ハブで決める。置き換えない方が安全。現況のない名所の補助として残せる。
+docs/stage18-report.md:67:  - ハブの契約の検査、独立検査器の対応(`details.kind: official_status` の提案。`go` なし・確信度なし)、ゴールデン。
+docs/stage18-report.md:77:- フェーズ0: `stage18` を main(0350d72)から作成。決定の記録 `docs/stage18-decisions.md`(D-01〜D-13)、段階計画に段階18 を差し込んだ(春以降を 1 つずつ後ろへ)。ハブ側の設計と、このリポジトリの既存の契約の検査(`tests/helpers.py` の `schema_errors`、`tests/contract/` の写し)を読んで確かめた(ハブの内容は写していない)。
+docs/stage18-report.md:81:- フェーズ4: `tests/test_proposals.py`(27 件: 整合・契約・ゴールデン 4 対象・決定的・go なし・evidence の照合値・年のない日付・年の補いの印・band の規則・古さ・30 日・14 日より先・警告の重複なし・同じ名所の複数行・位置の丸め・交通の注意・禁止語・印の付いた記録・子プロセスの CLI(ソケット禁止)・--out・--weekend next)。ハブの `validate.py` でゴールデン 4 つが OK(D-26)。不具合 3 つを直した(D-24)。
+docs/stage19-decisions.md:15:| D-08 | 2026-10-24 | 進め方・止める条件 | 無人で最後まで。main・biyori-hub に触らない。push しない。コミットは `stage19` だけ。拒否サイトを読まないと進めない/Elevation API の 429 か計測フックの下の実通信ができない/契約を変えないと提案が出せない/main・biyori-hub を変えないと進められない/段階19 の外の原因でテストが落ちる、のとき止める | — | 指示書 |
+docs/stage19-report.md:12:6. 契約の検査と biyori-hub の `hub/validate.py <ファイル>`(読むだけ)に通った。テストは下の「テストの結果」。
+docs/stage19-report.md:50:- **ハブへの取り込み**: 取り込む commit を上げる(`vendor.lock`)。manifest・契約・語彙は変わらない。`spot-coords` はハブから呼ばない(必要なときにエージェントが、その場の承認で実行する)。
+docs/stage19-report.md:59:- フェーズ4: 追加前後を比較(`docs/stage19-trial.md`)。記録の写しを名前から ID に付け替えると、提案 22 → 56 件、提案のある名所 11 → 28、「カタログにない」地点 23 → 4(標高で外れたもの)。答えのおすすめは次の土日 5/5・来週末 9/10 が提案になった(残りは鬼怒川温泉 丸山)。契約の検査・ハブの validate.py に通った。本物の記録は書き換えていない。
+docs/stage19-trial.md:24:- 契約の検査(`tests/contract/` の写し)と、biyori-hub の `hub/validate.py <ファイル>`(読むだけ。ファイルを書かない)に、2 つとも通った。
+docs/stage20-decisions.md:6:- 旬は方針 `month_thirds`(上旬 1〜10・中旬 11〜20・下旬 21〜月末。ハブのコンシェルと同じ)。`forecast_window` の終わりの日が、対象の最初の日より前なら「終わった」(`sources.forecast_ended`)。
+docs/stage21-decisions.md:29:- 提案(`proposals.decide`)も同じ判定にした: `drop` の日は `band: no`、`keep` の日は通常どおり(◎◯△なら `maybe`)で、`known_limits` に文を 1 つ足す(方針 `proposals.known_limits.forecast_past`)。**契約の形・項目は変えていないが、known_limits の文が 1 種類増える**(ハブの検査器が文の内容を比べていないかは未確認。ハブ側の確認をお願いします)。
+docs/stage22-decisions.md:40:- `docs/proposal-mapping.md` に「注意の文の型」の節を足し、方針の文をそのまま写した(正本は方針。テストが一致を確かめる)。ハブ(部B)はこの型を使う。
+docs/stage22-decisions.md:41:- 案B の文を提案の `details` に足すことはしなかった(指示は文書に型を書くこと。足さないほうを選んだ。ハブが要るなら、部B の報告をもとに次の段階で足す)。
+docs/stage22-report.md:8:- マージ後にユーザーが行うこと: stage22 を push・PR・マージ → biyori-hub で部B(段階H4f)を実行(ハブの vendor を更新し、`details.secondary_items`・`details.item_notes` でハブの検査器が落ちないかを確かめる)。
+docs/stage22-report.md:33:- ハブ(biyori-hub)の検査器が、`details` の新しい項目(`secondary_items`・`item_notes`)と、`known_limits` の段階21 の文で落ちないかは、部B で確かめる(このリポジトリからは読まない)。
+docs/stage22-report.md:35:- 指示書の背景 2(見頃の名所がコンシェルのおすすめに出ない)は、ハブ側の選び方の問題で、部B の範囲。このリポジトリの提案では、日塩もみじライン・瀬戸合峡・蛇王の滝などは band maybe になっている。
+docs/stage23-decisions.md:3:指示書 `stage23-instructions.md`(ユーザー承認済み 2026-10-25)への対応。無人で進める前提で、迷ったときは安全側(載せない・参考にとどめる・文書に書くだけ)を選び、ここに理由を書く。契約 `biyori-proposal/1` は変えない。main・biyori-hub には触れない。push しない。
+docs/stage23-decisions.md:49:- 実通信は `livegate.live_allowed()`(`BIYORI_ALLOW_LIVE=1`、テスト中は常に拒否)+ 明示の `--max-requests` + 計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/sitecustomize.py` を PYTHONPATH に足した子プロセスで、許可ホスト `BIYORI_ALLOW_HOSTS`・件数の上限 `BIYORI_REQ_MAX`・4xx/5xx で即中止・最小間隔を強制)。許可ホストは `config.yaml` の `live.allowed_hosts_by_subject`。
+docs/stage23-decisions.md:151:- 範囲の判定: 出発地を、ハブのコンシェルと同じく既定は横浜にし、東京などを選べるようにする。距離は出発地から測って書く。250 km の判定は出発地ごと、240〜250 km は「範囲の端」。答えの冒頭に出発地を 1 行。瓢湖が、横浜からは範囲の外、東京からは範囲の端と答えることをテストで確かめる。
+docs/stage23-decisions.md:164:- **提案(`proposals`)は変えていない**(契約とハブが読む項目のため)。出発地が横浜のとき、答えの下書きは瓢湖をおすすめに入れないが、提案には従来どおり出る。提案にも出発地を持たせるかは、ハブ(コンシェルの出発地)とあわせて次の段階で決める(報告書の提案)。
+docs/stage23-report.md:9:**止める条件**: 当たらなかった(契約を変えずにガイド用のデータを持てた・ページの中の指示は見つからなかった・通信は上限内・main と biyori-hub は変えていない)。
+docs/stage23-report.md:37:- **ハブのコンシェルからガイド型の質問を渡す**: コンシェルが質問を現況型 / ガイド型に分け(言い換えの表 `data/guide/policy.yaml` の `words` をハブにも写す)、ガイド型は `python -X utf8 -m ikimonobiyori.guide find --word <言葉> [--date] [--region]` の JSON をそのまま受け取る(通信なし・決まった出力)。契約 `biyori-proposal/1` には載せず、ガイドの答えは別の形(例: `biyori-guide/1`。名所・段階・独立した出どころの数・区分・例年の時期・URL)にするのがよい(契約の変更はユーザーの承認が要る)。
+docs/stage24-report.md:33:- **ハブ側**: `vendor.lock`(取り込む commit)の更新。提案の `details` に `reference_count` が増える(契約のスキーマは変えていないので、ハブ側の検査は通る見込み。ハブの検査器が `details` の項目を数えていないかを確認)。
+docs/stage24-report.md:34:- **契約の変更**: 不要だった(自由欄 `details` に載せた)。ハブの窓口が参照数を最終文に使いたい場合は、読む項目名 `details.reference_count` の取り決めが要る。
+docs/stage25-decisions.md:12:1. **承認A(代表点)**: `guide places-fetch --live --max-requests 6` を、計測フック(`BIYORI_REQ_LOG=C:/biyori-hub/runtime/req.log`)・許可ホスト(`www.wikidata.org`)の下で 1 回、必要な市区町村 6 件(栃木市・さいたま市・戸田市・日光市・大和市・船橋市)を取った(通信 1 回、6 件とも取得)。後で稲敷市(稲波干拓)を 1 回(通信 1 回)。`places-needed` が出す市区町村だけを取り、ほかには使っていない。
+docs/stage25-report.md:44:- ハブの `vendor.lock` の更新と、ハブの検査器が `details` の項目(`reference_count`)を数えていないかの確認。
+docs/stage26-decisions.md:3:指示書: `stage26-instructions.md`。ブランチ: `git branch -a` で stage25 が main に未マージだったため、**stage25 の先頭(`5d98a91`)から `stage26` を作った**。ハブ(C:\biyori-hub)と他のリポジトリは変更していない(`git status` が clean であることを確認)。Wikidata への通信(`places-fetch`)は使っていない。
+docs/stage26-progress.md:9:| E ハブ側の準備(読むだけ。docs/stageH5-instructions.md) | 完了(details.reference_count で落ちる箇所なし。golden の比較は H5 で要確認) | 段階26 フェーズE の commit | 580 |
+docs/stage26-report.md:12:| E ハブ側の準備 | **完了** | ハブは読むだけ。`docs/stageH5-instructions.md` を書いた |
+docs/stage26-report.md:44:## 7. ハブの検査の確認結果(読んだだけ。ハブは変更していない)
+docs/stage26-report.md:45:- **`reference_count` で落ちる箇所は見つからなかった**。契約の `details` は項目数・名前を制限しない自由欄。ハブのコードは `details.kind`・`details.observations[].read_at`・`details.component`・`details.display_lines`・`details.score_explain` を読むだけ。契約の写しはハブと同一。
+docs/stage26-report.md:46:- ただし、ハブのテストの golden に、参照数が付く名所を含むもの(`g3_composed`・`g4_child_birds`・`g4_composed`・`golden_status_snapshot`)があり、取り込みコードの実行結果と比べるテストなら、vendor 更新後に比較で落ちる可能性がある(H5 で要確認)。詳細は `docs/stageH5-instructions.md`。
+docs/stage26-report.md:56:- ハブの vendor.lock の更新(`docs/stageH5-instructions.md`)。ユーザーが ikimonobiyori の main に push・マージしたあとに行う。
+docs/stage27-report.md:3:ブランチ: `git branch -a` で stage24〜26 と main を確かめ、main(895b247)から `stage27` を作った。commit だけで、push・マージ・ハブの変更はしていない。
+docs/stage27-report.md:59:- ハブの vendor.lock の再更新(`docs/stageH5-instructions.md`)。ユーザーが main に push・マージしたあと。
+docs/stage29-decisions.md:32:- 通信は、計測フック(`C:\biyori-hub\hub\measure`。BIYORI_ALLOW_HOSTS は承認Aの 3 ホスト、BIYORI_REQ_MAX=80)の下で、`--max-requests 80` を付けて 3 回実行した(表づくり 2 回・写真 1 回)。
+docs/stage29-report.md:3:ブランチ: stage27・stage28 は main にマージ済みだが、**stage28b は未マージ**だったため、main からではなく stage28b の先頭(`4f41e79`)から `stage29` を作った。commit だけで、push・マージ・ハブの変更はしていない。
+docs/stage30-report.md:14:   - User-Agent は既存の `biyori-hub/ikimonobiyori (personal, non-commercial)`(アプリ名と用途だけ。メールアドレスなし)。
+docs/stage32-report.md:7:- push・main へのマージはしていない。ハブ(`C:\biyori-hub`)・`settings.local.json` には触れていない。
+docs/stage32-report.md:25:   - 状態の語: 台帳の `notation.map` が先、なければ語彙表(完全一致)。蕾・見頃前/咲き始め/見頃・満開/終盤・見頃過ぎ・終了。プロファイルの `stages`(`bud/starting/good/full/falling`)の id に対応づけ、**プロファイル・共通の段階の並びは変えていない**(ハブの manifest に影響しない)。
+docs/stage32-report.md:59:- ハブの `vendor.lock` 更新(段階H5)。manifest の値は変えていないので、ハブ側の変更は不要。
+docs/stage34-report.md:1:# 段階34 報告(イキモノビヨリの生まれ変わり・第1部。指示書 `biyori-hub/docs/ikimonobiyori-rebirth-instructions.md` の「段階R1」)
+docs/stage34-report.md:59:- **新しい器を status_log の拡張にするか、別にするか**: 別の記録 `observations/` にした。status_log は承認済みの台帳の covers にある地点だけが通る検査と、`proposals`・`answer`・ハブの現況の行が依存しており、広げると既存の挙動(ゴールデン・契約の行)が変わるため。目的(地域の質問に答える)には別の器で足りる。
+docs/stage34-report.md:73:## 受け入れテスト(ハブ側、段階H8)で見つけて直したこと(同じブランチに追加)
+docs/stage35-report.md:1:# 段階35 報告(試用で見つかった穴の修正・第1部。指示書 `biyori-hub/docs/stageH9-instructions.md` の「段階R2」)
+docs/stage35-report.md:9:   - 例: くりはま花の国「10/27時点」の記録を 11/1 に読んでも、11/1 の質問では「古い」(`plan` の `items` に出る)。なお、11/1 朝の試用でも `plan` はくりはま花の国を「古い」と出していた(窓口が読みに行かなかった。ハブ側で、読みに行かずに答えたら検査器が落とすようにした)。
+docs/stage35-report.md:29:7. **記録の結果をページごとに**: `record` の出力に `by_url`(ページごとの新しい記録・重複の数)を足した。ハブの窓口は「読み直しました」をこの数だけから作る。
+docs/stage35-report.md:56:## 受け入れテスト(ハブの段階H9 で実施)
+docs/stage35-report.md:57:ハブの `docs/stageH9-acceptance.md`。受け入れテストの中で見つけて直したもの: 記録から読んだ今年の行事と同じ月日の例年の時期・記録から読んだ例年の見頃の出所・横浜自然観察の森の休館日と「その翌日」の読み取り・iNaturalist の人が開くページの URL(`site_url`)。
+docs/stage36-report.md:1:# 段階36 報告(受け入れテストの残りと小さな修正・第1部。指示書 `biyori-hub/docs/stageH10-instructions.md` の「段階36」)
+docs/stage36-report.md:26:- Open-Meteo の取得(`fetch/live.py`・`fetch/archive_live.py`)も、取得時刻に `--now` を入れている。同じ直し方(受け取った時刻)にするなら、紅葉の部品の時刻(合成の `generated_at` = 入力の最も古い `fetched_at`)と鮮度の判定が実際の時刻に変わるので、ハブの定期実行の記録と合わせて確かめてから行いたい。
+docs/stage37-acceptance.md:3:指示書 `docs/stage37-H11-instructions.md` 4章。単体は `C:\ikimonobiyori` で、スキル `ikimono-weekend` の手順(`ikimonobiyori.ask prepare → 公開ページを読む → record → facts → 答えを書く → verify`)だけを使った。ハブ経由は `C:\biyori-hub` のスキル `biyori-concierge`(`hub/biyori.py ask`。中でイキモノビヨリの `ikimonobiyori.ask` を呼ぶ)。
+docs/stage37-acceptance.md:5:記録の置き場所は、単体・ハブ経由とも `C:\Users\takem\AppData\Local\ikimonobiyori`(呼び出しの記録 `calls.json` の `data_dir`)。単体の呼び出しの記録には、`biyori-hub` のパス・モジュールは出ていない(`module: ikimonobiyori.ask`、`code: C:\ikimonobiyori\ikimonobiyori`)。
+docs/stage37-acceptance.md:17:| 2(同じ質問) | ハブ経由 | 合格(2回目) | 1回目: 古い記録の神奈川県のページを、この回に読み直していなかった(A3)→ 読み直して記録し直した |
+docs/stage37-acceptance.md:18:| 「11/3のおすすめをおしえて」 | ハブ経由 | 合格(2回目) | 1回目: 境川遊水地(10/21)・檜洞丸(10/28)のページを、この回に読み直していなかった(A3)→ 読み直した |
+docs/stage37-acceptance.md:20:- **単体とハブ経由の問2**: 候補(丹沢湖・アネスト岩田 ターンパイク箱根・小田急 山のホテル・檜洞丸)と、状態・日付(色づき始め 11/1時点 tenki.jp、「山頂周辺では見ごろ。」10/28時点 神奈川県)は同じ。同じ置き場所の記録を使っている。
+docs/stage37-acceptance.md:23:- ハブ経由の「11/3」の答えの ⑤小田原フラワーガーデン「11/1に読んだ」は、同じ日の早い時刻(01:15)に読んだ記録の日付。この回には読み直していない(採点者の指摘。合否には入っていない)。
+docs/stage37-acceptance.md:148:## 問2(ハブ経由)
+docs/stage37-acceptance.md:176:## 「11/3のおすすめをおしえて」(ハブ経由)
+docs/stage37-acceptance.md:217:- ハブ経由 問2・「11/3」: 1回目 A3 不合格 → 2回目 全項目合格。
+docs/stage37-H11-instructions.md:1:# 指示書：イキモノビヨリを単体で完結させる（ikimonobiyori → biyori-hub。無人で PR まで）
+docs/stage37-H11-instructions.md:3:これまでの方針（`C:\biyori-hub\docs\ikimonobiyori-rebirth-instructions.md` の2章・通信の作法、H9・H10 の決定）は**そのまま有効**。この指示書は、**役割の置き場所の誤り**を直す。
+docs/stage37-H11-instructions.md:5:- 対象: `C:\ikimonobiyori`（主）と `C:\biyori-hub`。1つの Claude Code セッションで順に扱う。
+docs/stage37-H11-instructions.md:10:- CLAUDE.md は、ハブのものは自分で書き換えない（必要なら `docs/stageH11-claude-md-proposal.md` に案）。ikimonobiyori の `CLAUDE.md`・`AGENTS.md` は、これまでどおり書き換えてよい（2つを同じ内容に保つ）。
+docs/stage37-H11-instructions.md:18:- **biyori-hub は、情報を受け渡す基盤と、正しさ・安全の監査役。** 価値の判断（順位・絞り込み・推薦）は**コンシェルジュ**（今はハブのリポジトリの中のスキル `biyori-concierge` と `concierge_skill/`）。
+docs/stage37-H11-instructions.md:20:**誤り**: 段階H8〜H10 で、生き物の「古ければ取りに行く → 読む → 記録 → 答えの材料 → 文章の検査」の手順を、ハブ側（`concierge_skill/ask.py`・`concierge_skill/verify_text.py`）に作った。そのため:
+docs/stage37-H11-instructions.md:21:- ハブ経由で聞くと良い答えが出るが、`C:\ikimonobiyori` で単体で聞くと、取りに行かず、検査もされず、開発の言葉が混ざる。
+docs/stage37-H11-instructions.md:22:- 記録が2か所に分かれている: ハブ経由は `C:\biyori-hub\runtime-data\ikimonobiyori`、単体は `C:\ikimonobiyori\runtime\ikimonobiyori`。ハブの `config.local.yaml` の `data_dir` が単体側を指している箇所もある（現況の取り込み `refresh_ikimono_status`）。
+docs/stage37-H11-instructions.md:28:- ハブ経由では出ていた花菜ガーデン・くりはま花の国・ソレイユの丘、野鳥の iNaturalist の集計が出なかった（記録が別の場所にあるためと思われる。確かめること）。
+docs/stage37-H11-instructions.md:30:**目的**: イキモノビヨリを、yamabiyori・hoshibiyori と同じく**単体で完結する専門家**にする。`C:\ikimonobiyori` で単体で聞いても、ハブ経由で聞いても、生き物の部分は**同じ質の答え**になること。
+docs/stage37-H11-instructions.md:40:- ハブの `concierge_skill/ask.py`（手順の順番・呼び出しの記録・「読み直しました」の行の作り方・iNaturalist の取り直しの上限）と `concierge_skill/verify_text.py`（文章の検査器）が行っている**生き物の部分**を、ikimonobiyori の中に移す。例: `python -X utf8 -m ikimonobiyori.ask prepare|record|facts|verify`（名前は既存のコマンドの並びに合わせてよい）。
+docs/stage37-H11-instructions.md:44:  - `verify`: 文章の検査（文中の日付・状態の語・地名・数字・URL が材料にあるか、禁止の言い方・内部用語・開発の言葉がないか、候補が3件以上か、1,500字以内か、「読み直しました」とこの回の新しい記録の一致、野鳥に「例年の見頃」がないか、R4 の読み方（H10 の決定）など。ハブの検査器が今持っている規則をすべて引き継ぐ）。
+docs/stage37-H11-instructions.md:46:- 評価表（R1〜R11、H10 の R4 の読み方を本文に書き込んだもの）を ikimonobiyori の `docs/` に移す（ハブの `docs/concierge-rubric.md` の生き物の部分）。
+docs/stage37-H11-instructions.md:47:- ikimonobiyori の絶対ルール（ハブのモジュールを import しない、外部ライブラリは PyYAML・jsonschema・requests だけ、`ikimonobiyori/` の外を指さない）を守る。
+docs/stage37-H11-instructions.md:52:- **移行**: 既存の2か所（`C:\ikimonobiyori\runtime\ikimonobiyori` と `C:\biyori-hub\runtime-data\ikimonobiyori`）の記録（観察の記録・現況の記録 status_log・キャッシュ・区域の集計など）を、新しい置き場所へ**コピーして合わせる**。同じ事実の重複は 2-4 の規則でまとめる。**元の2か所は消さない・書き換えない**（戻せるように残す）。移行は1回だけ実行するコマンド（`python -X utf8 -m ikimonobiyori.migrate_data --dry-run` → 実行）にし、結果（件数・重複としてまとめた件数）を報告書に書く。
+docs/stage37-H11-instructions.md:61:- スキルの説明文（description）は、「生き物（紅葉・花・野鳥など）の見頃・おすすめを、単体で答える」とする。山・星を合わせた提案は、ハブのコンシェルジュの役割と書き分ける。
+docs/stage37-H11-instructions.md:72:1. 移した `prepare`・`record`・`facts`・`verify` が、ハブの H8〜H10 のテストと同じ挙動をする（ハブのテストの生き物の部分を写して足す）。
+docs/stage37-H11-instructions.md:83:## 3. 第2部：biyori-hub（`C:\biyori-hub`、段階H11）
+docs/stage37-H11-instructions.md:87:1. **固定の更新**: `vendor.lock`・`agents/ikimonobiyori/manifest.yaml`・`hub/core/place_names.json` の組を、第1部の PR のブランチの最後の commit（40桁）に更新する。自分で `hub/prepare_runtime.py ikimonobiyori --checkout` を実行する。
+docs/stage37-H11-instructions.md:88:2. **ハブ側の手順を、イキモノビヨリを呼ぶだけにする**: `concierge_skill/ask.py`・`concierge_skill/verify_text.py` の生き物の部分を、ikimonobiyori の新しいコマンド（第1部）を `hub/core/ikimono_source.py` 経由で呼ぶ形に縮める。ハブ側に残すのは、呼び出しの記録・山・星の材料との組み合わせ・山・星の部分の検査だけ。コンシェルジュの答えの生き物の部分は、ikimonobiyori の `verify` に通す。
+docs/stage37-H11-instructions.md:91:5. ハブの全テストと `hub/validate.py` が通ること。
+docs/stage37-H11-instructions.md:97:**単体**（`C:\ikimonobiyori` を作業フォルダとし、ikimonobiyori のスキル `ikimono-weekend` とコマンドだけを使う。ハブのモジュール・ハブのパスに触れないことを、呼び出しの記録で確かめる）:
+docs/stage37-H11-instructions.md:104:**ハブ経由**（`C:\biyori-hub` のスキル `biyori-concierge`）: 上の 2 と、「11/3のおすすめをおしえて」。
+docs/stage37-H11-instructions.md:107:- 評価表 R1〜R11（H10 の R4 の読み方を本文に書き込んだもの）を、単体の4問・ハブ経由の2問のすべてが満たす。
+docs/stage37-H11-instructions.md:109:- 単体とハブ経由の同じ質問（問2）で、生き物の候補と状態・日付が同じ（同じ置き場所の記録を使っている）。
+docs/stage37-H11-instructions.md:112:採点は、答えを書いていない別のサブエージェントに、評価表と答えだけを渡して行う。評価表の本文にない読み方を添えない。合わなければ直してやり直す（最大3回）。答えと採点を ikimonobiyori の `docs/stage37-acceptance.md` に保存し、ハブの PR からも参照する。
+docs/stage37-H11-instructions.md:118:ikimonobiyori の `docs/stage37-report.md` とハブの `docs/stageH11-report.md`、セッションの最後に:
+docs/stage37-H11-instructions.md:124:5. 利用者がやること（1ステップずつ。ウィンドウの名前と確かめ方つき）: ikimonobiyori の PR を「Create a merge commit」でマージ（ブランチは消さない）→ ハブの PR を同じくマージ → `C:\ikimonobiyori` のタブで `git checkout main` → `git pull` → `C:\biyori-hub` のタブで `git checkout main` → `git pull` → `.venv-hub\Scripts\python.exe -X utf8 hub\prepare_runtime.py ikimonobiyori --checkout` → ハブの CLAUDE.md の案があれば反映。
+docs/stage37-report.md:3:イキモノビヨリを、ヤマビヨリ・ホシビヨリと同じく**単体で完結する専門家**にした。生き物の手順(古ければ取りに行く → 読む → 記録 → 答えの材料 → 文章の検査)を biyori-hub から移し、記録の置き場所を利用者ごとの 1 か所にまとめた。
+docs/stage37-report.md:7:   - `ikimonobiyori/ask.py`: `python -X utf8 -m ikimonobiyori.ask prepare|inat-refresh|record|facts|verify`。ハブの `concierge_skill/ask.py` の生き物の部分(手順の順番・呼び出しの記録 `calls.json`・「読み直しました」の行 `this_round`/`fetch_line`・iNaturalist の取り直しの上限)を写した。`inat-refresh` は計測フック(`BIYORI_REQ_LOG`)と `BIYORI_ALLOW_LIVE=1` の下だけで動き、単体では `skipped: no_measure_hook` を残して古い集計を日付つきで使う(規則 6 を変えていない)。
+docs/stage37-report.md:8:   - `ikimonobiyori/ask_verify.py`: ハブの `concierge_skill/verify_text.py` の規則をすべて写した。語は `ikimonobiyori/data/ask/policy.yaml`。開発の言葉(`dev_terms`: テスト・コード・作業メモ・記録済み・スキル・コマンド・検査・実装 など。「フォトコンテスト」「ドレスコード」は数えない)と作業の経過の文(「あとは答えを書くだけ」「今回は取りに行っていません」など)を足した。
+docs/stage37-report.md:9:   - 評価表 `docs/ask-rubric.md`(ハブの `docs/concierge-rubric.md` の生き物の部分。H10 の R4 の読み方を本文に入れたまま。R10 に開発の言葉を足した)。
+docs/stage37-report.md:12:   - 確認: 記録は 2 か所に分かれていた。単体(`C:\ikimonobiyori\runtime\ikimonobiyori`)の観察の記録は紅葉 7 件だけ、ハブ(`C:\biyori-hub\runtime-data\ikimonobiyori`)は紅葉 82・野鳥 11・花 16 件と iNaturalist のキャッシュ。単体で花菜ガーデン・くりはま花の国・ソレイユの丘・野鳥の集計が出なかったのは、記録とキャッシュがハブ側にしかなかったため(移行後は単体でも出る。受け入れテストで確認)。
+docs/stage37-report.md:15:4. **スキル `ikimono-weekend` を作り直した**(2-3): CLAUDE.md・AGENTS.md・SKILL.md の手順の先頭に「段階37: 単体で答える手順(最優先)」(prepare → 読む(WebFetch、なければ `web-fetch` サブエージェント)→ record → facts → 書く → verify(1 回だけ書き直し、だめなら通らない文を除く))。説明文は「生き物(紅葉・花・野鳥など)の見頃・おすすめを、単体で答える」。山・星を合わせた提案はハブのコンシェルジュの役割と書き分けた。
+docs/stage37-report.md:26:新しいテスト `tests/test_stage37.py`(49 件): 移した手順と検査器(ハブの H8〜H10 の生き物の部分を写した)・書き込み先の既定・移行・2-4 の 4 つ・開発の言葉・索引のない集計。
+docs/stage37-report.md:39:2. 単体では iNaturalist の集計を取り直さない(規則 6: 計測フックの下だけ)。集計が古いときは、ハブ経由の質問で取り直すか、古い集計を日付つきで使う。単体の取り直しの仕組みを作るなら提案として相談したい。
+docs/stage38-instructions.md:3:これまでの方針（`C:\biyori-hub\docs\ikimonobiyori-rebirth-instructions.md` の2章・通信の作法、H9〜H11・段階37 の決定）は**そのまま有効**。イキモノビヨリは**単体で完結する専門家**（段階37）。今回はイキモノビヨリ単体だけを直す。**コンシェルジュ（ハブの `biyori-concierge`）の開発は行わない**（利用者の決定。後日）。
+docs/stage38-instructions.md:5:- 対象: `C:\ikimonobiyori`（主）。ハブ `C:\biyori-hub` は最後に固定の更新だけ。
+docs/stage38-instructions.md:24:6. 単体では iNaturalist の集計も写真も取り直せない。通信の回数を数える仕組み（計測フック）がハブにしかないため（段階37 の確認事項）。
+docs/stage38-instructions.md:30:1. **単体でも iNaturalist を取りに行けるようにする。** yamabiyori が単体で Open-Meteo を取りに行くのと同じ考え方。イキモノビヨリ自身に、小さな上限の仕組みを持たせる: 1回の実行の上限（集計は10リクエスト、写真は既存の `photos.max_requests_per_run` 80）、同じホストへの間隔1秒以上、実行ごとの記録（時刻・ホスト・回数・状態コード）を書き込み先（`%LOCALAPPDATA%\ikimonobiyori` の下）に残す。通信先は既存の許可（`api.inaturalist.org`、写真の配信元 `static.inaturalist.org`・`inaturalist-open-data.s3.amazonaws.com`、Commons の承認済みホスト）だけ。ハブから呼ばれるときは、これまでどおりハブの計測フックを使う（`BIYORI_REQ_LOG` があればそちら、なければ自前の上限）。ikimonobiyori の CLAUDE.md・AGENTS.md の絶対ルール6を、この形に書き換える（2つを同じ内容に）。**質問のときに、古ければ自分で取りに行く**（利用者に確認しない）。
+docs/stage38-instructions.md:73:1. 自前の上限: 上限で止まる、間隔を守る、記録が残る、許可外のホストを拒否する。ハブの計測フックがあるときはそちらを使う。
+docs/stage38-instructions.md:99:## 4. ハブ（`C:\biyori-hub`、段階H12。固定の更新だけ）
+docs/stage38-instructions.md:101:段階38 の PR のブランチの最後の commit（40桁）に、`vendor.lock`・`agents/ikimonobiyori/manifest.yaml`・`hub/core/place_names.json` の組を更新し、`hub/prepare_runtime.py ikimonobiyori --checkout` を自分で実行する。ハブの全テストと `hub/validate.py` が通ること。コンシェルジュの手順・答え方は変えない。push・PR は段階38 と同じ扱い（拒否されたら止めて報告）。
+docs/stage38-instructions.md:107:`docs/stage38-report.md`（ハブは `docs/stageH12-report.md`）と、セッションの最後に:
+docs/stage38-instructions.md:114:6. 利用者がやること（1ステップずつ。ウィンドウの名前と確かめ方つき）: ブランチの push と PR（拒否された場合）→ ikimonobiyori の PR を「Create a merge commit」でマージ（ブランチは消さない）→ ハブの PR を同じくマージ → `C:\ikimonobiyori` のタブで `git checkout main` → `git pull` → `C:\biyori-hub` のタブで `git checkout main` → `git pull` → `.venv-hub\Scripts\python.exe -X utf8 hub\prepare_runtime.py ikimonobiyori --checkout` → ページを開いて写真を確かめる。
+docs/stage38-report.md:3:指示書: `docs/stage38-instructions.md`。ブランチ `stage38`。ハブは段階H12(`C:\biyori-hub` の `docs/stageH12-report.md`)。
+docs/stage38-report.md:42:- 計測フック(`BIYORI_REQ_LOG`)があるときはハブのフックを使う(モード `hook`。自前の記録は書かない。`BIYORI_ALLOW_LIVE=1` が要る)。テスト中は常に拒否。
+docs/stage38-report.md:65:2. 同じく `C:\biyori-hub` のタブで `cd C:\biyori-hub` → `git push -u origin stageH12` → `gh pr create --base main --head stageH12 --fill` → `gh pr checks --watch`。確かめ方: 全項目が `pass`(ハブの CI は ikimonobiyori の commit を GitHub から取り込むので、1 の push のあとに行う)。
+docs/stage38-report.md:67:4. ハブ(biyori-hub)の PR を同じく「Create a merge commit」でマージ(ブランチは消さない)。
+docs/stage38-report.md:69:6. `C:\biyori-hub` のタブで `git checkout main` → `git pull`。
+docs/stage38-report.md:70:7. 同じタブで `.venv-hub\Scripts\python.exe -X utf8 hub\prepare_runtime.py ikimonobiyori --checkout`。確かめ方: `OK  C:\biyori-hub\runtime\ikimonobiyori` と出る。
+docs/stage39-claude-md-proposal.md:23:8. 山の天気・星は「ヤマビヨリ・ホシビヨリで確かめてください」の一言まで。**コンシェルジュの使い方・操作は案内しない**（ハブ側のスキル。単体では呼べない）。
+docs/stage39-photo-wildflower-instructions.md:1:# 指示書：試用で見つかった修正、写真つきページの標準化、野草・高山植物の知識の追加（ikimonobiyori → biyori-hub。無人で PR・マージまで）
+docs/stage39-photo-wildflower-instructions.md:3:作成: 2026-11-03（利用者との会話のまとめ）。対象: `C:\ikimonobiyori`（主）と `C:\biyori-hub`（第2部）。
+docs/stage39-photo-wildflower-instructions.md:7:- 利用者は操作できない。**最後まで無人で進める。質問・確認・承認を求めない。** 判断が要る所は、いちばん無難な案で進め、決めたことを報告書の「決めたこと」に書く。止まってよいのは、データを失う恐れ・秘密情報の流出・絶対ルール9（ハブを import しない等）の違反に当たるときだけ。報告は日本語。
+docs/stage39-photo-wildflower-instructions.md:13:- `CLAUDE.md` と `AGENTS.md` は、この指示書で決めたことを書き足し、**2つを同じ内容に保つ**。ハブの `CLAUDE.md` は書き換えない（必要なら `docs/stageH_claude-md-proposal.md` に案）。
+docs/stage39-photo-wildflower-instructions.md:14:- 絶対ルールは守る。特に、閾値・件数・年数をコードに書かない（プロファイルか方針の `provisional` つきの値にする）、外部ライブラリは PyYAML・jsonschema・requests だけ（**Pillow などを足さない**。必要なら提案として報告）、`ikimonobiyori/` の外を指さない、ハブを import しない、写真・画像・撮影者名・写真の URL をコミットしない。
+docs/stage39-photo-wildflower-instructions.md:62:- `guide_photos.py` の `_gate` は、`--live`・`BIYORI_ALLOW_LIVE`・明示的な `--max-requests`・計測フック（`BIYORI_REQ_LOG`）を要求する。単体（`C:\ikimonobiyori`）にはハブの計測フックがない。**`livegate.py` は変えない**（ハブ側のテストが両方を比べる）。代わりに、新しいコマンド `guide photos-ensure`（A-3）が、通信先を policy の固定ホストに限り、既存の `photos_requests.jsonl` に件数を記録し、上限・間隔を守る形で、自分の中で許可を満たす。ハブ経由の実通信は従来どおり計測フックの下。
+docs/stage39-photo-wildflower-instructions.md:120:- 単体の答えは、山の天気・星は「ヤマビヨリ・ホシビヨリで確かめてください」の一言まで。**コンシェルジュの使い方・操作を案内しない**（コンシェルジュはハブ側のスキル。単体では呼べない）。ハブ経由のときはハブ側が案内する。
+docs/stage39-photo-wildflower-instructions.md:169:## 7. 第2部：biyori-hub（`C:\biyori-hub`）
+docs/stage39-photo-wildflower-instructions.md:172:1. `vendor.lock`・`agents/ikimonobiyori/manifest.yaml`・`hub/core/place_names.json` の組を、第1部の main の最新の commit（40 桁）に更新し、`hub/prepare_runtime.py ikimonobiyori --checkout` を実行する。
+docs/stage39-photo-wildflower-instructions.md:173:2. ハブの全テストと `hub/validate.py` が通ること。通信先の宣言（manifest の `hosts`）に、Wikimedia Commons など新しく必要な通信先があれば足す（宣言なしは全拒否の既存の決まり）。
+docs/stage39-photo-wildflower-instructions.md:174:3. PR → CI が緑なら自分でマージ（第0章の方針）。ハブの `CLAUDE.md` は書き換えない。
+docs/stage39-photo-wildflower-instructions.md:203:`docs/stage39-report.md`（空き番号）とハブの報告書に、セッションの最後に:
+docs/stage39-report.md:59:- **第 2 部**(biyori-hub): 実行しなかった。`vendor.lock`・manifest・`place_names.json` の更新、ハブのテスト・CI・マージは未実施。**ハブは stage38 以降の ikimonobiyori をまだ取り込んでいない**。
+docs/stage40-example.md:3:コンシェルジュ（ハブ側。将来）が、ヤマビヨリの山の候補に、イキモノビヨリの `guide wildflower` を添える出力のイメージ。ヤマビヨリの出力は例として手で書いた（実通信なし）。
+docs/stage40-report.md:34:## ハブの呼び方の確認（読むだけ）
+docs/stage40-report.md:35:`C:\biyori-hub\agents\ikimonobiyori\manifest.yaml` は、`interface.command`（`main.py` の提案）と `snapshot`（`adapters/ikimonobiyori_run.py`。対象は autumn_leaves・birds だけ）を宣言していて、`interests` には `wildflowers` があるが、野草の入口は宣言されていない。`guide wildflower` は通信しない純粋な CLI なので、ハブ側では新しい `interface`（例: `wildflower: {command: [{python}, -X, utf8, -m, ikimonobiyori.guide, wildflower, --site, {site}, --month, {month}, --json], output: stdout-json}`）を manifest に足し、`vendor.lock`・manifest の commit を更新するだけで繋がる見込み。ハブは変更していない（第 2 部は別の機会）。
+docs/stage40-wildflower-instructions.md:11:- 既存テストの期待値は変えない。ゴールデンは作り直さない。絶対ルール（閾値は方針の `provisional` 値、外部ライブラリを増やさない、ハブを import しない、位置は丸める）を守る。
+docs/stage40-wildflower-instructions.md:33:- このコマンドが、ハブ側で将来コンシェルジュに繋がる**唯一の入口**になる。ハブは変更しない（第2部は別の機会）。ただし `C:\biyori-hub` の既存の「他ビヨリの呼び方」（`agents/*/manifest.yaml` や `CLAUDE.md` の記述）を**読むだけ**で確かめ、呼びやすい形になっているかを報告書に1段落で書く。
+docs/stage40-wildflower-instructions.md:62:`docs/stage40-report.md` に: 完了した山域と種数・花暦の行数・定評/仮の内訳、未着手の山域（準備中）、全テストの最後の行、受け入れの結果、ハブの呼び方の確認（2-2 の1段落）、決めたこと、PR の状態（push が止まったら「利用者が push する」）。**利用者がやること**は、あれば1ステップずつ、ウィンドウ名と確認方法つきで。
+docs/stage47-report.md:63:- ハブ(C:\biyori-hub)の `vendor.lock` の更新(今回は行わない)。
+docs/stage47-sources-instructions.md:44:4. この変更の後、ハブ（C:\biyori-hub）の vendor.lock の更新が別途必要になる。今回は行わず、報告書の「残った課題」に書く。
+docs/stage47-sources-instructions.md:123:  - 残った課題（ハブの vendor.lock 更新、読めなかったサイト、未特定の公式ページなど）
+docs/stage48-answer-quality-instructions.md:82:## 7. 第6部: ハブ（第1〜5部が main にマージされてから。別リポジトリ C:\biyori-hub）
+docs/stage48-answer-quality-instructions.md:85:- vendor.lock の ikimonobiyori を、マージ後の main の最新 commit（フル SHA）に更新する。
+docs/stage48-answer-quality-instructions.md:87:- ハブの価値判断はコンシェルジュに任せる方針は変えない（ハブは情報交換インフラ）。
+docs/stage48-answer-quality-instructions.md:88:- 更新後に prepare_runtime.py --checkout で runtime/ikimonobiyori が vendor.lock と一致することを確認する。
+docs/stage48-answer-quality-instructions.md:89:- ハブの CI が両 OS で pass してから main にマージ。
+docs/stage48-report.md:12:- 第6部(ハブ): 第1〜5部が揃っていないため未着手。`vendor.lock` は更新していない。
+docs/stage48-report.md:22:- 上の「未完了」のすべて。優先は第2部 2〜4(公式ラベルと一次情報源の別ページ)→ 第5部の動作確認 → 第3・4部 → ハブ。
+docs/stage63b-report.md:74:- 手順の部分(3 つのファイルで同じ)を「今有効な決まりの一覧」にまとめた。A ふだんの手順(`ask answer` を 1 回)・B 答えの中身(本人の決まり)・C 読み方と記録・D ガイド型ほか・E sources(biyori-hub が使う下書きと提案)の 5 つの節。
+docs/stage63b-report.md:103:| 段階37 1〜9・段階56・段階57 21・段階60・段階48(個別のコマンドと組み立て) | C 4 行目(デバッグ・ハブ用)、A |
+docs/stageH5-instructions.md:1:# 段階H5 作業指示書(ハブ側で行う作業。C:\biyori-hub、ブランチ stageH5)
+docs/stageH5-instructions.md:3:作成: 2026-10-30(ikimonobiyori 段階26 のフェーズE)。**この指示書は ikimonobiyori の段階26 が書いたもの。ハブのリポジトリは段階26 では一切変更していない**(読んだだけ)。
+docs/stageH5-instructions.md:6:- ikimonobiyori の `stage24`・`stage25`・`stage26` を、ユーザーが push して `main` にマージしたあとに行う(マージ前の commit を vendor.lock に入れない)。
+docs/stageH5-instructions.md:7:- 無人実行でよい。迷ったら安全側(vendor.lock を更新しない・変更しない)に倒し、報告に書く。
+docs/stageH5-instructions.md:9:## (a) vendor.lock の更新(段階10・H3・H4a の既存のやり方)
+docs/stageH5-instructions.md:11:2. `vendor.lock` の `ikimonobiyori` の行を、`https://github.com/ktakemaru/ikimonobiyori` と**そのフル SHA** に直す(タブ区切り 3 列。現在は `fa47992b9f9ad7e35e40ef6af3be1e7281fd47fe`)。他の行は触らない。
+docs/stageH5-instructions.md:13:4. 取り込み後、`vendor/ikimonobiyori` が ikimonobiyori の `main` と同じ内容であること(`tests/contract/` の契約の写し `biyori-proposal.schema.json` が、ハブの `schemas/biyori-proposal.schema.json` と同じであること。段階26 の確認では**同じ**だった)。
+docs/stageH5-instructions.md:18:  - ハブのコードが `details` を読む場所は `hub/core/ikimono_status.py`(`details.kind` と `details.observations` の `read_at` だけ)、`hub/core/collect.py`(`details.component.generated_at`・`details.display_lines`)、`hub/core/checktext.py`(`details.score_explain`)。**項目数・項目名を数えたり、未知の項目を拒否したりする箇所はなかった**。
+docs/stageH5-instructions.md:20:- **ただし要確認(落ちる可能性があるもの)**: ハブのテストの期待値(golden)に、`details` の中身まで比べているものがある。`tests/fixtures/stage12/golden_proposals/g3_composed.json`・`g4_child_birds.json`・`g4_composed.json`、`tests/fixtures/stageH4a/golden_status_snapshot.json` に、参照数が付く名所(東京港野鳥公園・葛西臨海公園・六義園・新宿御苑など)の名前がある。これらが「取り込んだコードを実行した結果」と比べるテストなら、`details.reference_count` が増えて**比較で落ちる**。静的な固定の写しなら落ちない。H5 で、vendor 更新の前後に全テストを実行して確かめる。落ちた場合は、ハブの golden を作り直すのではなく、**ユーザーに報告して承認を待つ**(ハブの CLAUDE.md の規則に従う)。
+docs/stageH5-instructions.md:22:## (c) ハブ側のテスト・CI で確かめること
+docs/stageH5-instructions.md:23:1. vendor 更新の前に、ハブの全テストが通ること(基準)。
+docs/stageH5-instructions.md:35:- vendor.lock の更新前後の SHA、(b) の確認結果(実際に落ちたか)、全テストの件数、案1・案2 のどちらにしたか。
+docs/validation-plan.md:96:- 無料枠: 10,000 call/日(600/分、5,000/時)。ハブの自主上限(`C:\biyori-hub\hub\config.yaml` の `snapshot`): Open-Meteo 宛て `daily_request_cap: 3000` リクエスト/日、`daily_call_cap_estimated: 4130` call/日(無料枠の 50% − yamabiyori-backtest の約 870)。v0 の紅葉の定期実行も同じ枠を使う(1 回 76 リクエスト前後)。
+docs/validation-plan.md:102:| A | 9 × 10(2016〜2025)× 1 | 90 | 約 830 | 約 3 分 | 無料枠・ハブの上限とも十分に収まる |
+docs/validation-plan.md:103:| A' | 9 × 10 × 2(官署の標高/なし) | 180 | 約 1,660 | 約 6 分 | 収まる(ハブの call 上限の約 4 割) |
+docs/validation-plan.md:104:| B | 12 × 35(1991〜2025)× 1 | 420 | 約 3,860 | 約 14 分 | 無料枠には収まるが、ハブの call 上限 4,130 にはその日の v0 の実行と合わせて届きうる → **2 日に分ける** |
+docs/validation-plan.md:105:| B' | 12 × 35 × 2 | 840 | 約 7,730 | 約 28 分 | ハブの上限を超える → **3 日以上に分ける**(1 日 ≦ 約 350 リクエスト) |
+docs/validation-plan.md:115:1. **承認(2026-10-22。§0)**: 許可ホストに `archive-api.open-meteo.com` を足す(`config.yaml` の `live.allowed_hosts_by_subject`、ハブの計測フックの許可リスト)。段階14 フェーズ 1 で実施。

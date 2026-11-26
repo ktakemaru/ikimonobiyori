@@ -5,7 +5,7 @@
 ## まとめ
 
 - 第1部: README・AGENTS.md・CLAUDE.md・スキルの「biyori-hub との関係」を「ビヨリコンシェルとの関係」に書き換えました。契約の正本はコンシェルの `schemas/` です。決まりの中身は緩めていません。
-- 第2部: 長い作業の前の予告の節と、実測だけの時間の表を AGENTS.md・CLAUDE.md に入れました。スキルには「予告の 1 行は例外」を足しました。出どころと手本は `docs/wait-notice-timings.md` です。
+- 第2部: 長い作業の前の予告の節と時間の表を AGENTS.md・CLAUDE.md に入れ、スキルには「予告の 1 行は例外」を足しました。今の版で実測があるのは花暦(約 1 秒)だけで、`ask brief` と全テストは「未計測」にしました。出どころと手本は `docs/wait-notice-timings.md` です。
 - 第3部: 資料の項目の一覧(`docs/concierge-brief-fields.md`)と、山 76 座の座標の一覧(`docs/sites-mountains-20261127.csv`)を書きました。資料の候補には、座標・`site_ref`・commit がありません。
 - 通信はしていません。`ask brief` は実行していません(資料の例は、通信を禁じたテストの仕組みの下で作りました)。コードと既存テストの期待値は変えていません。
 - push・PR・CI はまだです。手元で関係するテストだけを実行し、すべて OK でした。
@@ -14,9 +14,11 @@
 |---|---|---|---|
 | 第0部 | `docs/concierge-relation` | `0e666c9`(指示書の写し) | なし |
 | 第1部 | `docs/concierge-relation` | `cf24e49` | 文書を見ている 20 本(`test_sources`・`test_self_contained`・`test_stage22`・`test_stage63b`・`test_proposals` ほか)を `tests/` から: `Ran 603 tests in 65.345s` / `OK` |
-| 第2部 | `docs/wait-notice` | `221cc1f` | 文書を見ている 18 本: `Ran 560 tests in 68.095s` / `OK` |
-| 第3部 | `docs/wait-notice` | `e8aaac4` | なし(文書と CSV だけ。docs/ を読むテストは無いことを確かめた) |
+| 第2部 | `docs/wait-notice` | `221cc1f`(表の直しはこの報告書と同じ commit) | 文書を見ている 18 本: `Ran 560 tests in 68.095s` / `OK`。表を直したあとにもう一度: 下の「最後の実行」 |
+| 第3部 | `docs/wait-notice` | `e8aaac4`(直しはこの報告書と同じ commit) | なし(文書と CSV だけ。`docs/` の中を数え上げて読むテストは見つからなかった。決まった名前で読むテストはあり、第1部・第2部の実行に入っている) |
 | 報告書 | `docs/wait-notice` | この報告書の commit | なし |
+
+最後の実行(表と報告書を直したあと、`docs/wait-notice` の上で、第1部と同じ 20 本): `Ran 603 tests in 73.906s` / `OK`。
 
 CI は、push していないので未実行です。
 
@@ -25,7 +27,7 @@ CI は、push していないので未実行です。
 - 止まる条件には当たりませんでした。追跡中のファイルに変更は無く、main は `8d9a15e` で、`C:/biyori-concierge/docs/wait-notice.md` も読めました。
 - 始めたときのイキモノビヨリ: ブランチ `main`、`8d9a15e Merge pull request #70 from ktakemaru/docs-readme-0.2.0`。追跡していないファイルは `docs/stage72・73・78・83・84・85-instructions.md` で、触っていません。
 - ビヨリコンシェル(読むだけ): ブランチ `feature/stage3-day-flow`、`c6e277d 段階 3 第 2 部の報告書と通しの試しの記録`。読んだのは `docs/wait-notice.md`、`docs/biyori-concierge-instructions.md` の 6.4 章・7 章(I1・I2)と段階 4、`schemas/` の一覧と `biyori-vocabulary.yaml` です。
-- 「biyori-hub」「ハブ」「vendor.lock」が出る行は、README・AGENTS.md・CLAUDE.md・スキル・`docs/` で **293 行**ありました(指示書の写しを `docs/` に入れる前に数えた値)。
+- 「biyori-hub」「ハブ」「vendor.lock」が出る行は、README・AGENTS.md・CLAUDE.md・スキル・`docs/` で **293 行**ありました(指示書の写しを `docs/` に入れる前に数えた値)。一覧(ファイル・行・今の文)は `docs/stage4-prep-hub-lines.txt` です(書き換える前の行番号と文)。
 
 ## 第1部(「biyori-hub との関係」の書き換え)
 
@@ -71,7 +73,7 @@ CI は、push していないので未実行です。
 
 ### 昔の記録なのでそのままにした行(243)
 
-段階ごとの指示書・報告書・決定の記録(`docs/stage*`)、`docs/rules-history.md`(24 行)、`docs/ikimonobiyori-research.md`(4 行)、`docs/validation-plan.md`(6 行。当時の hub の上限で立てた計画)、`docs/ask-rubric.md:3`(経緯)、`docs/design.md:43`(当時の許可の設定の例)。
+一行ずつの一覧は `docs/stage4-prep-hub-lines.txt`。段階ごとの指示書・報告書・決定の記録(`docs/stage*`)、`docs/rules-history.md`(24 行)、`docs/ikimonobiyori-research.md`(4 行)、`docs/validation-plan.md`(6 行。当時の hub の上限で立てた計画)、`docs/ask-rubric.md:3`(経緯)、`docs/design.md:43`(当時の許可の設定の例)。
 
 ### コードとテスト
 
@@ -80,21 +82,20 @@ CI は、push していないので未実行です。
 
 ## 第2部(長い作業の前の予告)
 
-- AGENTS.md・CLAUDE.md の「## 報告のしかた」の前に「## 長い作業の前に伝える」を足しました。正本の場所・要点 3 つ・4 行の表です。
+- AGENTS.md・CLAUDE.md の「## 報告のしかた」の前に「## 長い作業の前に伝える」を足しました。正本の場所・要点 3 つ・3 行の表です。
 - 手順の部分(3 つのファイルで同じ)の「道具を呼ぶあいだにも書かない」の後ろに「(時間つきの予告 1 行は例外。AGENTS.md「長い作業の前に伝える」)」を足しました。
 - **指示書と違うところ**: 指示書は CLAUDE.md を「例外とだけ書く薄い層」としていますが、このリポジトリでは CLAUDE.md は AGENTS.md の全文の写しです(`test_self_contained` が、見出し以外が同じであることを確かめています)。そのため、節と表は CLAUDE.md にも入っています。
-- 字数の上限(`test_stage63b`): スキルは 15000 バイトまでのところ、足す前が 14961 バイトでした。スキル 8 行目の「(`tests/test_sources.py` が一致を検査する)」を外して場所を作り、今は **14997 バイト**です。AGENTS.md・CLAUDE.md は 30000 バイトまでのところ **29637 バイト**です。表を短くするため、出どころの詳細と手本は `docs/wait-notice-timings.md` に分けました。
+- 字数の上限(`test_stage63b`): スキルは 15000 バイトまでのところ、足す前が 14961 バイトでした。スキル 8 行目の「(`tests/test_sources.py` が一致を検査する)」を外して場所を作り、今は **14997 バイト**です。AGENTS.md・CLAUDE.md は 30000 バイトまでのところ **29455 バイト**です。表を短くするため、出どころの詳細と手本は `docs/wait-notice-timings.md` に分けました。
 
 ### 時間の表
 
 | 作業 | コマンド | 目安 | 出どころ |
 |---|---|---|---|
-| 資料を作る(読み直すページがあるとき) | `ask brief` | 読み直しに 5.6〜17.1 秒、作り直しまでの全体で 37〜40 秒 | `docs/stage85-report.md`「確かめ」の表。手元の PC・3 問(全体は 2 問)。段階85 第1部の版で、施設のページを足す前 |
-| 資料を作る(読み直すページがないとき) | `ask brief` | 未計測 | 段階77 の 1.7〜4.2 秒は、読み直しを入れる前の版なので使っていません |
+| 資料を作る | `ask brief` | 未計測 | 参考の値(表には使っていません): 段階85 第1部の版で、読み直し 5.6〜17.1 秒・作り直しまでの全体 37〜40 秒(`docs/stage85-report.md`「確かめ」)。そのあと「段階85 の続き」で施設のページを足したので、正本 5 章により未計測にしました。段階77 の 1.7〜4.2 秒は、読み直しを入れる前の版です |
 | 山の花暦 | `guide wildflower --json` | 0.88〜1.20 秒 | この作業(2026-11-27)。手元の PC・6 回(`m001`・`m002` を 7 月で 3 回ずつ。指示書の「3 回」を 2 地点で行いました) |
-| 全テスト | `unittest discover -s tests` | 4 組に分けて 1 組 60〜209 秒 | `docs/stage85-report.md`「通信と時間」。手元の PC |
+| 全テスト(1 回で) | `unittest discover -s tests` | 未計測 | 参考: 4 組に分けたときの 1 組 60〜209 秒(`docs/stage85-report.md`「通信と時間」)。1 回で実行した時間ではないので、表には使っていません |
 
-未計測の作業: `ask brief` の読み直しなしと、施設のページを読み直すとき、`ask answer`(段階63b の値は古い版のもの)、`ask research fetch`、写真の取得(`guide photos-*`・`ask photos`)、写真つきのページ(`guide page`・`ask page`)、`seasonal_obs fetch`・`taxa`、`ask inat-refresh`、`ask warm`。
+未計測の作業: `ask brief`(読み直しあり・なしとも)、全テストを 1 回で実行したとき、`ask answer`(段階63b の値は古い版のもの)、`ask research fetch`、写真の取得(`guide photos-*`・`ask photos`)、写真つきのページ(`guide page`・`ask page`)、`seasonal_obs fetch`・`taxa`、`ask inat-refresh`、`ask warm`。
 通信しない資料づくり(空のデータ置き場で `build` を直接呼んだもの。5.3 秒・3.4 秒)は、本当の使い方と条件が違うので、表には入れていません。
 
 ## 第3部(コンシェルのための調べ)
@@ -103,7 +104,7 @@ CI は、push していないので未実行です。
 
 - **コンシェルが使える項目**: 候補の `name`・`rank`・`distance_km`(出発地からの直線)・`distance_text`・`prefecture`・`city`・`current_state`・`current_date`、事実の `kind`(今年の現況・例年の目安・行事・施設・安全)・`content`・`source`・`url`・`source_class`・`observed`、知識カードの `facts`・`source`・`url`、`missing`、`origin`。
 - **足りない項目**:
-  - 候補の座標と、山の地点との結びつき(`site_ref: yamabiyori:mNNN`)が無い。
+  - 候補の座標と、山の地点との結びつき(`site_ref: yamabiyori:mNNN`)が無い。紅葉・花・山の質問の 5 つの資料(通信なし・空のデータ置き場)で、全項目と JSON 全体を調べて 0 件でした。このリポジトリの文書にも、入るとは書かれていません。実際のデータ置き場で作った資料では確かめていません。
   - 確かさの段階の項目が無い(事実の `kind` と `source_class` の組み合わせで表れる)。
   - 資料の commit・版・作った時刻が無い(`schema` と `now` はある)。
   - 資料の JSON Schema が無い。
@@ -119,6 +120,11 @@ CI は、push していないので未実行です。
 - 通信を禁じたときに `ask brief` の読み直しが断られる形は、コードを読んで書いただけで、入口からは実行していません。
 - コンシェル側の計測フック・出発地の扱い・資料を消す仕組みがあるか。
 - ヤマビヨリの座標との違い(I2。読んでいません)。
+- 実際のデータ置き場で作った資料の項目(通信が要るので作っていません。例は空のデータ置き場で作りました)。
+
+## 変えたテスト
+
+なし(期待値の変更・削除・スキップもありません)。
 
 ## 利用者がやること
 
@@ -126,13 +132,13 @@ CI は、push していないので未実行です。
 2. (GitHub)その PR の CI が全部 pass であることを確かめてマージする。
 3. (`C:\ikimonobiyori` のウィンドウ、Git Bash)`git push -u origin docs/wait-notice` を実行し、main 向けの PR を作る(1 本目のマージのあとなら、差分は第2部・第3部・報告書だけになります)。
 4. (GitHub)その PR の CI が全部 pass であることを確かめてマージする。
-5. (`C:\ikimonobiyori` のウィンドウ。通信が要る)同じ質問で `time python -X utf8 -m ikimonobiyori.ask brief "今週末の紅葉の情報は?"` を 3 回続けて測り、2 回目からを「読み直すページがないとき」として `docs/wait-notice-timings.md` と AGENTS.md・CLAUDE.md の表に書く(1 回目は「読み直すページがあるとき」の測り直し)。
+5. (`C:\ikimonobiyori` のウィンドウ。通信が要る)`time python -X utf8 -m ikimonobiyori.ask brief "今週末の紅葉の情報は?"` を 3 回測る。回ごとに、2 行目に出た資料の JSON に `auto_refresh` があるか(あれば `elapsed_s`・`requests`)を見て、「読み直しあり」「読み直しなし」に分けて `docs/wait-notice-timings.md` と AGENTS.md・CLAUDE.md の表に書く(何回目かでは分けない。変わったページは記録するまで読み直されるため)。
 6. (同じウィンドウ。通信が要る)写真つきのページ・`ask research fetch` など、未計測の作業を測る場合は、実際に使うときに時間を記録して表に足す。
 
 ## 決めてほしいこと
 
-1. 時間の表の「読み直しあり 37〜40 秒」は、施設のページを足す前の版で測った値です。このまま使いますか。測り直すまで「未計測」に戻しますか(正本 5 章は「中身が変わったら直すまでは未計測」としています)。
-2. スキルが 14997/15000 バイト、AGENTS.md・CLAUDE.md が 29637/30000 バイトで、ほぼ上限です。次に足すときは、削るか、上限(テストの期待値)を変えることになります。
+1. `ask brief` の時間は、正本 5 章(中身が変わったら直すまでは未計測)により「未計測」にしました。施設のページを足す前の版で測った値(読み直しあり 37〜40 秒)を使ってよいなら、表に戻します。全テストも同じで、1 回で実行した時間ではない 4 組の値を使ってよいなら戻します。
+2. スキルが 14997/15000 バイト、AGENTS.md・CLAUDE.md が 29455/30000 バイトで、ほぼ上限です。次に足すときは、削るか、上限(テストの期待値)を変えることになります。
 3. スキル 8 行目から「(`tests/test_sources.py` が一致を検査する)」を外しました(場所を作るため)。戻すなら、ほかを削る必要があります。
 4. CLAUDE.md は全文の写しのままにしました(テストが写しであることを求めています)。指示書の「薄い層」に変えるなら、テストの変更が要ります。
 5. 絶対ルール 9 の「biyori-hub のモジュールを import しない」を、ビヨリコンシェルのモジュールにも広げますか(広げるなら、テストを足すのがよいと思います)。
