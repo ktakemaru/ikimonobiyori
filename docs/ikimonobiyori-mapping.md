@@ -1,6 +1,6 @@
 # イキモノビヨリ v0 → biyori-proposal/1 対応表
 
-実装: `ikimonobiyori/`（このリポジトリのパッケージ。biyori-hub が固定 commit で取り込む。biyori-hub の中にあったとき〔段階12より前〕の記述が残る文書がある。他のビヨリのコードを import しない）。閾値・係数は `ikimonobiyori/profiles/*.yaml` の `method.params` だけに書く（コードに直接書かない）。
+実装: `ikimonobiyori/`（このリポジトリのパッケージ。ビヨリコンシェルが手元の版を取り込まずに呼ぶ〔以前は biyori-hub が固定 commit で取り込んでいた〕。biyori-hub の中にあったとき〔段階12より前〕の記述が残る文書がある。他のビヨリのコードを import しない）。閾値・係数は `ikimonobiyori/profiles/*.yaml` の `method.params` だけに書く（コードに直接書かない）。
 調査と出典: `docs/ikimonobiyori-research.md`。**v0 は通信しない**（入力は `ikimono-inputs/1` の JSON。テストでは合成フィクスチャ `synthetic`）。
 
 ## 1. 点数の尺度（他のビヨリと比較しない。必ず `scale` つき）

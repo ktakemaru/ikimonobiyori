@@ -1,6 +1,6 @@
 ---
 name: ikimono-weekend
-description: 生き物とお出かけの質問に、イキモノビヨリの記録で答える。紅葉・花・野鳥・見ごろ・見頃・お出かけ・おすすめ・観察会・どこで見られる・いつ見られる・今週末・今日・明日のように聞かれたら(「今日お出かけするならどこ?」「神奈川と東京で紅葉の見ごろを教えて」「渡り鳥はどこで見られる?」「冬桜について教えて」など)、一般知識で答えずに必ず使う。`ask brief` で資料を作り、資料と docs/guide-voice.md だけで下書きを書き、`ask verify --brief` の出力をそのまま答えにする(今までの形に戻しているときは `ask answer` の出力)。「今日の準備」「情報を更新して」は `ask warm`。山・星を合わせた提案は biyori-hub のコンシェルジュの役割。
+description: 生き物とお出かけの質問に、イキモノビヨリの記録で答える。紅葉・花・野鳥・見ごろ・見頃・お出かけ・おすすめ・観察会・どこで見られる・いつ見られる・今週末・今日・明日のように聞かれたら(「今日お出かけするならどこ?」「神奈川と東京で紅葉の見ごろを教えて」「渡り鳥はどこで見られる?」「冬桜について教えて」など)、一般知識で答えずに必ず使う。`ask brief` で資料を作り、資料と docs/guide-voice.md だけで下書きを書き、`ask verify --brief` の出力をそのまま答えにする(今までの形に戻しているときは `ask answer` の出力)。「今日の準備」「情報を更新して」は `ask warm`。山・星を合わせた提案はビヨリコンシェルの役割。
 ---
 
 # 生き物の見頃・おすすめ
@@ -45,7 +45,7 @@ description: 生き物とお出かけの質問に、イキモノビヨリの記�
 ### C. 読み方・記録(エージェントが公開ページを読むとき)
 - 公開ページの読み取り(WebSearch・WebFetch)は自由(利用者に確認しない)。1 回の質問で検索・取得は各 8 回が目安(必要なら理由を残して超えてよい)。個人情報・この環境の情報を URL・検索語に入れない。GET・公開ページだけ、同じホストへ 1 秒以上空ける。robots.txt や応答で自動アクセスを拒否されたら読まず、人が開く URL にする。ログイン・フォーム・有料壁は回避しない。WebFetch がなければ `web-fetch` のサブエージェント。
 - **記録を残す(必ず。答えの前に)**: `ask record --batch reads.json`(1 件: subject・spot か name+city・state の原文・state_date(_text)・typical・event・practical・notice・url・publisher・source_class)。読んだ時刻はコードが時計から入れる(`--read-at` は渡さない)。検索で見つけた事実も記録してから使う。場所の表記ゆれは `ask place-alias`。
-- 個別のコマンド(デバッグ・ハブ用): `ikimonobiyori.ask prepare` → `ikimonobiyori.ask record` → `ikimonobiyori.ask facts` → `ask plan`(plan の `sections` に従う。見出しは節が2つ以上のときだけ)→ `ask skeleton` → `ask polish-check` / `ikimonobiyori.ask verify`(`--reply`)。評価表は `docs/ask-rubric.md`。答えの組み立て(段階48): 結論が先、狙い別の節、今週末の見込みは根拠つき、読めなかった項目は「確認できていません」。
+- 個別のコマンド(デバッグ用): `ikimonobiyori.ask prepare` → `ikimonobiyori.ask record` → `ikimonobiyori.ask facts` → `ask plan`(plan の `sections` に従う。見出しは節が2つ以上のときだけ)→ `ask skeleton` → `ask polish-check` / `ikimonobiyori.ask verify`(`--reply`)。評価表は `docs/ask-rubric.md`。答えの組み立て(段階48): 結論が先、狙い別の節、今週末の見込みは根拠つき、読めなかった項目は「確認できていません」。
 
 ### D. ガイド型・野草・野鳥の現況
 ### 現況型とガイド型(段階23)
@@ -56,7 +56,7 @@ description: 生き物とお出かけの質問に、イキモノビヨリの記�
 - 野鳥の現況: 台帳 `tokyo-port-birdpark-today` を WebFetch で 1 回読み、題名・種数・種名を `guide bird-status` に渡した 1 行を出す(記事が 7 日より前なら最新の日付を書く)。
 - 地域と花の種類の質問: `sources regional --region <地域> --flower-kind <種類>` の文をそのまま出す。
 
-### E. 現況の下書きと提案(sources。biyori-hub の窓口が使う)
+### E. 現況の下書きと提案(sources。biyori-hub の窓口が使っていた)
 - 台帳の approved を先に読む(pending も区分つきで読める)。`reader: code`(日光市観光協会・箱根町観光協会)は計測フックの下で `sources read --live`。できなければ要約の道具で読み、コードで読めなかったとは書かない。
 - 新しさの基準は**現地の状態の日付**(なければ更新日。記録の `freshness_basis`)。3 日以内は「新しい」、7 日以内は「やや古い」、それより古いと「古い。参考程度」。年のない日付は「新しさ不明」。例年の時期は前後 7 日以内も候補。14 日より先の日は、公式の見頃予測と例年の時期だけで答える。
 - 質問の型: 1. **いつ** 2. **どこで**(`sources region`) 3. **どの段階まで**(既定は見ごろ・最盛。`--early`・`--late`) 4. **どんな場所で**(`--terrain`・`--access`) 5. **範囲の外**(出発地から 250km)。対象の指定がなければ `sources subjects` の実装済みをすべて。共通の順番は 0 前・1 始まり・2 見ごろ・3 最盛・4 終わり。山・高原はヤマビヨリと組み合わせることを添える。

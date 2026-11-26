@@ -163,14 +163,25 @@ python -X utf8 ikimonobiyori/main.py --request REQ.json --cache-only --now 2026-
 - 直接のコマンド(`guide photos-*`・`seasonal_obs fetch`・`seasonal_obs taxa` など)は `BIYORI_ALLOW_LIVE=1`・`--live`・`--max-requests` が要ります。
 - `BIYORI_UNDER_TEST=1`(テスト中)なら、実通信は常に拒否します。
 
-## biyori-hub との関係
+## ビヨリコンシェルとの関係
 
-[biyori-hub](https://github.com/ktakemaru/biyori-hub) は、ヤマビヨリ・ホシビヨリと同じように、このリポジトリを**固定 commit で取り込み(`vendor.lock`)**、manifest 1 枚で窓口(コンシェルジュ)に登録します。
+[biyori-hub](https://github.com/ktakemaru/biyori-hub) は 2026-11-15 に開発を中止しました。山・星・生き物を合わせて答える役割は、ビヨリコンシェル(biyori-concierge)に移りました。
 
-- このリポジトリは**ハブのコードもデータも参照しません**(`tests/test_self_contained.py` が検査します)。ハブ側の `adapters/ikimonobiyori_run.py` が、取り込んだコードを子プロセスで起動し、提案を契約で検査し、部品を合成します。
-- 契約 `biyori-proposal/1` の正本はハブの `schemas/` にあります。`tests/contract/biyori-proposal.schema.json` はその**写し**(検査用。`tests/contract/README.md`)で、このリポジトリでは変えません。
-- 山・星を合わせた提案、窓口の最終文・独立検査器・定期実行・計測フックはハブの仕事です。窓口との統合のテストはハブ側にあります。
-- ハブから呼ばれても単体で聞かれても、同じコマンド・同じ書き込み先(`IKIMONOBIYORI_DATA_DIR`。ハブは必ず渡します)を使います。
+- ビヨリコンシェルは、このリポジトリを取り込まず(固定 commit の取り込み・`vendor.lock` はしません)、手元にある版をそのまま呼びます。入口は `python -X utf8 -m ikimonobiyori.ask brief "<質問>"` と `python -X utf8 -m ikimonobiyori.guide wildflower --site mNNN --month <月> --json` です。コンシェルが読むのは資料で、イキモノビヨリが仕上げた文(`ask verify` の出力)ではありません。
+- 契約 `biyori-proposal/1` と語彙の正本は、ビヨリコンシェルの `schemas/` にあります。このリポジトリでは変えません。`tests/contract/biyori-proposal.schema.json` は検査用の写しです(`tests/contract/README.md`)。2026-11-27 に、ビヨリコンシェルの `schemas/biyori-proposal.schema.json` と同じ中身であることを確かめました。
+- イキモノビヨリは単体で動きます(ビヨリコンシェルが無くても答えられます)。`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しません(`tests/test_self_contained.py` が検査します)。
+- 単体で聞かれてもビヨリコンシェルから呼ばれても、同じコマンド・同じ書き込み先(`IKIMONOBIYORI_DATA_DIR`)を使います。
+
+biyori-hub のために作ったもので、今も残しているもの(消していません):
+
+| もの | 扱い |
+|---|---|
+| `biyori-proposal/1` の提案の出力(`sources proposals` など)と `tests/contract/` | 残している理由: 出力の契約の決まり(`AGENTS.md` の絶対ルール 4)と、ゴールデンを含むテストがこの形を守っているため。ビヨリコンシェルは資料(`ask brief`)を読むので、この出力は使いません |
+| 計測フック(`BIYORI_REQ_LOG`。biyori-hub の `hub/measure/`)の前提 | 残している理由: Open-Meteo などの `--live` の決まりを緩めないため(上の「実通信の制限」) |
+| `ikimonobiyori/livegate.py`(実通信の許可の判定) | 残している理由: 単体の実行でも、実通信の許可をこの判定で決めるため。biyori-hub の `hub/livegate.py` と同じ判定として作りました |
+| `ikimonobiyori/config.yaml` の `live.user_agent` の値(`biyori-hub/ikimonobiyori …`) | 残している理由: 通信の動きに関わる値なので、この作業では変えていません |
+| ハブの manifest への値の写し(`phenology_labels`・`stage_order`・`ttl_s`) | 使っていません(manifest は biyori-hub の側にありました) |
+| 窓口との統合のテスト・iNaturalist の実際の応答の記録 | 使っていません(biyori-hub の側にありました) |
 
 ## テストと CI
 
