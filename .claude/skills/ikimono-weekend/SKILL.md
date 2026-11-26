@@ -5,14 +5,14 @@ description: 生き物とお出かけの質問に、イキモノビヨリの記�
 
 # 生き物の見頃・おすすめ
 
-この手順は `CLAUDE.md`・`AGENTS.md` と同じ(`tests/test_sources.py` が一致を検査する)。
+この手順は `CLAUDE.md`・`AGENTS.md` と同じ。
 
 <!-- ikimono-weekend:begin -->
 今有効な決まりの一覧(段階63b。経緯は `docs/rules-history.md`。食い違うときはこの一覧に従う)。
 
 ### 0. 答えの形(段階77。既定は新しい形。戻し方は `docs/guide-mode.md` の先頭)
 - 生き物・お出かけの質問は `python -X utf8 -m ikimonobiyori.ask brief "<質問の文>"` で資料を作り、資料と `docs/guide-voice.md` だけで下書きを書き(Web 検索・ほかのコマンドで事実を足さない)、`ask verify <下書き> --brief <id>` の標準出力を**一字一句そのまま**送る。不合格は 2 回まで書き直し、3 回目に出る答え(今までの形の答え)を送る。続けて聞く質問は `--prev <前の資料の id>`。
-- **最後に送るのは道具が出した文だけ**(`ask verify`・`ask page-reply`・`ask source-urls`。前にも後ろにも何も足さない)。前置き・作業の説明(「検査に合格しました」「ページを作ります」「公式ページを探しています」など)・英語のメモは、答えの前後にも道具を呼ぶあいだにも書かない(段階78・81・85)。
+- **最後に送るのは道具が出した文だけ**(`ask verify`・`ask page-reply`・`ask source-urls`。前にも後ろにも何も足さない)。前置き・作業の説明(「検査に合格しました」「ページを作ります」「公式ページを探しています」など)・英語のメモは、答えの前後にも道具を呼ぶあいだにも書かない(段階78・81・85)(時間つきの予告 1 行は例外。AGENTS.md「長い作業の前に伝える」)。
 - 出典は名前と日付だけ(段階85)。「出典を見せて」「URL を教えて」は `ask source-urls` の出力をそのまま送る(URL を書き写さない)。
 - **ページ・Artifact を頼まれたとき**(「artifactにして」など。段階81 の続き): 下書きが合格したら `ask page` → Artifact で公開 → `python -X utf8 -m ikimonobiyori.ask page-reply --url <公開したリンク>` の出力を**一字一句そのまま**送る(公開できなければ `--url` を省く)。答えの全文は会話に出さない(ページの中にある)。
 - 写真の指摘は `docs/guide-mode.md` の手順(段階82)。
