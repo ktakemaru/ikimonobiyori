@@ -80,7 +80,7 @@
 | ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(カタログは各件の `location_precision` の桁で入っている)。野鳥の観察の名所だけは、野鳥のプロファイルの位置の粗さに丸めた値 | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所(`catalog_ref` が無いもの)は、出典の書かれた `point` か `bird_range` を、プロファイルの `care.location_precision`(野鳥は `area_10km` = 小数 1 桁)に丸めて出す(利用者の決定 2026-11-27。丸め方は提案の出力と同じ `proposals.coarse_precision`・`engine.round_coord`。丸める前の値は資料に入れない。絶対ルール 7) |
 | `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot`・`observation_spot_coarsened`(野鳥の観察の名所の座標を丸めたもの) | 文字列 | 座標があるとき |
 | `coord_precision` | 座標の細かさ: 名所カタログ(`catalog`・`catalog_via_spot`)は、その件の `location_precision` の値のまま(`exact`・`area_1km`・`area_10km`)。`observation_spot_coarsened` は丸めた粗さ(野鳥は `area_10km`) | 文字列 | 座標があり、細かさが元のデータに書かれているとき。観察の名所の `point`(`observation_spot`)には細かさが書かれていないので、推測せず `null`。座標が `null` なら `null` |
-| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | カタログの件の `site_ref`(`yamabiyori:` で始まるもの)、観察の名所の `mountain_site_ref`(資料の候補を作るときだけ読む項目。2026-11-27 に足した)、種の名所の `mountain_site`(段階84 第1部 A)の順。観察の名所の `catalog_ref` が指すカタログの件の `site_ref` は借りない。観察の名所の値は sites.yaml にある山だけ使う。今データに結びつきがあるのは 6 件(下の表)。名前が山と同じでも、データに結びつきが無ければ `null` |
+| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | カタログの件の `site_ref`(`yamabiyori:` で始まるもの)、観察の名所の `mountain_site_ref`(資料の候補を作るときだけ読む項目。2026-11-27 に足した)、種の名所の `mountain_site`(段階84 第1部 A)の順。観察の名所の `catalog_ref` が指すカタログの件の `site_ref` は借りない。観察の名所の値は sites.yaml にある山だけ使う。今データに結びつきがあるのは 7 件(下の表)。名前が山と同じでも、データに結びつきが無ければ `null` |
 
 - 同じ名所でも対象ごとに別の ID がある(三溪園: 紅葉 `obs-kouyou-0002`・花 `obs-hana-0001`)。候補の ID は、候補を作った計画の行の ID。
 - 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の山の地点との結びつきは、それと区別するため `mountain_site_ref` という名前にした(資料の候補に `site_ref` という項目は無い)。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
@@ -98,6 +98,7 @@
 | 名所カタログ 筑波山 `kouyou-0015` | `site_ref`(今ある項目) | `yamabiyori:m057` | 名前(括弧の前)が同じ。座標の距離 約1.3km |
 | 名所カタログ 大山(大山寺) `kouyou-0020` | `site_ref` | `yamabiyori:m027` | 名前(括弧の前)が同じ。座標の距離 約1.6km |
 | 名所カタログ 霧ヶ峰 `hana-0037` | `site_ref` | `yamabiyori:m043` | 名前(括弧の前)が同じ。件に座標が無いので距離は確かめていない |
+| 観察の名所 大山寺・大山阿夫利神社下社 `obs-kouyou-0019` | `mountain_site_ref` | `yamabiyori:m027` | 2026-11-28 に利用者の決定で足した(`docs/mountain-named-2-report.md` 第 1 部)。`catalog_ref` 先の `kouyou-0020` の `site_ref` と同じ山。名所に座標が無いので距離は確かめていない |
 
 - 観察の名所の `mountain_site_ref` は、資料の候補を作るとき(`guide_brief._place_of`)だけ読む。名所カタログの `site_ref` は、提案の出力 `biyori-proposal/1` の `details.catalog_site_ref` にも写る(`proposals.py`。今までからある動き)。
 - sites.yaml の山には都県の項目が無いので、都県は突き合わせていない。

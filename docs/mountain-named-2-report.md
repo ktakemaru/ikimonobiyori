@@ -50,6 +50,7 @@
 1. `part1.patch` をそのまま当てました(データ 1 行・`test_brief_concierge_fields_2.py` の 2 か所)。
 2. `test_mountain_named_candidates.py` の 92 行を `self.assertEqual(r[0]["mountain_site_ref"], "yamabiyori:m027")` にし、コメントを「観察の名所に書いた mountain_site_ref(2026-11-28 利用者の決定。第 1 部)」にしました。
 3. `MountainLinks` の説明の文(「6 件」)は、変えてよいと言われた箇所ではないので、そのままにしました(決めてほしいこと 1)。
+   - **追記(2026-11-28)**: その後、利用者の指示で「山の地点との結びつき 7 件」に直しました(commit `4445901`)。
 4. 35 の資料を作り直して、前の `after/`・`off/` と比べました(作り直した資料は同じフォルダの `p1b/`・`p1b-off/`)。
    - 違いは、b17・b18(大山の紅葉)の JSON の、足した候補の `mountain_site_ref` が `null` から `yamabiyori:m027` になった 1 か所ずつだけでした(`generator` を除く)。
    - Markdown は 35 とも 1 文字も違いません(`mountain_site_ref` は Markdown に出ない)。`fallback.text` も同じです。
@@ -425,6 +426,7 @@ b23「霧ヶ峰の花の見どころを教えて」:
 
 1. **大山の結びつき(第 1 部)**: 利用者の決定(2026-11-28)で入れました(第 1 部の追記)。残るのは 1 つだけです。
    - `test_brief_concierge_fields_2.py` の `MountainLinks` の説明の文(「山の地点との結びつき 6 件」)を「7 件」に直すか。期待値ではなく説明の文ですが、変えてよいと言われた箇所ではないので、そのままにしています。
+   - **追記(2026-11-28)**: 利用者が決定し、適用済みです。説明の文を「山の地点との結びつき 7 件」に直しました(commit `4445901`。期待値は変えていない)。あわせて `docs/concierge-brief-fields.md` の「今データに結びつきがあるのは 6 件」も「7 件」に直しました。
 2. **高尾山の `asked_mountain`**: 高尾山はもとから候補にある(足さない)ので、今は `asked_mountain` も節も入りません。
    - 入れるには、`test_mountain_named_candidates.py` の `test_not_added` を変える必要があります。このテストは、高尾山の紅葉の資料が設定の入・切で同じであることを確かめています。
    - 変えてよいか。変えると、b01・b02 の資料に節が入ります。
