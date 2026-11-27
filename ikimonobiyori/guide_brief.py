@@ -326,11 +326,12 @@ def merge_same_candidates(cands, F, c):
 # 資料の Markdown と決まり(rules)には出さない(JSON にだけ入れる)。候補の選び方・順位・距離は変えない。
 
 PLACE_SRC_KEY = "_place_src"                      # 候補の行に一時的に持たせる、計画の行の id(資料に出す前に外す)
-PLACE_KEYS = ("place_id", "lat", "lon", "coord_source", "mountain_site_ref")
+PLACE_KEYS = ("place_id", "lat", "lon", "coord_source", "coord_precision", "mountain_site_ref")
 
 
 def _place_index():
-    """→ {catalog: {id: 件}, spots: {id: 件}, mountains: {山の名前: sites.yaml の site_ref}}。名所カタログ(例を除く)・観察の名所・山の地点(sites.yaml)。"""
+    """→ {catalog: {id: 件}, spots: {id: 件}, mountains: {山の名前: sites.yaml の site_ref}, coarse: {対象: 位置の粗さ}}。
+    名所カタログ(例を除く)・観察の名所・山の地点(sites.yaml)と、観察の名所の座標を丸める対象ごとの粗さ(_coarse_precisions)。"""
     from .paths import CATALOG_DIR, SITES_PATH
     cat, spots, mountains = {}, {}, {}
     for p in sorted(Path(CATALOG_DIR).glob("*.yaml")):
@@ -357,7 +358,25 @@ def _place_index():
     for st in sites:
         if isinstance(st, dict) and st.get("name") and st.get("site_ref"):
             mountains.setdefault(st["name"], st["site_ref"])
-    return {"catalog": cat, "spots": spots, "mountains": mountains}
+    return {"catalog": cat, "spots": spots, "mountains": mountains, "coarse": _coarse_precisions()}
+
+
+def _coarse_precisions():
+    """→ {対象: 位置の粗さ}。concierge_fields.spot_coords_coarsen_subjects の対象だけ。粗さはプロファイルの care.location_precision
+    (提案の出力と同じ proposals.coarse_precision で決める)。プロファイル・方針が読めない対象は入れない(= その対象の観察の名所の座標は出さない)。"""
+    from . import catalog as catalog_mod
+    from .profiles import load_profiles
+    from .proposals import coarse_precision
+    try:
+        profiles, pol = load_profiles(), catalog_mod.load_policy()
+    except Exception:        # 読めなければ丸められないので、座標を出さない側にする(絶対ルール 7)
+        return {}
+    out = {}
+    for sj in cfg()["concierge_fields"]["spot_coords_coarsen_subjects"]:
+        prec = coarse_precision(None, profiles[sj], pol) if sj in profiles else None
+        if prec:
+            out[sj] = prec
+    return out
 
 
 def _point(pt):
@@ -365,20 +384,30 @@ def _point(pt):
     return (pt["lat"], pt["lon"]) if pt.get("lat") is not None and pt.get("lon") is not None else None
 
 
+def _coarsened(pt, prec):
+    """座標を位置の粗さに丸める(提案の出力と同じ engine.round_coord)。粗さが分からない・丸める桁が決まっていなければ None(元の値を出さない)。"""
+    from .engine import COORD_DECIMALS, round_coord
+    if not pt or prec not in COORD_DECIMALS:
+        return None
+    return round_coord(float(pt[0]), prec), round_coord(float(pt[1]), prec)
+
+
 def _place_of(r, ix, c):
-    """候補の 1 件 → {place_id, lat, lon, coord_source, mountain_site_ref}。元のデータに無いものは None。
-    計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point(出典の書かれたものだけ)の順
-    (野鳥の観察の名所の座標は写さない)。
+    """候補の 1 件 → {place_id, lat, lon, coord_source, coord_precision, mountain_site_ref}。元のデータに無いものは None。
+    計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point(出典の書かれたものだけ)の順。
+    野鳥の観察の名所(spot_coords_coarsen_subjects)の座標(出典の書かれた point か bird_range)は、プロファイルの位置の粗さに丸めて出す
+    (丸める前の値は資料に入れない。絶対ルール 7)。coord_precision は元のデータに書かれた細かさ(カタログの location_precision)か丸めた粗さで、
+    書かれていなければ None(推測しない)。
     山の地点: 種の名所の mountain_site(段階84 第1部 A)だけ。山の座標を名所の座標にしない。"""
     K = c["concierge_fields"]
     out = dict.fromkeys(PLACE_KEYS)
     sid = r.get(PLACE_SRC_KEY)
     e = ix["catalog"].get(sid) if sid else None
     s = ix["spots"].get(sid) if sid and not e else None
-    pt, src = None, None
+    pt, src, prec = None, None, None
     if e:
         out["place_id"] = K["place_id_prefix"] + sid
-        pt, src = _point(e.get("point")), K["coord_source"]["catalog"]
+        pt, src, prec = _point(e.get("point")), K["coord_source"]["catalog"], e.get("location_precision")
         ref = e.get("site_ref")                                            # カタログの項目名は site_ref のまま
         if isinstance(ref, str) and ref.startswith(K["mountain_site_ref_prefix"]):
             out["mountain_site_ref"] = ref
@@ -386,11 +415,16 @@ def _place_of(r, ix, c):
         out["place_id"] = K["place_id_prefix"] + sid
         ce = ix["catalog"].get(s.get("catalog_ref")) if s.get("catalog_ref") else None
         if ce and _point(ce.get("point")):
-            pt, src = _point(ce.get("point")), K["coord_source"]["catalog_ref"]
-        elif s.get("subject") not in K["spot_coords_skip_subjects"] and _point(s.get("point")) and (s.get("point") or {}).get("source"):
+            pt, src, prec = _point(ce.get("point")), K["coord_source"]["catalog_ref"], ce.get("location_precision")
+        elif s.get("subject") in K["spot_coords_coarsen_subjects"]:
+            raw = next((_point(x) for x in (s.get("point"), s.get("bird_range")) if _point(x) and x.get("source")), None)
+            prec = ix["coarse"].get(s.get("subject"))
+            pt, src = _coarsened(raw, prec), K["coord_source"]["spot_coarsened"]      # 丸められなければ None(座標を出さない)
+        elif _point(s.get("point")) and (s.get("point") or {}).get("source"):
             pt, src = _point(s.get("point")), K["coord_source"]["spot"]          # 出典(source)の書かれた座標だけ(市町村の代表点かもしれない値を写さない)
     if pt:
         out["lat"], out["lon"], out["coord_source"] = pt[0], pt[1], src
+        out["coord_precision"] = prec or None
     if r.get("mountain_site") and not out["mountain_site_ref"]:
         out["mountain_site_ref"] = ix["mountains"].get(r["mountain_site"])
     return out

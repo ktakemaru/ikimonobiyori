@@ -131,11 +131,17 @@ def row_evidence(row, d, source_name, policy):
     return ev
 
 
+def coarse_precision(entry_precision, profile, catalog_policy):
+    """位置の粗さ: 件の粗さ(無ければ None)とプロファイルの care.location_precision の粗い方。どちらも無ければ None。
+    提案の place と、資料(guide_brief)の野鳥の観察の名所の座標が同じ決まりで丸めるための 1 か所。"""
+    care = profile.get("care") or {}
+    precs = [p for p in (entry_precision, care.get("location_precision")) if p]
+    return max(precs, key=lambda p: catalog_mod.coarseness(catalog_policy, p)) if precs else None
+
+
 def place_of(entry, profile, catalog_policy):
     """名所カタログの件 → place。位置の粗さはカタログとプロファイルの粗い方で、座標もその粗さに丸める。"""
-    care = profile.get("care") or {}
-    precs = [p for p in (entry.get("location_precision"), care.get("location_precision")) if p]
-    prec = max(precs, key=lambda p: catalog_mod.coarseness(catalog_policy, p)) if precs else None
+    prec = coarse_precision(entry.get("location_precision"), profile, catalog_policy)
     pt = entry["point"]
     pl = {"name": entry["name"], "lat": round_coord(pt["lat"], prec), "lon": round_coord(pt["lon"], prec),
           "elevation_m": pt.get("elevation_m"), "region": (entry.get("tags") or {}).get("prefecture"),

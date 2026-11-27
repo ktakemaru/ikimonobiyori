@@ -71,19 +71,20 @@
 | `seasonal_obs_ids` | その地域の観察記録の id(公式の現況がない候補だけ) | 配列 | 項目ごと無い |
 | `theme` | 種・テーマの語(種の名所・山の見どころの候補など) | 文字列 | 項目ごと無い |
 
-2026-11-27 に足した項目(どの候補にも 5 つともある。元のデータに無ければ `null`。資料の Markdown と `rules` には出さない):
+2026-11-27 に足した項目(どの候補にも 6 つともある。`coord_precision` は同じ日の 2 回目の作業で足した。元のデータに無ければ `null`。資料の Markdown と `rules` には出さない):
 
 | 項目 | 意味 | 型 | 入るとき |
 |---|---|---|---|
 | ★ `place_id` | 名所の ID。名所カタログの件は `ikimonobiyori:<カタログの id>`(例 `ikimonobiyori:kouyou-0024`)、観察の名所の件は `ikimonobiyori:<観察の名所の id>`(例 `ikimonobiyori:obs-kouyou-0088`) | 文字列 | 順位つきの候補(今までの形の答えの計画の行の `id` から)。例年の目安・町の名所・種の名所・季節の目玉は `null` |
-| ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(丸めない。カタログは各件の `location_precision` の桁で入っている) | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所の座標(`bird_range`)は、野鳥のプロファイルの粗さより細かいので写さない(絶対ルール 7) |
-| `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot` | 文字列 | 座標があるとき |
+| ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(カタログは各件の `location_precision` の桁で入っている)。野鳥の観察の名所だけは、野鳥のプロファイルの位置の粗さに丸めた値 | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所(`catalog_ref` が無いもの)は、出典の書かれた `point` か `bird_range` を、プロファイルの `care.location_precision`(野鳥は `area_10km` = 小数 1 桁)に丸めて出す(利用者の決定 2026-11-27。丸め方は提案の出力と同じ `proposals.coarse_precision`・`engine.round_coord`。丸める前の値は資料に入れない。絶対ルール 7) |
+| `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot`・`observation_spot_coarsened`(野鳥の観察の名所の座標を丸めたもの) | 文字列 | 座標があるとき |
+| `coord_precision` | 座標の細かさ: 名所カタログ(`catalog`・`catalog_via_spot`)は、その件の `location_precision` の値のまま(`exact`・`area_1km`・`area_10km`)。`observation_spot_coarsened` は丸めた粗さ(野鳥は `area_10km`) | 文字列 | 座標があり、細かさが元のデータに書かれているとき。観察の名所の `point`(`observation_spot`)には細かさが書かれていないので、推測せず `null`。座標が `null` なら `null` |
 | ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | 種の名所で `mountain_site`(段階84 第1部 A)がある候補と、カタログの件に `site_ref` があるとき(今は例の件だけ)。名前が山と同じでも、データに結びつきが無ければ `null`(高尾山の観察の名所など) |
 
 - 同じ名所でも対象ごとに別の ID がある(三溪園: 紅葉 `obs-kouyou-0002`・花 `obs-hana-0001`)。候補の ID は、候補を作った計画の行の ID。
 - 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の山の地点との結びつきは、それと区別するため `mountain_site_ref` という名前にした(資料の候補に `site_ref` という項目は無い)。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
-- 候補をまとめたとき(`candidate_merges`): まとめた記録の 1 件に、項目を写した元の候補の名前 `place_from` を入れる。元の候補の `place_id`(または `mountain_site_ref`)が食い違えば、候補の 5 つの項目を `null` にし、`place_conflict`(`members`・`reason`)を残す。
-- 出発地からの距離(`distance_km`)は今までのまま(足した座標から計算し直さない)。8 つの資料では、足した座標から出した直線の距離との差はどれも 2km 未満だった。
+- 候補をまとめたとき(`candidate_merges`): まとめた記録の 1 件に、項目を写した元の候補の名前 `place_from` を入れる。元の候補の `place_id`(または `mountain_site_ref`)が食い違えば、候補の 6 つの項目を `null` にし、`place_conflict`(`members`・`reason`)を残す。
+- 出発地からの距離(`distance_km`)は今までのまま(足した座標から計算し直さない)。8 つの資料では、足した座標から出した直線の距離との差はどれも 2km 未満だった(野鳥の丸めた座標は、丸めの分だけずれうる。生田緑地で 2km)。
 
 足す前の調べ(座標・`site_ref` が無いことの確かめ。2026-11-27・通信なし。3 章と同じ作り方): 「今週末、高尾山で紅葉を見たい」「今週末の紅葉の情報は?」「丹沢で今咲いている花は?」「八ヶ岳の見どころを教えて」「高尾山の見どころを教えて」の 5 つの資料で、すべての候補・事実・`fields` の項目の名前を合わせて数え、JSON 全体で `mNNN`・`yamabiyori`・`site_ref`・`"site"`・`"point"`・`"lat"`・`"lon"` を探した。どれも 0 件。`README.md`・`CHANGELOG.md`・`docs/guide-mode.md` にも、資料の候補に座標や山の地点が入るとは書かれていない(`docs/guide-mode.md` は「座標は記録しない(市町村まで)」)。データ置き場が空の状態で作ったので、実際のデータ置き場で作った資料では確かめていない。
 

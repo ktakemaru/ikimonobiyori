@@ -82,7 +82,7 @@ class EightBriefs(unittest.TestCase):
         pol = CM.load_policy()
         for d in self.docs:
             for r in d["candidates"]:
-                if r["lat"] is not None and r.get("distance_km") is not None:
+                if r["lat"] is not None and r.get("distance_km") is not None and r["coord_source"] != "observation_spot_coarsened":   # 丸めた野鳥の座標は test_brief_concierge_fields_2 で
                     km = CM.range_from(pol, {"lat": r["lat"], "lon": r["lon"]}, d["origin"])["km"]
                     self.assertLess(abs(km - r["distance_km"]), 2, r["name"])     # 足した座標と、今までの距離が食い違わない(8 つの資料で確かめた)
 
@@ -99,7 +99,7 @@ class PlaceOf(unittest.TestCase):
         s = self.ix["spots"]["obs-kouyou-0088"]
         self.assertEqual(self.place(**{GB.PLACE_SRC_KEY: "obs-kouyou-0088"}),
                          {"place_id": "ikimonobiyori:obs-kouyou-0088", "lat": s["point"]["lat"], "lon": s["point"]["lon"],
-                          "coord_source": "observation_spot", "mountain_site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
+                          "coord_source": "observation_spot", "coord_precision": None, "mountain_site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
 
     def test_spot_catalog_ref(self):
         s = self.ix["spots"]["obs-yacho-0003"]
@@ -111,7 +111,7 @@ class PlaceOf(unittest.TestCase):
         self.assertTrue(self.ix["spots"]["obs-yacho-0002"].get("bird_range"))
         p = self.place(**{GB.PLACE_SRC_KEY: "obs-yacho-0002"})
         self.assertEqual(p["place_id"], "ikimonobiyori:obs-yacho-0002")
-        self.assertIsNone(p["lat"])                                    # 絶対ルール 7: 野鳥のプロファイルの粗さより細かい座標は写さない
+        self.assertEqual((p["lat"], p["lon"], p["coord_source"]), (35.4, 139.6, "observation_spot_coarsened"))   # 利用者の決定 2026-11-27: 野鳥のプロファイルの粗さ(小数 1 桁)に丸めて出す
 
     def test_spot_point_without_source_is_not_copied(self):
         s = self.ix["spots"]["obs-kouyou-0095"]

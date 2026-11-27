@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ikimonobiyori-guide-brief/1",
   "title": "イキモノビヨリの資料(ask brief。ikimonobiyori-guide-brief/1)",
-  "description": "2026-11-27 に、ビヨリコンシェル向けに足した項目(generator と、候補の place_id・lat・lon・coord_source・mountain_site_ref)と、いちばん上の必須の項目だけを決める。ほかの項目は縛らない(additionalProperties を許す)。",
+  "description": "2026-11-27 に、ビヨリコンシェル向けに足した項目(generator と、候補の place_id・lat・lon・coord_source・coord_precision・mountain_site_ref)と、いちばん上の必須の項目だけを決める。ほかの項目は縛らない(additionalProperties を許す)。",
   "type": "object",
   "required": ["schema", "id", "question", "now", "candidates", "facts", "generator"],
   "additionalProperties": true,
@@ -30,14 +30,15 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "place_id", "lat", "lon", "coord_source", "mountain_site_ref"],
+        "required": ["name", "place_id", "lat", "lon", "coord_source", "coord_precision", "mountain_site_ref"],
         "additionalProperties": true,
         "properties": {
           "name": {"type": "string"},
           "place_id": {"description": "名所の ID(名所カタログ・観察の名所の id の前に ikimonobiyori:)。元のデータに無ければ null", "type": ["string", "null"], "pattern": "^ikimonobiyori:[A-Za-z0-9_-]+$"},
-          "lat": {"description": "緯度(元のデータの値のまま)。無ければ null", "type": ["number", "null"], "minimum": -90, "maximum": 90},
-          "lon": {"description": "経度(元のデータの値のまま)。無ければ null", "type": ["number", "null"], "minimum": -180, "maximum": 180},
-          "coord_source": {"description": "座標を写した元。座標が無ければ null", "enum": ["catalog", "catalog_via_spot", "observation_spot", null]},
+          "lat": {"description": "緯度(元のデータの値のまま。野鳥の観察の名所は位置の粗さに丸めた値)。無ければ null", "type": ["number", "null"], "minimum": -90, "maximum": 90},
+          "lon": {"description": "経度(元のデータの値のまま。野鳥の観察の名所は位置の粗さに丸めた値)。無ければ null", "type": ["number", "null"], "minimum": -180, "maximum": 180},
+          "coord_source": {"description": "座標を写した元。座標が無ければ null", "enum": ["catalog", "catalog_via_spot", "observation_spot", "observation_spot_coarsened", null]},
+          "coord_precision": {"description": "座標の細かさ(元のデータに書かれた location_precision か、丸めた粗さ)。書かれていない・座標が無ければ null", "enum": ["exact", "area_1km", "area_10km", null]},
           "mountain_site_ref": {"description": "山の地点との結びつき yamabiyori:mNNN(元のデータに結びつきがある候補だけ。提案の出力 biyori-proposal/1 の place.site_ref とは意味が違う)", "type": ["string", "null"], "pattern": "^yamabiyori:m[0-9]{3}$"}
         }
       }
