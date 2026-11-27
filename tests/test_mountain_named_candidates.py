@@ -89,7 +89,7 @@ class MountainNamed(unittest.TestCase):
     def test_oyama_through_catalog_ref(self):
         r = self.added("oyama")
         self.assertEqual([x["place_id"] for x in r], ["ikimonobiyori:obs-kouyou-0019"])    # catalog_ref 先 kouyou-0020 が m027
-        self.assertIsNone(r[0]["mountain_site_ref"])                        # 観察の名所に mountain_site_ref は書いていない(第 1 部は取り消し)
+        self.assertEqual(r[0]["mountain_site_ref"], "yamabiyori:m027")      # 観察の名所に書いた mountain_site_ref(2026-11-28 利用者の決定。第 1 部)
 
     def test_town_row_for_highlights(self):
         r = self.added("kiri_hana")[0]
