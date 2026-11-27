@@ -120,9 +120,13 @@ def lines_for(bid, targets):
     if not targets:
         return []
     L = ["## 調べる(資料が薄い)", ""]
-    L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" for t in targets]
+    L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" + (f"(検索の語: {t['search_words']})" if t.get("kind") == "current_status" and t.get("search_words") else "") for t in targets]
     L.append("")
-    L += [x.format(id=bid) for x in R["step_lines"]]
+    if any(t.get("kind") != "current_status" for t in targets):    # 公式ページの名所・例年の時期の手順(今年の現況の対象だけのときは出さない)
+        L += [x.format(id=bid) for x in R["step_lines"]]
+    if any(t.get("kind") == "current_status" for t in targets):    # 指示書 current-status 第 4 部: 聞かれた名所の今年の現況を広く調べる手順
+        from . import current_status as CS
+        L += CS.research_step_lines(bid)
     if any(t.get("kind") == "species_card" for t in targets):      # 段階82 第2部 1: 種の公的な解説
         from . import guide_brief as GB
         L += [x.format(id=bid) for x in GB.cfg()["species_traits"]["step_lines"]]

@@ -432,6 +432,8 @@ def validate(rec, policy):
     errs += restricted_errors(rec, policy)
     optional_with = r.get("state_optional_with") or []
     for k in r["required"]:
+        if k == "url" and rec.get("source_class") == "user":
+            continue                                  # 指示書 current-status 第 3 部: 利用者が現地で確認した記録は URL を求めない(架空の URL を作らない)
         if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
             continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
         if k == "state" and r.get("state_optional_notice") and rec.get("notice") and rec.get("basis") == "page" and rec.get("source_class") == "official":
@@ -439,9 +441,10 @@ def validate(rec, policy):
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
             continue                                  # 段階69 第4部 3: 行事の記録は今の状態がなくてよい
         if not rec.get(k):
-            errs.append(f"{k} がない")
+            errs.append(f"{k} がない" + ("(利用者が現地で確認した記録は source_class: user にすると URL は要らない)" if k == "url" else ""))
     if rec.get("source_class") and rec["source_class"] not in r["source_classes"]:
         errs.append(f"source_class は {r['source_classes']} のどれか")
+    errs += detail_errors(rec, policy)                # 指示書 current-status 第 2・3 部: どのあたりか(part)・利用者の記録(user)
     if rec.get("subject") not in policy["subjects"]:
         errs.append(f"subject は {policy['subjects']} のどれか")
     if not rec.get("spot") and not rec.get("name"):
@@ -478,6 +481,28 @@ def validate(rec, policy):
                         date.fromisoformat(ev[k])
                     except (TypeError, ValueError):
                         errs.append(f"event.{k} は YYYY-MM-DD か null")
+    return errs
+
+
+def detail_errors(rec, policy):
+    """指示書 docs/current-status-instructions.md 第 2・3 部: part(どのあたりか。短くそのまま)・unseen(見ていない所)・利用者の記録の検査。"""
+    D = policy["record"].get("detail") or {}
+    errs = []
+    part = rec.get("part")
+    if part is not None and (not isinstance(part, str) or not part.strip() or len(part) > _v(D["part_max_chars"])):
+        errs.append(f"part はどのあたりかの短い言葉({_v(D['part_max_chars'])}字まで。ページ・利用者の言葉をそのまま)")
+    uns = rec.get("unseen")
+    if uns is not None and (not isinstance(uns, list) or not all(isinstance(x, str) and x.strip() and len(x) <= _v(D["part_max_chars"]) for x in uns)):
+        errs.append(f"unseen は見ていない所の言葉の配列({_v(D['part_max_chars'])}字まで)")
+    if uns is not None and rec.get("source_class") != "user":
+        errs.append("unseen は利用者が現地で確認した記録(source_class: user)にだけ付ける")
+    if rec.get("source_class") == "user":
+        for k in D.get("user_required") or []:
+            if not rec.get(k):
+                errs.append(f"利用者の記録は {k} が要る")
+        st = rec.get("state")
+        if isinstance(st, str) and len(st) > _v(policy["record"]["max_raw_chars"]):
+            errs.append(f"利用者の記録の state は {_v(policy['record']['max_raw_chars'])} 字まで(言葉をそのまま。切り詰めない)")
     return errs
 
 
@@ -528,7 +553,8 @@ FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "stat
           "source_class", "species", "practical", "provisional_search", "source_id", "notice", "basis",
           "source_year",                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
           "research",                            # 段階78 第4部: その場で調べた印 {at, brief, question}
-          "closed_period", "best_conditions")    # 段階82 第3部 1: 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
+          "closed_period", "best_conditions",    # 段階82 第3部 1
+          "part", "unseen")                      # 指示書 current-status 第 2・3 部: どのあたりか・見ていない所(利用者の記録): 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))
@@ -598,7 +624,7 @@ def make_record(rec, policy, read_at):
         if d and (kind == "day_only" or out.get("state_date_text")):
             out["state_date"] = d
             out["state_date_inferred"] = policy["state_date_inferred"][kind]
-    out["host"] = urlparse(rec["url"]).hostname
+    out["host"] = urlparse(rec["url"]).hostname if rec.get("url") else None
     out["read_at"] = read_at.isoformat()
     return out
 
@@ -625,7 +651,7 @@ def _theme_kinds():
         return set()
 
 
-def read_records(subject, env=None, policy=None, include_themes=False):
+def read_records(subject, env=None, policy=None, include_themes=False, include_detail=False):
     p = log_path(subject, env, policy)
     if not p.exists():
         return []
@@ -640,6 +666,8 @@ def read_records(subject, env=None, policy=None, include_themes=False):
     rows = [r for r in rows if not _ledger_gated(r, subject, policy)]   # 段階60 第9部: 台帳で承認待ちの公式の情報源(同じ形で統一)
     rows = [r for r in rows if not _sns_host(r.get("host") or urlparse(r.get("url") or "").hostname, policy)]    # 段階58 第4部
     rows = [r for r in rows if not _restricted_unusable(r, policy)]  # 段階54: 山と溪谷オンライン由来は、承認まで・規則を満たすものだけ
+    if not include_detail:                      # 指示書 current-status 第 2・3 部: 名所の一部の記録(part)・利用者の記録は、順位・候補の現況に使わない
+        rows = [r for r in rows if not r.get("part") and r.get("source_class") != "user"]
     conf = read_confirmed(subject, env, policy)
     for r in rows:                              # 正規化は読むたびに今の方針でやり直す(語の表を直したら古い記録にも効く。原文は残っている)
         r["state_norm"] = normalize_with_legend(r.get("subject") or subject, r.get("state"), r.get("publisher"), policy)
@@ -655,7 +683,7 @@ def _dup_key(r):
     """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
     ev = r.get("event")
     return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
-            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
 
 
 def dup_key_text(r):
@@ -676,7 +704,7 @@ def record(batch, *, env=None, policy=None, now=None):
             continue
         by_subject.setdefault(rec["subject"], []).append(make_record(rec, policy, read_at))
     for subject, rows in by_subject.items():
-        have = {dup_key_text(r) for r in read_records(subject, env, policy)}
+        have = {dup_key_text(r) for r in read_records(subject, env, policy, include_detail=True)}
         conf = read_confirmed(subject, env, policy)
         conf_changed = False
         p = log_path(subject, env, policy)
@@ -687,12 +715,12 @@ def record(batch, *, env=None, policy=None, now=None):
                     k = dup_key_text({**r, "state_date_from_text": state_date_from_text(r.get("state"), r["read_at"])})
                 else:
                     k = dup_key_text(r)
-                u = by_url.setdefault(r["url"], {"url": r["url"], "publisher": r.get("publisher"), "source_class": r["source_class"],
+                u = by_url.setdefault(r.get("url"), {"url": r.get("url"), "publisher": r.get("publisher"), "source_class": r["source_class"],
                                                   "written": 0, "duplicates": 0})
                 if k in have:
                     dup += 1
                     u["duplicates"] += 1
-                    conf.setdefault(k, {}).update(last_confirmed_at=r["read_at"], url=r["url"])   # 段階37: 新しい記録にせず、最後に確かめた日時だけ更新する
+                    conf.setdefault(k, {}).update(last_confirmed_at=r["read_at"], url=r.get("url"))   # 段階37: 新しい記録にせず、最後に確かめた日時だけ更新する
                     conf_changed = True
                     continue
                 have.add(k)

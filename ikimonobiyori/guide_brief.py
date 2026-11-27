@@ -700,7 +700,7 @@ def _source_class(url, given=None):
     承認済みの情報源のホスト、guide_mode.yaml の official_hosts。URL がなければ渡された区分。"""
     from . import publisher as P
     if not url:
-        return given if given in ("official", "secondary") else None
+        return given if given in ("official", "secondary", "user") else None     # user: 利用者が現地で確認した記録(指示書 current-status 第 3 部)
     host_names()
     if P.host_of(url) in _approved_hosts():
         return "official"
@@ -2032,6 +2032,11 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     _vc_facts(F, question, cands, now, env, c)              # 本人の判断(2026-11-15 の 1): 承認済みの施設の発信(新しいものを先に・古い現況を外す)
     mat, cards, sobs = _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c)   # 段階85 第4部 2: 観察記録と暦の枠
     refresh_pages = _refresh_targets(work, cands, now, env, c, F.rows)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
+    from . import current_status as CS
+    cs_block = None
+    if CS.on(c):                                          # 指示書 docs/current-status-instructions.md 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと)
+        cs_block = CS.build_block(CS.add_facts(F, question, cond, cands, now, env, c), question, cond, now, env, c)
+        targets += CS.research_targets(cs_block, {**cond, "route": res.get("route") or cond.get("route")}, now, c)   # 第 4 部
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
@@ -2049,8 +2054,10 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         + ([c["town_candidates"]["none_missing"].format(where=area_label or "・".join(towns))] if towns and not cands else [])
         + [c["species_traits"]["missing_line"].format(sp=sp) for sp in no_trait]
         + ([c["research"]["done_line"]] if researched else [])
+        + (CS.missing_lines(cs_block, c) if cs_block else [])
         + [f"調べる: {t['why']}" for t in targets],
         "research": {"targets": targets}, "refresh_pages": refresh_pages,
+        **({"current_status": cs_block} if cs_block is not None else {}),
         **({"photos": fp} if (fp := form_photos(question, env)) else {}),
         "rules": list(c["rules"]),
         "fallback": {"text": res.get("text") or "", "stage": res.get("stage"), "status": res.get("status")},
@@ -2636,7 +2643,7 @@ def _cand_md(r):
 
 def _fact_md(f):
     """事実の 1 行(資料の Markdown の「確かめた事実」と「聞かれた山の名所」で同じ文)。"""
-    src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else 'その他' if f.get('source_class') else '区分なし'}"
+    src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else '公式ではない' if f.get('source_class') == 'user' else 'その他' if f.get('source_class') else '区分なし'}"
     when = "・".join(x for x in (f"観測 {f['observed']}" if f.get("observed") else "", f"取得 {f['read_at'][:10]}" if f.get("read_at") else "") if x)
     if (f.get("fields") or {}).get("stale_days"):                # 段階85 第1部: 現況の古さの印
         when = "・".join(x for x in (when, cfg()["auto_refresh"]["lines"]["stale_mark"].format(days=f["fields"]["stale_days"])) if x)
@@ -2665,6 +2672,8 @@ def render_md(doc):
                 L.append(_cand_md(rows[x["name"]]))
             L += [_fact_md(fx[i]) for i in x.get("facts") or [] if i in fx]
         L.append("")
+    from . import current_status as CS
+    L += CS.md_lines(doc, _fact_md)                        # 指示書 current-status 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと。記録があるときだけ)
     if doc["candidates"]:
         L += ["## 候補と順位", ""]
         if doc.get("candidates_note"):
