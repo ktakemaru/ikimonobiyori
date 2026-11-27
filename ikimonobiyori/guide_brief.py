@@ -321,6 +321,161 @@ def merge_same_candidates(cands, F, c):
     return out, merges, conflicts
 
 
+# ---- コンシェル向けの項目(指示書 docs/brief-concierge-fields-instructions.md)----
+# 候補の ID・座標・山の地点との結びつきと、資料を作った版。リポジトリに今あるデータから写すだけ(座標・ID を作らない・推測しない)。
+# 資料の Markdown と決まり(rules)には出さない(JSON にだけ入れる)。候補の選び方・順位・距離は変えない。
+
+PLACE_SRC_KEY = "_place_src"                      # 候補の行に一時的に持たせる、計画の行の id(資料に出す前に外す)
+PLACE_KEYS = ("place_id", "lat", "lon", "coord_source", "site_ref")
+
+
+def _place_index():
+    """→ {catalog: {id: 件}, spots: {id: 件}, mountains: {山の名前: site_ref}}。名所カタログ(例を除く)・観察の名所・山の地点(sites.yaml)。"""
+    from .paths import CATALOG_DIR, SITES_PATH
+    cat, spots, mountains = {}, {}, {}
+    for p in sorted(Path(CATALOG_DIR).glob("*.yaml")):
+        if p.name == "policy.yaml":
+            continue
+        try:
+            doc = yamlcache.load(p) or {}
+        except (OSError, ValueError):
+            continue
+        for e in doc.get("entries") or []:
+            if isinstance(e, dict) and e.get("id") and not e.get("example"):
+                cat.setdefault(e["id"], e)
+    try:
+        sp = yamlcache.load(DATA_FILES_DIR / "observations" / "spots.yaml") or {}
+    except (OSError, ValueError):
+        sp = {}
+    for e in sp.get("spots") or []:
+        if isinstance(e, dict) and e.get("id"):
+            spots.setdefault(e["id"], e)
+    try:
+        sites = (yamlcache.load(SITES_PATH) or {}).get("sites") or []
+    except (OSError, ValueError):
+        sites = []
+    for st in sites:
+        if isinstance(st, dict) and st.get("name") and st.get("site_ref"):
+            mountains.setdefault(st["name"], st["site_ref"])
+    return {"catalog": cat, "spots": spots, "mountains": mountains}
+
+
+def _point(pt):
+    pt = pt if isinstance(pt, dict) else {}
+    return (pt["lat"], pt["lon"]) if pt.get("lat") is not None and pt.get("lon") is not None else None
+
+
+def _place_of(r, ix, c):
+    """候補の 1 件 → {place_id, lat, lon, coord_source, site_ref}。元のデータに無いものは None。
+    計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point(出典の書かれたものだけ)の順
+    (野鳥の観察の名所の座標は写さない)。
+    山の地点: 種の名所の mountain_site(段階84 第1部 A)だけ。山の座標を名所の座標にしない。"""
+    K = c["concierge_fields"]
+    out = dict.fromkeys(PLACE_KEYS)
+    sid = r.get(PLACE_SRC_KEY)
+    e = ix["catalog"].get(sid) if sid else None
+    s = ix["spots"].get(sid) if sid and not e else None
+    pt, src = None, None
+    if e:
+        out["place_id"] = K["place_id_prefix"] + sid
+        pt, src = _point(e.get("point")), K["coord_source"]["catalog"]
+        ref = e.get("site_ref")
+        if isinstance(ref, str) and ref.startswith(K["site_ref_prefix"]):
+            out["site_ref"] = ref
+    elif s:
+        out["place_id"] = K["place_id_prefix"] + sid
+        ce = ix["catalog"].get(s.get("catalog_ref")) if s.get("catalog_ref") else None
+        if ce and _point(ce.get("point")):
+            pt, src = _point(ce.get("point")), K["coord_source"]["catalog_ref"]
+        elif s.get("subject") not in K["spot_coords_skip_subjects"] and _point(s.get("point")) and (s.get("point") or {}).get("source"):
+            pt, src = _point(s.get("point")), K["coord_source"]["spot"]          # 出典(source)の書かれた座標だけ(市町村の代表点かもしれない値を写さない)
+    if pt:
+        out["lat"], out["lon"], out["coord_source"] = pt[0], pt[1], src
+    if r.get("mountain_site") and not out["site_ref"]:
+        out["site_ref"] = ix["mountains"].get(r["mountain_site"])
+    return out
+
+
+def place_fields_before_merge(cands, c):
+    """候補をまとめる前に、名前ごとのコンシェル向けの項目を決める(まとめると、まとめた候補の空の項目が埋まるので先に)。→ {名前: 項目}"""
+    ix = _place_index()
+    return {r["name"]: _place_of(r, ix, c) for r in cands if r.get("name")}
+
+
+def attach_place_fields(cands, merges, pre, c):
+    """まとめたあとの候補に項目を足す。まとめた候補は、元の候補の place_id が 1 つにそろえばそれを使い、食い違えばすべて None にする。
+    まとめた記録(candidate_merges の 1 件)には、項目を写した元の名前(place_from)と、食い違い(place_conflict)を残す。"""
+    K = c["concierge_fields"]
+    by_main = {m["name"]: m for m in merges}
+    for r in cands:
+        r.pop(PLACE_SRC_KEY, None)
+        names = [r["name"]] + list(r.get("merged_from") or [])
+        rows = [(n, pre.get(n) or dict.fromkeys(PLACE_KEYS)) for n in names]
+        m = by_main.get(r["name"]) if r.get("merged_from") else None
+        with_id = [(n, p) for n, p in rows if p["place_id"]]
+        with_ref = [(n, p) for n, p in rows if p["site_ref"]]
+        if len({p["place_id"] for _n, p in with_id}) > 1 or len({p["site_ref"] for _n, p in with_ref}) > 1:
+            r.update(dict.fromkeys(PLACE_KEYS))
+            if m is not None:
+                m["place_from"] = None
+                m["place_conflict"] = {"members": [{"name": n, "place_id": p["place_id"], "site_ref": p["site_ref"]} for n, p in rows],
+                                       "reason": K["merge_conflict_reason"]}
+            continue
+        out = dict(with_id[0][1]) if with_id else dict.fromkeys(PLACE_KEYS)
+        out["site_ref"] = with_ref[0][1]["site_ref"] if with_ref else None
+        r.update(out)
+        if m is not None:
+            m["place_from"] = (with_id or with_ref)[0][0] if (with_id or with_ref) else None
+
+
+def _git_state(run=None):
+    """→ (commit 40 桁 か None, 追跡中のファイルに未 commit の変更があるか か None)。このパッケージのリポジトリ(.git があるとき)だけを見る。
+    git は引数の配列で呼ぶ(シェルを介さない)。読めなければ None。テスト(BIYORI_UNDER_TEST=1)では run を渡したときだけ git を呼ぶ。"""
+    import os
+    import subprocess
+    if run is None:
+        if os.environ.get("BIYORI_UNDER_TEST") == "1":
+            return None, None
+        run = subprocess.run
+    pkg = Path(__file__).resolve().parent
+    G = cfg()["concierge_fields"]["git"]
+
+    def git(*args):
+        try:
+            p = run(["git", "-C", str(pkg), "--no-optional-locks", *args], capture_output=True, text=True, encoding="utf-8", timeout=G["timeout_s"])
+        except (OSError, ValueError, subprocess.SubprocessError):
+            return None
+        return p.stdout if getattr(p, "returncode", 1) == 0 and isinstance(p.stdout, str) else None
+    top = (git("rev-parse", "--show-toplevel") or "").strip()
+    try:
+        own = bool(top) and (Path(top).resolve() / pkg.name) == pkg
+    except (OSError, ValueError):
+        own = False
+    if not own:
+        return None, None                                  # 実行用のコピーなど(パッケージがリポジトリの直下にない。別のリポジトリの commit を拾わない)
+    head = (git("rev-parse", "HEAD") or "").strip()
+    commit = head if re.fullmatch(r"[0-9a-f]{40}", head) else None
+    st = git("status", "--porcelain", "--untracked-files=no")
+    return commit, (None if st is None else bool(st.strip()))
+
+
+def _wall_clock(now=None):
+    """資料を作った時刻(パソコンの時計。オフセットつき)。--now(資料の基準の時刻)とは別。
+    テスト専用の時計(sources.test_clock_enabled。tests/nonet.py だけが有効にする)のときは、渡された now を使う(同じ質問・同じ now の資料が同じになるテストのため)。"""
+    from . import sources as S
+    if now is not None and S.test_clock_enabled():
+        return now
+    return S.clock_now()
+
+
+def generator_info(now=None):
+    """資料を作った版: {name, version, commit, dirty, generated_at}。資料の id の計算には入れない。"""
+    from . import __version__
+    commit, dirty = _git_state()
+    return {"name": cfg()["concierge_fields"]["generator_name"], "version": __version__, "commit": commit, "dirty": dirty,
+            "generated_at": _wall_clock(now).isoformat()}
+
+
 def _ledger_pending(url):
     """台帳で承認待ちの情報源のページか(情報源の URL の範囲で判定する。observations._ledger_gated と同じ。段階80 D)。"""
     from . import observations as O
@@ -1450,7 +1605,8 @@ def _candidates(workdir, c):
                          "score": r.get("score"), "breakdown": r.get("breakdown"),
                          "outlook": r.get("outlook_label"), "phrase": px.get("phrase"), "current_state": r.get("current_state"),
                          "current_date": r.get("current_date"), "prefecture": px.get("prefecture"),
-                         "not_chosen_reason": r.get("reason_label"), "reasons": list(px.get("reason_labels") or [])})
+                         "not_chosen_reason": r.get("reason_label"), "reasons": list(px.get("reason_labels") or []),
+                         PLACE_SRC_KEY: r.get("id") or px.get("id")})     # 計画の行の id(コンシェル向けの項目の元。資料に出す前に外す)
     no_year = []
     for _sj, _rk, _pk, ny in parts:
         no_year += [x.get("name") for x in ny if isinstance(x, dict) and x.get("name") and x.get("name") not in no_year]
@@ -1593,7 +1749,9 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), estimated=bool(r.get("distance_estimated")),
                                          prefecture=r.get("prefecture"), city=r.get("city"), c=c)
             r["distance_km"], r["distance_text"] = km, label
+    pre_place = place_fields_before_merge(cands, c)           # コンシェル向けの項目(候補の ID・座標・山の地点)。まとめる前に名前ごとに
     cands, merges, merge_conflicts = merge_same_candidates(cands, F, c)    # 段階80 の追記5(本人の判断 2026-11-12): 名前の形が違う同じ場所を 1 つに
+    attach_place_fields(cands, merges, pre_place, c)
     names = [r["name"] for r in cands] + [n for r in cands for n in r.get("merged_from") or []] + _question_places(question, res)
     for card, hit in closures_for(names, months, c):
         cl = card["closure"]
@@ -1668,7 +1826,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     refresh_pages = _refresh_targets(work, cands, now, env, c, F.rows)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
     _mark_stale(F.rows, cond, now, c)
     doc = {
-        "schema": "ikimonobiyori-guide-brief/1", "id": bid, "question": question, "now": now.isoformat(),
+        "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
         "dates": _dates_block(cond, now), "intent": cond.get("intent"), "route": res.get("route") or cond.get("route"),
