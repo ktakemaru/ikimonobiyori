@@ -146,21 +146,8 @@ def _town_candidates(F, cands, towns, cond, c, label=None, areas=()):
     have = {r["name"] for r in cands}
     for town in towns:
         for s in _subject_spots(GM.town_spots(town, cond.get("origin")), cond, c):
-            loc = f"{s.get('prefecture') or ''}{s.get('city') or ''}"
-            for text, kind in s["seasons"]:
-                if any(f.get("place") == s["name"] and f.get("url") == s.get("url") and f["kind"] == "typical" for f in F.rows):
-                    continue                              # 同じ名所・同じ出典の例年の時期がもうある(読んだ事実の記録の行)
-                F.add("typical", f"{s['name']}({loc}): " + ("" if text.startswith("例年") else "例年 ") + f"{text}" + (f"({kind})" if kind else "") + (T["tentative_note"] if s["tentative"] else ""),
-                      place=s["name"], source=s.get("publisher"), url=s.get("url"), source_class=s.get("source_class"),
-                      extra={"_pref": s.get("prefecture"), "_city": s.get("city")})
-            if s["name"] in have:
-                continue
-            have.add(s["name"])
-            cands.append({"subject": None, "rank": None, "name": s["name"], "chosen": False, "basis": "town",
-                          "group": _group_of(s.get("prefecture"), c), "prefecture": s.get("prefecture"), "city": s.get("city"),
-                          "theme": "・".join(s["kinds"][:3]) or None,
-                          "reasons": [T["label"].format(town=label or town)] + ([T["tentative_label"]] if s["tentative"] else [])})
-    keep = [r for r in cands if GM.in_town(r["name"], r.get("city"), towns) or (areas and _in_areas(r, areas))]
+            _add_town_spot(F, s, have, cands, label or town, c)
+    keep =[r for r in cands if GM.in_town(r["name"], r.get("city"), towns) or (areas and _in_areas(r, areas))]
     kept = {r["name"] for r in keep}
     dropped = {r["name"] for r in cands} - kept
     words = list(kept) + towns + [re.sub(r"(市|町|村|区)$", "", t) for t in towns] + ([label] if label else [])
@@ -174,6 +161,141 @@ def _town_candidates(F, cands, towns, cond, c, label=None, areas=()):
     for i, f in enumerate(F.rows):                        # 番号を振り直す(このあと足す事実と重ならないように)
         f["id"] = f"F{i + 1:03d}"
     return keep, dropped
+
+
+def _add_town_spot(F, s, have, cands, where, c):
+    """市区町村の名所の 1 件(guide_materials.town_spots の行)→ 例年の時期の事実と候補の行(basis: town)を足す。→ 足した候補の行か None。
+    _town_candidates と、山の名前から入れる候補 _mountain_named_town で同じ形。"""
+    T = c["town_candidates"]
+    loc = f"{s.get('prefecture') or ''}{s.get('city') or ''}"
+    for text, kind in s["seasons"]:
+        if any(f.get("place") == s["name"] and f.get("url") == s.get("url") and f["kind"] == "typical" for f in F.rows):
+            continue                              # 同じ名所・同じ出典の例年の時期がもうある(読んだ事実の記録の行)
+        F.add("typical", f"{s['name']}({loc}): " + ("" if text.startswith("例年") else "例年 ") + f"{text}" + (f"({kind})" if kind else "") + (T["tentative_note"] if s["tentative"] else ""),
+              place=s["name"], source=s.get("publisher"), url=s.get("url"), source_class=s.get("source_class"),
+              extra={"_pref": s.get("prefecture"), "_city": s.get("city")})
+    if s["name"] in have:
+        return None
+    have.add(s["name"])
+    row = {"subject": None, "rank": None, "name": s["name"], "chosen": False, "basis": "town",
+           "group": _group_of(s.get("prefecture"), c), "prefecture": s.get("prefecture"), "city": s.get("city"),
+           "theme": "・".join(s["kinds"][:3]) or None,
+           "reasons": [T["label"].format(town=where)] + ([T["tentative_label"]] if s["tentative"] else [])}
+    cands.append(row)
+    return row
+
+
+# 山の名前を挙げた質問(2026-11-28 利用者の決定。docs/mountain-named-report.md): 質問の中の山(sites.yaml の名前。括弧の前の部分)と、
+# 名所の結びつき(カタログの site_ref・観察の名所の mountain_site_ref・catalog_ref 先のカタログの site_ref)が同じ ID の名所を候補に入れる。
+# 今ある候補は外さず、順番も変えない(末尾に足す)。順位・見込み・例年の時期は、今ある計画の行・市区町村の名所の行のまま(作らない)。
+
+def _asked_mountains(question, ix):
+    """質問の文 → 質問に挙げた山の site_ref の一覧。sites.yaml の名前(全体か、括弧の前の部分)と、質問から取り出した場所の語が同じものだけ。
+    出発地として挙げた名前(「○○から」「○○発」)は除く(_question_areas と同じ)。"""
+    from . import research as RS
+    by = {}
+    for name, ref in ix["mountains"].items():
+        for n in {name, re.split(r"[(（]", name)[0].strip()}:
+            if n:
+                by.setdefault(n, ref)
+    out = []
+    for w in RS.question_places(question):
+        ref = by.get(w)
+        if ref and ref not in out and not re.search(re.escape(w) + r"\s*(駅)?(から|発)", question or ""):
+            out.append(ref)
+    return out
+
+
+def _mountain_groups(ref, ix):
+    """山の site_ref → その山に結びついた名所の組の一覧 [[id, ...]]。カタログの件は、その件を catalog_ref で借りる観察の名所と 1 組にする
+    (同じ名所を二重に入れない)。観察の名所の mountain_site_ref は、その名所だけの組。"""
+    groups = []
+    for cid, e in ix["catalog"].items():
+        if e.get("site_ref") == ref:
+            groups.append([sid for sid, s in ix["spots"].items() if s.get("catalog_ref") == cid] + [cid])
+    for sid, s in ix["spots"].items():
+        if s.get("mountain_site_ref") == ref and not any(sid in g for g in groups):
+            groups.append([sid])
+    return groups
+
+
+def _entry_subjects(eid, ix):
+    e = ix["catalog"].get(eid)
+    if e:
+        return list(e.get("subjects") or [])
+    s = ix["spots"].get(eid) or {}
+    return [s["subject"]] if s.get("subject") else []
+
+
+def _mountain_targets(question, cond, cands, c):
+    """→ [(山の site_ref, 名所の組 [id, ...])]。設定で切っているとき・対象を絞らない質問(対象が既定のまま)・質問の対象と合わない名所・
+    もう候補にある名所(id か名前が同じ)は入れない。"""
+    from . import ask
+    M = c.get("mountain_named_candidates") or {}
+    if not M.get("enabled"):
+        return []
+    subs = set(cond.get("subjects") or [])
+    if not subs or subs == set(ask.load_policy()["default_subjects"]):
+        return []                                         # 対象を絞らない質問(「○○の見どころ」)は、今の高尾山の動きに合わせて入れない
+    ix = _place_index()
+    T = c["town_candidates"]
+    have_ids = {r.get(PLACE_SRC_KEY) for r in cands if r.get(PLACE_SRC_KEY)}
+    have_names = {r["name"] for r in cands}
+    out = []
+    for ref in _asked_mountains(question, ix):
+        for g in _mountain_groups(ref, ix):
+            if not any(T["subject_of"].get(sj) in subs for eid in g for sj in _entry_subjects(eid, ix)):
+                continue
+            names = {(ix["catalog"].get(eid) or ix["spots"].get(eid) or {}).get("name") for eid in g}
+            if have_ids & set(g) or have_names & names:
+                continue
+            out.append((ref, g))
+    return out
+
+
+def _mountain_named_ranked(question, cond, cands, picks, workdir, c):
+    """計画の順位(上限より下も含む全部)にある、質問の山の名所を、計画の行と同じ形で候補の末尾に足す。→ 計画の順位に無かった組。"""
+    M = c.get("mountain_named_candidates") or {}
+    targets = _mountain_targets(question, cond, cands, c)
+    if not targets:
+        return []
+    p = Path(workdir) / "answer_plan.json"
+    parts = _plan_parts(json.loads(p.read_text(encoding="utf-8"))) if p.exists() else []
+    rest = []
+    for ref, g in targets:
+        hit = next(((r, sj) for eid in g for sj, rk, _pk, _ny in parts for r in rk
+                    if isinstance(r, dict) and r.get("name") and r.get("id") == eid), None)
+        if hit is None:
+            rest.append((ref, g))
+            continue
+        row = _plan_row(hit[0], picks, hit[1])
+        row[M["mark_key"]] = M["mark_value"]
+        cands.append(row)
+    return rest if not parts else []          # 計画の順位がある経路では、順位に無い名所を別の形で足さない
+
+
+def _mountain_named_town(F, question, cond, cands, rest, c):
+    """計画の順位を作らない経路(見どころなど)で、質問の山の名所を、市区町村の名所の行(basis: town)と同じ形で候補の末尾に足す。
+    名所の市区町村の名所の一覧(guide_materials.town_spots)に同じ名前の件があるときだけ(例年の時期はその一覧のまま)。"""
+    from . import guide_materials as GM
+    M = c.get("mountain_named_candidates") or {}
+    ix = _place_index()
+    words = {ref: n for n, ref in ix["mountains"].items()}
+    have = {r["name"] for r in cands}
+    for ref, g in rest:
+        for eid in g:
+            e = ix["catalog"].get(eid) or ix["spots"].get(eid) or {}
+            city = (e.get("tags") or {}).get("city") or e.get("city")
+            hit = next((s for part in GM._city_parts(city) for s in _subject_spots(GM.town_spots(part, cond.get("origin")), cond, c)
+                        if s["name"] == e.get("name")), None)
+            if hit is None or hit["name"] in have:
+                continue
+            where = re.split(r"[(（]", words.get(ref) or "")[0].strip()
+            row = _add_town_spot(F, hit, have, cands, where, c)
+            if row is not None:
+                row[PLACE_SRC_KEY] = eid
+                row[M["mark_key"]] = M["mark_value"]
+            break
 
 
 def _subject_spots(spots, cond, c):
@@ -1615,6 +1737,19 @@ def _plan_parts(plan, subject=None):
     return out
 
 
+def _plan_row(r, picks, sj):
+    """計画の順位の 1 行 → 資料の候補の行(_candidates と、山の名前から入れる候補 _mountain_named_ranked で同じ形)。"""
+    px = picks.get(r["name"]) or {}
+    return {"subject": r.get("subject") or px.get("subject") or sj, "rank": r.get("rank"), "name": r["name"],
+            "chosen": r["name"] in picks, "aim": r.get("aim"),
+            "distance_km": r.get("distance_km"), "distance_estimated": bool(r.get("distance_estimated")),
+            "score": r.get("score"), "breakdown": r.get("breakdown"),
+            "outlook": r.get("outlook_label"), "phrase": px.get("phrase"), "current_state": r.get("current_state"),
+            "current_date": r.get("current_date"), "prefecture": px.get("prefecture"),
+            "not_chosen_reason": r.get("reason_label"), "reasons": list(px.get("reason_labels") or []),
+            PLACE_SRC_KEY: r.get("id") or px.get("id")}     # 計画の行の id(コンシェル向けの項目の元。資料に出す前に外す)
+
+
 def _candidates(workdir, c):
     """候補と順位(対象ごとに上位 max_candidates 件と、答えに選んだ候補すべて)。→ (行, 選んだ候補 {名前: pick}, 補足)"""
     from . import skeleton as SK
@@ -1638,15 +1773,7 @@ def _candidates(workdir, c):
             if r["name"] in seen:
                 continue
             seen.add(r["name"])
-            px = picks.get(r["name"]) or {}
-            rows.append({"subject": r.get("subject") or px.get("subject") or sj, "rank": r.get("rank"), "name": r["name"],
-                         "chosen": r["name"] in picks, "aim": r.get("aim"),
-                         "distance_km": r.get("distance_km"), "distance_estimated": bool(r.get("distance_estimated")),
-                         "score": r.get("score"), "breakdown": r.get("breakdown"),
-                         "outlook": r.get("outlook_label"), "phrase": px.get("phrase"), "current_state": r.get("current_state"),
-                         "current_date": r.get("current_date"), "prefecture": px.get("prefecture"),
-                         "not_chosen_reason": r.get("reason_label"), "reasons": list(px.get("reason_labels") or []),
-                         PLACE_SRC_KEY: r.get("id") or px.get("id")})     # 計画の行の id(コンシェル向けの項目の元。資料に出す前に外す)
+            rows.append(_plan_row(r, picks, sj))
     no_year = []
     for _sj, _rk, _pk, ny in parts:
         no_year += [x.get("name") for x in ny if isinstance(x, dict) and x.get("name") and x.get("name") not in no_year]
@@ -1720,6 +1847,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     pending = _pending_urls()
     F = _Facts(c, pending)
     cands, picks, extra = _candidates(work, c)
+    m_rest = _mountain_named_ranked(question, cond, cands, picks, work, c)   # 2026-11-28: 山の名前を挙げた質問で、その山の名所(計画の順位にあるもの)
     fpath = work / "facts.json"
     known_pubs = _plan_facts(F, work, cands, picks, extra)
     if (cond.get("route") in (c.get("alt_place_routes") or [])) and cond.get("area_names") and not cands:
@@ -1765,6 +1893,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         cands.append({"subject": "birds", "rank": None, "name": h["name"], "chosen": False, "basis": "highlight", "group": h["group"],
                       "prefecture": h["prefecture"], "city": h["city"], "theme": h["label"], "highlight_cards": [k.get("title") for k in h["cards"]],
                       "reasons": [c["bird_highlights"]["label"]]})
+    if m_rest:
+        _mountain_named_town(F, question, cond, cands, m_rest, c)      # 2026-11-28: 計画の順位を作らない経路では、市区町村の名所の行の形で
     from . import guide_materials as GM
     q_areas = _question_areas(question, cond)              # 段階80 の追記3(本人の判断 2026-11-11): エリアの質問は、そのエリアの名所だけ
     area_label = "・".join(a["name"] for a in q_areas) or None

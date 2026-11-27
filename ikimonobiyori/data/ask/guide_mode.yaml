@@ -498,3 +498,11 @@ concierge_fields:
   merge_conflict_reason: まとめた候補の元の ID が食い違うので、ID・座標を入れていない
   git:
     timeout_s: 5                            # commit を読む git の待ち時間の上限(仮の値。超えたら null)
+# 山の名前を挙げた質問(指示書 docs/mountain-named-instructions.md。2026-11-28 利用者の決定)。質問に sites.yaml の山の名前(括弧の前の部分)があり、
+# 対象を紅葉・花などに絞った質問のとき、その山と結びついた名所(カタログの site_ref・観察の名所の mountain_site_ref・catalog_ref 先の site_ref)を
+# 候補の末尾に足す。計画の順位にあればその行の形、順位を作らない経路では市区町村の名所の行の形(basis: town)。今ある候補は外さず、順番も変えない。
+# enabled: false で、直す前と同じ資料になる。足した候補にだけ、mark_key の項目(値は mark_value)が付く(docs/concierge-brief-fields.md)。
+mountain_named_candidates:
+  enabled: true
+  mark_key: added_by
+  mark_value: mountain_name
