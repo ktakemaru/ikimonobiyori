@@ -79,7 +79,7 @@
 | ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(カタログは各件の `location_precision` の桁で入っている)。野鳥の観察の名所だけは、野鳥のプロファイルの位置の粗さに丸めた値 | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所(`catalog_ref` が無いもの)は、出典の書かれた `point` か `bird_range` を、プロファイルの `care.location_precision`(野鳥は `area_10km` = 小数 1 桁)に丸めて出す(利用者の決定 2026-11-27。丸め方は提案の出力と同じ `proposals.coarse_precision`・`engine.round_coord`。丸める前の値は資料に入れない。絶対ルール 7) |
 | `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot`・`observation_spot_coarsened`(野鳥の観察の名所の座標を丸めたもの) | 文字列 | 座標があるとき |
 | `coord_precision` | 座標の細かさ: 名所カタログ(`catalog`・`catalog_via_spot`)は、その件の `location_precision` の値のまま(`exact`・`area_1km`・`area_10km`)。`observation_spot_coarsened` は丸めた粗さ(野鳥は `area_10km`) | 文字列 | 座標があり、細かさが元のデータに書かれているとき。観察の名所の `point`(`observation_spot`)には細かさが書かれていないので、推測せず `null`。座標が `null` なら `null` |
-| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | カタログの件の `site_ref`(`yamabiyori:` で始まるもの)、観察の名所の `mountain_site_ref`(資料の候補を作るときだけ読む項目。2026-11-27 に足した)、観察の名所の `catalog_ref` が指すカタログの件の `site_ref`、種の名所の `mountain_site`(段階84 第1部 A)の順。観察の名所の値は sites.yaml にある山だけ使う。今データに結びつきがあるのは 6 件(下の表)。名前が山と同じでも、データに結びつきが無ければ `null` |
+| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | カタログの件の `site_ref`(`yamabiyori:` で始まるもの)、観察の名所の `mountain_site_ref`(資料の候補を作るときだけ読む項目。2026-11-27 に足した)、種の名所の `mountain_site`(段階84 第1部 A)の順。観察の名所の `catalog_ref` が指すカタログの件の `site_ref` は借りない。観察の名所の値は sites.yaml にある山だけ使う。今データに結びつきがあるのは 6 件(下の表)。名前が山と同じでも、データに結びつきが無ければ `null` |
 
 - 同じ名所でも対象ごとに別の ID がある(三溪園: 紅葉 `obs-kouyou-0002`・花 `obs-hana-0001`)。候補の ID は、候補を作った計画の行の ID。
 - 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の山の地点との結びつきは、それと区別するため `mountain_site_ref` という名前にした(資料の候補に `site_ref` という項目は無い)。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
@@ -110,7 +110,7 @@
 - `coord_precision` で座標の細かさが分かる: `exact`(名所の位置)・`area_1km`(小数 2 桁。1km 程度ずれうる)・`area_10km`(小数 1 桁。5〜7km 程度ずれうる)。`null` は、座標はあるが細かさが元のデータに書かれていないもの(観察の名所の `point`。`coord_source: observation_spot`)。20km 以内などの判定では、`area_10km` の候補は端の扱いに注意が要る。
 - `coord_source: observation_spot_coarsened` は野鳥の観察の名所の座標を、野鳥のプロファイルの位置の粗さ(`area_10km`)に丸めたもの。実際の場所から数 km ずれる。丸める前の値は資料に無い。地図にピンを立てる用途には向かない。
 - `place_id` は 1 つの名所に 1 つではない: 同じ名所でも対象ごとに別の ID がある(三溪園の紅葉 `obs-kouyou-0002` と花 `obs-hana-0001`)。同じ名所かどうかを ID だけで決めると、別の名所に見えることがある。
-- `mountain_site_ref` が入るのは、データに結びつきがある 6 か所(高尾山・御岳山・陣馬山・筑波山・大山・霧ヶ峰)と、大山寺・大山阿夫利神社下社(カタログの大山の件を通して)、種の名所の `mountain_site` だけ。`null` でも山の近くの名所でないとは限らない。山との突き合わせは、`mountain_site_ref` があるときは ID で、無いときは座標と距離でする形が考えられる。
+- `mountain_site_ref` が入るのは、データに結びつきがある 6 か所(高尾山・御岳山・陣馬山・筑波山・大山・霧ヶ峰)と、種の名所の `mountain_site` だけ。大山のカタログの件 `kouyou-0020` は観察の名所 大山寺・大山阿夫利神社下社(`obs-kouyou-0019`)に借りられていて候補に出てこないので、今は大山の結びつきは資料に出ない。`null` でも山の近くの名所でないとは限らない。山との突き合わせは、`mountain_site_ref` があるときは ID で、無いときは座標と距離でする形が考えられる。
 - `generator.commit` が `null` のとき(実行用のコピーなど)は、`version` だけで版を記録することになる。`dirty: true` のときは、その commit と手元の中身が違う。
 - 資料の `id` は今までどおり質問・`now`・`prev` だけから決まり、`generator` を含まない。同じ id の資料でも `generated_at`・`commit` は作り直すたびに変わりうる。
 
@@ -159,7 +159,7 @@
 
 ## 3. 実物の例(通信なし)
 
-**2026-11-27 の注**: 下の例は、項目を足す前の資料。今の資料には、いちばん上の `schema` の次に `generator` があり、候補の各件の末尾に 5 つの項目がある。同じ作り方で今の資料を作ると、下の 1 件目の候補の末尾は `"place_id": "ikimonobiyori:kouyou-0024", "lat": 35.711, "lon": 139.398, "coord_source": "catalog", "mountain_site_ref": null`、`generator` は `{"name": "ikimonobiyori", "version": "0.2.0", "commit": null, "dirty": null, "generated_at": "2026-11-27T09:00:00+09:00"}`(テストの仕組みの下なので `commit`・`dirty` は `null`、`generated_at` は `now`)。
+**2026-11-27 の注**: 下の例は、項目を足す前の資料。今の資料には、いちばん上の `schema` の次に `generator` があり、候補の各件の末尾に 6 つの項目がある。同じ作り方で今の資料を作ると、下の 1 件目の候補の末尾は `"place_id": "ikimonobiyori:kouyou-0024", "lat": 35.711, "lon": 139.398, "coord_source": "catalog", "coord_precision": "exact", "mountain_site_ref": null`、`generator` は `{"name": "ikimonobiyori", "version": "0.2.0", "commit": null, "dirty": null, "generated_at": "2026-11-27T09:00:00+09:00"}`(テストの仕組みの下なので `commit`・`dirty` は `null`、`generated_at` は `now`)。
 
 作り方(2026-11-27): `tests/helpers.py` を読み込んで(ソケット禁止・`BIYORI_UNDER_TEST=1`・一時のデータ置き場)、`guide_brief.build("今週末、高尾山で紅葉を見たい", now=2026-11-27T09:00+09:00)` を呼んだ。呼んだスクリプトは作業用の一時フォルダに置き、リポジトリには入れていない。
 データ置き場が空なので、使ったのはリポジトリにあるデータ(名所カタログ・例年の目安など)だけで、今年の現況・知識カード・観察記録は入っていない。`build` を直接呼んだので `auto_refresh` の項目は無い(`ask brief` は `build_refreshed` を呼び、読み直しの対象があれば足す)。長い配列と文は「…」で縮め、空の配列が並ぶ `values` は 1 行にした。

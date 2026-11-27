@@ -245,9 +245,9 @@ class MountainLinks(unittest.TestCase):
         links |= {sid for sid, s in self.ix["spots"].items() if s.get("mountain_site_ref")}
         self.assertEqual(links, set(SIX))
 
-    def test_link_through_catalog_ref(self):
+    def test_no_link_through_catalog_ref(self):
         self.assertEqual(self.ix["spots"]["obs-kouyou-0019"]["catalog_ref"], "kouyou-0020")   # 大山寺・大山阿夫利神社下社
-        self.assertEqual(self.place("obs-kouyou-0019")["mountain_site_ref"], "yamabiyori:m027")
+        self.assertIsNone(self.place("obs-kouyou-0019")["mountain_site_ref"])   # catalog_ref の件の site_ref は借りない(6 件のほかに結びつきを出さない)
 
     def test_unknown_mountain_is_ignored(self):
         ix = dict(self.ix, spots=dict(self.ix["spots"]))

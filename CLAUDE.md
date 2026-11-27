@@ -113,7 +113,7 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 
 ## ビヨリコンシェルとの関係
 - biyori-hub は開発を中止した(2026-11-15)。役割はビヨリコンシェルに移った。コンシェルはこのリポジトリを取り込まず、手元の版を呼ぶ(入口は `ask brief` と `guide wildflower`)。読むのは資料で、仕上げた文ではない。イキモノビヨリは単体で動く(コンシェルが無くても答えられる)。
-- 資料の JSON には、コンシェル向けに候補の `place_id`・`lat`・`lon`・`coord_source`・`mountain_site_ref`(山の地点) と `generator`(版・commit・作った時刻)がある(2026-11-27)。カタログなどにある値を写すだけで、無ければ `null`。Markdown・`rules` には出さず、答えに書かない(`docs/concierge-brief-fields.md`)。
+- 資料の JSON には、コンシェル向けに候補の `place_id`・`lat`・`lon`・`coord_source`・`coord_precision`(座標の細かさ)・`mountain_site_ref`(山の地点) と `generator`(版・commit・作った時刻)がある(2026-11-27)。カタログなどにある値を写すだけで、無ければ `null`。Markdown・`rules` には出さず、答えに書かない(`docs/concierge-brief-fields.md`)。
 - hub のために作って残しているもの: `biyori-proposal/1` の出力と `tests/contract/`(絶対ルール 4 とテストが形を守る)、`livegate.py` と計測フックの前提(実通信の決まりを緩めない)、`config.yaml` の `live.user_agent` の値(動きなので変えていない)。使っていないもの: ハブの manifest(`phenology_labels`・`stage_order`・`ttl_s` の写し)と、ハブ側の統合のテスト・iNaturalist の実際の応答の記録。
 - プロファイルの `phenology_labels`・`stage_order`、`config.yaml` の有効期間、提案の `id`・`phenology_stage` の値・`details.component`・`diagnostics` の項目を変えるときは、必ず事前にユーザーに報告する(以前はハブの manifest・窓口・検査器が読んでいた)。
 
