@@ -172,5 +172,41 @@ class PlaceOf(unittest.TestCase):
         self.assertIsNone(PR.coarse_precision(None, {}, pol))
 
 
+class SpotCatalogLinks(unittest.TestCase):
+    """第 3 部: 観察の名所の catalog_ref で、同じ名所の別の対象のカタログの件を結んだ(三溪園の紅葉 → 花の hana-0021)。"""
+
+    def setUp(self):
+        self.ix = GB._place_index()
+
+    def test_sankeien_gets_the_flower_catalog_point(self):
+        e = self.ix["catalog"]["hana-0021"]
+        p = GB._place_of({"name": "三溪園", GB.PLACE_SRC_KEY: "obs-kouyou-0002"}, self.ix, GB.cfg())
+        self.assertEqual((p["lat"], p["lon"], p["coord_source"], p["coord_precision"]),
+                         (e["point"]["lat"], e["point"]["lon"], "catalog_via_spot", e["location_precision"]))
+
+    def test_cross_subject_links_are_same_place_and_not_birds(self):
+        from ikimonobiyori.observations import CATALOG_SUBJECTS
+        cat_subject = {}
+        for sj, cs in CATALOG_SUBJECTS.items():
+            for e in CM.load_catalog(cs).get("entries") or []:
+                cat_subject[e["id"]] = sj
+        n = 0
+        for s in self.ix["spots"].values():
+            ref = s.get("catalog_ref")
+            if ref and cat_subject.get(ref) != s["subject"]:
+                n += 1
+                e = self.ix["catalog"][ref]
+                t = e.get("tags") or {}
+                self.assertEqual((s["name"], s["prefecture"], s["city"]), (e["name"], t.get("prefecture"), t.get("city")), s["id"])
+                self.assertNotIn(s["subject"], GB.cfg()["concierge_fields"]["spot_coords_coarsen_subjects"])   # 野鳥の観察の名所は結ばない
+        self.assertEqual(n, 1)
+
+    def test_cross_subject_link_does_not_change_the_candidates(self):
+        from ikimonobiyori import observations as O
+        c = next(c for c in O.all_candidates("autumn_leaves") if c["id"] == "obs-kouyou-0002")
+        self.assertNotIn("catalog_ref", c)                                # 紅葉の候補の作り方は、紅葉のカタログしか見ない
+        self.assertIsNone(c["point"])
+
+
 if __name__ == "__main__":
     unittest.main()
