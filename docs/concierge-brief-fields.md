@@ -36,6 +36,7 @@
 | `region`・`areas` | 質問の地域・エリアの名前 | 文字列・配列 | `null`・空の配列 |
 | `subjects` | 対象(例 `autumn_leaves`) | 配列 | 空の配列のことがある |
 | ★ `origin`・`origin_source` | 出発地と、その決め方(`default` は既定の横浜) | 文字列 | — |
+| `asked_mountain` | 聞かれた山の名所(2026-11-28)。`{site_ref, name, candidates: [{name, outlook, facts}]}`。`site_ref` は質問に挙げた山(`data/sites.yaml` の名前か括弧の前の部分)の `yamabiyori:mNNN`、`name` は `sites.yaml` の名前のまま。`candidates` は、その山の名所で資料の候補にあるもの(足した候補と、もとから候補にあったもの)の候補の `name`・`outlook` と、その候補の事実(`facts` の `place` が候補の名前のもの)の `id`。新しい値は作らず、候補と事実に今ある値を指すだけ。入るのは、山の名前から候補を足した(`added_by: mountain_name`)資料だけ。資料の Markdown では、候補の一覧より前に「聞かれた山の名所」の節になる(候補の行・事実の行をそのまま並べる) | オブジェクト | `null`(山の名前の入らない質問・足した候補が無い質問。高尾山のようにもとから候補にあって足さなかった山も `null`。`mountain_named_candidates` の `enabled: false` でも `null`) |
 | ★ `candidates` | 候補(2.2) | 配列 | 空の配列 |
 | `candidates_note` | 候補の選び方の 1 文(例「横浜からの距離で選びました。」) | 文字列 | `null` |
 | `candidate_merges`・`candidate_merge_conflicts` | 同じ場所の候補をまとめた記録と、まとめられなかった食い違い | 配列 | 空の配列 |

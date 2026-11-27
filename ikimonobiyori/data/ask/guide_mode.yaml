@@ -509,3 +509,7 @@ mountain_named_candidates:
   # 「調べる(資料が薄い)」の数え方(指示書 docs/mountain-named-2-instructions.md 第 2 部。2026-11-28 利用者の決定): 足した候補が、ここに挙げた種類の事実
   # (今年の現況 current・例年の時期 typical)を 1 つも連れてこなかったときは、その候補を「資料が薄いか」の数に入れない(足す前と同じ「調べる」が残る)。
   thin_fact_kinds: [current, typical]
+  # 資料の Markdown の先頭の節(第 3 部): 資料の asked_mountain があるときだけ、候補の一覧より前に、その候補の行と事実の行をそのまま並べる。
+  asked_section:
+    heading: "## 聞かれた山の名所"
+    lead: "質問で挙げられた山の名所です。まずこの名所の状態を答えてください。"

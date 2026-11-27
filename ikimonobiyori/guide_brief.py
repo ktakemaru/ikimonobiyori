@@ -269,6 +269,28 @@ def _cands_for_needs(cands, facts, c):
     return [r for r in cands if r.get(M["mark_key"]) != M["mark_value"] or _brought_facts(r, facts, kinds)]
 
 
+def asked_mountain(question, cands, facts, c):
+    """資料のいちばん上の asked_mountain(指示書 docs/mountain-named-2-instructions.md 第 3 部)。山の名前から候補を足した資料だけ(ほかは None)。
+    → {site_ref, name(sites.yaml の名前), candidates: [{name, outlook, facts: [事実の id]}]}。新しい値を作らず、候補と事実に今ある値を写すだけ。
+    入れるのは、質問に挙げた山(_asked_mountains)のうち、足した候補(mark_key の印)がその山の名所の組(_mountain_groups)に当たる最初の山。
+    その山の名所でもとから候補にあるものは、足した候補があるときだけ一緒に並べる(足した候補が無い資料は None)。"""
+    M = c.get("mountain_named_candidates") or {}
+    if not M.get("enabled") or not any(r.get(M["mark_key"]) == M["mark_value"] for r in cands):
+        return None
+    ix = _place_index()
+    name_of = {}
+    for n, ref in ix["mountains"].items():
+        name_of.setdefault(ref, n)
+    for ref in _asked_mountains(question, ix):
+        ids = {eid for g in _mountain_groups(ref, ix) for eid in g}
+        rows = [r for r in cands if (r.get("place_id") or "").split(":", 1)[-1] in ids]
+        if not any(r.get(M["mark_key"]) == M["mark_value"] for r in rows):
+            continue
+        return {"site_ref": ref, "name": name_of.get(ref),
+                "candidates": [{"name": r["name"], "outlook": r.get("outlook"), "facts": [f["id"] for f in _brought_facts(r, facts)]} for r in rows]}
+    return None
+
+
 def _mountain_named_ranked(question, cond, cands, picks, workdir, c):
     """計画の順位(上限より下も含む全部)にある、質問の山の名所を、計画の行と同じ形で候補の末尾に足す。→ 計画の順位に無かった組。"""
     M = c.get("mountain_named_candidates") or {}
@@ -2019,6 +2041,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else (scope or "default"),
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
+        "asked_mountain": asked_mountain(question, cands, F.rows, c),      # 2026-11-28: 聞かれた山の名所(山の名前から候補を足した資料だけ。ほかは null)
         "candidates": cands, "candidates_note": (extra or {}).get("origin_line"),
         "candidate_merges": merges, "candidate_merge_conflicts": merge_conflicts,
         "facts": F.rows, "seasonal_obs": sobs, "cards": cards, "narrative": mat,
@@ -2598,6 +2621,28 @@ def _loc(r):
     return f"{pref}{city}"
 
 
+def _cand_md(r):
+    """候補の 1 行(資料の Markdown の「候補と順位」と「聞かれた山の名所」で同じ文)。"""
+    why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
+    if r.get("rank") is None:
+        tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
+        return (f"- [{tag}・{r.get('group') or ''}] {r['name']}({_loc(r)} {_dist(r)})"
+                + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else "")
+                + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
+    return (f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({_loc(r)} {_dist(r)}・点 {r.get('score')}・"
+            f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}"
+            + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
+
+
+def _fact_md(f):
+    """事実の 1 行(資料の Markdown の「確かめた事実」と「聞かれた山の名所」で同じ文)。"""
+    src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else 'その他' if f.get('source_class') else '区分なし'}"
+    when = "・".join(x for x in (f"観測 {f['observed']}" if f.get("observed") else "", f"取得 {f['read_at'][:10]}" if f.get("read_at") else "") if x)
+    if (f.get("fields") or {}).get("stale_days"):                # 段階85 第1部: 現況の古さの印
+        when = "・".join(x for x in (when, cfg()["auto_refresh"]["lines"]["stale_mark"].format(days=f["fields"]["stale_days"])) if x)
+    return f"- [{f['id']}] {f['kind_label']}: {f['content']}({src}{'・' + when if when else ''}){' ' + f['url'] if f.get('url') else ''}"
+
+
 def render_md(doc):
     L = [f"# ガイドの資料 {doc['id']}", "", f"- 質問: {doc['question']}"]
     if doc.get("species_renamed"):                       # 段階82 第1部: 種の名前の読み替え
@@ -2609,29 +2654,27 @@ def render_md(doc):
           f"- 対象の日: {' ; '.join('・'.join(p) for p in d.get('periods') or [])}" + ("(日付の指定なし・既定)" if d.get("defaulted_date") else ""),
           f"- 質問の型: {doc.get('intent')} / 経路: {doc.get('route')} / 範囲: {doc.get('scope')} {doc.get('region') or ''} {'・'.join(doc.get('areas') or [])}",
           f"- 出発地: {doc.get('origin')}", ""]
+    am = doc.get("asked_mountain")
+    if am:                                                # 2026-11-28: 聞かれた山の名所(候補の一覧・事実の一覧と同じ行を、そのまま先に並べる)
+        A = cfg()["mountain_named_candidates"]["asked_section"]
+        rows = {r["name"]: r for r in doc["candidates"]}
+        fx = {f["id"]: f for f in doc["facts"]}
+        L += [A["heading"], "", A["lead"], ""]
+        for x in am["candidates"]:
+            if x["name"] in rows:
+                L.append(_cand_md(rows[x["name"]]))
+            L += [_fact_md(fx[i]) for i in x.get("facts") or [] if i in fx]
+        L.append("")
     if doc["candidates"]:
         L += ["## 候補と順位", ""]
         if doc.get("candidates_note"):
             L.append(doc["candidates_note"])
         for r in doc["candidates"]:
-            why = "、".join(x for x in [r.get("outlook"), r.get("phrase"), *(r.get("reasons") or [])] if x)
-            if r.get("rank") is None:
-                tag = "種の名所" if r.get("basis") == "species" else "季節の目玉" if r.get("basis") == "highlight" else "例年の目安"
-                L.append(f"- [{tag}・{r.get('group') or ''}] {r['name']}({_loc(r)} {_dist(r)})"
-                         + (f"・{r['theme']}" if r.get("theme") else "") + (f"・{r['note']}" if r.get("note") else "")
-                         + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
-                continue
-            L.append(f"{r['rank']}. [{r.get('subject') or ''}{'・今年の現況あり' if r.get('basis') == 'current' else '・例年の目安'}] {r['name']}({_loc(r)} {_dist(r)}・点 {r.get('score')}・"
-                     f"{'選んだ' if r['chosen'] else '選ばなかった: ' + (r.get('not_chosen_reason') or '点数が下')}) {why}"
-                     + (cfg()["reserve"]["obs_ref"].format(ids="・".join(r["seasonal_obs_ids"])) if r.get("seasonal_obs_ids") else ""))
+            L.append(_cand_md(r))
         L.append("")
     L += ["## 確かめた事実", ""]
     for f in doc["facts"]:
-        src = f"{f.get('source') or '出典名なし'}・{'公式' if f.get('source_class') == 'official' else 'その他' if f.get('source_class') else '区分なし'}"
-        when = "・".join(x for x in (f"観測 {f['observed']}" if f.get("observed") else "", f"取得 {f['read_at'][:10]}" if f.get("read_at") else "") if x)
-        if (f.get("fields") or {}).get("stale_days"):                # 段階85 第1部: 現況の古さの印
-            when = "・".join(x for x in (when, cfg()["auto_refresh"]["lines"]["stale_mark"].format(days=f["fields"]["stale_days"])) if x)
-        L.append(f"- [{f['id']}] {f['kind_label']}: {f['content']}({src}{'・' + when if when else ''}){' ' + f['url'] if f.get('url') else ''}")
+        L.append(_fact_md(f))
     if not doc["facts"]:
         L.append("(なし)")
     if doc.get("seasonal_obs"):                            # 段階83 第2部
