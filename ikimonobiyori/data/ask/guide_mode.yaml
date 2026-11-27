@@ -506,3 +506,6 @@ mountain_named_candidates:
   enabled: true
   mark_key: added_by
   mark_value: mountain_name
+  # 「調べる(資料が薄い)」の数え方(指示書 docs/mountain-named-2-instructions.md 第 2 部。2026-11-28 利用者の決定): 足した候補が、ここに挙げた種類の事実
+  # (今年の現況 current・例年の時期 typical)を 1 つも連れてこなかったときは、その候補を「資料が薄いか」の数に入れない(足す前と同じ「調べる」が残る)。
+  thin_fact_kinds: [current, typical]

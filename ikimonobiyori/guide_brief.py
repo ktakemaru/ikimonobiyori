@@ -253,6 +253,22 @@ def _mountain_targets(question, cond, cands, c):
     return out
 
 
+def _brought_facts(r, facts, kinds=None):
+    """候補の 1 件 → その候補の事実(場所が候補の名前か、まとめた名前のもの)の一覧。kinds を渡すと、その種類だけ。"""
+    names = {r.get("name"), *(r.get("merged_from") or [])} - {None}
+    return [f for f in facts if f.get("place") in names and (kinds is None or f.get("kind") in kinds)]
+
+
+def _cands_for_needs(cands, facts, c):
+    """「資料が薄いか」(research.needs)に数える候補。山の名前から足した候補のうち、今年の現況・例年の時期の事実(設定 thin_fact_kinds)を
+    1 つも連れてこなかったものは数えない(足す前と同じ「調べる」を残す。指示書 docs/mountain-named-2-instructions.md 第 2 部)。"""
+    M = c.get("mountain_named_candidates") or {}
+    kinds = set(M.get("thin_fact_kinds") or [])
+    if not M.get("mark_key") or not kinds:
+        return cands
+    return [r for r in cands if r.get(M["mark_key"]) != M["mark_value"] or _brought_facts(r, facts, kinds)]
+
+
 def _mountain_named_ranked(question, cond, cands, picks, workdir, c):
     """計画の順位(上限より下も含む全部)にある、質問の山の名所を、計画の行と同じ形で候補の末尾に足す。→ 計画の順位に無かった組。"""
     M = c.get("mountain_named_candidates") or {}
@@ -1979,7 +1995,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if hl:
         mat = _highlight_materials(mat, cards, hl, c)
     from . import research as RS
-    targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, cands, cards, F.rows, c)   # 段階78 第4部 1
+    targets = [] if cond.get("route") in c["species_rows"]["routes_skip"] else RS.needs(question, cond, sprows, _cands_for_needs(cands, F.rows, c), cards, F.rows, c)   # 段階78 第4部 1
     if towns and cond.get("route") not in c["species_rows"]["routes_skip"]:
         targets += _tentative_targets(question, towns, area_label, cands, targets, c)
     researched = RS.already_researched(question, now, env)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ
