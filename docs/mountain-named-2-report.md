@@ -50,6 +50,7 @@
 1. `part1.patch` をそのまま当てました(データ 1 行・`test_brief_concierge_fields_2.py` の 2 か所)。
 2. `test_mountain_named_candidates.py` の 92 行を `self.assertEqual(r[0]["mountain_site_ref"], "yamabiyori:m027")` にし、コメントを「観察の名所に書いた mountain_site_ref(2026-11-28 利用者の決定。第 1 部)」にしました。
 3. `MountainLinks` の説明の文(「6 件」)は、変えてよいと言われた箇所ではないので、そのままにしました(決めてほしいこと 1)。
+   - **追記(2026-11-28)**: その後、利用者の指示で「山の地点との結びつき 7 件」に直しました(commit `4445901`)。
 4. 35 の資料を作り直して、前の `after/`・`off/` と比べました(作り直した資料は同じフォルダの `p1b/`・`p1b-off/`)。
    - 違いは、b17・b18(大山の紅葉)の JSON の、足した候補の `mountain_site_ref` が `null` から `yamabiyori:m027` になった 1 か所ずつだけでした(`generator` を除く)。
    - Markdown は 35 とも 1 文字も違いません(`mountain_site_ref` は Markdown に出ない)。`fallback.text` も同じです。

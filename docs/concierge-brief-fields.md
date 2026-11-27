@@ -98,6 +98,7 @@
 | 名所カタログ 筑波山 `kouyou-0015` | `site_ref`(今ある項目) | `yamabiyori:m057` | 名前(括弧の前)が同じ。座標の距離 約1.3km |
 | 名所カタログ 大山(大山寺) `kouyou-0020` | `site_ref` | `yamabiyori:m027` | 名前(括弧の前)が同じ。座標の距離 約1.6km |
 | 名所カタログ 霧ヶ峰 `hana-0037` | `site_ref` | `yamabiyori:m043` | 名前(括弧の前)が同じ。件に座標が無いので距離は確かめていない |
+| 観察の名所 大山寺・大山阿夫利神社下社 `obs-kouyou-0019` | `mountain_site_ref` | `yamabiyori:m027` | 2026-11-28 に利用者の決定で足した(`docs/mountain-named-2-report.md` 第 1 部)。`catalog_ref` 先の `kouyou-0020` の `site_ref` と同じ山。名所に座標が無いので距離は確かめていない |
 
 - 観察の名所の `mountain_site_ref` は、資料の候補を作るとき(`guide_brief._place_of`)だけ読む。名所カタログの `site_ref` は、提案の出力 `biyori-proposal/1` の `details.catalog_site_ref` にも写る(`proposals.py`。今までからある動き)。
 - sites.yaml の山には都県の項目が無いので、都県は突き合わせていない。
