@@ -481,3 +481,18 @@ reserve:
   fallback_question: 今の時期に見られる生き物           # 観察記録の分類を決めない質問の形(紅葉だけの質問でも地域の観察記録を引く)
   obs_ref: "・公式の現況がなければ、地域の観察記録 [{ids}] の傾向を続けて書ける"
   skip_routes: []
+# コンシェル向けの項目(指示書 docs/brief-concierge-fields-instructions.md。2026-11-27)。資料の JSON にだけ入れる(Markdown・rules には出さない)。
+# 候補の ID・座標は、計画の行の id が指す名所カタログ・観察の名所の値を写すだけ(作らない・推測しない・丸めない)。無ければ null。
+concierge_fields:
+  generator_name: ikimonobiyori
+  place_id_prefix: "ikimonobiyori:"         # 名所カタログ・観察の名所の id の前に付ける(提案の出力 biyori-proposal/1 の place.site_ref と同じ書き方)
+  site_ref_prefix: "yamabiyori:"            # 山の地点との結びつき(sites.yaml の site_ref)
+  coord_source:                             # 座標を写した元
+    catalog: catalog                        # 名所カタログ(data/catalog/*.yaml)の point
+    catalog_ref: catalog_via_spot           # 観察の名所の catalog_ref が指す名所カタログの point
+    spot: observation_spot                  # 観察の名所(data/observations/spots.yaml)の point
+  # 野鳥の観察の名所の座標(bird_range。小数 2 桁)は、野鳥のプロファイルの位置の粗さ(area_10km = 小数 1 桁)より細かいので写さない(絶対ルール 7)
+  spot_coords_skip_subjects: [birds, wintering_birds]
+  merge_conflict_reason: まとめた候補の元の ID が食い違うので、ID・座標を入れていない
+  git:
+    timeout_s: 5                            # commit を読む git の待ち時間の上限(仮の値。超えたら null)
