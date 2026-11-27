@@ -158,7 +158,14 @@ def add_facts(F, question, cond, cands, now, env, c):
                          "publisher": f.get("source"), "source_class": f.get("source_class"), "url": f.get("url"),
                          "state_norm": (f.get("fields") or {}).get("state_norm"), "subject": None})
         recs.sort(key=lambda r: (O.state_date_of(r) or "", r.get("read_at") or ""), reverse=True)
-        for r in recs:
+        seen = set()
+        newest = []
+        for r in recs:                                      # 同じ発信元・同じ場所・同じ区分は、いちばん新しい発信だけ(古い発信は記録に残る)
+            k = (r.get("publisher") or r.get("url"), r.get("part") or None, r.get("source_class"), r.get("subject"))
+            if k not in seen:
+                seen.add(k)
+                newest.append(r)
+        for r in newest:
             sd = O.state_date_of(r)
             same = next((x for x in rows if not r.get("part") and r.get("source_class") != "user" and x["url"] == r.get("url")
                          and (x["state_date"] or None) == (sd or None) and (x["state"] or "") in (r.get("state") or "")), None)
@@ -174,7 +181,7 @@ def add_facts(F, question, cond, cands, now, env, c):
             if r.get("source_class") == "user":
                 fr["source_class"] = "user"
             rows.append({"fact": fr["id"], "part": r.get("part"), "state": r.get("state"), "state_date": sd,
-                         "publisher": fr.get("source"), "source_class": r.get("source_class"), "url": r.get("url"),
+                         "publisher": fr.get("source"), "source_class": fr.get("source_class"), "url": r.get("url"),   # 区分は資料の事実と同じ(ホストで決まる)
                          "state_norm": r.get("state_norm"), "subject": r["subject"],
                          **({"unseen": r["unseen"]} if r.get("unseen") else {})})
         rows.sort(key=lambda x: (x.get("state_date") or ""), reverse=True)
@@ -219,11 +226,24 @@ def _within(a, b, days):
     return abs((da - db).days) <= days
 
 
+def _latest_per_source(rows):
+    """同じ発信元(発行元か URL)・同じ場所・同じ区分の記録は、状態の日付がいちばん新しい 1 件だけ(同じ発信元の古い発信と新しい発信を、ばらつきにしない)。"""
+    best = {}
+    for r in rows:
+        if not r.get("state_date"):
+            continue
+        k = (r.get("publisher") or r.get("url"), r.get("part") or None, r.get("source_class"))
+        if k not in best or str(r["state_date"]) > str(best[k]["state_date"]):
+            best[k] = r
+    keep = {id(r) for r in best.values()}
+    return [r for r in rows if id(r) in keep]
+
+
 def spread(rows, C, unknown):
     S = C.get("spread") or {}
     days = _v(S.get("window_days"))
     groups = {}
-    dated = [r for r in rows if r.get("state_date")]
+    dated = _latest_per_source(rows)
     for i, a in enumerate(dated):
         for b in dated[i + 1:]:
             same_part = (a.get("part") or None) == (b.get("part") or None)
@@ -301,7 +321,8 @@ def _searched_path(env=None):
 def note_searched(bid, place, *, found, reason=None, env=None, now=None):
     from . import guide_brief as GB
     doc = GB.load(bid, env)
-    now = now or datetime.now().astimezone()
+    from . import observations as O
+    now = now or O.clock_now()
     row = {"at": now.isoformat(timespec="seconds"), "brief": bid, "question": doc.get("question"), "place": place,
            "found": bool(found), **({"reason": str(reason)[:80]} if reason else {})}
     p = _searched_path(env)

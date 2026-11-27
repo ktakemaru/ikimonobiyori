@@ -187,6 +187,32 @@ class CurrentStatus(unittest.TestCase):
         self.assertFalse([x for x in again["research"]["targets"] if x.get("kind") == "current_status"])
         self.assertIn("新しい情報は見つからなかった", GB.render_md(again))
 
+    def test_schema(self):
+        import json
+        from jsonschema import Draft202012Validator
+        schema = json.loads((H.ROOT / "ikimonobiyori" / "schemas" / "guide-brief.schema.json").read_text(encoding="utf-8"))
+        self.assertEqual([e.message[:120] for e in Draft202012Validator(schema).iter_errors(self.doc)], [])
+
+    def test_switches(self):
+        def with_off(part):
+            def f():
+                c = _on()
+                c["current_status"][part]["enabled"] = False
+                return c
+            return f
+        with mock.patch.object(GB, "cfg", with_off("research")):
+            d = GB.build(Q, now=NOW)
+        self.assertFalse([x for x in d["research"]["targets"] if x.get("kind") == "current_status"])
+        with mock.patch.object(GB, "cfg", with_off("spread")):
+            d = GB.build(Q, now=NOW)
+        self.assertEqual(d["current_status"]["places"][0]["spread"], [])
+        self.assertIsNone(d["current_status"]["spread_line"])
+        doc = copy.deepcopy(self.doc)
+        doc["id"] = "b-test-steps"
+        with mock.patch.object(GB, "cfg", with_off("steps")):
+            r = GV.check(self.draft_ok() + FOOT, doc)
+        self.assertNotIn("current_research_skipped", {e["code"] for e in r["errors"]})
+
     def test_refresh_not_recorded(self):
         doc = copy.deepcopy(self.doc)
         doc["id"] = "b-test-refresh"
@@ -195,6 +221,41 @@ class CurrentStatus(unittest.TestCase):
         self.assertIn("refresh_not_recorded", self.codes(self.draft_ok(), doc))
         doc["auto_refresh"]["pages"][0]["result"] = "unchanged"
         self.assertNotIn("refresh_not_recorded", self.codes(self.draft_ok(), doc))
+
+
+class OtherRecords(unittest.TestCase):
+    """part の無い利用者の記録と、同じ発信元の古い発信・新しい発信(作り物)。"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="ikimono-current-status-2-")
+        self.env = mock.patch.dict(os.environ, {"IKIMONOBIYORI_DATA_DIR": self.tmp.name})
+        self.env.start()
+        GB._HOSTS = None
+
+    def tearDown(self):
+        self.env.stop()
+        GB._HOSTS = None
+        self.tmp.cleanup()
+
+    def test_user_record_without_part(self):
+        rec = {"subject": "autumn_leaves", "name": "筑波山", "state": "紅葉は少し", "state_date": "2026-11-26", "source_class": "user"}
+        res = O.record([rec], now=NOW)
+        self.assertEqual((res["written"], res["rejected"]), (1, []))
+        self.assertEqual(O.record([rec], now=NOW)["duplicates"], 1)
+        err = O.validate({**rec, "source_class": "official"}, O.load_policy())
+        self.assertTrue(any("source_class: user" in e for e in err), err)      # URL の無い記録に、利用者の記録の入口を案内する
+
+    def test_same_publisher_is_not_spread(self):
+        base = {"subject": "autumn_leaves", "name": "筑波山", "part": "山頂", "url": A, "publisher": "試験の発信元A(作り物)",
+                "source_class": "official", "basis": "page"}
+        O.record([{**base, "state": "色づき始め", "state_date": "2026-11-14"}, {**base, "state": "見頃", "state_date": "2026-11-22"}],
+                 now=NOW - timedelta(hours=1))
+        with mock.patch.object(GB, "cfg", _on):
+            d = GB.build(Q, now=NOW)
+        p = d["current_status"]["places"][0]
+        self.assertEqual(p["spread"], [])                                          # 同じ発信元の更新は、ばらつきではない
+        self.assertEqual([r["state"] for r in p["current_parts"]], ["見頃"])        # 新しい発信だけを並べる
+        self.assertEqual(p["current_parts"][0]["source_class"], "official")
 
 
 if __name__ == "__main__":

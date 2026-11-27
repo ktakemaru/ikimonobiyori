@@ -903,7 +903,7 @@ def main(argv=None, http_get=None):
     p = sub.add_parser("inat-refresh")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--now")
-    p = sub.add_parser("record")
+    p = sub.add_parser("record", help="読んだ事実を記録する。利用者が現地で確認した記録は source_class: user(URL なし・state_date と state(言葉のまま)が要る・part・unseen は任意)")
     p.add_argument("--out-dir", required=True)
     p.add_argument("--batch", required=True)
     p = sub.add_parser("photos", help="答えに載る種の写真のうち、手元にないものを取りに行く(段階38・57。上限の範囲)")

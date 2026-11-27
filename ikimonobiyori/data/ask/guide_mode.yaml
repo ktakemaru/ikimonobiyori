@@ -537,7 +537,7 @@ current_status:
     searched_none_md: "- その場で調べた({at}): 新しい情報は見つからなかった(答えにもそのとおり書く)"
     searched_none: "「{where}」の今年の現況を調べたが、新しい情報は見つからなかった"
     user_fix: "「11月26日に現地で確認した記録では、…(公式の発表ではありません)」の形で、日付と公式ではないことを同じ文に書く"
-    skipped_fix: "調べる手順(資料の節「調べる」)で調べて記録し、python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place {where}(見つからなければ --none <理由>)を実行してから、資料を作り直す"
+    skipped_fix: "調べる手順(資料の節「調べる」)で調べて記録し、python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place {where}(見つからなければ --none <理由>。Web が使えないときは調べずに --none)を実行してから、資料を作り直す"
     refresh_fix: "節「読み直したページ」の本文の控えで状態と日付を確かめて ask record し(新しい情報が無ければ ask research searched --brief {id} --place {where} --none <理由>)、資料を作り直す"
   research:                          # 第 4 部: 聞かれた名所に「新しい」(observations の freshness.fresh_days)今年の現況が 1 件も無いとき
     enabled: true
@@ -551,7 +551,7 @@ current_status:
       - '今年の現況(名所ごと): 検索の語は名所の名前・対象・今年の年だけ(個人情報・この環境の情報を入れない)。1 つの名所につき検索 {searches} 回・ページ {pages} 枚まで(WebSearch・WebFetch。検索の要約を事実にしない)。'
       - '読む順番: 現地の発信(観光協会・施設や索道の運営会社・自治体・ビジターセンター)を先に、次に紹介サイト。自動アクセスを断っているページ・ログインや有料の壁は読まず、人が開く URL として添える。'
       - '読んだら 1 件ずつ ask record --batch <JSON> で記録する(state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
-      - 'そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place <名所>(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。'
+      - 'そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place <名所>(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
   spread:                            # 第 5 部
     enabled: true
     window_days: {value: 14, source: "指示書 current-status 第 5 部(状態の日付が 14 日以内・仮置き)", provisional: true}

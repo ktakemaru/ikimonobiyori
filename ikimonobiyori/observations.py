@@ -441,7 +441,7 @@ def validate(rec, policy):
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
             continue                                  # 段階69 第4部 3: 行事の記録は今の状態がなくてよい
         if not rec.get(k):
-            errs.append(f"{k} がない")
+            errs.append(f"{k} がない" + ("(利用者が現地で確認した記録は source_class: user にすると URL は要らない)" if k == "url" else ""))
     if rec.get("source_class") and rec["source_class"] not in r["source_classes"]:
         errs.append(f"source_class は {r['source_classes']} のどれか")
     errs += detail_errors(rec, policy)                # 指示書 current-status 第 2・3 部: どのあたりか(part)・利用者の記録(user)
@@ -683,7 +683,7 @@ def _dup_key(r):
     """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
     ev = r.get("event")
     return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
-            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r["part"], r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
 
 
 def dup_key_text(r):
@@ -720,7 +720,7 @@ def record(batch, *, env=None, policy=None, now=None):
                 if k in have:
                     dup += 1
                     u["duplicates"] += 1
-                    conf.setdefault(k, {}).update(last_confirmed_at=r["read_at"], url=r["url"])   # 段階37: 新しい記録にせず、最後に確かめた日時だけ更新する
+                    conf.setdefault(k, {}).update(last_confirmed_at=r["read_at"], url=r.get("url"))   # 段階37: 新しい記録にせず、最後に確かめた日時だけ更新する
                     conf_changed = True
                     continue
                 have.add(k)
