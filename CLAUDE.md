@@ -52,7 +52,7 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 - 出典は名前と日付だけ(段階85)。「出典を見せて」「URL を教えて」は `ask source-urls` の出力をそのまま送る(URL を書き写さない)。
 - **ページ・Artifact を頼まれたとき**(「artifactにして」など。段階81 の続き): 下書きが合格したら `ask page` → Artifact で公開 → `python -X utf8 -m ikimonobiyori.ask page-reply --url <公開したリンク>` の出力を**一字一句そのまま**送る(公開できなければ `--url` を省く)。答えの全文は会話に出さない(ページの中にある)。
 - 写真の指摘は `docs/guide-mode.md` の手順(段階82)。
-- 資料に「調べる(資料が薄い)」の節があり Web が使えるときは、その手順で公式ページを `ask research fetch` で読み(1 問 3 ページ・2 分まで)、確かめた名所と例年の時期だけを `ask research record` してから資料を作り直す(段階78。今年の現況は記録しない。Web が使えなければ飛ばす。`docs/guide-mode.md` §5)。下書きは `docs/guide-voice.md` §1 の順番で、語りの材料を 1 点以上使う。
+- 資料に「調べる(資料が薄い)」の節があり Web が使えるときは、その節の手順で調べて記録し、資料を作り直す(段階78。名所と例年の時期は `ask research fetch`・`record`(1 問 3 ページ・2 分まで)。今年の現況は WebFetch で読み `ask record`・`ask research searched`。Web が使えなければ飛ばす。`docs/guide-mode.md` §5)。下書きは `docs/guide-voice.md` §1 の順番で、語りの材料を 1 点以上使う。
 - 今までの形(下の A〜E)が受け持つもの: `answer_form: classic` に戻したとき、単体の実行(`ask answer` を直接使う)、表にして比べる・写真つきのページ、新しい形の控え。新しい形の答えに「表にできます」などの案内を足さない。
 
 ### A. ふだんの手順(段階63a)
@@ -126,6 +126,7 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 | 作業 | コマンド | 目安 | 出どころ |
 |---|---|---|---|
 | 資料を作る | `ask brief` | 読み直しあり 23.6 秒・なしは未計測 | 2026-11-28 手元・1 回。詳細は `docs/wait-notice-timings.md` |
+| 現況を広く調べる | 検索・WebFetch・`ask record` | 未計測 | 今回足した |
 | 山の花暦 | `guide wildflower --json` | 0.9〜1.2 秒 | 2026-11-27 手元・6 回 |
 | 全テスト(1 回で) | `unittest discover -s tests` | 未計測 | 4 組に分けた値は `docs/wait-notice-timings.md` |
 
