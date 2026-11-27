@@ -456,7 +456,7 @@ class Flow:
         self._save("records.json", hist)
         mark_fetched([u.get("url") for u in out.get("by_url") or []], self.clock(), self.env)
         from . import page_cache as PC                                  # 段階63b 第2部: 取得のキャッシュ(本文は保存しない。取り出した事実のハッシュだけ)
-        PC.note(PC.entries_for_batch(batch, out.get("by_url")), self.clock(), self.env)
+        PC.note(PC.entries_for_batch(batch, [u for u in out.get("by_url") or [] if u.get("url")]), self.clock(), self.env)   # 利用者の記録(URL なし)はキャッシュに入れない
         self.call("record", submitted=len(batch), written=out.get("written"), duplicates=out.get("duplicates"),
                   rejected=len(out.get("rejected") or []))
         return out
@@ -959,8 +959,10 @@ def main(argv=None, http_get=None):
     p.add_argument("--now")
     p.add_argument("--out-dir", help=argparse.SUPPRESS)
     p = sub.add_parser("research", help="段階78 第4部: その場で調べる。fetch <URL> --brief <id>(公式ページの本文を読む。1 つの質問で 3 ページ・2 分まで)|record --brief <id> --file <JSON>|list")
-    p.add_argument("action", choices=["fetch", "record", "list"])
+    p.add_argument("action", choices=["fetch", "record", "list", "searched"])
     p.add_argument("url", nargs="?")
+    p.add_argument("--place", help="searched: 今年の現況を調べた名所(資料の節「調べる」の名前。指示書 current-status 第 4・6 部)")
+    p.add_argument("--none", dest="none_reason", help="searched: 新しい情報が取れなかったときの理由(短く)")
     p.add_argument("--publisher", help="fetch: 公式の一覧にないホスト(観光協会の独自ドメインなど)の発行元の名前。本文にその名前があるときだけ読む")
     p.add_argument("--brief")
     p.add_argument("--file")
@@ -1265,6 +1267,17 @@ def main(argv=None, http_get=None):
             lim = RS.cfg()["max_text_chars"]
             tail = f"\n…(続きは {r['path']})\n" if len(r["text"]) > lim else "\n"
             sys.stdout.flush(); sys.stdout.buffer.write((r["text"][:lim] + tail).encode("utf-8"))
+            return 0
+        if a.action == "searched":                       # 指示書 current-status 第 4・6 部: 今年の現況を調べた印(取れた・取れなかった)
+            from . import current_status as CS
+            if not a.place:
+                print("--place <名所> が要ります", file=sys.stderr)
+                return 2
+            try:
+                _out(CS.note_searched(a.brief, a.place, found=not a.none_reason, reason=a.none_reason, now=now))
+            except (OSError, ValueError) as ex:
+                print(f"資料を読めません: {ex}", file=sys.stderr)
+                return 2
             return 0
         from . import guide_brief as GB
         try:

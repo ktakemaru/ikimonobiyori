@@ -10,8 +10,13 @@ subject_labels: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
 record:
   dir: observations                       # IKIMONOBIYORI_DATA_DIR の下
   max_raw_chars: {value: 80, source: "指示書 2-通信の作法・4-2(状態の短い原文は80字まで)", provisional: false}
-  source_classes: [official, secondary]
+  source_classes: [official, secondary, user]   # user: 利用者が現地で確認した記録(指示書 docs/current-status-instructions.md 第 3 部。利用者の承認 2026-11-28。URL なし)
   required: [url, state, source_class]
+  # 指示書 current-status 第 2・3 部(利用者の承認 2026-11-28): どのあたりか(part)と、利用者の記録の検査。
+  # part・user の記録は、順位・候補の今年の現況に使わない(資料の聞かれた名所の節と事実にだけ出す。仮置き)
+  detail:
+    part_max_chars: {value: 30, source: "指示書 current-status 第 2 部(30 字まで・仮置き)", provisional: true}
+    user_required: [state, state_date]     # 名所(spot か name)は全体の検査で要る。状態は利用者の言葉をそのまま(max_raw_chars まで。切り詰めずに止める)
   # 段階69 第3部 4: 名所の登録(種 kind と例年の時期 typical。本文を読んだ印 basis: page)は、今の状態(state)がなくても記録できる。
   # 今の状態は読めたときだけ別に記録する(画像で読めないときは記録しない。推測しない)
   state_optional_with: [kind, typical]
