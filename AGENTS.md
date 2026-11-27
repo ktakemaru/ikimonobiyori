@@ -125,7 +125,7 @@ Claude Code ではスキル `.claude/skills/ikimono-weekend/SKILL.md`(同じ内�
 
 | 作業 | コマンド | 目安 | 出どころ |
 |---|---|---|---|
-| 資料を作る | `ask brief` | 未計測 | 段階85 の続きで中身が変わった。前の版の値は `docs/wait-notice-timings.md` |
+| 資料を作る | `ask brief` | 読み直しあり 23.6 秒・なしは未計測 | 2026-11-28 手元・1 回。詳細は `docs/wait-notice-timings.md` |
 | 山の花暦 | `guide wildflower --json` | 0.9〜1.2 秒 | 2026-11-27 手元・6 回 |
 | 全テスト(1 回で) | `unittest discover -s tests` | 未計測 | 4 組に分けた値は `docs/wait-notice-timings.md` |
 
