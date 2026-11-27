@@ -6,15 +6,15 @@
 
 - 筑波山・御岳山・陣馬山・大山の紅葉(各 2 問)と霧ヶ峰の花の 9 つの資料で、先頭に「聞かれた山の名所」の節が出ます。JSON には `asked_mountain` が入ります。候補の順位・一覧・`rules` は変えていません。
 - 御岳山の 2 つでは「調べる(資料が薄い)」が main と同じ形で戻りました。陣馬山・筑波山・大山は、前回のとおり出ません。
-- 第 1 部(大山の結びつき)は取り消しました。許された 2 か所のほかに、前回足したテスト `test_mountain_named_candidates.py` の 1 か所が落ちたためです。用意した差分は残してあります(決めてほしいこと 1)。大山の節は、山の名前から引く道で出ます。
+- 第 1 部(大山の結びつき)は、いったん取り消したあと、利用者の決定(2026-11-28)で入れました。`obs-kouyou-0019` に `mountain_site_ref: yamabiyori:m027` を書き、テストは `test_brief_concierge_fields_2.py` の 2 か所と `test_mountain_named_candidates.py` の 1 か所を変えました。資料で変わるのは、大山の紅葉の 2 つの候補の `mountain_site_ref` だけです(第 1 部の追記)。
 - 山の名前の入らない 9 つと、変わらないはずの 17 は、`asked_mountain` を除いて main と 1 文字も違いません(高尾山の 4 つもこの中で、`asked_mountain` は `null`)。設定で切ると、35 の資料が main と同じになります。照合の合否も、節のあるなしで変わりません。
 - 時間の表の `ask brief` に、読み直しありの 1 回(23.6 秒)を書きました。通信はしていません。push・PR はまだです。
 
 | ブランチ | 最後の commit | 実行したテストと最後の行 |
 |---|---|---|
-| `feature/mountain-named-candidates` | この報告書の commit(作業は `b50e9cf`・`5366b66`・`8b7bb1c`・`e88563c`) | 関係する 59 本(前回の 58 本と新しい `test_mountain_named_2`)を `tests/` から 1 回で: `Ran 1149 tests in 403.876s` / `OK`。時間の表を直したあとに、文書・設定の 4 本(`test_stage63b`・`test_sources`・`test_self_contained`・`test_ikimonobiyori`): `Ran 130 tests in 43.459s` / `OK` |
+| `feature/mountain-named-candidates` | この報告書の commit(作業は `b50e9cf`・`5366b66`・`8b7bb1c`・`e88563c`、第 1 部は報告書の 1 つ前の commit) | 関係する 59 本(前回の 58 本と新しい `test_mountain_named_2`)を `tests/` から 1 回で: `Ran 1149 tests in 403.876s` / `OK`。時間の表を直したあとに、文書・設定の 4 本(`test_stage63b`・`test_sources`・`test_self_contained`・`test_ikimonobiyori`): `Ran 130 tests in 43.459s` / `OK`。第 1 部を入れたあとに、59 本をもう一度: `Ran 1149 tests in 279.200s` / `OK` |
 
-**変えたテストの 2 か所**: 変えていません。第 1 部で `tests/test_brief_concierge_fields_2.py` の 2 か所を直しましたが、取り消したので元のままです(第 1 部)。
+**変えたテストの 3 か所**(利用者の決定 2026-11-28): `tests/test_brief_concierge_fields_2.py` の `test_only_these_have_links`(期待値を 7 件に)と `test_no_link_through_catalog_ref`(期待値を `yamabiyori:m027` に・名前を `test_oyama_spot_has_its_own_link` に)、`tests/test_mountain_named_candidates.py` の `test_oyama_through_catalog_ref`(92 行。`assertIsNone` を `assertEqual(..., "yamabiyori:m027")` に)。ほかのテストは変えていません。
 
 ## 第0部: 始める前の確かめ
 
@@ -28,7 +28,7 @@
 - main のときの資料は、前回の `C:/temp/ikimono-mountain-named-20261128/before/` を比べる相手にしました。
 - 指示書を `docs/mountain-named-2-instructions.md` に写して commit しました(`b50e9cf`)。
 
-## 第1部: 大山の結びつき(取り消した)
+## 第1部: 大山の結びつき(いったん取り消し、利用者の決定で入れた)
 
 1. `obs-kouyou-0019` に `mountain_site_ref: yamabiyori:m027` を、高尾山などと同じ形のコメントつきで 1 行足しました。
 2. `tests/test_brief_concierge_fields_2.py` の 2 か所を直しました。
@@ -41,7 +41,20 @@
    - 中身は `self.assertIsNone(r[0]["mountain_site_ref"])` で、コメントは「観察の名所に mountain_site_ref は書いていない(第 1 部は取り消し)」です。
    - 前回、第 1 部を取り消したことに合わせて書いたテストです。今回変えてよいのは `test_brief_concierge_fields_2.py` の 2 か所だけなので、指示書 2 章のとおり取り消しました。
 5. データ 1 行とテスト 2 か所の差分は `C:/temp/ikimono-mountain-named-2-20261128/part1.patch` に残しました。取り消したあと、2 本のテストが `OK` であることを確かめました。
-6. 大山の節は、`mountain_site_ref` ではなく、質問の山の名前(`data/sites.yaml` の m027)から引くので出ます。`asked_mountain.site_ref` も `yamabiyori:m027` です。候補の行の `mountain_site_ref` は `null` のままです。
+6. 大山の節は、`mountain_site_ref` ではなく、質問の山の名前(`data/sites.yaml` の m027)から引くので出ます。`asked_mountain.site_ref` も `yamabiyori:m027` です。候補の行の `mountain_site_ref` は `null` のままです(取り消した時点。下の追記で変わった)。
+
+### 追記(2026-11-28): 利用者の決定で入れた
+
+利用者が決めてほしいこと 1 に答えました: 「用意した差分を適用してください。`tests/test_brief_concierge_fields_2.py` の 2 か所に加えて、`tests/test_mountain_named_candidates.py` の落ちた 1 か所も、大山の結びつきが `yamabiyori:m027` になる形に変えてよいです。ほかのテストは変えないでください」。
+
+1. `part1.patch` をそのまま当てました(データ 1 行・`test_brief_concierge_fields_2.py` の 2 か所)。
+2. `test_mountain_named_candidates.py` の 92 行を `self.assertEqual(r[0]["mountain_site_ref"], "yamabiyori:m027")` にし、コメントを「観察の名所に書いた mountain_site_ref(2026-11-28 利用者の決定。第 1 部)」にしました。
+3. `MountainLinks` の説明の文(「6 件」)は、変えてよいと言われた箇所ではないので、そのままにしました(決めてほしいこと 1)。
+4. 35 の資料を作り直して、前の `after/`・`off/` と比べました(作り直した資料は同じフォルダの `p1b/`・`p1b-off/`)。
+   - 違いは、b17・b18(大山の紅葉)の JSON の、足した候補の `mountain_site_ref` が `null` から `yamabiyori:m027` になった 1 か所ずつだけでした(`generator` を除く)。
+   - Markdown は 35 とも 1 文字も違いません(`mountain_site_ref` は Markdown に出ない)。`fallback.text` も同じです。
+   - 設定で切った 35 の資料は、前の `off/` と JSON・Markdown とも同じでした(切ると大山の候補は足されないので、結びつきは資料に出ない)。
+5. テストの結果は「確かめの結果」の 6 に書きました。
 
 ## 第2部: 「調べる」を残す条件
 
@@ -374,7 +387,8 @@ b23「霧ヶ峰の花の見どころを教えて」:
    - 照らした資料: 節のある資料、`asked_mountain` を `null` にした同じ資料、前回の資料。
    - 下書き: `fallback.text` と、前回と同じ印つきの短い下書き(御岳山を除く 7 つ)。
    - 結果は 3 つとも、すべての項目まで同じでした。`fallback.text` は前回と同じ `ok: false`、印つきの下書きは `ok: true` です。
-5. **テスト**: 関係する 59 本を 1 回で実行しました: `Ran 1149 tests in 403.876s` / `OK`。既存のテストは 1 件も変えていません。
+5. **テスト**: 関係する 59 本を 1 回で実行しました: `Ran 1149 tests in 403.876s` / `OK`。(この時点では既存のテストは 1 件も変えていない)。
+6. **第 1 部を入れたあと**(利用者の決定 2026-11-28): テスト 3 か所を変えて、関係する 59 本を 1 回で実行しました: `Ran 1149 tests in 279.200s` / `OK`。
 
 ## 確かめられていないこと
 
@@ -400,7 +414,7 @@ b23「霧ヶ峰の花の見どころを教えて」:
 
 ## コンシェル側で使うときのメモ(書くだけ。決めるのはコンシェル側)
 
-- `asked_mountain` は「質問で挙げられた山と、その山の名所で資料に入った候補」を指します。`site_ref` は質問の山の `yamabiyori:mNNN` で、候補の `mountain_site_ref` が `null`(大山)でも入ります。
+- `asked_mountain` は「質問で挙げられた山と、その山の名所で資料に入った候補」を指します。`site_ref` は質問の山の `yamabiyori:mNNN` で、候補の `mountain_site_ref` が `null` でも入ります(大山の候補は第 1 部の追記で `yamabiyori:m027` になった)。
 - `asked_mountain.candidates[].name` で `candidates` の行を、`facts[]` で `facts` の行を引けます。値はどれも、その行に今ある値の写しです。
 - `null` のときは、「山の名前が質問に無い」か「山の名前はあるが、足した候補が無い」のどちらかです。高尾山はもとから候補にあるので、今は `null` です(決めてほしいこと 2)。
 - 見込みの語(`outlook`)は順位の見込みのままです。「見頃を過ぎている見込み」(御岳山)でも入ります。山に登る日の答えに使うときは、この語を見て書き方を決める形が考えられます。
@@ -409,10 +423,8 @@ b23「霧ヶ峰の花の見どころを教えて」:
 
 ## 決めてほしいこと
 
-1. **大山の結びつき(第 1 部)**: 書くには、許された 2 か所のほかに、もう 1 か所テストを変える必要があります。
-   - `tests/test_mountain_named_candidates.py` の `test_oyama_through_catalog_ref`(92 行)の `assertIsNone(r[0]["mountain_site_ref"])` を、`assertEqual(r[0]["mountain_site_ref"], "yamabiyori:m027")` に変える。
-   - 変えてよければ、`C:/temp/ikimono-mountain-named-2-20261128/part1.patch`(データ 1 行・`test_brief_concierge_fields_2.py` の 2 か所)とこの 1 か所で済みます。
-   - 合わせて、`test_brief_concierge_fields_2.py` の `MountainLinks` の説明の文(「6 件」)も「7 件」に直すかを決めてください。
+1. **大山の結びつき(第 1 部)**: 利用者の決定(2026-11-28)で入れました(第 1 部の追記)。残るのは 1 つだけです。
+   - `test_brief_concierge_fields_2.py` の `MountainLinks` の説明の文(「山の地点との結びつき 6 件」)を「7 件」に直すか。期待値ではなく説明の文ですが、変えてよいと言われた箇所ではないので、そのままにしています。
 2. **高尾山の `asked_mountain`**: 高尾山はもとから候補にある(足さない)ので、今は `asked_mountain` も節も入りません。
    - 入れるには、`test_mountain_named_candidates.py` の `test_not_added` を変える必要があります。このテストは、高尾山の紅葉の資料が設定の入・切で同じであることを確かめています。
    - 変えてよいか。変えると、b01・b02 の資料に節が入ります。
