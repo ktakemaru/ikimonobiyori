@@ -2,7 +2,7 @@
 
 ## 未公開
 
-- 資料(`ask brief` の JSON)に、ビヨリコンシェル向けの項目を足しました。候補ごとの `place_id`(名所の ID)・`lat`・`lon`・`coord_source`・`site_ref`(山の地点 `yamabiyori:mNNN` との結びつき)と、資料を作った版 `generator`(版・commit・未 commit の変更・作った時刻)です。名所カタログ・観察の名所・山の地点にある値を写すだけで、無いものは `null` です。答え・資料の Markdown・候補の選び方は変わりません。資料の形のスキーマ `ikimonobiyori/schemas/guide-brief.schema.json` を足しました(足した項目といちばん上の必須の項目だけを決めます)。
+- 資料(`ask brief` の JSON)に、ビヨリコンシェル向けの項目を足しました。候補ごとの `place_id`(名所の ID)・`lat`・`lon`・`coord_source`・`mountain_site_ref`(山の地点 `yamabiyori:mNNN` との結びつき)と、資料を作った版 `generator`(版・commit・未 commit の変更・作った時刻)です。名所カタログ・観察の名所・山の地点にある値を写すだけで、無いものは `null` です。答え・資料の Markdown・候補の選び方は変わりません。資料の形のスキーマ `ikimonobiyori/schemas/guide-brief.schema.json` を足しました(足した項目といちばん上の必須の項目だけを決めます)。
 
 ## 0.2.0(2026-11-15。段階75〜85)
 

@@ -78,11 +78,11 @@
 | ★ `place_id` | 名所の ID。名所カタログの件は `ikimonobiyori:<カタログの id>`(例 `ikimonobiyori:kouyou-0024`)、観察の名所の件は `ikimonobiyori:<観察の名所の id>`(例 `ikimonobiyori:obs-kouyou-0088`) | 文字列 | 順位つきの候補(今までの形の答えの計画の行の `id` から)。例年の目安・町の名所・種の名所・季節の目玉は `null` |
 | ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(丸めない。カタログは各件の `location_precision` の桁で入っている) | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所の座標(`bird_range`)は、野鳥のプロファイルの粗さより細かいので写さない(絶対ルール 7) |
 | `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot` | 文字列 | 座標があるとき |
-| ★ `site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref`) | 文字列 | 種の名所で `mountain_site`(段階84 第1部 A)がある候補と、カタログの件に `site_ref` があるとき(今は例の件だけ)。名前が山と同じでも、データに結びつきが無ければ `null`(高尾山の観察の名所など) |
+| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | 種の名所で `mountain_site`(段階84 第1部 A)がある候補と、カタログの件に `site_ref` があるとき(今は例の件だけ)。名前が山と同じでも、データに結びつきが無ければ `null`(高尾山の観察の名所など) |
 
 - 同じ名所でも対象ごとに別の ID がある(三溪園: 紅葉 `obs-kouyou-0002`・花 `obs-hana-0001`)。候補の ID は、候補を作った計画の行の ID。
-- 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の `site_ref` は山の地点との結びつきで、意味が違う。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
-- 候補をまとめたとき(`candidate_merges`): まとめた記録の 1 件に、項目を写した元の候補の名前 `place_from` を入れる。元の候補の `place_id`(または `site_ref`)が食い違えば、候補の 5 つの項目を `null` にし、`place_conflict`(`members`・`reason`)を残す。
+- 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の山の地点との結びつきは、それと区別するため `mountain_site_ref` という名前にした(資料の候補に `site_ref` という項目は無い)。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
+- 候補をまとめたとき(`candidate_merges`): まとめた記録の 1 件に、項目を写した元の候補の名前 `place_from` を入れる。元の候補の `place_id`(または `mountain_site_ref`)が食い違えば、候補の 5 つの項目を `null` にし、`place_conflict`(`members`・`reason`)を残す。
 - 出発地からの距離(`distance_km`)は今までのまま(足した座標から計算し直さない)。8 つの資料では、足した座標から出した直線の距離との差はどれも 2km 未満だった。
 
 足す前の調べ(座標・`site_ref` が無いことの確かめ。2026-11-27・通信なし。3 章と同じ作り方): 「今週末、高尾山で紅葉を見たい」「今週末の紅葉の情報は?」「丹沢で今咲いている花は?」「八ヶ岳の見どころを教えて」「高尾山の見どころを教えて」の 5 つの資料で、すべての候補・事実・`fields` の項目の名前を合わせて数え、JSON 全体で `mNNN`・`yamabiyori`・`site_ref`・`"site"`・`"point"`・`"lat"`・`"lon"` を探した。どれも 0 件。`README.md`・`CHANGELOG.md`・`docs/guide-mode.md` にも、資料の候補に座標や山の地点が入るとは書かれていない(`docs/guide-mode.md` は「座標は記録しない(市町村まで)」)。データ置き場が空の状態で作ったので、実際のデータ置き場で作った資料では確かめていない。
@@ -132,7 +132,7 @@
 
 ## 3. 実物の例(通信なし)
 
-**2026-11-27 の注**: 下の例は、項目を足す前の資料。今の資料には、いちばん上の `schema` の次に `generator` があり、候補の各件の末尾に 5 つの項目がある。同じ作り方で今の資料を作ると、下の 1 件目の候補の末尾は `"place_id": "ikimonobiyori:kouyou-0024", "lat": 35.711, "lon": 139.398, "coord_source": "catalog", "site_ref": null`、`generator` は `{"name": "ikimonobiyori", "version": "0.2.0", "commit": null, "dirty": null, "generated_at": "2026-11-27T09:00:00+09:00"}`(テストの仕組みの下なので `commit`・`dirty` は `null`、`generated_at` は `now`)。
+**2026-11-27 の注**: 下の例は、項目を足す前の資料。今の資料には、いちばん上の `schema` の次に `generator` があり、候補の各件の末尾に 5 つの項目がある。同じ作り方で今の資料を作ると、下の 1 件目の候補の末尾は `"place_id": "ikimonobiyori:kouyou-0024", "lat": 35.711, "lon": 139.398, "coord_source": "catalog", "mountain_site_ref": null`、`generator` は `{"name": "ikimonobiyori", "version": "0.2.0", "commit": null, "dirty": null, "generated_at": "2026-11-27T09:00:00+09:00"}`(テストの仕組みの下なので `commit`・`dirty` は `null`、`generated_at` は `now`)。
 
 作り方(2026-11-27): `tests/helpers.py` を読み込んで(ソケット禁止・`BIYORI_UNDER_TEST=1`・一時のデータ置き場)、`guide_brief.build("今週末、高尾山で紅葉を見たい", now=2026-11-27T09:00+09:00)` を呼んだ。呼んだスクリプトは作業用の一時フォルダに置き、リポジトリには入れていない。
 データ置き場が空なので、使ったのはリポジトリにあるデータ(名所カタログ・例年の目安など)だけで、今年の現況・知識カード・観察記録は入っていない。`build` を直接呼んだので `auto_refresh` の項目は無い(`ask brief` は `build_refreshed` を呼び、読み直しの対象があれば足す)。長い配列と文は「…」で縮め、空の配列が並ぶ `values` は 1 行にした。
@@ -237,7 +237,7 @@
 
 ## 6. コンシェルから呼ばれるときに困りそうな点(直していない)
 
-1. ~~候補に座標と `site_ref` が無い~~ → 2026-11-27 に足した(2.2)。ただし座標があるのは順位つきの候補の一部だけ(8 つの資料で 95 件中 52 件)で、`site_ref` は種の名所の一部だけ。`null` の候補は、名前・都県・市区町村・出発地からの距離しか使えない。
+1. ~~候補に座標と山の地点との結びつき(今の `mountain_site_ref`)が無い~~ → 2026-11-27 に足した(2.2)。ただし座標があるのは順位つきの候補の一部だけ(8 つの資料で 95 件中 52 件)で、`mountain_site_ref` は種の名所の一部だけ。`null` の候補は、名前・都県・市区町村・出発地からの距離しか使えない。
 2. ~~資料に commit・版・作った時刻が無い~~ → 2026-11-27 に `generator` を足した(2.7)。
 3. **`ask brief` は通信する**(読み直し。1 問 25 秒まで。記録が変われば資料をもう 1 回作る)。読み直しを切る引数は無い。通信を禁じたとき(`BIYORI_UNDER_TEST=1` など)は読み直さず、`auto_refresh.refused` に理由を入れ、そのページを「読み直せませんでした」として `missing` に足す(`auto_refresh.run`・`attach_refresh` のコードから。実行では確かめていない)。時間は今の版では未計測(前の版の値は `docs/wait-notice-timings.md` に参考として置いた)。
 4. **`ask brief` の標準出力は JSON ではない**(id とパスの 3 行)。コンシェルは 2 行目のパスの JSON を読むことになる。

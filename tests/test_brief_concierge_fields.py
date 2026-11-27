@@ -1,5 +1,5 @@
 """資料(ask brief)のコンシェル向けの項目(指示書 docs/brief-concierge-fields-instructions.md。2026-11-27)。通信しない。
-候補の place_id・lat・lon・coord_source・site_ref と、資料を作った版 generator。スキーマ ikimonobiyori/schemas/guide-brief.schema.json。"""
+候補の place_id・lat・lon・coord_source・mountain_site_ref と、資料を作った版 generator。スキーマ ikimonobiyori/schemas/guide-brief.schema.json。"""
 import json
 import os
 import subprocess
@@ -99,7 +99,7 @@ class PlaceOf(unittest.TestCase):
         s = self.ix["spots"]["obs-kouyou-0088"]
         self.assertEqual(self.place(**{GB.PLACE_SRC_KEY: "obs-kouyou-0088"}),
                          {"place_id": "ikimonobiyori:obs-kouyou-0088", "lat": s["point"]["lat"], "lon": s["point"]["lon"],
-                          "coord_source": "observation_spot", "site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
+                          "coord_source": "observation_spot", "mountain_site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
 
     def test_spot_catalog_ref(self):
         s = self.ix["spots"]["obs-yacho-0003"]
@@ -131,7 +131,7 @@ class PlaceOf(unittest.TestCase):
 
     def test_mountain_site_gives_site_ref_only(self):
         p = self.place(mountain_site="乗鞍岳(剣ヶ峰)")
-        self.assertEqual(p["site_ref"], "yamabiyori:m041")
+        self.assertEqual(p["mountain_site_ref"], "yamabiyori:m041")
         self.assertIsNone(p["lat"])                                    # 山の座標を名所の座標にしない
         self.assertIsNone(p["place_id"])
 
@@ -147,7 +147,7 @@ class MergedCandidates(unittest.TestCase):
         return cands[0], merges[0]
 
     def p(self, pid=None, lat=None, ref=None):
-        return {"place_id": pid, "lat": lat, "lon": lat, "coord_source": "catalog" if lat is not None else None, "site_ref": ref}
+        return {"place_id": pid, "lat": lat, "lon": lat, "coord_source": "catalog" if lat is not None else None, "mountain_site_ref": ref}
 
     def test_one_side_has_id(self):
         r, m = self.run_merge({"A": self.p(), "B": self.p("ikimonobiyori:k1", 35.0)})
@@ -164,7 +164,7 @@ class MergedCandidates(unittest.TestCase):
 
     def test_same_id_and_site_ref_from_other(self):
         r, m = self.run_merge({"A": self.p("ikimonobiyori:k1", 35.0), "B": self.p(ref="yamabiyori:m001")})
-        self.assertEqual((r["place_id"], r["site_ref"], m["place_from"]), ("ikimonobiyori:k1", "yamabiyori:m001", "A"))
+        self.assertEqual((r["place_id"], r["mountain_site_ref"], m["place_from"]), ("ikimonobiyori:k1", "yamabiyori:m001", "A"))
 
 
 def fake_git(cmd, head, status, top=None):

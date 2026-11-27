@@ -326,11 +326,11 @@ def merge_same_candidates(cands, F, c):
 # 資料の Markdown と決まり(rules)には出さない(JSON にだけ入れる)。候補の選び方・順位・距離は変えない。
 
 PLACE_SRC_KEY = "_place_src"                      # 候補の行に一時的に持たせる、計画の行の id(資料に出す前に外す)
-PLACE_KEYS = ("place_id", "lat", "lon", "coord_source", "site_ref")
+PLACE_KEYS = ("place_id", "lat", "lon", "coord_source", "mountain_site_ref")
 
 
 def _place_index():
-    """→ {catalog: {id: 件}, spots: {id: 件}, mountains: {山の名前: site_ref}}。名所カタログ(例を除く)・観察の名所・山の地点(sites.yaml)。"""
+    """→ {catalog: {id: 件}, spots: {id: 件}, mountains: {山の名前: sites.yaml の site_ref}}。名所カタログ(例を除く)・観察の名所・山の地点(sites.yaml)。"""
     from .paths import CATALOG_DIR, SITES_PATH
     cat, spots, mountains = {}, {}, {}
     for p in sorted(Path(CATALOG_DIR).glob("*.yaml")):
@@ -366,7 +366,7 @@ def _point(pt):
 
 
 def _place_of(r, ix, c):
-    """候補の 1 件 → {place_id, lat, lon, coord_source, site_ref}。元のデータに無いものは None。
+    """候補の 1 件 → {place_id, lat, lon, coord_source, mountain_site_ref}。元のデータに無いものは None。
     計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point(出典の書かれたものだけ)の順
     (野鳥の観察の名所の座標は写さない)。
     山の地点: 種の名所の mountain_site(段階84 第1部 A)だけ。山の座標を名所の座標にしない。"""
@@ -379,9 +379,9 @@ def _place_of(r, ix, c):
     if e:
         out["place_id"] = K["place_id_prefix"] + sid
         pt, src = _point(e.get("point")), K["coord_source"]["catalog"]
-        ref = e.get("site_ref")
-        if isinstance(ref, str) and ref.startswith(K["site_ref_prefix"]):
-            out["site_ref"] = ref
+        ref = e.get("site_ref")                                            # カタログの項目名は site_ref のまま
+        if isinstance(ref, str) and ref.startswith(K["mountain_site_ref_prefix"]):
+            out["mountain_site_ref"] = ref
     elif s:
         out["place_id"] = K["place_id_prefix"] + sid
         ce = ix["catalog"].get(s.get("catalog_ref")) if s.get("catalog_ref") else None
@@ -391,8 +391,8 @@ def _place_of(r, ix, c):
             pt, src = _point(s.get("point")), K["coord_source"]["spot"]          # 出典(source)の書かれた座標だけ(市町村の代表点かもしれない値を写さない)
     if pt:
         out["lat"], out["lon"], out["coord_source"] = pt[0], pt[1], src
-    if r.get("mountain_site") and not out["site_ref"]:
-        out["site_ref"] = ix["mountains"].get(r["mountain_site"])
+    if r.get("mountain_site") and not out["mountain_site_ref"]:
+        out["mountain_site_ref"] = ix["mountains"].get(r["mountain_site"])
     return out
 
 
@@ -413,16 +413,16 @@ def attach_place_fields(cands, merges, pre, c):
         rows = [(n, pre.get(n) or dict.fromkeys(PLACE_KEYS)) for n in names]
         m = by_main.get(r["name"]) if r.get("merged_from") else None
         with_id = [(n, p) for n, p in rows if p["place_id"]]
-        with_ref = [(n, p) for n, p in rows if p["site_ref"]]
-        if len({p["place_id"] for _n, p in with_id}) > 1 or len({p["site_ref"] for _n, p in with_ref}) > 1:
+        with_ref = [(n, p) for n, p in rows if p["mountain_site_ref"]]
+        if len({p["place_id"] for _n, p in with_id}) > 1 or len({p["mountain_site_ref"] for _n, p in with_ref}) > 1:
             r.update(dict.fromkeys(PLACE_KEYS))
             if m is not None:
                 m["place_from"] = None
-                m["place_conflict"] = {"members": [{"name": n, "place_id": p["place_id"], "site_ref": p["site_ref"]} for n, p in rows],
+                m["place_conflict"] = {"members": [{"name": n, "place_id": p["place_id"], "mountain_site_ref": p["mountain_site_ref"]} for n, p in rows],
                                        "reason": K["merge_conflict_reason"]}
             continue
         out = dict(with_id[0][1]) if with_id else dict.fromkeys(PLACE_KEYS)
-        out["site_ref"] = with_ref[0][1]["site_ref"] if with_ref else None
+        out["mountain_site_ref"] = with_ref[0][1]["mountain_site_ref"] if with_ref else None
         r.update(out)
         if m is not None:
             m["place_from"] = (with_id or with_ref)[0][0] if (with_id or with_ref) else None
