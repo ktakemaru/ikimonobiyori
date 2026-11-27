@@ -398,7 +398,8 @@ def _place_of(r, ix, c):
     野鳥の観察の名所(spot_coords_coarsen_subjects)の座標(出典の書かれた point か bird_range)は、プロファイルの位置の粗さに丸めて出す
     (丸める前の値は資料に入れない。絶対ルール 7)。coord_precision は元のデータに書かれた細かさ(カタログの location_precision)か丸めた粗さで、
     書かれていなければ None(推測しない)。
-    山の地点: 種の名所の mountain_site(段階84 第1部 A)だけ。山の座標を名所の座標にしない。"""
+    山の地点 mountain_site_ref: カタログの件の site_ref、観察の名所の mountain_site_ref か、その catalog_ref の件の site_ref(2026-11-27)。
+    それが無ければ種の名所の mountain_site(段階84 第1部 A)。山の座標を名所の座標にしない。"""
     K = c["concierge_fields"]
     out = dict.fromkeys(PLACE_KEYS)
     sid = r.get(PLACE_SRC_KEY)
@@ -414,6 +415,11 @@ def _place_of(r, ix, c):
     elif s:
         out["place_id"] = K["place_id_prefix"] + sid
         ce = ix["catalog"].get(s.get("catalog_ref")) if s.get("catalog_ref") else None
+        # 山の地点: 観察の名所の mountain_site_ref(資料の候補を作るときだけ読む項目)→ catalog_ref の件の site_ref の順。sites.yaml にある山だけ
+        for ref in (s.get("mountain_site_ref"), (ce or {}).get("site_ref")):
+            if isinstance(ref, str) and ref.startswith(K["mountain_site_ref_prefix"]) and ref in ix["mountains"].values():
+                out["mountain_site_ref"] = ref
+                break
         if ce and _point(ce.get("point")):
             pt, src, prec = _point(ce.get("point")), K["coord_source"]["catalog_ref"], ce.get("location_precision")
         elif s.get("subject") in K["spot_coords_coarsen_subjects"]:

@@ -208,5 +208,61 @@ class SpotCatalogLinks(unittest.TestCase):
         self.assertIsNone(c["point"])
 
 
+SIX = {"obs-kouyou-0088": "m029", "obs-kouyou-0089": "m031", "obs-kouyou-0093": "m030",
+       "kouyou-0015": "m057", "kouyou-0020": "m027", "hana-0037": "m043"}
+
+
+class MountainLinks(unittest.TestCase):
+    """第 4 部: 山の地点との結びつき 6 件(名所カタログは今ある site_ref、観察の名所は新しい mountain_site_ref)。"""
+
+    def setUp(self):
+        self.ix = GB._place_index()
+        from ikimonobiyori.paths import SITES_PATH
+        import yaml
+        self.sites = {s["id"]: s for s in yaml.safe_load(Path(SITES_PATH).read_text(encoding="utf-8"))["sites"]}
+
+    def place(self, sid):
+        return GB._place_of({"name": "試験", GB.PLACE_SRC_KEY: sid}, self.ix, GB.cfg())
+
+    def test_six_links(self):
+        for sid, m in SIX.items():
+            self.assertEqual(self.place(sid)["mountain_site_ref"], f"yamabiyori:{m}", sid)
+            self.assertEqual(self.sites[m]["site_ref"], f"yamabiyori:{m}")
+
+    def test_names_match_and_points_are_near(self):
+        import re
+        base = lambda n: re.split(r"[(（]", n)[0].strip()
+        for sid, m in SIX.items():
+            e = self.ix["catalog"].get(sid) or self.ix["spots"][sid]
+            self.assertEqual(base(e["name"]), base(self.sites[m]["name"]), sid)
+            pt = e.get("point")
+            if pt:
+                km = CM.distance_km(pt["lat"], pt["lon"], self.sites[m]["lat"], self.sites[m]["lon"], CM.load_policy()["range_limit"]["earth_radius_km"])
+                self.assertLess(km, 10, sid)                              # 指示書の仮の値(10km より離れていたら結ばない)
+
+    def test_only_these_have_links(self):
+        links = {sid for sid, e in self.ix["catalog"].items() if e.get("site_ref")}
+        links |= {sid for sid, s in self.ix["spots"].items() if s.get("mountain_site_ref")}
+        self.assertEqual(links, set(SIX))
+
+    def test_link_through_catalog_ref(self):
+        self.assertEqual(self.ix["spots"]["obs-kouyou-0019"]["catalog_ref"], "kouyou-0020")   # 大山寺・大山阿夫利神社下社
+        self.assertEqual(self.place("obs-kouyou-0019")["mountain_site_ref"], "yamabiyori:m027")
+
+    def test_unknown_mountain_is_ignored(self):
+        ix = dict(self.ix, spots=dict(self.ix["spots"]))
+        ix["spots"]["obs-kouyou-0088"] = dict(ix["spots"]["obs-kouyou-0088"], mountain_site_ref="yamabiyori:m999")
+        self.assertIsNone(GB._place_of({"name": "試験", GB.PLACE_SRC_KEY: "obs-kouyou-0088"}, ix, GB.cfg())["mountain_site_ref"])
+
+    def test_takao_brief(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"IKIMONOBIYORI_DATA_DIR": d}):
+            GB._HOSTS = None
+            doc = GB.build("今週末、高尾山で紅葉を見たい", now=NOW)
+            GB._HOSTS = None
+        r = next(r for r in doc["candidates"] if r["name"] == "高尾山")
+        self.assertEqual((r["place_id"], r["mountain_site_ref"]), ("ikimonobiyori:obs-kouyou-0088", "yamabiyori:m029"))
+        self.assertNotIn("yamabiyori", GB.render_md(doc))
+
+
 if __name__ == "__main__":
     unittest.main()

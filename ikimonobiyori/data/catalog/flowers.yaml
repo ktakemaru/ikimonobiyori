@@ -1222,6 +1222,7 @@ entries:
     timing_type: managed
     kind: area
     location_precision: area_10km
+    site_ref: yamabiyori:m043   # 山の地点(sites.yaml m043 霧ヶ峰(車山))との結びつき(名前が同じ。この件に座標が無いので距離は確かめていない。2026-11-27 利用者の決定)
     status: approved
     approved_by: claude_code_provisional
     approved_at: '2026-11-04'

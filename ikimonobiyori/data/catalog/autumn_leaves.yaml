@@ -204,6 +204,7 @@ entries:
     kind: area
     point: {lat: 36.214, lon: 140.104, elevation_m: 308}
     location_precision: exact
+    site_ref: yamabiyori:m057   # 山の地点(sites.yaml m057 筑波山(女体山))との結びつき(名前が同じ・座標の距離 約1.3km。2026-11-27 利用者の決定)
     typical_window: {start: "11-01", end: "11-30", source_url: "https://www.ibarakiguide.jp/special/autumn_leaves/page000493.html", note: "茨城県(観光いばらき): 筑波山 11月上旬〜下旬"}
     status: approved
     tags: {prefecture: 茨城県, area: 筑波山, terrain: [mountain, temple_shrine], access: [cable_car, bus], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}
@@ -254,6 +255,7 @@ entries:
     kind: area
     point: {lat: 35.430, lon: 139.243, elevation_m: 528}
     location_precision: exact
+    site_ref: yamabiyori:m027   # 山の地点(sites.yaml m027 大山(伊勢原))との結びつき(名前が同じ・座標の距離 約1.6km。2026-11-27 利用者の決定)
     access_notes: "伊勢原駅北口からバスで大山ケーブル(終点)。紅葉ライトアップの期間はケーブルカーが夜も動く"
     status: approved
     tags: {prefecture: 神奈川県, area: 丹沢・大山, terrain: [mountain, temple_shrine], access: [cable_car, bus], source: "Claude Code が名所の名前・カタログの access_notes・一般に知られた事実から付けた(推定。段階16 B-3)"}

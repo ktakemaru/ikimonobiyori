@@ -79,14 +79,40 @@
 | ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(カタログは各件の `location_precision` の桁で入っている)。野鳥の観察の名所だけは、野鳥のプロファイルの位置の粗さに丸めた値 | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所(`catalog_ref` が無いもの)は、出典の書かれた `point` か `bird_range` を、プロファイルの `care.location_precision`(野鳥は `area_10km` = 小数 1 桁)に丸めて出す(利用者の決定 2026-11-27。丸め方は提案の出力と同じ `proposals.coarse_precision`・`engine.round_coord`。丸める前の値は資料に入れない。絶対ルール 7) |
 | `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot`・`observation_spot_coarsened`(野鳥の観察の名所の座標を丸めたもの) | 文字列 | 座標があるとき |
 | `coord_precision` | 座標の細かさ: 名所カタログ(`catalog`・`catalog_via_spot`)は、その件の `location_precision` の値のまま(`exact`・`area_1km`・`area_10km`)。`observation_spot_coarsened` は丸めた粗さ(野鳥は `area_10km`) | 文字列 | 座標があり、細かさが元のデータに書かれているとき。観察の名所の `point`(`observation_spot`)には細かさが書かれていないので、推測せず `null`。座標が `null` なら `null` |
-| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | 種の名所で `mountain_site`(段階84 第1部 A)がある候補と、カタログの件に `site_ref` があるとき(今は例の件だけ)。名前が山と同じでも、データに結びつきが無ければ `null`(高尾山の観察の名所など) |
+| ★ `mountain_site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref` の値。2026-11-27 に `site_ref` から名前を変えた) | 文字列 | カタログの件の `site_ref`(`yamabiyori:` で始まるもの)、観察の名所の `mountain_site_ref`(資料の候補を作るときだけ読む項目。2026-11-27 に足した)、観察の名所の `catalog_ref` が指すカタログの件の `site_ref`、種の名所の `mountain_site`(段階84 第1部 A)の順。観察の名所の値は sites.yaml にある山だけ使う。今データに結びつきがあるのは 6 件(下の表)。名前が山と同じでも、データに結びつきが無ければ `null` |
 
 - 同じ名所でも対象ごとに別の ID がある(三溪園: 紅葉 `obs-kouyou-0002`・花 `obs-hana-0001`)。候補の ID は、候補を作った計画の行の ID。
 - 提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料の `place_id` に当たる。資料の山の地点との結びつきは、それと区別するため `mountain_site_ref` という名前にした(資料の候補に `site_ref` という項目は無い)。提案の `place.lat`・`lon` は位置の粗さで丸めた値なので、資料の座標と違うことがある。
 - 候補をまとめたとき(`candidate_merges`): まとめた記録の 1 件に、項目を写した元の候補の名前 `place_from` を入れる。元の候補の `place_id`(または `mountain_site_ref`)が食い違えば、候補の 6 つの項目を `null` にし、`place_conflict`(`members`・`reason`)を残す。
-- 出発地からの距離(`distance_km`)は今までのまま(足した座標から計算し直さない)。8 つの資料では、足した座標から出した直線の距離との差はどれも 2km 未満だった(野鳥の丸めた座標は、丸めの分だけずれうる。生田緑地で 2km)。
+- 出発地からの距離(`distance_km`)は今までのまま(足した座標から計算し直さない)。8 つの資料では、足した座標から出した直線の距離との差はどれも 2km 未満だった(野鳥の丸めた座標は、丸めの分だけずれうる。15 の資料で最大 3km(舞岡公園))。
+
+2026-11-27(2 回目。指示書 `docs/brief-concierge-fields-2-instructions.md`)に足したデータ(座標の値は足していない。リポジトリの中の件どうしを結んだだけ):
+
+| 件 | 項目 | 値 | 確かめ |
+|---|---|---|---|
+| 観察の名所 三溪園(紅葉)`obs-kouyou-0002` | `catalog_ref` | `hana-0021`(花のカタログの三溪園) | 名前・都県・市区町村が同じ。対象が違うので、紅葉の候補の作り方(`observations.all_candidates` は同じ対象のカタログしか見ない)は変わらない |
+| 観察の名所 高尾山 `obs-kouyou-0088` | `mountain_site_ref`(新しい項目) | `yamabiyori:m029` | 名前が同じ。名所の `point` は m029 の座標を写したもの |
+| 観察の名所 御岳山 `obs-kouyou-0089` | `mountain_site_ref` | `yamabiyori:m031` | 同上(m031) |
+| 観察の名所 陣馬山 `obs-kouyou-0093` | `mountain_site_ref` | `yamabiyori:m030` | 名前が同じ。名所に座標が無いので距離は確かめていない |
+| 名所カタログ 筑波山 `kouyou-0015` | `site_ref`(今ある項目) | `yamabiyori:m057` | 名前(括弧の前)が同じ。座標の距離 約1.3km |
+| 名所カタログ 大山(大山寺) `kouyou-0020` | `site_ref` | `yamabiyori:m027` | 名前(括弧の前)が同じ。座標の距離 約1.6km |
+| 名所カタログ 霧ヶ峰 `hana-0037` | `site_ref` | `yamabiyori:m043` | 名前(括弧の前)が同じ。件に座標が無いので距離は確かめていない |
+
+- 観察の名所の `mountain_site_ref` は、資料の候補を作るとき(`guide_brief._place_of`)だけ読む。名所カタログの `site_ref` は、提案の出力 `biyori-proposal/1` の `details.catalog_site_ref` にも写る(`proposals.py`。今までからある動き)。
+- sites.yaml の山には都県の項目が無いので、都県は突き合わせていない。
 
 足す前の調べ(座標・`site_ref` が無いことの確かめ。2026-11-27・通信なし。3 章と同じ作り方): 「今週末、高尾山で紅葉を見たい」「今週末の紅葉の情報は?」「丹沢で今咲いている花は?」「八ヶ岳の見どころを教えて」「高尾山の見どころを教えて」の 5 つの資料で、すべての候補・事実・`fields` の項目の名前を合わせて数え、JSON 全体で `mNNN`・`yamabiyori`・`site_ref`・`"site"`・`"point"`・`"lat"`・`"lon"` を探した。どれも 0 件。`README.md`・`CHANGELOG.md`・`docs/guide-mode.md` にも、資料の候補に座標や山の地点が入るとは書かれていない(`docs/guide-mode.md` は「座標は記録しない(市町村まで)」)。データ置き場が空の状態で作ったので、実際のデータ置き場で作った資料では確かめていない。
+
+#### コンシェル側で使うときのメモ(2026-11-27。書くだけ。決めるのはコンシェル側)
+
+- 項目: 候補の `place_id`(名所の ID)・`lat`/`lon`(緯度・経度)・`coord_source`(座標を写した元)・`coord_precision`(座標の細かさ)・`mountain_site_ref`(山の地点 `yamabiyori:mNNN`)、資料の `generator`(`name`・`version`・`commit`・`dirty`・`generated_at`)。資料の形の名前は `ikimonobiyori-guide-brief/1` のまま。スキーマは `ikimonobiyori/schemas/guide-brief.schema.json`。資料の候補に `site_ref` という項目は無い(2026-11-27 に `mountain_site_ref` に変えた。提案の出力 `biyori-proposal/1` の `place.site_ref` は名所そのものの ID で、資料では `place_id` に当たる)。
+- `lat`/`lon` が `null` の候補: 山・星の地点からの直線距離を計算できない。「日中」の枠に入れない、または名前・都県・市町村だけで扱う、などが考えられる。座標があるのは順位つきの候補の一部だけ(8 つの資料で 95 件中 65 件)。
+- `coord_precision` で座標の細かさが分かる: `exact`(名所の位置)・`area_1km`(小数 2 桁。1km 程度ずれうる)・`area_10km`(小数 1 桁。5〜7km 程度ずれうる)。`null` は、座標はあるが細かさが元のデータに書かれていないもの(観察の名所の `point`。`coord_source: observation_spot`)。20km 以内などの判定では、`area_10km` の候補は端の扱いに注意が要る。
+- `coord_source: observation_spot_coarsened` は野鳥の観察の名所の座標を、野鳥のプロファイルの位置の粗さ(`area_10km`)に丸めたもの。実際の場所から数 km ずれる。丸める前の値は資料に無い。地図にピンを立てる用途には向かない。
+- `place_id` は 1 つの名所に 1 つではない: 同じ名所でも対象ごとに別の ID がある(三溪園の紅葉 `obs-kouyou-0002` と花 `obs-hana-0001`)。同じ名所かどうかを ID だけで決めると、別の名所に見えることがある。
+- `mountain_site_ref` が入るのは、データに結びつきがある 6 か所(高尾山・御岳山・陣馬山・筑波山・大山・霧ヶ峰)と、大山寺・大山阿夫利神社下社(カタログの大山の件を通して)、種の名所の `mountain_site` だけ。`null` でも山の近くの名所でないとは限らない。山との突き合わせは、`mountain_site_ref` があるときは ID で、無いときは座標と距離でする形が考えられる。
+- `generator.commit` が `null` のとき(実行用のコピーなど)は、`version` だけで版を記録することになる。`dirty: true` のときは、その commit と手元の中身が違う。
+- 資料の `id` は今までどおり質問・`now`・`prev` だけから決まり、`generator` を含まない。同じ id の資料でも `generated_at`・`commit` は作り直すたびに変わりうる。
 
 ### 2.3 確かめた事実(`facts` の 1 件)
 
@@ -238,7 +264,7 @@
 
 ## 6. コンシェルから呼ばれるときに困りそうな点(直していない)
 
-1. ~~候補に座標と山の地点との結びつき(今の `mountain_site_ref`)が無い~~ → 2026-11-27 に足した(2.2)。ただし座標があるのは順位つきの候補の一部だけ(8 つの資料で 95 件中 52 件)で、`mountain_site_ref` は種の名所の一部だけ。`null` の候補は、名前・都県・市区町村・出発地からの距離しか使えない。
+1. ~~候補に座標と山の地点との結びつき(今の `mountain_site_ref`)が無い~~ → 2026-11-27 に足した(2.2)。ただし座標があるのは順位つきの候補の一部だけ(8 つの資料で 95 件中 65 件。2 回目の作業のあと)で、`mountain_site_ref` は結びつきのデータがある名所と種の名所の一部だけ。`null` の候補は、名前・都県・市区町村・出発地からの距離しか使えない。
 2. ~~資料に commit・版・作った時刻が無い~~ → 2026-11-27 に `generator` を足した(2.7)。
 3. **`ask brief` は通信する**(読み直し。1 問 25 秒まで。記録が変われば資料をもう 1 回作る)。読み直しを切る引数は無い。通信を禁じたとき(`BIYORI_UNDER_TEST=1` など)は読み直さず、`auto_refresh.refused` に理由を入れ、そのページを「読み直せませんでした」として `missing` に足す(`auto_refresh.run`・`attach_refresh` のコードから。実行では確かめていない)。時間は今の版では未計測(前の版の値は `docs/wait-notice-timings.md` に参考として置いた)。
 4. **`ask brief` の標準出力は JSON ではない**(id とパスの 3 行)。コンシェルは 2 行目のパスの JSON を読むことになる。

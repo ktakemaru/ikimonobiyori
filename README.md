@@ -171,7 +171,7 @@ python -X utf8 ikimonobiyori/main.py --request REQ.json --cache-only --now 2026-
 - 契約 `biyori-proposal/1` と語彙の正本は、ビヨリコンシェルの `schemas/` にあります。このリポジトリでは変えません。`tests/contract/biyori-proposal.schema.json` は検査用の写しです(`tests/contract/README.md`)。2026-11-27 に、ビヨリコンシェルの `schemas/biyori-proposal.schema.json` と同じ中身であることを確かめました。
 - イキモノビヨリは単体で動きます(ビヨリコンシェルが無くても答えられます)。`ikimonobiyori/` は自分のフォルダの外を指さず、biyori-hub のモジュールを import しません(`tests/test_self_contained.py` が検査します)。
 - 単体で聞かれてもビヨリコンシェルから呼ばれても、同じコマンド・同じ書き込み先(`IKIMONOBIYORI_DATA_DIR`)を使います。
-- 資料の JSON には、コンシェル向けの項目があります(2026-11-27): 候補の `place_id`(名所の ID)・`lat`・`lon`(緯度・経度)・`coord_source`(座標を写した元)・`mountain_site_ref`(山の地点 `yamabiyori:mNNN` との結びつき)と、資料を作った版 `generator`(版・commit・未 commit の変更・作った時刻)です。名所カタログ・観察の名所・山の地点にある値を写すだけで、無ければ `null` です。資料の Markdown と答えの決まりには出しません。項目の一覧は `docs/concierge-brief-fields.md`、形は `ikimonobiyori/schemas/guide-brief.schema.json` です。
+- 資料の JSON には、コンシェル向けの項目があります(2026-11-27): 候補の `place_id`(名所の ID)・`lat`・`lon`(緯度・経度)・`coord_source`(座標を写した元)・`coord_precision`(座標の細かさ)・`mountain_site_ref`(山の地点 `yamabiyori:mNNN` との結びつき)と、資料を作った版 `generator`(版・commit・未 commit の変更・作った時刻)です。名所カタログ・観察の名所・山の地点にある値を写すだけで、無ければ `null` です。資料の Markdown と答えの決まりには出しません。項目の一覧は `docs/concierge-brief-fields.md`、形は `ikimonobiyori/schemas/guide-brief.schema.json` です。
 
 biyori-hub のために作ったもので、今も残しているもの(消していません):
 

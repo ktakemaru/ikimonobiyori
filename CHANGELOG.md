@@ -3,6 +3,7 @@
 ## 未公開
 
 - 資料(`ask brief` の JSON)に、ビヨリコンシェル向けの項目を足しました。候補ごとの `place_id`(名所の ID)・`lat`・`lon`・`coord_source`・`mountain_site_ref`(山の地点 `yamabiyori:mNNN` との結びつき)と、資料を作った版 `generator`(版・commit・未 commit の変更・作った時刻)です。名所カタログ・観察の名所・山の地点にある値を写すだけで、無いものは `null` です。答え・資料の Markdown・候補の選び方は変わりません。資料の形のスキーマ `ikimonobiyori/schemas/guide-brief.schema.json` を足しました(足した項目といちばん上の必須の項目だけを決めます)。
+- 資料の候補の項目を仕上げました(2026-11-27 の 2 回目)。山の地点との結びつきの名前を `site_ref` から `mountain_site_ref` に変え(提案の出力の `place.site_ref` と意味が違うため)、座標の細かさ `coord_precision` を足しました。野鳥の観察の名所の座標を、野鳥のプロファイルの位置の粗さ(小数 1 桁)に丸めて出すようにしました(`coord_source: observation_spot_coarsened`。丸める前の値は出しません)。三溪園の紅葉の名所を花のカタログの件に結び、高尾山・御岳山・陣馬山・筑波山・大山・霧ヶ峰の 6 か所に山の地点との結びつきを足しました。答え・資料の Markdown・候補の選び方は変わりません。
 
 ## 0.2.0(2026-11-15。段階75〜85)
 

@@ -99,7 +99,7 @@ class PlaceOf(unittest.TestCase):
         s = self.ix["spots"]["obs-kouyou-0088"]
         self.assertEqual(self.place(**{GB.PLACE_SRC_KEY: "obs-kouyou-0088"}),
                          {"place_id": "ikimonobiyori:obs-kouyou-0088", "lat": s["point"]["lat"], "lon": s["point"]["lon"],
-                          "coord_source": "observation_spot", "coord_precision": None, "mountain_site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
+                          "coord_source": "observation_spot", "coord_precision": None, "mountain_site_ref": "yamabiyori:m029"})     # 高尾山。2026-11-27 に spots.yaml の mountain_site_ref で m029 と結んだ
 
     def test_spot_catalog_ref(self):
         s = self.ix["spots"]["obs-yacho-0003"]
