@@ -213,7 +213,7 @@ SIX = {"obs-kouyou-0088": "m029", "obs-kouyou-0089": "m031", "obs-kouyou-0093": 
 
 
 class MountainLinks(unittest.TestCase):
-    """第 4 部: 山の地点との結びつき 6 件(名所カタログは今ある site_ref、観察の名所は新しい mountain_site_ref)。"""
+    """第 4 部: 山の地点との結びつき 7 件(名所カタログは今ある site_ref、観察の名所は新しい mountain_site_ref)。"""
 
     def setUp(self):
         self.ix = GB._place_index()
@@ -243,11 +243,11 @@ class MountainLinks(unittest.TestCase):
     def test_only_these_have_links(self):
         links = {sid for sid, e in self.ix["catalog"].items() if e.get("site_ref")}
         links |= {sid for sid, s in self.ix["spots"].items() if s.get("mountain_site_ref")}
-        self.assertEqual(links, set(SIX))
+        self.assertEqual(links, set(SIX) | {"obs-kouyou-0019"})   # 6 件と、大山の観察の名所(2026-11-28 利用者の決定)の 7 件
 
-    def test_no_link_through_catalog_ref(self):
+    def test_oyama_spot_has_its_own_link(self):
         self.assertEqual(self.ix["spots"]["obs-kouyou-0019"]["catalog_ref"], "kouyou-0020")   # 大山寺・大山阿夫利神社下社
-        self.assertIsNone(self.place("obs-kouyou-0019")["mountain_site_ref"])   # catalog_ref の件の site_ref は借りない(6 件のほかに結びつきを出さない)
+        self.assertEqual(self.place("obs-kouyou-0019")["mountain_site_ref"], "yamabiyori:m027")   # 観察の名所に書いた mountain_site_ref(2026-11-28 利用者の決定。catalog_ref 先の site_ref と同じ値)
 
     def test_unknown_mountain_is_ignored(self):
         ix = dict(self.ix, spots=dict(self.ix["spots"]))

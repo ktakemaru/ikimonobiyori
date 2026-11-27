@@ -191,6 +191,7 @@ spots:
     city: 伊勢原市
     area: 丹沢・大山
     catalog_ref: kouyou-0020
+    mountain_site_ref: yamabiyori:m027   # 山の地点(sites.yaml m027 大山(伊勢原))との結びつき。資料(ask brief)の候補を作るときだけ読む(2026-11-28 利用者の決定。この名所に座標が無いので距離は確かめていない。catalog_ref 先 kouyou-0020 の site_ref と同じ)
     typical:
       - {text: "11月中旬～11月下旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e12675/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:

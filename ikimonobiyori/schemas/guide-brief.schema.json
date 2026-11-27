@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "ikimonobiyori-guide-brief/1",
   "title": "イキモノビヨリの資料(ask brief。ikimonobiyori-guide-brief/1)",
-  "description": "2026-11-27 に、ビヨリコンシェル向けに足した項目(generator と、候補の place_id・lat・lon・coord_source・coord_precision・mountain_site_ref)と、いちばん上の必須の項目だけを決める。ほかの項目は縛らない(additionalProperties を許す)。",
+  "description": "2026-11-27 に、ビヨリコンシェル向けに足した項目(generator と、候補の place_id・lat・lon・coord_source・coord_precision・mountain_site_ref)・2026-11-28 に足した asked_mountain と、いちばん上の必須の項目だけを決める。ほかの項目は縛らない(additionalProperties を許す)。",
   "type": "object",
-  "required": ["schema", "id", "question", "now", "candidates", "facts", "generator"],
+  "required": ["schema", "id", "question", "now", "candidates", "facts", "generator", "asked_mountain"],
   "additionalProperties": true,
   "properties": {
     "schema": {"const": "ikimonobiyori-guide-brief/1"},
@@ -12,6 +12,30 @@
     "question": {"type": "string"},
     "now": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?([+-][0-9]{2}:[0-9]{2}|Z)$"},
     "facts": {"type": "array"},
+    "asked_mountain": {
+      "description": "聞かれた山の名所(2026-11-28)。質問の山の名前から候補を足した資料だけに入る。ほかの資料は null。新しい値を作らず、候補(name・outlook)と事実(id)に今ある値を指すだけ",
+      "type": ["object", "null"],
+      "required": ["site_ref", "name", "candidates"],
+      "additionalProperties": false,
+      "properties": {
+        "site_ref": {"description": "山の地点 yamabiyori:mNNN(data/sites.yaml)", "type": "string", "pattern": "^yamabiyori:m[0-9]{3}$"},
+        "name": {"description": "山の名前(data/sites.yaml の name のまま)", "type": ["string", "null"]},
+        "candidates": {
+          "description": "その山の名所で、資料の候補にあるもの(足した候補と、もとから候補にあったもの)",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "outlook", "facts"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"description": "候補の name と同じ", "type": "string"},
+              "outlook": {"description": "候補の outlook と同じ(無ければ null)", "type": ["string", "null"]},
+              "facts": {"description": "その候補の事実(facts の place が候補の名前のもの)の id", "type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
     "generator": {
       "description": "資料を作った版。資料の id の計算には入れない。",
       "type": "object",
