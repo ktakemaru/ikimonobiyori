@@ -490,7 +490,7 @@ concierge_fields:
   coord_source:                             # 座標を写した元
     catalog: catalog                        # 名所カタログ(data/catalog/*.yaml)の point
     catalog_ref: catalog_via_spot           # 観察の名所の catalog_ref が指す名所カタログの point
-    spot: observation_spot                  # 観察の名所(data/observations/spots.yaml)の point
+    spot: observation_spot                  # 観察の名所(data/observations/spots.yaml)の point(point.source に出典が書かれたものだけ)
   # 野鳥の観察の名所の座標(bird_range。小数 2 桁)は、野鳥のプロファイルの位置の粗さ(area_10km = 小数 1 桁)より細かいので写さない(絶対ルール 7)
   spot_coords_skip_subjects: [birds, wintering_birds]
   merge_conflict_reason: まとめた候補の元の ID が食い違うので、ID・座標を入れていない

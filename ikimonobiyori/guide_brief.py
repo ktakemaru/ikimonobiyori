@@ -367,7 +367,8 @@ def _point(pt):
 
 def _place_of(r, ix, c):
     """候補の 1 件 → {place_id, lat, lon, coord_source, site_ref}。元のデータに無いものは None。
-    計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point の順(野鳥の観察の名所の座標は写さない)。
+    計画の行の id: 名所カタログの件ならその point、観察の名所なら catalog_ref の件の point → その名所の point(出典の書かれたものだけ)の順
+    (野鳥の観察の名所の座標は写さない)。
     山の地点: 種の名所の mountain_site(段階84 第1部 A)だけ。山の座標を名所の座標にしない。"""
     K = c["concierge_fields"]
     out = dict.fromkeys(PLACE_KEYS)
@@ -386,8 +387,8 @@ def _place_of(r, ix, c):
         ce = ix["catalog"].get(s.get("catalog_ref")) if s.get("catalog_ref") else None
         if ce and _point(ce.get("point")):
             pt, src = _point(ce.get("point")), K["coord_source"]["catalog_ref"]
-        elif s.get("subject") not in K["spot_coords_skip_subjects"] and _point(s.get("point")):
-            pt, src = _point(s.get("point")), K["coord_source"]["spot"]
+        elif s.get("subject") not in K["spot_coords_skip_subjects"] and _point(s.get("point")) and (s.get("point") or {}).get("source"):
+            pt, src = _point(s.get("point")), K["coord_source"]["spot"]          # 出典(source)の書かれた座標だけ(市町村の代表点かもしれない値を写さない)
     if pt:
         out["lat"], out["lon"], out["coord_source"] = pt[0], pt[1], src
     if r.get("mountain_site") and not out["site_ref"]:
@@ -441,7 +442,7 @@ def _git_state(run=None):
 
     def git(*args):
         try:
-            p = run(["git", "-C", str(pkg), *args], capture_output=True, text=True, encoding="utf-8", timeout=G["timeout_s"])
+            p = run(["git", "-C", str(pkg), "--no-optional-locks", *args], capture_output=True, text=True, encoding="utf-8", timeout=G["timeout_s"])
         except (OSError, ValueError, subprocess.SubprocessError):
             return None
         return p.stdout if getattr(p, "returncode", 1) == 0 and isinstance(p.stdout, str) else None

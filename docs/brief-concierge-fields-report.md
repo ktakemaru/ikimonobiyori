@@ -11,7 +11,7 @@
 
 | ブランチ | 最後の commit | 実行したテストと最後の行 |
 |---|---|---|
-| `feature/brief-concierge-fields` | この報告書の commit(実装は `c3ae2db`) | 関係する 52 本(新しい `test_brief_concierge_fields`、資料・照合の `test_stage75_guide`〜`test_stage85` の 20 本、提案・契約・ゴールデンの `test_proposals`・`test_golden`・`test_compose_and_survey`・`test_ikimonobiyori`・`test_stage19`〜`test_stage22` ほか、文書の `test_sources`・`test_self_contained`・`test_stage63b` ほか)を `tests/` から 1 回で: `Ran 1123 tests in 165.619s` / `OK` |
+| `feature/brief-concierge-fields` | この報告書の commit(実装は `c3ae2db` と、その直しの commit) | 関係する 51 本(資料・照合の `test_stage75_guide`〜`test_stage85` の 20 本、文書・設定を読む `test_sources`・`test_self_contained`・`test_stage63b` ほか 13 本、提案・契約・ゴールデンの `test_proposals`・`test_golden`・`test_compose_and_survey`・`test_ikimonobiyori`・`test_stage19`〜`test_stage22` ほか 17 本、新しい `test_brief_concierge_fields` を最後に)を `tests/` から 1 回で: `Ran 1125 tests in 157.516s` / `OK` |
 
 ## 候補の出どころ(第 0 部 3。実装の前に書いた)
 
@@ -36,7 +36,7 @@
 | 項目 | 場所 | 中身 | 無いとき |
 |---|---|---|---|
 | `place_id` | 候補 | 名所カタログの件は `ikimonobiyori:<カタログの id>`、観察の名所の件は `ikimonobiyori:<観察の名所の id>`。計画の順位の行の `id` から | `null` |
-| `lat`・`lon` | 候補 | 元のデータの値のまま(丸めない)。名所カタログの `point` → 観察の名所の `catalog_ref` が指すカタログの `point` → 観察の名所の `point` の順。野鳥の観察の名所の座標は写さない(下の「決めてほしいこと」2) | `null` |
+| `lat`・`lon` | 候補 | 元のデータの値のまま(丸めない)。名所カタログの `point`(`status: candidate` の件も、順位に使われていれば写す。例: 山下公園 `hana-0009`)→ 観察の名所の `catalog_ref` が指すカタログの `point` → 観察の名所の `point`(`point.source` に出典が書かれたものだけ。決めてほしいこと 5)の順。野鳥の観察の名所の座標は写さない(決めてほしいこと 2) | `null` |
 | `coord_source` | 候補 | `catalog`・`catalog_via_spot`・`observation_spot` | `null` |
 | `site_ref` | 候補 | `yamabiyori:mNNN`。種の名所の `mountain_site` が指す sites.yaml の山の `site_ref`、またはカタログの件の `site_ref`(`yamabiyori:` で始まるものだけ) | `null` |
 | `place_from`・`place_conflict` | `candidate_merges` の 1 件 | まとめた候補に項目を写した元の候補の名前。元の候補の `place_id`・`site_ref` が食い違ったときは、候補の 5 つの項目を `null` にし、`place_conflict: {members, reason}` を残す | `place_from: null` |
@@ -44,7 +44,7 @@
 
 - 名前の合わせ方: 提案の出力 `biyori-proposal/1` の `place.lat`・`place.lon` と同じ名前にした。**`site_ref` は合わせられなかった**: 提案の `place.site_ref` は名所そのものの ID(`ikimonobiyori:<id>`)で、資料ではそれを `place_id` にした。資料の `site_ref` は、指示書のとおり山の地点との結びつき(提案では `details.catalog_site_ref` に近い)なので、同じ名前で意味が違う。また提案の座標は位置の粗さで丸めた値なので、資料の座標と違うことがある(今のカタログは各件の粗さの桁で入っているので、カタログの件では同じ値になる)。
 - 足した場所: `guide_brief.py` の `place_fields_before_merge`・`attach_place_fields`(候補をまとめる直前と直後)と `generator_info`。設定は `data/ask/guide_mode.yaml` の `concierge_fields`。資料の Markdown(`render_md`)と `rules` は触っていない。
-- commit の読み方: `git -C <パッケージのフォルダ> rev-parse --show-toplevel` でリポジトリの直下にパッケージがあることを確かめてから、`rev-parse HEAD` と `status --porcelain --untracked-files=no`。引数の配列で呼び、待ち時間の上限 5 秒(仮の値)。失敗したら `null` で、資料は作る。今あるコードに同じ用途の部品は無かった(`knowledge_backup.py` の git は別のリポジトリ用)。`parent.parent` を使うと `tests/test_self_contained.py`(パッケージの外を指さない)に当たったので、パッケージのフォルダから呼ぶ形にした。
+- commit の読み方: `git -C <パッケージのフォルダ> rev-parse --show-toplevel` でリポジトリの直下にパッケージがあることを確かめてから、`rev-parse HEAD` と `status --porcelain --untracked-files=no`。引数の配列で呼び、`--no-optional-locks` を付ける(git が `.git/index` を書き直さない。書き込み先の決まり 8)。待ち時間の上限 5 秒(仮の値)。失敗したら `null` で、資料は作る。今あるコードに同じ用途の部品は無かった(`knowledge_backup.py` の git は別のリポジトリ用)。`parent.parent` を使うと `tests/test_self_contained.py`(パッケージの外を指さない)に当たったので、パッケージのフォルダから呼ぶ形にした。
 - テストでの差し替え: `BIYORI_UNDER_TEST=1` では git を呼ばない(`commit`・`dirty` は `null`。`_git_state(run=...)` に差し替えを渡したときだけ呼ぶ)。テスト専用の時計(`IKIMONOBIYORI_TEST_CLOCK`。`tests/nonet.py` が有効にする)のときは `generated_at` に `now` を使う。今ある `test_stage75_guide` の「同じ質問・同じ now なら資料全体が同じ」のテストを、期待値を変えずに通すため。
 
 ### 実物の例(通信なし。テストの仕組みの下で作った「今週末、野鳥を見に行きたい」の資料から 3 件)
@@ -111,12 +111,12 @@
 - 今年の現況つきの候補(`basis: current`)・季節の目玉・記録の種の名所が入った資料(データ置き場が空なので出てこない)。
 - 実際のデータ置き場で作った資料。
 - 全テスト(CI に任せる決まり。push していないので CI は未実行)。
-- 照合(`ask verify`)の合否が変わらないことは、照合のテスト(`test_stage75_guide`〜`test_stage85`)が通ったことと、照合が読む資料の項目(`candidates` の `name`・`distance_text` など)に手を入れていないことで確かめた。実際の下書きでの照合はしていない。
+- 照合(`ask verify`)の合否: 12 の資料それぞれで、直す前と直したあとの資料に同じ下書きを `guide_verify.check` で照らし、結果がまったく同じことを確かめた(下書きは `fallback.text` と、候補の名前と緯度の数を書いた 1 文の 2 通り。24 通りとも同じ)。照合のテスト(`test_stage75_guide`〜`test_stage85`)も通った。実際に AI が書いた下書きでは確かめていない。
 
 ## 変えたテスト
 
 - 既存のテストは変えていない(期待値・削除・スキップなし)。
-- 足したテスト: `tests/test_brief_concierge_fields.py`(19 件。8 つの資料のスキーマ・項目がそろうこと・作業用の項目が残らないこと・Markdown と `rules` に出ないこと・カタログの座標の写し・距離との食い違いがないこと・観察の名所の座標の順番・野鳥の観察の名所の座標を写さないこと・山の地点の `site_ref`・まとめた候補の 3 通り・`generator` の id と中身・git の読み方と失敗・テストでは git を呼ばないこと・時計)。
+- 足したテスト: `tests/test_brief_concierge_fields.py`(21 件。出典のない観察の名所の座標を写さないこと・承認待ちのカタログの件の座標を写すことを含む。8 つの資料のスキーマ・項目がそろうこと・作業用の項目が残らないこと・Markdown と `rules` に出ないこと・カタログの座標の写し・距離との食い違いがないこと・観察の名所の座標の順番・野鳥の観察の名所の座標を写さないこと・山の地点の `site_ref`・まとめた候補の 3 通り・`generator` の id と中身・git の読み方と失敗・テストでは git を呼ばないこと・時計)。
 - 途中で落ちたテストと直し方: `test_stage75_guide.Brief.test_same_question_same_now_same_brief`(資料全体の一致)が `generated_at` の秒の違いで落ちた。期待値は変えず、テスト専用の時計のときは `generated_at` に `now` を使う形にした。`test_self_contained.test_no_path_outside_the_package` が `parent.parent` で落ちた。パッケージのフォルダから git を呼ぶ形にした。
 
 ## 利用者がやること
@@ -124,8 +124,8 @@
 1. (`C:\ikimonobiyori` のウィンドウ、Git Bash)`git push -u origin feature/brief-concierge-fields` を実行し、main 向けの PR を作る。
 2. (GitHub)その PR の CI が全部 pass であることを確かめてマージする。
 3. (`C:\ikimonobiyori` のウィンドウ、Git Bash)`git switch main` と `git pull` を実行する。
-4. (`C:\ikimonobiyori` のウィンドウ。通信が要る)`python -X utf8 -m ikimonobiyori.ask brief "今週末、高尾山で紅葉を見たい"` を実行し、2 行目に出た JSON のパスを控える。
-5. (同じウィンドウ)`python -X utf8 -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); print(d['generator']); [print(r['name'], r['place_id'], r['lat'], r['lon'], r['coord_source'], r['site_ref']) for r in d['candidates']]" <4 で控えたパス>` を実行し、`generator` に 40 桁の `commit` と `dirty: False` が入っていること、候補の行に 5 つの項目が出ることを見る。
+4. (`C:\ikimonobiyori` のウィンドウ。通信が要る)`python -X utf8 -m ikimonobiyori.ask brief "今週末、高尾山で紅葉を見たい"` を実行し、1 行目に出た資料の id(`b2026…` の形)を控える。
+5. (同じウィンドウ)`python -X utf8 -c "import sys; from ikimonobiyori import guide_brief as GB; d=GB.load(sys.argv[1]); print(d['generator']); [print(r['name'], r['place_id'], r['lat'], r['lon'], r['coord_source'], r['site_ref']) for r in d['candidates']]" <4 の 1 行目の id>` を実行し、`generator` に 40 桁の `commit` と `dirty: False` が入っていること、候補の行に 5 つの項目が出ることを見る。
 
 ## コンシェル側で使うときのメモ(書くだけ。決めるのはコンシェル側)
 
@@ -143,5 +143,5 @@
 2. **野鳥の観察の名所の座標**: `data/observations/spots.yaml` の野鳥の 6 件の `bird_range` は小数 2 桁で、野鳥のプロファイルの位置の粗さ(`area_10km` = 小数 1 桁)より細かい。絶対ルール 7 に当たりうるので写さなかった(`null`)。小数 1 桁に丸めて出すかどうか(丸めるのは指示書の「丸めない」と食い違う)。
 3. **ガイドのカタログの ID(`g-…`)**: 例年の目安・町の名所の候補の元の件には `g-…` の ID があり、`data/guide/catalog.yaml` にも書かれているが、テーマ・都道府県・名前から計算した値なので名前が変わると変わる。「変わらない ID」に当たらないと考えて写さなかった(`null`)。写すかどうか。
 4. **座標の細かさの項目**: 座標の細かさ(カタログの `location_precision`)を候補に足すかどうか(指示書の項目に無いので足していない)。
-5. **出典の書かれていない観察の名所の座標**: `spots.yaml` の 20 件(`obs-kouyou-0094`〜`0115` の一部。秩父・山中湖・富士吉田などの名所)の `point` には `source` が無く、別の名所どうしで同じ値のものがある(市町村の代表点の可能性)。今は、ほかの座標と同じく写す(`observation_spot`)。8 つの資料では出てこなかった。写さないようにするか、出典を確かめるか。
+5. **出典の書かれていない観察の名所の座標**: `spots.yaml` の 20 件(`obs-kouyou-0094`〜`0115` の一部。秩父・山中湖・富士吉田などの名所)の `point` には `source` が無く、別の名所どうしで同じ値のものがある(市町村の代表点の可能性)。名所の座標とは言えないので**写さなかった**(`null`)。8 つの資料には出てこない。出典を確かめて `source` を書けば写るようになる。写すかどうか。
 6. **埋めるための提案**(上の 1〜6。データ・コードを足すかどうか)。

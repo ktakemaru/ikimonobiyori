@@ -113,6 +113,18 @@ class PlaceOf(unittest.TestCase):
         self.assertEqual(p["place_id"], "ikimonobiyori:obs-yacho-0002")
         self.assertIsNone(p["lat"])                                    # 絶対ルール 7: 野鳥のプロファイルの粗さより細かい座標は写さない
 
+    def test_spot_point_without_source_is_not_copied(self):
+        s = self.ix["spots"]["obs-kouyou-0095"]
+        self.assertTrue(s.get("point") and not s["point"].get("source"))
+        p = self.place(**{GB.PLACE_SRC_KEY: "obs-kouyou-0095"})
+        self.assertEqual((p["place_id"], p["lat"], p["coord_source"]), ("ikimonobiyori:obs-kouyou-0095", None, None))   # 出典のない座標は写さない
+
+    def test_candidate_status_catalog_entry_is_copied(self):
+        e = self.ix["catalog"]["hana-0009"]
+        self.assertEqual(e["status"], "candidate")
+        p = self.place(**{GB.PLACE_SRC_KEY: "hana-0009"})
+        self.assertEqual((p["lat"], p["lon"], p["coord_source"]), (e["point"]["lat"], e["point"]["lon"], "catalog"))   # 順位に使われている件はそのまま写す
+
     def test_no_source_id(self):
         self.assertEqual(self.place(), dict.fromkeys(GB.PLACE_KEYS))
         self.assertEqual(self.place(**{GB.PLACE_SRC_KEY: "g-0000000000"}), dict.fromkeys(GB.PLACE_KEYS))
@@ -188,6 +200,7 @@ class Generator(unittest.TestCase):
         self.assertEqual(GB._git_state(run=run), ("0123456789abcdef0123456789abcdef01234567", True))
         self.assertTrue(all(isinstance(c, list) and c[0] == "git" and c[2] == str(H.ROOT / "ikimonobiyori") for c, _ in calls))   # 引数の配列・パッケージのフォルダから
         self.assertTrue(all(kw.get("timeout") for _, kw in calls))
+        self.assertTrue(all(c[3] == "--no-optional-locks" for c, _ in calls))   # git が索引を書き直さない(書き込み先の決まり)
 
     def test_git_state_clean_and_failures(self):
         ok = lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=fake_git(cmd, "f" * 40, ""), stderr="")

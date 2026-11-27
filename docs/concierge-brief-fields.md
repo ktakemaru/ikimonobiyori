@@ -76,7 +76,7 @@
 | 項目 | 意味 | 型 | 入るとき |
 |---|---|---|---|
 | ★ `place_id` | 名所の ID。名所カタログの件は `ikimonobiyori:<カタログの id>`(例 `ikimonobiyori:kouyou-0024`)、観察の名所の件は `ikimonobiyori:<観察の名所の id>`(例 `ikimonobiyori:obs-kouyou-0088`) | 文字列 | 順位つきの候補(今までの形の答えの計画の行の `id` から)。例年の目安・町の名所・種の名所・季節の目玉は `null` |
-| ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(丸めない。カタログは各件の `location_precision` の桁で入っている) | 数 | 名所カタログの `point`、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point` の順。野鳥の観察の名所の座標(`bird_range`)は、野鳥のプロファイルの粗さより細かいので写さない(絶対ルール 7) |
+| ★ `lat`・`lon` | 緯度・経度。元のデータの値のまま(丸めない。カタログは各件の `location_precision` の桁で入っている) | 数 | 名所カタログの `point`(承認待ちの件も、順位に使われていれば写す)、観察の名所の `catalog_ref` が指すカタログの `point`、観察の名所の `point`(`point.source` に出典が書かれたものだけ)の順。野鳥の観察の名所の座標(`bird_range`)は、野鳥のプロファイルの粗さより細かいので写さない(絶対ルール 7) |
 | `coord_source` | 座標を写した元: `catalog`・`catalog_via_spot`・`observation_spot` | 文字列 | 座標があるとき |
 | ★ `site_ref` | 山の地点との結びつき `yamabiyori:mNNN`(sites.yaml の `site_ref`) | 文字列 | 種の名所で `mountain_site`(段階84 第1部 A)がある候補と、カタログの件に `site_ref` があるとき(今は例の件だけ)。名前が山と同じでも、データに結びつきが無ければ `null`(高尾山の観察の名所など) |
 
@@ -131,6 +131,8 @@
 - 同じ質問・同じ `now` なら、`generator.generated_at`(と `commit`・`dirty`)のほかは同じ資料。テスト(`BIYORI_UNDER_TEST=1`)では git を呼ばず `commit`・`dirty` は `null`、テスト専用の時計のときの `generated_at` は `now`。
 
 ## 3. 実物の例(通信なし)
+
+**2026-11-27 の注**: 下の例は、項目を足す前の資料。今の資料には、いちばん上の `schema` の次に `generator` があり、候補の各件の末尾に 5 つの項目がある。同じ作り方で今の資料を作ると、下の 1 件目の候補の末尾は `"place_id": "ikimonobiyori:kouyou-0024", "lat": 35.711, "lon": 139.398, "coord_source": "catalog", "site_ref": null`、`generator` は `{"name": "ikimonobiyori", "version": "0.2.0", "commit": null, "dirty": null, "generated_at": "2026-11-27T09:00:00+09:00"}`(テストの仕組みの下なので `commit`・`dirty` は `null`、`generated_at` は `now`)。
 
 作り方(2026-11-27): `tests/helpers.py` を読み込んで(ソケット禁止・`BIYORI_UNDER_TEST=1`・一時のデータ置き場)、`guide_brief.build("今週末、高尾山で紅葉を見たい", now=2026-11-27T09:00+09:00)` を呼んだ。呼んだスクリプトは作業用の一時フォルダに置き、リポジトリには入れていない。
 データ置き場が空なので、使ったのはリポジトリにあるデータ(名所カタログ・例年の目安など)だけで、今年の現況・知識カード・観察記録は入っていない。`build` を直接呼んだので `auto_refresh` の項目は無い(`ask brief` は `build_refreshed` を呼び、読み直しの対象があれば足す)。長い配列と文は「…」で縮め、空の配列が並ぶ `values` は 1 行にした。
