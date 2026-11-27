@@ -513,3 +513,55 @@ mountain_named_candidates:
   asked_section:
     heading: "## 聞かれた山の名所"
     lead: "質問で挙げられた山の名所です。まずこの名所の状態を答えてください。"
+# 指示書 docs/current-status-instructions.md(2026-11-28。利用者の承認: 資料の出力の項目と記録の検査を変えてよい)。
+# 聞かれた名所(質問が名前を挙げた山と、質問の場所の語と名前が同じ候補)の今年の現況を、場所ごと(part)・出どころごと(公式・紹介サイト・利用者)に資料に並べる。
+# enabled: false で資料に current_status が入らず、照合も main と同じになる。research・spread・steps はそれぞれ第 4・5・6 部を切る。
+current_status:
+  enabled: true
+  section:
+    heading: "## 聞かれた名所の今年の現況(場所ごと・出どころごと)"
+    lead: "質問で挙げられた名所の、今年の現況の記録をすべて並べます(新しい順)。場所(山頂・中腹など)が書かれた記録は、その場所のことだけを書いてください。発信元が違う記録は、どれも消さずに発信元と日付を添えて書いてください。"
+  lines:
+    dated: "{label}: {state}({md}時点、{publisher})"
+    undated: "{label}: 「{state}」({publisher}。日付の書かれていない発信で、いつの状態か分からない)"
+    whole: 名所全体としての表示
+    user: "{date}に現地で確認した記録では、{where}は「{state}」(公式の発表ではありません)"
+    user_source: 利用者が現地で確認した記録
+    no_date: 日付不明
+    fresh_unknown: 新しさ不明
+    unseen: "- 確認していない: {words}({date}に現地で確認した記録 [{fact}] で、見ていない所。この場所の状態は、別の発信元の記録が無ければ書かない)"
+    spread_row: "- ばらつき({part}): {ids}"
+    whole_note: "(名所全体としての表示は、場所ごとの記録より粗い)"
+    spread_lead: "ばらつきがあるときは、「{line}」と書き、それぞれの発信元と日付を添えて並べる(どれか 1 つだけを選ばない。現地で確認した記録は先に書いてよい)。"
+    searched_found: "- その場で調べた({at}): 見つかった記録は上のとおり"
+    searched_none_md: "- その場で調べた({at}): 新しい情報は見つからなかった(答えにもそのとおり書く)"
+    searched_none: "「{where}」の今年の現況を調べたが、新しい情報は見つからなかった"
+    user_fix: "「11月26日に現地で確認した記録では、…(公式の発表ではありません)」の形で、日付と公式ではないことを同じ文に書く"
+    skipped_fix: "調べる手順(資料の節「調べる」)で調べて記録し、python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place {where}(見つからなければ --none <理由>)を実行してから、資料を作り直す"
+    refresh_fix: "節「読み直したページ」の本文の控えで状態と日付を確かめて ask record し(新しい情報が無ければ ask research searched --brief {id} --place {where} --none <理由>)、資料を作り直す"
+  research:                          # 第 4 部: 聞かれた名所に「新しい」(observations の freshness.fresh_days)今年の現況が 1 件も無いとき
+    enabled: true
+    routes: [plan]                   # 対象にする経路(仮置き。見どころ・花の質問は今年の現況を調べる対象にしない)
+    subject_words: {autumn_leaves: 紅葉, flowers: 花, birds: 野鳥}
+    why: "「{where}」の今年の現況が新しくない(広く調べる)"
+    search_words: "{where} {what} {year}"
+    max_searches_per_place: {value: 2, source: "指示書 current-status 第 4 部(聞かれた名所 1 つにつき検索 2 回・仮置き)", provisional: true}
+    max_pages_per_place: {value: 4, source: "指示書 current-status 第 4 部(聞かれた名所 1 つにつきページ 4 枚・仮置き)", provisional: true}
+    step_lines:
+      - '今年の現況(名所ごと): 検索の語は名所の名前・対象・今年の年だけ(個人情報・この環境の情報を入れない)。1 つの名所につき検索 {searches} 回・ページ {pages} 枚まで(WebSearch・WebFetch。検索の要約を事実にしない)。'
+      - '読む順番: 現地の発信(観光協会・施設や索道の運営会社・自治体・ビジターセンター)を先に、次に紹介サイト。自動アクセスを断っているページ・ログインや有料の壁は読まず、人が開く URL として添える。'
+      - '読んだら 1 件ずつ ask record --batch <JSON> で記録する(state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
+      - 'そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place <名所>(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。'
+  spread:                            # 第 5 部
+    enabled: true
+    window_days: {value: 14, source: "指示書 current-status 第 5 部(状態の日付が 14 日以内・仮置き)", provisional: true}
+    line: 発信元によって、状況の伝え方にばらつきがあります。
+  steps:                             # 第 6 部: 手順を飛ばした答えを照合で止める
+    enabled: true
+  verify:
+    extra_state_words: [終了, 終わっ, 残る, 残って, 無い, ない, 無く, 散っ]   # 場所を広げた文を見つけるための状態の言い方(照合の state_words に足すのはこの節の中だけ)
+    unseen_state_words: [紅葉, 色づ, 見頃, 見ごろ, 残, 無い, ない, 散]
+    unseen_ok_words: [確認していません, 確認していない, 見ていません, 見ていない, 分かりません, 行っていない]
+    user_words: [公式の発表ではありません, 公式の発表ではない, 公式ではありません]
+    spread_words: [ばらつき]
+    allowed_phrases: [現地で確認した記録では]   # 利用者の記録がある資料だけ、内部の言葉(「記録では」)の照合から外す決まった言い方

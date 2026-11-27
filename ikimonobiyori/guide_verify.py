@@ -549,12 +549,14 @@ def check(draft, brief, c=None, env=None):
             errs += check_unmarked(s, rec_places, c, allowed)
     errs += check_places(parsed, sents, brief, c, env)
     body = fix_bold(strip_markers(parsed["body"], c))      # 段階78 第1部 8: 太字の記号が文字のまま見えないように
-    errs += common_errors(body, brief.get("question") or "", c)
+    from . import current_status as CS
+    errs += common_errors(body, brief.get("question") or "", CS.verify_cfg(c, brief))   # 指示書 current-status 第 3 部: 利用者の記録の決まった言い方を内部の言葉にしない
     errs += distance_errors(sents, brief, c)               # 段階78 第1部 3
     errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
     errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
     errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
+    errs += CS.current_status_errors(sents, strip_markers(parsed["body"], c), brief, c, env, _err)
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
     cited = [by[i] for i in cited_ids if i in by]
     src = final_sources(cited, c)
