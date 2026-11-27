@@ -26,6 +26,7 @@ spots:
     prefecture: 神奈川県
     city: 横浜市中区
     area: 横浜
+    catalog_ref: hana-0021   # 同じ名所の花のカタログの件(名前・都県・市区町村が同じ。2026-11-27。対象が違うので、紅葉の候補の作り方では読まれない。資料の座標に使う)
     typical:
       - {text: "11月中旬～12月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e123975/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
@@ -1086,6 +1087,7 @@ spots:
     prefecture: 東京都
     city: 八王子市
     area: 都内
+    mountain_site_ref: yamabiyori:m029   # 山の地点(sites.yaml m029 高尾山)との結びつき。資料(ask brief)の候補を作るときだけ読む(2026-11-27 利用者の決定。この名所の point は m029 の座標を写したもの)
     origin: festival
     point: {lat: 35.6253, lon: 139.2436, elevation_m: 599, source: "ikimonobiyori/data/sites.yaml m029(高尾山)の座標", checked_on: '2026-11-06'}
     elevation_m: 599
@@ -1102,6 +1104,7 @@ spots:
     prefecture: 東京都
     city: 青梅市
     area: 都内
+    mountain_site_ref: yamabiyori:m031   # 山の地点(sites.yaml m031 御岳山)との結びつき。資料(ask brief)の候補を作るときだけ読む(2026-11-27 利用者の決定。この名所の point は m031 の座標を写したもの)
     origin: festival
     point: {lat: 35.7829, lon: 139.1495, elevation_m: 929, source: "ikimonobiyori/data/sites.yaml m031(御岳山)の座標", checked_on: '2026-11-06'}
     elevation_m: 929
@@ -1466,6 +1469,7 @@ spots:
     prefecture: 神奈川県
     city: 相模原市緑区
     area: 陣馬・相模湖
+    mountain_site_ref: yamabiyori:m030   # 山の地点(sites.yaml m030 陣馬山)との結びつき。資料(ask brief)の候補を作るときだけ読む(2026-11-27 利用者の決定。この名所に座標が無いので距離は確かめていない)
     typical:                              # 段階57 第4部(2026-11-07 に読んだ記載)
       - {text: "11月中旬～11月下旬", publisher: YAMAP MAGAZINE, url: "https://yamap.com/magazine/19743", year: 2026, source_class: secondary}
     pages:

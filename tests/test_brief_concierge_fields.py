@@ -1,5 +1,5 @@
 """資料(ask brief)のコンシェル向けの項目(指示書 docs/brief-concierge-fields-instructions.md。2026-11-27)。通信しない。
-候補の place_id・lat・lon・coord_source・site_ref と、資料を作った版 generator。スキーマ ikimonobiyori/schemas/guide-brief.schema.json。"""
+候補の place_id・lat・lon・coord_source・mountain_site_ref と、資料を作った版 generator。スキーマ ikimonobiyori/schemas/guide-brief.schema.json。"""
 import json
 import os
 import subprocess
@@ -82,7 +82,7 @@ class EightBriefs(unittest.TestCase):
         pol = CM.load_policy()
         for d in self.docs:
             for r in d["candidates"]:
-                if r["lat"] is not None and r.get("distance_km") is not None:
+                if r["lat"] is not None and r.get("distance_km") is not None and r["coord_source"] != "observation_spot_coarsened":   # 丸めた野鳥の座標は test_brief_concierge_fields_2 で
                     km = CM.range_from(pol, {"lat": r["lat"], "lon": r["lon"]}, d["origin"])["km"]
                     self.assertLess(abs(km - r["distance_km"]), 2, r["name"])     # 足した座標と、今までの距離が食い違わない(8 つの資料で確かめた)
 
@@ -99,7 +99,7 @@ class PlaceOf(unittest.TestCase):
         s = self.ix["spots"]["obs-kouyou-0088"]
         self.assertEqual(self.place(**{GB.PLACE_SRC_KEY: "obs-kouyou-0088"}),
                          {"place_id": "ikimonobiyori:obs-kouyou-0088", "lat": s["point"]["lat"], "lon": s["point"]["lon"],
-                          "coord_source": "observation_spot", "site_ref": None})     # 高尾山。sites.yaml の m029 とは、文の注記しかないので結ばない
+                          "coord_source": "observation_spot", "coord_precision": None, "mountain_site_ref": "yamabiyori:m029"})     # 高尾山。2026-11-27 に spots.yaml の mountain_site_ref で m029 と結んだ
 
     def test_spot_catalog_ref(self):
         s = self.ix["spots"]["obs-yacho-0003"]
@@ -111,7 +111,7 @@ class PlaceOf(unittest.TestCase):
         self.assertTrue(self.ix["spots"]["obs-yacho-0002"].get("bird_range"))
         p = self.place(**{GB.PLACE_SRC_KEY: "obs-yacho-0002"})
         self.assertEqual(p["place_id"], "ikimonobiyori:obs-yacho-0002")
-        self.assertIsNone(p["lat"])                                    # 絶対ルール 7: 野鳥のプロファイルの粗さより細かい座標は写さない
+        self.assertEqual((p["lat"], p["lon"], p["coord_source"]), (35.4, 139.6, "observation_spot_coarsened"))   # 利用者の決定 2026-11-27: 野鳥のプロファイルの粗さ(小数 1 桁)に丸めて出す
 
     def test_spot_point_without_source_is_not_copied(self):
         s = self.ix["spots"]["obs-kouyou-0095"]
@@ -131,7 +131,7 @@ class PlaceOf(unittest.TestCase):
 
     def test_mountain_site_gives_site_ref_only(self):
         p = self.place(mountain_site="乗鞍岳(剣ヶ峰)")
-        self.assertEqual(p["site_ref"], "yamabiyori:m041")
+        self.assertEqual(p["mountain_site_ref"], "yamabiyori:m041")
         self.assertIsNone(p["lat"])                                    # 山の座標を名所の座標にしない
         self.assertIsNone(p["place_id"])
 
@@ -147,7 +147,7 @@ class MergedCandidates(unittest.TestCase):
         return cands[0], merges[0]
 
     def p(self, pid=None, lat=None, ref=None):
-        return {"place_id": pid, "lat": lat, "lon": lat, "coord_source": "catalog" if lat is not None else None, "site_ref": ref}
+        return {"place_id": pid, "lat": lat, "lon": lat, "coord_source": "catalog" if lat is not None else None, "mountain_site_ref": ref}
 
     def test_one_side_has_id(self):
         r, m = self.run_merge({"A": self.p(), "B": self.p("ikimonobiyori:k1", 35.0)})
@@ -164,7 +164,7 @@ class MergedCandidates(unittest.TestCase):
 
     def test_same_id_and_site_ref_from_other(self):
         r, m = self.run_merge({"A": self.p("ikimonobiyori:k1", 35.0), "B": self.p(ref="yamabiyori:m001")})
-        self.assertEqual((r["place_id"], r["site_ref"], m["place_from"]), ("ikimonobiyori:k1", "yamabiyori:m001", "A"))
+        self.assertEqual((r["place_id"], r["mountain_site_ref"], m["place_from"]), ("ikimonobiyori:k1", "yamabiyori:m001", "A"))
 
 
 def fake_git(cmd, head, status, top=None):

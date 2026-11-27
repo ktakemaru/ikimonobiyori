@@ -486,13 +486,15 @@ reserve:
 concierge_fields:
   generator_name: ikimonobiyori
   place_id_prefix: "ikimonobiyori:"         # 名所カタログ・観察の名所の id の前に付ける(提案の出力 biyori-proposal/1 の place.site_ref と同じ書き方)
-  site_ref_prefix: "yamabiyori:"            # 山の地点との結びつき(sites.yaml の site_ref)
+  mountain_site_ref_prefix: "yamabiyori:"   # 資料の候補の mountain_site_ref(山の地点との結びつき。sites.yaml・カタログの site_ref の値)
   coord_source:                             # 座標を写した元
     catalog: catalog                        # 名所カタログ(data/catalog/*.yaml)の point
     catalog_ref: catalog_via_spot           # 観察の名所の catalog_ref が指す名所カタログの point
     spot: observation_spot                  # 観察の名所(data/observations/spots.yaml)の point(point.source に出典が書かれたものだけ)
-  # 野鳥の観察の名所の座標(bird_range。小数 2 桁)は、野鳥のプロファイルの位置の粗さ(area_10km = 小数 1 桁)より細かいので写さない(絶対ルール 7)
-  spot_coords_skip_subjects: [birds, wintering_birds]
+    spot_coarsened: observation_spot_coarsened   # 下の対象の観察の名所の座標を、プロファイルの位置の粗さに丸めたもの
+  # 野鳥の観察の名所の座標(出典の書かれた point か bird_range。小数 2 桁)は、野鳥のプロファイルの位置の粗さ(birds は area_10km = 小数 1 桁)に
+  # 丸めて出す(利用者の決定 2026-11-27。丸める前の値は資料に入れない。絶対ルール 7)。丸め方は提案の出力と同じ(proposals.coarse_precision・engine.round_coord)
+  spot_coords_coarsen_subjects: [birds, wintering_birds]
   merge_conflict_reason: まとめた候補の元の ID が食い違うので、ID・座標を入れていない
   git:
     timeout_s: 5                            # commit を読む git の待ち時間の上限(仮の値。超えたら null)
