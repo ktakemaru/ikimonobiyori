@@ -213,7 +213,7 @@ SIX = {"obs-kouyou-0088": "m029", "obs-kouyou-0089": "m031", "obs-kouyou-0093": 
 
 
 class MountainLinks(unittest.TestCase):
-    """第 4 部: 山の地点との結びつき 6 件(名所カタログは今ある site_ref、観察の名所は新しい mountain_site_ref)。"""
+    """第 4 部: 山の地点との結びつき 7 件(名所カタログは今ある site_ref、観察の名所は新しい mountain_site_ref)。"""
 
     def setUp(self):
         self.ix = GB._place_index()
