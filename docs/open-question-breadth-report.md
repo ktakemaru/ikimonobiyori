@@ -108,7 +108,7 @@
   - 日光市観光協会の ▼・◎ には凡例の語を添える(「▼(凡例: 色褪せ・落葉始め)」)。
   - 候補に無い名所は候補に足す(「手元に今年の現況がある(開いた質問)」)。これで **`season_place` の質問でも、花菜ガーデンのサザンカ(11/27)が資料の候補と事実に入る**(第0部の調べ 1 の作り物の試しで確かめた)。
   - 名所・場所・発信元ごとに、いちばん新しい記録 1 件。最大 `open.max_known`(20。仮置き)。
-- **広く探す**(`open_targets`): `research.targets` に `kind: open_breadth` を 1 つ出す(`where` = 「横浜から行ける範囲」など、`what` = 「紅葉」「ツバキ・サザンカ」など)。節「調べる」に手順 5 行(`open.step_lines`)。
+- **広く探す**(`open_targets`): `research.targets` に `kind: open_breadth` を 1 つ出す(`where` = 「横浜から行ける範囲」など、`what` = 「紅葉」「ツバキ・サザンカ」など)。節「調べる」に手順 6 行(`open.step_lines`)。
   - 上限: 検索 `open.max_searches` = 8、取得 `open.max_pages` = 16(指示書 1-3 の初期値。仮置き。第5部の実測を報告書の時間の節に書く)。
   - WebSearch に渡す `blocked_domains`(コードが方針から作る): `bird-research.jp`・`n-kishou.co.jp`・`n-kishou.com`・`tenki.jp`・`weathernews.jp`・`yamakei-online.com`。
   - 記録のしかた: 対象と日付が分かった公式ページ → `ask record`(今年の現況)。日付の無い公式ページ → `ask record` に `typical`・`basis: page`(例年の目安)。公式が見つからない → `ask record-unverified`。url は公式サイトのページ(公式ページが外部のブログの記事を載せているときも)。
