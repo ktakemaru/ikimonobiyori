@@ -37,6 +37,30 @@ class SourceDates(unittest.TestCase):
         self.assertIn("ほか", line)
 
 
+class FactIdsAndDates(unittest.TestCase):
+    """第5部の試しで見つかった不具合: 事実を外したあとに足すと番号が重なった・施設の発信の日付(文の中の「11/27時点」)を日付なしと見た。"""
+
+    def test_ids_unique_after_removal(self):
+        F = GB._Facts(GB.cfg(), set())
+        a = F.add("other", "試験の事実 1(作り物)")
+        F.add("other", "試験の事実 2(作り物)")
+        F.rows.remove(a)
+        c = F.add("other", "試験の事実 3(作り物)")
+        self.assertEqual(len({r["id"] for r in F.rows}), len(F.rows))
+        self.assertEqual(c["id"], "F003")
+
+    def test_fact_date_from_content(self):
+        r = {"id": "F001", "kind": "current", "observed": None, "read_at": "2026-11-28T09:00:00+09:00",
+             "content": "試験のビジターセンター(作り物)は、11/27時点で「麓 散り始め」と発信しています。"}
+        self.assertEqual(GV.fact_date(r), "2026-11-27")
+        self.assertIsNone(GV.fact_date({"id": "F002", "observed": None, "read_at": "2026-11-28T09:00:00+09:00", "content": "見ごろの花: サザンカ"}))
+        brief = {"facts": [r]}
+        s = _s("試験のビジターセンター(作り物)は、11月27日時点で麓は散り始めと発信しています。", ["F001"])
+        self.assertEqual(GV.date_basis_errors([s], brief, GB.cfg()), [])
+        line = GV.short_sources([{**r, "url": "https://vc-test.example.jp/", "source": "試験のビジターセンター(作り物)", "source_class": "official"}], GB.cfg())
+        self.assertIn("11/27時点", line)
+
+
 class DateBasis(unittest.TestCase):
     """第4部 2: 本文と事実の日付の持ち方の食い違いを照合で止める。"""
 

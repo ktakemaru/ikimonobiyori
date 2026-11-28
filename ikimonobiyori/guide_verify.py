@@ -411,6 +411,20 @@ def seasonal_obs_errors(s, rows, c, vocab=None):
     return errs
 
 
+_AS_OF_MD = __import__("re").compile(r"(\d{1,2})[/月](\d{1,2})日?(?:時点|現在)")
+
+
+def fact_date(r):
+    """事実の発信の日付(YYYY-MM-DD)。observed が無い事実(施設の発信など)は、事実の文の「11/27時点」「11月26日時点」から(年は読んだ日の年)。"""
+    if r.get("observed"):
+        return str(r["observed"])[:10]
+    m = _AS_OF_MD.search(r.get("content") or "")
+    y = str(r.get("read_at") or "")[:4]
+    if not m or not y.isdigit():
+        return None
+    return f"{y}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
+
+
 def date_basis_errors(sents, brief, c):
     """発信の日付がある事実の文に「いつの発信か分からない」と書く・日付の無い事実の文に「○/○時点」と書く(出典の「〜時点」「〜に確認」と食い違う)。"""
     D = c.get("date_basis") or {}
@@ -423,9 +437,9 @@ def date_basis_errors(sents, brief, c):
         if not fs:
             continue
         text = s["clean"]
-        if any(f.get("observed") for f in fs) and GB.has_any(D["undated_words"], text) and all(f.get("observed") for f in fs):
+        if all(fact_date(f) for f in fs) and GB.has_any(D["undated_words"], text):
             out.append(_err("date_basis_mismatch", s, "発信の日付がある事実に、いつの発信か分からないと書いている", D["fix_dated"]))
-        elif not any(f.get("observed") for f in fs) and re.search(D["as_of_re"], text):
+        elif not any(fact_date(f) for f in fs) and re.search(D["as_of_re"], text):
             out.append(_err("date_basis_mismatch", s, "発信の日付が無い事実を「○/○時点」と書いている(読んだ日は発信の日付ではない)", D["fix_undated"]))
     return out
 
@@ -483,7 +497,7 @@ def final_sources(cited, c):
         if r["id"].startswith("K"):
             note = f["card_note"].format(date=_md(r.get("checked_on")) or "日付不明")
         else:
-            d = _md(r.get("observed"))                   # 指示書 open-question-breadth 第4部 2: 「〜時点」は発信の日付が分かるときだけ。読んだ日は「〜に確認」
+            d = _md(fact_date(r))                        # 指示書 open-question-breadth 第4部 2: 「〜時点」は発信の日付が分かるときだけ。読んだ日は「〜に確認」
             note = f["fact_note"].format(date=d) if d else (f["card_note"].format(date=_md(r.get("read_at"))) if _md(r.get("read_at")) else None)
         cls = f["official"] if r.get("source_class") == "official" else f["not_official"]
         from . import guide_materials as GM                # 段階78 第1部 5: ドメインのままの名前は使わず、台帳・自治体の名前で
@@ -514,11 +528,11 @@ def short_sources(cited, c):
             name = _source_label(r)
             if r["id"].startswith("K"):
                 iso, how = r.get("checked_on"), "card"
-            elif r.get("observed"):
-                iso, how = r.get("observed"), "fact"
+            elif fact_date(r):
+                iso, how = fact_date(r), "fact"
             else:
                 iso, how = r.get("read_at"), "card"            # 指示書 open-question-breadth 第4部 2: 発信の日付が無い事実は、読んだ日を「〜に確認」で
-            dated = bool(r.get("observed")) and not r["id"].startswith("K")
+            dated = bool(fact_date(r)) and not r["id"].startswith("K")
             off = r.get("source_class") != "secondary"        # 紹介サイトと分かるもの(secondary)だけに添える(区分のない知識カードは添えない)
         if r.get("kind") == "seasonal_obs":
             dated = False

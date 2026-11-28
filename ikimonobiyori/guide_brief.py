@@ -713,6 +713,11 @@ class _Facts:
     def __init__(self, c, pending):
         self.c, self.pending, self.rows, self.keys = c, pending, [], set()
 
+    def _next_no(self):
+        """次の事実の番号。途中で事実を外したあと(施設の古い現況など)に足しても、番号が重ならないように、今ある番号の最大 + 1。"""
+        nos = [int(r["id"][1:]) for r in self.rows if str(r.get("id") or "")[1:].isdigit()]
+        return max(nos, default=0) + 1
+
     def add(self, kind, content, *, place=None, source=None, url=None, source_class=None, observed=None, read_at=None, extra=None):
         content = seireki(re.sub(r"\s+", " ", (content or "").strip()))
         if not content or not _usable_url(url, self.pending):
@@ -730,7 +735,7 @@ class _Facts:
             return None
         self.keys.add(key)
         v = values(content + " " + " ".join(str(x) for x in (extra or {}).values() if x), self.c)
-        row = {"id": f"F{len(self.rows) + 1:03d}", "kind": kind, "kind_label": self.c["kinds"][kind], "place": place, "content": content,
+        row = {"id": f"F{self._next_no():03d}", "kind": kind, "kind_label": self.c["kinds"][kind], "place": place, "content": content,
                "values": v, "source": source, "source_class": _source_class(url, source_class), "url": url,
                "observed": observed, "read_at": read_at}
         if extra:
