@@ -1253,21 +1253,6 @@ def main(argv=None, http_get=None):
         if a.action == "list":
             _out(RS.listing())
             return 0
-        if not a.brief:
-            print("--brief <資料の id> が要ります", file=sys.stderr)
-            return 2
-        if a.action == "fetch":
-            if not a.url:
-                print("URL がありません", file=sys.stderr)
-                return 2
-            r = RS.fetch(a.url, a.brief, now=now, publisher=a.publisher)
-            if not r["ok"]:
-                print(f"読みませんでした: {r.get('reason')}", file=sys.stderr)
-                return 1
-            lim = RS.cfg()["max_text_chars"]
-            tail = f"\n…(続きは {r['path']})\n" if len(r["text"]) > lim else "\n"
-            sys.stdout.flush(); sys.stdout.buffer.write((r["text"][:lim] + tail).encode("utf-8"))
-            return 0
         if a.action in ("pending", "seen"):              # 指示書 open-question-breadth の続き 第1部
             from . import pending_sources as PS
             if a.action == "seen":
@@ -1285,13 +1270,28 @@ def main(argv=None, http_get=None):
                 return 2
             from . import guide_brief as GB
             try:
-                q = GB.load(a.brief).get("question")
+                q = GB.load(a.brief).get("question") if a.brief else None   # --brief を省くときは、1 件ごとに question を書く
             except (OSError, ValueError):
                 q = None
             doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
             res = PS.add(doc if isinstance(doc, list) else [doc], brief=a.brief, question=q, now=now)
             _out(res)
             return 1 if res["rejected"] and not (res["added"] or res["updated"]) else 0
+        if not a.brief:
+            print("--brief <資料の id> が要ります", file=sys.stderr)
+            return 2
+        if a.action == "fetch":
+            if not a.url:
+                print("URL がありません", file=sys.stderr)
+                return 2
+            r = RS.fetch(a.url, a.brief, now=now, publisher=a.publisher)
+            if not r["ok"]:
+                print(f"読みませんでした: {r.get('reason')}", file=sys.stderr)
+                return 1
+            lim = RS.cfg()["max_text_chars"]
+            tail = f"\n…(続きは {r['path']})\n" if len(r["text"]) > lim else "\n"
+            sys.stdout.flush(); sys.stdout.buffer.write((r["text"][:lim] + tail).encode("utf-8"))
+            return 0
         if a.action == "searched":                       # 指示書 current-status 第 4・6 部: 今年の現況を調べた印(取れた・取れなかった)
             from . import current_status as CS
             if not a.place:

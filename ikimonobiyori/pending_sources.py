@@ -91,13 +91,22 @@ def _find_line(lines, key):
 def build_url(row, when):
     """月ごとに URL が変わる行は、対象の日の月の URL を組み立てる。組み立てられなければ変わらない部分のページ(start_url)か URL。"""
     t = row.get("url_template")
-    if t and "{yyyy}" in t and "{mm}" in t and when is not None:
-        return t.replace("{yyyy}", f"{when.year:04d}").replace("{mm}", f"{when.month:02d}")
+    if _template_ok(t) and when is not None:
+        return (t.replace("{yyyy}", f"{when.year:04d}").replace("{ry}", str(when.year - REIWA_BASE))   # {ry}: 令和の年(神奈川県の r811 = 令和8年11月)
+                .replace("{mm}", f"{when.month:02d}"))
     return row.get("start_url") or row.get("url")
 
 
+REIWA_BASE = 2018                                          # 令和元年 = 2019 年(暦。閾値ではない)
+
+
+def _template_ok(t):
+    return bool(t) and ("{yyyy}" in t or "{ry}" in t) and "{mm}" in t
+
+
 def _template_re(t):
-    return "^" + re.escape(t).replace(re.escape("{yyyy}"), r"\d{4}").replace(re.escape("{mm}"), r"\d{2}") + "/?$"
+    return ("^" + re.escape(t).replace(re.escape("{yyyy}"), r"\d{4}").replace(re.escape("{ry}"), r"\d{1,2}")
+            .replace(re.escape("{mm}"), r"\d{2}") + "/?$")
 
 
 def in_ledger(url):
@@ -142,8 +151,8 @@ def check(item):
         errs.append(f"update_style は {list(C['update_styles'])} のどれか")
     if item.get("update_style") == "monthly_url":
         t = item.get("url_template") or ""
-        if "{yyyy}" not in t or "{mm}" not in t:
-            errs.append("月ごとに URL が変わるページは url_template({yyyy} と {mm} を含む変わらない部分)が要る")
+        if not _template_ok(t):
+            errs.append("月ごとに URL が変わるページは url_template({yyyy} か {ry}(令和の年)と {mm} を含む変わらない部分)が要る")
         elif url and not re.match(_template_re(t), url):
             errs.append("url が url_template の形に合わない")
     pl = item.get("place") or {}

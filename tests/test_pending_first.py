@@ -91,6 +91,11 @@ class PendingFirst(unittest.TestCase):
         self.assertEqual(PS.build_url(PS.rows()[0], date(2027, 1, 9)), "https://blog-test.example.jp/blog/2027/01/")
         self.assertTrue(PS.add([dict(it, url="https://blog-test.example.jp/other/2026/11/", url_template="https://blog-test.example.jp/x/{yyyy}/{mm}/")], now=NOW)["rejected"])
         self.assertEqual(PS.seen("https://blog-test.example.jp/blog/2027/01/", brief="b-9", now=NOW)["id"], PS.rows()[0]["id"])
+        r8 = item(url="https://pref-test.example.jp/leaves/r811kouyou.html", url_template="https://pref-test.example.jp/leaves/r{ry}{mm}kouyou.html",
+                  update_style="monthly_url", publisher_kind="自治体")
+        self.assertEqual(PS.add([r8], now=NOW)["added"], 1)
+        row = next(x for x in PS.rows() if "pref-test" in x["url"])
+        self.assertEqual(PS.build_url(row, date(2027, 1, 9)), "https://pref-test.example.jp/leaves/r901kouyou.html")
 
     def test_pick_order_range_subject_species(self):
         PS.add([item(),
