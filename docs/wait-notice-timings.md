@@ -10,7 +10,8 @@
 |---|---|---|---|
 | 資料を作る(読み直しあり) | `python -X utf8 -m ikimonobiyori.ask brief "<質問>"` | 23.6 秒(1 回) | 2026-11-28、利用者の手元の PC で 1 回。`time python -X utf8 -m ikimonobiyori.ask brief "今週末、高尾山で紅葉を見たい"` の real 23.579 秒。資料 `b20261128-6a24b91f`(版 0.2.0・commit `c07cf30`)の JSON に `auto_refresh` があり(`elapsed_s` 5.8・`requests` 5。読み直した 2 ページの内容が変わった)、読み直しありの回。1 回だけなので幅は無い |
 | 資料を作る(読み直しなし) | `python -X utf8 -m ikimonobiyori.ask brief "<質問>"` | **未計測** | 今の版では測っていない。参考(前の版の値。表には使わない): 段階85 第1部の版で、読み直しに 5.6〜17.1 秒・読み直したページを記録して資料を作り直すまでの全体 37〜40 秒(`docs/stage85-report.md`「確かめ(実際に読み直した結果)」。手元の PC・3 問、全体は 2 問)。そのあと「段階85 の続き」で施設の情報ページを読み直しの対象に足したので、正本 5 章(中身が変わったら直すまでは未計測)により未計測にした。読み直しを入れる前の段階77 の版では資料づくり 1.7〜4.2 秒(`docs/stage77-report.md` 3 章。手元・6 問)。読み直しの上限は 1 問 5 ページ・25 秒(`data/ask/guide_mode.yaml` の `auto_refresh`。上限の設定で、実測ではない) |
-| 開いた質問で広く探して答える(全体) | `ask brief` → 検索・WebFetch → `ask record` → `ask research searched` → `ask brief`(作り直し)→ 下書き → `ask verify` | 約 2 分(96.5 秒・1 回) | 2026-11-28、手元の PC、Claude Code のサブエージェント(Sonnet)で 1 回(「ツバキやサザンカが見られるところを教えて」。検索 2・取得 3・記録 2・照合 1 回で合格)。指示書 open-question-breadth 第2部。第5部の試しの実測で直す(報告書 `docs/open-question-breadth-report.md`) |
+| 広く調べて答える(全体。開いた質問) | `ask brief` → 検索・WebFetch → `ask record` → `ask research searched` → `ask brief`(作り直し)→ 下書き → `ask verify` | **約 3 分**(96.5〜197.9 秒・中央値 162.2 秒・7 回) | 2026-11-28、手元の PC、Claude Code のサブエージェント(Sonnet)。試し 1 問目(96.5 秒)と、指示書 open-question-breadth 第5部の質問 1〜6(169.5・176.9・162.2・197.9・114.8・153.0 秒)。3 問ずつ同時に実行した。検索 2〜5 回・取得 1〜8 回 |
+| 広く調べて答える(全体。名指しの質問) | 同じ(資料の「今年の現況が新しくない(広く調べる)」から) | **約 3 分**(149.8・176.3 秒・2 回) | 同じ日・同じやり方。第5部の質問 7(大山)・8(富士山) |
 | 山の花暦 | `python -X utf8 -m ikimonobiyori.guide wildflower --site mNNN --month <月> --json` | 0.88〜1.20 秒 | 2026-11-27、手元の PC(Git Bash から)。`m001`・`m002` を 7 月で 3 回ずつ、計 6 回。`IKIMONOBIYORI_DATA_DIR` は作業用の一時フォルダ。この作業(`docs/stage4-prep-report.md`)で測った |
 | 全テスト(1 回で) | `python -X utf8 -m unittest discover -s tests` | **未計測** | 1 回の実行では測っていない。参考: 4 組に分けて別々に実行したときの 1 組の時間 128・209・70・60 秒(`docs/stage85-report.md`「通信と時間」。手元の PC・1 回ずつ) |
 
@@ -22,7 +23,6 @@
 - 全テストを 1 回で実行したとき(上の 1 章)
 - 今までの形の答え `ask answer`(参考: 段階63b の版で 1.2〜3.5 秒、読むページを読んで答え直すまで 40.8〜42.9 秒。`docs/stage63a-report.md`・`docs/stage63b-report.md` 第5部。そのあと中身が変わっているので未計測)
 - その場で調べる `ask research fetch`(上限は 1 問 3 ページ・2 分。実測なし)
-- 聞かれた名所の今年の現況を広く調べる(検索・WebFetch・`ask record`・`ask research searched` のあと資料を作り直す。上限は名所 1 つにつき検索 2 回・ページ 4 枚。`docs/current-status-instructions.md` 第 4 部。2026-11-28 に足した。実測は利用者)
 - 写真の取得(`guide photos-ensure`・`photos-prefetch`・`ask photos`)・写真つきのページ(`guide page`・`ask page`)
 - 例年この時期の観察記録の集計(`seasonal_obs fetch`・`taxa`)・野鳥の集計(`ask inat-refresh`)
 - 今日の準備(`ask warm` の一覧を読んで記録する)
@@ -34,7 +34,7 @@
 - 「全テストを実行します。時間の目安はまだ測っていません。」
 - 「写真つきのページを作ります。時間の目安はまだ測っていません。」
 - 「今年の現況を、公式の発信と紹介サイトで広く調べます。時間の目安はまだ測っていません。」(資料に「今年の現況が新しくない(広く調べる)」が出たとき)
-- 「公式ページで広く調べてから答えます。2 分ほどかかります。」(資料に「広く探す(開いた質問)」が出たとき。分は表の実測の値を切り上げる。指示書 open-question-breadth 第2部)
+- 「公式ページで広く調べてから答えます。3 分ほどかかります。」(資料の節「調べる」に「広く探す(開いた質問)」か「今年の現況が新しくない(広く調べる)」が出たとき。表の「広く調べて答える」の行。指示書 open-question-breadth 第2部)
 
 予告は、コマンドを呼ぶ前の別のメッセージで 1 回だけ出す。最後のメッセージ(`ask verify`・`ask page-reply`・`ask source-urls` の出力をそのまま送るもの)の前後には入れない(正本 4 章。入れると、送る文が道具の出した文と違ってしまう)。
 花暦(約 1 秒)のように 30 秒かからない作業の前には、予告を書かない。
