@@ -281,6 +281,9 @@ def distance_text(name, km, origin, *, estimated=False, prefecture=None, city=No
         return None, D["across_bay_label"]
     if km is None:
         return None, D["estimated_label"]
+    isl = D.get("island") or {}
+    if isl.get("enabled") and ct in (isl.get("municipalities") or []):    # 指示書 open-question-breadth 第4部 5: 船か飛行機が要る島は、直線の距離だけを書かない
+        return km, isl["label"].format(km=int(round(km)))
     return km, D["straight_label"].format(km=int(round(km)))
 
 

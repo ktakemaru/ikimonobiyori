@@ -240,6 +240,7 @@ spots:
       - {text: "12月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/detail/ar0314e13013/", year: 2026, source_class: secondary, checked_on: '2026-11-01'}
     pages:
       - {url: "https://koyo.walkerplus.com/detail/ar0314e13013/", publisher: ウォーカープラス, source_class: secondary}
+      - {url: "https://www.hakone.or.jp/1804", publisher: 箱根町観光協会, source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "箱根 紅葉 色づき"
   - id: obs-kouyou-0024
     subject: autumn_leaves
@@ -1229,6 +1230,7 @@ spots:
     point: {lat: 35.693444444444445, lon: 138.6868888888889}          # 市町村の代表点(Wikidata)
     typical:
     pages:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", publisher: やまなし観光推進機構, source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "西沢渓谷周辺 紅葉 2026 公式"
   - id: obs-kouyou-0105
     subject: autumn_leaves
@@ -1241,6 +1243,7 @@ spots:
     point: {lat: 35.70433333333333, lon: 138.72941666666668}          # 市町村の代表点(Wikidata)
     typical:
     pages:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", publisher: やまなし観光推進機構, source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "上日川峠(大菩薩周辺) 紅葉 2026 公式"
   - id: obs-kouyou-0106
     subject: autumn_leaves
@@ -1345,6 +1348,7 @@ spots:
     point: {lat: 35.4105, lon: 138.86094444444444}          # 市町村の代表点(Wikidata)
     typical:
     pages:
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", publisher: やまなし観光推進機構, source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "旭日丘湖畔緑地公園 紅葉 2026 公式"
   - id: obs-kouyou-0094
     subject: autumn_leaves
@@ -1357,6 +1361,7 @@ spots:
       - {text: "10月下旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
     pages:
       - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+      - {url: "https://navi.city.chichibu.lg.jp/p_flower/1553/", publisher: 秩父市(秩父観光なび), source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "中津峡 紅葉 色づき"
   - id: obs-kouyou-0095
     subject: autumn_leaves
@@ -1381,6 +1386,7 @@ spots:
       - {text: "10月下旬～11月中旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
     pages:
       - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+      - {url: "https://navi.city.chichibu.lg.jp/p_flower/1553/", publisher: 秩父市(秩父観光なび), source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "大血川渓谷 紅葉 色づき"
   - id: obs-kouyou-0097
     subject: autumn_leaves
@@ -1393,6 +1399,7 @@ spots:
       - {text: "10月下旬～11月上旬", publisher: ウォーカープラス, url: "https://koyo.walkerplus.com/ranking/ar0311/", year: 2026, source_class: secondary}
     pages:
       - {url: "https://koyo.walkerplus.com/ranking/ar0311/", publisher: ウォーカープラス, source_class: secondary}
+      - {url: "https://navi.city.chichibu.lg.jp/p_flower/1553/", publisher: 秩父市(秩父観光なび), source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "秩父グリーンミューズパーク 紅葉 色づき"
   - id: obs-kouyou-0098
     subject: autumn_leaves
@@ -1475,6 +1482,7 @@ spots:
       - {text: "11月中旬～11月下旬", publisher: YAMAP MAGAZINE, url: "https://yamap.com/magazine/19743", year: 2026, source_class: secondary}
     pages:
       - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/r811kouyou.html", publisher: 神奈川県, source_class: official}
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", publisher: 神奈川県 自然環境保全センター, source_class: official}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ
     search: "陣馬山 紅葉 色づき"
   - id: obs-kouyou-0092
     subject: autumn_leaves

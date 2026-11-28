@@ -120,17 +120,37 @@ def lines_for(bid, targets):
     if not targets:
         return []
     L = ["## 調べる(資料が薄い)", ""]
-    L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" + (f"(検索の語: {t['search_words']})" if t.get("kind") == "current_status" and t.get("search_words") else "") for t in targets]
+    wide = ("current_status", "open_breadth")
+    L += [f"- {t.get('where') or ''}{'の' if t.get('where') and t.get('what') else ''}{t.get('what') or ''}: {t['why']}" + (f"(検索の語: {t['search_words']})" if t.get("kind") in wide and t.get("search_words") else "") for t in targets]
     L.append("")
-    if any(t.get("kind") != "current_status" for t in targets):    # 公式ページの名所・例年の時期の手順(今年の現況の対象だけのときは出さない)
+    if any(t.get("kind") not in wide for t in targets):    # 公式ページの名所・例年の時期の手順(今年の現況の対象だけのときは出さない)
         L += [x.format(id=bid) for x in R["step_lines"]]
+    from . import pending_sources as PS
     if any(t.get("kind") == "current_status" for t in targets):    # 指示書 current-status 第 4 部: 聞かれた名所の今年の現況を広く調べる手順
         from . import current_status as CS
-        L += CS.research_step_lines(bid)
+        first = [x for t in targets if t.get("kind") == "current_status" for x in PS.step_lines(bid, t)]   # 指示書 open-question-breadth の続き 1-3: 検索より先に読む一覧
+        L += _insert_first(CS.research_step_lines(bid), first)
+    for t in targets:
+        if t.get("kind") == "open_breadth":                      # 指示書 open-question-breadth 第 1 部: 開いた質問で広く探す手順
+            from . import current_status as CS
+            L += _insert_first(CS.open_step_lines(bid, t), PS.step_lines(bid, t))
+    if any(t.get("kind") in wide for t in targets):          # 指示書 open-question-breadth の続き 1-2: 使えた公式ページを一覧に残す
+        L.append(R["pending_add_line"].format(id=bid))
     if any(t.get("kind") == "species_card" for t in targets):      # 段階82 第2部 1: 種の公的な解説
         from . import guide_brief as GB
         L += [x.format(id=bid) for x in GB.cfg()["species_traits"]["step_lines"]]
     return L + [""]
+
+
+def _insert_first(steps, first):
+    """最初に読むページの手順を、探す手順(「1. 」・「読む順番」で始まる行)の前に入れる(予告・上限の行の後)。"""
+    if not first:
+        return steps
+    i = next((k for k, x in enumerate(steps) if re.match(R_FIRST_BEFORE, x)), len(steps))
+    return steps[:i] + [x for x in first if x] + steps[i:]
+
+
+R_FIRST_BEFORE = r"^(1\. |読む順番)"
 
 
 # ---- 取得 ----
@@ -577,7 +597,8 @@ def listing(env=None):
                             "url": r.get("url"), "publisher": r.get("publisher"), "question": r["research"].get("question"),
                             "declared_publisher": r["research"].get("declared_publisher"),
                             "via": "独自ドメイン(本文の発行元の名前で確かめた)" if r["research"].get("declared_publisher") else "公式の一覧のホスト"})
-    return {"records": sorted(out, key=lambda r: r.get("at") or ""), "pending_sources": _pending_rows(env)}
+    from . import pending_sources as PS
+    return {"records": sorted(out, key=lambda r: r.get("at") or ""), "pending_sources": PS.rows(env)}
 
 
 def _pending_rows(env=None):

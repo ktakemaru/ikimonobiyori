@@ -8,9 +8,9 @@
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
-| 現況の情報源（sources/） | 44 | 35 | 3 |
+| 現況の情報源（sources/） | 53 | 35 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 135 | 14 | 2 |
+| 名所カタログ（catalog/） | 138 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -128,7 +128,7 @@
 | 谷津干潟自然観察センター | yatsuhigata-nature-center | user（2026-11-07） | https://www.seibu-la.co.jp/yatsuhigata/blog/ | 転載禁止の明示なし。利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可 | **承認してよい**: 指定管理者の公式。『自然情報』に渡り鳥の観察記録。転載禁止の明示なし。最新は 10/13 で11月分はまだない |
 | 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団） | oze-fnd | user（2026-11-09） | https://oze-fnd.or.jp/archives/category/if/ | **無断転載を禁じます** | **要判断**: 事実のみの扱いでよいか |
 
-### 2-B. 現況の情報源の台帳（承認済み 44件）
+### 2-B. 現況の情報源の台帳（承認済み 53件）
 
 | 台帳 | 情報源（id） | 承認した人・日 | 最新情報のページ |
 |---|---|---|---|
@@ -156,6 +156,10 @@
 | autumn_leaves.yaml | 秩父市(秩父観光なび)（chichibu-navi-koyo） | user（2026-11-07） | https://navi.city.chichibu.lg.jp/p_flower/1553/ |
 | autumn_leaves.yaml | (一社)長瀞町観光協会（nagatoro-koyo-matsuri-2026） | user（2026-11-07） | https://nagatoro.gr.jp/2026/10/%E9%95%B7%E7%80%9E%E7%B4%85%E8%91%89%E3%81%BE%E3%81%A4%E3%82%8A2026 |
 | autumn_leaves.yaml | 日光市観光協会（nikko-kankou-lightup-2026） | user（2026-11-05） | https://www.nikko-kankou.org/event/1246 |
+| autumn_leaves.yaml | 公益財団法人三溪園保勝会（sankeien-koyo-news） | user（2026-11-28） | https://www.sankeien.or.jp/news/10921/ |
+| autumn_leaves.yaml | 公益社団法人鎌倉市観光協会（kamakura-kankou-koyo） | user（2026-11-28） | https://www.trip-kamakura.com/advertisement/detail.php?id=158 |
+| autumn_leaves.yaml | 長谷寺(鎌倉)（hasedera-hanasanpo） | user（2026-11-28） | https://www.hasedera.jp/ |
+| autumn_leaves.yaml | 一般社団法人伊勢原市観光協会（isehara-kankou-oyama-koyo） | user（2026-11-28） | https://isehara-kanko.com/news/flower/13991/ |
 | birds.yaml | 公益財団法人日本野鳥の会(東京港野鳥公園の管理者)（tokyo-port-birdpark-today） | claude_code_provisional（2026-10-24） | https://wbsj-wildbirdpark.blog.jp/archives/cat_773662.html |
 | birds.yaml | 東京都公園協会(葛西臨海公園サービスセンター)（tokyo-park-kasai-news） | claude_code_provisional（2026-10-24） | https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html |
 | birds.yaml | 公益財団法人日本野鳥の会(横浜自然観察の森の指定管理者)（wbsj-yokohama-blog） | claude_code_provisional（2026-10-24） | https://wbsj-yokohama.blog.jp |
@@ -169,6 +173,11 @@
 | flowers.yaml | よこすかseasideパートナーズ(ヴェルニー公園)（kanagawaparks-verny） | claude_code_provisional（2026-10-31） | https://www.kanagawaparks.com/verny/blog/ |
 | flowers.yaml | 公益財団法人三溪園保勝会（sankeien-kikka） | claude_code_provisional（2026-10-31） | https://www.sankeien.or.jp/ |
 | flowers.yaml | くりはまフラワーパートナーズ(くりはま花の国)（kanagawaparks-kurihama） | claude_code_provisional（2026-10-31） | https://www.kanagawaparks.com/kurihama/ |
+| flowers.yaml | くりはま花の国 指定管理者 くりはまフラワーパートナーズ（kanagawaparks-kurihama-blog） | user（2026-11-28） | https://www.kanagawaparks.com/kurihama/blog/ |
+| flowers.yaml | 京成バラ園芸株式会社（keisei-rose-garden-top） | user（2026-11-28） | https://www.keiseirose.co.jp/ |
+| flowers.yaml | 藤岡市 鬼石総合支所にぎわい観光課（fujioka-sakurayama-fuyuzakura） | user（2026-11-28） | https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/4/11865.html |
+| flowers.yaml | 神川町観光協会（kamikawa-kankou-jomine） | user（2026-11-28） | https://www.kamikawa-kanko.com/news/ |
+| flowers.yaml | 県立相模原公園 指定管理者 神奈川県公園協会・サカタのタネ・サカタのタネGS グループ（kanagawa-park-sagamihara-flower） | user（2026-11-28） | https://www.kanagawa-park.or.jp/sagamihara/feed/feed-flower.php |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-kanagawa） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0314/ |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-tokyo） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0313/ |
 | secondary/autumn_leaves.yaml | GO TOKYO(東京都観光財団。紹介サイト)（gotokyo-autumn-leaves-ja） | user（2026-11-05） | https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/ |
@@ -183,7 +192,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 135件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 138件。うち本人の承認 17件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -197,6 +206,9 @@
 | catalog/autumn_leaves.yaml | 金石水管橋(長瀞)（kouyou-0063） | 2026-11-08 |
 | catalog/autumn_leaves.yaml | 白鳥橋(長瀞)（kouyou-0064） | 2026-11-08 |
 | catalog/autumn_leaves.yaml | 埼玉県立自然の博物館（kouyou-0065） | 2026-11-08 |
+| catalog/flowers.yaml | 県立相模原公園（hana-0093） | 2026-11-28 |
+| catalog/flowers.yaml | 新宿御苑（hana-0094） | 2026-11-28 |
+| catalog/flowers.yaml | さむかわ冬のひまわり（hana-0095） | 2026-11-28 |
 | catalog/wintering_birds.yaml | 瓢湖(阿賀野市)（hakucho-0001） | 2026-10-23 |
 | catalog/wintering_birds.yaml | 安曇野(犀川白鳥湖・御宝田遊水池)（hakucho-0002） | 2026-10-23 |
 | catalog/wintering_birds.yaml | 多々良沼(館林市)（hakucho-0003） | 2026-10-23 |

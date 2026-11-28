@@ -165,7 +165,11 @@ question_re: '([?？]\s*$|(ますか|ませんか|でしょうか|ですか|し�
 # 段階76 第5部 2: 文中に入れない長い断り(公式かどうかは最後の出典で分かる)
 long_disclaimers: [紹介サイトの記載で、公式ではありません, の記載で、公式ではありません, (公式ではありません), （公式ではありません）, とのことで、公式ではありません, 、公式ではありません]   # 段階78: 「紹介サイトによると、とのことで、公式ではありません。」
 # 公式として扱うホスト(段階76 第5部 1)。霧ヶ峰自然保護センター: 長野県が設置、指定管理者の諏訪観光協会が運営(https://www.kirigamine-vc.jp/about。2026-11-10 確認)
-official_hosts: [kirigamine-vc.jp]
+# 指示書 open-question-breadth の続き(本人の決定 2026-11-28 の 1): 運営者の表記で観光協会の運営と確かめたサイト(2026-11-28 に読んだ)。
+#   isehara-kanko.com: フッター「Copyright © (一社)伊勢原市観光協会 公式ホームページ」・発行元の欄「一般社団法人 伊勢原市観光協会 伊勢原市伊勢原1-1-5」
+#   kamikawa-kanko.com: フッター「© 神川町観光協会」・事務局の住所「埼玉県児玉郡神川町大字下阿久原1088」
+#   資料の区分(公式)を決めるだけで、台帳の承認ではない。
+official_hosts: [kirigamine-vc.jp, isehara-kanko.com, kamikawa-kanko.com]
 
 # 最終の文の出典の並び
 final:
@@ -183,10 +187,36 @@ final:
     seasonal_name: iNaturalist の観察記録(過去5年)
     max_items: {value: 6, source: "指示書 段階85 第2部 1(1〜2 行に収める)。理由: 6 件で 2 行ほど", provisional: true}
     more: 'ほか{n}件'
+# 指示書 open-question-breadth 第4部 2(2026-11-28): 本文と出典の日付の食い違い(本文「いつの発信か分からない」・出典「11/9時点」)。
+# 出典は、発信の日付(observed)がある事実だけ「〜時点」、無い事実は読んだ日を「〜に確認」(final.card_note)。照合は文の側を見る。
+# 指示書 open-question-breadth 第4部 6(2026-11-28): 週末のおすすめの答えに天気の話が無かった。出かける日の答えの最後に 1 行(イキモノビヨリは天気を答えない)
+weather_line:
+  enabled: true
+  routes: [plan, season_place, highlights_dated, species_dated, combo]
+  line: 天気はヤマビヨリで確かめてください。
+  skip_words: [ヤマビヨリ]
+  skip_off_season: true            # 本人の返事 2(2026-11-28): 種の名所と時期の答えで、対象の日がどの名所の例年の時期にも入らない(資料の off_season)ときは付けない
+# 指示書 open-question-breadth 第4部 7(2026-11-28): 土曜の朝に「週末」を聞かれたら、土曜は今日だと分かる書き方にする(開園時間に間に合うかの判断)
+today_line:
+  enabled: true
+  line: "- 対象の日に今日が入っている: {md}({wd})は今日。答えでは「今日({md}・{wd})」のように、今日だと分かる書き方にする"
+  weekdays: [月, 火, 水, 木, 金, 土, 日]
+# 指示書 open-question-breadth 第4部 4(2026-11-28): 冬桜(11月中旬〜12月初旬がいちばん良い時期)を 11/28 の答えの「これから」の節に入れた。
+upcoming_heading:
+  enabled: true
+  words: [これから]
+  fix: 対象の日がもう時期の中に入るものは、「今が時期」の節に書く(「これから」の節には、時期の始まりが対象の日より後のものだけ)
+date_basis:
+  enabled: true
+  undated_words: [いつの発信か, いつの情報か, 日付の書かれていない, 日付が書かれていない, 日付は分から, 日付が分から, 発信日は分から]
+  as_of_re: '\d{1,2}[/月]\d{1,2}日?(時点|現在)'
+  fix_dated: この事実には発信の日付がある。「○月○日時点で…」と書く
+  fix_undated: この事実のページには発信の日付が無い。「○/○時点」と書かず、「日付の書かれていない発信」「例年の目安」として書く
 
 # 資料の「決まり」(AI に渡す。指示書 0.3 の事実の決まりを短く)
 rules:
   - ウェザーニュース(転載を含む)・tenki.jp・日本気象協会の予想と、SNS の投稿は使わない。
+  - '例外: 公式ページに載った発行元自身の投稿として確かめた事実(資料に「公式ページに載った発行元の投稿」とあるもの)は使える。出典は公式ページ。状態の語と日付を自分の言葉で書き、投稿の文を長く引かない(本人の返事 4、2026-11-28)。'
   - 山と溪谷オンラインは、状態の語・日付・URL だけ。
   - 行事(まつり・ライトアップなど)の期間を、例年の見頃や今の色づきとして書かない。
   - 範囲は横浜から片道250km前後。範囲の外の場所を書かない。
@@ -209,6 +239,13 @@ distance:
     # 市町村(座標がないとき)。内房・外房・南房総(Claude Code が地図の一般的な区分で選んだ。provisional)
     municipalities: [木更津市, 君津市, 富津市, 袖ケ浦市, 館山市, 南房総市, 鋸南町, 鴨川市, 勝浦市, いすみ市, 御宿町, 大多喜町, 一宮町, 睦沢町, 長生村, 白子町, 長柄町, 長南町, 茂原市]
   estimated_label: 距離は未計算
+  # 指示書 open-question-breadth 第4部 5(2026-11-28): 大島公園を「直線で約83km」とだけ書いた。船か飛行機が要る島(伊豆諸島・小笠原諸島の町村)は、その旨を添える
+  island:
+    enabled: true
+    municipalities: [大島町, 利島村, 新島村, 神津島村, 三宅村, 御蔵島村, 八丈町, 青ヶ島村, 小笠原村]
+    label: 船か飛行機で渡る島(直線で約{km}km)
+    words: [船, 飛行機, フェリー, 島へ渡]
+    fix: 「船か飛行機で渡る島で、直線で約○km」のように、船か飛行機が要ることを同じ文に書く
 # 第2部 2・3: 種の質問の名所の一覧(資料に入れる数。古い・あいまいな時期の名所も入れて、その旨を書く)
 # 段階79 第1部 5: 日付のない今年の現況の事実(ブログの分類の題名「2026年の野鳥公園(45種)」など)を、書き手が「小さな園なので…」のように
 # 読み違えた。いつの記録か分からないことを、事実の文そのものに書く
@@ -319,6 +356,26 @@ research:
   forbidden_fields: [state, state_date, state_date_text, current, practical]
   event_period_re: 'まつり|祭|開催|イベント|ライトアップ|期間中'   # 段階78 第7部: 行事の期間を例年の時期として記録しない
   omitted_month_re: '\d+月(上旬|中旬|下旬|初旬|末)〜(上旬|中旬|下旬|末)'   # 段階78 第6部の続き: 「4月上旬〜下旬」は前半しか読まれないので、後ろの月を省かない(「4月上旬〜4月下旬」)
+  # 指示書 open-question-breadth の続き 第1部(本人の返事 1・7、2026-11-28): 見つけた公式ページを research/pending_sources.jsonl に残し、
+  # 広く探す段の最初に、聞かれた対象と範囲に合うページを読む(ikimonobiyori/pending_sources.py)。台帳ではない・答えの材料を絞らない・確かさの区分を上げない。
+  pending_first:
+    max_reads: {value: 8, source: "指示書 open-question-breadth の続き 1-3 の 5(一覧から読むのは取得の上限 16 回の半分まで。一覧だけで上限を使い切らないため・仮置き)", provisional: true}
+    wide_max_same_prefecture: {value: 2, source: "本人の返事 3(2026-11-28): 範囲が wide の質問で、一覧から選ぶページの同じ都県の上限(仮置き)", provisional: true}
+    subjects: [autumn_leaves, flowers, birds]
+    publisher_kinds: [運営者, 指定管理者, 自治体, 観光協会, ビジターセンター]   # 前の指示書 3-2: 発行元がこのどれかだと、ページの中身から確かめられたときだけ残す
+    date_styles: {article: 記事ごとの日付あり, photo: 撮影日あり, none: 日付なし}
+    update_styles: {append: 記事が増える, rewrite: 1 ページを書き換える, monthly_url: 月ごとに URL が変わる}
+    step_lines:
+      - '0. 最初に読む(見つけた公式ページの一覧。Web の検索より先に): 下の {n} ページを WebFetch で読む(一覧から読むのは最大 {max} 回。取得の上限 {pages} 回に数える)。読めて対象と日付が分かったものは、検索で見つけて読んだ公式ページと同じに ask record する(一覧に載っていることで確かさを上げない)。一覧のページの発行元は、運営者の欄・著作権表示・同じホストのトップページで確かめてある(ページに運営者の欄が無くても、一覧の発行元の名前で記録してよい。ただし「運営者は未確認」の印の行は、確かめてから記録する)。発行元自身の投稿(SNS)の文だけのページは、公式サイトが自分のアカウントとして案内している(「フォロー」の案内やリンク)ことを確かめて、ask record の embedded_post で記録する(docs/guide-mode.md)。実際に読めたページだけ、python -X utf8 -m ikimonobiyori.ask research seen <id> --brief {id} を実行する(読んでいないページには実行しない)。'
+    row: "   - {id}: {name}({publisher}。{km}最後に読めた日 {last}) {url}"
+    # 本人の返事 6(2026-11-28): ask record で書いた今年の現況のページ。(a) 公式の区分のホストで台帳にも一覧にも無ければ自動で残す(運営者は「未確認」)。(b) ほかは案内の 1 行
+    auto:
+      unverified: 未確認
+      reason: "未確認(ask record で今年の現況を書いたときに、コードが自動で残した。運営者の欄は確かめていない)"
+      question: (ask record から自動で残した)
+      row_mark: "(運営者は未確認。ページの運営者の欄・著作権表示で確かめてから記録する)"
+      hint: "一覧に残せるか確かめる: {url} の発行元が運営者・指定管理者・自治体・観光協会・ビジターセンターだとページの中身から確かめられたら、python -X utf8 -m ikimonobiyori.ask research pending --file <JSON> で残す"
+  pending_add_line: '公式ページで確かめるのに使えたページのうち、発行元がその場所の運営者・指定管理者・自治体・観光協会・ビジターセンターだとページの中身(運営者の欄・著作権表示)から確かめられたものは、python -X utf8 -m ikimonobiyori.ask research pending --brief {id} --file <JSON> で残す(1 件: publisher・publisher_kind・official_reason・url・subject・content・kinds・date_style(article/photo/none)・update_style(append/rewrite/monthly_url。monthly_url は url_template に {{yyyy}}・{{mm}})・place{{name, prefecture, city, lat, lon}})。台帳にあるページ・確かめられないページは残さない(はねられる)。'
   step_lines:
     - '1. 公式ページの URL を Web 検索で探す(検索の要約を事実にしない。行き先探しだけ)。読んでよいのは自治体・観光協会・公園管理者・施設運営者(指定管理者を含む)・国や県の機関のページ。'
     - '2. python -X utf8 -m ikimonobiyori.ask research fetch <URL> --brief {id} で本文を読む(1 つの質問で 3 ページ・2 分まで。robots.txt で拒否されたページ・公式でないページは読まない)。'
@@ -548,16 +605,59 @@ current_status:
     max_searches_per_place: {value: 2, source: "指示書 current-status 第 4 部(聞かれた名所 1 つにつき検索 2 回・仮置き)", provisional: true}
     max_pages_per_place: {value: 4, source: "指示書 current-status 第 4 部(聞かれた名所 1 つにつきページ 4 枚・仮置き)", provisional: true}
     step_lines:
+      - '始める前に、利用者への予告を 1 行だけ出す: 「公式ページで広く調べてから答えます。3 分ほどかかります。」(CLAUDE.md の表の「広く調べて答える」。2026-11-28 の試し 9 回の実測。docs/wait-notice-timings.md)。'
       - '今年の現況(名所ごと): 検索の語は名所の名前・対象・今年の年だけ(個人情報・この環境の情報を入れない)。1 つの名所につき検索 {searches} 回・ページ {pages} 枚まで(WebSearch・WebFetch。検索の要約を事実にしない)。'
       - '読む順番: 現地の発信(観光協会・施設や索道の運営会社・自治体・ビジターセンター)を先に、次に紹介サイト。自動アクセスを断っているページ・ログインや有料の壁は読まず、人が開く URL として添える。'
-      - '読んだら 1 件ずつ ask record --batch <JSON> で記録する(state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
+      - '読んだら 1 件ずつ ask record --out-dir <データ置き場> --batch <JSON> で記録する(--out-dir は必須。state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
       - 'そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place <名所>(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
+  post:                              # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿
+    mark: "(公式ページに載った発行元の投稿、投稿日 {md})"
+    mark_inferred: "(公式ページに載った発行元の投稿、投稿日 {md}。年は読んだ日から補った)"
+    quote_fix: 投稿の文を写さず、状態の語と日付を自分の言葉で書く(「11月27日時点では見頃で、落葉が目立ち始めていました」の形)
   spread:                            # 第 5 部
     enabled: true
     window_days: {value: 14, source: "指示書 current-status 第 5 部(状態の日付が 14 日以内・仮置き)", provisional: true}
     line: 発信元によって、状況の伝え方にばらつきがあります。
   steps:                             # 第 6 部: 手順を飛ばした答えを照合で止める
     enabled: true
+  # 指示書 open-question-breadth 第 1 部(2026-11-28): 場所を名指ししない質問でも、手元の今年の現況を全部並べ、Web で広く探す。
+  # 名指しの質問(上の research)は変えない。調べた印・照合(current_research_skipped)は同じ部品(--place に where を渡す)。
+  open:
+    enabled: true
+    routes: [plan, season_place]     # 開いた質問として扱う経路(仮置き。知識・見どころ・日付つきの種などは対象にしない)
+    recent_days: {value: 14, source: "第 5 部のばらつきの窓(14 日)と同じ幅で、手元の今年の現況を「今の様子」として並べる(仮置き)", provisional: true}
+    earlier_days: {value: 30, source: "指示書 open-question-breadth の続き 第4部(本人の返事 6): 14 日の幅から外れた公式の記録を「少し前の様子」として添える上限(15〜30 日前・仮置き)", provisional: true}
+    event_only:                      # 続き 第6部(本人の返事 9): 行事の語だけで、花や色づきの状態の語が無い記録は、手元の現況の節に入れない
+      state_words: [咲, 開花, 見頃, 見ごろ, 満開, 散, 色づ, 色付, 紅葉, 黄葉, 落葉, 蕾, つぼみ, 盛り, 分咲, 部咲]
+    earlier_section:
+      heading: "## 少し前の様子(15〜30日前の公式の記録)"
+      lead: "今年の現況の幅(14 日)より前の、公式の記録です。今の様子として言い切らず、「○月○日時点では見頃でした。その後の様子は確かめられていません」の形で、日付つきで書く。並べる順は 今年の現況 → 少し前の様子 → 例年の目安 → 未確認。"
+      later_unknown_words: [その後, 確かめられていません, 確かめていません, 確認できていません, 分かりません]
+      fix: "「○月○日時点では見頃でした。その後の様子は確かめられていません」の形で、日付と、その後の様子が分からないことを同じ文に書く"
+    max_known: {value: 20, source: "資料に並べる手元の今年の現況の数の上限(仮置き。2026-11-28 の写しで、花の開いた質問の日付つきの記録は 11 件)", provisional: true}
+    max_searches: {value: 8, source: "指示書 open-question-breadth 1-3(1 問あたり検索 8 回の初期値。第 5 部の試しで見直す)", provisional: true}
+    max_pages: {value: 16, source: "指示書 open-question-breadth 1-3(1 問あたりページの取得 16 回の初期値。第 5 部の試しで見直す)", provisional: true}
+    target_confirmed: {value: 3, source: "指示書 open-question-breadth 5-2(今年の現況を公式で確かめた場所が 3 か所以上。2026-11-28 の試し 1 問目は検索 2 回・取得 3 回で止まった)", provisional: true}
+    why: "「{where}」の{what}を広く探す(開いた質問)"
+    search_words: "{what} {year}年{month}月 見頃 公式(都県の名前を変えて範囲全体で)"
+    lines:
+      where_origin: "{origin}から行ける範囲"
+      where_default: 出発地から行ける範囲
+      candidate_reason: 手元に今年の現況がある(開いた質問)
+      dated: "{name}: {state}({md}時点、{publisher})"
+      earlier: "{name}: {state}({md}時点、{publisher}。少し前の様子で、その後の様子は確かめられていない)"
+    section:
+      heading: "## 聞かれた対象の今年の現況(手元の記録・新しい順)"
+      lead: "{where}で、{what}の今年の現況(日付つき)の記録です。公式ページの記録だけ。ここにある場所は候補にも入っている。答えでは、この中から新しいもの・聞かれた対象に合うものを選び、並べる順は 今年の現況のある場所(新しい日付の順)→ 例年の目安の場所 → 未確認の場所。場所(括弧の中)が書かれた記録は、その場所のことだけを書く。"
+      none: "- (手元に、この対象の日付つきの今年の現況はない)"
+    step_lines:
+      - '開いた質問(場所を名指ししていない): 検索 {searches} 回・ページの取得 {pages} 回まで(WebSearch・WebFetch)。検索の語は対象・季節・範囲・今年の年だけ(個人情報・この環境の情報を入れない)。WebSearch には blocked_domains に {blocked} を渡す(使わない出典。結果に出ても読まない)。'
+      - '始める前に、利用者への予告を 1 行だけ出す: 「公式ページで広く調べてから答えます。3 分ほどかかります。」(CLAUDE.md の表の「広く調べて答える」。2026-11-28 の試し 9 回の実測。docs/wait-notice-timings.md)。'
+      - '目安: 上の節の手元の場所と合わせて、今年の現況を公式ページで確かめた場所が {target} か所以上になるまで、上限の中で探して読む(数を合わせるために確かさを下げない。届かなければ、読めた分で答える)。'
+      - '1. 広く探す: 範囲全体(出発地から片道 250km 前後。近い所だけで終わらせない)で、「今その対象が見られそうな場所」の名前を集める。紹介サイト・観光協会の特集・まとめ記事は場所の名前を知るきっかけにだけ使う(そこに書かれた色づきの段階・見頃を事実にしない)。上の節の手元の場所も候補から外さない。'
+      - '2. 公式ページで確かめる: 候補ごとに運営者・自治体・観光協会・ビジターセンターのページを WebFetch で読む。中身が取れない応答(148 バイトなど)は読めた扱いにせず、別ページを 1 回だけ試す。それでも読めなければ読めなかったとして扱い、検索結果の抜き書きを公式の内容にしない。'
+      - '3. 記録する(ask record --out-dir <データ置き場> --batch <JSON>): subject は必須(autumn_leaves・flowers・birds のどれか)。対象と日付が分かったもの → 1 件ずつ {{"subject", "name", "prefecture", "city", "kind", "state"(原文), "state_date", "url", "publisher", "source_class": "official"}}。日付の無い公式ページ(月別の一覧など)→ state を入れず {{"name", "prefecture", "city", "kind", "typical"(書かれた月・時期), "url", "publisher", "source_class": "official", "basis": "page"}}(例年の目安。今年の現況にしない)。公式ページが見つからない・読めないもの → ask record-unverified --batch <JSON>(name・prefecture・city・theme・months)。url は公式サイトのページにする(公式ページが外部のブログの記事を載せているときも、記事の URL ではなく載せている公式ページ)。ページが場所を分けて書いていれば part(30 字まで)。'
+      - '4. そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place "{where}"(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
   verify:
     extra_state_words: [終了, 終わっ, 残る, 残って, 無い, ない, 無く, 散っ]   # 場所を広げた文を見つけるための状態の言い方(照合の state_words に足すのはこの節の中だけ)
     unseen_state_words: [紅葉, 色づ, 見頃, 見ごろ, 残, 無い, ない, 散]

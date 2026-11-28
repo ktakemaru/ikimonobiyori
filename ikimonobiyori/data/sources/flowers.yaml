@@ -633,3 +633,67 @@ sources:
     readable: {status: ok, checked_on: "2026-11-11", robots: unknown, observed_latest_update: "2026-06-04"}
     terms: {status: not_checked}
     approval: {status: pending, reason: "段階78 第6部で見つけたホタルの今年の情報のページ。年ごとに URL が変わる。本人の承認を待つ"}
+
+  # 指示書 open-question-breadth の続き(本人の返事 8、2026-11-28): 見つけた公式ページの一覧から、本人がチャットで示した id だけを承認で足した。
+  # robots.txt・利用条件は 2026-11-28 に読んだ(同じホストの承認済みの項目があるものは、その確かめを使った)。条件: 事実のみ・自分の言葉・出典明記
+  - id: kanagawaparks-kurihama-blog
+    publisher: くりはま花の国 指定管理者 くりはまフラワーパートナーズ
+    publisher_kind: park_manager
+    url: "https://www.kanagawaparks.com/kurihama/blog/"
+    kind: status_page
+    flower_kinds: [コスモス, ツバキ, 皇帝ダリア]
+    covers:
+      - {site: hana-0027, label: 公式ブログ, flower_kind: ツバキ}   # 名所カタログの種類(本人の返事 2026-11-28 の続きの 2 でツバキを足した)に合わせる
+    notation: {style: none, map: {}, updated: per_article, year_shown: true, date_basis: observed_date, note: "公園だよりの入口(blog/。月が変わっても同じ URL で、最新の記事が配信日つきで 10 件ずつ並ぶ。2026-11-28 に 11/28・11/27・11/20 の記事を確かめた)。月ごとの記事の一覧は blog/<年>/<月>/(台帳の形では月ごとの URL を持てないので入口にした)"}
+    readable: {status: ok, checked_on: "2026-11-28", robots: allows, note: "同じホストの kanagawaparks-kurihama(robots.txt は /wp-admin/ のみ拒否、2026-10-31)の確かめを使った"}
+    terms: {status: no_prohibition_found, note: "同じホストの kanagawaparks-kurihama の確かめ(サイトポリシー・利用規約のページが見つからず、禁止の記載を確認できなかった)を使った"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-28", reason: "本人の承認(2026-11-28 のチャットの指示文。一覧 research/pending_sources.jsonl の ps-8121a1e0)。条件: 事実のみ・自分の言葉・出典明記"}
+  - id: keisei-rose-garden-top
+    publisher: 京成バラ園芸株式会社
+    publisher_kind: facility_operator
+    url: "https://www.keiseirose.co.jp/"
+    kind: status_page
+    flower_kinds: [秋バラ]
+    covers:
+      - {site: hana-0005, label: 現在の開花状況, flower_kind: 秋バラ}
+    notation: {style: none, map: {}, updated: per_item, year_shown: true, date_basis: observed_date, note: "トップの「現在の開花状況」に日付(2026.11.25「秋バラが見頃です」)。台帳の keisei-rose-garden(/garden/。承認待ち)とは別のページ"}
+    readable: {status: ok, checked_on: "2026-11-28", robots: no_file, note: "robots.txt は 404。フッター「Keisei Rose Nurseries, Inc. All Rights Reserved.」"}
+    terms: {status: no_prohibition_found, note: "利用規約・サイトポリシーのページは見つからない(フッターは個人情報保護方針・Cookie ポリシー・リンク)。リンクのページは営利目的でないリンクを原則自由とし、フレーム表示を断る。複製・転載・自動取得の規定はない(2026-11-28 確認)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-28", reason: "本人の承認(2026-11-28 のチャットの指示文。一覧 research/pending_sources.jsonl の ps-74c8f9d2)。条件: 事実のみ・自分の言葉・出典明記"}
+  - id: fujioka-sakurayama-fuyuzakura
+    publisher: 藤岡市 鬼石総合支所にぎわい観光課
+    publisher_kind: municipality
+    url: "https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/4/11865.html"
+    kind: status_page
+    flower_kinds: [冬桜]
+    covers:
+      - {site: hana-0066, label: 冬桜の開花状況, flower_kind: 冬桜}
+    notation: {style: none, map: {}, updated: per_page, year_shown: true, date_basis: observed_date, note: "「【令和8年11月26日時点】」の形で 1 ページを書き換える。紅葉の様子も書かれる"}
+    readable: {status: ok, checked_on: "2026-11-28", robots: no_file, note: "robots.txt は 404。フッター「Copyright (c) 2021 Fujioka city.」"}
+    terms: {status: no_prohibition_found, url: "https://www.city.fujioka.gunma.jp/material/files/group/2/riyoukiyaku.pdf", note: "藤岡市ホームページ利用規約 第3条: 私的使用のための複製・引用など著作権法上認められた場合を除き、無断で転用・引用できない。自動取得の規定はない。事実(状態の語・日付)だけを自分の言葉で出典つきで示す(2026-11-28 確認)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-28", reason: "本人の承認(2026-11-28 のチャットの指示文。一覧 research/pending_sources.jsonl の ps-9a59d3f5)。条件: 事実のみ・自分の言葉・出典明記"}
+  - id: kamikawa-kankou-jomine
+    publisher: 神川町観光協会
+    publisher_kind: tourism_association
+    url: "https://www.kamikawa-kanko.com/news/"
+    kind: status_page
+    flower_kinds: [冬桜]
+    covers:
+      - {site: hana-0078, label: "新着情報(冬桜・紅葉の見頃のお知らせ)", flower_kind: 冬桜}
+    notation: {style: none, map: {}, updated: per_article, year_shown: true, date_basis: observed_date, note: "新着情報の一覧(news/)。記事ごとに日付と題(2026年11月13日「冬桜・紅葉が見頃になりました(11月12日現在)」→ news/9615/)。状態は記事の本文で読み、日付は題の「○月○日現在」"}
+    readable: {status: ok, checked_on: "2026-11-28", robots: allows, note: "robots.txt は /wp-admin/ のみ拒否。フッター「© 神川町観光協会」"}
+    terms: {status: no_prohibition_found, url: "https://www.kamikawa-kanko.com/disclaimer/", note: "免責事項のページだけ(複製・転載・引用・自動取得の規定はない。2026-11-28 確認)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-28", reason: "本人の承認(2026-11-28 のチャットの指示文。一覧 research/pending_sources.jsonl の ps-0bc1cb5b)。条件: 事実のみ・自分の言葉・出典明記"}
+  # 本人の返事(2026-11-28 の続きの 1): 名所カタログに hana-0093 を足したあとで、ps-1e347d22 を承認で足した。条件: 事実のみ・自分の言葉・出典明記
+  - id: kanagawa-park-sagamihara-flower
+    publisher: 県立相模原公園 指定管理者 神奈川県公園協会・サカタのタネ・サカタのタネGS グループ
+    publisher_kind: park_manager
+    url: "https://www.kanagawa-park.or.jp/sagamihara/feed/feed-flower.php"
+    kind: status_page
+    flower_kinds: [サザンカ]
+    covers:
+      - {site: hana-0093, label: 開花情報, flower_kind: サザンカ}
+    notation: {style: none, map: {}, updated: per_item, year_shown: true, date_basis: observed_date, note: "花ごとに場所と撮影日(サザンカ シャラノキゲート付近 開花中 撮影日 2026年11月27日)。記事は公園の花ブログ(外部の Blogger)。運営者はこのページに無く、同じホストの公園のトップページで確かめた(一覧の行の理由)"}
+    readable: {status: ok, checked_on: "2026-11-28", robots: no_file, note: "robots.txt は 404。公園のトップページに「指定管理者:神奈川県公園協会・サカタのタネ・サカタのタネGS グループ」"}
+    terms: {status: no_prohibition_found, note: "公園・神奈川県公園協会のサイトに利用規約・著作権・免責事項のページは見つからない(Copyright 表示だけ。2026-11-28 確認)"}
+    approval: {status: approved, approved_by: user, approved_on: "2026-11-28", reason: "本人の承認(2026-11-28 のチャットの指示文。一覧 research/pending_sources.jsonl の ps-1e347d22。一覧の行に、トップページで確かめた運営者が書いてある)。条件: 事実のみ・自分の言葉・出典明記"}

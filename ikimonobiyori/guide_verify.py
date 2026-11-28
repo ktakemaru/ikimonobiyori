@@ -411,10 +411,106 @@ def seasonal_obs_errors(s, rows, c, vocab=None):
     return errs
 
 
+_AS_OF_MD = __import__("re").compile(r"(\d{1,2})[/月](\d{1,2})日?(?:時点|現在)")
+
+
+def fact_date(r):
+    """事実の発信の日付(YYYY-MM-DD)。observed が無い事実(施設の発信など)は、事実の文の「11/27時点」「11月26日時点」から(年は読んだ日の年)。"""
+    if r.get("observed"):
+        return str(r["observed"])[:10]
+    m = _AS_OF_MD.search(r.get("content") or "")
+    y = str(r.get("read_at") or r.get("_year") or "")[:4]           # 読んだ時刻の無い事実(施設の発信)は資料の年
+    if not m or not y.isdigit():
+        return None
+    return f"{y}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
+
+
+def _prefer_dated(cited):
+    """同じ URL の出典が複数あるとき(カードと今年の現況の事実など)、発信の日付のある事実をその URL の代表にする(順番は最初に出た位置のまま)。
+    第5部の試し(質問 4): 本文は「11月26日時点」なのに、同じ URL のカード(11/11 に確認)が先にあって出典が「11/11に確認」になった。"""
+    def dated_fact(r):
+        return str(r.get("id", "")).startswith("F") and bool(fact_date(r))
+    best = {}
+    for r in cited:
+        u = r.get("url")
+        if u and (u not in best or (dated_fact(r) and not dated_fact(best[u]))):
+            best[u] = r
+    out, seen = [], set()
+    for r in cited:
+        u = r.get("url")
+        if not u:
+            out.append(r)
+        elif u not in seen:
+            seen.add(u)
+            out.append(best[u])
+    return out
+
+
+def date_basis_errors(sents, brief, c):
+    """発信の日付がある事実の文に「いつの発信か分からない」と書く・日付の無い事実の文に「○/○時点」と書く(出典の「〜時点」「〜に確認」と食い違う)。"""
+    D = c.get("date_basis") or {}
+    if not D.get("enabled"):
+        return []
+    yr = str(brief.get("now") or "")[:4]
+    by = {f["id"]: {**f, "_year": yr} for f in brief.get("facts") or []}
+    out = []
+    for s in sents:
+        fs = [by[i] for i in s["ids"] if i in by and by[i].get("kind") == "current"]
+        if not fs:
+            continue
+        text = s["clean"]
+        if all(fact_date(f) for f in fs) and GB.has_any(D["undated_words"], text):
+            out.append(_err("date_basis_mismatch", s, "発信の日付がある事実に、いつの発信か分からないと書いている", D["fix_dated"]))
+        elif not any(fact_date(f) for f in fs) and re.search(D["as_of_re"], text):
+            out.append(_err("date_basis_mismatch", s, "発信の日付が無い事実を「○/○時点」と書いている(読んだ日は発信の日付ではない)", D["fix_undated"]))
+    return out
+
+
+def upcoming_heading_errors(body, brief, c):
+    """「これから」などの見出しの節に、対象の日がその時期の中に入る文(例年の時期・いちばん良い時期)を書いている。
+    時期は文に書かれた月日だけで読む(observations.parse_typical。読めない文は照らさない)。"""
+    U = c.get("upcoming_heading") or {}
+    if not U.get("enabled"):
+        return []
+    from datetime import date as _date
+    from . import observations as O
+    per = ((brief.get("dates") or {}).get("periods") or [[]])
+    days = [_date.fromisoformat(x[:10]) for x in (per[0] if per else []) if x]
+    if not days:
+        return []
+    pol = O.load_policy()
+    out, inside = [], False
+    for ln, line in enumerate((body or "").splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            inside = GB.has_any(U["words"], line)
+            continue
+        if not inside or not line.strip():
+            continue
+        w = O.parse_typical(re.sub(r"\[[A-Z]\d+\]", "", line), pol)
+        if not w:
+            continue
+        if any(O.window_dates(w[0], w[1], d)[0] <= d <= O.window_dates(w[0], w[1], d)[1] for d in days):
+            out.append({"code": "upcoming_heading_in_season", "line": ln, "sentence": line.strip()[:80],
+                        "detail": "「これから」の節に、対象の日がもう時期の中に入るものを書いている", "fix": U["fix"]})
+    return out
+
+
+def weather_line(brief, body, c):
+    """出かける日の答え(経路が weather_line.routes)の最後の 1 行。すでに本文にヤマビヨリの案内があれば足さない。イキモノビヨリ自身は天気を答えない。"""
+    W = c.get("weather_line") or {}
+    if not W.get("enabled") or (brief.get("route") or "") not in (W.get("routes") or []):
+        return None
+    if GB.has_any(W.get("skip_words") or [], body or ""):
+        return None
+    if W.get("skip_off_season") and brief.get("off_season"):     # 本人の返事 2(2026-11-28): 時期の外の答え(どの名所の例年の時期にも対象の日が入らない)には付けない
+        return None
+    return W["line"]
+
+
 def final_sources(cited, c):
     f = c["final"]
     out, seen = [], set()
-    for r in cited:
+    for r in _prefer_dated(cited):
         key = r.get("url")
         if not key or key in seen:                       # 段階76 第5部 1: URL のない出典は出さない
             continue
@@ -425,8 +521,8 @@ def final_sources(cited, c):
         if r["id"].startswith("K"):
             note = f["card_note"].format(date=_md(r.get("checked_on")) or "日付不明")
         else:
-            d = _md(r.get("observed")) or _md(r.get("read_at"))
-            note = f["fact_note"].format(date=d) if d else None
+            d = _md(fact_date(r))                        # 指示書 open-question-breadth 第4部 2: 「〜時点」は発信の日付が分かるときだけ。読んだ日は「〜に確認」
+            note = f["fact_note"].format(date=d) if d else (f["card_note"].format(date=_md(r.get("read_at"))) if _md(r.get("read_at")) else None)
         cls = f["official"] if r.get("source_class") == "official" else f["not_official"]
         from . import guide_materials as GM                # 段階78 第1部 5: ドメインのままの名前は使わず、台帳・自治体の名前で
         name = GM.source_name(r.get("url"), r.get("source")) or _ledger_name(r.get("url")) or _domain(r.get("url"))   # 段階77: 台帳の発行元の名前、なければドメイン名
@@ -445,7 +541,7 @@ def short_sources(cited, c):
     f = c["final"]
     S = f["short"]
     groups, seen = {}, set()
-    for r in cited:
+    for r in _prefer_dated(cited):
         key = r.get("url")
         if not key or key in seen:                       # URL のない出典は出さない(URL つきの出典と同じ範囲)
             continue
@@ -456,25 +552,32 @@ def short_sources(cited, c):
             name = _source_label(r)
             if r["id"].startswith("K"):
                 iso, how = r.get("checked_on"), "card"
+            elif fact_date(r):
+                iso, how = fact_date(r), "fact"
             else:
-                iso, how = r.get("observed") or r.get("read_at"), "fact"
+                iso, how = r.get("read_at"), "card"            # 指示書 open-question-breadth 第4部 2: 発信の日付が無い事実は、読んだ日を「〜に確認」で
+            dated = bool(fact_date(r)) and not r["id"].startswith("K")
             off = r.get("source_class") != "secondary"        # 紹介サイトと分かるもの(secondary)だけに添える(区分のない知識カードは添えない)
-        g = groups.setdefault(name, {"iso": None, "how": None, "official": off})
+        if r.get("kind") == "seasonal_obs":
+            dated = False
+        g = groups.setdefault(name, {"iso": None, "how": None, "official": off, "dated": False})
         g["official"] = g["official"] and off
+        g["dated"] = g["dated"] or dated
         if iso and (g["iso"] is None or (how == "fact" and g["how"] == "card") or (how == g["how"] and str(iso)[:10] > str(g["iso"])[:10])):
             if not (how == "card" and g["how"] == "fact"):
                 g["iso"], g["how"] = iso, how
-    parts = []
+    parts, dated_parts = [], []
     for name, g in groups.items():
         md = _md(g["iso"])
         note = [S["not_official"]] if not g["official"] else []
         if md:
             note.append((S["fact_note"] if g["how"] == "fact" else S["card_note"]).format(date=md))
-        parts.append(name + ("(" + "・".join(note) + ")" if note else ""))
-    if not parts:
+        (dated_parts if g["dated"] else parts).append(name + ("(" + "・".join(note) + ")" if note else ""))
+    if not parts and not dated_parts:
         return None
     mx = S["max_items"]["value"] if isinstance(S["max_items"], dict) else S["max_items"]
-    shown = parts[:mx] + ([S["more"].format(n=len(parts) - mx)] if len(parts) > mx else [])
+    room = max(mx - len(dated_parts), 0)                   # 指示書 open-question-breadth 第4部 3: 本文に日付つきで書いた発行元は「ほか」にまとめない(先に並べる)
+    shown = dated_parts + parts[:room] + ([S["more"].format(n=len(parts) - room)] if len(parts) > room else [])
     return S["line"].format(items="、".join(shown))
 
 
@@ -555,11 +658,16 @@ def check(draft, brief, c=None, env=None):
     errs += edge_note_errors(body, c)                      # 段階78 第1部 1・第3部 3
     errs += narrative_errors(sents, brief, c)              # 段階78 第3部 3
     errs += trait_errors(sents, brief, c)                  # 段階82 第2部: 種の見分け方・特徴はカードにあることだけ
+    errs += date_basis_errors(sents, brief, c)             # 指示書 open-question-breadth 第4部 2: 発信の日付の有無と、文の書き方の食い違い
+    errs += upcoming_heading_errors(body, brief, c)        # 指示書 open-question-breadth 第4部 4: 「これから」の見出しに、今が時期のものを入れない
     errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
     errs += CS.current_status_errors(sents, strip_markers(parsed["body"], c), brief, c, env, _err)
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
-    cited = [by[i] for i in cited_ids if i in by]
+    cited = [{**by[i], "_year": str(brief.get("now") or "")[:4]} for i in cited_ids if i in by]
     src = final_sources(cited, c)
+    wl = weather_line(brief, body, c)                       # 指示書 open-question-breadth 第4部 6: 出かける日の答えの最後に、天気の一言
+    if wl:
+        body = body.rstrip(NL) + NL + NL + wl + NL
     final = body.rstrip(NL) + NL + ((NL + c["final"]["sources_heading"] + NL + NL.join(src) + NL) if src else "")
     short = short_sources(cited, c)                         # 段階85 第2部: 会話の答え(ask verify の出力)は名前と日付だけの出典
     chat = body.rstrip(NL) + NL + ((NL + short + NL) if short else "")
@@ -738,13 +846,18 @@ def distance_errors(sents, brief, c):
     """距離の書き方: 東京湾の向こう側の候補に距離の数字を書かない。ほかは「直線で約○km」(「直線」を付ける)。"""
     errs = []
     bay = [r["name"] for r in brief.get("candidates") or [] if r.get("distance_text") == c["distance"]["across_bay_label"]]
+    I = c["distance"].get("island") or {}
+    island = [r["name"] for r in brief.get("candidates") or [] if I.get("enabled") and r.get("city") in (I.get("municipalities") or [])]
     for s in sents:
         t = s["clean"]
         if not re.search(r"\d+\s*(?:km|キロ)", t):
             continue
         hit = [n for n in bay if n in t]
+        isl = [n for n in island if n in t]
         if hit:
             errs.append(_err("bay_distance", s, f"東京湾の向こう側の「{hit[0]}」に距離の数字", "距離の数字を書かず「東京湾の向こう側」のように書く"))
+        elif isl and not GB.has_any(I.get("words") or [], t):
+            errs.append(_err("island_distance", s, f"船か飛行機が要る「{isl[0]}」に、直線の距離だけ", I["fix"]))
         elif "直線" not in t:
             errs.append(_err("straight_distance", s, "距離に「直線」がない", "「直線で約○km」と書く(道のりではない)"))
     return errs

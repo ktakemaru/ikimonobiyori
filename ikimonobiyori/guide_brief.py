@@ -709,9 +709,19 @@ def _source_class(url, given=None):
     return "secondary" if url else None
 
 
+def _plan_policy():
+    from . import answer_plan as AP
+    return AP.load_policy()
+
+
 class _Facts:
     def __init__(self, c, pending):
         self.c, self.pending, self.rows, self.keys = c, pending, [], set()
+
+    def _next_no(self):
+        """次の事実の番号。途中で事実を外したあと(施設の古い現況など)に足しても、番号が重ならないように、今ある番号の最大 + 1。"""
+        nos = [int(r["id"][1:]) for r in self.rows if str(r.get("id") or "")[1:].isdigit()]
+        return max(nos, default=0) + 1
 
     def add(self, kind, content, *, place=None, source=None, url=None, source_class=None, observed=None, read_at=None, extra=None):
         content = seireki(re.sub(r"\s+", " ", (content or "").strip()))
@@ -730,7 +740,7 @@ class _Facts:
             return None
         self.keys.add(key)
         v = values(content + " " + " ".join(str(x) for x in (extra or {}).values() if x), self.c)
-        row = {"id": f"F{len(self.rows) + 1:03d}", "kind": kind, "kind_label": self.c["kinds"][kind], "place": place, "content": content,
+        row = {"id": f"F{self._next_no():03d}", "kind": kind, "kind_label": self.c["kinds"][kind], "place": place, "content": content,
                "values": v, "source": source, "source_class": _source_class(url, source_class), "url": url,
                "observed": observed, "read_at": read_at}
         if extra:
@@ -1752,6 +1762,16 @@ def _question_places(question, res):
     return [x for i, x in enumerate(out) if x and x not in out[:i]]
 
 
+def _today_lines(d):
+    """指示書 open-question-breadth 第4部 7: 対象の日に今日が入るとき、今日だと分かる書き方の 1 行(資料の Markdown)。"""
+    T = cfg().get("today_line") or {}
+    today = d.get("today")
+    if not T.get("enabled") or not today or not any(today in (p or []) for p in d.get("periods") or []):
+        return []
+    t = date.fromisoformat(today)
+    return [T["line"].format(md=f"{t.month}/{t.day}", wd=T["weekdays"][t.weekday()])]
+
+
 def _dates_block(cond, now):
     from . import sources as S
     wk1 = S.next_weekend(now)
@@ -1880,7 +1900,12 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     work = brief_dir(env) / f"{bid}.work"
     if work.exists():
         shutil.rmtree(work)                              # 同じ資料の作り直し(前回の作業の残りで結果を変えない)
-    res = AR.run(question, now=now, env=env, workdir=work, quiet=True, clock=clock, obs_kw=obs_kw)
+    from . import answer_plan as AP
+    tok = AP.GUIDE_RANK.set(True)                        # 続き 第2部: ガイドの資料の順位だけ、日付の無い現況を例年の目安と同じに数える
+    try:
+        res = AR.run(question, now=now, env=env, workdir=work, quiet=True, clock=clock, obs_kw=obs_kw)
+    finally:
+        AP.GUIDE_RANK.reset(tok)
     cond = res.get("cond") or {}
     pending = _pending_urls()
     F = _Facts(c, pending)
@@ -1951,7 +1976,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             info = GM.place_info(r["name"])
             r["prefecture"] = r.get("prefecture") or info.get("prefecture")
             r["city"] = r.get("city") or info.get("city")
-        r.setdefault("basis", "current" if r.get("current_state") else "typical")
+        r.setdefault("basis", "current" if r.get("current_state") and (r.get("current_date") or r.get("subject") == "birds"
+                                            or not (_plan_policy().get("undated_current") or {}).get("as_typical")) else "typical")   # 続き 第2部: 日付の無い現況は「例年の目安」
         r.setdefault("group", _group_of(r.get("prefecture"), c))
         if "distance_text" not in r:                          # 段階78 第1部 2・3: 直線と明記。見積もりの距離は出さない。東京湾の向こう側は数字なし
             km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), estimated=bool(r.get("distance_estimated")),
@@ -2037,12 +2063,29 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if CS.on(c):                                          # 指示書 docs/current-status-instructions.md 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと)
         cs_block = CS.build_block(CS.add_facts(F, question, cond, cands, now, env, c), question, cond, now, env, c)
         targets += CS.research_targets(cs_block, {**cond, "route": res.get("route") or cond.get("route")}, now, c)   # 第 4 部
+        if not cs_block["places"] and CS.is_open(question, {**cond, "route": res.get("route") or cond.get("route")}, [], towns or q_areas, c):
+            ob = CS.add_open_facts(F, question, cond, cands, now, env, c)   # 指示書 open-question-breadth 第 1 部: 開いた質問の手元の今年の現況と、広く探す対象
+            ob["searched"] = CS.searched_for(question, ob["where"], now, env, c)
+            cs_block["open"] = ob
+            off = (res.get("route") or cond.get("route")) == "season_place" and bool((res.get("season_place") or {}).get("off_season"))
+            targets += [] if researched or off else CS.open_targets(ob, question, now, env, c)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ。本人の返事 4: 時期の外の種の質問は広く探さない
+            for r in cands:
+                if "distance_text" not in r:                  # 足した候補にも、ほかの候補と同じ距離の語・地域の組
+                    r.setdefault("group", _group_of(r.get("prefecture"), c))
+                    km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), prefecture=r.get("prefecture"), city=r.get("city"), c=c)
+                    r["distance_km"], r["distance_text"] = km, label
+        if any(t.get("kind") in ("open_breadth", "current_status") for t in targets):   # 指示書 open-question-breadth の続き 1-3: 見つけた公式ページの一覧から最初に読む
+            from . import pending_sources as PS
+            sp_names, sp_words = CS._open_species(question)
+            targets = PS.attach(targets, cond, now, env, species_words=sp_words if sp_names else None,
+                                wide=scope == "wide", current_names=[r["name"] for r in cands if r.get("basis") == "current"])   # 本人の返事 3
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
         "dates": _dates_block(cond, now), "intent": cond.get("intent"), "route": res.get("route") or cond.get("route"),
+        "off_season": bool((res.get("season_place") or {}).get("off_season")) if (res.get("route") or cond.get("route")) == "season_place" else False,   # 本人の返事 2・4(2026-11-28)
         "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else (scope or "default"),
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
@@ -2659,6 +2702,7 @@ def render_md(doc):
     d = doc["dates"]
     L += [f"- 今日: {d['today']} / 今週末: {'・'.join(d['this_weekend'])} / 来週末: {'・'.join(d['next_weekend'])}",
           f"- 対象の日: {' ; '.join('・'.join(p) for p in d.get('periods') or [])}" + ("(日付の指定なし・既定)" if d.get("defaulted_date") else ""),
+          *_today_lines(d),
           f"- 質問の型: {doc.get('intent')} / 経路: {doc.get('route')} / 範囲: {doc.get('scope')} {doc.get('region') or ''} {'・'.join(doc.get('areas') or [])}",
           f"- 出発地: {doc.get('origin')}", ""]
     am = doc.get("asked_mountain")
@@ -2674,6 +2718,7 @@ def render_md(doc):
         L.append("")
     from . import current_status as CS
     L += CS.md_lines(doc, _fact_md)                        # 指示書 current-status 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと。記録があるときだけ)
+    L += CS.open_md_lines(doc, _fact_md)                   # 指示書 open-question-breadth 第 1 部: 開いた質問の手元の今年の現況(新しい順)
     if doc["candidates"]:
         L += ["## 候補と順位", ""]
         if doc.get("candidates_note"):
