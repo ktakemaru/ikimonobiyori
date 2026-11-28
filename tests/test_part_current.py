@@ -84,6 +84,21 @@ class PartAsCurrent(Tmp):
         self.assertIn("(つばき園)", fact["content"])
 
 
+class OpenQuestionKinds(Tmp):
+    def test_dahlia_in_cosmos_garden_is_not_a_cosmos_current(self):
+        """コスモス園の皇帝ダリアの記録は、コスモスを聞いた質問の今年の現況にしない。ツバキのつばき園の記録は、ツバキの現況。"""
+        from ikimonobiyori import current_status as CS
+        O.record([rec(kind="皇帝ダリア", part="コスモス園の右サイド", state="コスモス園の右サイドの皇帝ダリアは満開です", state_date="2026-11-20"),
+                  rec()], now=NOW - timedelta(minutes=5))
+        cond = {"subjects": ["flowers"]}
+
+        def states(words):
+            return [r["state"] for r in CS.open_records("試験の質問", cond, NOW, species_words=words) if r["_name"] == "くりはま花の国"]
+        self.assertEqual(states(["コスモス"]), [])
+        self.assertEqual(states(["ツバキ", "つばき"]), ["つばき園では曙が開花しました。"])
+        self.assertEqual(len(states(["皇帝ダリア"])), 1)
+
+
 class LatePeak(unittest.TestCase):
     TEXT = "まだ見頃ですが、落葉が目立つようになってきました"
 

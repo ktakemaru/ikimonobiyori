@@ -656,6 +656,7 @@ def open_records(question, cond, now, env=None, c=None, species_words=None, olde
     out = []
     for sj in _subjects(cond, policy):
         cands = O.all_candidates(sj, policy)
+        flower_names = {k for x in cands for k in x.get("flower_kinds") or []} if sj == "flowers" else set()
         for r in O.read_records(sj, env, policy, include_detail=True):   # part のある記録(三溪園の土橋のモミジ など)も。利用者の記録は入れない
             sd = O.state_date_of(r)
             if not r.get("state") or r.get("event") or not sd or not _this_year(r, now) or r.get("source_class") == "user":
@@ -671,6 +672,8 @@ def open_records(question, cond, now, env=None, c=None, species_words=None, olde
             if event_only(r.get("state"), c):                 # 続き 第6部: 行事の終了だけの記録は、手元の現況の節に入れない(記録は消さない)
                 continue
             text = " ".join(str(r.get(k) or "") for k in ("state", "kind", "name"))
+            if sj == "flowers" and r.get("part"):            # 本人の決定(2026-11-28): 場所を分けた記録は、その記録の花としてだけ(「コスモス園」の皇帝ダリアはコスモスではない)
+                text = O.part_kind(r, [], flower_names) or text
             if words and not any(w in text for w in words):
                 continue
             name, pref, city = _record_name(r, cands, policy)
