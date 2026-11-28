@@ -708,5 +708,5 @@ def open_md_lines(doc, fact_md, c=None):
 
 def open_step_lines(bid, target, c=None):
     OC = open_cfg(c)
-    return [x.format(id=bid, where=target["where"], searches=target["max_searches"], pages=target["max_pages"],
+    return [x.format(id=bid, where=target["where"], searches=target["max_searches"], pages=target["max_pages"], target=_v(OC["target_confirmed"]),
                      blocked="・".join(target.get("blocked_domains") or [])) for x in OC["step_lines"]]

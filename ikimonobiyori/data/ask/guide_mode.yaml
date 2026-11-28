@@ -598,6 +598,7 @@ current_status:
     max_known: {value: 20, source: "資料に並べる手元の今年の現況の数の上限(仮置き。2026-11-28 の写しで、花の開いた質問の日付つきの記録は 11 件)", provisional: true}
     max_searches: {value: 8, source: "指示書 open-question-breadth 1-3(1 問あたり検索 8 回の初期値。第 5 部の試しで見直す)", provisional: true}
     max_pages: {value: 16, source: "指示書 open-question-breadth 1-3(1 問あたりページの取得 16 回の初期値。第 5 部の試しで見直す)", provisional: true}
+    target_confirmed: {value: 3, source: "指示書 open-question-breadth 5-2(今年の現況を公式で確かめた場所が 3 か所以上。2026-11-28 の試し 1 問目は検索 2 回・取得 3 回で止まった)", provisional: true}
     why: "「{where}」の{what}を広く探す(開いた質問)"
     search_words: "{what} {year}年{month}月 見頃 公式(都県の名前を変えて範囲全体で)"
     lines:
@@ -611,6 +612,7 @@ current_status:
       none: "- (手元に、この対象の日付つきの今年の現況はない)"
     step_lines:
       - '開いた質問(場所を名指ししていない): 検索 {searches} 回・ページの取得 {pages} 回まで(WebSearch・WebFetch)。検索の語は対象・季節・範囲・今年の年だけ(個人情報・この環境の情報を入れない)。WebSearch には blocked_domains に {blocked} を渡す(使わない出典。結果に出ても読まない)。'
+      - '目安: 上の節の手元の場所と合わせて、今年の現況を公式ページで確かめた場所が {target} か所以上になるまで、上限の中で探して読む(数を合わせるために確かさを下げない。届かなければ、読めた分で答える)。'
       - '1. 広く探す: 範囲全体(出発地から片道 250km 前後。近い所だけで終わらせない)で、「今その対象が見られそうな場所」の名前を集める。紹介サイト・観光協会の特集・まとめ記事は場所の名前を知るきっかけにだけ使う(そこに書かれた色づきの段階・見頃を事実にしない)。上の節の手元の場所も候補から外さない。'
       - '2. 公式ページで確かめる: 候補ごとに運営者・自治体・観光協会・ビジターセンターのページを WebFetch で読む。中身が取れない応答(148 バイトなど)は読めた扱いにせず、別ページを 1 回だけ試す。それでも読めなければ読めなかったとして扱い、検索結果の抜き書きを公式の内容にしない。'
       - '3. 記録する(ask record --out-dir <データ置き場> --batch <JSON>): 対象と日付が分かったもの → 1 件ずつ {{"subject", "name", "prefecture", "city", "kind", "state"(原文), "state_date", "url", "publisher", "source_class": "official"}}。日付の無い公式ページ(月別の一覧など)→ state を入れず {{"name", "prefecture", "city", "kind", "typical"(書かれた月・時期), "url", "publisher", "source_class": "official", "basis": "page"}}(例年の目安。今年の現況にしない)。公式ページが見つからない・読めないもの → ask record-unverified --batch <JSON>(name・prefecture・city・theme・months)。url は公式サイトのページにする(公式ページが外部のブログの記事を載せているときも、記事の URL ではなく載せている公式ページ)。ページが場所を分けて書いていれば part(30 字まで)。'
