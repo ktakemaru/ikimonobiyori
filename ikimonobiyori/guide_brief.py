@@ -1752,6 +1752,16 @@ def _question_places(question, res):
     return [x for i, x in enumerate(out) if x and x not in out[:i]]
 
 
+def _today_lines(d):
+    """指示書 open-question-breadth 第4部 7: 対象の日に今日が入るとき、今日だと分かる書き方の 1 行(資料の Markdown)。"""
+    T = cfg().get("today_line") or {}
+    today = d.get("today")
+    if not T.get("enabled") or not today or not any(today in (p or []) for p in d.get("periods") or []):
+        return []
+    t = date.fromisoformat(today)
+    return [T["line"].format(md=f"{t.month}/{t.day}", wd=T["weekdays"][t.weekday()])]
+
+
 def _dates_block(cond, now):
     from . import sources as S
     wk1 = S.next_weekend(now)
@@ -2669,6 +2679,7 @@ def render_md(doc):
     d = doc["dates"]
     L += [f"- 今日: {d['today']} / 今週末: {'・'.join(d['this_weekend'])} / 来週末: {'・'.join(d['next_weekend'])}",
           f"- 対象の日: {' ; '.join('・'.join(p) for p in d.get('periods') or [])}" + ("(日付の指定なし・既定)" if d.get("defaulted_date") else ""),
+          *_today_lines(d),
           f"- 質問の型: {doc.get('intent')} / 経路: {doc.get('route')} / 範囲: {doc.get('scope')} {doc.get('region') or ''} {'・'.join(doc.get('areas') or [])}",
           f"- 出発地: {doc.get('origin')}", ""]
     am = doc.get("asked_mountain")
