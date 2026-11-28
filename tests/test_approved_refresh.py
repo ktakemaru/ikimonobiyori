@@ -90,8 +90,8 @@ class Targets(unittest.TestCase):
 
 
 class AltText(unittest.TestCase):
-    HTML = ('<html><body><a><span>11/27(金)試験の山の様子です。</span> <span>まだ見頃ですが、落葉が目立つように。 お早</span></a>'
-            '<img alt="11/27(金)試験の山の様子です。\nまだ見頃ですが、落葉が目立つように。 お早めにどうぞ。" src="a.jpg">'
+    HTML = ('<html><body><a><span>11/27(金)試験の山の様子です。</span> <span>試験の木は色が進み、足元の葉が増えました。 お早</span></a>'
+            '<img alt="11/27(金)試験の山の様子です。\n試験の木は色が進み、足元の葉が増えました。 お早めにどうぞ。" src="a.jpg">'
             '<img alt="ロゴ" src="b.png"><p>本文の行はそのまま残る</p></body></html>')
 
     def test_full_alt_is_added_and_truncated_copy_removed(self):
@@ -107,7 +107,7 @@ class AltText(unittest.TestCase):
         self.assertNotIn("お早めにどうぞ", RS.html_text(self.HTML))
 
     def test_truncated_post_text_is_rejected(self):
-        ep = {"own_account": True, "own_account_basis": "フッターの案内", "account": "試験", "posted_on": "2026-11-27", "text": "まだ見頃ですが…"}
+        ep = {"own_account": True, "own_account_basis": "フッターの案内", "account": "試験", "posted_on": "2026-11-27", "text": "試験の木は色が進み…"}
         errs = O.embedded_post_errors({"embedded_post": ep}, O.load_policy())
         self.assertTrue([e for e in errs if "途中で切れて" in e])
 

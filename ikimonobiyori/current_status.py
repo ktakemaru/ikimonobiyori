@@ -131,9 +131,15 @@ def post_mark(rec, c=None):
     return L["mark_inferred" if ep.get("posted_on_inferred") else "mark"].format(md=_md(ep.get("posted_on")) or "")
 
 
+def _flower_state(rec, state):
+    """場所を分けた花の記録の状態の文には、花の名前を添える(記録の kind。文にあれば添えない)。"""
+    from . import observations as O
+    return O.state_with_kind(state, rec.get("kind")) if rec.get("part") and rec.get("subject") == "flowers" else state
+
+
 def _fact_content(rec, place, C):
     L = C["lines"]
-    st = (rec.get("state") or "") + post_mark(rec)
+    st = _flower_state(rec, rec.get("state") or "") + post_mark(rec)
     pub = rec.get("publisher") or ""
     where = place["name"] + (f"の{rec['part']}" if rec.get("part") else "")
     from . import observations as O
@@ -722,7 +728,7 @@ def add_open_facts(F, question, cond, cands, now, env, c):
                      and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]
                      and (r.get("state") or "") in (f.get("content") or "")), None)   # 状態の文も同じときだけ指す(同じ日に読み直した別の文を隠さない)
         label = name + (f"({r['part']})" if r.get("part") else "")
-        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
+        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_flower_state(r, _legend_state(r, policy)) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
                            source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
                            extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "_pref": r.get("_pref"), "_city": r.get("_city"),
                                   "freshness": O.freshness(r, now.date(), r["subject"], policy)["label"]})
@@ -747,7 +753,7 @@ def add_open_facts(F, question, cond, cands, now, env, c):
         if O._key(r["_name"]) in recent_names or len(earlier) >= _v(OC["max_known"]):
             continue
         label = r["_name"] + (f"({r['part']})" if r.get("part") else "")
-        fr = F.add("current", OC["lines"]["earlier"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""),
+        fr = F.add("current", OC["lines"]["earlier"].format(name=label, state=_flower_state(r, _legend_state(r, policy)) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""),
                    place=r["_name"], source=r.get("publisher"), url=r.get("url"), source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
                    extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "earlier": True, "_pref": r.get("_pref"), "_city": r.get("_city")})
         if fr is None:

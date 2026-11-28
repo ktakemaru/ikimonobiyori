@@ -100,7 +100,7 @@ class OpenQuestionKinds(Tmp):
 
 
 class LatePeak(unittest.TestCase):
-    TEXT = "まだ見頃ですが、落葉が目立つようになってきました"
+    TEXT = "試験の森は見頃、落葉が目立つ所もある(作り物)"
 
     def test_peak_with_falling_leaves_is_late_not_past(self):
         self.assertEqual(O.normalize("autumn_leaves", self.TEXT), "見頃")

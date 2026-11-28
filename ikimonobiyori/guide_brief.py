@@ -840,7 +840,8 @@ def _approved_hosts():
 
 
 def host_names(env=None):
-    """ホスト → 発行元・施設の名前(台帳・施設・行事・名所の一覧と、データ置き場の観察の記録から)。答えの行に URL を結びつけるため。"""
+    """ホスト(複数の公園が使うホストは、ホストと公園の道筋。publisher.site_key) → 発行元・施設の名前(台帳・施設・行事・名所の一覧と、
+    データ置き場の観察の記録から)。答えの行に URL を結びつけるため。"""
     global _HOSTS
     if _HOSTS is not None:
         return _HOSTS
@@ -857,7 +858,7 @@ def host_names(env=None):
                 for k in ("publisher", "facility", "name", "organizer", "operator"):
                     v = o.get(k)
                     if isinstance(v, str) and len(v) >= 3 and not re.fullmatch(r"[a-z0-9_-]+", v):
-                        out.setdefault(h, set()).add(v)
+                        out.setdefault(P.site_key(u), set()).add(v)      # 複数の公園が使うホストの名前は、公園ごと
             for v in o.values():
                 walk(v)
         elif isinstance(o, list):
@@ -1151,7 +1152,7 @@ def _line_facts(F, text, c, known_pubs, skip_blocks=False, skip_names=()):
     cls = {f["url"]: f["source_class"] for f in F.rows if f.get("url") and f.get("source_class")}
     hn = host_names()
     for u in urls:                                       # 台帳・施設・記録の名前(施設名・発行元)でも行と URL を結ぶ
-        for n in sorted(hn.get(P.host_of(u)) or []):
+        for n in sorted(hn.get(P.site_key(u)) or []):
             by_name.setdefault(n, u)
     in_block = False
     ctx = None
@@ -1195,7 +1196,7 @@ def _line_facts(F, text, c, known_pubs, skip_blocks=False, skip_names=()):
         if src is None:
             src = next((h for h in hit if h in known_pubs or re.search(c["publisher_name_re"], h)), None)
         if src is None and url:                          # URL のホストの台帳の名前(発行元らしいもの)
-            src = next((h for h in sorted(hn.get(P.host_of(url)) or [], key=len) if re.search(c["publisher_name_re"], h)), None)
+            src = next((h for h in sorted(hn.get(P.site_key(url)) or [], key=len) if re.search(c["publisher_name_re"], h)), None)
         kind = _line_kind(s, c) if _perishable(s, c) else "other"
         sc = cls.get(url) or (_source_class(url) if url else ("official" if _official_name(src, c) else None))
         F.add(kind, s, place=place, source=src, url=url, source_class=sc)

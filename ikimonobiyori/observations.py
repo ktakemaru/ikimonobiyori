@@ -2070,6 +2070,13 @@ def _kana(text):
     return "".join(chr(ord(ch) + 0x60) if "ぁ" <= ch <= "ゖ" else ch for ch in unicodedata.normalize("NFKC", text or ""))
 
 
+def state_with_kind(state, kind, policy=None):
+    """状態の文に花の名前がなければ添える(「開花中」→「サザンカ: 開花中」)。花の名前がない記録はそのまま。"""
+    if not kind or not state or _kana(kind) in _kana(state):
+        return state
+    return (policy or load_policy())["part_kind_label"].format(kind=kind, state=state)
+
+
 def part_kind(r, kinds, known=()):
     """場所を分けた記録(part)が、どの花の記録か。分からなければ None(現況に数えない)。kinds: 名所の花の種類。known: ほかの花の名前。
     記録の kind → 状態の原文にある花の名前(「コスモス園」のような場所の名前は見ない) → 場所の言葉の花の名前(「つばき園」)。
@@ -2222,6 +2229,7 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
         if cur.get("_part_kind"):
             current["part"], current["kind"] = cur["part"], cur["_part_kind"]
+            current["display"] = state_with_kind(current["display"], cur.get("kind") or cur["_part_kind"], policy)
         if cur.get("embedded_post"):                      # 公式ページに載った発行元の投稿の印は、候補の現況の文にも付ける
             current["embedded_post"] = cur["embedded_post"]
         if is_late_peak(subject, cur["state"], policy):
