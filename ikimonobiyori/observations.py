@@ -275,6 +275,41 @@ def _sns_host(host, policy):
     return any(host == s or host.endswith("." + s) for s in policy["record"].get("sns_hosts") or [])
 
 
+def embedded_post_errors(rec, policy):
+    """指示書 open-question-breadth の続き 第3部(本人の返事 4、2026-11-28): 公式ページに載った発行元自身の投稿の記録の条件。
+    ① 公式ページ(url は SNS のホストでない・source_class official) ② own_account: true(発行元自身のアカウント) ③ 投稿の日付が年まで(posted_on)。
+    投稿の文の写し(text)はデータ置き場の記録だけに残る。値は policy の record.embedded_post。"""
+    E = policy["record"].get("embedded_post") or {}
+    ep = rec.get("embedded_post")
+    if not E.get("enabled"):
+        return ["公式ページに載った投稿の記録は今は使えない(record.embedded_post.enabled)"]
+    if not isinstance(ep, dict):
+        return ["embedded_post は {own_account, own_account_basis, account, posted_on, posted_on_inferred, text} のオブジェクト"]
+    errs = []
+    if ep.get("own_account") is not True:
+        errs.append("発行元自身のアカウントの投稿だけ(own_account: true。ほかの人の投稿の紹介・リポストは使わない)")
+    if not str(ep.get("own_account_basis") or "").strip():     # 本人の決定(2026-11-28): 公式サイトが自分のアカウントとして案内している(「フォロー」の案内・リンク)ものを自分の投稿とみなす
+        errs.append("embedded_post.own_account_basis(公式サイトがそのアカウントを自分のものとして案内している文と場所。例: フッターの「Instagram でフォロー」)が要る")
+    if not str(ep.get("account") or "").strip():
+        errs.append("embedded_post.account(表示のアカウント名)が要る")
+    try:
+        date.fromisoformat(str(ep.get("posted_on")))
+    except (TypeError, ValueError):
+        errs.append("embedded_post.posted_on は YYYY-MM-DD(年まで決められない投稿は使わない。月日だけなら読んだ日からいちばん近い過去の日にし、posted_on_inferred: true)")
+    if not isinstance(ep.get("posted_on_inferred", False), bool):
+        errs.append("embedded_post.posted_on_inferred は true か false")
+    t = str(ep.get("text") or "").strip()
+    if not t:
+        errs.append("embedded_post.text(読んだときの投稿の文の写し)が要る")
+    elif len(t) > _v(E["max_text_chars"]):
+        errs.append(f"embedded_post.text は {_v(E['max_text_chars'])} 字まで")
+    if rec.get("source_class") != "official":
+        errs.append("公式ページに載った投稿の記録は source_class: official(出典は公式ページ)")
+    if rec.get("state_date") and ep.get("posted_on") and rec["state_date"] != ep.get("posted_on"):
+        errs.append("state_date は投稿の日付(embedded_post.posted_on)と同じにする")
+    return errs
+
+
 def _restricted_unusable(r, policy):
     cfg = restricted_cfg(r.get("host") or urlparse(r.get("url") or "").hostname, policy)
     if not cfg:
@@ -456,6 +491,8 @@ def validate(rec, policy):
         errs.append("このホストは読まない対象(利用規約)")
     if u.hostname and _sns_host(u.hostname, policy):
         errs.append("SNS の投稿は事実の根拠に使わない")
+    if "embedded_post" in rec:
+        errs += embedded_post_errors(rec, policy)
     if isinstance(rec, dict) and _reprint_of_blocked(rec, policy):
         errs.append("ウェザーニュース由来の事実は使わない(転載を含む)")
     for k in ("state_date",):
@@ -554,7 +591,9 @@ FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "stat
           "source_year",                         # 段階72 第6部 1: 出典のページの年(古い年の投稿の「例年」を年つきで出す)
           "research",                            # 段階78 第4部: その場で調べた印 {at, brief, question}
           "closed_period", "best_conditions",    # 段階82 第3部 1
-          "part", "unseen")                      # 指示書 current-status 第 2・3 部: どのあたりか・見ていない所(利用者の記録): 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
+          "part", "unseen",                      # 指示書 current-status 第 2・3 部(下の注)
+          "embedded_post")                       # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿の印・投稿の日付・読んだときの投稿の文の写し
+# 指示書 current-status 第 2・3 部: どのあたりか・見ていない所(利用者の記録): 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
 
 
 STATE_DATE_RES = (re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})\s*(?:現在|時点)"), re.compile(r"(\d{1,2})月(\d{1,2})日\s*(?:現在|時点)"))

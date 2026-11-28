@@ -41,6 +41,12 @@ record:
   rejected_hosts: [bird-research.jp]
   # 段階58 第4部: SNS の投稿を事実の根拠にしない(記録しない。過去の記録も答えの材料にしない)
   sns_hosts: [x.com, twitter.com, facebook.com, instagram.com, youtube.com, youtu.be, tiktok.com, threads.net]
+  # 指示書 open-question-breadth の続き 第3部(本人の返事 4、2026-11-28): 公式ページに埋め込み・転載で載った発行元自身のアカウントの投稿で、
+  # 投稿の日付が年まで分かるものは、出典を公式ページにして記録できる(observations.embedded_post_errors)。写しはデータ置き場の記録だけ
+  embedded_post:
+    enabled: true
+    max_text_chars: {value: 400, source: "投稿の文の写しの上限(あとで照合が同じ文で確かめるため。ふつうの投稿の文が収まる長さ・仮置き)", provisional: true}
+    max_quote_chars: {value: 15, source: "答えに写してよい投稿の文の連続の字数の上限(段階58 第10部の長い引用 long_quote_min 15 と同じ・仮置き)", provisional: true}
   # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)
   # 段階60 第9部: 承認待ちを隠す仕組みの統一。対象(記録の対象 → 隠す台帳の状態)。公式の台帳(data/sources/*.yaml)で、
   # 記録の URL に対応する項目がこの状態なら、公式としての記録は承認されるまで答えに出さない(記録は残る。承認されれば自動で出る)。

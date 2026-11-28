@@ -122,9 +122,18 @@ def place_records(place, cond, now, env=None, policy=None):
 
 # ---- 資料に足す事実 ----
 
+def post_mark(rec, c=None):
+    """指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元の投稿の記録の印(状態の後ろに添える)。印の無い記録は空。"""
+    ep = rec.get("embedded_post")
+    if not isinstance(ep, dict):
+        return ""
+    L = cfg(c)["post"]
+    return L["mark_inferred" if ep.get("posted_on_inferred") else "mark"].format(md=_md(ep.get("posted_on")) or "")
+
+
 def _fact_content(rec, place, C):
     L = C["lines"]
-    st = rec.get("state")
+    st = (rec.get("state") or "") + post_mark(rec)
     pub = rec.get("publisher") or ""
     where = place["name"] + (f"の{rec['part']}" if rec.get("part") else "")
     from . import observations as O
@@ -467,6 +476,7 @@ def current_status_errors(sents, body, brief, c, env=None, err=None):
             if left or not _has(V.get("spread_words"), body):
                 out.append(err("spread_hidden", None, f"{g['part'] or C['lines']['whole']}は発信元で状態にばらつきがある({'・'.join(g['facts'])})",
                                f"「{blk.get('spread_line') or ''}」を入れ、{'・'.join(left or g['facts'])}も発信元と日付を添えて並べる"))
+    out += embedded_post_quote_errors(body, brief, env, err)    # 指示書 open-question-breadth の続き 第3部
     # 第 6 部: 手順を飛ばした答え
     if on(c, "steps"):
         bid = brief.get("id")
@@ -484,6 +494,34 @@ def current_status_errors(sents, body, brief, c, env=None, err=None):
                     continue
                 out.append(err("refresh_not_recorded", None, f"「{pg['name']}」のページが読み直しで変わっているのに、記録が無い",
                                C["lines"]["refresh_fix"].format(id=bid, where=pl)))
+    return out
+
+
+def embedded_post_quote_errors(body, brief, env=None, err=None):
+    """公式ページに載った発行元の投稿の文を、答えに長く写した文(写しの文と max_quote_chars 字以上同じ並び)を止める。
+    資料の事実の URL の記録のうち、embedded_post の写しがあるものだけを見る。"""
+    from . import observations as O
+    pol = O.load_policy()
+    E = pol["record"].get("embedded_post") or {}
+    if not E.get("enabled"):
+        return []
+    n = O._v(E["max_quote_chars"])
+    urls = {f.get("url") for f in brief.get("facts") or [] if f.get("url")}
+    if not urls:
+        return []
+    texts = []
+    for sj in pol["subjects"]:
+        for r in O.read_records(sj, env, pol, include_detail=True):
+            ep = r.get("embedded_post")
+            if isinstance(ep, dict) and r.get("url") in urls and ep.get("text"):
+                texts.append(re.sub(r"\s+", "", ep["text"]))
+    flat = re.sub(r"\s+", "", body or "")
+    out = []
+    for t in dict.fromkeys(texts):
+        hit = next((t[i:i + n] for i in range(0, max(0, len(t) - n + 1)) if t[i:i + n] in flat), None)
+        if hit:
+            out.append(err("embedded_post_quoted", None, f"公式ページに載った投稿の文を写している(「{hit}…」)",
+                           cfg()["post"]["quote_fix"]))
     return out
 
 
@@ -641,7 +679,7 @@ def add_open_facts(F, question, cond, cands, now, env, c):
                      and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]
                      and (r.get("state") or "") in (f.get("content") or "")), None)   # 状態の文も同じときだけ指す(同じ日に読み直した別の文を隠さない)
         label = name + (f"({r['part']})" if r.get("part") else "")
-        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
+        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
                            source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
                            extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "_pref": r.get("_pref"), "_city": r.get("_city"),
                                   "freshness": O.freshness(r, now.date(), r["subject"], policy)["label"]})
