@@ -94,6 +94,18 @@ class Wide(Tmp):
         self.assertEqual(len(t[0]["read_first"]), 5)                                    # wide でなければ都県で絞らない
 
 
+class ApprovedNotPicked(Tmp):
+    def test_approved_rows_are_not_read_first(self):
+        PS.add([row("試験の園(作り物)", "神奈川県", "https://ok-polish.example.jp/", 35.45, 139.63),
+                row("台帳の園(作り物)", "神奈川県", "https://ledger-polish.example.jp/flower/", 35.45, 139.63)], now=NOW)
+        lines = PS._raw_lines()
+        PS._write_lines([l.replace('"approval": "pending"', '"approval": "approved"') if "ok-polish" in l else l for l in lines])
+        rows_ = [("ledger-polish.example.jp", "/flower/", "approved", "flowers", "test-ledger")]
+        with mock.patch.object(O, "_ledger_urls", lambda: rows_):
+            self.assertEqual(PS.pick(["flowers"], origin="横浜"), [])                    # 一覧の欄が approved の行・台帳に approved の行
+        self.assertEqual([x["name"] for x in PS.pick(["flowers"], origin="横浜")], ["台帳の園(作り物)"])
+
+
 class AutoPending(Tmp):
     def rec(self, **kw):
         base = {"subject": "flowers", "name": "試験の公園(作り物)", "prefecture": "神奈川県", "city": "横浜市", "kind": "サザンカ",

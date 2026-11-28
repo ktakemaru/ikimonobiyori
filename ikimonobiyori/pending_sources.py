@@ -121,6 +121,14 @@ def in_ledger(url):
     return None
 
 
+def in_ledger_approved(url):
+    """本人の返事(2026-11-28 の続きの 3): 台帳に、このページの URL そのものの項目が approved であるか。"""
+    from . import observations as O
+    u = urlparse(url or "")
+    host, p = O._bare_host(u.hostname), unquote(u.path or "/").rstrip("/") or "/"
+    return any(h == host and (lp.rstrip("/") or "/") == p and st == "approved" for h, lp, st, _l, _i in O._ledger_urls())
+
+
 def check(item):
     """→ 理由の一覧(空なら残してよい)。"""
     from . import observations as O
@@ -319,7 +327,7 @@ def pick(subjects, *, origin=None, when=None, places=None, species_words=None, e
     for r in rows(env):
         if r.get("subject") not in (subjects or []):      # 1-1 の項目の無い古い行(subject なし)は選ばない
             continue
-        if r.get("approval") not in (None, "pending"):
+        if r.get("approval") not in (None, "pending") or in_ledger_approved(r.get("url")):   # 台帳に approved で入った行は、最初に読む一覧に出さない
             continue
         if places and not _name_hit(r, places):
             continue
