@@ -201,6 +201,10 @@ today_line:
   enabled: true
   line: "- 対象の日に今日が入っている: {md}({wd})は今日。答えでは「今日({md}・{wd})」のように、今日だと分かる書き方にする"
   weekdays: [月, 火, 水, 木, 金, 土, 日]
+  # 本人の決定(2026-11-28): 聞かれた日が今日のときに「今日(日付・曜日)」の書き方が抜けたら、照合で止める(出かける日の経路だけ。知識を聞く質問は対象にしない)
+  required_routes: [plan, season_place, highlights_dated, species_dated, combo]
+  ng_why: '対象の日に今日が入るのに、「今日({md}・{wd})」の書き方がない'
+  ng_fix: '「今日({md}・{wd})」を入れる。状態の語(見頃・開花など)や事実の印の無い文に入れる(例: 「今日({md}・{wd})に出かけるなら、次の場所が候補です。」)'
 # 指示書 open-question-breadth 第4部 4(2026-11-28): 冬桜(11月中旬〜12月初旬がいちばん良い時期)を 11/28 の答えの「これから」の節に入れた。
 upcoming_heading:
   enabled: true
@@ -512,10 +516,24 @@ auto_refresh:
     failed: "{name}の公式の現況({publisher})を読み直せませんでした({md}時点の記録のまま)"
     heading: "## 読み直したページ(前回の記録から内容が変わった公式の現況)"
     note: "下の本文の控えで、名所ごとの今の状態と日付を確かめ、ask record --batch <JSON> で記録してから、同じ質問で ask brief を作り直す(本文にない状態を書かない。Web を使わない)。記録する事実が無いページは ask warm --mark <URL> で読んだ印だけを残す。"
+    notice_note: "  控えに通行止め・閉鎖・復旧中などの案内があり、今も有効なら、必ず ask record に {\"name\", \"notice\": \"自分の言葉で短く(80 字まで)\", \"state_date\": \"案内の日付\", \"url\", \"publisher\", \"source_class\": \"official\", \"basis\": \"page\"} で記録する。解除の案内が出ていたら、notice に「解除」の語を入れて記録する。花を場所ごとに記録するとき(part)は、花の名前を kind に入れる。"
     alt_note: "  画像の説明(alt)の全文を控えの終わりに入れた。そこにある投稿は、発行元自身の公式ページ・発行元自身の投稿・日付が分かる、の 3 つを満たすときだけ ask record の embedded_post で記録する(docs/guide-mode.md)。途中で切れた文は使わない。"
     vc_note: "施設(ビジターセンターなど)のページは ask record ではなく ask vc-record --batch <JSON> で記録する(1 件: center・date(年つき)・state(状態の語だけ)・url。台帳の allowed_fields にない項目(種名など)は入れない)。"
     row: "- {name}({publisher}・前回の記録 {md}時点): {url} → 本文の控え {text_path}"
     stale_mark: "古い({days}日前)"
+# 本人の決定(2026-11-28): 今も有効な通行止め・閉鎖・復旧中の案内は、その場所を案内する答えに必ず添える(照合 safety_notice_missing)。
+# 記録の notice(公式のページの本文で読んだお知らせを短くまとめた語)のうち、words の語があるもの。名所と発信元ごとにいちばん新しい案内を見て、
+# lifted_words の語(解除など)があれば添えない。案内の日付が max_age_days より古いものも添えない(読み直して今も有効なら記録し直す)
+must_attach:
+  enabled: true
+  words: [通行止, 通行禁止, 通行でき, 閉鎖, 閉園, 立入禁止, 立ち入り禁止, 復旧]
+  lifted_words: [解除, 全面開通, 全面復旧しました, 全面復旧いたしました, 通常開園]
+  max_age_days: {value: 30, source: "理由: 古い案内を今も有効と書かない。復旧の知らせは数週間おきに出る(くりはま花の国の公園だより)", provisional: true}
+  line: '{name}: 行く前に(公式の案内): {notice}({md}時点の案内)'
+  ng_why: '{place}を案内しているのに、今も有効な通行止め・閉鎖・復旧中の案内([{id}])が添えられていない'
+  ng_fix: 'その場所の案内に、事実 [{id}] の内容を印を付けた文で添える'
+# 本人の決定(2026-11-28): 資料の「今年の現況」と食い違う言葉。今年の現況の事実がある場所の、ほかの行からは外す
+no_current_notes: [。今年の現況は分かりません, (今年の情報は確認できていません), 。今年の情報は確認できていません]
 # 本人の決定(2026-11-28 の直す案 8): 月別の花の一覧に名前が載るだけの記録。「例年」と書かない
 month_list:
   enabled: true

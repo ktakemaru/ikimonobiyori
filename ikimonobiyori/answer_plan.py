@@ -108,6 +108,8 @@ def outlook_of(c, d, pol, subject=None):
     cur = c.get("current") or {}
     st = cur.get("state")
     rel = c.get("relation")
+    if cur.get("late_peak") and st == "見頃" and c.get("avoid") != "past" and _gap_ok(cur, d, o):
+        return "late"                                        # 本人の決定(2026-11-28): 「見頃」と「落葉が目立つ」が並ぶ発信は、見頃の終わりごろ
     if rel == "after_peak" and st in (o.get("after_window_current") or {}) and _fresh_official(cur, d, o):
         return o["after_window_current"][st]                  # 段階62 第4部: 公式の新しい現況を、例年の時期より優先する
     if c.get("avoid") == "past" or rel == "after_peak" or st == "見頃過ぎ":
@@ -274,7 +276,8 @@ def dated_official_text(cur, pol=None):
 def has_this_year(c, year):
     """今年(今のシーズン)の情報があるか: 状態が読める今年の日付の記録、または今年の行事。「例年の時期」だけでは数えない(段階58 第3部)。"""
     cur = c.get("current")
-    if has_state_record(c):
+    # 本人の決定(2026-11-28): 場所を分けた記録(花の現況として数えるもの)は、状態の語が読めなくても(「開花しました」)、日付のある公式の原文なら今年の情報
+    if has_state_record(c) or (cur and cur.get("part") and cur.get("kind") and dated_official_text(cur)):
         d = cur.get("state_date")
         if d is None or str(d)[:4] == str(year):
             return True

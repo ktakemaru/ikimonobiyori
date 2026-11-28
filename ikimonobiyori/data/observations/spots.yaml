@@ -621,6 +621,9 @@ spots:
     area: 三浦半島
     catalog_ref: hana-0027
     flower_kinds: [コスモス]
+    events:
+      # 公式ブログの 11/16「コスモスまつり終了について」と 11/20 の開花情報: 「今期は11月19日で…コスモスまつりは終了」「11月29日の無料花摘みイベントも中止」(2026-11-28 に本文で確認。始まりは 10/27 のお知らせ)
+      - {name: "コスモスまつり", kind: コスモス, start: "2026-10-31", end: "2026-11-19", publisher: くりはま花の国, url: "https://www.kanagawaparks.com/kurihama/blog/", source_class: official, checked_on: "2026-11-28"}
     typical:
       - {text: "11月上旬～11月下旬", kind: コスモス, publisher: 神奈川県観光協会, url: "https://kanagawa-kankou.or.jp/event/6763", year: 2025, source_class: secondary, checked_on: "2026-11-01", event_derived: true, note: "段階35: 2025年の行事(開放)の期間に近い値のため例年の時期としては使わない。2025年はコスモス園の開放を11/1～11/24に変更(生育が遅いため)。例年の見頃は9月～10月とする紹介サイトもある"}
     pages:

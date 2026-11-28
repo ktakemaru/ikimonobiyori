@@ -754,13 +754,15 @@ def _candidate_facts(F, c_row, pick=None):
     cur = c_row.get("current") or {}
     if cur.get("state") or cur.get("state_raw"):
         md = _md(cur.get("state_date"))
-        st = cur.get("display") or cur.get("state_raw") or cur.get("state")
-        F.add("current", f"{name}: {st}({md}時点、{cur.get('publisher')})" if md else          # 段階79 第1部 5: 日付のない発信は、いつの記録か分からないと書く
-              F.c["current_undated"].format(name=name, state=st, publisher=cur.get("publisher")),
+        from . import current_status as CS
+        st = (cur.get("display") or cur.get("state_raw") or cur.get("state")) + CS.post_mark(cur)
+        where = f"{name}({cur['part']})" if cur.get("part") else name      # 場所を分けた記録は、その場所のことだけを書く
+        F.add("current", f"{where}: {st}({md}時点、{cur.get('publisher')})" if md else          # 段階79 第1部 5: 日付のない発信は、いつの記録か分からないと書く
+              F.c["current_undated"].format(name=where, state=st, publisher=cur.get("publisher")),
               place=name, source=cur.get("publisher"), url=cur.get("url"), source_class=cur.get("source_class"),
               observed=cur.get("state_date"), read_at=cur.get("read_at"),
               extra={"state": cur.get("state_raw") or cur.get("state"), "state_norm": cur.get("state"),
-                     "freshness": cur.get("freshness_label")})
+                     "freshness": cur.get("freshness_label"), **({"part": cur["part"]} if cur.get("part") else {})})
     for t in c_row.get("typical") or []:
         if t.get("text"):
             F.add("typical", f"{name}: 例年 {t.get('text_thirds') or t['text']}", place=name, source=t.get("publisher"), url=t.get("url"),   # 段階81 第1部 1: 旬で書く
@@ -1838,20 +1840,46 @@ def _candidates(workdir, c):
     return rows, picks, {"no_this_year": no_year, "origin_line": plan.get("origin_line")}
 
 
+def places_with_current(facts):
+    """今年の現況(日付のある公式の記録。「少し前の様子」を除く)の事実がある場所の名前(照合用の形)。「足りないもの」を食い違わせないために使う。"""
+    from . import observations as O
+    return {O._key(re.sub(r"[(（].*$", "", f["place"])) for f in facts
+            if f.get("kind") == "current" and f.get("place") and f.get("observed") and f.get("source_class") == "official"
+            and not (f.get("fields") or {}).get("earlier")}
+
+
+def _drop_no_current_notes(rows, c):
+    """今年の現況の事実がある場所の、ほかの行に付いた「今年の現況は分かりません」の類いの言葉(guide_mode.yaml の no_current_notes)を外す。"""
+    have = places_with_current(rows)
+    for f in rows:
+        if f.get("kind") == "current" or not f.get("place") or not _has_current(f["place"], have):
+            continue
+        for note in c.get("no_current_notes") or []:
+            f["content"] = f["content"].replace(note, "")
+
+
+def _has_current(name, have):
+    from . import observations as O
+    return O._key(re.sub(r"[(（].*$", "", name or "")) in have
+
+
 def _missing(question, res, cands, facts, cards, extra):
     from . import place_guard as PG
     out = []
+    have = places_with_current(facts)                    # 「今年の現況」に事実がある場所を、「現況がない」に入れない(本人の決定 2026-11-28)
+    if extra and extra.get("no_this_year"):
+        extra = {**extra, "no_this_year": [n for n in extra["no_this_year"] if not _has_current(n, have)]}
     for t in res.get("research_targets") or []:
         out.append(f"記録が足りない: {t.get('what')}" + (f"({t.get('where')})" if t.get("where") else ""))
     sp = res.get("season_place") or {}
     for m in sp.get("missing") or []:
         out.append(f"名所と例年の時期の記録がない種: {m}")
     for r in cands:
-        if r["chosen"] and not r.get("current_state"):
+        if r["chosen"] and not r.get("current_state") and not _has_current(r["name"], have):
             out.append(f"今年の現況がない候補: {r['name']}")
     if extra and extra.get("no_this_year"):
         out.append("今年の情報が確認できていない候補: " + "、".join(extra["no_this_year"]))
-    if cands and not any(r.get("current_state") for r in cands):
+    if cands and not any(r.get("current_state") or _has_current(r["name"], have) for r in cands):
         out.append("今年の現況の記録がある候補がない")
     try:
         qplaces = PG.candidates(question)
@@ -2058,6 +2086,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     _vc_facts(F, question, cands, now, env, c)              # 本人の判断(2026-11-15 の 1): 承認済みの施設の発信(新しいものを先に・古い現況を外す)
     mat, cards, sobs = _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c)   # 段階85 第4部 2: 観察記録と暦の枠
     _month_list_facts(F, question, cond, cands, now, env, c)   # 月別の花の一覧に名前が載るだけの記録(例年の時期にしない)
+    _notice_facts(F, cands, now, env, c)                  # 今も有効な通行止め・閉鎖・復旧中の案内は、その場所を案内する答えに添える
     refresh_pages = _refresh_targets(question, cond, cands, now, env, c, F.rows)   # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
     from . import current_status as CS
     cs_block = None
@@ -2080,6 +2109,7 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             sp_names, sp_words = CS._open_species(question)
             targets = PS.attach(targets, cond, now, env, species_words=sp_words if sp_names else None,
                                 wide=scope == "wide", current_names=[r["name"] for r in cands if r.get("basis") == "current"])   # 本人の返事 3
+    _drop_no_current_notes(F.rows, c)                     # 「今年の現況」に事実がある場所の行に「今年の現況は分かりません」を残さない
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
@@ -2263,6 +2293,46 @@ def _refresh_targets(question, cond, cands, now, env, c, F_rows=()):
     vc = _vc_targets(F_rows, order, now, env, {AU.url_key(p.get("url")) for p in pages})   # 本人の判断(2026-11-15 の 1): 承認済みの施設の情報ページ
     pages += sorted(vc, key=lambda p: order.get(p["name"], (len(cands) + 1, 0)))
     return pages[: mx] if mx else pages
+
+
+def _notice_facts(F, cands, now, env, c):
+    """資料の候補の、今も有効な通行止め・閉鎖・復旧中の公式の案内(記録の notice)を、答えに必ず添える安全の事実にする。
+    名所と発信元ごとに、案内の日付がいちばん新しい 1 件だけを見る。それが解除の案内なら添えない。古い案内(max_age_days より前)も添えない。
+    語と日数は guide_mode.yaml の must_attach。"""
+    from . import observations as O
+    M = c.get("must_attach") or {}
+    if not M.get("enabled"):
+        return
+    names = [(r["name"], n) for r in cands for n in [r.get("name"), *(r.get("merged_from") or [])] if n]
+    if not names:
+        return
+    for subject in ("autumn_leaves", "flowers", "birds"):
+        recs = [r for r in O.read_records(subject, env, include_detail=True)
+                if r.get("notice") and r.get("source_class") == "official"
+                and any(w in r["notice"] for w in [*M["words"], *M["lifted_words"]])]
+        if not recs:
+            continue
+        places = O.all_candidates(subject)
+        by_spot = {x["id"]: O._name_keys(x) for x in places}
+        latest = {}
+        for r in recs:
+            keys = set(by_spot.get(r.get("spot")) or []) | {O._key(r.get("name"))}
+            hit = next((shown for shown, n in names if O._key(re.sub(r"[(（].*$", "", n)) in keys or O._key(n) in keys), None)
+            if hit is None:
+                continue
+            day = str(O.state_date_of(r) or r.get("read_at") or "")[:10]
+            k = (hit, r.get("publisher"))
+            if k not in latest or (day, r.get("read_at") or "") >= latest[k][0]:
+                latest[k] = ((day, r.get("read_at") or ""), r)
+        for (name, _pub), ((day, _at), r) in latest.items():
+            if any(w in r["notice"] for w in M["lifted_words"]):
+                continue
+            if not day or not 0 <= (now.date() - date.fromisoformat(day)).days <= M["max_age_days"]["value"]:
+                continue
+            content = M["line"].format(name=name, notice=r["notice"], md=_md(day))
+            if F.add("safety", content, place=name, source=r.get("publisher"), url=r.get("url"), source_class="official",
+                     observed=day, read_at=r.get("read_at"), extra={"must_attach": True}) is None:
+                continue
 
 
 def _month_list_facts(F, question, cond, cands, now, env, c):
@@ -2775,6 +2845,8 @@ def render_md(doc):
             L += ["", A["heading"], "", A["note"], A["vc_note"]]
         else:
             L += ["", A["heading"], "", A["note"]]
+        if A.get("notice_note"):
+            L.append(A["notice_note"])
         for p in changed:
             L.append(A["row"].format(name=p.get("name"), publisher=p.get("publisher") or "", url=p.get("url"),
                                      md=_md(p.get("current_date")) if p.get("current_date") else "前回", text_path=p.get("text_path")))
