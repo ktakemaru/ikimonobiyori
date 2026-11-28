@@ -129,7 +129,7 @@ def in_ledger_approved(url):
     return any(h == host and (lp.rstrip("/") or "/") == p and st == "approved" for h, lp, st, _l, _i in O._ledger_urls())
 
 
-def not_auto_read(url):
+def not_auto_read(url, memo=None):
     """台帳で承認済みなのに、資料の自動の読み直しでは読まれないページか(現況のページでない・どの名所からも届かない)。
     本人の決定(2026-11-28 の直す案 5): 承認済みの行は、自動で読み直せるときだけ「最初に読む」から外す。"""
     from . import auto_refresh as AU
@@ -143,7 +143,12 @@ def not_auto_read(url):
             continue
         for src in (reg or {}).get("sources") or []:
             if AU.url_key(src.get("url")) == k and S.is_approved(src):
-                return src.get("kind") != "status_page" or k not in BR.reachable_urls()
+                if src.get("kind") != "status_page":
+                    return True
+                memo = {} if memo is None else memo
+                if "reach" not in memo:
+                    memo["reach"] = BR.reachable_urls()
+                return k not in memo["reach"]
     return False
 
 
@@ -342,10 +347,11 @@ def pick(subjects, *, origin=None, when=None, places=None, species_words=None, e
     limit = _v(C["max_reads"]) if limit is None else limit
     prefs = set((O.load_policy()["record"].get("range_check") or {}).get("prefectures") or [])
     out = []
+    memo = {}                                             # どの名所から届くかは、1 回の呼び出しで 1 回だけ作る
     for r in rows(env):
         if r.get("subject") not in (subjects or []):      # 1-1 の項目の無い古い行(subject なし)は選ばない
             continue
-        if (r.get("approval") not in (None, "pending") or in_ledger_approved(r.get("url"))) and not not_auto_read(r.get("url")):
+        if (r.get("approval") not in (None, "pending") or in_ledger_approved(r.get("url"))) and not not_auto_read(r.get("url"), memo):
             continue                                      # 台帳に approved で入った行は、自動で読み直せるので、最初に読む一覧に出さない
         if places and not _name_hit(r, places):
             continue
