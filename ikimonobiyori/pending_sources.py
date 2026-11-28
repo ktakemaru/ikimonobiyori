@@ -199,6 +199,49 @@ def add(items, *, brief=None, question=None, env=None, now=None):
     return {"added": added, "updated": updated, "rejected": rejected, "ids": ids}
 
 
+def after_record(records, *, env=None, now=None):
+    """本人の返事 6(2026-11-28): ask record で書けた今年の現況(状態・今年の状態の日付・URL あり・利用者の記録でない)のページについて、
+    (a) 公式の区分のホスト(資料と同じ GB._source_class)で、台帳にも一覧にも無ければ、一覧に自動で残す(運営者の欄は「未確認」。確かめたことにしない)。
+    (b) 公式の区分に無いホストなら、案内の 1 行(hints)を返す(自動では残さない)。一覧に載っていることで確かさの区分は上げない。
+    → {"added": [id...], "hints": [文...]}"""
+    from . import guide_brief as GB
+    from . import current_status as CS
+    from . import observations as O
+    now = now or datetime.now().astimezone().replace(microsecond=0)
+    C = cfg()
+    A = C["auto"]
+    lines = _raw_lines(env)
+    keys = {key_of(json.loads(l)) for l in lines if l.strip().startswith("{")}
+    blocked = CS.open_blocked_domains()
+    added, hints, done = [], [], set()
+    for r in records or []:
+        url = r.get("url")
+        if not url or url in done or not r.get("state") or r.get("source_class") == "user" or r.get("event"):
+            continue
+        sd = O.state_date_of(r)
+        if not sd or str(sd)[:4] != str(now.year):
+            continue
+        done.add(url)
+        host = (urlparse(url).hostname or "").lower()
+        if any(host == b or host.endswith("." + b) for b in blocked) or in_ledger(url) or url.rstrip("/") in keys:
+            continue
+        if GB._source_class(url, r.get("source_class")) != "official":
+            hints.append(A["hint"].format(url=url))
+            continue
+        row = {"publisher": r.get("publisher") or host, "publisher_kind": A["unverified"], "official_reason": A["reason"], "url": url,
+               "subject": r.get("subject"), "content": (f"{r.get('kind') or ''} {r.get('state') or ''}").strip()[:80], "kinds": [r["kind"]] if r.get("kind") else [],
+               "date_style": A["unverified"], "update_style": A["unverified"],
+               "place": {k: v for k, v in {"name": r.get("name") or r.get("spot"), "prefecture": r.get("prefecture"), "city": r.get("city")}.items() if v},
+               "auto": True, "operator_checked": False}
+        row.update(id=id_of(row), found_at=now.isoformat(), last_read_at=now.isoformat(), question=A["question"], brief=None, approval="pending")
+        lines.append(json.dumps(row, ensure_ascii=False))
+        keys.add(key_of(row))
+        added.append(row["id"])
+    if added:
+        _write_lines(lines, env)
+    return {"added": added, "hints": hints}
+
+
 def seen(ref, *, brief=None, env=None, now=None):
     """一覧のページを読めた印(ref は id か URL)。→ {id, url} か None(一覧に無い)。"""
     now = now or datetime.now().astimezone().replace(microsecond=0)
@@ -265,7 +308,7 @@ def _name_hit(row, places):
     return any(p and (p in text or (pl.get("name") and pl["name"] in p)) for p in places)
 
 
-def pick(subjects, *, origin=None, when=None, places=None, species_words=None, env=None, limit=None):
+def pick(subjects, *, origin=None, when=None, places=None, species_words=None, env=None, limit=None, wide=False, current_names=None):
     """最初に読むページ。subjects: 聞かれた対象。places: 名指しの質問の名所(あれば、その名所に合う行だけ)。
     species_words: 種を挙げた質問の語(行に kinds があり、どれも合わない行は外す)。→ [{id, url, publisher, name, km, last_read_at}]。"""
     from . import observations as O
@@ -290,16 +333,28 @@ def pick(subjects, *, origin=None, when=None, places=None, species_words=None, e
             continue
         out.append({"id": r["id"], "url": build_url(r, when), "publisher": r.get("publisher"), "name": (r.get("place") or {}).get("name"),
                     "km": km, "last_read_at": r.get("last_read_at") or r.get("found_at") or "", "update_style": r.get("update_style"),
-                    "start_url": r.get("start_url")})
+                    "start_url": r.get("start_url"), "prefecture": (r.get("place") or {}).get("prefecture"),
+                    "has_current": bool(current_names) and _name_hit(r, current_names), "unverified": r.get("operator_checked") is False})
     out.sort(key=lambda x: x["last_read_at"], reverse=True)
     out.sort(key=lambda x: x["km"] if x["km"] is not None else float("inf"))
-    return out[:limit]
-
-
-def attach(targets, cond, now, env=None, species_words=None):
-    """調べる対象(広く探す・名指しの今年の現況)に read_first を付ける。全体で最大 max_reads 件(同じページは 1 回)。"""
-    wide = [t for t in targets or [] if t.get("kind") in ("open_breadth", "current_status")]
     if not wide:
+        return out[:limit]
+    # 本人の返事 3(2026-11-28): 範囲が wide(「遠くても」)のときは、今年の現況がある場所を先に、そのうえで都県が重ならないように(同じ都県は wide_max_same_prefecture まで)
+    out.sort(key=lambda x: not x["has_current"])
+    cap, seen, got = _v(C["wide_max_same_prefecture"]), {}, []
+    for x in out:
+        k = x.get("prefecture") or ""
+        if seen.get(k, 0) >= cap:
+            continue
+        seen[k] = seen.get(k, 0) + 1
+        got.append(x)
+    return got[:limit]
+
+
+def attach(targets, cond, now, env=None, species_words=None, wide=False, current_names=None):
+    """調べる対象(広く探す・名指しの今年の現況)に read_first を付ける。全体で最大 max_reads 件(同じページは 1 回)。"""
+    tg = [t for t in targets or [] if t.get("kind") in ("open_breadth", "current_status")]
+    if not tg:
         return targets
     C = cfg()
     left = _v(C["max_reads"])
@@ -312,13 +367,14 @@ def attach(targets, cond, now, env=None, species_words=None):
             break
         except (TypeError, ValueError, IndexError):
             continue
-    for t in wide:
+    for t in tg:
         if left <= 0:
             t["read_first"] = []
             continue
         places = [t["where"]] if t.get("kind") == "current_status" else None
         cap = min(left, t.get("max_pages") or left)          # 名指しの名所 1 つの取得の上限(4)より多くは選ばない
-        got = [x for x in pick(subjects, origin=cond.get("origin"), when=when, places=places, species_words=species_words, env=env, limit=cap + len(used))
+        got = [x for x in pick(subjects, origin=cond.get("origin"), when=when, places=places, species_words=species_words, env=env, limit=cap + len(used),
+                               wide=wide and t.get("kind") == "open_breadth", current_names=current_names)
                if x["id"] not in used][:cap]
         used.update(x["id"] for x in got)
         left -= len(got)
@@ -337,5 +393,5 @@ def step_lines(bid, target):
         km = f"直線で約{int(x['km'])}km、" if x.get("km") is not None else ""
         extra = f"。読めなければ {x['start_url']} から辿る" if x.get("update_style") == "monthly_url" and x.get("start_url") else ""
         out.append(C["row"].format(id=x["id"], name=x.get("name") or "", publisher=x.get("publisher") or "", url=x["url"], km=km,
-                                   last=(x.get("last_read_at") or "")[:10]) + extra)
+                                   last=(x.get("last_read_at") or "")[:10]) + extra + (C["auto"]["row_mark"] if x.get("unverified") else ""))
     return out + [""]

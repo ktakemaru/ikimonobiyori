@@ -502,6 +502,8 @@ def weather_line(brief, body, c):
         return None
     if GB.has_any(W.get("skip_words") or [], body or ""):
         return None
+    if W.get("skip_off_season") and brief.get("off_season"):     # 本人の返事 2(2026-11-28): 時期の外の答え(どの名所の例年の時期にも対象の日が入らない)には付けない
+        return None
     return W["line"]
 
 

@@ -615,7 +615,9 @@ def _season_place_route(res, cond, now, env):
     res["research_targets"] = got.get("research") or []                  # 段階69 第3部: 調べる対象(利用者向けの答えには出さない)
     text, _removed = AG.delete_bad_sentences(got["text"], offers=[])
     errs = [e for e in V.generic_check(text)["errors"] if e["code"] not in ("too_few_candidates", "ask_back_only")]
-    res["season_place"] = {"species": got["species_all"], "spots": [r["name"] for r in got["spots"]], "missing": got["missing"]}
+    days = [date.fromisoformat(x) for ds in cond.get("periods") or [] for x in ds if x] or [now.date()]
+    res["season_place"] = {"species": got["species_all"], "spots": [r["name"] for r in got["spots"]], "missing": got["missing"],
+                           "off_season": SP.off_season(got["spots"], days)}   # 本人の返事 2・4: 時期の外の答え(天気の一言・広く探す対象を出さない)
     if got.get("research") and got["spots"]:                              # 段階69 第3部: 質問の場所に記録がない(ほかの場所の名所は出した)
         res.update(text=text, stage=3, status=STATUS_DEGRADED, needs_research=True, research_kind="season_place")
     elif not got["spots"]:

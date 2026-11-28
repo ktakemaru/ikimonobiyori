@@ -448,6 +448,12 @@ class Flow:
             raise ValueError(f"読んだ事実の JSON を読めない: {e}") from e
         batch = batch if isinstance(batch, list) else [batch]
         out = O.record(batch, env=self.env, now=self.clock())
+        from . import pending_sources as PS                             # 本人の返事 6(2026-11-28): 公式の区分のページは一覧に自動で残す・ほかは案内の 1 行
+        ps = PS.after_record(out.get("records"), env=self.env, now=self.clock())
+        for h in ps["hints"]:
+            print(h, file=sys.stderr)
+        if ps["added"]:
+            out["pending_sources_added"] = ps["added"]
         out.pop("records", None)
         hist = self._load("records.json", [])
         hist.append({"at": self.clock().isoformat(timespec="seconds"), "batch": str(batch_path), "submitted": len(batch),

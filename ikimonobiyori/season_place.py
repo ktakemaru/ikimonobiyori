@@ -503,6 +503,15 @@ def _in_window(today, start, end):
     return start <= md <= end if start <= end else (md >= start or md <= end)
 
 
+def off_season(rows, days):
+    """本人の返事 2・4(2026-11-28): 時期の外か。例年の時期のある名所があり、対象の日(days: date の一覧)が、どの名所の時期にも入らない。
+    時期のある名所が 1 つも無ければ False(分からないときは時期の外と言わない)。"""
+    wins = [r for r in rows or [] if r.get("start") and r.get("end")]
+    if not wins or not days:
+        return False
+    return not any(_in_window(d, r["start"], r["end"]) for d in days for r in wins)
+
+
 def _next_month(today, rows):
     best = None
     for r in rows:

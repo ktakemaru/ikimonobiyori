@@ -195,6 +195,7 @@ weather_line:
   routes: [plan, season_place, highlights_dated, species_dated, combo]
   line: 天気はヤマビヨリで確かめてください。
   skip_words: [ヤマビヨリ]
+  skip_off_season: true            # 本人の返事 2(2026-11-28): 種の名所と時期の答えで、対象の日がどの名所の例年の時期にも入らない(資料の off_season)ときは付けない
 # 指示書 open-question-breadth 第4部 7(2026-11-28): 土曜の朝に「週末」を聞かれたら、土曜は今日だと分かる書き方にする(開園時間に間に合うかの判断)
 today_line:
   enabled: true
@@ -359,13 +360,21 @@ research:
   # 広く探す段の最初に、聞かれた対象と範囲に合うページを読む(ikimonobiyori/pending_sources.py)。台帳ではない・答えの材料を絞らない・確かさの区分を上げない。
   pending_first:
     max_reads: {value: 8, source: "指示書 open-question-breadth の続き 1-3 の 5(一覧から読むのは取得の上限 16 回の半分まで。一覧だけで上限を使い切らないため・仮置き)", provisional: true}
+    wide_max_same_prefecture: {value: 2, source: "本人の返事 3(2026-11-28): 範囲が wide の質問で、一覧から選ぶページの同じ都県の上限(仮置き)", provisional: true}
     subjects: [autumn_leaves, flowers, birds]
     publisher_kinds: [運営者, 指定管理者, 自治体, 観光協会, ビジターセンター]   # 前の指示書 3-2: 発行元がこのどれかだと、ページの中身から確かめられたときだけ残す
     date_styles: {article: 記事ごとの日付あり, photo: 撮影日あり, none: 日付なし}
     update_styles: {append: 記事が増える, rewrite: 1 ページを書き換える, monthly_url: 月ごとに URL が変わる}
     step_lines:
-      - '0. 最初に読む(見つけた公式ページの一覧。Web の検索より先に): 下の {n} ページを WebFetch で読む(一覧から読むのは最大 {max} 回。取得の上限 {pages} 回に数える)。読めて対象と日付が分かったものは、検索で見つけて読んだ公式ページと同じに ask record する(一覧に載っていることで確かさを上げない)。一覧のページの発行元は、運営者の欄・著作権表示・同じホストのトップページで確かめてある(ページに運営者の欄が無くても、一覧の発行元の名前で記録してよい)。発行元自身の投稿(SNS)の文だけのページは、公式サイトが自分のアカウントとして案内している(「フォロー」の案内やリンク)ことを確かめて、ask record の embedded_post で記録する(docs/guide-mode.md)。実際に読めたページだけ、python -X utf8 -m ikimonobiyori.ask research seen <id> --brief {id} を実行する(読んでいないページには実行しない)。'
+      - '0. 最初に読む(見つけた公式ページの一覧。Web の検索より先に): 下の {n} ページを WebFetch で読む(一覧から読むのは最大 {max} 回。取得の上限 {pages} 回に数える)。読めて対象と日付が分かったものは、検索で見つけて読んだ公式ページと同じに ask record する(一覧に載っていることで確かさを上げない)。一覧のページの発行元は、運営者の欄・著作権表示・同じホストのトップページで確かめてある(ページに運営者の欄が無くても、一覧の発行元の名前で記録してよい。ただし「運営者は未確認」の印の行は、確かめてから記録する)。発行元自身の投稿(SNS)の文だけのページは、公式サイトが自分のアカウントとして案内している(「フォロー」の案内やリンク)ことを確かめて、ask record の embedded_post で記録する(docs/guide-mode.md)。実際に読めたページだけ、python -X utf8 -m ikimonobiyori.ask research seen <id> --brief {id} を実行する(読んでいないページには実行しない)。'
     row: "   - {id}: {name}({publisher}。{km}最後に読めた日 {last}) {url}"
+    # 本人の返事 6(2026-11-28): ask record で書いた今年の現況のページ。(a) 公式の区分のホストで台帳にも一覧にも無ければ自動で残す(運営者は「未確認」)。(b) ほかは案内の 1 行
+    auto:
+      unverified: 未確認
+      reason: "未確認(ask record で今年の現況を書いたときに、コードが自動で残した。運営者の欄は確かめていない)"
+      question: (ask record から自動で残した)
+      row_mark: "(運営者は未確認。ページの運営者の欄・著作権表示で確かめてから記録する)"
+      hint: "一覧に残せるか確かめる: {url} の発行元が運営者・指定管理者・自治体・観光協会・ビジターセンターだとページの中身から確かめられたら、python -X utf8 -m ikimonobiyori.ask research pending --file <JSON> で残す"
   pending_add_line: '公式ページで確かめるのに使えたページのうち、発行元がその場所の運営者・指定管理者・自治体・観光協会・ビジターセンターだとページの中身(運営者の欄・著作権表示)から確かめられたものは、python -X utf8 -m ikimonobiyori.ask research pending --brief {id} --file <JSON> で残す(1 件: publisher・publisher_kind・official_reason・url・subject・content・kinds・date_style(article/photo/none)・update_style(append/rewrite/monthly_url。monthly_url は url_template に {{yyyy}}・{{mm}})・place{{name, prefecture, city, lat, lon}})。台帳にあるページ・確かめられないページは残さない(はねられる)。'
   step_lines:
     - '1. 公式ページの URL を Web 検索で探す(検索の要約を事実にしない。行き先探しだけ)。読んでよいのは自治体・観光協会・公園管理者・施設運営者(指定管理者を含む)・国や県の機関のページ。'

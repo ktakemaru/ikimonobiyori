@@ -2067,7 +2067,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             ob = CS.add_open_facts(F, question, cond, cands, now, env, c)   # 指示書 open-question-breadth 第 1 部: 開いた質問の手元の今年の現況と、広く探す対象
             ob["searched"] = CS.searched_for(question, ob["where"], now, env, c)
             cs_block["open"] = ob
-            targets += [] if researched else CS.open_targets(ob, question, now, env, c)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ
+            off = (res.get("route") or cond.get("route")) == "season_place" and bool((res.get("season_place") or {}).get("off_season"))
+            targets += [] if researched or off else CS.open_targets(ob, question, now, env, c)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ。本人の返事 4: 時期の外の種の質問は広く探さない
             for r in cands:
                 if "distance_text" not in r:                  # 足した候補にも、ほかの候補と同じ距離の語・地域の組
                     r.setdefault("group", _group_of(r.get("prefecture"), c))
@@ -2076,13 +2077,15 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
         if any(t.get("kind") in ("open_breadth", "current_status") for t in targets):   # 指示書 open-question-breadth の続き 1-3: 見つけた公式ページの一覧から最初に読む
             from . import pending_sources as PS
             sp_names, sp_words = CS._open_species(question)
-            targets = PS.attach(targets, cond, now, env, species_words=sp_words if sp_names else None)
+            targets = PS.attach(targets, cond, now, env, species_words=sp_words if sp_names else None,
+                                wide=scope == "wide", current_names=[r["name"] for r in cands if r.get("basis") == "current"])   # 本人の返事 3
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
         **({"asked": asked, "species_renamed": [list(x) for x in renamed]} if renamed else {}),
         "previous": {"id": prev, "question": (pb or {}).get("question")} if prev else None,
         "dates": _dates_block(cond, now), "intent": cond.get("intent"), "route": res.get("route") or cond.get("route"),
+        "off_season": bool((res.get("season_place") or {}).get("off_season")) if (res.get("route") or cond.get("route")) == "season_place" else False,   # 本人の返事 2・4(2026-11-28)
         "scope": "region" if cond.get("region") else "areas" if cond.get("area_names") else (scope or "default"),
         "region": cond.get("region"), "areas": cond.get("area_names"), "subjects": cond.get("subjects"),
         "origin": cond.get("origin"), "origin_source": cond.get("origin_source"),
