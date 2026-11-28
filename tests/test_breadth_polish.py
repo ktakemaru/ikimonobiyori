@@ -52,6 +52,31 @@ class OffSeason(Tmp):
         self.assertFalse(SP.off_season([{"start": None, "end": None}], [date(2026, 11, 28)]))   # 時期が分からなければ時期の外と言わない
         self.assertFalse(SP.off_season([{"start": "11-01", "end": "02-28"}], [date(2027, 1, 5)]))  # 年をまたぐ時期
 
+    def test_species_level_uses_all_rows_recent_and_empty(self):
+        d = [date(2026, 11, 28)]
+        rows = [{"name": f"冬の園{i}", "start": "02-01", "end": "03-31"} for i in range(6)] + [{"name": "今の園", "start": "11-01", "end": "12-31"}]
+        self.assertFalse(SP.off_season_species({"サザンカ": rows}, d))                  # 並べる件数(先頭 6 件)で切っても、全部で見る
+        self.assertTrue(SP.off_season(rows[:6], d))                                     # 切った分だけなら時期の外になってしまう
+        self.assertTrue(SP.off_season_species({"サザンカ": rows[:6]}, d))
+        self.assertFalse(SP.off_season_species({"サザンカ": rows[:6]}, d, recent=["サザンカ"]))   # 14 日以内の公式の現況があれば時期の外にしない
+        self.assertFalse(SP.off_season_species({"サザンカ": []}, d))                    # その種の名所が 1 件も無ければ時期の外にしない
+        self.assertFalse(SP.off_season_species({"ツバキ": rows[:6], "サザンカ": rows}, d))   # どれか 1 つでも時期なら時期の外にしない
+
+    def test_catalog_growth_does_not_make_in_season_off(self):
+        """今が時期の花が、カタログの名所の増減(並べる件数からあふれる)で時期の外にならない。"""
+        real = SP.gather
+        def more(sp, origin, c=None, env=None):
+            rows = real(sp, origin, c, env)
+            extra = [{**rows[0], "name": f"増えた冬の園{i}(作り物)", "start": "02-01", "end": "03-31", "km": 1, "season": "2月"} for i in range(20)] if rows else []
+            return extra + rows
+        q = "ツバキやサザンカが見られるところを教えて"
+        base = SP.compose(q, today=date(2026, 11, 28), origin="横浜")
+        self.assertFalse(SP.off_season_species(base["season_rows"], [date(2026, 11, 28)]))
+        with mock.patch.object(SP, "gather", more):
+            grown = SP.compose(q, today=date(2026, 11, 28), origin="横浜", max_items=3)
+        self.assertFalse(SP.off_season_species(grown["season_rows"], [date(2026, 11, 28)]))
+        self.assertGreater(len(grown["season_rows"]["サザンカ"]), len([r for r in grown["spots"] if "サザンカ" in (r.get("kinds") or [])]))   # 並べたのは一部
+
     def test_brief_off_season_no_breadth_no_weather(self):
         doc = GB.build("ニッコウキスゲはいつどこへ行けばいい?", now=NOW)
         self.assertEqual(doc["route"], "season_place")

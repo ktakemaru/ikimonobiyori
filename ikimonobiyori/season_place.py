@@ -630,9 +630,11 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
     birds_only = all(sp["name"] in c.get("bird_species", []) for sp in sps)
     pf = c["place_filter"]
     research = []
+    season_rows = {}
     for sp in sps:
         is_bird = sp["name"] in c.get("bird_species", [])
         rows, n_out = select(gather(sp, origin, c, env), origin, prefectures, c, by_distance=is_bird)
+        season_rows[sp["name"]] = list(rows)                              # 本人の返事(2026-11-28 の続きの 1): 時期の外の判定は、件数で切る前の名所全部で
         if max_items is not None:
             rows = rows[:max_items]
         place_none = None
@@ -681,7 +683,21 @@ def compose(question, *, today, origin, region=None, prefectures=None, env=None,
     if urls:
         lines += ["", t["sources_heading"]] + urls
     return {"text": NL.join(lines) + NL, "spots": all_rows, "species": sps[0], "species_all": [x["name"] for x in sps],
-            "missing": missing, "needs_research": bool(missing or research), "research": research}
+            "missing": missing, "needs_research": bool(missing or research), "research": research, "season_rows": season_rows}
+
+
+def off_season_species(season_rows, days, recent=()):
+    """本人の返事(2026-11-28 の続きの 1): 聞かれた種がどれも時期の外か。種ごとに、件数で切る前の名所全部の例年の時期で見る。
+    その種の今年の公式の現況が recent(14 日以内。current_status.open.recent_days)にあれば時期の外にしない。
+    その種の例年の時期のある名所が 1 件も無ければ時期の外にしない。"""
+    if not season_rows:
+        return False
+    for name, rows in season_rows.items():
+        if name in set(recent or ()):
+            return False
+        if not off_season(rows, days):
+            return False
+    return True
 
 
 # ---- 段階69 第2部 3: 種と日付の質問 ----
