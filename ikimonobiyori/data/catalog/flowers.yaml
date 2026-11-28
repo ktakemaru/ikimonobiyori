@@ -3042,6 +3042,7 @@ entries:
     status: approved
     approved_by: user
     approved_at: '2026-11-28'
+    status_sources: [kanagawa-park-sagamihara-flower]
     tags:
       prefecture: 神奈川県
       area: 相模原

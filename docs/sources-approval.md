@@ -8,7 +8,7 @@
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
-| 現況の情報源（sources/） | 52 | 35 | 3 |
+| 現況の情報源（sources/） | 53 | 35 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
 | 名所カタログ（catalog/） | 136 | 14 | 2 |
 
@@ -128,7 +128,7 @@
 | 谷津干潟自然観察センター | yatsuhigata-nature-center | user（2026-11-07） | https://www.seibu-la.co.jp/yatsuhigata/blog/ | 転載禁止の明示なし。利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可 | **承認してよい**: 指定管理者の公式。『自然情報』に渡り鳥の観察記録。転載禁止の明示なし。最新は 10/13 で11月分はまだない |
 | 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団） | oze-fnd | user（2026-11-09） | https://oze-fnd.or.jp/archives/category/if/ | **無断転載を禁じます** | **要判断**: 事実のみの扱いでよいか |
 
-### 2-B. 現況の情報源の台帳（承認済み 52件）
+### 2-B. 現況の情報源の台帳（承認済み 53件）
 
 | 台帳 | 情報源（id） | 承認した人・日 | 最新情報のページ |
 |---|---|---|---|
@@ -177,6 +177,7 @@
 | flowers.yaml | 京成バラ園芸株式会社（keisei-rose-garden-top） | user（2026-11-28） | https://www.keiseirose.co.jp/ |
 | flowers.yaml | 藤岡市 鬼石総合支所にぎわい観光課（fujioka-sakurayama-fuyuzakura） | user（2026-11-28） | https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/4/11865.html |
 | flowers.yaml | 神川町観光協会（kamikawa-kankou-jomine） | user（2026-11-28） | https://www.kamikawa-kanko.com/news/ |
+| flowers.yaml | 県立相模原公園 指定管理者 神奈川県公園協会・サカタのタネ・サカタのタネGS グループ（kanagawa-park-sagamihara-flower） | user（2026-11-28） | https://www.kanagawa-park.or.jp/sagamihara/feed/feed-flower.php |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-kanagawa） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0314/ |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-tokyo） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0313/ |
 | secondary/autumn_leaves.yaml | GO TOKYO(東京都観光財団。紹介サイト)（gotokyo-autumn-leaves-ja） | user（2026-11-05） | https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/ |
