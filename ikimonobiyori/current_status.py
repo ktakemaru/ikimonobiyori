@@ -580,9 +580,11 @@ def open_records(question, cond, now, env=None, c=None, species_words=None):
     out = []
     for sj in _subjects(cond, policy):
         cands = O.all_candidates(sj, policy)
-        for r in O.read_records(sj, env, policy):
+        for r in O.read_records(sj, env, policy, include_detail=True):   # part のある記録(三溪園の土橋のモミジ など)も。利用者の記録は入れない
             sd = O.state_date_of(r)
-            if not r.get("state") or r.get("event") or not sd or not _this_year(r, now):
+            if not r.get("state") or r.get("event") or not sd or not _this_year(r, now) or r.get("source_class") == "user":
+                continue
+            if _host_class(r) != "official":                  # 公式ページで確かめた記録だけ(紹介サイトの状態は、開いた質問の手元の現況にしない)
                 continue
             try:
                 age = (now.date() - date.fromisoformat(str(sd)[:10])).days
@@ -600,12 +602,27 @@ def open_records(question, cond, now, env=None, c=None, species_words=None):
     out.sort(key=lambda r: (r["_sd"], r.get("read_at") or ""), reverse=True)
     seen, rows = set(), []
     for r in out:
-        k = (O._key(r["_name"]), r.get("publisher") or r.get("url"), r["subject"])
+        k = (O._key(r["_name"]), r.get("part") or None, r.get("publisher") or r.get("url"), r["subject"])
         if k in seen:
             continue
         seen.add(k)
         rows.append(r)
     return rows
+
+
+def _host_class(r):
+    """資料の事実と同じ区分(URL のホストで決める。guide_brief._source_class)。"""
+    from . import guide_brief as GB
+    return GB._source_class(r.get("url"), r.get("source_class"))
+
+
+def _legend_state(r, policy):
+    """凡例のある発行元の記号(日光市観光協会の ▼・◎ など)は、凡例の語を添える(「▼(凡例: 見頃過ぎ)」)。記号でなければ原文のまま。"""
+    st = (r.get("state") or "").strip()
+    legend = next((m for p, m in ((policy.get("state_symbols") or {}).get("by_publisher") or {}).items() if p in (r.get("publisher") or "")), None)
+    if legend and st and st[0] in legend:
+        return f"{st}(凡例: {legend[st[0]]})"
+    return st
 
 
 def add_open_facts(F, question, cond, cands, now, env, c):
@@ -622,20 +639,23 @@ def add_open_facts(F, question, cond, cands, now, env, c):
         name = r["_name"]
         have = next((f for f in F.rows if f.get("kind") == "current" and O._key(f.get("place")) == O._key(name)
                      and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]), None)
-        fr = have or F.add("current", OC["lines"]["dated"].format(name=name, state=r.get("state"), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
+        label = name + (f"({r['part']})" if r.get("part") else "")
+        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
                            source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
-                           extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "_pref": r.get("_pref"), "_city": r.get("_city"),
+                           extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "_pref": r.get("_pref"), "_city": r.get("_city"),
                                   "freshness": O.freshness(r, now.date(), r["subject"], policy)["label"]})
         if fr is None:
             continue
         cand = by_name.get(O._key(name))
-        if cand is None:
+        if cand is None and r.get("part"):
+            pass                                          # part のある記録だけの名所は、候補にしない(順位・候補の今年の現況に part の記録を使わない。指示書 current-status 第 2 部)
+        elif cand is None:
             cand = {"subject": r["subject"], "rank": None, "name": name, "chosen": False, "basis": "current",
                     "current_state": r.get("state_norm") or r.get("state"), "prefecture": r.get("_pref"), "city": r.get("_city"),
                     "reasons": [OC["lines"]["candidate_reason"]]}
             cands.append(cand)
             by_name[O._key(name)] = cand
-        elif not cand.get("current_state"):
+        elif not cand.get("current_state") and not r.get("part"):
             cand["current_state"] = r.get("state_norm") or r.get("state")
             cand["basis"] = "current"
         known.append({"name": name, "fact": fr["id"], "state_date": r["_sd"], "publisher": fr.get("source"), "source_class": fr.get("source_class")})

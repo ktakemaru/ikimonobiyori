@@ -26,6 +26,10 @@ RECS = [
      "state": "サザンカが見ごろ", "state_date": "2026-11-26", "url": URL, "publisher": "試験の運営者(作り物)", "source_class": "official"},
     {"subject": "flowers", "name": "試験の古い園(作り物)", "prefecture": "神奈川県", "city": "横浜市", "kind": "サザンカ",
      "state": "サザンカが咲き始め", "state_date": "2026-10-20", "url": URL + "/old", "publisher": "試験の運営者(作り物)", "source_class": "official"},
+    {"subject": "flowers", "name": "試験の椿の丘(作り物)", "prefecture": "神奈川県", "city": "横浜市", "kind": "ツバキ", "part": "椿の小径",
+     "state": "ツバキが咲き始め", "state_date": "2026-11-25", "url": URL + "/tsubaki", "publisher": "試験の運営者(作り物)", "source_class": "official"},
+    {"subject": "flowers", "name": "試験の紹介の園(作り物)", "prefecture": "神奈川県", "city": "横浜市", "kind": "サザンカ",
+     "state": "サザンカが見頃", "state_date": "2026-11-26", "url": "https://intro-test.example.com/sazanka", "publisher": "試験の紹介サイト(作り物)", "source_class": "secondary"},
     {"subject": "flowers", "name": "試験のばら園(作り物)", "prefecture": "神奈川県", "city": "横浜市", "kind": "バラ",
      "state": "秋バラが見ごろ", "state_date": "2026-11-26", "url": URL + "/rose", "publisher": "試験の運営者(作り物)", "source_class": "official"},
 ]
@@ -86,6 +90,22 @@ class OpenQuestion(unittest.TestCase):
         fact = next(f for f in self.doc["facts"] if f["id"] == ob["known"][0]["fact"])
         self.assertEqual(fact["kind"], "current")
         self.assertIn("11/26時点", fact["content"])
+
+    def test_part_record_shown_with_part(self):
+        ob = self.doc["current_status"]["open"]
+        self.assertIn("試験の椿の丘(作り物)", [k["name"] for k in ob["known"]])
+        self.assertIn("試験の椿の丘(作り物)(椿の小径): ツバキが咲き始め(11/25時点", self.md)
+        self.assertNotIn("試験の椿の丘(作り物)", [r["name"] for r in self.doc["candidates"]])     # part の記録だけの名所は候補にしない
+
+    def test_secondary_not_known(self):
+        self.assertNotIn("試験の紹介の園(作り物)", [k["name"] for k in self.doc["current_status"]["open"]["known"]])
+
+    def test_legend_word(self):
+        pol = O.load_policy()
+        pub, legend = next(iter(((pol.get("state_symbols") or {}).get("by_publisher") or {}).items()))
+        sym = next(iter(legend))
+        self.assertEqual(CS._legend_state({"state": sym, "publisher": pub}, pol), f"{sym}(凡例: {legend[sym]})")
+        self.assertEqual(CS._legend_state({"state": "見ごろ", "publisher": pub}, pol), "見ごろ")
 
     def test_known_place_is_candidate(self):
         c = next(r for r in self.doc["candidates"] if r["name"] == "試験のさざんか園(作り物)")
