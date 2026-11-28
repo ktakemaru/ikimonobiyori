@@ -167,6 +167,26 @@ def _code_batch(reads, src, subject):
     return out
 
 
+def _alt_pages():
+    """画像の説明(alt)も控えに入れるページ(台帳の id で指定。auto_refresh.alt_text)の URL(比べる形)。"""
+    from . import brief_refresh as BR
+    ids = set((cfg().get("alt_text") or {}).get("source_ids") or [])
+    return {url_key(s["url"]) for s in BR.ledger_pages() if s["id"] in ids}
+
+
+def with_alt(text, html):
+    """指定したページの控え: 本文から途中で切れた写しを外し、画像の説明の全文を後ろに足す。控えの長さの上限では、本文の側を削る。"""
+    from . import research as RS
+    X = cfg()["alt_text"]
+    alts = RS.image_alts(html, _v(X["min_chars"]))
+    if not alts:
+        return text[: _v(cfg()["max_text_chars"])]
+    block = NL + NL + X["heading"] + NL + NL.join("- " + a for a in alts)
+    mx = _v(cfg()["max_text_chars"])
+    block = block[:block.rfind(NL, 0, mx) if len(block) > mx else len(block)]      # 説明は行の区切りで切る(途中の文を残さない)
+    return RS.drop_truncated(text, alts, _v(X["truncated_min_chars"]))[: max(mx - len(block), 0)] + block
+
+
 def _text_path(url, env=None):
     return data_path(cfg()["dir"], env) / "pages" / (hashlib.sha1(url.encode("utf-8")).hexdigest()[:16] + ".txt")
 
@@ -250,6 +270,9 @@ def run(targets, *, now, env=None, http_get=None, clock=time.monotonic, sleep=ti
                 raw = body if isinstance(body, bytes) else (body or "").encode("utf-8")
                 html = raw.decode(RS._charset(ctype, raw), errors="replace")
                 text = RS.html_text(html)
+                alt_page = url_key(url) in _alt_pages()
+                if alt_page:                             # 台帳で指定したページだけ: 画像の説明(alt)の全文も控えに入れる
+                    text = with_alt(text, html)
                 if t.get("center") and not vc_unchanged(text, t["center"], env):   # 施設のトップに見出しだけがあるとき: 決まった語のリンクを 1 つだけたどる
                     link = follow_link(html, url)
                     if link and budget.left() > 0 and clock() - t0 <= _v(C["max_seconds"]):
@@ -277,7 +300,8 @@ def run(targets, *, now, env=None, http_get=None, clock=time.monotonic, sleep=ti
                 tp = _text_path(url, env)
                 tp.parent.mkdir(parents=True, exist_ok=True)
                 tp.write_text(text[: _v(C["max_text_chars"])], encoding="utf-8")
-                out["pages"].append({**row, "result": "changed", "detail": "前回の記録の原文がページにない", "text_path": str(tp)})
+                out["pages"].append({**row, "result": "changed", "detail": "前回の記録の原文がページにない", "text_path": str(tp),
+                                     **({"alt_text": True} if alt_page else {})})
             except Exception as ex:                       # 通信の失敗・上限は、古い記録のまま続ける
                 out["pages"].append({**row, "result": "failed", "detail": f"{type(ex).__name__}"})
     finally:

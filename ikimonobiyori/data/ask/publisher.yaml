@@ -11,6 +11,15 @@ official_publisher:
   # ホストのラベルにこれがあり、末尾が .jp なら自治体のページ(www.town.ninomiya.kanagawa.jp・www.city.odawara.kanagawa.jp・www.pref.saitama.lg.jp など)
   labels: [pref, city, town, village, metro]
 
+# 本人の決定(2026-11-28): 複数の公園が同じホストを使うサイトでは、発行元の名前をホストから選ばない。台帳の行か URL の道筋から決める。
+# 値は、公園を分ける道筋の区切りの数(kanagawaparks.com/kurihama/ は 1、tokyo-park.or.jp/park/rikugien/ は 2)
+shared_hosts:
+  source: "本人の決定(2026-11-28)。台帳と名所カタログで、1 つのホストを複数の公園(別の指定管理者・サービスセンター)が使うもの"
+  provisional: false
+  hosts: {kanagawaparks.com: 1, kanagawa-park.or.jp: 1, tokyo-park.or.jp: 2}
+  # 台帳に行が無い公園の名前(公園の単位 = ホストと道筋 → 名前)。名前が無いと出典の行にドメインが出る。名前は名所の一覧(observations/spots.yaml の pages の発行元)
+  park_names: {kanagawa-park.or.jp/zamayatoyama: 県立座間谷戸山公園}
+
 # 段階69 第6部(承認 3。本人の判断 2026-11-09「推奨どおり」): 観光協会・公園の管理者・施設の運営者が、その施設・地域の当事者として
 # 自分で出しているサイトも「公式」と表示する(表示だけ。通信先の承認・source_class・候補の選び方は変えない)。
 # 紹介サイト(旅行情報・まとめサイト・新聞・出版社)はこれまでどおり紹介サイト。

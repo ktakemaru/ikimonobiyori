@@ -16,6 +16,7 @@ AI がガイドとして書いた答えの下書きを、資料(guide_brief.py �
 値と語は data/ask/guide_mode.yaml。"""
 import json
 import re
+import unicodedata
 from datetime import date, datetime
 
 from . import guide_brief as GB
@@ -86,7 +87,12 @@ def sentences(body, c=None):
 
 def strip_markers(body, c=None):
     c = c or cfg()
-    return NL.join(re.sub(r"\s*" + c["draft"]["marker_re"], "", l) for l in body).strip(NL) + NL
+    mk = c["draft"]["marker_re"]
+
+    def one(line):
+        line = re.sub(r"\s*" + mk, "", line)
+        return re.sub(r"(?<=[。！!])[ \u3000]+(?=\S)", "", line)       # 印を外したあとに、文の間の余分な空白を残さない
+    return NL.join(one(l) for l in body).strip(NL) + NL
 
 
 # ---- 照らす ----
@@ -661,6 +667,10 @@ def check(draft, brief, c=None, env=None):
     errs += date_basis_errors(sents, brief, c)             # 指示書 open-question-breadth 第4部 2: 発信の日付の有無と、文の書き方の食い違い
     errs += upcoming_heading_errors(body, brief, c)        # 指示書 open-question-breadth 第4部 4: 「これから」の見出しに、今が時期のものを入れない
     errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
+    errs += month_list_errors(sents, brief, c)             # 月別の花の一覧の事実を「例年」「見頃」にしない
+    errs += general_talk_errors(sents, brief, c)           # 一般の話は上限まで(docs/guide-voice.md §1b)
+    errs += today_errors(body, brief, c)                   # 聞かれた日に今日が入るときは「今日(月/日・曜日)」と書く
+    errs += must_attach_errors(sents, body, brief, c)      # 今も有効な通行止め・閉鎖・復旧中の案内を、その場所の案内に添える
     errs += CS.current_status_errors(sents, strip_markers(parsed["body"], c), brief, c, env, _err)
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
     cited = [{**by[i], "_year": str(brief.get("now") or "")[:4]} for i in cited_ids if i in by]
@@ -893,6 +903,77 @@ def narrative_errors(sents, brief, c):
         return []
     return [{"code": "no_narrative", "line": 0, "sentence": "", "detail": f"語りの材料({len(ids)} 点)を 1 つも使っていない",
              "fix": "「語りの材料」から、なぜ今・どこをどう見る などを 1〜3 点選んで、文にして印 [K…] を付ける"}]
+
+
+def month_list_errors(sents, brief, c):
+    """月別の花の一覧に名前が載るだけの事実(fields.month_list)の印の文は、「例年」「見頃」の話にしない。"""
+    M = c.get("month_list") or {}
+    ids = {f["id"] for f in brief.get("facts") or [] if (f.get("fields") or {}).get("month_list")}
+    return [_err("month_list_as_typical", s, M["ng_why"], M["ng_fix"]) for s in sents
+            if set(s["ids"]) & ids and any(w in s["clean"] for w in M.get("banned_words") or [])]
+
+
+def general_talk_items(sents, brief, c):
+    """一般の話(豆知識・小話)の数え方(docs/guide-voice.md §1b)。→ 数えた話ごとの文の一覧。
+    数える文: 印が知識カードだけで、そのカードが「この場所の話」「季節の暦」「保全・マナー」でなく、文に安全・マナーの注意の語がない。
+    同じカードの印の文が続くあいだは 1 つ。"""
+    G = c.get("general_talk") or {}
+    cards = {k["id"]: k for k in brief.get("cards") or []}
+    out, prev = [], None
+    for s in sents:
+        ids = set(s["ids"])
+        counted = bool(ids) and all(i in cards for i in ids) and not any(w in s["clean"] for w in G.get("safety_words") or [])             and any(cards[i].get("link") not in (G.get("exempt_links") or []) and cards[i].get("category") not in (G.get("exempt_categories") or []) for i in ids)
+        if not counted:
+            prev = None
+            continue
+        if ids == prev:
+            out[-1].append(s)
+        else:
+            out.append([s])
+        prev = ids
+    return out
+
+
+def general_talk_errors(sents, brief, c):
+    """出かける日の答え(general_talk.routes)の一般の話は max まで。知識を聞く質問は数えない。"""
+    G = c.get("general_talk") or {}
+    if not G.get("enabled") or (brief.get("route") or "") not in (G.get("routes") or []):
+        return []
+    items = general_talk_items(sents, brief, c)
+    mx = G["max"]["value"]
+    if len(items) <= mx:
+        return []
+    return [_err("too_many_general_talk", items[mx][0], G["ng_why"].format(n=len(items), max=mx), G["ng_fix"].format(max=mx))]
+
+
+def today_errors(body, brief, c):
+    """資料に「対象の日に今日が入っている」と出る(GB._today_lines)出かける日の答えは、「今日(月/日・曜日)」の書き方が要る。"""
+    T = c.get("today_line") or {}
+    if (brief.get("route") or "") not in (T.get("required_routes") or []) or not GB._today_lines(brief.get("dates") or {}):
+        return []
+    t = date.fromisoformat((brief.get("dates") or {})["today"])
+    md, wd = f"{t.month}/{t.day}", T["weekdays"][t.weekday()]
+    plain = unicodedata.normalize("NFKC", body).replace("*", "").replace(" ", "")
+    if re.search(rf"今日\({re.escape(md)}[・･]{wd}\)", plain):
+        return []
+    return [{"code": "today_not_marked", "line": 0, "sentence": "", "detail": T["ng_why"].format(md=md, wd=wd), "fix": T["ng_fix"].format(md=md, wd=wd)}]
+
+
+def must_attach_errors(sents, body, brief, c):
+    """答えに添える安全の事実(fields.must_attach)がある場所を本文で案内するときは、その事実の印の文が要る。"""
+    M = c.get("must_attach") or {}
+    from . import observations as O
+    cited = {i for s in sents for i in s["ids"]}
+    plain = O._key(body.replace("*", ""))
+    out = []
+    for f in brief.get("facts") or []:
+        if not (f.get("fields") or {}).get("must_attach") or f["id"] in cited:
+            continue
+        name = O._key(re.sub(r"[(（].*$", "", f.get("place") or ""))
+        if name and name in plain:
+            out.append({"code": "safety_notice_missing", "line": 0, "sentence": "", "detail": M["ng_why"].format(place=f.get("place"), id=f["id"]),
+                        "fix": M["ng_fix"].format(id=f["id"])})
+    return out
 
 
 # ---- 書き直しの回数・記録・最終の文 ----

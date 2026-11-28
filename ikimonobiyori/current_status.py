@@ -131,9 +131,15 @@ def post_mark(rec, c=None):
     return L["mark_inferred" if ep.get("posted_on_inferred") else "mark"].format(md=_md(ep.get("posted_on")) or "")
 
 
+def _flower_state(rec, state):
+    """場所を分けた花の記録の状態の文には、花の名前を添える(記録の kind。文にあれば添えない)。"""
+    from . import observations as O
+    return O.state_with_kind(state, rec.get("kind")) if rec.get("part") and rec.get("subject") == "flowers" else state
+
+
 def _fact_content(rec, place, C):
     L = C["lines"]
-    st = (rec.get("state") or "") + post_mark(rec)
+    st = _flower_state(rec, rec.get("state") or "") + post_mark(rec)
     pub = rec.get("publisher") or ""
     where = place["name"] + (f"の{rec['part']}" if rec.get("part") else "")
     from . import observations as O
@@ -656,6 +662,7 @@ def open_records(question, cond, now, env=None, c=None, species_words=None, olde
     out = []
     for sj in _subjects(cond, policy):
         cands = O.all_candidates(sj, policy)
+        flower_names = {k for x in cands for k in x.get("flower_kinds") or []} if sj == "flowers" else set()
         for r in O.read_records(sj, env, policy, include_detail=True):   # part のある記録(三溪園の土橋のモミジ など)も。利用者の記録は入れない
             sd = O.state_date_of(r)
             if not r.get("state") or r.get("event") or not sd or not _this_year(r, now) or r.get("source_class") == "user":
@@ -671,6 +678,8 @@ def open_records(question, cond, now, env=None, c=None, species_words=None, olde
             if event_only(r.get("state"), c):                 # 続き 第6部: 行事の終了だけの記録は、手元の現況の節に入れない(記録は消さない)
                 continue
             text = " ".join(str(r.get(k) or "") for k in ("state", "kind", "name"))
+            if sj == "flowers" and r.get("part"):            # 本人の決定(2026-11-28): 場所を分けた記録は、その記録の花としてだけ(「コスモス園」の皇帝ダリアはコスモスではない)
+                text = O.part_kind(r, [], flower_names) or text
             if words and not any(w in text for w in words):
                 continue
             name, pref, city = _record_name(r, cands, policy)
@@ -719,7 +728,7 @@ def add_open_facts(F, question, cond, cands, now, env, c):
                      and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]
                      and (r.get("state") or "") in (f.get("content") or "")), None)   # 状態の文も同じときだけ指す(同じ日に読み直した別の文を隠さない)
         label = name + (f"({r['part']})" if r.get("part") else "")
-        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
+        fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_flower_state(r, _legend_state(r, policy)) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
                            source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
                            extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "_pref": r.get("_pref"), "_city": r.get("_city"),
                                   "freshness": O.freshness(r, now.date(), r["subject"], policy)["label"]})
@@ -744,7 +753,7 @@ def add_open_facts(F, question, cond, cands, now, env, c):
         if O._key(r["_name"]) in recent_names or len(earlier) >= _v(OC["max_known"]):
             continue
         label = r["_name"] + (f"({r['part']})" if r.get("part") else "")
-        fr = F.add("current", OC["lines"]["earlier"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""),
+        fr = F.add("current", OC["lines"]["earlier"].format(name=label, state=_flower_state(r, _legend_state(r, policy)) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""),
                    place=r["_name"], source=r.get("publisher"), url=r.get("url"), source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
                    extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "earlier": True, "_pref": r.get("_pref"), "_city": r.get("_city")})
         if fr is None:

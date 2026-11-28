@@ -235,10 +235,28 @@ def normalize(subject, raw, policy=None):
         if any(w in text for w in ("見頃", "見ごろ", "満開")) and not any(w in text for w in ("過ぎ", "前")):
             if re.search(st["partial_quoted"], raw or "") or any(w in text for w in st["partial_words"]):
                 return unknown                                  # 品種名・区画だけの「見頃」は園全体の見頃にしない
+    if _late_peak_text(text, st):
+        return "見頃"
     for word, norm in st.get("words") or []:
         if unicodedata.normalize("NFKC", word) in text:
             return norm
     return unknown
+
+
+def _late_peak_text(text, st):
+    """同じ発信に「見頃」と「落葉が目立つ」が並ぶ(過ぎた・終わったの語はない)。語は policy の states.<対象>.late_peak。"""
+    L = st.get("late_peak") or {}
+    return bool(L) and any(w in text for w in L["peak_words"]) and any(w in text for w in L["late_words"]) \
+        and not any(w in text for w in L["unless_words"])
+
+
+def is_late_peak(subject, raw, policy=None):
+    """状態の原文が「見頃の終わりごろ」(見頃と、落葉が目立つ)か。"""
+    policy = policy or load_policy()
+    text = unicodedata.normalize("NFKC", raw or "")
+    for ph in policy.get("not_state_phrases") or []:
+        text = text.replace(unicodedata.normalize("NFKC", ph), " ")
+    return _late_peak_text(text, policy["states"].get(subject) or {})
 
 
 def normalize_with_legend(subject, raw, publisher, policy=None):
@@ -296,6 +314,8 @@ def embedded_post_errors(rec, policy):
         date.fromisoformat(str(ep.get("posted_on")))
     except (TypeError, ValueError):
         errs.append("embedded_post.posted_on は YYYY-MM-DD(年まで決められない投稿は使わない。月日だけなら読んだ日からいちばん近い過去の日にし、posted_on_inferred: true)")
+    if str(ep.get("text") or "").rstrip().endswith(tuple(E.get("truncated_endings") or [])) and E.get("truncated_endings"):
+        errs.append("embedded_post.text が途中で切れている(末尾が省略の印)。途中で切れた文は使わない")
     if not isinstance(ep.get("posted_on_inferred", False), bool):
         errs.append("embedded_post.posted_on_inferred は true か false")
     t = str(ep.get("text") or "").strip()
@@ -471,6 +491,8 @@ def validate(rec, policy):
             continue                                  # 指示書 current-status 第 3 部: 利用者が現地で確認した記録は URL を求めない(架空の URL を作らない)
         if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
             continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
+        if k == "state" and rec.get("listed_months"):
+            continue                                  # 本人の決定(2026-11-28 の直す案 8): 月別の花の一覧に名前が載るだけの記録は、状態がない
         if k == "state" and r.get("state_optional_notice") and rec.get("notice") and rec.get("basis") == "page" and rec.get("source_class") == "official":
             continue                                  # 段階80 F(提案7): 公式のページで読んだ「行く前に」だけの記録
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
@@ -505,6 +527,8 @@ def validate(rec, policy):
     sp = rec.get("species")                     # 段階38: 野鳥の記録に書かれた鳥の名前(書かれたとおり)。任意
     if sp is not None and (not isinstance(sp, list) or not all(isinstance(x, str) and x.strip() and len(x) <= _v(policy["record"]["max_raw_chars"]) for x in sp)):
         errs.append("species は鳥の名前(文字列)の配列")
+    errs += listed_months_errors(rec)                 # 月別の花の一覧
+    errs += excluded_kind_errors(rec)                 # 名所カタログが理由をつけて外した花
     errs += manner_errors(rec, policy)                # 段階64 第5部
     ev = rec.get("event")
     if ev is not None:
@@ -519,6 +543,39 @@ def validate(rec, policy):
                     except (TypeError, ValueError):
                         errs.append(f"event.{k} は YYYY-MM-DD か null")
     return errs
+
+
+def listed_months_errors(rec):
+    """月別の花の一覧(「10 月」の欄に名前が載るだけ)の記録。例年の時期(typical)や今の状態(state)にしない。"""
+    if "listed_months" not in rec:
+        return []
+    m = rec.get("listed_months")
+    errs = []
+    if not isinstance(m, list) or not m or not all(isinstance(x, int) and not isinstance(x, bool) and 1 <= x <= 12 for x in m):
+        errs.append("listed_months は一覧で名前が載っている月の数の配列(例: [10, 11])")
+    if not rec.get("kind") or rec.get("basis") != "page" or rec.get("source_class") != "official":
+        errs.append("listed_months の記録は kind(花の名前)・basis: page・公式のページ(source_class: official)が要る")
+    if rec.get("typical") or rec.get("state"):
+        errs.append("月別の一覧に名前が載るだけのものは、typical(例年の時期)や state(今の状態)にしない(listed_months だけ)")
+    return errs
+
+
+def excluded_kind_errors(rec, catalogs=None):
+    """名所カタログが理由をつけて外した花(excluded_flower_kinds)の例年の時期・月別の一覧は、確かめを挟んでから記録する
+    (excluded_kind_confirmed に、外した理由を読んだうえで記録する理由を書く)。日付のある今年の状態は止めない。"""
+    if rec.get("subject") != "flowers" or not (rec.get("typical") or rec.get("listed_months")) or str(rec.get("excluded_kind_confirmed") or "").strip():
+        return []
+    if catalogs is None:
+        catalogs = (catalog_mod.load_catalog("flowers") or {}).get("entries") or []
+    k = _key(rec.get("name"))
+    for e in catalogs:
+        if not (rec.get("spot") == e.get("id") or (k and k == _key(e.get("name")))):
+            continue
+        for x in e.get("excluded_flower_kinds") or []:
+            if x["kind"] == rec.get("kind"):
+                return [f"名所カタログは {e['name']} の {x['kind']} を理由をつけて外している: {x['reason']} "
+                        "確かめてから記録するときは excluded_kind_confirmed に理由を書く"]
+    return []
 
 
 def detail_errors(rec, policy):
@@ -592,7 +649,8 @@ FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "stat
           "research",                            # 段階78 第4部: その場で調べた印 {at, brief, question}
           "closed_period", "best_conditions",    # 段階82 第3部 1
           "part", "unseen",                      # 指示書 current-status 第 2・3 部(下の注)
-          "embedded_post")                       # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿の印・投稿の日付・読んだときの投稿の文の写し
+          "embedded_post",                       # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿の印・投稿の日付・読んだときの投稿の文の写し
+          "listed_months", "excluded_kind_confirmed")   # 月別の花の一覧に名前が載る月・カタログで外した花の確かめ
 # 指示書 current-status 第 2・3 部: どのあたりか・見ていない所(利用者の記録): 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
 
 
@@ -722,7 +780,7 @@ def _dup_key(r):
     """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
     ev = r.get("event")
     return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
-            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])         + (["listed_months", r.get("kind"), r.get("listed_months")] if r.get("listed_months") else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
 
 
 def dup_key_text(r):
@@ -939,7 +997,7 @@ def _from_spot(s, policy, catalog_by_id):
         c["events"] += [ev for ev in cat["events"] if ev["name"] not in names]
         urls = {p["url"] for p in c["pages"]}
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
-        c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
+        c["flower_kinds"] = list(dict.fromkeys([*c["flower_kinds"], *cat["flower_kinds"]]))   # 名所の一覧とカタログの花の種類を合わせる(2026-11-28)
         c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
         c["spot_kind"] = c.get("spot_kind") or cat.get("spot_kind")
     return c
@@ -1979,7 +2037,8 @@ def typical_line(typ, c, dates, policy, last_year=None):
         if lab.get("known_strip") and lab["known_strip"] in text:            # 段階56: 「例年の見頃: …例年10月…」のように「例年」を重ねない
             text = text.replace(lab["known_strip"], "", 1)
         return lab["known"].format(text=text)
-    evs = [e for e in c.get("events") or [] if e.get("start") and e.get("end")]
+    evs = [e for e in c.get("events") or [] if e.get("start") and e.get("end")
+           and not (dates and str(e["end"]) < min(dates).isoformat())]       # 対象の日より前に終わった行事は「あります」と書かない
     evs = sorted(evs, key=lambda e: (not any(date.fromisoformat(e["start"]) <= d <= date.fromisoformat(e["end"]) for d in dates), e["start"]))
     if evs:
         e = evs[0]
@@ -2006,20 +2065,113 @@ def human_inat_url(api_url):
     return "https://www.inaturalist.org/observations?" + urlencode(q + [("view", "species")])
 
 
+def _kana(text):
+    """比べるための形: 全角・半角をそろえ、ひらがなはカタカナに(「つばき園」と「ツバキ」を同じに)。"""
+    return "".join(chr(ord(ch) + 0x60) if "ぁ" <= ch <= "ゖ" else ch for ch in unicodedata.normalize("NFKC", text or ""))
+
+
+def state_with_kind(state, kind, policy=None):
+    """状態の文に花の名前がなければ添える(「開花中」→「サザンカ: 開花中」)。花の名前がない記録はそのまま。"""
+    if not kind or not state or _kana(kind) in _kana(state):
+        return state
+    return (policy or load_policy())["part_kind_label"].format(kind=kind, state=state)
+
+
+def part_kind(r, kinds, known=()):
+    """場所を分けた記録(part)が、どの花の記録か。分からなければ None(現況に数えない)。kinds: 名所の花の種類。known: ほかの花の名前。
+    記録の kind → 状態の原文にある花の名前(「コスモス園」のような場所の名前は見ない) → 場所の言葉の花の名前(「つばき園」)。
+    状態の原文に別の花の名前(コスモス園の皇帝ダリア)があれば、その花の記録(場所の名前の花にしない)。"""
+    names = list(dict.fromkeys([*(kinds or []), *sorted(known)]))
+    own = _kana(r.get("kind"))
+    if own:
+        hit = next((k for k in names if _kana(k) == own), None) or next((k for k in (kinds or []) if _kana(k) in own or own in _kana(k)), None)
+        return hit or r["kind"]
+    state = _kana(r.get("state"))
+    for k in names:
+        state = re.sub(re.escape(_kana(k)) + "[園畑苑林]", " ", state)
+    for text in (state, _kana(r.get("part"))):
+        hit = sorted((k for k in names if _kana(k) in text), key=lambda k: (k not in (kinds or []), -len(k)))
+        if hit:
+            return hit[0]
+    return None
+
+
+def with_part_rows(rows, c, subject, known=()):
+    """名所の記録のうち、場所を分けた記録は、花の対象で、どの花か分かるものだけを残して花の印(_part_kind)を付ける。"""
+    out = []
+    for r in rows:
+        if not r.get("part"):
+            out.append(r)
+            continue
+        k = part_kind(r, c.get("flower_kinds") or [], known) if subject == "flowers" else None
+        if k:
+            out.append({**r, "_part_kind": k})
+    return out
+
+
+def _record_kinds(r, kinds):
+    """記録が書いている花の種類(名所の花の種類のうち、記録の kind か状態の原文にあるもの)。場所を分けた記録は、その記録の花だけ。"""
+    if r.get("_part_kind"):
+        return {r["_part_kind"]} & set(kinds)
+    text = _kana(f"{r.get('kind') or ''} {r.get('state') or ''}")
+    return {k for k in kinds if _kana(k) in text}
+
+
+def latest_events(listed, rows):
+    """同じ名前の行事の期間は、いちばん新しく確かめた公式のもの(名所の一覧・カタログは確かめた日、記録は読んだ日)を使う
+    (「コスモスまつり」が早く終わった案内で、前に読んだ期間を残さない)。始まりと終わりのそろわないものは、期間を置き換えない。
+    → (名所の一覧の行事, 記録の行事)。"""
+    rec = [{"name": r["event"]["name"], "start": r["event"].get("start"), "end": r["event"].get("end"), "url": r["url"],
+            "publisher": r.get("publisher"), "source_class": r["source_class"], "_at": str(r.get("read_at") or "")[:10]}
+           for r in rows if r.get("event")]
+    best = {}
+    for i, (e, at) in enumerate([(e, str(e.get("checked_on") or "")) for e in listed] + [(e, e["_at"]) for e in rec]):
+        if not (e.get("start") and e.get("end")) or e.get("source_class") != "official":
+            continue
+        key = (at, -i)
+        if e["name"] not in best or key > best[e["name"]][0]:
+            best[e["name"]] = (key, (str(e["start"]), str(e["end"])))
+
+    def keep(e):
+        w = best.get(e["name"])
+        return w is None or not (e.get("start") and e.get("end")) or (str(e["start"]), str(e["end"])) == w[1]
+    return [e for e in listed if keep(e)], [{k: v for k, v in e.items() if k != "_at"} for e in rec if keep(e)]
+
+
+def ended_kinds(c, rows, subject):
+    """花の種類が 2 つ以上ある名所で、いちばんの記録が「見頃過ぎ」(「コスモスまつり終了」など)で、一部の花だけを書いているとき、
+    その花を外して今の状態を選び直す(コスモスの終了でツバキを外さない)。→ (今の状態に使う記録, 終わった花の種類)。
+    記録がどの花も書いていないときは、これまでどおり名所全体の状態にする。"""
+    kinds = set(c.get("flower_kinds") or [])
+    ended = set()
+    if subject != "flowers" or len(kinds) < 2:
+        return rows, ended
+    while True:
+        cur = best_record(rows)
+        hit = _record_kinds(cur, kinds) if cur and cur.get("state_norm") == "見頃過ぎ" else set()
+        if not hit or not (hit | ended) < kinds:
+            return rows, ended
+        ended |= hit
+        rows = [r for r in rows if not (_record_kinds(r, kinds) and _record_kinds(r, kinds) <= ended)]
+
+
 def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False):
     d = dates[0]
-    cur = best_record(rows)
+    state_rows, ended = ended_kinds(c, rows, subject)
+    cur = best_record(state_rows)
     fr = freshness(cur, today, subject, policy)
-    rec_events = [{"name": r["event"]["name"], "start": r["event"].get("start"), "end": r["event"].get("end"), "url": r["url"],
-                   "publisher": r.get("publisher"), "source_class": r["source_class"]} for r in rows if r.get("event")]
+    listed_events, rec_events = latest_events(list(c.get("events") or []), rows)
+    c = {**c, "events": listed_events}
     rec_ev_md = {(str(e["start"])[5:], str(e["end"])[5:]) for e in rec_events if e.get("start") and e.get("end")}
     for t in c.get("typical") or []:                 # 段階35: 記録から読んだ今年の行事と同じ月日の「例年の時期」も、行事の期間とみなす
         if (t.get("start"), t.get("end")) in rec_ev_md:
             t["event_derived"] = True
     real_typ = [t for t in c.get("typical") or [] if not t.get("event_derived")]
-    typ = next((t for t in real_typ if t.get("start")), None)
+    own_kind = (cur or {}).get("_part_kind")             # 場所を分けた記録が今の状態のときは、その花(か花の指定のない)例年の時期だけ
+    typ = next((t for t in real_typ if t.get("start") and t.get("kind") not in ended
+                and not (own_kind and t.get("kind") and _kana(t["kind"]) != _kana(own_kind))), None)
     not_typ = (policy.get("typical") or {}).get("record_not_typical_words") or []
-    typ_row = next((r for r in sorted(rows, key=lambda r: r["read_at"], reverse=True)
+    typ_row = next((r for r in sorted(state_rows, key=lambda r: r["read_at"], reverse=True)
                     if r.get("typical") and not any(w in r["typical"] for w in not_typ)), None)
     if typ is None and typ_row:
         w = parse_typical(typ_row["typical"], policy)
@@ -2075,6 +2227,13 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False
                    "freshness": fr["class"], "freshness_label": fr["label"], "age_days": fr["age_days"],
                    "confidence_label": _confidence_label(cur)}
         current["display"], current["symbol_only"] = state_display(cur["state"], current["publisher"], policy)
+        if cur.get("_part_kind"):
+            current["part"], current["kind"] = cur["part"], cur["_part_kind"]
+            current["display"] = state_with_kind(current["display"], cur.get("kind") or cur["_part_kind"], policy)
+        if cur.get("embedded_post"):                      # 公式ページに載った発行元の投稿の印は、候補の現況の文にも付ける
+            current["embedded_post"] = cur["embedded_post"]
+        if is_late_peak(subject, cur["state"], policy):
+            current["late_peak"] = True
     pubs = _publishers(c, rows)
     out = {"id": c["id"], "name": c["name"], "aliases": c.get("aliases") or [], "point": c.get("point"), "city": c.get("city"), "prefecture": c.get("prefecture"), "area": c.get("area"),
             "elevation_m": c.get("elevation_m"), "elevation_note": c.get("elevation_note"), "spot_kind": c.get("spot_kind"),
@@ -2240,7 +2399,13 @@ def facts(subject, *, region=None, dates, now, origin=None, env=None, policy=Non
     reg = resolve(region, origin, policy)
     today = now.date()
     cands = all_candidates(subject, policy, spots_doc, catalogs)
-    by_c, rest = assign_records(read_records(subject, env, policy), cands, policy, env)
+    recs = read_records(subject, env, policy)
+    if subject == "flowers":     # 本人の決定(2026-11-28): 場所を分けた記録は、その記録の花の現況としてだけ数える(利用者の記録は数えない)
+        recs = [r for r in read_records(subject, env, policy, include_detail=True) if r.get("source_class") != "user"]
+    by_c, rest = assign_records(recs, cands, policy, env)
+    known_kinds = {k for x in cands for k in x.get("flower_kinds") or []} | {r["kind"] for r in recs if r.get("kind")}
+    by_c = {x["id"]: with_part_rows(by_c[x["id"]], x, subject, known_kinds) for x in cands}
+    rest = [r for r in rest if not r.get("part")]            # 一覧にない名所の、場所を分けた記録は、名所全体の現況にしない
     extra = {}
     for g in merge_extras(rest, merge_cfg(policy)):   # 一覧にない名所の記録もカタログ外として残す(表記ゆれは 1 つにまとめる)
         k = _key(g["name"])

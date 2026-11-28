@@ -26,6 +26,20 @@ def host_of(url):
     return h[4:] if h.startswith("www.") else h
 
 
+def shared_depth(url, c=None):
+    """複数の公園が使うホストなら、公園を分ける道筋の区切りの数。ほかは None。"""
+    return (((c or cfg()).get("shared_hosts") or {}).get("hosts") or {}).get(host_of(url))
+
+
+def site_key(url, c=None):
+    """発行元の名前を結びつける単位。ふつうはホスト。複数の公園が使うホストは、ホストと公園の道筋(kanagawaparks.com/kurihama)。"""
+    host = host_of(url)
+    n = shared_depth(url, c)
+    if not n:
+        return host
+    return "/".join([host, *[x for x in urlsplit(url or "").path.split("/") if x][:n]])
+
+
 def _suffix(host, s):
     return host == s or host.endswith("." + s)
 
@@ -89,6 +103,40 @@ def _ledger_rows():
             if s.get("url") and s.get("publisher"):
                 rows.append((host_of(s["url"]), s["publisher"], s.get("publisher_kind")))
     return tuple(rows)
+
+
+@lru_cache(maxsize=1)
+def _ledger_site_rows():
+    """台帳の (公園の単位, URL の道筋, 発行元)。複数の公園が使うホストの名前を決めるため。"""
+    rows = []
+    for p in sorted((ROOT / "data" / "sources").glob("*.yaml")):
+        if p.name == "policy.yaml":
+            continue
+        try:
+            doc = yamlcache.load(p) or {}
+        except (OSError, ValueError):
+            continue
+        for s in doc.get("sources") or []:
+            if s.get("url") and s.get("publisher"):
+                rows.append((site_key(s["url"]), urlsplit(s["url"]).path.rstrip("/"), s["publisher"]))
+    return tuple(rows)
+
+
+def ledger_name(url, c=None):
+    """台帳の発行元の名前。ふつうは同じホストの最初の行。複数の公園が使うホストは、同じ公園の道筋の行だけから
+    (同じページの行 → URL の道筋がいちばん長く合う行 → その公園の最初の行)。その公園の行がなければ None(ほかの公園の名前にしない)。"""
+    if not shared_depth(url, c):
+        host = host_of(url)
+        return next((p for h, p, _ in _ledger_rows() if h == host), None)
+    key, path = site_key(url, c), urlsplit(url).path.rstrip("/")
+    rows = [(rp, pub) for k, rp, pub in _ledger_site_rows() if k == key]
+    exact = next((pub for rp, pub in rows if rp == path), None)
+    if exact:
+        return exact
+    under = sorted((x for x in rows if path.startswith(x[0] + "/")), key=lambda x: -len(x[0]))
+    if under or rows:
+        return under[0][1] if under else rows[0][1]
+    return (((c or cfg()).get("shared_hosts") or {}).get("park_names") or {}).get(key)
 
 
 def ledger_kind(url):
@@ -208,7 +256,7 @@ def name(url, entry=None, title=None, c=None):
     if g:
         return g
     host = host_of(url)
-    led = next((p for h, p, _ in _ledger_rows() if h == host), None)
+    led = ledger_name(url, c)
     if led:
         return led
     tags = (entry or {}).get("tags") or entry or {}
