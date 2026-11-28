@@ -129,6 +129,24 @@ def in_ledger_approved(url):
     return any(h == host and (lp.rstrip("/") or "/") == p and st == "approved" for h, lp, st, _l, _i in O._ledger_urls())
 
 
+def not_auto_read(url):
+    """台帳で承認済みなのに、資料の自動の読み直しでは読まれないページか(現況のページでない・どの名所からも届かない)。
+    本人の決定(2026-11-28 の直す案 5): 承認済みの行は、自動で読み直せるときだけ「最初に読む」から外す。"""
+    from . import auto_refresh as AU
+    from . import brief_refresh as BR
+    from . import sources as S
+    k = AU.url_key(url)
+    for ledger in AU.LEDGERS:
+        try:
+            reg = S.load_registry(ledger)
+        except (OSError, ValueError):
+            continue
+        for src in (reg or {}).get("sources") or []:
+            if AU.url_key(src.get("url")) == k and S.is_approved(src):
+                return src.get("kind") != "status_page" or k not in BR.reachable_urls()
+    return False
+
+
 def check(item):
     """→ 理由の一覧(空なら残してよい)。"""
     from . import observations as O
@@ -327,8 +345,8 @@ def pick(subjects, *, origin=None, when=None, places=None, species_words=None, e
     for r in rows(env):
         if r.get("subject") not in (subjects or []):      # 1-1 の項目の無い古い行(subject なし)は選ばない
             continue
-        if r.get("approval") not in (None, "pending") or in_ledger_approved(r.get("url")):   # 台帳に approved で入った行は、最初に読む一覧に出さない
-            continue
+        if (r.get("approval") not in (None, "pending") or in_ledger_approved(r.get("url"))) and not not_auto_read(r.get("url")):
+            continue                                      # 台帳に approved で入った行は、自動で読み直せるので、最初に読む一覧に出さない
         if places and not _name_hit(r, places):
             continue
         kinds = r.get("kinds") or []

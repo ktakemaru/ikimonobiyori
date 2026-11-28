@@ -243,6 +243,53 @@ def html_text(html):
     return re.sub(r"\n\s*\n+", "\n", t).strip()
 
 
+class _Alt(HTMLParser):
+    """画像の説明(alt)の文字を集める(script・style などの中の画像は見ない。noscript の中の画像は見る)。"""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.out = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "img":
+            v = (dict(attrs).get("alt") or "").strip()
+            if v and v not in self.out:
+                self.out.append(v)
+
+
+def image_alts(html, min_chars=1):
+    """ページの画像の説明(alt)の全文(min_chars 字以上。同じ文は 1 回)。台帳で指定したページの控えにだけ使う(auto_refresh)。"""
+    p = _Alt()
+    try:
+        p.feed(html or "")
+    except Exception:
+        pass
+    return [re.sub(r"\s+", " ", a).strip() for a in p.out if len(re.sub(r"\s+", "", a)) >= min_chars]
+
+
+def drop_truncated(text, fulls, min_chars):
+    """本文の中の、全文(fulls)の途中で切れた写し(「…まだ見頃ですが、落葉が目立つ。お早」)の行を外す。
+    続いた行をつないだものが全文の先頭の一部(min_chars 字以上。末尾の「…」は見ない)で、全文より短いとき。全文そのままの行は残す。"""
+    def n(x):
+        return re.sub(r"\s+", "", x or "")
+    full = [n(f) for f in fulls]
+    lines = text.split(NL)
+    out, i = [], 0
+    while i < len(lines):
+        acc, j = "", i
+        while j < len(lines):
+            nxt = (acc + n(lines[j])).rstrip("….")
+            if not nxt or not any(f.startswith(nxt) for f in full):
+                break
+            acc, j = nxt, j + 1
+        if j > i and len(acc) >= min_chars and acc not in full:
+            i = j
+            continue
+        out.append(lines[i])
+        i += 1
+    return NL.join(out)
+
+
 def robots_allows(robots_txt, url, agent="*"):
     """robots.txt の Disallow(User-agent: * の組)にパスが当たらないか(読めないものは呼び出し側で拒否扱い)。"""
     path = urlsplit(url).path or "/"

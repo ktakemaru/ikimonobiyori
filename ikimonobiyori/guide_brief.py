@@ -2057,7 +2057,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     sobs = seasonal_rows(question, {**cond, "_towns": towns}, cands, now, env, c)     # 段階83 第2部: 例年この時期の観察記録
     _vc_facts(F, question, cands, now, env, c)              # 本人の判断(2026-11-15 の 1): 承認済みの施設の発信(新しいものを先に・古い現況を外す)
     mat, cards, sobs = _reserve_slots(mat, cards, sobs, question, cond, cands, months, now, env, c)   # 段階85 第4部 2: 観察記録と暦の枠
-    refresh_pages = _refresh_targets(work, cands, now, env, c, F.rows)      # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
+    _month_list_facts(F, question, cond, cands, now, env, c)   # 月別の花の一覧に名前が載るだけの記録(例年の時期にしない)
+    refresh_pages = _refresh_targets(question, cond, cands, now, env, c, F.rows)   # 段階85 第1部: 資料に入る候補の、有効期間切れの現況のページ
     from . import current_status as CS
     cs_block = None
     if CS.on(c):                                          # 指示書 docs/current-status-instructions.md 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと)
@@ -2239,40 +2240,58 @@ def _vc_targets(rows, order, now, env, seen=()):
     return out
 
 
-def _refresh_targets(work, cands, now, env, c, F_rows=()):
-    """段階85 第1部: 資料に入る候補の、承認済みの現況の情報源のうち有効期間が切れたページ(候補の順位の高いものから。最大 max_pages)。通信しない。"""
-    from . import answer_plan as AP
+def _refresh_targets(question, cond, cands, now, env, c, F_rows=()):
+    """段階85 第1部: 資料に入る候補の、承認済みの現況の情報源のうち有効期間が切れたページ(最大 max_pages)。通信しない。
+    台帳の covers で候補に結ぶ・期限切れはページごと・経路や「避ける」側に関係なく全部の候補を見る(brief_refresh.py)。"""
+    from . import auto_refresh as AU
+    from . import brief_refresh as BR
+    from . import current_status as CS
     A = c.get("auto_refresh") or {}
-    try:
-        facts_doc = json.loads((Path(work) / "facts.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        facts_doc = {"subjects": {}, "now": now.isoformat()}     # 計画の経路でない質問(場所 + 日付など)も、施設の情報ページは読み直す
-    subs = facts_doc.get("subjects") or {}
-    plan_doc = {"subjects": {}}                              # 資料に入る候補(選ばなかった候補も)を、読み直しの対象を選ぶ計画の形に
-    for r in cands:
-        sj = r.get("subject")
-        if sj in subs:
-            for n in [r.get("name"), *(r.get("merged_from") or [])]:
-                if n:
-                    plan_doc["subjects"].setdefault(sj, {"picks": []})["picks"].append({"name": n})
     mx = A.get("max_pages") or {}
     mx = mx.get("value") if isinstance(mx, dict) else mx
-    try:
-        pages = AP.refresh_targets(facts_doc, plan_doc, now=now, env=env, max_pages=None if mx is None else len(cands) + mx) if subs else []
-    except (KeyError, ValueError, TypeError):
-        pages = []
+    hold = A.get("rounds_hours") or {}
+    hold = hold.get("value") if isinstance(hold, dict) else hold
+    asked = [n for p in CS.asked_places(question, cands, c) for n in p["names"]]
+    _sp_names, sp_words = CS._open_species(question)
+    pages = BR.targets(question, cands, now=now, env=env, asked_names=asked, species_words=sp_words, subjects=cond.get("subjects") or [],
+                       max_pages=mx, hold_hours=hold, directory=A.get("dir") or "auto_refresh")
     order = {}
     for i, r in enumerate(cands):
         for n in [r.get("name"), *(r.get("merged_from") or [])]:
             if n and n not in order:
                 order[n] = (r.get("rank") if r.get("rank") is not None else len(cands) + i, i)
-    from . import auto_refresh as AU
-    ok = AU.approved_status_urls()                       # 台帳で承認済みの現況のページだけ(新しい通信先を足さない)
-    pages = [p for p in pages if p.get("name") in order and AU.url_key(p.get("url")) in ok]
-    pages += _vc_targets(F_rows, order, now, env, {AU.url_key(p.get("url")) for p in pages})   # 本人の判断(2026-11-15 の 1): 承認済みの施設の情報ページ
-    big = (len(cands) + 1, 0)
-    pages.sort(key=lambda p: order.get(p["name"], big))
+    vc = _vc_targets(F_rows, order, now, env, {AU.url_key(p.get("url")) for p in pages})   # 本人の判断(2026-11-15 の 1): 承認済みの施設の情報ページ
+    pages += sorted(vc, key=lambda p: order.get(p["name"], (len(cands) + 1, 0)))
     return pages[: mx] if mx else pages
+
+
+def _month_list_facts(F, question, cond, cands, now, env, c):
+    """月別の花の一覧に名前が載るだけの記録(listed_months)を、そのとおりの文の事実にする(対象の日の月が一覧にあるものだけ)。
+    種を挙げた質問は聞かれた花のもの、ほかは資料の候補の名所のものだけ。例年の時期にも今の状態にもしない。"""
+    from . import current_status as CS
+    from . import observations as O
+    M = c.get("month_list") or {}
+    if not M.get("enabled"):
+        return
+    names, words = CS._open_species(question)
+    if not names and cond.get("subjects") and not set(cond["subjects"]) & {"flowers"}:
+        return
+    near = {O._key(n) for r in cands for n in [r.get("name"), *(r.get("merged_from") or [])] if n}
+    month = _target_day(cond, now).month
+    seen = set()
+    for r in O.read_records("flowers", env):
+        months = r.get("listed_months")
+        if not months or month not in months:
+            continue
+        hit = any(w in (r.get("kind") or "") for w in words) if names else O._key(r.get("name")) in near
+        key = (r.get("name"), r.get("kind"), r.get("url"))
+        if not hit or key in seen:
+            continue
+        seen.add(key)
+        F.add("other", M["line"].format(name=r.get("name") or "", kind=r["kind"], publisher=r.get("publisher") or "",
+                                        months="・".join(f"{m}月" for m in sorted(months))),
+              place=r.get("name"), source=r.get("publisher"), url=r.get("url"), source_class=r.get("source_class"),
+              read_at=r.get("read_at"), extra={"month_list": ",".join(str(m) for m in sorted(months))})
 
 
 def _target_day(cond, now):
@@ -2756,9 +2775,11 @@ def render_md(doc):
             L += ["", A["heading"], "", A["note"], A["vc_note"]]
         else:
             L += ["", A["heading"], "", A["note"]]
-        L += [A["row"].format(name=p.get("name"), publisher=p.get("publisher") or "", url=p.get("url"),
-                                                               md=_md(p.get("current_date")) if p.get("current_date") else "前回",
-                                                               text_path=p.get("text_path")) for p in changed]
+        for p in changed:
+            L.append(A["row"].format(name=p.get("name"), publisher=p.get("publisher") or "", url=p.get("url"),
+                                     md=_md(p.get("current_date")) if p.get("current_date") else "前回", text_path=p.get("text_path")))
+            if p.get("alt_text"):
+                L.append(A["alt_note"])
     if (doc.get("research") or {}).get("targets"):
         from . import research as RS
         L += [""] + RS.lines_for(doc["id"], doc["research"]["targets"])

@@ -317,7 +317,7 @@ narrative:
   extra_cards: 4                 # 材料が min_items より少ないときに足すカードの上限
   min_items_to_require: 2        # 第3部 3: この数以上の材料があるのに 1 点も使わない答えは不合格
   skip_routes: [name, event]     # 行事の質問と、名前だけを聞く短い質問は除く
-  md_note: 'ここから選んで文にする(1つの答えで2〜4点。使ったら文の終わりに [K…])。「材料なし」の種類は書かない。'
+  md_note: 'ここから選んで文にする(1つの答えで1〜2点。一般の話は合わせて2つまで。安全・マナーの注意は数えない。使ったら文の終わりに [K…])。「材料なし」の種類は書かない。'
   word_rules:
     - {kind: 見分け方, words: [違い, とは違, 見分け, 区別, 似て, 比べ, 異なる, 見た目, 特徴は, とは別, 別の種, ではなく]}
     - {kind: 次の季節, words: [このあと, その後, 続いて, やがて, 翌年, 翌春, 冬になると, 春になると, 夏になると, 秋になると, 散ったあと, 終わると, 終わったあと, 次は, 落葉後, 冬を越]}
@@ -499,16 +499,40 @@ auto_refresh:
   read_s: {value: 8, source: "同上", provisional: true}
   max_bytes: {value: 3000000, source: "research.max_bytes と同じ", provisional: true}
   max_text_chars: {value: 20000, source: "理由: 変わったページの本文の控えの長さ(エージェントが読む分)", provisional: true}
+  rounds_hours: {value: 2, source: "同じ質問で資料を作り直すあいだ、1 回目に上限で外したページを足さない時間(読み直しがくり返されないように)。理由: 1 問に答える時間より長い", provisional: true}
+  alt_text:                          # 本人の決定(2026-11-28 の直す案 7): 指定したページだけ、画像の説明(alt)の全文も控えに入れる。投稿を使ってよい条件(発行元自身のページ・発行元自身の投稿・日付が分かる)は observations の record.embedded_post のまま
+    source_ids: [isehara-kankou-oyama-koyo]   # 台帳(data/sources)の id。状態の文がサイドバーの Instagram の画像の説明にだけある(台帳の notation.note)
+    min_chars: {value: 20, source: "理由: ロゴや写真の短い説明を控えに入れない", provisional: true}
+    truncated_min_chars: {value: 10, source: "理由: 見出しの短い語を、途中で切れた写しと取り違えない", provisional: true}
+    heading: "----- 画像の説明(alt の全文)。ここの投稿の文は embedded_post の条件を満たすときだけ使う。途中で切れた文は使わない -----"
   stale_days: {value: 7, source: "指示書 段階85 1.2(現況の日付が対象の日より 7 日以上前なら「古い」の印)", provisional: true}
   vc_follow_words: [紅葉情報, 開花情報, 花情報, 自然情報, 野鳥情報, 今の, 近ごろの自然]   # 本人の判断(2026-11-15 の 1): 施設のトップに見出しだけがあるとき、この語のリンクを 1 つだけたどる(同じサイトの中だけ)
   dir: auto_refresh                  # データ置き場の下(変わったページの本文の控え。次の読み直しで上書き)
   lines:
     failed: "{name}の公式の現況({publisher})を読み直せませんでした({md}時点の記録のまま)"
     heading: "## 読み直したページ(前回の記録から内容が変わった公式の現況)"
-    note: "下の本文の控えで、名所ごとの今の状態と日付を確かめ、ask record --batch <JSON> で記録してから、同じ質問で ask brief を作り直す(本文にない状態を書かない。Web を使わない)。"
+    note: "下の本文の控えで、名所ごとの今の状態と日付を確かめ、ask record --batch <JSON> で記録してから、同じ質問で ask brief を作り直す(本文にない状態を書かない。Web を使わない)。記録する事実が無いページは ask warm --mark <URL> で読んだ印だけを残す。"
+    alt_note: "  画像の説明(alt)の全文を控えの終わりに入れた。そこにある投稿は、発行元自身の公式ページ・発行元自身の投稿・日付が分かる、の 3 つを満たすときだけ ask record の embedded_post で記録する(docs/guide-mode.md)。途中で切れた文は使わない。"
     vc_note: "施設(ビジターセンターなど)のページは ask record ではなく ask vc-record --batch <JSON> で記録する(1 件: center・date(年つき)・state(状態の語だけ)・url。台帳の allowed_fields にない項目(種名など)は入れない)。"
     row: "- {name}({publisher}・前回の記録 {md}時点): {url} → 本文の控え {text_path}"
     stale_mark: "古い({days}日前)"
+# 本人の決定(2026-11-28 の直す案 8): 月別の花の一覧に名前が載るだけの記録。「例年」と書かない
+month_list:
+  enabled: true
+  line: '{name}: {kind}は、{publisher}の{months}の花の一覧に名前が載っています(見ごろの時期の記載ではありません。今年の様子でもありません)'
+  banned_words: [例年, 平年, 毎年, 見頃, 見ごろ]
+  ng_why: 月別の花の一覧に名前が載るだけの事実を、例年の時期・見ごろとして書いている
+  ng_fix: 「○月の花の一覧に名前が載っています」の形で書く(例年・見ごろの語を使わない)
+# 本人の決定(2026-11-28 の直す案 9): 1 つの答えの一般の話(豆知識・小話)は 2 つまで。安全やマナーの注意は数に入れない。数え方の決まりは docs/guide-voice.md §1b
+general_talk:
+  enabled: true
+  max: {value: 2, source: "指示書 open-question-breadth 第4部 8・本人の決定 2026-11-28(上限 2 つ)", provisional: false}
+  routes: [plan, season_place, highlights_dated, species_dated, combo]   # 出かける場所を聞く質問の経路。知識を聞く質問は数えない
+  exempt_links: [この場所の話, 季節の暦]       # 聞かれた場所の案内と、場所や種を決めない質問の主な材料(暦)
+  exempt_categories: [保全・マナー, 安全, シーズンの目安, 行き方・アクセス]
+  safety_words: [注意, 危険, 毒, チャドクガ, ハチ, クマ, マムシ, ヤマビル, かぶれ, 刺さ, 近づきすぎ, 近づかな, 餌, エサ, 採ら, 持ち帰, 触ら, さわら, 踏み, 立ち入, 登山道, ライト, 通行止, 閉鎖, マナー]
+  ng_why: '一般の話(豆知識・小話)が {n} つある(上限 {max} つ。安全・マナーの注意は数えない)'
+  ng_fix: '見に行く人の役に立つ一般の話を {max} つまで残して、ほかは消す(同じカードの続いた文は 1 つ)'
 # 段階85 第2部: 「出典を見せて」のときの URL つきの出典(sources_reply.py。ask sources)
 sources_reply:
   file: ask/last_sources_reply.json
@@ -656,7 +680,7 @@ current_status:
       - '目安: 上の節の手元の場所と合わせて、今年の現況を公式ページで確かめた場所が {target} か所以上になるまで、上限の中で探して読む(数を合わせるために確かさを下げない。届かなければ、読めた分で答える)。'
       - '1. 広く探す: 範囲全体(出発地から片道 250km 前後。近い所だけで終わらせない)で、「今その対象が見られそうな場所」の名前を集める。紹介サイト・観光協会の特集・まとめ記事は場所の名前を知るきっかけにだけ使う(そこに書かれた色づきの段階・見頃を事実にしない)。上の節の手元の場所も候補から外さない。'
       - '2. 公式ページで確かめる: 候補ごとに運営者・自治体・観光協会・ビジターセンターのページを WebFetch で読む。中身が取れない応答(148 バイトなど)は読めた扱いにせず、別ページを 1 回だけ試す。それでも読めなければ読めなかったとして扱い、検索結果の抜き書きを公式の内容にしない。'
-      - '3. 記録する(ask record --out-dir <データ置き場> --batch <JSON>): subject は必須(autumn_leaves・flowers・birds のどれか)。対象と日付が分かったもの → 1 件ずつ {{"subject", "name", "prefecture", "city", "kind", "state"(原文), "state_date", "url", "publisher", "source_class": "official"}}。日付の無い公式ページ(月別の一覧など)→ state を入れず {{"name", "prefecture", "city", "kind", "typical"(書かれた月・時期), "url", "publisher", "source_class": "official", "basis": "page"}}(例年の目安。今年の現況にしない)。公式ページが見つからない・読めないもの → ask record-unverified --batch <JSON>(name・prefecture・city・theme・months)。url は公式サイトのページにする(公式ページが外部のブログの記事を載せているときも、記事の URL ではなく載せている公式ページ)。ページが場所を分けて書いていれば part(30 字まで)。'
+      - '3. 記録する(ask record --out-dir <データ置き場> --batch <JSON>): subject は必須(autumn_leaves・flowers・birds のどれか)。対象と日付が分かったもの → 1 件ずつ {{"subject", "name", "prefecture", "city", "kind", "state"(原文), "state_date", "url", "publisher", "source_class": "official"}}。月別の花の一覧(「10月」の欄に花の名前が載るだけで、見ごろの期間の記載がない)→ state も typical も入れず {{"name", "prefecture", "city", "kind", "listed_months": [10, 11](名前が載る月), "url", "publisher", "source_class": "official", "basis": "page"}}(「例年」にしない)。見ごろの期間が書かれた日付の無い公式ページ → state を入れず {{"name", "prefecture", "city", "kind", "typical"(書かれた月・時期), "url", "publisher", "source_class": "official", "basis": "page"}}(例年の目安。今年の現況にしない)。公式ページが見つからない・読めないもの → ask record-unverified --batch <JSON>(name・prefecture・city・theme・months)。url は公式サイトのページにする(公式ページが外部のブログの記事を載せているときも、記事の URL ではなく載せている公式ページ)。ページが場所を分けて書いていれば part(30 字まで)。'
       - '4. そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place "{where}"(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
   verify:
     extra_state_words: [終了, 終わっ, 残る, 残って, 無い, ない, 無く, 散っ]   # 場所を広げた文を見つけるための状態の言い方(照合の state_words に足すのはこの節の中だけ)

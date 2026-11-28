@@ -46,6 +46,7 @@ record:
   embedded_post:
     enabled: true
     max_text_chars: {value: 400, source: "投稿の文の写しの上限(あとで照合が同じ文で確かめるため。ふつうの投稿の文が収まる長さ・仮置き)", provisional: true}
+    truncated_endings: ["…", "...", "‥"]   # 本人の決定(2026-11-28 の直す案 7): 途中で切れた文は使わない(写しの末尾がこの印なら記録しない)
     max_quote_chars: {value: 15, source: "答えに写してよい投稿の文の連続の字数の上限(段階58 第10部の長い引用 long_quote_min 15 と同じ・仮置き)", provisional: true}
   # 段階57 第11部: 公式の機械可読データ。台帳の承認(approval.status)が approved になるまで答えの材料にしない(記録は残す)
   # 段階60 第9部: 承認待ちを隠す仕組みの統一。対象(記録の対象 → 隠す台帳の状態)。公式の台帳(data/sources/*.yaml)で、

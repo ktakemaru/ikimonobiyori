@@ -296,6 +296,8 @@ def embedded_post_errors(rec, policy):
         date.fromisoformat(str(ep.get("posted_on")))
     except (TypeError, ValueError):
         errs.append("embedded_post.posted_on は YYYY-MM-DD(年まで決められない投稿は使わない。月日だけなら読んだ日からいちばん近い過去の日にし、posted_on_inferred: true)")
+    if str(ep.get("text") or "").rstrip().endswith(tuple(E.get("truncated_endings") or [])) and E.get("truncated_endings"):
+        errs.append("embedded_post.text が途中で切れている(末尾が省略の印)。途中で切れた文は使わない")
     if not isinstance(ep.get("posted_on_inferred", False), bool):
         errs.append("embedded_post.posted_on_inferred は true か false")
     t = str(ep.get("text") or "").strip()
@@ -471,6 +473,8 @@ def validate(rec, policy):
             continue                                  # 指示書 current-status 第 3 部: 利用者が現地で確認した記録は URL を求めない(架空の URL を作らない)
         if k == "state" and optional_with and all(rec.get(x) for x in optional_with):
             continue                                  # 段階69 第3部 4: 名所の登録(種と例年の時期)は今の状態がなくてよい
+        if k == "state" and rec.get("listed_months"):
+            continue                                  # 本人の決定(2026-11-28 の直す案 8): 月別の花の一覧に名前が載るだけの記録は、状態がない
         if k == "state" and r.get("state_optional_notice") and rec.get("notice") and rec.get("basis") == "page" and rec.get("source_class") == "official":
             continue                                  # 段階80 F(提案7): 公式のページで読んだ「行く前に」だけの記録
         if k == "state" and rec.get("event") and isinstance(rec.get("event"), dict) and rec["event"].get("name"):
@@ -505,6 +509,8 @@ def validate(rec, policy):
     sp = rec.get("species")                     # 段階38: 野鳥の記録に書かれた鳥の名前(書かれたとおり)。任意
     if sp is not None and (not isinstance(sp, list) or not all(isinstance(x, str) and x.strip() and len(x) <= _v(policy["record"]["max_raw_chars"]) for x in sp)):
         errs.append("species は鳥の名前(文字列)の配列")
+    errs += listed_months_errors(rec)                 # 月別の花の一覧
+    errs += excluded_kind_errors(rec)                 # 名所カタログが理由をつけて外した花
     errs += manner_errors(rec, policy)                # 段階64 第5部
     ev = rec.get("event")
     if ev is not None:
@@ -519,6 +525,39 @@ def validate(rec, policy):
                     except (TypeError, ValueError):
                         errs.append(f"event.{k} は YYYY-MM-DD か null")
     return errs
+
+
+def listed_months_errors(rec):
+    """月別の花の一覧(「10 月」の欄に名前が載るだけ)の記録。例年の時期(typical)や今の状態(state)にしない。"""
+    if "listed_months" not in rec:
+        return []
+    m = rec.get("listed_months")
+    errs = []
+    if not isinstance(m, list) or not m or not all(isinstance(x, int) and not isinstance(x, bool) and 1 <= x <= 12 for x in m):
+        errs.append("listed_months は一覧で名前が載っている月の数の配列(例: [10, 11])")
+    if not rec.get("kind") or rec.get("basis") != "page" or rec.get("source_class") != "official":
+        errs.append("listed_months の記録は kind(花の名前)・basis: page・公式のページ(source_class: official)が要る")
+    if rec.get("typical") or rec.get("state"):
+        errs.append("月別の一覧に名前が載るだけのものは、typical(例年の時期)や state(今の状態)にしない(listed_months だけ)")
+    return errs
+
+
+def excluded_kind_errors(rec, catalogs=None):
+    """名所カタログが理由をつけて外した花(excluded_flower_kinds)の例年の時期・月別の一覧は、確かめを挟んでから記録する
+    (excluded_kind_confirmed に、外した理由を読んだうえで記録する理由を書く)。日付のある今年の状態は止めない。"""
+    if rec.get("subject") != "flowers" or not (rec.get("typical") or rec.get("listed_months")) or str(rec.get("excluded_kind_confirmed") or "").strip():
+        return []
+    if catalogs is None:
+        catalogs = (catalog_mod.load_catalog("flowers") or {}).get("entries") or []
+    k = _key(rec.get("name"))
+    for e in catalogs:
+        if not (rec.get("spot") == e.get("id") or (k and k == _key(e.get("name")))):
+            continue
+        for x in e.get("excluded_flower_kinds") or []:
+            if x["kind"] == rec.get("kind"):
+                return [f"名所カタログは {e['name']} の {x['kind']} を理由をつけて外している: {x['reason']} "
+                        "確かめてから記録するときは excluded_kind_confirmed に理由を書く"]
+    return []
 
 
 def detail_errors(rec, policy):
@@ -592,7 +631,8 @@ FIELDS = ("subject", "spot", "name", "city", "prefecture", "area", "kind", "stat
           "research",                            # 段階78 第4部: その場で調べた印 {at, brief, question}
           "closed_period", "best_conditions",    # 段階82 第3部 1
           "part", "unseen",                      # 指示書 current-status 第 2・3 部(下の注)
-          "embedded_post")                       # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿の印・投稿の日付・読んだときの投稿の文の写し
+          "embedded_post",                       # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿の印・投稿の日付・読んだときの投稿の文の写し
+          "listed_months", "excluded_kind_confirmed")   # 月別の花の一覧に名前が載る月・カタログで外した花の確かめ
 # 指示書 current-status 第 2・3 部: どのあたりか・見ていない所(利用者の記録): 行けない時期(冬期閉鎖など)・特によいとされる条件(公式に書かれているときだけ)
 
 
@@ -722,7 +762,7 @@ def _dup_key(r):
     """段階37: 同じ名所・同じ状態の語・同じ状態の日付(と同じ例年の時期・行事)の記録は、URL や読んだ日が違っても新しい記録に数えない。"""
     ev = r.get("event")
     return [r.get("spot") or _key(r.get("name")), unicodedata.normalize("NFKC", r.get("state") or "").strip(), state_date_of(r),
-            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
+            r.get("typical"), json.dumps(ev, ensure_ascii=False, sort_keys=True) if ev else None, r.get("area"), r.get("prefecture")]         + ([r["practical"]] if r.get("practical") else [])          + (["part", r.get("part"), r.get("source_class")] if r.get("part") or r.get("source_class") == "user" else [])         + (["listed_months", r.get("kind"), r.get("listed_months")] if r.get("listed_months") else [])          # 段階52: 実用情報が違えば別の記録（付いていない記録の鍵は従来どおり）
 
 
 def dup_key_text(r):
@@ -939,7 +979,7 @@ def _from_spot(s, policy, catalog_by_id):
         c["events"] += [ev for ev in cat["events"] if ev["name"] not in names]
         urls = {p["url"] for p in c["pages"]}
         c["pages"] += [p for p in cat["pages"] if p["url"] not in urls]
-        c["flower_kinds"] = c["flower_kinds"] or cat["flower_kinds"]
+        c["flower_kinds"] = list(dict.fromkeys([*c["flower_kinds"], *cat["flower_kinds"]]))   # 名所の一覧とカタログの花の種類を合わせる(2026-11-28)
         c["tree_species"] = c["tree_species"] or cat.get("tree_species") or []
         c["spot_kind"] = c.get("spot_kind") or cat.get("spot_kind")
     return c
@@ -2006,9 +2046,33 @@ def human_inat_url(api_url):
     return "https://www.inaturalist.org/observations?" + urlencode(q + [("view", "species")])
 
 
+def _record_kinds(r, kinds):
+    """記録が書いている花の種類(名所の花の種類のうち、記録の kind か状態の原文にあるもの)。"""
+    text = f"{r.get('kind') or ''} {r.get('state') or ''}"
+    return {k for k in kinds if k in text}
+
+
+def ended_kinds(c, rows, subject):
+    """花の種類が 2 つ以上ある名所で、いちばんの記録が「見頃過ぎ」(「コスモスまつり終了」など)で、一部の花だけを書いているとき、
+    その花を外して今の状態を選び直す(コスモスの終了でツバキを外さない)。→ (今の状態に使う記録, 終わった花の種類)。
+    記録がどの花も書いていないときは、これまでどおり名所全体の状態にする。"""
+    kinds = set(c.get("flower_kinds") or [])
+    ended = set()
+    if subject != "flowers" or len(kinds) < 2:
+        return rows, ended
+    while True:
+        cur = best_record(rows)
+        hit = _record_kinds(cur, kinds) if cur and cur.get("state_norm") == "見頃過ぎ" else set()
+        if not hit or not (hit | ended) < kinds:
+            return rows, ended
+        ended |= hit
+        rows = [r for r in rows if not (_record_kinds(r, kinds) and _record_kinds(r, kinds) <= ended)]
+
+
 def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False):
     d = dates[0]
-    cur = best_record(rows)
+    state_rows, ended = ended_kinds(c, rows, subject)
+    cur = best_record(state_rows)
     fr = freshness(cur, today, subject, policy)
     rec_events = [{"name": r["event"]["name"], "start": r["event"].get("start"), "end": r["event"].get("end"), "url": r["url"],
                    "publisher": r.get("publisher"), "source_class": r["source_class"]} for r in rows if r.get("event")]
@@ -2017,9 +2081,9 @@ def fact_for(c, rows, dates, today, subject, policy, origin, cat_pol, wide=False
         if (t.get("start"), t.get("end")) in rec_ev_md:
             t["event_derived"] = True
     real_typ = [t for t in c.get("typical") or [] if not t.get("event_derived")]
-    typ = next((t for t in real_typ if t.get("start")), None)
+    typ = next((t for t in real_typ if t.get("start") and t.get("kind") not in ended), None)
     not_typ = (policy.get("typical") or {}).get("record_not_typical_words") or []
-    typ_row = next((r for r in sorted(rows, key=lambda r: r["read_at"], reverse=True)
+    typ_row = next((r for r in sorted(state_rows, key=lambda r: r["read_at"], reverse=True)
                     if r.get("typical") and not any(w in r["typical"] for w in not_typ)), None)
     if typ is None and typ_row:
         w = parse_typical(typ_row["typical"], policy)
