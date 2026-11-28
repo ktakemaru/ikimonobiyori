@@ -3065,6 +3065,7 @@ entries:
       start: '11-01'
       end: '12-31'
       source_url: https://www.kanagawa-park.or.jp/sagamihara/flower.html
-      source_class: official
+      source_host: www.kanagawa-park.or.jp
+      source_class: secondary
       source_year: null
-      note: '花ガイドの12月の欄のオトメサザンカ: 開花は11月上旬から12月が見頃(長い期間楽しめる場合もある)'
+      note: '花ガイドの12月の欄のオトメサザンカ: 開花は11月上旬から12月が見頃(長く楽しめる年もある)'
