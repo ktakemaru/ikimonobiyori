@@ -709,6 +709,11 @@ def _source_class(url, given=None):
     return "secondary" if url else None
 
 
+def _plan_policy():
+    from . import answer_plan as AP
+    return AP.load_policy()
+
+
 class _Facts:
     def __init__(self, c, pending):
         self.c, self.pending, self.rows, self.keys = c, pending, [], set()
@@ -1895,7 +1900,12 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     work = brief_dir(env) / f"{bid}.work"
     if work.exists():
         shutil.rmtree(work)                              # 同じ資料の作り直し(前回の作業の残りで結果を変えない)
-    res = AR.run(question, now=now, env=env, workdir=work, quiet=True, clock=clock, obs_kw=obs_kw)
+    from . import answer_plan as AP
+    tok = AP.GUIDE_RANK.set(True)                        # 続き 第2部: ガイドの資料の順位だけ、日付の無い現況を例年の目安と同じに数える
+    try:
+        res = AR.run(question, now=now, env=env, workdir=work, quiet=True, clock=clock, obs_kw=obs_kw)
+    finally:
+        AP.GUIDE_RANK.reset(tok)
     cond = res.get("cond") or {}
     pending = _pending_urls()
     F = _Facts(c, pending)
@@ -1966,7 +1976,8 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
             info = GM.place_info(r["name"])
             r["prefecture"] = r.get("prefecture") or info.get("prefecture")
             r["city"] = r.get("city") or info.get("city")
-        r.setdefault("basis", "current" if r.get("current_state") else "typical")
+        r.setdefault("basis", "current" if r.get("current_state") and (r.get("current_date") or r.get("subject") == "birds"
+                                            or not (_plan_policy().get("undated_current") or {}).get("as_typical")) else "typical")   # 続き 第2部: 日付の無い現況は「例年の目安」
         r.setdefault("group", _group_of(r.get("prefecture"), c))
         if "distance_text" not in r:                          # 段階78 第1部 2・3: 直線と明記。見積もりの距離は出さない。東京湾の向こう側は数字なし
             km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), estimated=bool(r.get("distance_estimated")),

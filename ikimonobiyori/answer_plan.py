@@ -6,6 +6,7 @@
 
   python -X utf8 -m ikimonobiyori.ask plan --out-dir DIR [--subject S] [--explain 名所] [--override 名所 --reason 理由 [--replace 計画の名所]]
 """
+import contextvars
 import re
 from datetime import date, datetime, timedelta
 
@@ -352,6 +353,19 @@ def _refine_reject(rows, status, rule, pol, reject):
     return relaxed
 
 
+GUIDE_RANK = contextvars.ContextVar("guide_rank", default=False)   # ガイドの資料(ask brief)の中で計画を作っているか
+
+
+def _rank_view(c, pol, subject):
+    """指示書 open-question-breadth の続き 第2部(本人の返事 3、2026-11-28): 状態の日付(発信日・撮影日・記事の日付)の無い現況は、
+    候補の順位では「例年の目安」と同じに数える(読んだ日を発信日の代わりにしない)。表示の current_state・current_date は元のまま。野鳥は変えない。"""
+    cur = c.get("current")
+    mode = (pol.get("undated_current") or {}).get("as_typical")
+    if subject == "birds" or not cur or cur.get("state_date") or not mode or (mode == "guide" and not GUIDE_RANK.get()):
+        return c
+    return {**c, "current": None}
+
+
 def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     """facts.json の 1 対象(subjects.<subject>)から計画を作る。同じ入力なら同じ出力。refine: 追質問の語(段階57 第5部)。"""
     pol = scope_policy(policy or load_policy(), facts_doc.get("scope"))      # 段階72 第4部
@@ -361,10 +375,11 @@ def build(facts_doc, subject, policy=None, overrides=None, refine=None):
     oo = pol["outlook"]
     rs = pol["reasons"]
     rows = []
-    for c in cands:
+    for c0 in cands:
+        c = _rank_view(c0, pol, subject)                                  # 指示書 open-question-breadth の続き 第2部: 日付の無い現況は、順位では例年の目安と同じ
         r = score_candidate(dict(c, _today=facts_doc.get("now"), _origin=facts_doc.get("origin")), dates, pol, subject)
-        r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "prefecture": c.get("prefecture"), "current_state": (c.get("current") or {}).get("state"),
-                  "current_date": (c.get("current") or {}).get("state_date"),
+        r.update({"subject": subject, "id": c.get("id"), "name": c["name"], "cluster": cluster_key(c), "prefecture": c.get("prefecture"), "current_state": (c0.get("current") or {}).get("state"),
+                  "current_date": (c0.get("current") or {}).get("state_date"),
                   "current_age_days": (c.get("current") or {}).get("age_days") if not (c.get("current") or {}).get("symbol_only") else None,
                   "stale": bool(c.get("current")) and (c["current"].get("freshness") == "stale"),
                   "target_age_days": _target_age(c, dates[0], facts_doc.get("now")),
