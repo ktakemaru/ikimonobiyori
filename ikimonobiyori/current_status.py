@@ -638,7 +638,8 @@ def add_open_facts(F, question, cond, cands, now, env, c):
     for r in recs[: _v(OC["max_known"])]:
         name = r["_name"]
         have = next((f for f in F.rows if f.get("kind") == "current" and O._key(f.get("place")) == O._key(name)
-                     and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]), None)
+                     and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]
+                     and (r.get("state") or "") in (f.get("content") or "")), None)   # 状態の文も同じときだけ指す(同じ日に読み直した別の文を隠さない)
         label = name + (f"({r['part']})" if r.get("part") else "")
         fr = have or F.add("current", OC["lines"]["dated"].format(name=label, state=_legend_state(r, policy), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
                            source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),

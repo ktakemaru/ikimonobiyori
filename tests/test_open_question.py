@@ -97,6 +97,15 @@ class OpenQuestion(unittest.TestCase):
         self.assertIn("試験の椿の丘(作り物)(椿の小径): ツバキが咲き始め(11/25時点", self.md)
         self.assertNotIn("試験の椿の丘(作り物)", [r["name"] for r in self.doc["candidates"]])     # part の記録だけの名所は候補にしない
 
+    def test_same_day_other_state_not_hidden(self):
+        """同じ名所・同じ URL・同じ日付でも、状態の文が違う記録は、前の事実で隠さない(第5部の試し 質問 4)。"""
+        F = GB._Facts(_on(), set())
+        F.add("current", "試験のさざんか園(作り物): 前に読んだ別の文(11/26時点)", place="試験のさざんか園(作り物)", url=URL, observed="2026-11-26")
+        with mock.patch.object(GB, "cfg", _on):
+            ob = CS.add_open_facts(F, Q, {"subjects": ["flowers"], "origin": "横浜"}, [], NOW, None, _on())
+        fid = next(k["fact"] for k in ob["known"] if k["name"] == "試験のさざんか園(作り物)")
+        self.assertIn("サザンカが見ごろ", next(f for f in F.rows if f["id"] == fid)["content"])
+
     def test_secondary_not_known(self):
         self.assertNotIn("試験の紹介の園(作り物)", [k["name"] for k in self.doc["current_status"]["open"]["known"]])
 

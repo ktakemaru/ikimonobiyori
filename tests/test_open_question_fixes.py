@@ -61,6 +61,18 @@ class FactIdsAndDates(unittest.TestCase):
         self.assertIn("11/27時点", line)
 
 
+class SameUrlSources(unittest.TestCase):
+    """第5部の試し(質問 4): 同じ URL のカード(11/11 に確認)が先にあると、今年の現況の事実(11/26)の日付が出典に出なかった。"""
+
+    def test_dated_fact_represents_url(self):
+        u = "https://park-test.example.jp/flower/"
+        cited = [{"id": "K001", "kind": "card", "url": u, "source": "試験の公園(作り物)", "checked_on": "2026-11-11"},
+                 {"id": "F003", "kind": "current", "url": u, "source": "試験の公園(作り物)", "source_class": "official",
+                  "observed": "2026-11-26", "read_at": "2026-11-28T09:00:00+09:00", "content": "試験の公園: 見ごろの花"}]
+        self.assertIn("試験の公園(作り物)(11/26時点)", GV.short_sources(cited, GB.cfg()))
+        self.assertIn("11/26時点", GV.final_sources(cited, GB.cfg())[0])
+
+
 class DateBasis(unittest.TestCase):
     """第4部 2: 本文と事実の日付の持ち方の食い違いを照合で止める。"""
 

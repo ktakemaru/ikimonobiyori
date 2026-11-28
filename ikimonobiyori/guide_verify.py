@@ -425,6 +425,27 @@ def fact_date(r):
     return f"{y}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
 
 
+def _prefer_dated(cited):
+    """同じ URL の出典が複数あるとき(カードと今年の現況の事実など)、発信の日付のある事実をその URL の代表にする(順番は最初に出た位置のまま)。
+    第5部の試し(質問 4): 本文は「11月26日時点」なのに、同じ URL のカード(11/11 に確認)が先にあって出典が「11/11に確認」になった。"""
+    def dated_fact(r):
+        return str(r.get("id", "")).startswith("F") and bool(fact_date(r))
+    best = {}
+    for r in cited:
+        u = r.get("url")
+        if u and (u not in best or (dated_fact(r) and not dated_fact(best[u]))):
+            best[u] = r
+    out, seen = [], set()
+    for r in cited:
+        u = r.get("url")
+        if not u:
+            out.append(r)
+        elif u not in seen:
+            seen.add(u)
+            out.append(best[u])
+    return out
+
+
 def date_basis_errors(sents, brief, c):
     """発信の日付がある事実の文に「いつの発信か分からない」と書く・日付の無い事実の文に「○/○時点」と書く(出典の「〜時点」「〜に確認」と食い違う)。"""
     D = c.get("date_basis") or {}
@@ -486,7 +507,7 @@ def weather_line(brief, body, c):
 def final_sources(cited, c):
     f = c["final"]
     out, seen = [], set()
-    for r in cited:
+    for r in _prefer_dated(cited):
         key = r.get("url")
         if not key or key in seen:                       # 段階76 第5部 1: URL のない出典は出さない
             continue
@@ -517,7 +538,7 @@ def short_sources(cited, c):
     f = c["final"]
     S = f["short"]
     groups, seen = {}, set()
-    for r in cited:
+    for r in _prefer_dated(cited):
         key = r.get("url")
         if not key or key in seen:                       # URL のない出典は出さない(URL つきの出典と同じ範囲)
             continue
