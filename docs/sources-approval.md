@@ -8,7 +8,7 @@
 | 台帳 | 承認済み | 承認待ち | 取り消し・引退 |
 |---|---|---|---|
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
-| 現況の情報源（sources/） | 53 | 35 | 3 |
+| 現況の情報源（sources/） | 52 | 35 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
 | 名所カタログ（catalog/） | 136 | 14 | 2 |
 
@@ -128,7 +128,7 @@
 | 谷津干潟自然観察センター | yatsuhigata-nature-center | user（2026-11-07） | https://www.seibu-la.co.jp/yatsuhigata/blog/ | 転載禁止の明示なし。利用規約・サイトポリシー・著作権のリンクは確認できず（フッターは Copyright SEIBU Landscape のみ）。転載禁止の明示なし。robots.txt は /wp-admin/ のみ拒否で /yatsuhigata/ は許可 | **承認してよい**: 指定管理者の公式。『自然情報』に渡り鳥の観察記録。転載禁止の明示なし。最新は 10/13 で11月分はまだない |
 | 尾瀬沼・山ノ鼻ビジターセンター（尾瀬保護財団） | oze-fnd | user（2026-11-09） | https://oze-fnd.or.jp/archives/category/if/ | **無断転載を禁じます** | **要判断**: 事実のみの扱いでよいか |
 
-### 2-B. 現況の情報源の台帳（承認済み 53件）
+### 2-B. 現況の情報源の台帳（承認済み 52件）
 
 | 台帳 | 情報源（id） | 承認した人・日 | 最新情報のページ |
 |---|---|---|---|
@@ -159,7 +159,6 @@
 | autumn_leaves.yaml | 公益財団法人三溪園保勝会（sankeien-koyo-news） | user（2026-11-28） | https://www.sankeien.or.jp/news/10921/ |
 | autumn_leaves.yaml | 公益社団法人鎌倉市観光協会（kamakura-kankou-koyo） | user（2026-11-28） | https://www.trip-kamakura.com/advertisement/detail.php?id=158 |
 | autumn_leaves.yaml | 長谷寺(鎌倉)（hasedera-hanasanpo） | user（2026-11-28） | https://www.hasedera.jp/ |
-| autumn_leaves.yaml | 神奈川県 自然環境保全センター（kanagawa-parkranger-koyo-r811） | user（2026-11-28） | https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/r811kouyou.html |
 | autumn_leaves.yaml | 一般社団法人伊勢原市観光協会（isehara-kankou-oyama-koyo） | user（2026-11-28） | https://isehara-kanko.com/news/flower/13991/ |
 | birds.yaml | 公益財団法人日本野鳥の会(東京港野鳥公園の管理者)（tokyo-port-birdpark-today） | claude_code_provisional（2026-10-24） | https://wbsj-wildbirdpark.blog.jp/archives/cat_773662.html |
 | birds.yaml | 東京都公園協会(葛西臨海公園サービスセンター)（tokyo-park-kasai-news） | claude_code_provisional（2026-10-24） | https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html |
@@ -174,10 +173,10 @@
 | flowers.yaml | よこすかseasideパートナーズ(ヴェルニー公園)（kanagawaparks-verny） | claude_code_provisional（2026-10-31） | https://www.kanagawaparks.com/verny/blog/ |
 | flowers.yaml | 公益財団法人三溪園保勝会（sankeien-kikka） | claude_code_provisional（2026-10-31） | https://www.sankeien.or.jp/ |
 | flowers.yaml | くりはまフラワーパートナーズ(くりはま花の国)（kanagawaparks-kurihama） | claude_code_provisional（2026-10-31） | https://www.kanagawaparks.com/kurihama/ |
-| flowers.yaml | くりはま花の国 指定管理者 くりはまフラワーパートナーズ（kanagawaparks-kurihama-blog） | user（2026-11-28） | https://www.kanagawaparks.com/kurihama/blog/2026/11/ |
+| flowers.yaml | くりはま花の国 指定管理者 くりはまフラワーパートナーズ（kanagawaparks-kurihama-blog） | user（2026-11-28） | https://www.kanagawaparks.com/kurihama/blog/ |
 | flowers.yaml | 京成バラ園芸株式会社（keisei-rose-garden-top） | user（2026-11-28） | https://www.keiseirose.co.jp/ |
 | flowers.yaml | 藤岡市 鬼石総合支所にぎわい観光課（fujioka-sakurayama-fuyuzakura） | user（2026-11-28） | https://www.city.fujioka.gunma.jp/soshiki/onisisogoshisho/nigiwaikanko/4/11865.html |
-| flowers.yaml | 神川町観光協会（kamikawa-kankou-jomine） | user（2026-11-28） | https://www.kamikawa-kanko.com/news/9615/ |
+| flowers.yaml | 神川町観光協会（kamikawa-kankou-jomine） | user（2026-11-28） | https://www.kamikawa-kanko.com/news/ |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-kanagawa） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0314/ |
 | secondary/autumn_leaves.yaml | ウォーカープラス(紹介サイト。公式ではない)（walkerplus-koyo-tokyo） | user（2026-11-04） | https://koyo.walkerplus.com/list/ar0313/ |
 | secondary/autumn_leaves.yaml | GO TOKYO(東京都観光財団。紹介サイト)（gotokyo-autumn-leaves-ja） | user（2026-11-05） | https://www.gotokyo.org/jp/story/guide/autumn-leaves-forecast/ |
