@@ -477,6 +477,7 @@ def current_status_errors(sents, body, brief, c, env=None, err=None):
                 out.append(err("spread_hidden", None, f"{g['part'] or C['lines']['whole']}は発信元で状態にばらつきがある({'・'.join(g['facts'])})",
                                f"「{blk.get('spread_line') or ''}」を入れ、{'・'.join(left or g['facts'])}も発信元と日付を添えて並べる"))
     out += embedded_post_quote_errors(body, brief, env, err)    # 指示書 open-question-breadth の続き 第3部
+    out += earlier_errors(sents, brief, c, err)                 # 続き 第4部
     # 第 6 部: 手順を飛ばした答え
     if on(c, "steps"):
         bid = brief.get("id")
@@ -494,6 +495,27 @@ def current_status_errors(sents, body, brief, c, env=None, err=None):
                     continue
                 out.append(err("refresh_not_recorded", None, f"「{pg['name']}」のページが読み直しで変わっているのに、記録が無い",
                                C["lines"]["refresh_fix"].format(id=bid, where=pl)))
+    return out
+
+
+def earlier_errors(sents, brief, c, err):
+    """続き 第4部 6: 少し前の様子の記録(15〜30 日前)を印にした文は、その日付と「その後の様子は確かめられていない」ことを同じ文に書く。"""
+    ob = (brief.get("current_status") or {}).get("open") or {}
+    ids = {k["fact"]: k for k in ob.get("earlier") or []}
+    if not ids:
+        return []
+    E = open_cfg(c)["earlier_section"]
+    out = []
+    for j, s in enumerate(sents):
+        nxt = sents[j + 1]["clean"] if j + 1 < len(sents) else ""      # 「…時点では見頃でした。その後の様子は確かめられていません。」の 2 文
+        for i in s["ids"]:
+            k = ids.get(i)
+            if not k:
+                continue
+            md, jp = _md(k.get("state_date")), _jp_md(k.get("state_date"))
+            dated = (md and md in s["clean"]) or (jp and jp in s["clean"])
+            if not dated or not (_has(E["later_unknown_words"], s["clean"]) or _has(E["later_unknown_words"], nxt)):
+                out.append(err("earlier_as_now", s, f"少し前の様子の記録({i}。{k.get('state_date')})を、今の様子として書いている", E["fix"]))
     return out
 
 
@@ -607,13 +629,17 @@ def _record_name(r, cands, policy):
     return r.get("name"), r.get("prefecture"), r.get("city")
 
 
-def open_records(question, cond, now, env=None, c=None, species_words=None):
+def open_records(question, cond, now, env=None, c=None, species_words=None, older=False):
     """手元の今年の現況(日付つき・状態あり・行事でない)を、聞かれた対象(種を挙げたらその種の語が記録にあるもの)で集める。
-    名所・発信元ごとに、いちばん新しい状態の日付の記録 1 件。状態の日付が open.recent_days より古いものは入れない。新しい順。"""
+    名所・発信元ごとに、いちばん新しい状態の日付の記録 1 件。状態の日付が open.recent_days より古いものは入れない。新しい順。
+    older=True(続き 第4部): open.recent_days より古く open.earlier_days 以内の記録(「少し前の様子」)。"""
     from . import observations as O
     OC = open_cfg(c)
     policy = O.load_policy()
     days = _v(OC["recent_days"])
+    lo = days + 1 if older else 0
+    if older:
+        days = _v(OC["earlier_days"])
     words = species_words or []
     out = []
     for sj in _subjects(cond, policy):
@@ -628,7 +654,7 @@ def open_records(question, cond, now, env=None, c=None, species_words=None):
                 age = (now.date() - date.fromisoformat(str(sd)[:10])).days
             except ValueError:
                 continue
-            if age < 0 or age > days:
+            if age < lo or age > days:
                 continue
             text = " ".join(str(r.get(k) or "") for k in ("state", "kind", "name"))
             if words and not any(w in text for w in words):
@@ -698,7 +724,20 @@ def add_open_facts(F, question, cond, cands, now, env, c):
             cand["current_state"] = r.get("state_norm") or r.get("state")
             cand["basis"] = "current"
         known.append({"name": name, "fact": fr["id"], "state_date": r["_sd"], "publisher": fr.get("source"), "source_class": fr.get("source_class")})
-    return {"where": _open_where(cond, c), "what": _open_what(cond, species, c), "species": species, "known": known}
+    earlier = []                                           # 続き 第4部: 少し前の様子(同じ場所に 14 日以内の記録があれば出さない。候補・順位には使わない)
+    recent_names = {O._key(r["_name"]) for r in recs}
+    for r in open_records(question, cond, now, env, c, species_words=words if species else None, older=True):
+        if O._key(r["_name"]) in recent_names or len(earlier) >= _v(OC["max_known"]):
+            continue
+        label = r["_name"] + (f"({r['part']})" if r.get("part") else "")
+        fr = F.add("current", OC["lines"]["earlier"].format(name=label, state=_legend_state(r, policy) + post_mark(r, c), md=_md(r["_sd"]), publisher=r.get("publisher") or ""),
+                   place=r["_name"], source=r.get("publisher"), url=r.get("url"), source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
+                   extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "part": r.get("part"), "earlier": True, "_pref": r.get("_pref"), "_city": r.get("_city")})
+        if fr is None:
+            continue
+        recent_names.add(O._key(r["_name"]))
+        earlier.append({"name": r["_name"], "fact": fr["id"], "state_date": r["_sd"], "publisher": fr.get("source")})
+    return {"where": _open_where(cond, c), "what": _open_what(cond, species, c), "species": species, "known": known, "earlier": earlier}
 
 
 def open_targets(block, question, now, env=None, c=None):
@@ -742,7 +781,12 @@ def open_md_lines(doc, fact_md, c=None):
     if s:
         L = cfg(c)["lines"]
         out.append(L["searched_found"].format(at=s["at"][:16]) if s.get("found") else L["searched_none_md"].format(at=s["at"][:16]))
-    return out + [""]
+    out.append("")
+    er = [fact_md(fx[k["fact"]]) for k in blk.get("earlier") or [] if k.get("fact") in fx]
+    if er:                                                 # 続き 第4部: 少し前の様子(並べる順は 今年の現況 → 少し前の様子 → 例年の目安 → 未確認)
+        E = open_cfg(c)["earlier_section"]
+        out += [E["heading"], "", E["lead"], ""] + er + [""]
+    return out
 
 
 def open_step_lines(bid, target, c=None):

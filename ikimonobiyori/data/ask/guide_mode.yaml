@@ -617,6 +617,12 @@ current_status:
     enabled: true
     routes: [plan, season_place]     # 開いた質問として扱う経路(仮置き。知識・見どころ・日付つきの種などは対象にしない)
     recent_days: {value: 14, source: "第 5 部のばらつきの窓(14 日)と同じ幅で、手元の今年の現況を「今の様子」として並べる(仮置き)", provisional: true}
+    earlier_days: {value: 30, source: "指示書 open-question-breadth の続き 第4部(本人の返事 6): 14 日の幅から外れた公式の記録を「少し前の様子」として添える上限(15〜30 日前・仮置き)", provisional: true}
+    earlier_section:
+      heading: "## 少し前の様子(15〜30日前の公式の記録)"
+      lead: "今年の現況の幅(14 日)より前の、公式の記録です。今の様子として言い切らず、「○月○日時点では見頃でした。その後の様子は確かめられていません」の形で、日付つきで書く。並べる順は 今年の現況 → 少し前の様子 → 例年の目安 → 未確認。"
+      later_unknown_words: [その後, 確かめられていません, 確かめていません, 確認できていません, 分かりません]
+      fix: "「○月○日時点では見頃でした。その後の様子は確かめられていません」の形で、日付と、その後の様子が分からないことを同じ文に書く"
     max_known: {value: 20, source: "資料に並べる手元の今年の現況の数の上限(仮置き。2026-11-28 の写しで、花の開いた質問の日付つきの記録は 11 件)", provisional: true}
     max_searches: {value: 8, source: "指示書 open-question-breadth 1-3(1 問あたり検索 8 回の初期値。第 5 部の試しで見直す)", provisional: true}
     max_pages: {value: 16, source: "指示書 open-question-breadth 1-3(1 問あたりページの取得 16 回の初期値。第 5 部の試しで見直す)", provisional: true}
@@ -628,6 +634,7 @@ current_status:
       where_default: 出発地から行ける範囲
       candidate_reason: 手元に今年の現況がある(開いた質問)
       dated: "{name}: {state}({md}時点、{publisher})"
+      earlier: "{name}: {state}({md}時点、{publisher}。少し前の様子で、その後の様子は確かめられていない)"
     section:
       heading: "## 聞かれた対象の今年の現況(手元の記録・新しい順)"
       lead: "{where}で、{what}の今年の現況(日付つき)の記録です。公式ページの記録だけ。ここにある場所は候補にも入っている。答えでは、この中から新しいもの・聞かれた対象に合うものを選び、並べる順は 今年の現況のある場所(新しい日付の順)→ 例年の目安の場所 → 未確認の場所。場所(括弧の中)が書かれた記録は、その場所のことだけを書く。"
