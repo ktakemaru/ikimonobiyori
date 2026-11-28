@@ -49,6 +49,15 @@ class FactIdsAndDates(unittest.TestCase):
         self.assertEqual(len({r["id"] for r in F.rows}), len(F.rows))
         self.assertEqual(c["id"], "F003")
 
+    def test_fact_date_without_read_at_uses_brief_year(self):
+        """施設の発信の事実には読んだ時刻が無い(再試しの質問 2)。資料の年で日付にする。"""
+        f = {"id": "F056", "kind": "current", "observed": None, "read_at": None,
+             "content": "試験のビジターセンター(作り物)は、11/27時点で「麓 散り始め」と発信しています。"}
+        brief = {"now": "2026-11-28T10:00:00+09:00", "facts": [f]}
+        s = _s("試験のビジターセンター(作り物)は、11月27日時点で麓は散り始めと発信しています。", ["F056"])
+        self.assertEqual(GV.date_basis_errors([s], brief, GB.cfg()), [])
+        self.assertEqual(GV.fact_date({**f, "_year": "2026"}), "2026-11-27")
+
     def test_fact_date_from_content(self):
         r = {"id": "F001", "kind": "current", "observed": None, "read_at": "2026-11-28T09:00:00+09:00",
              "content": "試験のビジターセンター(作り物)は、11/27時点で「麓 散り始め」と発信しています。"}

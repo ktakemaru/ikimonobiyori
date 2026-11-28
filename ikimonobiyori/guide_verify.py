@@ -419,7 +419,7 @@ def fact_date(r):
     if r.get("observed"):
         return str(r["observed"])[:10]
     m = _AS_OF_MD.search(r.get("content") or "")
-    y = str(r.get("read_at") or "")[:4]
+    y = str(r.get("read_at") or r.get("_year") or "")[:4]           # 読んだ時刻の無い事実(施設の発信)は資料の年
     if not m or not y.isdigit():
         return None
     return f"{y}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
@@ -451,7 +451,8 @@ def date_basis_errors(sents, brief, c):
     D = c.get("date_basis") or {}
     if not D.get("enabled"):
         return []
-    by = {f["id"]: f for f in brief.get("facts") or []}
+    yr = str(brief.get("now") or "")[:4]
+    by = {f["id"]: {**f, "_year": yr} for f in brief.get("facts") or []}
     out = []
     for s in sents:
         fs = [by[i] for i in s["ids"] if i in by and by[i].get("kind") == "current"]
@@ -660,7 +661,7 @@ def check(draft, brief, c=None, env=None):
     errs += contrast_errors(sents, brief, c)               # 段階82 の続き: 2 つの種の見分け方のカードの組み合わせと逆の文
     errs += CS.current_status_errors(sents, strip_markers(parsed["body"], c), brief, c, env, _err)
     by = {r["id"]: r for r in (brief.get("facts") or []) + (brief.get("seasonal_obs") or []) + (brief.get("cards") or [])}
-    cited = [by[i] for i in cited_ids if i in by]
+    cited = [{**by[i], "_year": str(brief.get("now") or "")[:4]} for i in cited_ids if i in by]
     src = final_sources(cited, c)
     wl = weather_line(brief, body, c)                       # 指示書 open-question-breadth 第4部 6: 出かける日の答えの最後に、天気の一言
     if wl:
