@@ -364,7 +364,7 @@ research:
     date_styles: {article: 記事ごとの日付あり, photo: 撮影日あり, none: 日付なし}
     update_styles: {append: 記事が増える, rewrite: 1 ページを書き換える, monthly_url: 月ごとに URL が変わる}
     step_lines:
-      - '0. 最初に読む(見つけた公式ページの一覧。Web の検索より先に): 下の {n} ページを WebFetch で読む(一覧から読むのは最大 {max} 回。取得の上限 {pages} 回に数える)。読めて対象と日付が分かったものは、検索で見つけて読んだ公式ページと同じに ask record する(一覧に載っていることで確かさを上げない)。読めたページごとに python -X utf8 -m ikimonobiyori.ask research seen <id> --brief {id} を実行する。'
+      - '0. 最初に読む(見つけた公式ページの一覧。Web の検索より先に): 下の {n} ページを WebFetch で読む(一覧から読むのは最大 {max} 回。取得の上限 {pages} 回に数える)。読めて対象と日付が分かったものは、検索で見つけて読んだ公式ページと同じに ask record する(一覧に載っていることで確かさを上げない)。一覧のページの発行元は、運営者の欄・著作権表示・同じホストのトップページで確かめてある(ページに運営者の欄が無くても、一覧の発行元の名前で記録してよい)。発行元自身の投稿(SNS)の文だけのページは、公式サイトが自分のアカウントとして案内している(「フォロー」の案内やリンク)ことを確かめて、ask record の embedded_post で記録する(docs/guide-mode.md)。実際に読めたページだけ、python -X utf8 -m ikimonobiyori.ask research seen <id> --brief {id} を実行する(読んでいないページには実行しない)。'
     row: "   - {id}: {name}({publisher}。{km}最後に読めた日 {last}) {url}"
   pending_add_line: '公式ページで確かめるのに使えたページのうち、発行元がその場所の運営者・指定管理者・自治体・観光協会・ビジターセンターだとページの中身(運営者の欄・著作権表示)から確かめられたものは、python -X utf8 -m ikimonobiyori.ask research pending --brief {id} --file <JSON> で残す(1 件: publisher・publisher_kind・official_reason・url・subject・content・kinds・date_style(article/photo/none)・update_style(append/rewrite/monthly_url。monthly_url は url_template に {{yyyy}}・{{mm}})・place{{name, prefecture, city, lat, lon}})。台帳にあるページ・確かめられないページは残さない(はねられる)。'
   step_lines:
@@ -599,7 +599,7 @@ current_status:
       - '始める前に、利用者への予告を 1 行だけ出す: 「公式ページで広く調べてから答えます。3 分ほどかかります。」(CLAUDE.md の表の「広く調べて答える」。2026-11-28 の試し 9 回の実測。docs/wait-notice-timings.md)。'
       - '今年の現況(名所ごと): 検索の語は名所の名前・対象・今年の年だけ(個人情報・この環境の情報を入れない)。1 つの名所につき検索 {searches} 回・ページ {pages} 枚まで(WebSearch・WebFetch。検索の要約を事実にしない)。'
       - '読む順番: 現地の発信(観光協会・施設や索道の運営会社・自治体・ビジターセンター)を先に、次に紹介サイト。自動アクセスを断っているページ・ログインや有料の壁は読まず、人が開く URL として添える。'
-      - '読んだら 1 件ずつ ask record --batch <JSON> で記録する(state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
+      - '読んだら 1 件ずつ ask record --out-dir <データ置き場> --batch <JSON> で記録する(--out-dir は必須。state は原文・state_date は状態の日付・part はページが場所を分けて書いていればその言葉・url・publisher・source_class)。日付の無い状態は、読んだ日を状態の日付にしない(state_date を省く)。名所全体に 1 つの語だけの紹介サイトの表示は part なしで記録する。'
       - 'そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place <名所>(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
   post:                              # 指示書 open-question-breadth の続き 第3部: 公式ページに載った発行元自身の投稿
     mark: "(公式ページに載った発行元の投稿、投稿日 {md})"
