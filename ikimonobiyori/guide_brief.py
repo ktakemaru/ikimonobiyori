@@ -2037,6 +2037,16 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
     if CS.on(c):                                          # 指示書 docs/current-status-instructions.md 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと)
         cs_block = CS.build_block(CS.add_facts(F, question, cond, cands, now, env, c), question, cond, now, env, c)
         targets += CS.research_targets(cs_block, {**cond, "route": res.get("route") or cond.get("route")}, now, c)   # 第 4 部
+        if not cs_block["places"] and CS.is_open(question, {**cond, "route": res.get("route") or cond.get("route")}, [], towns or q_areas, c):
+            ob = CS.add_open_facts(F, question, cond, cands, now, env, c)   # 指示書 open-question-breadth 第 1 部: 開いた質問の手元の今年の現況と、広く探す対象
+            ob["searched"] = CS.searched_for(question, ob["where"], now, env, c)
+            cs_block["open"] = ob
+            targets += [] if researched else CS.open_targets(ob, question, now, env, c)   # 段階82 第3部 4: 同じ質問で調べるのは 1 回だけ
+            for r in cands:
+                if "distance_text" not in r:                  # 足した候補にも、ほかの候補と同じ距離の語・地域の組
+                    r.setdefault("group", _group_of(r.get("prefecture"), c))
+                    km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), prefecture=r.get("prefecture"), city=r.get("city"), c=c)
+                    r["distance_km"], r["distance_text"] = km, label
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
@@ -2674,6 +2684,7 @@ def render_md(doc):
         L.append("")
     from . import current_status as CS
     L += CS.md_lines(doc, _fact_md)                        # 指示書 current-status 第 2〜5 部: 聞かれた名所の今年の現況(場所ごと・出どころごと。記録があるときだけ)
+    L += CS.open_md_lines(doc, _fact_md)                   # 指示書 open-question-breadth 第 1 部: 開いた質問の手元の今年の現況(新しい順)
     if doc["candidates"]:
         L += ["## 候補と順位", ""]
         if doc.get("candidates_note"):

@@ -558,6 +558,32 @@ current_status:
     line: 発信元によって、状況の伝え方にばらつきがあります。
   steps:                             # 第 6 部: 手順を飛ばした答えを照合で止める
     enabled: true
+  # 指示書 open-question-breadth 第 1 部(2026-11-28): 場所を名指ししない質問でも、手元の今年の現況を全部並べ、Web で広く探す。
+  # 名指しの質問(上の research)は変えない。調べた印・照合(current_research_skipped)は同じ部品(--place に where を渡す)。
+  open:
+    enabled: true
+    routes: [plan, season_place]     # 開いた質問として扱う経路(仮置き。知識・見どころ・日付つきの種などは対象にしない)
+    recent_days: {value: 14, source: "第 5 部のばらつきの窓(14 日)と同じ幅で、手元の今年の現況を「今の様子」として並べる(仮置き)", provisional: true}
+    max_known: {value: 20, source: "資料に並べる手元の今年の現況の数の上限(仮置き。2026-11-28 の写しで、花の開いた質問の日付つきの記録は 11 件)", provisional: true}
+    max_searches: {value: 8, source: "指示書 open-question-breadth 1-3(1 問あたり検索 8 回の初期値。第 5 部の試しで見直す)", provisional: true}
+    max_pages: {value: 16, source: "指示書 open-question-breadth 1-3(1 問あたりページの取得 16 回の初期値。第 5 部の試しで見直す)", provisional: true}
+    why: "「{where}」の{what}を広く探す(開いた質問)"
+    search_words: "{what} {year}年{month}月 見頃 公式(都県の名前を変えて範囲全体で)"
+    lines:
+      where_origin: "{origin}から行ける範囲"
+      where_default: 出発地から行ける範囲
+      candidate_reason: 手元に今年の現況がある(開いた質問)
+      dated: "{name}: {state}({md}時点、{publisher})"
+    section:
+      heading: "## 聞かれた対象の今年の現況(手元の記録・新しい順)"
+      lead: "{where}で、{what}の今年の現況(日付つき)の記録です。この対象を書くときは、ここにある場所を落とさない。並べる順は、今年の現況のある場所(新しい日付の順)→ 例年の目安の場所 → 未確認の場所。"
+      none: "- (手元に、この対象の日付つきの今年の現況はない)"
+    step_lines:
+      - '開いた質問(場所を名指ししていない): 検索 {searches} 回・ページの取得 {pages} 回まで(WebSearch・WebFetch)。検索の語は対象・季節・範囲・今年の年だけ(個人情報・この環境の情報を入れない)。WebSearch には blocked_domains に {blocked} を渡す(使わない出典。結果に出ても読まない)。'
+      - '1. 広く探す: 範囲全体(出発地から片道 250km 前後。近い所だけで終わらせない)で、「今その対象が見られそうな場所」の名前を集める。紹介サイト・観光協会の特集・まとめ記事は場所の名前を知るきっかけにだけ使う(そこに書かれた色づきの段階・見頃を事実にしない)。上の節の手元の場所も候補から外さない。'
+      - '2. 公式ページで確かめる: 候補ごとに運営者・自治体・観光協会・ビジターセンターのページを WebFetch で読む。中身が取れない応答(148 バイトなど)は読めた扱いにせず、別ページを 1 回だけ試す。それでも読めなければ読めなかったとして扱い、検索結果の抜き書きを公式の内容にしない。'
+      - '3. 記録する(ask record --out-dir <データ置き場> --batch <JSON>): 対象と日付が分かったもの → 1 件ずつ {{"subject", "name", "prefecture", "city", "kind", "state"(原文), "state_date", "url", "publisher", "source_class": "official"}}。日付の無い公式ページ(月別の一覧など)→ state を入れず {{"name", "prefecture", "city", "kind", "typical"(書かれた月・時期), "url", "publisher", "source_class": "official", "basis": "page"}}(例年の目安。今年の現況にしない)。公式ページが見つからない・読めないもの → ask record-unverified --batch <JSON>(name・prefecture・city・theme・months)。'
+      - '4. そのあと python -X utf8 -m ikimonobiyori.ask research searched --brief {id} --place "{where}"(新しい情報が取れなかったら --none <理由>)を実行し、同じ質問で ask brief を作り直す。Web が使えないときは調べずに --none <Web が使えない> を実行する。'
   verify:
     extra_state_words: [終了, 終わっ, 残る, 残って, 無い, ない, 無く, 散っ]   # 場所を広げた文を見つけるための状態の言い方(照合の state_words に足すのはこの節の中だけ)
     unseen_state_words: [紅葉, 色づ, 見頃, 見ごろ, 残, 無い, ない, 散]

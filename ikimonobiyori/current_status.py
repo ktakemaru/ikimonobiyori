@@ -308,7 +308,9 @@ def research_targets(block, cond, now, c):
 
 def missing_lines(block, c):
     L = cfg(c)["lines"]
-    return [L["searched_none"].format(where=p["name"]) for p in block["places"] if (p.get("searched") or {}).get("found") is False]
+    ob = block.get("open")
+    return [L["searched_none"].format(where=p["name"]) for p in block["places"] if (p.get("searched") or {}).get("found") is False] + (
+        [L["searched_none"].format(where=ob["where"])] if ob and (ob.get("searched") or {}).get("found") is False else [])
 
 
 # ---- 調べた印(第 4・6 部) ----
@@ -470,7 +472,7 @@ def current_status_errors(sents, body, brief, c, env=None, err=None):
         bid = brief.get("id")
         done = searched_by_brief(bid, env) if bid else set()
         for t in (brief.get("research") or {}).get("targets") or []:
-            if t.get("kind") == "current_status" and t.get("where") not in done:
+            if t.get("kind") in ("current_status", "open_breadth") and t.get("where") not in done:
                 out.append(err("current_research_skipped", None, f"「{t['where']}」の今年の現況を調べる対象があるのに、調べた印が無い",
                                C["lines"]["skipped_fix"].format(id=bid, where=t["where"])))
         names = {n for p in blk.get("places") or [] for n in [p["name"], *(p.get("candidates") or [])]}
@@ -502,3 +504,189 @@ def _recorded_urls(brief, env=None):
             except (KeyError, ValueError):
                 continue
     return out
+
+
+# ---- 開いた質問(指示書 open-question-breadth 第 1 部。2026-11-28) ----
+# 場所を名指ししない質問(「週末のおすすめ」「横浜から行ける場所で紅葉」「ツバキやサザンカが見られるところ」)でも、
+# 1. 手元の今年の現況(日付つき)を聞かれた対象で全部集めて資料に並べ(候補に無ければ候補に足す)、
+# 2. 広く探す対象(research.targets の kind: open_breadth)を 1 つ出す。調べた印は名指しの質問と同じ ask research searched(--place は対象の where)。
+# 照合の「調べる手順を飛ばした答え」(current_research_skipped)も同じ決まりで見る。値は guide_mode.yaml の current_status.open。
+
+def open_cfg(c=None):
+    return cfg(c).get("open") or {}
+
+
+def is_open(question, cond, asked, towns=(), c=None):
+    """開いた質問か: 設定が有効・経路が open.routes・聞かれた名所(asked_places)が無い・市区町村を挙げていない。"""
+    OC = open_cfg(c)
+    if not on(c) or not OC.get("enabled"):
+        return False
+    if cond.get("route") not in (OC.get("routes") or []):
+        return False
+    return not asked and not towns
+
+
+def _open_species(question):
+    """聞かれた種(種の表で引けるもの)→ (表示の名前の一覧, 記録の文と照らす語の一覧)。"""
+    from . import season_place as SP
+    try:
+        sps = SP.resolve_all(question)
+    except (KeyError, TypeError, ValueError):
+        sps = []
+    names, words = [], []
+    for sp in sps:
+        if sp.get("name") and sp["name"] not in names:
+            names.append(sp["name"])
+        for w in [sp.get("name"), *(sp.get("match") or []), *(sp.get("words") or [])]:
+            if w and w not in words:
+                words.append(w)
+    return names, words
+
+
+def _open_where(cond, c):
+    L = open_cfg(c)["lines"]
+    if cond.get("area_names"):
+        return "・".join(cond["area_names"])
+    if cond.get("region"):
+        return str(cond["region"])
+    if cond.get("origin"):
+        return L["where_origin"].format(origin=cond["origin"])
+    return L["where_default"]
+
+
+def _open_what(cond, species, c):
+    if species:
+        return "・".join(species)
+    sw = (cfg(c)["research"].get("subject_words") or {})
+    return "・".join(sw.get(s, s) for s in (cond.get("subjects") or [])) or None
+
+
+def _record_name(r, cands, policy):
+    from . import observations as O
+    hit = O.match_record(r, cands or [], policy)
+    if hit:
+        return hit["name"], hit.get("prefecture"), hit.get("city")
+    return r.get("name"), r.get("prefecture"), r.get("city")
+
+
+def open_records(question, cond, now, env=None, c=None, species_words=None):
+    """手元の今年の現況(日付つき・状態あり・行事でない)を、聞かれた対象(種を挙げたらその種の語が記録にあるもの)で集める。
+    名所・発信元ごとに、いちばん新しい状態の日付の記録 1 件。状態の日付が open.recent_days より古いものは入れない。新しい順。"""
+    from . import observations as O
+    OC = open_cfg(c)
+    policy = O.load_policy()
+    days = _v(OC["recent_days"])
+    words = species_words or []
+    out = []
+    for sj in _subjects(cond, policy):
+        cands = O.all_candidates(sj, policy)
+        for r in O.read_records(sj, env, policy):
+            sd = O.state_date_of(r)
+            if not r.get("state") or r.get("event") or not sd or not _this_year(r, now):
+                continue
+            try:
+                age = (now.date() - date.fromisoformat(str(sd)[:10])).days
+            except ValueError:
+                continue
+            if age < 0 or age > days:
+                continue
+            text = " ".join(str(r.get(k) or "") for k in ("state", "kind", "name"))
+            if words and not any(w in text for w in words):
+                continue
+            name, pref, city = _record_name(r, cands, policy)
+            if not name:
+                continue
+            out.append({**r, "subject": r.get("subject") or sj, "_name": name, "_pref": pref, "_city": city, "_sd": str(sd)[:10]})
+    out.sort(key=lambda r: (r["_sd"], r.get("read_at") or ""), reverse=True)
+    seen, rows = set(), []
+    for r in out:
+        k = (O._key(r["_name"]), r.get("publisher") or r.get("url"), r["subject"])
+        if k in seen:
+            continue
+        seen.add(k)
+        rows.append(r)
+    return rows
+
+
+def add_open_facts(F, question, cond, cands, now, env, c):
+    """手元の今年の現況を事実にし(同じ名所・同じ URL・同じ日付の事実が既にあれば指すだけ)、候補に無い名所は候補に足す。
+    → {where, what, species, known: [{name, fact, state_date, publisher, source_class}]}(新しい順)。"""
+    from . import observations as O
+    OC = open_cfg(c)
+    species, words = _open_species(question)
+    recs = open_records(question, cond, now, env, c, species_words=words if species else None)
+    known = []
+    by_name = {O._key(n): r for r in cands for n in [r.get("name"), *(r.get("merged_from") or [])] if n}
+    policy = O.load_policy()
+    for r in recs[: _v(OC["max_known"])]:
+        name = r["_name"]
+        have = next((f for f in F.rows if f.get("kind") == "current" and O._key(f.get("place")) == O._key(name)
+                     and (f.get("url") or None) == (r.get("url") or None) and (f.get("observed") or None) == r["_sd"]), None)
+        fr = have or F.add("current", OC["lines"]["dated"].format(name=name, state=r.get("state"), md=_md(r["_sd"]), publisher=r.get("publisher") or ""), place=name, source=r.get("publisher"), url=r.get("url"),
+                           source_class=r.get("source_class"), observed=r["_sd"], read_at=r.get("read_at"),
+                           extra={"state": r.get("state"), "state_norm": r.get("state_norm"), "_pref": r.get("_pref"), "_city": r.get("_city"),
+                                  "freshness": O.freshness(r, now.date(), r["subject"], policy)["label"]})
+        if fr is None:
+            continue
+        cand = by_name.get(O._key(name))
+        if cand is None:
+            cand = {"subject": r["subject"], "rank": None, "name": name, "chosen": False, "basis": "current",
+                    "current_state": r.get("state_norm") or r.get("state"), "prefecture": r.get("_pref"), "city": r.get("_city"),
+                    "reasons": [OC["lines"]["candidate_reason"]]}
+            cands.append(cand)
+            by_name[O._key(name)] = cand
+        elif not cand.get("current_state"):
+            cand["current_state"] = r.get("state_norm") or r.get("state")
+            cand["basis"] = "current"
+        known.append({"name": name, "fact": fr["id"], "state_date": r["_sd"], "publisher": fr.get("source"), "source_class": fr.get("source_class")})
+    return {"where": _open_where(cond, c), "what": _open_what(cond, species, c), "species": species, "known": known}
+
+
+def open_targets(block, question, now, env=None, c=None):
+    """広く探す対象(1 つ)。同じ質問・同じ where で research.once_hours の中に調べた印があれば出さない。"""
+    if not block or not on(c, "research"):
+        return []
+    OC = open_cfg(c)
+    where = block["where"]
+    if block.get("searched"):
+        return []
+    what = block.get("what") or ""
+    return [{"what": what or None, "where": where, "why": OC["why"].format(where=where, what=what), "kind": "open_breadth",
+             "search_words": OC["search_words"].format(where=where, what=what, year=now.year, month=now.month).strip(),
+             "known": [k["name"] for k in block.get("known") or []],
+             "max_searches": _v(OC["max_searches"]), "max_pages": _v(OC["max_pages"]),
+             "blocked_domains": open_blocked_domains()}]
+
+
+def open_blocked_domains():
+    """検索から外すドメイン(使わない出典: 予想・転載のホスト、読まないホスト、不採用のホスト、使い方を限るホスト)。"""
+    from . import observations as O
+    from . import publisher as P
+    rec = O.load_policy().get("record") or {}
+    out = list((P.cfg().get("unused_sources") or {}).get("unused") or [])
+    out += list(_v(rec.get("not_read_hosts") or {"value": []}) or [])
+    out += list(rec.get("rejected_hosts") or [])
+    out += list(_v((rec.get("restricted_sources") or {}).get("hosts") or {"value": []}) or [])
+    return sorted(dict.fromkeys(h for h in out if h))
+
+
+def open_md_lines(doc, fact_md, c=None):
+    blk = (doc.get("current_status") or {}).get("open")
+    if not blk:
+        return []
+    S = open_cfg(c)["section"]
+    fx = {f["id"]: f for f in doc.get("facts") or []}
+    out = [S["heading"], "", S["lead"].format(where=blk["where"], what=blk.get("what") or ""), ""]
+    rows = [fact_md(fx[k["fact"]]) for k in blk.get("known") or [] if k.get("fact") in fx]
+    out += rows or [S["none"]]
+    s = blk.get("searched")
+    if s:
+        L = cfg(c)["lines"]
+        out.append(L["searched_found"].format(at=s["at"][:16]) if s.get("found") else L["searched_none_md"].format(at=s["at"][:16]))
+    return out + [""]
+
+
+def open_step_lines(bid, target, c=None):
+    OC = open_cfg(c)
+    return [x.format(id=bid, where=target["where"], searches=target["max_searches"], pages=target["max_pages"],
+                     blocked="・".join(target.get("blocked_domains") or [])) for x in OC["step_lines"]]

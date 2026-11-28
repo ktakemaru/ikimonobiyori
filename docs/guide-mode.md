@@ -91,6 +91,11 @@ ask verify <下書き> --brief <id> に通す(不合格なら理由に従って�
   - 手順: 名所の名前・対象・今年の年で検索し(名所 1 つにつき検索 2 回・ページ 4 枚まで。`guide_mode.yaml` の `current_status.research`)、現地の発信(観光協会・施設や索道の運営会社・自治体・ビジターセンター)を先に、次に紹介サイトを WebFetch で読む。`ask research fetch`(公式だけ)は使わない。
   - 記録は `ask record --batch <JSON>`(1 件ずつ: `state` 原文・`state_date` 状態の日付・`part` ページが場所を分けて書いていればその言葉(30 字まで)・`url`・`publisher`・`source_class`)。日付の無い状態は `state_date` を省く(新しさは「不明」)。名所全体に 1 つの語だけの紹介サイトの表示は `part` なし。
   - そのあと `ask research searched --brief <id> --place <名所>`(取れなかったら `--none <理由>`)を実行して資料を作り直す。同じ質問・同じ名所で 24 時間(`research.once_hours`)の中に印があれば、作り直した資料に「調べる」は出ない。取れなかったときは「足りないもの」にそのとおり出る。
+- **開いた質問でも広く探す**(指示書 open-question-breadth 第 1 部。2026-11-28): 場所を名指ししない質問(「週末のおすすめ」「横浜から行ける場所で紅葉情報」「ツバキやサザンカが見られるところ」)で、経路が `current_status.open.routes`(計画・種の名所と時期)のとき、資料は
+  - 節「聞かれた対象の今年の現況(手元の記録・新しい順)」に、手元の今年の現況(状態の日付が `open.recent_days` 以内・日付つき。種を挙げた質問はその種の語が記録にあるもの)を新しい順に並べる。候補に無い名所は候補に足す(「手元に今年の現況がある(開いた質問)」)。答えでは、この節の場所を落とさない。並べる順は 今年の現況(新しい日付の順)→ 例年の目安 → 未確認。
+  - 節「調べる」に「「○○から行ける範囲」の○○を広く探す(開いた質問)」(`research.targets` の `kind: open_breadth`)と手順が出る。手順: ① 範囲全体で場所の名前を集める(紹介サイト・まとめは名前を知るきっかけだけ。WebSearch に `blocked_domains` で使わない出典を渡す) ② 候補ごとに公式ページを WebFetch で読む(148 バイトなどは別ページを 1 回だけ) ③ 対象と日付が分かったもの → `ask record`(今年の現況)、日付の無い公式ページ → `ask record`(`typical`・`basis: page`。例年の目安)、公式が見つからない → `ask record-unverified` ④ `ask research searched --brief <id> --place "<節の where>"` を実行して資料を作り直す。上限は 1 問 検索 `open.max_searches`(8)・取得 `open.max_pages`(16)(仮置き)。
+  - 照合は名指しの質問と同じ `current_research_skipped`(調べた印が無い答えを止める)。切るときは `current_status.open.enabled`。
+  - 「横浜から行ける場所で紅葉情報を教えて」が知識の質問に分かれていたので、`data/ask/plan.yaml` の `plan_words` に「行ける」「紅葉情報」「開花情報」を足した。
 - **場所ごと・出どころごと**(第 2・3・5 部): `part` のある記録と利用者の記録(`source_class: user`)は、順位・候補の今年の現況に使わない(`observations.read_records` の既定で外す)。聞かれた名所の節「聞かれた名所の今年の現況(場所ごと・出どころごと)」と事実にだけ出る(JSON は `current_status.places[].current_parts`・`unseen`・`spread`)。
   - 利用者が現地で確認した記録: `ask record --batch` に `{"subject": "autumn_leaves", "name": "筑波山", "part": "山頂", "state": "<利用者の言葉そのまま。80 字まで>", "state_date": "2026-11-26", "source_class": "user", "unseen": ["筑波山神社"]}`(URL は付けない・作らない。状態を段階の語に直さない)。答えでは「11月26日に現地で確認した記録では、…(公式の発表ではありません)」の形で書く。
   - 同じ場所で状態の日付が 14 日以内に状態の語が違う事実は「ばらつき」として並ぶ。答えには「発信元によって、状況の伝え方にばらつきがあります。」と、それぞれの発信元と日付を書く。
