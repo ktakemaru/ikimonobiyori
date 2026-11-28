@@ -159,6 +159,7 @@ entries:
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.kofu.yamanashi.jp/kanko/faq/kyoiku/sports/shisetsu/00644.html", title: "甲府市 紅葉が楽しめる場所を教えてください", checked_on: "2026-10-22"}
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", title: "やまなし観光推進機構 紅葉情報", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "代表点: 仙娥滝付近(推定)。渓谷は長いので、下流の長潭橋付近とは時期・標高がずれる(検索結果の要約では、観光協会の方の話として長潭橋付近は11月初め頃)"
   - id: kouyou-0012
     name: 河口湖 もみじ回廊
@@ -176,6 +177,7 @@ entries:
     approved_at: "2026-10-22"
     sources:
       - {url: "https://fujisan.ne.jp/sightseeing/4218/", title: "富士河口湖町観光連盟 もみじ回廊", checked_on: "2026-10-22"}
+      - {url: "https://www.yamanashi-kankou.jp/special/yamanashi-koyo.html", title: "やまなし観光推進機構 紅葉情報", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "代表点: 梨川沿いの回廊(推定)。所在地は富士河口湖町河口。モミジ約150本"
   - id: kouyou-0014
     name: 袋田の滝
@@ -263,6 +265,7 @@ entries:
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.city.isehara.kanagawa.jp/kankou_guide/docs/2024012600094/", title: "伊勢原市 紅葉(大山)", checked_on: "2026-10-22"}
+      - {url: "https://www.pref.kanagawa.jp/docs/f4y/02yama/kanagawaparkranger/leaves/l-top.html", title: "神奈川県 自然環境保全センター 紅葉情報", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "公式ページに例年の記載なし(紅葉ライトアップが11月下旬ごろ、とだけある)。typical_window は空のまま(ユーザー承認 2026-10-22)。代表点: 大山寺の境内(ユーザーの修正の指示。座標は Claude Code の推定、標高は Open-Meteo Elevation API で取り直し)。76地点の大山(伊勢原。山頂)とは別"
   - id: kouyou-0021
     name: 鎌倉 長谷寺
@@ -296,6 +299,7 @@ entries:
     approved_at: "2026-10-22"
     sources:
       - {url: "https://www.tokyo-park.or.jp/park/rikugien/news/2026/rikugiengardens.html", title: "東京都公園協会 庭紅葉の六義園 夜間特別観賞(2026)", checked_on: "2026-10-22"}
+      - {url: "https://www.tokyo-park.or.jp/park/rikugien/news/index.html", title: "東京都公園協会 六義園 お知らせ", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "公式ページに例年の記載なし。typical_window は空のまま(ユーザー承認 2026-10-22。夜間特別観賞の期間は見頃の記述ではない)。代表点: 庭園(推定)"
   - id: kouyou-0023
     name: 新宿御苑
@@ -312,6 +316,7 @@ entries:
     approved_at: "2026-10-22"
     sources:
       - {url: "https://fng.or.jp/shinjuku/place/season/", title: "国民公園協会 新宿御苑 四季のみどころ", checked_on: "2026-10-22"}
+      - {url: "https://fng.or.jp/shinjuku/", title: "国民公園協会 新宿御苑 季節のみどころ情報", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "公式の記載は月単位(12月の欄に紅葉)。typical_window は12月全体にした。代表点: 苑内(日本庭園付近。推定)"
   - id: kouyou-0025
     name: 養老渓谷(粟又の滝)
@@ -343,6 +348,7 @@ entries:
     sources:
       - {url: "https://www.nikko-kankou.org/spot/12", title: "日光市観光協会 中禅寺湖", checked_on: "2026-10-22"}
       - {url: "https://www.nikko-kankou.org/spot/9", title: "日光市観光協会 いろは坂", checked_on: "2026-10-22"}
+      - {url: "https://www.nikko-kankou.org/flowering/autumn-leaves", title: "日光市観光協会 紅葉情報", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "公式スポットページに例年の記載なし(紅葉状況ページの見頃予測は今年の予測のため使わない。ユーザー承認 2026-10-22)。代表点: 中禅寺温泉(バス停付近。湖面は公式で標高1269m。推定)"
   - id: kouyou-0013
     name: 長瀞(月の石もみじ公園)
@@ -454,6 +460,7 @@ entries:
     status_sources: [tanigawadake-joch-information]
     sources:
       - {url: "https://tanigawadake-joch.com/information/20261022/", title: "谷川岳ヨッホ 紅葉情報(2026-10-22)", checked_on: "2026-10-23"}
+      - {url: "https://tanigawadake-joch.com/information/", title: "谷川岳ヨッホ お知らせ", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "段階16 A-9(山)。ロープウェイの運営者の発信(天神平・ロープウェイ沿線・天神峠)。代表点は天神平の付近(Claude Code の推定)。例年の時期の公式の記載は見つけていない(書かない)"
   - id: kouyou-0031
     name: 白馬 八方尾根(うさぎ平周辺)

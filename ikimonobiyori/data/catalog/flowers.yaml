@@ -660,6 +660,7 @@ entries:
       - 秋バラ
       source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
     sources:
+    - {url: "https://www.kanagawaparks.com/verny/blog/", title: "ヴェルニー公園 ブログ", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     - url: https://www.kanagawaparks.com/verny/
       title: ヴェルニー公園(指定管理者 よこすかseasideパートナーズ)
       checked_on: '2026-10-31'

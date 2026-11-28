@@ -24,6 +24,7 @@ entries:
     status_sources: [agano-hyoko-monthly]
     sources:
       - {url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2845.html", title: "阿賀野市 白鳥の渡来地・瓢湖 最新情報", checked_on: "2026-10-23"}
+      - {url: "https://www.city.agano.niigata.jp/soshiki/koenkanrijimusho/2/2/index.html", title: "阿賀野市 白鳥の渡来状況", checked_on: "2026-11-28"}   # 指示書 open-question-breadth の続き 第5部: 台帳で承認済みの現況のページ(読み直しの対象)
     note: "東京・横浜から約 244 km(範囲の端)。管理者が決めた時間に給餌をしている(公式)"
   - id: hakucho-0002
     name: 安曇野(犀川白鳥湖・御宝田遊水池)
