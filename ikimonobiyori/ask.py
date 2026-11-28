@@ -959,7 +959,7 @@ def main(argv=None, http_get=None):
     p.add_argument("--now")
     p.add_argument("--out-dir", help=argparse.SUPPRESS)
     p = sub.add_parser("research", help="段階78 第4部: その場で調べる。fetch <URL> --brief <id>(公式ページの本文を読む。1 つの質問で 3 ページ・2 分まで)|record --brief <id> --file <JSON>|list")
-    p.add_argument("action", choices=["fetch", "record", "list", "searched"])
+    p.add_argument("action", choices=["fetch", "record", "list", "searched", "pending", "seen"])   # pending・seen: 指示書 open-question-breadth の続き 第1部(見つけた公式ページの一覧に残す・一覧のページを読めた印)
     p.add_argument("url", nargs="?")
     p.add_argument("--place", help="searched: 今年の現況を調べた名所(資料の節「調べる」の名前。指示書 current-status 第 4・6 部)")
     p.add_argument("--none", dest="none_reason", help="searched: 新しい情報が取れなかったときの理由(短く)")
@@ -1268,6 +1268,30 @@ def main(argv=None, http_get=None):
             tail = f"\n…(続きは {r['path']})\n" if len(r["text"]) > lim else "\n"
             sys.stdout.flush(); sys.stdout.buffer.write((r["text"][:lim] + tail).encode("utf-8"))
             return 0
+        if a.action in ("pending", "seen"):              # 指示書 open-question-breadth の続き 第1部
+            from . import pending_sources as PS
+            if a.action == "seen":
+                if not a.url:
+                    print("id か URL がありません", file=sys.stderr)
+                    return 2
+                r = PS.seen(a.url, brief=a.brief, now=now)
+                if r is None:
+                    print("一覧にありません", file=sys.stderr)
+                    return 1
+                _out(r)
+                return 0
+            if not a.file:
+                print("--file <JSON> が要ります", file=sys.stderr)
+                return 2
+            from . import guide_brief as GB
+            try:
+                q = GB.load(a.brief).get("question")
+            except (OSError, ValueError):
+                q = None
+            doc = json.loads(Path(a.file).read_text(encoding="utf-8"))
+            res = PS.add(doc if isinstance(doc, list) else [doc], brief=a.brief, question=q, now=now)
+            _out(res)
+            return 1 if res["rejected"] and not (res["added"] or res["updated"]) else 0
         if a.action == "searched":                       # 指示書 current-status 第 4・6 部: 今年の現況を調べた印(取れた・取れなかった)
             from . import current_status as CS
             if not a.place:

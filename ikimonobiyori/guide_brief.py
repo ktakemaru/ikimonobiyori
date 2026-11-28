@@ -2062,6 +2062,10 @@ def build(question, *, now, env=None, prev=None, clock=None, obs_kw=None):
                     r.setdefault("group", _group_of(r.get("prefecture"), c))
                     km, label = GM.distance_text(r["name"], r.get("distance_km"), cond.get("origin"), prefecture=r.get("prefecture"), city=r.get("city"), c=c)
                     r["distance_km"], r["distance_text"] = km, label
+        if any(t.get("kind") in ("open_breadth", "current_status") for t in targets):   # 指示書 open-question-breadth の続き 1-3: 見つけた公式ページの一覧から最初に読む
+            from . import pending_sources as PS
+            sp_names, sp_words = CS._open_species(question)
+            targets = PS.attach(targets, cond, now, env, species_words=sp_words if sp_names else None)
     _mark_stale(F.rows, cond, now, c)
     doc = {
         "schema": "ikimonobiyori-guide-brief/1", "generator": generator_info(now), "id": bid, "question": question, "now": now.isoformat(),
