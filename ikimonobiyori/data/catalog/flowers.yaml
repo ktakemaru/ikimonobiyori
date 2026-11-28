@@ -184,7 +184,7 @@ entries:
     approved_by: claude_code_provisional
     approved_at: "2026-10-24"
     tags: {prefecture: 千葉県, area: 八千代, terrain: [garden], flower_kinds: [秋バラ], source: "Claude Code が付けた(推定。段階17)"}
-    status_sources: [keisei-rose-garden]
+    status_sources: [keisei-rose-garden, keisei-rose-garden-top]
     sources:
       - {url: "https://www.keiseirose.co.jp/garden/", title: "京成バラ園", checked_on: "2026-10-24"}
     note: "トップに『現在の開花状況』と『秋バラ見頃予報』(グラフの画像)。運営は京成バラ園芸株式会社(民間の施設)"
@@ -957,6 +957,7 @@ entries:
     approved_at: '2026-10-31'
     status_sources:
     - kanagawaparks-kurihama
+    - kanagawaparks-kurihama-blog
   - id: hana-0028
     name: 長井海の手公園 ソレイユの丘
     subjects:
@@ -2107,6 +2108,7 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: '2026-11-10'
+    status_sources: [fujioka-sakurayama-fuyuzakura]   # 指示書 open-question-breadth の続き(本人の返事 8、2026-11-28)
     tags:
       prefecture: 群馬県
       area: 藤岡
@@ -2566,6 +2568,7 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: '2026-11-10'
+    status_sources: [kamikawa-kankou-jomine]   # 指示書 open-question-breadth の続き(本人の返事 8、2026-11-28)
     tags:
       prefecture: 埼玉県
       area: 神川
