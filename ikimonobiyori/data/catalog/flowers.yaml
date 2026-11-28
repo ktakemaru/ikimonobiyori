@@ -164,7 +164,7 @@ entries:
     status: approved
     approved_by: claude_code_provisional
     approved_at: "2026-10-24"
-    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], access: [walk_from_station], flower_kinds: [コスモス], source: "Claude Code が付けた(推定。コスモスの丘。段階17)"}
+    tags: {prefecture: 東京都, area: 多摩, terrain: [garden], access: [walk_from_station], flower_kinds: [コスモス, サザンカ], source: "Claude Code が付けた(推定。コスモスの丘。段階17)"}
     status_sources: [showakinen-flower-information-flowers]
     sources:
       - {url: "https://www.showakinen-koen.jp/flower-information/", title: "国営昭和記念公園 花情報", checked_on: "2026-10-24"}
@@ -173,6 +173,7 @@ entries:
     flower_windows:
       - {kind: ロウバイ, start: '12-21', end: '02-20', source_url: "https://www.showakinen-koen.jp/flower-information/", source_host: www.showakinen-koen.jp, source_class: official, source_year: null, note: "国営昭和記念公園: ソシンロウバイ 12月下旬〜2月中旬(こもれびの池・バーベキューガーデン南側)"}
       - {kind: 梅, start: '01-11', end: '03-20', source_url: "https://www.showakinen-koen.jp/flower-information/", source_host: www.showakinen-koen.jp, source_class: official, source_year: null, note: "国営昭和記念公園: ウメ 1月中旬〜3月中旬(花木園梅園・こもれびの池など)"}
+      - {kind: サザンカ, start: '10-21', end: '02-28', source_url: "https://www.showakinen-koen.jp/flower-information/", source_host: www.showakinen-koen.jp, source_class: official, source_year: null, note: "国営昭和記念公園: サザンカ 10月下旬～2月下旬(園内各所)。本人の返事 2026-11-28 で足した"}
   - id: hana-0005
     name: 京成バラ園
     subjects: [flowers]
@@ -3038,7 +3039,16 @@ entries:
     - flowers
     timing_type: managed
     kind: area
-    location_precision: area_10km
+    point:
+      lat: 35.532
+      lon: 139.388
+      elevation_m: null
+    coordinate_source:
+      kind: wikidata
+      qid: Q11582097
+      title: 相模原公園
+      checked_on: '2026-11-28'
+    location_precision: exact
     status: approved
     approved_by: user
     approved_at: '2026-11-28'
@@ -3059,7 +3069,7 @@ entries:
     - url: https://www.kanagawa-park.or.jp/sagamihara/feed/feed-flower.php
       title: 県立相模原公園 開花情報
       checked_on: '2026-11-28'
-    note: 開花情報は花ごとに場所と撮影日(記事は公園の花ブログ)。運営者は同じホストの公園のトップページで確かめた
+    note: 開花情報は花ごとに場所と撮影日(記事は公園の花ブログ)。運営者は同じホストの公園のトップページで確かめた。座標は Wikidata の項目 Q11582097(相模原公園。日本語版の記事で「神奈川県相模原市南区下溝にある神奈川県立の都市公園」と確かめた。2026-11-28。公式の地図では未確認)
     flower_windows:
     - kind: サザンカ
       start: '11-01'
@@ -3069,3 +3079,82 @@ entries:
       source_class: secondary
       source_year: null
       note: '花ガイドの12月の欄のオトメサザンカ: 開花は11月上旬から12月が見頃(長く楽しめる年もある)'
+  # 本人の返事(2026-11-28 の続きの続きの 2): 公式ページで例年の時期と運営者を確かめて足した。承認外の通信先のホストの値には source_class: secondary と source_host の印
+  - id: hana-0094
+    name: 新宿御苑
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: user
+    approved_at: '2026-11-28'
+    tags:
+      prefecture: 東京都
+      area: 都心
+      city: 新宿区
+      terrain:
+      - garden
+      - urban
+      flower_kinds:
+      - バラ
+      source: 本人の返事(2026-11-28)。運営は一般財団法人国民公園協会新宿御苑(ページ上部の表記・フッター「© The National Gardens Association」)、所在は「東京都新宿区内藤町11番地」(交通アクセスのページ)
+    sources:
+    - url: https://fng.or.jp/shinjuku/2026/10/16/rose_matome/
+      title: 新宿御苑のバラ【2026】| 春・秋の見ごろと楽しみ方(国民公園協会 新宿御苑。2026.10.16)
+      checked_on: '2026-11-28'
+    - url: https://fng.or.jp/shinjuku/place/season
+      title: 新宿御苑 四季のみどころ
+      checked_on: '2026-11-28'
+    note: サザンカは四季のみどころの10月の項に名前があるだけで、見ごろの時期の記載が無いので種類に入れていない。座標は確かめていない(紅葉のカタログ kouyou-0023 にある)
+    flower_windows:
+    - kind: バラ
+      start: '04-21'
+      end: '05-31'
+      source_url: https://fng.or.jp/shinjuku/2026/10/16/rose_matome/
+      source_host: fng.or.jp
+      source_class: secondary
+      source_year: null
+      note: '国民公園協会 新宿御苑: バラは例年、春は4月下旬～5月下旬'
+    - kind: バラ
+      start: '10-21'
+      end: '11-30'
+      source_url: https://fng.or.jp/shinjuku/2026/10/16/rose_matome/
+      source_host: fng.or.jp
+      source_class: secondary
+      source_year: null
+      note: '国民公園協会 新宿御苑: バラは例年、秋は10月下旬～11月下旬'
+  - id: hana-0095
+    name: さむかわ冬のひまわり
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: user
+    approved_at: '2026-11-28'
+    tags:
+      prefecture: 神奈川県
+      area: 湘南
+      city: 寒川町
+      terrain:
+      - garden
+      flower_kinds:
+      - 冬のひまわり
+      source: 本人の返事(2026-11-28)。寒川町観光協会とボランティアが育てる(公式ページ「毎年、寒川町観光協会とボランティアさんで」)。会場は寒川町ひまわり畑(寒川町宮山321)ほか。フッター「Copyright Samukawa-Kankou」
+    sources:
+    - url: https://www.samukawa-kankou.jp/samukawa-winter-himawari/
+      title: さむかわ冬のひまわり(一般社団法人 寒川町観光協会)
+      checked_on: '2026-11-28'
+    note: 会場は寒川町ひまわり畑(寒川町宮山321)・川とのふれあい公園ひまわり花壇(寒川町一之宮)・相模線線路沿いひまわり畑(寒川町岡田)。座標は確かめていない
+    flower_windows:
+    - kind: 冬のひまわり
+      start: '11-21'
+      end: '12-10'
+      source_url: https://www.samukawa-kankou.jp/samukawa-winter-himawari/
+      source_host: www.samukawa-kankou.jp
+      source_class: secondary
+      source_year: null
+      note: '寒川町観光協会: 毎年、11月の下旬～12月初頭に満開にしている(気温や天候で左右される)'
