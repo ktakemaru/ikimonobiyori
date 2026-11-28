@@ -643,7 +643,7 @@ sources:
     kind: status_page
     flower_kinds: [コスモス, ツバキ, 皇帝ダリア]
     covers:
-      - {site: hana-0027, label: 公式ブログ, flower_kind: コスモス}   # 名所カタログの種類(hana-0027 は コスモス)から。ブログは園の花全体を扱う
+      - {site: hana-0027, label: 公式ブログ, flower_kind: ツバキ}   # 名所カタログの種類(本人の返事 2026-11-28 の続きの 2 でツバキを足した)に合わせる
     notation: {style: none, map: {}, updated: per_article, year_shown: true, date_basis: observed_date, note: "記事ごとに配信日。月ごとに URL が変わる(blog/<年>/<月>/)。一覧の行は url_template で対象の日の月を組み立てる"}
     readable: {status: ok, checked_on: "2026-11-28", robots: allows, note: "同じホストの kanagawaparks-kurihama(robots.txt は /wp-admin/ のみ拒否、2026-10-31)の確かめを使った"}
     terms: {status: no_prohibition_found, note: "同じホストの kanagawaparks-kurihama の確かめ(サイトポリシー・利用規約のページが見つからず、禁止の記載を確認できなかった)を使った"}

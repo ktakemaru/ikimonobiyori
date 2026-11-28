@@ -10,7 +10,7 @@
 | 施設（visitor_centers/centers.yaml） | 14 | 17 | 0 |
 | 現況の情報源（sources/） | 53 | 35 | 3 |
 | 行事・展示（facility_events/events.yaml） | 1 | 0 | 0 |
-| 名所カタログ（catalog/） | 135 | 14 | 2 |
+| 名所カタログ（catalog/） | 136 | 14 | 2 |
 
 ## 推奨の基準
 - **承認してよい**: 公式・範囲内・転載禁止の明示がなく、最新の更新日が近く、状態や種名が読める。
@@ -192,7 +192,7 @@
 |---|---|---|
 | 神奈川県立生命の星・地球博物館（kanagawa-museum） | user（2026-11-08） | https://nh.kanagawa-museum.jp/event/ |
 
-### 2-D. 名所カタログ（承認済み 135件。うち本人の承認 14件を列挙）
+### 2-D. 名所カタログ（承認済み 136件。うち本人の承認 15件を列挙）
 
 | 台帳 | 名所（id） | 承認した日 |
 |---|---|---|
@@ -206,6 +206,7 @@
 | catalog/autumn_leaves.yaml | 金石水管橋(長瀞)（kouyou-0063） | 2026-11-08 |
 | catalog/autumn_leaves.yaml | 白鳥橋(長瀞)（kouyou-0064） | 2026-11-08 |
 | catalog/autumn_leaves.yaml | 埼玉県立自然の博物館（kouyou-0065） | 2026-11-08 |
+| catalog/flowers.yaml | 県立相模原公園（hana-0093） | 2026-11-28 |
 | catalog/wintering_birds.yaml | 瓢湖(阿賀野市)（hakucho-0001） | 2026-10-23 |
 | catalog/wintering_birds.yaml | 安曇野(犀川白鳥湖・御宝田遊水池)（hakucho-0002） | 2026-10-23 |
 | catalog/wintering_birds.yaml | 多々良沼(館林市)（hakucho-0003） | 2026-10-23 |

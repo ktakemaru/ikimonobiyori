@@ -947,6 +947,7 @@ entries:
       - garden
       flower_kinds:
       - コスモス
+      - ツバキ   # 本人の返事(2026-11-28 の続きの 2): 公式ブログ(11/27「つばき園では曙が開花しました」)
       source: Claude Code が付けた(推定。段階32。指示書 2026-10-31 の名所の一覧と調査)
     sources:
     - url: https://www.kanagawaparks.com/kurihama/
@@ -3029,3 +3030,40 @@ entries:
     status_sources: [chichibu-kanko-hotaru]
     sources:
       - {url: "https://www.chichibuji.gr.jp/news/hotaru2026/", title: "秩父観光協会 ホタル飛翔情報2026年(概ね6月中旬〜7月上旬に飛翔)", checked_on: '2026-11-11'}
+  # 本人の返事(2026-11-28 の続きの 1): 県立相模原公園。種類はサザンカ(公式の花ガイドのオトメサザンカ「開花は１１月上旬から１２月が見頃」)。
+  # メタセコイアの紅葉は、公式の花ガイド・トップページに例年の時期の記載が無いので足していない。座標は確かめていない(市の代表点で距離を出す)
+  - id: hana-0093
+    name: 県立相模原公園
+    subjects:
+    - flowers
+    timing_type: managed
+    kind: area
+    location_precision: area_10km
+    status: approved
+    approved_by: user
+    approved_at: '2026-11-28'
+    tags:
+      prefecture: 神奈川県
+      area: 相模原
+      city: 相模原市
+      terrain:
+      - garden
+      flower_kinds:
+      - サザンカ
+      source: 本人の返事(2026-11-28)。所在は公式の花ガイドの「神奈川県相模原市南区下溝3277番地」
+    sources:
+    - url: https://www.kanagawa-park.or.jp/sagamihara/flower.html
+      title: 県立相模原公園 花ガイド(指定管理者 神奈川県公園協会・サカタのタネ・サカタのタネGS グループ)
+      checked_on: '2026-11-28'
+    - url: https://www.kanagawa-park.or.jp/sagamihara/feed/feed-flower.php
+      title: 県立相模原公園 開花情報
+      checked_on: '2026-11-28'
+    note: 開花情報は花ごとに場所と撮影日(記事は公園の花ブログ)。運営者は同じホストの公園のトップページで確かめた
+    flower_windows:
+    - kind: サザンカ
+      start: '11-01'
+      end: '12-31'
+      source_url: https://www.kanagawa-park.or.jp/sagamihara/flower.html
+      source_class: official
+      source_year: null
+      note: '花ガイドの12月の欄のオトメサザンカ: 開花は11月上旬から12月が見頃(長い期間楽しめる場合もある)'
