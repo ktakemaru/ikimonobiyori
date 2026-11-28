@@ -37,6 +37,14 @@ class Name(unittest.TestCase):
         self.assertIsNone(P.name(BASE + "shiken-no-koen/"))
         self.assertEqual(P.name(BASE + "shiken-no-koen/", {"sources": []}, "試験の公園(作り物)"), "試験の公園")
 
+    def test_every_known_page_on_a_shared_host_has_a_name(self):
+        """複数の公園が使うホストの、名所と台帳のページは、どれも名前が決まる(出典の行にドメインを出さない)。"""
+        from ikimonobiyori import brief_refresh as BR
+        urls = {u for p in BR.place_index() for u in p["pages"] if u and P.shared_depth(u)}
+        urls |= {s["url"] for s in BR.ledger_pages() if P.shared_depth(s["url"])}
+        self.assertTrue(urls)
+        self.assertEqual(sorted(u for u in urls if not P.name(u)), [])
+
     def test_every_listed_shared_host_resolves_by_path(self):
         for url, token, bad in [("https://www.kanagawa-park.or.jp/sagamihara/flower.html", "相模原", ["境川", "秦野"]),
                                 ("https://www.tokyo-park.or.jp/park/kyu-furukawa/news/index.html", "東京都公園協会", ["六義園", "葛西"])]:

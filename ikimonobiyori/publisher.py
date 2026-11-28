@@ -134,7 +134,9 @@ def ledger_name(url, c=None):
     if exact:
         return exact
     under = sorted((x for x in rows if path.startswith(x[0] + "/")), key=lambda x: -len(x[0]))
-    return under[0][1] if under else (rows[0][1] if rows else None)
+    if under or rows:
+        return under[0][1] if under else rows[0][1]
+    return (((c or cfg()).get("shared_hosts") or {}).get("park_names") or {}).get(key)
 
 
 def ledger_kind(url):
