@@ -85,6 +85,16 @@ class Earlier(unittest.TestCase):
         cand = [c for c in self.doc["candidates"] if c["name"] == "試験の冬桜の丘(作り物)"]
         self.assertTrue(all(c.get("basis") != "current" for c in cand))            # 少し前の様子で候補の今年の現況にしない
 
+    def test_event_only_not_in_section(self):
+        known = [k["name"] for k in self.ob()["known"]]
+        self.assertNotIn("試験の花の国(作り物)", known)
+        self.assertIn("試験の祭りの庭(作り物)", known)
+        got = [x for x in O.read_records("flowers", None, O.load_policy(), include_detail=True) if x.get("name") == "試験の花の国(作り物)"]
+        self.assertEqual(len(got), 1)                                             # 記録は消さない
+        self.assertTrue(CS.event_only("コスモスまつり終了について"))
+        self.assertFalse(CS.event_only("コスモスまつり開催中、コスモスは満開"))
+        self.assertFalse(CS.event_only("冬桜が見頃"))
+
     def test_verify_stops_earlier_as_now(self):
         fid = self.ob()["earlier"][0]["fact"]
         err = lambda code, s, detail, fix: {"code": code}

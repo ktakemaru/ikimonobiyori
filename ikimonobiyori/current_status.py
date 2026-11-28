@@ -629,6 +629,18 @@ def _record_name(r, cands, policy):
     return r.get("name"), r.get("prefecture"), r.get("city")
 
 
+def event_only(state, c=None):
+    """指示書 open-question-breadth の続き 第6部(本人の返事 9): 状態の文が行事の語(research.event_period_re と同じ語)だけで、
+    花や色づきの状態の語(open.event_only.state_words)が無いか(「コスモスまつり終了について」)。"""
+    from . import research as RS
+    st = state or ""
+    ev = RS.cfg()["event_period_re"]
+    if not re.search(ev, st):
+        return False
+    rest = re.sub(r"[^\s、。・,()()「」]*(?:%s)" % ev, "", st)
+    return not any(w in rest for w in open_cfg(c)["event_only"]["state_words"])
+
+
 def open_records(question, cond, now, env=None, c=None, species_words=None, older=False):
     """手元の今年の現況(日付つき・状態あり・行事でない)を、聞かれた対象(種を挙げたらその種の語が記録にあるもの)で集める。
     名所・発信元ごとに、いちばん新しい状態の日付の記録 1 件。状態の日付が open.recent_days より古いものは入れない。新しい順。
@@ -655,6 +667,8 @@ def open_records(question, cond, now, env=None, c=None, species_words=None, olde
             except ValueError:
                 continue
             if age < lo or age > days:
+                continue
+            if event_only(r.get("state"), c):                 # 続き 第6部: 行事の終了だけの記録は、手元の現況の節に入れない(記録は消さない)
                 continue
             text = " ".join(str(r.get(k) or "") for k in ("state", "kind", "name"))
             if words and not any(w in text for w in words):
